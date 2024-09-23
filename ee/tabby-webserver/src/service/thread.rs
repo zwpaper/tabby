@@ -425,4 +425,62 @@ mod tests {
             .unwrap();
         assert_eq!(messages.len(), 1);
     }
+
+    #[tokio::test]
+    async fn test_get_thread() {
+        let db = DbConn::new_in_memory().await.unwrap();
+        let user_id = create_user(&db).await.as_id();
+        let service = create(db.clone(), None);
+
+        let thread_id = service
+            .create(
+                &user_id,
+                &CreateThreadInput {
+                    user_message: CreateMessageInput {
+                        content: "Ping!".to_string(),
+                        attachments: None,
+                    },
+                },
+            )
+            .await
+            .unwrap();
+
+        let thread = service.get(&thread_id).await.unwrap().unwrap();
+        assert_eq!(thread.id, thread_id);
+        assert_eq!(thread.user_id, user_id);
+    }
+
+    #[tokio::test]
+    async fn test_set_persisted() {
+        let db = DbConn::new_in_memory().await.unwrap();
+        let user_id = create_user(&db).await.as_id();
+        let service = create(db.clone(), None);
+
+        let thread_id = service
+            .create(
+                &user_id,
+                &CreateThreadInput {
+                    user_message: CreateMessageInput {
+                        content: "Ping!".to_string(),
+                        attachments: None,
+                    },
+                },
+            )
+            .await
+            .unwrap();
+
+        // by default, threads are ephemeral
+        assert!(!db
+            .get_thread_ephemeral(thread_id.as_rowid().unwrap())
+            .await
+            .unwrap());
+
+        let thread = service.set_persisted(&thread_id).await.unwrap();
+
+        // now the thread is persisted
+        assert!(db
+            .get_thread_ephemeral(thread_id.as_rowid().unwrap())
+            .await
+            .unwrap());
+    }
 }

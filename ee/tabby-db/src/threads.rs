@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, query_as, types::Json, FromRow};
@@ -131,6 +131,20 @@ impl DbConn {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn get_thread_ephemeral(&self, thread_id: i64) -> Result<bool> {
+        struct Response {
+            is_ephemeral: bool,
+        }
+        Ok(query_as!(
+            Response,
+            "SELECT is_ephemeral FROM threads WHERE id = ?",
+            thread_id
+        )
+        .fetch_one(&self.pool)
+        .await?
+        .is_ephemeral)
     }
 
     pub async fn create_thread_message(
