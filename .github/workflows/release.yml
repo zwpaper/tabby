@@ -15,8 +15,8 @@ on:
       - '.github/workflows/release.yml'
 
 concurrency:
-  group: ${{ github.workflow_ref }}-${{ github.head_ref || github.ref_name }} 
-  
+  group: ${{ github.workflow_ref }}-${{ github.head_ref || github.ref_name }}
+
   # If this is enabled it will cancel current running and start latest
   cancel-in-progress: true
 
@@ -246,24 +246,24 @@ jobs:
           retention-days: 3
           name: tabby_${{ matrix.binary }}${{ matrix.ext }}
           path: tabby_${{ matrix.binary }}${{ matrix.ext }}
-  
+
   package-win-cuda:
     runs-on: ubuntu-latest
-    env:
-      LLAMA_CPP_VERSION: b3571
     needs: [release-binary]
     permissions:
       contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - name: Download all artifacts
         uses: actions/download-artifact@v3
-      
+
       - name: Display structure of downloaded files
         run: ls -R
-      
+
       - name: Package CUDA 11.7
         run: >
           LLAMA_CPP_PLATFORM=cuda-cu11.7.1-x64 OUTPUT_NAME=tabby_x86_64-windows-msvc-cuda117 ./ci/package-win.sh
@@ -326,7 +326,7 @@ jobs:
               fi
             done
           done
-      
+
       - name: Display structure of created files
         run: ls -R dist
 
@@ -340,7 +340,7 @@ jobs:
 
       - name: Check if stable release
         run: echo "Stable Release is ${{ env.STABLE_RELEASE }}"
-  
+
       - uses: ncipollo/release-action@v1
         if: github.event_name == 'push'
         with:
