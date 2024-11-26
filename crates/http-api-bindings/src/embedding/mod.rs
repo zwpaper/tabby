@@ -1,13 +1,12 @@
 mod llama;
 mod openai;
-mod rate_limit;
 mod voyage;
 
 use core::panic;
 use std::sync::Arc;
 
+use super::rate_limit::RateLimitedEmbedding;
 use llama::LlamaCppEngine;
-use rate_limit::RateLimitedEmbedding;
 use tabby_common::config::HttpModelConfig;
 use tabby_inference::Embedding;
 
