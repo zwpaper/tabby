@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use async_stream::stream;
 use async_trait::async_trait;
 use futures::stream::BoxStream;
@@ -69,7 +69,7 @@ impl IndexAttributeBuilder<SourceCode> for CodeBuilder {
     async fn build_chunk_attributes<'a>(
         &self,
         source_code: &'a SourceCode,
-    ) -> BoxStream<'a, JoinHandle<Result<(Vec<String>, serde_json::Value)>>> {
+    ) -> BoxStream<'a, JoinHandle<(Result<Vec<String>>, serde_json::Value)>> {
         let text = match source_code.read_content() {
             Ok(content) => content,
             Err(e) => {
@@ -81,7 +81,7 @@ impl IndexAttributeBuilder<SourceCode> for CodeBuilder {
                 return Box::pin(stream! {
                     let path = source_code.filepath.clone();
                     yield tokio::spawn(async move {
-                        bail!("Failed to read content of '{}': {}", path, e);
+                        (Err(anyhow!("Failed to read content of '{}': {}", path, e)), json!({}))
                     });
                 });
             }
@@ -91,7 +91,7 @@ impl IndexAttributeBuilder<SourceCode> for CodeBuilder {
             warn!("No embedding service found for code indexing");
             return Box::pin(stream! {
                 yield tokio::spawn(async move {
-                    bail!("No embedding service found for code indexing");
+                    (Err(anyhow!("No embedding service found for code indexing")), json!({}))
                 });
             });
         };
@@ -110,10 +110,7 @@ impl IndexAttributeBuilder<SourceCode> for CodeBuilder {
                 let embedding = embedding.clone();
                 let rewritten_body = format!("```{}\n{}\n```", source_code.filepath, body);
                 yield tokio::spawn(async move {
-                    match build_binarize_embedding_tokens(embedding.clone(), &rewritten_body).await {
-                        Ok(tokens) => Ok((tokens, attributes)),
-                        Err(err) => Err(err),
-                    }
+                    (build_binarize_embedding_tokens(embedding.clone(), &rewritten_body).await, attributes)
                 });
             }
         };

@@ -43,19 +43,13 @@ impl BuildStructuredDoc for PullDocument {
     async fn build_chunk_attributes(
         &self,
         embedding: Arc<dyn Embedding>,
-    ) -> BoxStream<JoinHandle<Result<(Vec<String>, serde_json::Value)>>> {
+    ) -> BoxStream<JoinHandle<(Result<Vec<String>>, serde_json::Value)>> {
         // currently not indexing the diff
         let text = format!("{}\n\n{}", self.title, self.body);
         let s = stream! {
             yield tokio::spawn(async move {
-                let tokens = match build_tokens(embedding, &text).await{
-                    Ok(tokens) => tokens,
-                    Err(e) => {
-                        return Err(anyhow::anyhow!("Failed to build tokens for text: {}", e));
-                    }
-                };
-                let chunk_attributes = json!({});
-                Ok((tokens, chunk_attributes))
+                let tokens = build_tokens(embedding, &text).await;
+                (tokens, json!({}))
             })
         };
 

@@ -34,7 +34,7 @@ impl BuildStructuredDoc for WebDocument {
     async fn build_chunk_attributes(
         &self,
         embedding: Arc<dyn Embedding>,
-    ) -> BoxStream<JoinHandle<Result<(Vec<String>, serde_json::Value)>>> {
+    ) -> BoxStream<JoinHandle<(Result<Vec<String>>, serde_json::Value)>> {
         let chunks: Vec<_> = TextSplitter::new(2048)
             .chunks(&self.body)
             .map(|x| x.to_owned())
@@ -45,7 +45,7 @@ impl BuildStructuredDoc for WebDocument {
             Err(e) => {
                 return Box::pin(stream! {
                     yield tokio::spawn(async move {
-                        Err(anyhow::anyhow!("Failed to build tokens for title: {}", e))
+                        (Err(anyhow::anyhow!("Failed to build tokens for title: {}", e)), json!({}))
                     });
                 });
             }
@@ -55,19 +55,19 @@ impl BuildStructuredDoc for WebDocument {
                 let title_embedding_tokens = title_embedding_tokens.clone();
                 let embedding = embedding.clone();
                 yield tokio::spawn(async move {
+                    let chunk = json!({
+                        fields::web::CHUNK_TEXT: chunk_text.clone(),
+                    });
                     let chunk_embedding_tokens = match build_tokens(embedding.clone(), &chunk_text).await {
                         Ok(tokens) => tokens,
                         Err(e) => {
-                            return Err(anyhow::anyhow!("Failed to build tokens for chunk: {}", e));
+                            return (Err(anyhow::anyhow!("Failed to build tokens for chunk: {}", e)), chunk);
                         }
                     };
-                    let chunk = json!({
-                        fields::web::CHUNK_TEXT: chunk_text,
-                    });
 
                     // Title embedding tokens are merged with chunk embedding tokens to enhance the search results.
                     let tokens = merge_tokens(vec![title_embedding_tokens, chunk_embedding_tokens]);
-                    Ok((tokens, chunk))
+                    (Ok(tokens), chunk)
                 });
             }
         };

@@ -38,7 +38,7 @@ impl IndexAttributeBuilder<StructuredDoc> for StructuredDocBuilder {
     async fn build_chunk_attributes<'a>(
         &self,
         document: &'a StructuredDoc,
-    ) -> BoxStream<'a, JoinHandle<Result<(Vec<String>, serde_json::Value)>>> {
+    ) -> BoxStream<'a, JoinHandle<(Result<Vec<String>>, serde_json::Value)>> {
         let embedding = self.embedding.clone();
         document.build_chunk_attributes(embedding).await
     }

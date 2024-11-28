@@ -43,7 +43,7 @@ pub trait IndexAttributeBuilder<T>: Send + Sync {
     async fn build_chunk_attributes<'a>(
         &self,
         document: &'a T,
-    ) -> BoxStream<'a, JoinHandle<Result<(Vec<String>, serde_json::Value)>>>;
+    ) -> BoxStream<'a, JoinHandle<(Result<Vec<String>>, serde_json::Value)>>;
 }
 
 pub struct TantivyDocBuilder<T> {
@@ -132,18 +132,11 @@ impl<T: ToIndexId> TantivyDocBuilder<T> {
                 // the document, and
                 // a flag indicating whether the tokens were created successfully.
                 yield tokio::spawn(async move {
-                    let Ok(built_chunk_attributes_result) = task.await else {
+                    let Ok((tokens, chunk_attributes)) = task.await else {
                         // Join error, there is no attr, return None and false
                         return (None, false);
                     };
 
-                    let (tokens, chunk_attributes) = match built_chunk_attributes_result{
-                        Ok((tokens, chunk_attributes)) => (tokens, chunk_attributes),
-                        Err(e) => {
-                            warn!("Failed to build chunk attributes for document '{}': {}", id, e);
-                            return (None, false);
-                        }
-                    };
                     let mut doc = doc! {
                         schema.field_id => id,
                         schema.field_source_id => source_id,
@@ -153,11 +146,18 @@ impl<T: ToIndexId> TantivyDocBuilder<T> {
                         schema.field_chunk_attributes => chunk_attributes,
                     };
 
-                    for token in &tokens {
-                        doc.add_text(schema.field_chunk_tokens, token);
+                    match tokens {
+                        Ok(tokens) => {
+                            for token in &tokens {
+                                doc.add_text(schema.field_chunk_tokens, token);
+                            }
+                            (Some(doc), true)
+                        },
+                        Err(e) => {
+                            warn!("Failed to build tokens for document '{}': {}", id, e);
+                            (Some(doc), false)
+                        }
                     }
-
-                    (Some(doc), !tokens.is_empty())
                 });
             }
         }
