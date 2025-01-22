@@ -56,10 +56,11 @@ pub async fn create(config: &HttpModelConfig) -> Arc<dyn Embedding> {
         ),
     };
 
-    Arc::new(rate_limit::new_embedding(
-        engine,
-        config.rate_limit.request_per_minute,
-    ))
+    engine.into()
+    // Arc::new(rate_limit::new_embedding(
+    //     engine,
+    //     config.rate_limit.request_per_minute,
+    // ))
 }
 
 #[macro_export]
