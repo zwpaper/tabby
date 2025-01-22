@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use std::fmt::Write;
 use tabby_inference::Embedding;
 use tracing::Instrument;
 
@@ -33,6 +34,15 @@ struct EmbeddingResponse {
     embedding: Vec<f32>,
 }
 
+fn report(mut err: &(dyn std::error::Error + 'static)) -> String {
+    let mut s = format!("{}", err);
+    while let Some(src) = err.source() {
+        let _ = write!(s, "\n\nCaused by: {}", src);
+        err = src;
+    }
+    s
+}
+
 #[async_trait]
 impl Embedding for LlamaCppEngine {
     async fn embed(&self, prompt: &str) -> anyhow::Result<Vec<f32>> {
@@ -48,7 +58,11 @@ impl Embedding for LlamaCppEngine {
         let response = request
             .send()
             .instrument(embedding_info_span!("llamacpp"))
-            .await?;
+            .await
+            .map_err(|e| {
+                let report = report(&e);
+                anyhow::anyhow!("Error sending request: {}", report)
+            })?;
         if response.status().is_server_error() {
             let error = response.text().await?;
             return Err(anyhow::anyhow!(

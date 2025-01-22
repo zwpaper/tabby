@@ -1,3 +1,4 @@
+use std::fs::File;
 use std::{env::var, net::TcpListener, process::Stdio, time::Duration};
 
 use tokio::{io::AsyncBufReadExt, task::JoinHandle};
@@ -40,6 +41,9 @@ impl LlamaCppSupervisor {
                     .to_string();
                 let mut command = tokio::process::Command::new(server_binary);
 
+                let stdout_file = File::create("/tmp/llama-server-output.log").unwrap();
+                let stderr_file = File::create("/tmp/llama-server-error.log").unwrap();
+
                 command
                     .arg("-m")
                     .arg(&model_path)
@@ -48,12 +52,11 @@ impl LlamaCppSupervisor {
                     .arg(port.to_string())
                     .arg("-np")
                     .arg(parallelism.to_string())
-                    .arg("--log-disable")
                     .arg("--ctx-size")
                     .arg(context_size.to_string())
                     .kill_on_drop(true)
-                    .stderr(Stdio::piped())
-                    .stdout(Stdio::null());
+                    .stderr(Stdio::from(stderr_file))
+                    .stdout(Stdio::from(stdout_file));
 
                 if let Ok(n_threads) = std::env::var("LLAMA_CPP_N_THREADS") {
                     command.arg("-t").arg(n_threads);
