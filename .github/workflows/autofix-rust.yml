@@ -52,7 +52,7 @@ jobs:
           args: --version 0.7.0 cargo-machete
 
       - name: Cargo registry cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.sha }}
           restore-keys: |
