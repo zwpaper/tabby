@@ -55,7 +55,7 @@ jobs:
           version: "v0.4.0"
 
       - name: Cargo registry cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.sha }}
           restore-keys: |
@@ -102,7 +102,7 @@ jobs:
           version: "v0.4.0"
 
       - name: Cargo registry cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-${{ github.sha }}
           restore-keys: |
