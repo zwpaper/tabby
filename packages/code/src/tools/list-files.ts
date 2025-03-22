@@ -2,7 +2,8 @@ import { readdir } from 'fs/promises';
 import { join } from 'path';
 
 export async function listFiles({ path, recursive }: { path: string; recursive?: boolean }) {
-  const result: string[] = [];
+  let isTruncated = false;
+  const files: string[] = [];
 
   async function traverseBFS(directory: string) {
     const queue: string[] = [directory];
@@ -39,11 +40,11 @@ export async function listFiles({ path, recursive }: { path: string; recursive?:
         if (entry.isDirectory() && recursive) {
           queue.push(fullPath);
         } else if (entry.isFile()) {
-          result.push(fullPath);
+          files.push(fullPath);
         }
 
-        if (result.length >= 300) {
-          result.push(`(File list truncated. Use list_files on specific subdirectories if you need to explore further.)`);
+        if (files.length >= 300) {
+          isTruncated = true;
           return; // Stop traversal if 300 files are collected
         }
       }
@@ -51,6 +52,8 @@ export async function listFiles({ path, recursive }: { path: string; recursive?:
   }
 
   await traverseBFS(path);
-  return result;
-  return result.slice(0, 300); // Ensure only 300 files are returned
+  return {
+    files: files,
+    isTruncated,
+  }
 }

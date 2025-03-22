@@ -63,7 +63,7 @@ function MessageText({ text }: { text: string }) {
 
 function MessageToolInvocation({ toolInvocation }: { toolInvocation: ToolInvocation }) {
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="yellow" marginLeft={1} padding={1} gap={1}>
+    <Box flexDirection="column" borderStyle="round" borderColor="grey" marginLeft={1} padding={1} gap={1}>
       <Box>
         <Text color="whiteBright">{toolInvocation.toolName}( </Text>
         <RecordView value={toolInvocation.args} />

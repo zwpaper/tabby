@@ -10,5 +10,6 @@ export const listFiles = createTool({
     }),
     outputSchema: z.object({
         files: z.array(z.string()).describe("The list of files and directories within the specified directory."),
+        isTruncated: z.boolean().describe("Whether the list of files is truncated (due to too many files). Use listFiles on specific subdirectories if you need to explore further."),
     }),
 })
