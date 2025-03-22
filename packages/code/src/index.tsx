@@ -20,7 +20,7 @@ const App = () => {
     <Box flexDirection="column" padding={1}>
       {messages.length > 0 && <Box flexDirection="column" borderStyle="round" borderColor="cyan" padding={1}>
         {messages.map((message, index) => (
-          <Box key={index} marginBottom={1} flexDirection='column'>
+          <Box key={index} marginBottom={1} flexDirection='column' gap={1}>
             {message.parts.map((part, index) => {
               if (part.type === "text") {
                 return <MessageText key={index} text={part.text} role={message.role} />;
@@ -32,13 +32,15 @@ const App = () => {
         ))}
       </Box>}
 
-      <Box marginTop={1}>
-        <TextInput
-          value={input}
-          onChange={setInput}
-          onSubmit={() => handleSubmit()}
-          placeholder="Type your message here..."
-        />
+      <Box marginTop={1} borderStyle="round" borderColor="white" padding={1}>
+        <Box>
+          <TextInput
+            value={input}
+            onChange={setInput}
+            onSubmit={() => handleSubmit()}
+            placeholder='Type your message here...'
+          />
+        </Box>
       </Box>
     </Box>
   );
@@ -52,9 +54,28 @@ function MessageText({ text, role }: { text: string, role: string }) {
 
 function MessageToolInvocation({ toolInvocation }: { toolInvocation: ToolInvocation }) {
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="green" paddingLeft={2}>
-      <Text color="green">State: {toolInvocation.state}</Text>
-      <Text>{JSON.stringify(toolInvocation)}</Text>
+    <Box flexDirection="column" borderStyle="round" borderColor="yellow" marginLeft={1} padding={1} gap={1}>
+      <Box>
+        <Text color="whiteBright">{toolInvocation.toolName}( </Text>
+        <RecordView value={toolInvocation.args} />
+        <Text color="whiteBright"> )</Text>
+      </Box>
+      <Box marginLeft={1}>
+        {toolInvocation.state === "result" && <RecordView value={toolInvocation.result} />}
+      </Box>
+    </Box>
+  );
+}
+
+function RecordView({ value: args }: { value: Record<string, any> }) {
+  return (
+    <Box gap={1}>
+      {Object.entries(args).map(([key, value], index) => (
+        <Box key={index} gap={1}>
+          <Text color="grey">{key}:</Text>
+          <Text color="whiteBright">{JSON.stringify(value)}</Text>
+        </Box>
+      ))}
     </Box>
   );
 }
