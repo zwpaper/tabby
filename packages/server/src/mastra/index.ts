@@ -1,7 +1,7 @@
 import { Mastra } from "@mastra/core";
  
-import { weatherAgent } from "./agents/weather";
+import { tabby } from "./agents/tabby";
  
 export const mastra = new Mastra({
-  agents: { weatherAgent },
+  agents: { tabby },
 });
