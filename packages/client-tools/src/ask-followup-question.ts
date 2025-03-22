@@ -1,0 +1,14 @@
+import { createTool } from "@mastra/core";
+import { z } from "zod";
+
+export const askFollowupQuestionTool = createTool({
+    id: "askFollowupQuestion",
+    description: "Ask the user a question to gather additional information needed to complete the task. This tool should be used when you encounter ambiguities, need clarification, or require more details to proceed effectively.",
+    inputSchema: z.object({
+        question: z.string().describe("The question to ask the user."),
+        followUp: z.array(z.string()).describe("A list of 2-4 suggested answers that logically follow from the question."),
+    }),
+    outputSchema: z.object({
+        success: z.boolean().describe("Indicates whether the question was successfully asked."),
+    }),
+});

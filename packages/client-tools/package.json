@@ -1,0 +1,5 @@
+{
+  "name": "@ragdoll/client-tools",
+  "private": true,
+  "main": "./src/index.ts"
+}
