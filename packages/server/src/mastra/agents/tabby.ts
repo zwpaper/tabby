@@ -1,6 +1,6 @@
+import { generateSystemPrompt } from "@/prompts";
 import { openai } from "@ai-sdk/openai";
 import { Agent } from "@mastra/core";
-import { generateSystemPrompt } from "@/prompts";
 import { ToolsRegistry } from "@ragdoll/client-tools";
 
 export const tabby = new Agent({
