@@ -1,7 +1,7 @@
 import { createTool } from "@mastra/core";
 import { z } from "zod";
 
-export const attemptCompletionTool = createTool({
+export const attemptCompletion = createTool({
     id: "attemptCompletion",
     description: "After each tool use, the user will respond with the result of that tool use. Once you've received the results of tool uses and can confirm that the task is complete, use this tool to present the result of your work to the user.",
     inputSchema: z.object({

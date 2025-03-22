@@ -1,7 +1,7 @@
 import { createTool } from "@mastra/core"
 import { z } from "zod"
 
-export const writeToFileTool = createTool({
+export const writeToFile = createTool({
     id: "writeToFile",
     description: "Request to write full content to a file at the specified path. If the file exists, it will be overwritten with the provided content. If the file doesn't exist, it will be created. This tool will automatically create any directories needed to write the file.",
     inputSchema: z.object({

@@ -1,7 +1,7 @@
 import { createTool } from "@mastra/core"
 import { z } from "zod"
 
-export const applyDiffTool = createTool({
+export const applyDiff = createTool({
     id: "applyDiff",
     description: "Request to replace existing code using a search and replace block. This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with.",
     inputSchema: z.object({
@@ -12,12 +12,3 @@ export const applyDiffTool = createTool({
         success: z.boolean().describe("Indicates whether the diff was successfully applied."),
     }),
 })
-
-type InputType = z.infer<NonNullable<typeof applyDiffTool.inputSchema>>
-type OutputType = z.infer<NonNullable<typeof applyDiffTool.outputSchema>>
-
-function impl(props: InputType): OutputType {
-    return {
-        success: true,
-    }
-}

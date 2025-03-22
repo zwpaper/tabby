@@ -1,7 +1,7 @@
 import { createTool } from "@mastra/core";
 import { z } from "zod";
 
-export const executeCommandTool = createTool({
+export const executeCommand = createTool({
     id: "executeCommand",
     description: "Request to execute a CLI command on the system. Use this when you need to perform system operations or run specific commands to accomplish any step in the user's task.",
     inputSchema: z.object({

@@ -1,9 +1,0 @@
-{
-  "name": "@ragdoll/client-tools",
-  "private": true,
-  "main": "./src/index.ts",
-  "dependencies": {
-    "@mastra/core": "^0.6.3",
-    "zod": "^3.24.2"
-  }
-}
