@@ -5,6 +5,7 @@ import { useChat } from "@ai-sdk/react";
 import type { ToolInvocation } from '@ai-sdk/ui-utils';
 import { listFiles } from './tools/list-files';
 import { readFile } from './tools/read-file';
+import Markdown from './components/markdown';
 
 const App = () => {
   const { messages, handleSubmit, input, setInput } = useChat({
@@ -27,12 +28,13 @@ const App = () => {
 
   return (
     <Box flexDirection="column" padding={1}>
-      {messages.length > 0 && <Box flexDirection="column" borderStyle="round" borderColor="cyan" padding={1}>
+      {messages.length > 0 && <Box flexDirection="column" gap={1}>
         {messages.map((message, index) => (
-          <Box key={index} marginBottom={1} flexDirection='column' gap={1}>
+          <Box key={index} flexDirection='column' gap={1}>
+            <Text color={getRoleColor(message.role)}>{message.role === "user"? "You" : "Tabby"}</Text>
             {message.parts.map((part, index) => {
               if (part.type === "text") {
-                return <MessageText key={index} text={part.text} role={message.role} />;
+                return <MessageText key={index} text={part.text} />;
               } else if (part.type === "tool-invocation") {
                 return <MessageToolInvocation key={index} toolInvocation={part.toolInvocation} />
               }
@@ -55,10 +57,8 @@ const App = () => {
   );
 };
 
-function MessageText({ text, role }: { text: string, role: string }) {
-  return <Text color={role === "user" ? "blue" : "yellow"}>
-    {role === "user" ? "You" : "Tabby"}: {text}
-  </Text>
+function MessageText({ text }: { text: string }) {
+  return <Markdown>{text}</Markdown>
 }
 
 function MessageToolInvocation({ toolInvocation }: { toolInvocation: ToolInvocation }) {
@@ -100,6 +100,13 @@ function RecordView({ value }: { value: Record<string, any> }) {
       </Box>
     );
   }
+}
+
+function getRoleColor(role: string) {
+  if (role === "user") {
+    return "blue";
+  }
+  return "yellow";
 }
 
 render(<App />);
