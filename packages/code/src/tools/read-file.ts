@@ -1,5 +1,7 @@
 import fs from "fs/promises";
 
+import { fileTypeFromFile  } from "file-type";
+
 export async function readFile({
     path,
     startLine,
@@ -8,14 +10,27 @@ export async function readFile({
     path: string;
     startLine?: number;
     endLine?: number;
-}): Promise<{ content: string }> {
-    const fileContent = await fs.readFile(path, "utf-8");
+}): Promise<{ content: string; isTruncated: boolean }> {
+    const type = await fileTypeFromFile(path);
+    if (type && !type.mime.startsWith("text/")) {
+        throw new Error(`The file is binary or not plain text (detected type: ${type.mime}).`);
+    }
+
+    const fileBuffer = await fs.readFile(path);
+
+    const fileContent = fileBuffer.toString("utf-8");
     const lines = fileContent.split("\n");
 
     const start = startLine ? startLine - 1 : 0;
     const end = endLine ? endLine : lines.length;
 
-    const selectedLines = lines.slice(start, end).join("\n");
+    let selectedLines = lines.slice(start, end).join("\n");
 
-    return { content: selectedLines };
+    let isTruncated = false;
+    if (Buffer.byteLength(selectedLines, "utf-8") > 1_048_576) {
+        selectedLines = selectedLines.slice(0, 1_048_576);
+        isTruncated = true;
+    }
+
+    return { content: selectedLines, isTruncated };
 }

@@ -11,5 +11,6 @@ export const readFile = createTool({
     }),
     outputSchema: z.object({
         content: z.string().describe("The content of the file as a string."),
+        isTruncated: z.boolean().describe("Whether the content is truncated due to size limitations."),
     }),
 })

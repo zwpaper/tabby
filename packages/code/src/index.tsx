@@ -7,6 +7,14 @@ import { listFiles } from './tools/list-files';
 import { readFile } from './tools/read-file';
 import Markdown from './components/markdown';
 
+function safeCall<T>(x: Promise<T>) {
+  return x.catch((e) => {
+    return {
+      error: e.message
+    }
+  });
+}
+
 const App = () => {
   const { messages, handleSubmit, input, setInput } = useChat({
     api: "http://localhost:4111/api/agents/tabby/stream",
@@ -15,9 +23,9 @@ const App = () => {
     onToolCall: async (tool) => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       if (tool.toolCall.toolName === "listFiles") {
-        return listFiles(tool.toolCall.args as any);
+        return safeCall(listFiles(tool.toolCall.args as any));
       } else if (tool.toolCall.toolName === "readFile") {
-        return readFile(tool.toolCall.args as any);
+        return safeCall(readFile(tool.toolCall.args as any));
       } else {
         return {
           error: `${tool.toolCall.toolName} is not implemented`

@@ -4,6 +4,7 @@
   "dependencies": {
     "@ai-sdk/react": "^1.2.0",
     "@mastra/client-js": "^0.1.11",
+    "file-type": "^20.4.1",
     "ink": "^5.2.0",
     "ink-text-input": "^6.0.0",
     "react": "^18"
