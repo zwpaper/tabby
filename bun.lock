@@ -9,6 +9,10 @@
     },
     "packages/client-tools": {
       "name": "@ragdoll/client-tools",
+      "dependencies": {
+        "@mastra/core": "^0.6.3",
+        "zod": "^3.24.2",
+      },
     },
     "packages/code": {
       "name": "@ragdoll/code",

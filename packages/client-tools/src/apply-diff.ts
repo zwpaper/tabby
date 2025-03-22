@@ -12,3 +12,12 @@ export const applyDiffTool = createTool({
         success: z.boolean().describe("Indicates whether the diff was successfully applied."),
     }),
 })
+
+type InputType = z.infer<NonNullable<typeof applyDiffTool.inputSchema>>
+type OutputType = z.infer<NonNullable<typeof applyDiffTool.outputSchema>>
+
+function impl(props: InputType): OutputType {
+    return {
+        success: true,
+    }
+}
