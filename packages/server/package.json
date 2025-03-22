@@ -1,5 +1,6 @@
 {
   "name": "@ragdoll/server",
+  "private": true,
   "scripts": {
     "dev": "mastra dev"
   },
