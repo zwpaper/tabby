@@ -6,7 +6,9 @@
     "@mastra/client-js": "^0.1.11",
     "ink": "^5.2.0",
     "ink-text-input": "^6.0.0",
-    "react": "^18.0.0",
-    "@ragdoll/server": "workspace:*"
+    "react": "^18"
+  },
+  "devDependencies": {
+    "@ai-sdk/ui-utils": "^1.2.0"
   }
 }
