@@ -8,7 +8,8 @@ const App = () => {
   const { messages, handleSubmit, input, setInput } = useChat({
     api: "http://localhost:4111/api/agents/tabby/stream",
     maxSteps: 2,
-    onToolCall: (tool) => {
+    onToolCall: async (tool) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       return {
         files: ["file1.txt", "file2.txt"],
       };
@@ -19,7 +20,7 @@ const App = () => {
     <Box flexDirection="column" padding={1}>
       {messages.length > 0 && <Box flexDirection="column" borderStyle="round" borderColor="cyan" padding={1}>
         {messages.map((message, index) => (
-          <Box key={index} marginBottom={1}>
+          <Box key={index} marginBottom={1} flexDirection='column'>
             {message.parts.map((part, index) => {
               if (part.type === "text") {
                 return <MessageText key={index} text={part.text} role={message.role} />;
@@ -49,10 +50,13 @@ function MessageText({ text, role }: { text: string, role: string }) {
   </Text>
 }
 
-function MessageToolInvocation({ toolInvocation }: {toolInvocation: ToolInvocation}) {
-  return <Text color="green">
-    {toolInvocation.name} is being invoked...
-  </Text>
+function MessageToolInvocation({ toolInvocation }: { toolInvocation: ToolInvocation }) {
+  return (
+    <Box flexDirection="column" borderStyle="round" borderColor="green" paddingLeft={2}>
+      <Text color="green">State: {toolInvocation.state}</Text>
+      <Text>{JSON.stringify(toolInvocation)}</Text>
+    </Box>
+  );
 }
 
 render(<App />);
