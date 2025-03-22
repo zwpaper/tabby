@@ -1,0 +1,14 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "ragdoll",
+    },
+    "packages/core": {
+      "name": "@ragdoll/core",
+    },
+  },
+  "packages": {
+    "@ragdoll/core": ["@ragdoll/core@workspace:packages/core"],
+  }
+}

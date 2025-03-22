@@ -1,0 +1,10 @@
+{
+    "name": "ragdoll",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "engines": {
+        "bun": ">=1.2.5"
+    }
+}
