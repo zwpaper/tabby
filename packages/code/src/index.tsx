@@ -10,9 +10,15 @@ const App = () => {
     maxSteps: 2,
     onToolCall: async (tool) => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      return {
-        files: ["file1.txt", "file2.txt"],
-      };
+      if (tool.toolCall.toolName === "listFiles") {
+        return {
+          files: ["file1.txt", "file2.txt"],
+        };
+      } else {
+        return {
+          error: `${tool.toolCall.toolName} is not implemented`
+        }
+      }
     },
   });
 
