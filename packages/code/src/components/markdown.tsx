@@ -1,7 +1,9 @@
-import React from 'react';
-import {parse, setOptions} from 'marked';
-import { Text } from 'ink';
-import TerminalRenderer, { TerminalRendererOptions } from 'marked-terminal';
+import { Text } from "ink";
+import { parse, setOptions } from "marked";
+import TerminalRenderer, {
+  type TerminalRendererOptions,
+} from "marked-terminal";
+import React from "react";
 
 export type Props = TerminalRendererOptions & {
   children: string;

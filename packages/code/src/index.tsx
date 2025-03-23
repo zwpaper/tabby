@@ -1,10 +1,10 @@
-import React from 'react';
-import { Box, render, Text } from 'ink';
-import TextInput from 'ink-text-input';
 import { useChat } from "@ai-sdk/react";
-import type { ToolInvocation } from '@ai-sdk/ui-utils';
-import Markdown from './components/markdown';
-import { onToolCall } from './tools';
+import type { ToolInvocation } from "@ai-sdk/ui-utils";
+import { Box, Text, render } from "ink";
+import TextInput from "ink-text-input";
+import React from "react";
+import Markdown from "./components/markdown";
+import { onToolCall } from "./tools";
 
 const App = () => {
   const { messages, handleSubmit, input, setInput } = useChat({
@@ -15,20 +15,29 @@ const App = () => {
 
   return (
     <Box flexDirection="column" padding={1}>
-      {messages.length > 0 && <Box flexDirection="column" gap={1}>
-        {messages.map((message, index) => (
-          <Box key={index} flexDirection='column' gap={1}>
-            <Text color={getRoleColor(message.role)}>{message.role === "user" ? "You" : "Tabby"}</Text>
-            {message.parts.map((part, index) => {
-              if (part.type === "text") {
-                return <MessageText key={index} text={part.text} />;
-              } else if (part.type === "tool-invocation") {
-                return <MessageToolInvocation key={index} toolInvocation={part.toolInvocation} />
-              }
-            })}
-          </Box>
-        ))}
-      </Box>}
+      {messages.length > 0 && (
+        <Box flexDirection="column" gap={1}>
+          {messages.map((message, index) => (
+            <Box key={index} flexDirection="column" gap={1}>
+              <Text color={getRoleColor(message.role)}>
+                {message.role === "user" ? "You" : "Tabby"}
+              </Text>
+              {message.parts.map((part, index) => {
+                if (part.type === "text") {
+                  return <MessageText key={index} text={part.text} />;
+                } else if (part.type === "tool-invocation") {
+                  return (
+                    <MessageToolInvocation
+                      key={index}
+                      toolInvocation={part.toolInvocation}
+                    />
+                  );
+                }
+              })}
+            </Box>
+          ))}
+        </Box>
+      )}
 
       <Box marginTop={1} borderStyle="round" borderColor="white" padding={1}>
         <Box>
@@ -36,7 +45,7 @@ const App = () => {
             value={input}
             onChange={setInput}
             onSubmit={() => handleSubmit()}
-            placeholder='Type your message here...'
+            placeholder="Type your message here..."
           />
         </Box>
       </Box>
@@ -45,19 +54,30 @@ const App = () => {
 };
 
 function MessageText({ text }: { text: string }) {
-  return <Markdown>{text}</Markdown>
+  return <Markdown>{text}</Markdown>;
 }
 
-function MessageToolInvocation({ toolInvocation }: { toolInvocation: ToolInvocation }) {
+function MessageToolInvocation({
+  toolInvocation,
+}: { toolInvocation: ToolInvocation }) {
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="grey" marginLeft={1} padding={1} gap={1}>
+    <Box
+      flexDirection="column"
+      borderStyle="round"
+      borderColor="grey"
+      marginLeft={1}
+      padding={1}
+      gap={1}
+    >
       <Box>
         <Text color="whiteBright">{toolInvocation.toolName}( </Text>
         <RecordView value={toolInvocation.args} />
         <Text color="whiteBright"> )</Text>
       </Box>
       <Box marginLeft={1}>
-        {toolInvocation.state === "result" && <RecordView value={toolInvocation.result} />}
+        {toolInvocation.state === "result" && (
+          <RecordView value={toolInvocation.result} />
+        )}
       </Box>
     </Box>
   );

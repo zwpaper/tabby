@@ -1,15 +1,22 @@
 import { z } from "zod";
-import { declareClientTool, ToolFunctionType } from './types';
+import { type ToolFunctionType, declareClientTool } from "./types";
 
 export const askFollowupQuestion = declareClientTool({
-    description: "Ask the user a question to gather additional information needed to complete the task. This tool should be used when you encounter ambiguities, need clarification, or require more details to proceed effectively.",
-    inputSchema: z.object({
-        question: z.string().describe("The question to ask the user."),
-        followUp: z.array(z.string()).describe("A list of 2-4 suggested answers that logically follow from the question."),
-    }),
-    outputSchema: z.object({
-        answer: z.string().describe("The user's answer to the question."),
-    }),
+  description:
+    "Ask the user a question to gather additional information needed to complete the task. This tool should be used when you encounter ambiguities, need clarification, or require more details to proceed effectively.",
+  inputSchema: z.object({
+    question: z.string().describe("The question to ask the user."),
+    followUp: z
+      .array(z.string())
+      .describe(
+        "A list of 2-4 suggested answers that logically follow from the question.",
+      ),
+  }),
+  outputSchema: z.object({
+    answer: z.string().describe("The user's answer to the question."),
+  }),
 });
 
-export type AskFollowupQuestionFunctionType = ToolFunctionType<typeof askFollowupQuestion>;
+export type AskFollowupQuestionFunctionType = ToolFunctionType<
+  typeof askFollowupQuestion
+>;
