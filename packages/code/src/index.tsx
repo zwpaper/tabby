@@ -2,7 +2,6 @@ import { useChat } from "@ai-sdk/react";
 import type { ToolInvocation } from "@ai-sdk/ui-utils";
 import { Box, Text, render } from "ink";
 import TextInput from "ink-text-input";
-import React from "react";
 import Markdown from "./components/markdown";
 import { onToolCall } from "./tools";
 

@@ -1,6 +1,7 @@
 import type { ToolCall } from "ai";
 import { listFiles } from "./list-files";
 import { readFile } from "./read-file";
+import { searchFiles } from "./search-files";
 
 async function onToolCallImpl(tool: { toolCall: ToolCall<string, unknown> }) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -12,6 +13,9 @@ async function onToolCallImpl(tool: { toolCall: ToolCall<string, unknown> }) {
   }
   if (tool.toolCall.toolName === "readFile") {
     return readFile(args);
+  }
+  if (tool.toolCall.toolName === "searchFiles") {
+    return searchFiles(args);
   }
   throw new Error(`${tool.toolCall.toolName} is not implemented`);
 }

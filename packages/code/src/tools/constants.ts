@@ -1,0 +1,18 @@
+export const dirsToIgnore = [
+  "node_modules",
+  "__pycache__",
+  "env",
+  "venv",
+  "target/dependency",
+  "build/dependencies",
+  "dist",
+  "out",
+  "bundle",
+  "vendor",
+  "tmp",
+  "temp",
+  "deps",
+  "pkg",
+  "Pods",
+  ".*",
+];
