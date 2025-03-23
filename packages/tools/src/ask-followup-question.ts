@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool } from './types';
+import { defineClientTool, ToolFunctionType } from './types';
 
 export const askFollowupQuestion = defineClientTool({
     description: "Ask the user a question to gather additional information needed to complete the task. This tool should be used when you encounter ambiguities, need clarification, or require more details to proceed effectively.",
@@ -11,3 +11,5 @@ export const askFollowupQuestion = defineClientTool({
         answer: z.string().describe("The user's answer to the question."),
     }),
 });
+
+export type AskFollowupQuestionFunctionType = ToolFunctionType<typeof askFollowupQuestion>;

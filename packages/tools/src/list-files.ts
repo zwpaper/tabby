@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool } from './types';
+import { defineClientTool, ToolFunctionType } from './types';
 
 export const listFiles = defineClientTool({
     description: "Request to list files and directories within the specified directory. If recursive is true, it will list all files and directories recursively. If recursive is false or not provided, it will only list the top-level contents. Do not use this tool to confirm the existence of files you may have created, as the user will let you know if the files were created successfully or not.",
@@ -11,3 +11,5 @@ export const listFiles = defineClientTool({
         files: z.array(z.string()).describe("List of file and directory names"),
     }),
 });
+
+export type ListFilesFunctionType = ToolFunctionType<typeof listFiles>;

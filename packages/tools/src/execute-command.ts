@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool } from './types';
+import { defineClientTool, ToolFunctionType } from './types';
 
 export const executeCommand = defineClientTool({
     description: "Request to execute a CLI command on the system. Use this when you need to perform system operations or run specific commands to accomplish any step in the user's task.",
@@ -12,3 +12,5 @@ export const executeCommand = defineClientTool({
         success: z.boolean().describe("Indicates whether the command was executed successfully."),
     }),
 });
+
+export type ExecuteCommandFunctionType = ToolFunctionType<typeof executeCommand>;

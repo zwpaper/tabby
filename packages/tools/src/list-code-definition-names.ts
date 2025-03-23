@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool } from './types';
+import { defineClientTool, ToolFunctionType } from './types';
 
 export const listCodeDefinitionNames = defineClientTool({
     description: "Request to list definition names (classes, functions, methods, etc.) used in source code files at the top level of the specified directory. This tool provides insights into the codebase structure and important constructs, encapsulating high-level concepts and relationships that are crucial for understanding the overall architecture.",
@@ -10,3 +10,5 @@ export const listCodeDefinitionNames = defineClientTool({
         definitions: z.array(z.string()).describe("List of top-level source code definitions."),
     }),
 });
+
+export type ListCodeDefinitionNamesFunctionType = ToolFunctionType<typeof listCodeDefinitionNames>;

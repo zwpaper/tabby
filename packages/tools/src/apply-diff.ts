@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool } from './types';
+import { defineClientTool, ToolFunctionType } from './types';
 
 export const applyDiff = defineClientTool({
     description: "Request to replace existing code using a search and replace block. This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with.",
@@ -12,3 +12,5 @@ export const applyDiff = defineClientTool({
         message: z.string().optional().describe("Optional message providing additional details about the operation."),
     }),
 });
+
+export type ApplyDiffFunctionType = ToolFunctionType<typeof applyDiff>;

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool } from './types';
+import { defineClientTool, ToolFunctionType } from './types';
 
 export const searchFiles = defineClientTool({
     description: "Request to perform a regex search across files in a specified directory, providing context-rich results. This tool searches for patterns or specific content across multiple files, displaying each match with encapsulating context.",
@@ -16,3 +16,5 @@ export const searchFiles = defineClientTool({
         })).describe("List of matches found in the search."),
     }),
 });
+
+export type SearchFilesFunctionType = ToolFunctionType<typeof searchFiles>;

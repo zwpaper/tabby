@@ -1,7 +1,7 @@
 import fs from "fs/promises";
-import { ToolFunctionType, readFile as readFileTool } from "@ragdoll/server/tools";
+import { ToolFunctionType, type readFile as readFileTool } from "@ragdoll/tools";
 
-import { fileTypeFromFile  } from "file-type";
+import { fileTypeFromFile } from "file-type";
 
 export const readFile: ToolFunctionType<typeof readFileTool> = async ({
     path,
