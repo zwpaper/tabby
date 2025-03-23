@@ -12,4 +12,8 @@ export function defineClientTool<PARAMETERS extends z.ZodTypeAny, RESULT extends
 type ToolInputType<T extends Tool<any, any>> = z.infer<T["parameters"]>;
 type ToolOutputType<T extends Tool<any, any>> = z.infer<Awaited<ReturnType<NonNullable<T["execute"]>>>>;
 
-export type ToolFunctionType<T extends Tool<any, any>> = (args: ToolInputType<T>)=> Promise<ToolOutputType<T>>;
+type ToolOutputErrorType = {
+    error: string;
+};
+
+export type ToolFunctionType<T extends Tool<any, any>> = (args: ToolInputType<T>)=> Promise<ToolOutputType<T> | ToolOutputErrorType>;

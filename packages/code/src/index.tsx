@@ -1,37 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Box, render, Text, useInput, useStdin } from 'ink';
+import React from 'react';
+import { Box, render, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { useChat } from "@ai-sdk/react";
 import type { ToolInvocation } from '@ai-sdk/ui-utils';
-import { listFiles } from './tools/list-files';
-import { readFile } from './tools/read-file';
 import Markdown from './components/markdown';
-
-function safeCall<T>(x: Promise<T>) {
-  return x.catch((e) => {
-    return {
-      error: e.message
-    }
-  });
-}
+import { onToolCall } from './tools';
 
 const App = () => {
   const { messages, handleSubmit, input, setInput } = useChat({
     api: "http://localhost:4111/api/chat/stream",
     maxSteps: 2,
-
-    onToolCall: async (tool) => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      if (tool.toolCall.toolName === "listFiles") {
-        return safeCall(listFiles(tool.toolCall.args as any));
-      } else if (tool.toolCall.toolName === "readFile") {
-        return safeCall(readFile(tool.toolCall.args as any));
-      } else {
-        return {
-          error: `${tool.toolCall.toolName} is not implemented`
-        }
-      }
-    },
+    onToolCall,
   });
 
   return (
@@ -39,7 +18,7 @@ const App = () => {
       {messages.length > 0 && <Box flexDirection="column" gap={1}>
         {messages.map((message, index) => (
           <Box key={index} flexDirection='column' gap={1}>
-            <Text color={getRoleColor(message.role)}>{message.role === "user"? "You" : "Tabby"}</Text>
+            <Text color={getRoleColor(message.role)}>{message.role === "user" ? "You" : "Tabby"}</Text>
             {message.parts.map((part, index) => {
               if (part.type === "text") {
                 return <MessageText key={index} text={part.text} />;

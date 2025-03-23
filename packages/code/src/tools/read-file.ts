@@ -2,8 +2,9 @@ import fs from "fs/promises";
 import { ReadFileFunctionType } from "@ragdoll/tools";
 
 import { fileTypeFromFile } from "file-type";
+import { safeCall } from "./types";
 
-export const readFile: ReadFileFunctionType = async ({
+const readFileImpl: ReadFileFunctionType = async ({
     path,
     startLine,
     endLine
@@ -32,3 +33,5 @@ export const readFile: ReadFileFunctionType = async ({
 
     return { content: selectedLines, isTruncated };
 }
+
+export const readFile: ReadFileFunctionType = (args) => safeCall(readFileImpl(args));
