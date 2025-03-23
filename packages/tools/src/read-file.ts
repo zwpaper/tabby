@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineClientTool, ToolFunctionType } from './types';
+import { declareClientTool, ToolFunctionType } from './types';
 
-export const readFile = defineClientTool({
+export const readFile = declareClientTool({
     description: "Request to read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files.",
     inputSchema: z.object({
         path: z.string().describe("The path of the file to read (relative to the current working directory)"),

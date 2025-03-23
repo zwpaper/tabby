@@ -1,9 +1,8 @@
 import { readdir } from 'fs/promises';
 import { join } from 'path';
 import { ListFilesFunctionType } from '@ragdoll/tools';
-import { safeCall } from './types';
 
-const listFilesImpl: ListFilesFunctionType = async ({ path, recursive }) => {
+export const listFiles: ListFilesFunctionType = async ({ path, recursive }) => {
   let isTruncated = false;
   const files: string[] = [];
 
@@ -59,5 +58,3 @@ const listFilesImpl: ListFilesFunctionType = async ({ path, recursive }) => {
     isTruncated,
   }
 }
-
-export const listFiles: ListFilesFunctionType = (args) => safeCall(listFilesImpl(args));

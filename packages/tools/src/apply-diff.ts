@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineClientTool, ToolFunctionType } from './types';
+import { declareClientTool, ToolFunctionType } from './types';
 
-export const applyDiff = defineClientTool({
+export const applyDiff = declareClientTool({
     description: "Request to replace existing code using a search and replace block. This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with.",
     inputSchema: z.object({
         path: z.string().describe("The path of the file to modify (relative to the current working directory)."),
