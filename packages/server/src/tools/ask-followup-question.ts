@@ -1,0 +1,10 @@
+import { tool } from 'ai';
+import { z } from "zod";
+
+export const askFollowupQuestion = tool({
+    description: "Ask the user a question to gather additional information needed to complete the task. This tool should be used when you encounter ambiguities, need clarification, or require more details to proceed effectively.",
+    parameters: z.object({
+        question: z.string().describe("The question to ask the user."),
+        followUp: z.array(z.string()).describe("A list of 2-4 suggested answers that logically follow from the question."),
+    }),
+});

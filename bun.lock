@@ -22,6 +22,16 @@
       },
     },
     "packages/server": {
+      "name": "server",
+      "dependencies": {
+        "@ai-sdk/openai": "^1.3.0",
+        "hono": "^4.7.5",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+    },
+    "packages/server-legacy": {
       "name": "@ragdoll/server",
       "dependencies": {
         "@ai-sdk/openai": "^1.3.0",
@@ -434,7 +444,7 @@
 
     "@ragdoll/code": ["@ragdoll/code@workspace:packages/code"],
 
-    "@ragdoll/server": ["@ragdoll/server@workspace:packages/server"],
+    "@ragdoll/server": ["@ragdoll/server@workspace:packages/server-legacy"],
 
     "@rollup/plugin-alias": ["@rollup/plugin-alias@5.1.1", "", { "peerDependencies": { "rollup": "^1.20.0||^2.0.0||^3.0.0||^4.0.0" }, "optionalPeers": ["rollup"] }, "sha512-PR9zDb+rOzkRb2VD+EuKB7UC41vU5DIwZ5qqCpk0KJudcWAyi8rvYOhS7+L5aZCspw1stTViLgN5v6FF1p5cgQ=="],
 
@@ -1163,6 +1173,8 @@
     "secure-json-parse": ["secure-json-parse@2.7.0", "", {}, "sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw=="],
 
     "semver": ["semver@7.7.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA=="],
+
+    "server": ["server@workspace:packages/server"],
 
     "shebang-command": ["shebang-command@2.0.0", "", { "dependencies": { "shebang-regex": "^3.0.0" } }, "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA=="],
 

@@ -17,7 +17,7 @@ function safeCall<T>(x: Promise<T>) {
 
 const App = () => {
   const { messages, handleSubmit, input, setInput } = useChat({
-    api: "http://localhost:4111/api/agents/tabby/stream",
+    api: "http://localhost:4111/api/chat/stream",
     maxSteps: 2,
 
     onToolCall: async (tool) => {
