@@ -9,6 +9,7 @@ export const listFiles = defineClientTool({
     }),
     outputSchema: z.object({
         files: z.array(z.string()).describe("List of file and directory names"),
+        isTruncated: z.boolean().describe("Whether the list of files is truncated"),
     }),
 });
 

@@ -1,7 +1,8 @@
 import { readdir } from 'fs/promises';
 import { join } from 'path';
+import { ListFilesFunctionType } from '@ragdoll/tools';
 
-export async function listFiles({ path, recursive }: { path: string; recursive?: boolean }) {
+export const listFiles: ListFilesFunctionType = async ({ path, recursive }) => {
   let isTruncated = false;
   const files: string[] = [];
 
