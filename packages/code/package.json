@@ -10,6 +10,7 @@
     "react": "^18"
   },
   "devDependencies": {
-    "@ai-sdk/ui-utils": "^1.2.0"
+    "@ai-sdk/ui-utils": "^1.2.0",
+    "@ragdoll/server": "workspace:*"
   }
 }

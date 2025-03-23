@@ -1,17 +1,15 @@
 import fs from "fs/promises";
+import { ToolFunctionType, readFile as readFileTool } from "@ragdoll/server/tools";
 
 import { fileTypeFromFile  } from "file-type";
 
-export async function readFile({
+export const readFile: ToolFunctionType<typeof readFileTool> = async ({
     path,
     startLine,
     endLine
-}: {
-    path: string;
-    startLine?: number;
-    endLine?: number;
-}): Promise<{ content: string; isTruncated: boolean }> {
+}) => {
     const type = await fileTypeFromFile(path);
+
     if (type && !type.mime.startsWith("text/")) {
         throw new Error(`The file is binary or not plain text (detected type: ${type.mime}).`);
     }

@@ -3,7 +3,7 @@ import { stream } from 'hono/streaming';
 import { Message, streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { generateSystemPrompt } from './prompts';
-import * as tools from "./tools"
+import * as tools from "@ragdoll/tools"
 
 const api = new Hono().basePath('/api');
 

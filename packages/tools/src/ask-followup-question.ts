@@ -1,10 +1,13 @@
-import { tool } from 'ai';
 import { z } from "zod";
+import { defineClientTool } from './types';
 
-export const askFollowupQuestion = tool({
+export const askFollowupQuestion = defineClientTool({
     description: "Ask the user a question to gather additional information needed to complete the task. This tool should be used when you encounter ambiguities, need clarification, or require more details to proceed effectively.",
-    parameters: z.object({
+    inputSchema: z.object({
         question: z.string().describe("The question to ask the user."),
         followUp: z.array(z.string()).describe("A list of 2-4 suggested answers that logically follow from the question."),
+    }),
+    outputSchema: z.object({
+        answer: z.string().describe("The user's answer to the question."),
     }),
 });
