@@ -17,15 +17,16 @@ const App = () => {
     <Box flexDirection="column" padding={1}>
       {messages.length > 0 && (
         <Box flexDirection="column" gap={1}>
-          {messages.map((message, index) => (
-            <Box key={index} flexDirection="column" gap={1}>
+          {messages.map((message) => (
+            <Box key={message.id} flexDirection="column" gap={1}>
               <Text color={getRoleColor(message.role)}>
                 {message.role === "user" ? "You" : "Tabby"}
               </Text>
               {message.parts.map((part, index) => {
                 if (part.type === "text") {
                   return <MessageText key={index} text={part.text} />;
-                } else if (part.type === "tool-invocation") {
+                }
+                if (part.type === "tool-invocation") {
                   return (
                     <MessageToolInvocation
                       key={index}
@@ -83,30 +84,31 @@ function MessageToolInvocation({
   );
 }
 
-function RecordView({ value }: { value: Record<string, any> }) {
+function RecordView({
+  value,
+}: { value: Record<string, unknown> | Array<unknown> }) {
   if (!Array.isArray(value)) {
     return (
       <Box gap={1}>
-        {Object.entries(value).map(([key, value], index) => (
-          <Box key={index} gap={1}>
+        {Object.entries(value).map(([key, value]) => (
+          <Box key={key} gap={1}>
             <Text color="grey">{key}:</Text>
             <Text color="whiteBright">{JSON.stringify(value)}</Text>
           </Box>
         ))}
       </Box>
     );
-  } else {
-    return (
-      <Box flexDirection="column" gap={1}>
-        {value.map((item, index) => (
-          <Box key={index} gap={1}>
-            <Text color="grey">{index}:</Text>
-            <Text color="whiteBright">{JSON.stringify(item)}</Text>
-          </Box>
-        ))}
-      </Box>
-    );
   }
+  return (
+    <Box flexDirection="column" gap={1}>
+      {value.map((item, index) => (
+        <Box key={index} gap={1}>
+          <Text color="grey">{index}:</Text>
+          <Text color="whiteBright">{JSON.stringify(item)}</Text>
+        </Box>
+      ))}
+    </Box>
+  );
 }
 
 function getRoleColor(role: string) {

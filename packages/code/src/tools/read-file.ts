@@ -1,5 +1,5 @@
+import fs from "node:fs/promises";
 import type { ReadFileFunctionType } from "@ragdoll/tools";
-import fs from "fs/promises";
 
 import { fileTypeFromFile } from "file-type";
 

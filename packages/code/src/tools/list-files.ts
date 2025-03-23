@@ -1,6 +1,6 @@
-import { join } from "path";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
 import type { ListFilesFunctionType } from "@ragdoll/tools";
-import { readdir } from "fs/promises";
 
 export const listFiles: ListFilesFunctionType = async ({ path, recursive }) => {
   let isTruncated = false;
@@ -28,6 +28,7 @@ export const listFiles: ListFilesFunctionType = async ({ path, recursive }) => {
     ];
 
     while (queue.length > 0) {
+      // biome-ignore lint/style/noNonNullAssertion: queue.length is checked above.
       const currentDir = queue.shift()!;
       const entries = await readdir(currentDir, { withFileTypes: true });
 

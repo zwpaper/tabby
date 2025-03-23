@@ -19,11 +19,15 @@ export function declareClientTool<
   });
 }
 
+// biome-ignore lint/suspicious/noExplicitAny: template matching.
 type ToolInputType<T extends Tool<any, any>> = z.infer<T["parameters"]>;
+
+// biome-ignore lint/suspicious/noExplicitAny: template matching.
 type ToolOutputType<T extends Tool<any, any>> = z.infer<
   Awaited<ReturnType<NonNullable<T["execute"]>>>
 >;
 
+// biome-ignore lint/suspicious/noExplicitAny: template matching.
 export type ToolFunctionType<T extends Tool<any, any>> = (
   args: ToolInputType<T>,
 ) => Promise<ToolOutputType<T>>;
