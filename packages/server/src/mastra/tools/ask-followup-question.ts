@@ -2,7 +2,7 @@ import { createTool } from "@mastra/core";
 import { z } from "zod";
 
 export const askFollowupQuestion = createTool({
-    id: "askFollowupQuestion",
+    id: "ask_followup_question",
     description: "Ask the user a question to gather additional information needed to complete the task. This tool should be used when you encounter ambiguities, need clarification, or require more details to proceed effectively.",
     inputSchema: z.object({
         question: z.string().describe("The question to ask the user."),

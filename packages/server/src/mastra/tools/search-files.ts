@@ -2,7 +2,7 @@ import { createTool } from "@mastra/core"
 import { z } from "zod"
 
 export const searchFiles = createTool({
-    id: "searchFiles",
+    id: "search_files",
     description: "Request to perform a regex search across files in a specified directory, providing context-rich results. This tool searches for patterns or specific content across multiple files, displaying each match with encapsulating context.",
     inputSchema: z.object({
         path: z.string().describe("The path of the directory to search in (relative to the current working directory). This directory will be recursively searched."),
