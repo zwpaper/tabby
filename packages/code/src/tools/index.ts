@@ -3,6 +3,12 @@ import { useState } from "react";
 import { listFiles } from "./list-files";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
+import { applyDiff } from "./apply-diff";
+import { executeCommand } from "./execute-command";
+import { askFollowupQuestion } from "./ask-followup-question";
+import { attemptCompletion } from "./attempt-completion";
+import { listCodeDefinitionNames } from "./list-code-definition-names";
+import { writeToFile } from "./write-to-file";
 
 async function invokeToolImpl(tool: { toolCall: ToolCall<string, unknown> }) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -17,6 +23,24 @@ async function invokeToolImpl(tool: { toolCall: ToolCall<string, unknown> }) {
   }
   if (tool.toolCall.toolName === "searchFiles") {
     return searchFiles(args);
+  }
+  if (tool.toolCall.toolName === "applyDiff") {
+    return applyDiff(args);
+  }
+  if (tool.toolCall.toolName === "executeCommand") {
+    return executeCommand(args);
+  }
+  if (tool.toolCall.toolName === "askFollowupQuestion") {
+    return askFollowupQuestion(args);
+  }
+  if (tool.toolCall.toolName === "attemptCompletion") {
+    return attemptCompletion(args);
+  }
+  if (tool.toolCall.toolName === "listCodeDefinitionNames") {
+    return listCodeDefinitionNames(args);
+  }
+  if (tool.toolCall.toolName === "writeToFile") {
+    return writeToFile(args);
   }
   throw new Error(`${tool.toolCall.toolName} is not implemented`);
 }
