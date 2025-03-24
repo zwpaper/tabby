@@ -2,7 +2,7 @@
   "private": true,
   "name": "@ragdoll/code",
   "scripts": {
-    "dev": "bun --hot src/index.tsx"
+    "dev": "bun --watch src/index.tsx"
   },
   "dependencies": {
     "@ai-sdk/react": "^1.2.0",

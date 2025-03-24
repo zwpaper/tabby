@@ -48,11 +48,19 @@ async function invokeTool(tool: {
   return await safeCall(invokeToolImpl(tool));
 }
 
-const ToolsExemptFromApproval = new Set(["attemptCompletion"]);
+const ToolsExemptFromApproval = new Set([
+  "attemptCompletion",
+  "askFollowupQuestion",
+]);
 
 export interface PendingTool {
   toolCallId: string;
   resolve: (approved: boolean) => void;
+}
+
+export interface PendingFollowupQuestion {
+  toolCallId: string;
+  resolve: (answer: string) => void;
 }
 
 export function useOnToolCall() {
@@ -67,7 +75,27 @@ export function useOnToolCall() {
     }
   };
 
+  const [pendingFollowupQuestion, setPendingFollowupQuestion] =
+    useState<PendingFollowupQuestion | null>(null);
+
+  const submitAnswer = (answer: string) => {
+    if (pendingFollowupQuestion) {
+      pendingFollowupQuestion.resolve(answer);
+      setPendingFollowupQuestion(null);
+    }
+  };
+
   const onToolCall = async (tool: { toolCall: ToolCall<string, unknown> }) => {
+    if (tool.toolCall.toolName === "askFollowupQuestion") {
+      const promise = new Promise<string>((resolve) => {
+        setPendingFollowupQuestion({
+          toolCallId: tool.toolCall.toolCallId,
+          resolve,
+        });
+      });
+      return await promise;
+    }
+
     let approved = true;
     if (!ToolsExemptFromApproval.has(tool.toolCall.toolName)) {
       const promise = new Promise<boolean>((resolve) => {
@@ -92,5 +120,7 @@ export function useOnToolCall() {
     onToolCall,
     pendingTool,
     confirmTool,
+    pendingFollowupQuestion,
+    submitAnswer,
   };
 }
