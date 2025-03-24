@@ -10,39 +10,30 @@ import { attemptCompletion } from "./attempt-completion";
 import { listCodeDefinitionNames } from "./list-code-definition-names";
 import { writeToFile } from "./write-to-file";
 
+const ToolMap: Record<string, (args: any) => Promise<unknown>> = {
+  listFiles,
+  readFile,
+  searchFiles,
+  applyDiff,
+  executeCommand,
+  askFollowupQuestion,
+  attemptCompletion,
+  listCodeDefinitionNames,
+  writeToFile,
+};
+
 async function invokeToolImpl(tool: { toolCall: ToolCall<string, unknown> }) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   // biome-ignore lint/suspicious/noExplicitAny: external call without type information
   const args: any = tool.toolCall.args;
-  if (tool.toolCall.toolName === "listFiles") {
-    return listFiles(args);
+
+  const toolFunction = ToolMap[tool.toolCall.toolName];
+  if (!toolFunction) {
+    throw new Error(`${tool.toolCall.toolName} is not implemented`);
   }
-  if (tool.toolCall.toolName === "readFile") {
-    return readFile(args);
-  }
-  if (tool.toolCall.toolName === "searchFiles") {
-    return searchFiles(args);
-  }
-  if (tool.toolCall.toolName === "applyDiff") {
-    return applyDiff(args);
-  }
-  if (tool.toolCall.toolName === "executeCommand") {
-    return executeCommand(args);
-  }
-  if (tool.toolCall.toolName === "askFollowupQuestion") {
-    return askFollowupQuestion(args);
-  }
-  if (tool.toolCall.toolName === "attemptCompletion") {
-    return attemptCompletion(args);
-  }
-  if (tool.toolCall.toolName === "listCodeDefinitionNames") {
-    return listCodeDefinitionNames(args);
-  }
-  if (tool.toolCall.toolName === "writeToFile") {
-    return writeToFile(args);
-  }
-  throw new Error(`${tool.toolCall.toolName} is not implemented`);
+
+  return toolFunction(args);
 }
 
 function safeCall<T>(x: Promise<T>) {
@@ -58,6 +49,10 @@ async function invokeTool(tool: {
 }) {
   return await safeCall(invokeToolImpl(tool));
 }
+
+const ToolsExemptFromApproval = new Set([
+  "attemptCompletion"
+])
 
 export interface PendingTool {
   toolCallId: string;
@@ -77,14 +72,18 @@ export function useOnToolCall() {
   };
 
   const onToolCall = async (tool: { toolCall: ToolCall<string, unknown> }) => {
-    const promise = new Promise<boolean>((resolve) => {
-      setPendingToolApproval({
-        toolCallId: tool.toolCall.toolCallId,
-        resolve,
+    let approved = true;
+    if (!ToolsExemptFromApproval.has(tool.toolCall.toolName)) {
+      const promise = new Promise<boolean>((resolve) => {
+        setPendingToolApproval({
+          toolCallId: tool.toolCall.toolCallId,
+          resolve,
+        });
       });
-    });
+      approved = await promise;
+    }
 
-    if (await promise) {
+    if (approved) {
       return await invokeTool(tool);
     }
 
