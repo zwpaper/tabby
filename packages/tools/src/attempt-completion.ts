@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { type ToolFunctionType, declareClientTool } from "./types";
+import {
+  type ToolFunctionType,
+  type ToolInputType,
+  type ToolOutputType,
+  declareClientTool,
+} from "./types";
 
 export const attemptCompletion = declareClientTool({
   description: `After each tool use. Once you've received the results of tool uses and can confirm that the task is complete, use this tool to present the result of your work to the user.`,
@@ -19,6 +24,12 @@ export const attemptCompletion = declareClientTool({
   outputSchema: z.boolean(),
 });
 
+export type AttemptCompletionInputType = ToolInputType<
+  typeof attemptCompletion
+>;
+export type AttemptCompletionOutputType = ToolOutputType<
+  typeof attemptCompletion
+>;
 export type AttemptCompletionFunctionType = ToolFunctionType<
   typeof attemptCompletion
 >;

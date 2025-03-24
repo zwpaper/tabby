@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { type ToolFunctionType, declareClientTool } from "./types";
+import {
+  type ToolFunctionType,
+  type ToolInputType,
+  type ToolOutputType,
+  declareClientTool,
+} from "./types";
 
 export const writeToFile = declareClientTool({
   description:
@@ -15,4 +20,6 @@ export const writeToFile = declareClientTool({
   outputSchema: z.void(),
 });
 
+export type WriteToFileInputType = ToolInputType<typeof writeToFile>;
+export type WriteToFileOutputType = ToolOutputType<typeof writeToFile>;
 export type WriteToFileFunctionType = ToolFunctionType<typeof writeToFile>;

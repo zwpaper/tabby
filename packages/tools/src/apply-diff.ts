@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { type ToolFunctionType, declareClientTool } from "./types";
+import {
+  type ToolFunctionType,
+  type ToolInputType,
+  type ToolOutputType,
+  declareClientTool,
+} from "./types";
 
 export const applyDiff = declareClientTool({
   description: `Request to replace existing code using a search and replace block.
@@ -94,4 +99,6 @@ def calculate_sum(items):
   outputSchema: z.boolean(),
 });
 
+export type ApplyDiffInputType = ToolInputType<typeof applyDiff>;
+export type ApplyDiffOutputType = ToolOutputType<typeof applyDiff>;
 export type ApplyDiffFunctionType = ToolFunctionType<typeof applyDiff>;

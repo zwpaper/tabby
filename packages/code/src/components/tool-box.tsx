@@ -1,14 +1,42 @@
-import type { ToolInvocation } from "@ai-sdk/ui-utils";
+import type { ToolCall, ToolResult } from "@ai-sdk/provider-utils";
+import type { ToolInvocation as ToolInvocationAny } from "@ai-sdk/ui-utils";
 import { ConfirmInput, TextInput } from "@inkjs/ui";
+import type {
+  ApplyDiffInputType,
+  ApplyDiffOutputType,
+  AskFollowupQuestionInputType,
+  AskFollowupQuestionOutputType,
+} from "@ragdoll/tools";
+import type { ReadFileInputType, ReadFileOutputType } from "@ragdoll/tools";
+
+import type {
+  AttemptCompletionInputType,
+  AttemptCompletionOutputType,
+} from "@ragdoll/tools";
+
 import { Box, Text } from "ink";
 import Markdown from "./markdown";
+
+type ToolInvocation<INPUT, OUTPUT> =
+  | ({
+      state: "partial-call";
+      step?: number;
+    } & ToolCall<string, INPUT>)
+  | ({
+      state: "call";
+      step?: number;
+    } & ToolCall<string, INPUT>)
+  | ({
+      state: "result";
+      step?: number;
+    } & ToolResult<string, INPUT, OUTPUT>);
 
 export default function ToolBox({
   toolInvocation,
   confirmTool,
   submitAnswer,
 }: {
-  toolInvocation: ToolInvocation;
+  toolInvocation: ToolInvocationAny;
   confirmTool?: (approved: boolean) => void;
   submitAnswer?: (answer: string) => void;
 }) {
@@ -55,7 +83,7 @@ function ConfirmToolUsage({
 function ApplyDiffTool({
   toolInvocation,
 }: {
-  toolInvocation: ToolInvocation;
+  toolInvocation: ToolInvocation<ApplyDiffInputType, ApplyDiffOutputType>;
 }) {
   const { path, diff } = toolInvocation.args;
   return (
@@ -71,7 +99,12 @@ function ApplyDiffTool({
 
 function TaskCompleteTool({
   toolInvocation,
-}: { toolInvocation: ToolInvocation }) {
+}: {
+  toolInvocation: ToolInvocation<
+    AttemptCompletionInputType,
+    AttemptCompletionOutputType
+  >;
+}) {
   const { result, command } = toolInvocation.args;
   return (
     <Box flexDirection="column">
@@ -86,11 +119,14 @@ function AskFollowupQuestionTool({
   toolInvocation,
   submitAnswer,
 }: {
-  toolInvocation: ToolInvocation;
+  toolInvocation: ToolInvocation<
+    AskFollowupQuestionInputType,
+    AskFollowupQuestionOutputType
+  >;
   submitAnswer?: (answer: string) => void;
 }) {
-  const followUps = (toolInvocation.args.followUps || []).join(", ");
-  const followUpPrompt = followUps ? `\nPossible follow-ups: ${followUps}` : "";
+  const followUp = (toolInvocation.args.followUp || []).join(", ");
+  const followUpPrompt = followUp ? `\nPossible follow-ups: ${followUp}` : "";
   const content = `${toolInvocation.args.question}${followUpPrompt}`;
   return (
     <Box flexDirection="column" gap={1}>
@@ -114,7 +150,7 @@ function AskFollowupQuestionTool({
 function ReadFileTool({
   toolInvocation,
 }: {
-  toolInvocation: ToolInvocation;
+  toolInvocation: ToolInvocation<ReadFileInputType, ReadFileOutputType>;
 }) {
   const { path } = toolInvocation.args;
   return (
@@ -126,7 +162,7 @@ function ReadFileTool({
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: args are dynamic
-function ToolCall({ name, args }: { name: string; args: any }) {
+function ToolArgs({ name, args }: { name: string; args: any }) {
   return (
     <Box>
       <Text color="whiteBright">{name}( </Text>
@@ -136,10 +172,12 @@ function ToolCall({ name, args }: { name: string; args: any }) {
   );
 }
 
-function DefaultTool({ toolInvocation }: { toolInvocation: ToolInvocation }) {
+function DefaultTool({
+  toolInvocation,
+}: { toolInvocation: ToolInvocationAny }) {
   return (
     <>
-      <ToolCall name={toolInvocation.toolName} args={toolInvocation.args} />
+      <ToolArgs name={toolInvocation.toolName} args={toolInvocation.args} />
       {toolInvocation.state === "result" && toolInvocation.result && (
         <Box marginLeft={1}>
           <Record value={toolInvocation.result} flexDirection="column" />

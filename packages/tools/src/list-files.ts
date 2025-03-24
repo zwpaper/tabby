@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { type ToolFunctionType, declareClientTool } from "./types";
+import {
+  type ToolFunctionType,
+  type ToolInputType,
+  type ToolOutputType,
+  declareClientTool,
+} from "./types";
 
 export const listFiles = declareClientTool({
   description:
@@ -21,4 +26,6 @@ export const listFiles = declareClientTool({
   }),
 });
 
+export type ListFilesInputType = ToolInputType<typeof listFiles>;
+export type ListFilesOutputType = ToolOutputType<typeof listFiles>;
 export type ListFilesFunctionType = ToolFunctionType<typeof listFiles>;
