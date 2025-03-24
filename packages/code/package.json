@@ -1,6 +1,9 @@
 {
-  "name": "@ragdoll/code",
   "private": true,
+  "name": "@ragdoll/code",
+  "scripts": {
+    "dev": "bun --watch src/index.tsx"
+  },
   "dependencies": {
     "@ai-sdk/react": "^1.2.0",
     "@mastra/client-js": "^0.1.11",
