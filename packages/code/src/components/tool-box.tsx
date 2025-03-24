@@ -18,6 +18,7 @@ export default function ToolBox({
     askFollowupQuestion: (props) => (
       <AskFollowupQuestionTool {...props} submitAnswer={submitAnswer} />
     ),
+    readFile: ReadFileTool,
   };
 
   const C = components[toolInvocation.toolName] || DefaultTool;
@@ -61,7 +62,7 @@ function ApplyDiffTool({
     <Box flexDirection="column" gap={1}>
       <Box>
         <Text>Applying patch to </Text>
-        <Text color="greenBright">{path}</Text>
+        <Text color="yellowBright">{path}</Text>
       </Box>
       <Text color="grey">{diff}</Text>
     </Box>
@@ -110,6 +111,20 @@ function AskFollowupQuestionTool({
   );
 }
 
+function ReadFileTool({
+  toolInvocation,
+}: {
+  toolInvocation: ToolInvocation;
+}) {
+  const { path } = toolInvocation.args;
+  return (
+    <Box>
+      <Text>Reading file </Text>
+      <Text color="yellowBright">{path}</Text>
+    </Box>
+  );
+}
+
 // biome-ignore lint/suspicious/noExplicitAny: args are dynamic
 function ToolCall({ name, args }: { name: string; args: any }) {
   return (
@@ -133,7 +148,6 @@ function DefaultTool({ toolInvocation }: { toolInvocation: ToolInvocation }) {
     </>
   );
 }
-
 
 function Record({
   value,

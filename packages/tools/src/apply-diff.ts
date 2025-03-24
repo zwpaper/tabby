@@ -85,7 +85,11 @@ def calculate_sum(items):
       .describe(
         "The path of the file to modify (relative to the current working directory).",
       ),
-    diff: z.string().describe("The search/replace block defining the changes. It shall not wrapped with ```"),
+    diff: z
+      .string()
+      .describe(
+        "The search/replace block defining the changes. It shall not wrapped with ```",
+      ),
   }),
   outputSchema: z.boolean(),
 });
