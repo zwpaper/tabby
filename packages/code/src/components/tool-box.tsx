@@ -19,17 +19,17 @@ import Markdown from "./markdown";
 
 type ToolInvocation<INPUT, OUTPUT> =
   | ({
-      state: "partial-call";
-      step?: number;
-    } & ToolCall<string, INPUT>)
+    state: "partial-call";
+    step?: number;
+  } & ToolCall<string, INPUT>)
   | ({
-      state: "call";
-      step?: number;
-    } & ToolCall<string, INPUT>)
+    state: "call";
+    step?: number;
+  } & ToolCall<string, INPUT>)
   | ({
-      state: "result";
-      step?: number;
-    } & ToolResult<string, INPUT, OUTPUT>);
+    state: "result";
+    step?: number;
+  } & ToolResult<string, INPUT, OUTPUT>);
 
 export default function ToolBox({
   toolInvocation,
@@ -139,7 +139,11 @@ function AskFollowupQuestionTool({
       <Box>
         <Text color="grey">A: </Text>
         {toolInvocation.state === "result" && (
-          <Text color="grey">{toolInvocation.result}</Text>
+          <Text color="grey">
+            {"answer" in toolInvocation.result
+              ? toolInvocation.result.answer
+              : toolInvocation.result.error}
+          </Text>
         )}
         {toolInvocation.state === "call" && (
           <TextInput
@@ -158,10 +162,24 @@ function ReadFileTool({
   toolInvocation: ToolInvocation<ReadFileInputType, ReadFileOutputType>;
 }) {
   const { path } = toolInvocation.args;
+  let resultEl;
+  if (toolInvocation.state === "result") {
+    if ("error" in toolInvocation.result) {
+      resultEl = (
+        <Text color="redBright"> ({toolInvocation.result.error})</Text>
+      );
+    } else {
+      const { isTruncated } = toolInvocation.result;
+      resultEl = (
+        <Text> ({toolInvocation.result.content.length} characters read{isTruncated? ", truncated" : ""})</Text>
+      );
+    }
+  }
   return (
     <Box>
       <Text>Reading file </Text>
       <Text color="yellowBright">{path}</Text>
+      {resultEl}
     </Box>
   );
 }

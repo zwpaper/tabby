@@ -93,7 +93,7 @@ def calculate_sum(items):
     diff: z
       .string()
       .describe(
-        "The search/replace block defining the changes. It shall not wrapped with ```",
+        "The search/replace block defining the changes.",
       ),
   }),
   outputSchema: z.boolean(),
