@@ -1,12 +1,12 @@
 import { useChat } from "@ai-sdk/react";
 import type { ToolInvocation } from "@ai-sdk/ui-utils";
 import { Box, Text, render } from "ink";
-import TextInput from "ink-text-input";
+import { TextInput } from "@inkjs/ui";
 import Markdown from "./components/markdown";
 import { onToolCall } from "./tools";
 
 const App = () => {
-  const { messages, handleSubmit, input, setInput } = useChat({
+  const { messages, handleSubmit, setInput } = useChat({
     api: "http://localhost:4111/api/chat/stream",
     maxSteps: 2,
     onToolCall,
@@ -42,7 +42,7 @@ const App = () => {
       <Box marginTop={1} borderStyle="round" borderColor="white" padding={1}>
         <Box>
           <TextInput
-            value={input}
+            key={messages.length + 1}
             onChange={setInput}
             onSubmit={() => handleSubmit()}
             placeholder="Type your message here..."
