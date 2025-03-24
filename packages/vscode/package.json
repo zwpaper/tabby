@@ -1,0 +1,30 @@
+{
+  "private": true,
+  "name": "@ragdoll/vscode",
+  "displayName": "Ragdoll",
+  "description": "Ragdoll",
+  "version": "0.0.1",
+  "publisher": "com.tabbyml",
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ragdoll.hello",
+        "title": "Hello Ragdoll"
+      }
+    ]
+  },
+  "scripts": {
+    "watch": "bun build --watch --format=cjs --target=node --external=vscode src/extension.ts --outdir=dist --outfile=dist/extension.js",
+    "vscode": "code --extensionDevelopmentPath=$PWD",
+    "dev": "bun run vscode && bun run watch"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.98.0",
+    "@ragdoll/tools": "workspace:*"
+  }
+}
