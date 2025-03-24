@@ -11,15 +11,8 @@ export const writeToFile = declareClientTool({
         "The path of the file to write to (relative to the current working directory).",
       ),
     content: z.string().describe("The content to write to the file."),
-    lineCount: z
-      .number()
-      .describe("The number of lines in the file, including empty lines."),
   }),
-  outputSchema: z.object({
-    success: z
-      .boolean()
-      .describe("Indicates whether the file was written successfully."),
-  }),
+  outputSchema: z.void(),
 });
 
 export type WriteToFileFunctionType = ToolFunctionType<typeof writeToFile>;

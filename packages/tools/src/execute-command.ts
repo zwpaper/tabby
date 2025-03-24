@@ -17,9 +17,6 @@ export const executeCommand = declareClientTool({
   }),
   outputSchema: z.object({
     output: z.string().describe("The output of the executed command."),
-    success: z
-      .boolean()
-      .describe("Indicates whether the command was executed successfully."),
   }),
 });
 
