@@ -21,8 +21,6 @@ api.post("/chat/stream", async (c) => {
     return c.status(200);
   }
 
-  // const strippedMessages = stripPendingToolCall(messages);
-
   const result = await streamText({
     model: openai("gpt-4o-mini"),
     system: systemPrompt,
