@@ -17,10 +17,11 @@ api.post("/chat/stream", async (c) => {
   c.header("Content-Type", "text/plain; charset=utf-8");
 
   const systemPrompt = generateSystemPrompt();
-  const lastMessage = messages[messages.length - 1];
-  if (containsAttemptCompletion(lastMessage)) {
+  if (isAttemptCompletion(messages)) {
     return c.status(200);
   }
+
+  // const strippedMessages = stripPendingToolCall(messages);
 
   const result = await streamText({
     model: openai("gpt-4o-mini"),
@@ -32,7 +33,8 @@ api.post("/chat/stream", async (c) => {
   return stream(c, (stream) => stream.pipe(result.toDataStream()));
 });
 
-function containsAttemptCompletion(message: Message) {
+function isAttemptCompletion(messages: Message[]) {
+  const message = messages[messages.length - 1];
   return !!message.parts?.some(
     (part) =>
       part.type === "tool-invocation" &&

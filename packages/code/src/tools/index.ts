@@ -55,12 +55,13 @@ const ToolsExemptFromApproval = new Set([
   "askFollowupQuestion",
 ]);
 
-export interface PendingTool {
+interface PendingTool {
   toolCallId: string;
   resolve: (approved: boolean) => void;
+  reject: (reason?: string) => void;
 }
 
-export interface PendingFollowupQuestion {
+interface PendingFollowupQuestion {
   toolCallId: string;
   resolve: (answer: string) => void;
 }
@@ -70,9 +71,13 @@ export function useOnToolCall() {
     null,
   );
 
-  const confirmTool = (approved: boolean) => {
+  const confirmTool = (approved: boolean, cancel?: boolean) => {
     if (pendingTool) {
-      pendingTool.resolve(approved);
+      if (cancel) {
+        pendingTool.reject("User cancelled the tool call");
+      } else {
+        pendingTool.resolve(approved);
+      }
       setPendingToolApproval(null);
     }
   };
@@ -100,10 +105,11 @@ export function useOnToolCall() {
 
     let approved = true;
     if (!ToolsExemptFromApproval.has(tool.toolCall.toolName)) {
-      const promise = new Promise<boolean>((resolve) => {
+      const promise = new Promise<boolean>((resolve, reject) => {
         setPendingToolApproval({
           toolCallId: tool.toolCall.toolCallId,
           resolve,
+          reject
         });
       });
       approved = await promise;
@@ -120,9 +126,9 @@ export function useOnToolCall() {
 
   return {
     onToolCall,
-    pendingTool,
+    pendingToolCallId: pendingTool?.toolCallId,
     confirmTool,
-    pendingFollowupQuestion,
+    pendingFollowupQuestionToolCallId: pendingFollowupQuestion?.toolCallId,
     submitAnswer,
   };
 }

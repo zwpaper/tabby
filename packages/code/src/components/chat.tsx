@@ -1,16 +1,16 @@
 import { useOnToolCall } from "@/tools";
-import { useChat } from "@ai-sdk/react";
+import { useChat, type Message } from "@ai-sdk/react";
 import { Spinner, TextInput } from "@inkjs/ui";
-import { Box, Text } from "ink";
+import { Box, Text, useFocus } from "ink";
 import Markdown from "./markdown";
 import ToolBox from "./tool-box";
 
 function Chat() {
   const {
     onToolCall,
-    pendingTool,
+    pendingToolCallId,
     confirmTool,
-    pendingFollowupQuestion,
+    pendingFollowupQuestionToolCallId,
     submitAnswer,
   } = useOnToolCall();
 
@@ -18,6 +18,7 @@ function Chat() {
     api: "http://localhost:4111/api/chat/stream",
     maxSteps: 100,
     onToolCall,
+    experimental_prepareRequestBody: prepareRequestBody,
   });
 
   const isLoading = status === "submitted" || status === "streaming";
@@ -29,6 +30,13 @@ function Chat() {
       content: "",
       parts: [],
     });
+  }
+
+  function onSubmit() {
+    handleSubmit();
+    if (pendingToolCallId) {
+      confirmTool(false, true);
+    }
   }
 
   return (
@@ -53,10 +61,10 @@ function Chat() {
                   if (part.type === "tool-invocation") {
                     const isToolPending =
                       part.toolInvocation.toolCallId ===
-                      pendingTool?.toolCallId;
+                      pendingToolCallId;
                     const isFollowupQuestionPending =
                       part.toolInvocation.toolCallId ===
-                      pendingFollowupQuestion?.toolCallId;
+                      pendingFollowupQuestionToolCallId;
                     return (
                       <ToolBox
                         key={index}
@@ -75,16 +83,27 @@ function Chat() {
         </Box>
       )}
 
-      {!isLoading && (
-        <Box borderStyle="round" borderColor="white" padding={1}>
-          <TextInput
-            key={messages.length + 1}
-            onChange={setInput}
-            onSubmit={() => handleSubmit()}
-            placeholder="Type your message here..."
-          />
-        </Box>
+      {(!isLoading || pendingToolCallId) && (
+        <UserTextInput onChange={setInput} onSubmit={onSubmit} />
       )}
+    </Box>
+  );
+}
+
+function UserTextInput({
+  onChange,
+  onSubmit,
+}: { onChange: (input: string) => void; onSubmit: () => void }) {
+  const { isFocused } = useFocus({ autoFocus: true });
+  const borderColor = isFocused ? "white" : "gray";
+  return (
+    <Box borderStyle="round" borderColor={borderColor} padding={1}>
+      <TextInput
+        isDisabled={!isFocused}
+        onChange={onChange}
+        onSubmit={onSubmit}
+        placeholder="Type your message here..."
+      />
     </Box>
   );
 }
@@ -94,6 +113,32 @@ function getRoleColor(role: string) {
     return "blue";
   }
   return "yellow";
+}
+
+function prepareRequestBody({ id, messages }: { id: string, messages: Message[] }) {
+  return {
+    id,
+    messages: cancelPendingToolCall(messages),
+  };
+}
+
+function cancelPendingToolCall(messages: Message[]) {
+  return messages.map((message) => {
+    if (message.role === "assistant" && message.parts) {
+      message.parts?.forEach((part) => {
+        if (part.type === "tool-invocation" && part.toolInvocation.state !== "result") {
+          part.toolInvocation = {
+            ...part.toolInvocation,
+            state: "result",
+            result: {
+              error: "User cancelled the tool call.",
+            }
+          }
+        }
+      });
+    }
+    return message;
+  });
 }
 
 export default Chat;
