@@ -1,19 +1,19 @@
-import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 
 const execPromise = promisify(exec);
 
 export const executeCommand: ExecuteCommandFunctionType = async ({
-    command,
-    cwd,
+  command,
+  cwd,
 }) => {
-    if (!command) {
-        throw new Error("Command is required to execute.");
-    }
+  if (!command) {
+    throw new Error("Command is required to execute.");
+  }
 
-    const { stdout, stderr } = await execPromise(command, { cwd });
-    return {
-        output: stdout || stderr,
-    };
+  const { stdout, stderr } = await execPromise(command, { cwd });
+  return {
+    output: stdout || stderr,
+  };
 };

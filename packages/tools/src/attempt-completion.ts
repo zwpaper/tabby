@@ -16,7 +16,7 @@ export const attemptCompletion = declareClientTool({
         "A CLI command to execute to show a live demo of the result to the user.",
       ),
   }),
-  outputSchema: z.void(),
+  outputSchema: z.boolean(),
 });
 
 export type AttemptCompletionFunctionType = ToolFunctionType<

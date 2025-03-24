@@ -1,12 +1,14 @@
-import type { ApplyDiffFunctionType } from "@ragdoll/tools";
 import fs from "node:fs/promises";
+import type { ApplyDiffFunctionType } from "@ragdoll/tools";
 
 export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
   const fileContent = await fs.readFile(path, "utf-8");
   const [search, replace] = diff.split("=======");
 
   if (!search || !replace) {
-    throw new Error("Invalid diff format. Ensure it contains '=======' separator.");
+    throw new Error(
+      "Invalid diff format. Ensure it contains '=======' separator.",
+    );
   }
 
   const updatedContent = fileContent.replace(search, replace);

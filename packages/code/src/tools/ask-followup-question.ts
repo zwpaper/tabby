@@ -6,7 +6,7 @@ export const askFollowupQuestion: AskFollowupQuestionFunctionType = async ({
 }) => {
   if (!question || followUp.length < 2 || followUp.length > 4) {
     throw new Error(
-      "Invalid input. Ensure the question is provided and followUp contains 2-4 suggested answers."
+      "Invalid input. Ensure the question is provided and followUp contains 2-4 suggested answers.",
     );
   }
 

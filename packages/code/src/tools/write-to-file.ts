@@ -1,12 +1,15 @@
-import type { WriteToFileFunctionType } from "@ragdoll/tools";
 import fs from "node:fs/promises";
 import { dirname } from "node:path";
+import type { WriteToFileFunctionType } from "@ragdoll/tools";
 
 /**
  * Implements the writeToFile tool, which writes content to a specified file.
  * If the file exists, it overwrites the content. If it doesn't exist, it creates the file.
  */
-export const writeToFile: WriteToFileFunctionType = async ({ path, content }) => {
+export const writeToFile: WriteToFileFunctionType = async ({
+  path,
+  content,
+}) => {
   try {
     // Ensure the directory exists
     const directory = dirname(path);

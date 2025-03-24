@@ -10,7 +10,7 @@ function Chat() {
 
   const { messages, handleSubmit, setInput, status } = useChat({
     api: "http://localhost:4111/api/chat/stream",
-    maxSteps: 2,
+    maxSteps: 5,
     onToolCall,
   });
 
@@ -53,8 +53,11 @@ function Chat() {
                       <MessageToolInvocation
                         key={index}
                         toolInvocation={part.toolInvocation}
-                        confirm={isToolPending ? confirmTool : undefined}
-                      />
+                      >
+                        {isToolPending && (
+                          <ConfirmToolUsage confirm={confirmTool} />
+                        )}
+                      </MessageToolInvocation>
                     );
                   }
                 })}
@@ -78,17 +81,60 @@ function Chat() {
   );
 }
 
+function ConfirmToolUsage({
+  confirm,
+}: { confirm: (approved: boolean) => void }) {
+  return (
+    <Box>
+      <Text color="whiteBright">Allow this tool to run? </Text>
+      <ConfirmInput
+        onConfirm={() => confirm(true)}
+        onCancel={() => confirm(false)}
+      />
+    </Box>
+  );
+}
+
+function MessageTaskComplete({
+  result,
+  command,
+}: { result: string; command?: string }) {
+  return (
+    <Box
+      flexDirection="column"
+      marginLeft={1}
+      borderStyle="round"
+      borderColor="green"
+      padding={1}
+      gap={1}
+    >
+      <Text color="greenBright">Task Complete</Text>
+      <MessageText text={result} />
+      {command && <Text>Please use `{command}` to check the result.</Text>}
+    </Box>
+  );
+}
+
 function MessageText({ text }: { text: string }) {
   return <Markdown>{text}</Markdown>;
 }
 
 function MessageToolInvocation({
   toolInvocation,
-  confirm,
+  children,
 }: {
   toolInvocation: ToolInvocation;
-  confirm?: (approved: boolean) => void;
+  children?: React.ReactNode;
 }) {
+  if (toolInvocation.toolName === "attemptCompletion") {
+    return (
+      <MessageTaskComplete
+        result={toolInvocation.args.result}
+        command={toolInvocation.args.command}
+      />
+    );
+  }
+
   return (
     <Box
       flexDirection="column"
@@ -99,16 +145,8 @@ function MessageToolInvocation({
       gap={1}
     >
       <ToolCall name={toolInvocation.toolName} args={toolInvocation.args} />
-      {toolInvocation.state === "call" && confirm && (
-        <Box>
-          <Text color="whiteBright">Allow this tool to run? </Text>
-          <ConfirmInput
-            onConfirm={() => confirm(true)}
-            onCancel={() => confirm(false)}
-          />
-        </Box>
-      )}
-      {toolInvocation.state === "result" && (
+      {children}
+      {toolInvocation.state === "result" && toolInvocation.result && (
         <Box marginLeft={1}>
           <Record value={toolInvocation.result} flexDirection="column" />
         </Box>

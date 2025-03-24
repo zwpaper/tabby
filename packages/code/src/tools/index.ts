@@ -1,15 +1,16 @@
 import type { ToolCall } from "ai";
 import { useState } from "react";
+import { applyDiff } from "./apply-diff";
+import { askFollowupQuestion } from "./ask-followup-question";
+import { attemptCompletion } from "./attempt-completion";
+import { executeCommand } from "./execute-command";
+import { listCodeDefinitionNames } from "./list-code-definition-names";
 import { listFiles } from "./list-files";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
-import { applyDiff } from "./apply-diff";
-import { executeCommand } from "./execute-command";
-import { askFollowupQuestion } from "./ask-followup-question";
-import { attemptCompletion } from "./attempt-completion";
-import { listCodeDefinitionNames } from "./list-code-definition-names";
 import { writeToFile } from "./write-to-file";
 
+// biome-ignore lint/suspicious/noExplicitAny: external call without type information
 const ToolMap: Record<string, (args: any) => Promise<unknown>> = {
   listFiles,
   readFile,
@@ -25,15 +26,12 @@ const ToolMap: Record<string, (args: any) => Promise<unknown>> = {
 async function invokeToolImpl(tool: { toolCall: ToolCall<string, unknown> }) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-  const args: any = tool.toolCall.args;
-
   const toolFunction = ToolMap[tool.toolCall.toolName];
   if (!toolFunction) {
     throw new Error(`${tool.toolCall.toolName} is not implemented`);
   }
 
-  return toolFunction(args);
+  return toolFunction(tool.toolCall.args);
 }
 
 function safeCall<T>(x: Promise<T>) {
@@ -50,9 +48,7 @@ async function invokeTool(tool: {
   return await safeCall(invokeToolImpl(tool));
 }
 
-const ToolsExemptFromApproval = new Set([
-  "attemptCompletion"
-])
+const ToolsExemptFromApproval = new Set(["attemptCompletion"]);
 
 export interface PendingTool {
   toolCallId: string;
