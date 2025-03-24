@@ -13,7 +13,7 @@ const App = () => {
     <ThemeProvider theme={customTheme}>
       <Box margin={1} flexDirection="column">
         <Box width={32}>
-          <Alert variant="info">Ragdoll Code is in beta.</Alert>
+          <Alert variant="info">Welcome to Ragdoll Code!.</Alert>
         </Box>
 
         <Chat />
