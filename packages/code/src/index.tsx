@@ -3,7 +3,6 @@ import { Box, render } from "ink";
 import Chat from "./components/chat";
 
 import { defaultTheme, extendTheme } from "@inkjs/ui";
-import { onToolCall } from "./tools";
 
 const customTheme = extendTheme(defaultTheme, {
   components: {},
@@ -17,7 +16,7 @@ const App = () => {
           <Alert variant="info">Ragdoll Code is in beta.</Alert>
         </Box>
 
-        <Chat onToolCall={onToolCall} />
+        <Chat />
       </Box>
     </ThemeProvider>
   );

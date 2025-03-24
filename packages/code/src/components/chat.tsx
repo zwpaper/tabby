@@ -1,11 +1,13 @@
-import { type UseChatOptions, useChat } from "@ai-sdk/react";
+import { useOnToolCall } from "@/tools";
+import { useChat } from "@ai-sdk/react";
 import type { ToolInvocation } from "@ai-sdk/ui-utils";
-import { Spinner } from "@inkjs/ui";
-import { TextInput } from "@inkjs/ui";
+import { ConfirmInput, Spinner, TextInput } from "@inkjs/ui";
 import { Box, Text } from "ink";
 import Markdown from "./markdown";
 
-function Chat({ onToolCall }: { onToolCall: UseChatOptions["onToolCall"] }) {
+function Chat() {
+  const { onToolCall, pendingTool, confirmTool } = useOnToolCall();
+
   const { messages, handleSubmit, setInput, status } = useChat({
     api: "http://localhost:4111/api/chat/stream",
     maxSteps: 2,
@@ -33,7 +35,7 @@ function Chat({ onToolCall }: { onToolCall: UseChatOptions["onToolCall"] }) {
               <Box key={message.id} flexDirection="column" gap={1}>
                 <Box gap={1}>
                   <Text color={getRoleColor(message.role)}>
-                    {message.role === "user" ? "You" : "Tabby"}
+                    {message.role === "user" ? "You" : "Ragdoll"}
                   </Text>
                   {isLoading && index === renderMessages.length - 1 && (
                     <Spinner />
@@ -44,10 +46,14 @@ function Chat({ onToolCall }: { onToolCall: UseChatOptions["onToolCall"] }) {
                     return <MessageText key={index} text={part.text} />;
                   }
                   if (part.type === "tool-invocation") {
+                    const isToolPending =
+                      part.toolInvocation.toolCallId ===
+                      pendingTool?.toolCallId;
                     return (
                       <MessageToolInvocation
                         key={index}
                         toolInvocation={part.toolInvocation}
+                        confirm={isToolPending ? confirmTool : undefined}
                       />
                     );
                   }
@@ -78,8 +84,10 @@ function MessageText({ text }: { text: string }) {
 
 function MessageToolInvocation({
   toolInvocation,
+  confirm,
 }: {
   toolInvocation: ToolInvocation;
+  confirm?: (approved: boolean) => void;
 }) {
   return (
     <Box
@@ -90,21 +98,37 @@ function MessageToolInvocation({
       padding={1}
       gap={1}
     >
-      <Box>
-        <Text color="whiteBright">{toolInvocation.toolName}( </Text>
-        <RecordView value={toolInvocation.args} />
-        <Text color="whiteBright"> )</Text>
-      </Box>
-      <Box marginLeft={1}>
-        {toolInvocation.state === "result" && (
-          <RecordView value={toolInvocation.result} flexDirection="column" />
-        )}
-      </Box>
+      <ToolCall name={toolInvocation.toolName} args={toolInvocation.args} />
+      {toolInvocation.state === "call" && confirm && (
+        <Box>
+          <Text color="whiteBright">Allow this tool to run? </Text>
+          <ConfirmInput
+            onConfirm={() => confirm(true)}
+            onCancel={() => confirm(false)}
+          />
+        </Box>
+      )}
+      {toolInvocation.state === "result" && (
+        <Box marginLeft={1}>
+          <Record value={toolInvocation.result} flexDirection="column" />
+        </Box>
+      )}
     </Box>
   );
 }
 
-function RecordView({
+// biome-ignore lint/suspicious/noExplicitAny: args are dynamic
+function ToolCall({ name, args }: { name: string; args: any }) {
+  return (
+    <Box>
+      <Text color="whiteBright">{name}( </Text>
+      <Record value={args} />
+      <Text color="whiteBright"> )</Text>
+    </Box>
+  );
+}
+
+function Record({
   value,
   flexDirection,
 }: {
