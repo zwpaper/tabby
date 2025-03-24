@@ -13,6 +13,7 @@ export default function ToolBox({
   submitAnswer?: (answer: string) => void;
 }) {
   const components: Record<string, typeof DefaultTool> = {
+    applyDiff: ApplyDiffTool,
     attemptCompletion: TaskCompleteTool,
     askFollowupQuestion: (props) => (
       <AskFollowupQuestionTool {...props} submitAnswer={submitAnswer} />
@@ -50,16 +51,20 @@ function ConfirmToolUsage({
   );
 }
 
-function DefaultTool({ toolInvocation }: { toolInvocation: ToolInvocation }) {
+function ApplyDiffTool({
+  toolInvocation,
+}: {
+  toolInvocation: ToolInvocation;
+}) {
+  const { path, diff } = toolInvocation.args;
   return (
-    <>
-      <ToolCall name={toolInvocation.toolName} args={toolInvocation.args} />
-      {toolInvocation.state === "result" && toolInvocation.result && (
-        <Box marginLeft={1}>
-          <Record value={toolInvocation.result} flexDirection="column" />
-        </Box>
-      )}
-    </>
+    <Box flexDirection="column" gap={1}>
+      <Box>
+        <Text>Applying patch to </Text>
+        <Text color="greenBright">{path}</Text>
+      </Box>
+      <Text color="grey">{diff}</Text>
+    </Box>
   );
 }
 
@@ -115,6 +120,20 @@ function ToolCall({ name, args }: { name: string; args: any }) {
     </Box>
   );
 }
+
+function DefaultTool({ toolInvocation }: { toolInvocation: ToolInvocation }) {
+  return (
+    <>
+      <ToolCall name={toolInvocation.toolName} args={toolInvocation.args} />
+      {toolInvocation.state === "result" && toolInvocation.result && (
+        <Box marginLeft={1}>
+          <Record value={toolInvocation.result} flexDirection="column" />
+        </Box>
+      )}
+    </>
+  );
+}
+
 
 function Record({
   value,

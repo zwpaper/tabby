@@ -49,6 +49,8 @@ async function invokeTool(tool: {
 }
 
 const ToolsExemptFromApproval = new Set([
+  "listFiles",
+  "readFile",
   "attemptCompletion",
   "askFollowupQuestion",
 ]);
