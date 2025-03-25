@@ -16,14 +16,13 @@ api.post("/chat/stream", async (c) => {
   c.header("X-Vercel-AI-Data-Stream", "v1");
   c.header("Content-Type", "text/plain; charset=utf-8");
 
-  const systemPrompt = generateSystemPrompt();
   if (isAttemptCompletion(messages)) {
     return c.status(200);
   }
 
   const result = await streamText({
     model: openai("gpt-4o-mini"),
-    system: systemPrompt,
+    system: generateSystemPrompt(),
     messages,
     tools,
   });
