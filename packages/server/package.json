@@ -1,6 +1,7 @@
 {
   "name": "@ragdoll/server",
   "scripts": {
+    "tsc": "tsc --noEmit",
     "dev": "vite --port 4111"
   },
   "dependencies": {

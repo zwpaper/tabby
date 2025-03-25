@@ -34,7 +34,8 @@
     "watch:webui": "cd ../vscode-webui && npm run start",
     "watch": "vite build --watch",
     "vscode": "code --extensionDevelopmentPath=$PWD",
-    "dev": "npm-run-all --parallel watch watch:webui vscode"
+    "dev": "npm-run-all --parallel watch watch:webui vscode",
+    "tsc": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/vscode": "^1.98.0",

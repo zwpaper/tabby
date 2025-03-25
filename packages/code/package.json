@@ -2,7 +2,7 @@
   "private": true,
   "name": "@ragdoll/code",
   "scripts": {
-    "build": "tsc --noEmit",
+    "tsc": "tsc --noEmit",
     "dev": "vite-node --watch src/index.tsx"
   },
   "dependencies": {

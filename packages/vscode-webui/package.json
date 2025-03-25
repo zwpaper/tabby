@@ -6,7 +6,8 @@
     "start": "vite --port 4112",
     "build": "vite build && tsc",
     "serve": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.6",
