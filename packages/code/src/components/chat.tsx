@@ -1,4 +1,4 @@
-import { useOnToolCall } from "@/tools";
+import { useUserInteractionTools } from "@/tools";
 import { type Message, useChat } from "@ai-sdk/react";
 import { Spinner, TextInput } from "@inkjs/ui";
 import { Box, Text, useFocus } from "ink";
@@ -6,24 +6,18 @@ import Markdown from "./markdown";
 import ToolBox from "./tool-box";
 
 function Chat() {
-  const {
-    onToolCall,
-    pendingToolCallId,
-    confirmTool,
-    pendingFollowupQuestionToolCallId,
-    submitAnswer,
-  } = useOnToolCall();
-
-  const { messages, handleSubmit, setInput, status } = useChat({
+  const { messages, handleSubmit, setInput, status, addToolResult } = useChat({
     api: "http://localhost:4111/api/chat/stream",
     maxSteps: 100,
-    onToolCall,
     experimental_prepareRequestBody: prepareRequestBody,
   });
 
+  const { pendingFollowupQuestion } = useUserInteractionTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
+
   const renderMessages = [...messages];
   if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
+    // Add a placeholder message to show the spinner
     renderMessages.push({
       id: "",
       role: "assistant",
@@ -32,10 +26,25 @@ function Chat() {
     });
   }
 
-  function onSubmit() {
-    handleSubmit();
-    if (pendingToolCallId) {
-      confirmTool(false, true);
+  const showTextInput = !isLoading || pendingFollowupQuestion;
+
+  function onChange(value: string) {
+    if (pendingFollowupQuestion) {
+      return;
+    }
+    setInput(value);
+  }
+
+  function onSubmit(value: string) {
+    if (pendingFollowupQuestion) {
+      addToolResult({
+        toolCallId: pendingFollowupQuestion,
+        result: {
+          answer: value,
+        },
+      });
+    } else {
+      handleSubmit();
     }
   }
 
@@ -59,19 +68,11 @@ function Chat() {
                     return <Markdown key={index}>{part.text}</Markdown>;
                   }
                   if (part.type === "tool-invocation") {
-                    const isToolPending =
-                      part.toolInvocation.toolCallId === pendingToolCallId;
-                    const isFollowupQuestionPending =
-                      part.toolInvocation.toolCallId ===
-                      pendingFollowupQuestionToolCallId;
                     return (
                       <ToolBox
                         key={index}
-                        toolInvocation={part.toolInvocation}
-                        confirmTool={isToolPending ? confirmTool : undefined}
-                        submitAnswer={
-                          isFollowupQuestionPending ? submitAnswer : undefined
-                        }
+                        toolCall={part.toolInvocation}
+                        addToolResult={addToolResult}
                       />
                     );
                   }
@@ -82,8 +83,8 @@ function Chat() {
         </Box>
       )}
 
-      {(!isLoading || pendingToolCallId) && (
-        <UserTextInput onChange={setInput} onSubmit={onSubmit} />
+      {showTextInput && (
+        <UserTextInput onChange={onChange} onSubmit={onSubmit} />
       )}
     </Box>
   );
@@ -92,7 +93,7 @@ function Chat() {
 function UserTextInput({
   onChange,
   onSubmit,
-}: { onChange: (input: string) => void; onSubmit: () => void }) {
+}: { onChange: (input: string) => void; onSubmit: (input: string) => void }) {
   const { isFocused } = useFocus({ autoFocus: true });
   const borderColor = isFocused ? "white" : "gray";
   return (

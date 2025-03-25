@@ -1,6 +1,6 @@
 import type { ToolCall, ToolResult } from "@ai-sdk/provider-utils";
 import type { ToolInvocation as ToolInvocationAny } from "@ai-sdk/ui-utils";
-import { ConfirmInput, TextInput } from "@inkjs/ui";
+import { ConfirmInput } from "@inkjs/ui";
 import type {
   ApplyDiffInputType,
   ApplyDiffOutputType,
@@ -9,11 +9,11 @@ import type {
 } from "@ragdoll/tools";
 import type { ReadFileInputType, ReadFileOutputType } from "@ragdoll/tools";
 
+import { useExecuteTool } from "@/tools";
 import type {
   AttemptCompletionInputType,
   AttemptCompletionOutputType,
 } from "@ragdoll/tools";
-
 import { Box, Text, useFocus } from "ink";
 import Markdown from "./markdown";
 
@@ -31,25 +31,22 @@ type ToolInvocation<INPUT, OUTPUT> =
       step?: number;
     } & ToolResult<string, INPUT, OUTPUT>);
 
-export default function ToolBox({
-  toolInvocation,
-  confirmTool,
-  submitAnswer,
-}: {
-  toolInvocation: ToolInvocationAny;
-  confirmTool?: (approved: boolean) => void;
-  submitAnswer?: (answer: string) => void;
-}) {
-  const components: Record<string, typeof DefaultTool> = {
-    applyDiff: ApplyDiffTool,
-    attemptCompletion: TaskCompleteTool,
-    askFollowupQuestion: (props) => (
-      <AskFollowupQuestionTool {...props} submitAnswer={submitAnswer} />
-    ),
-    readFile: ReadFileTool,
-  };
+// biome-ignore lint/suspicious/noExplicitAny: external function def.
+interface ToolProps<INPUT = any, OUTPUT = any> {
+  toolCall: ToolInvocation<INPUT, OUTPUT>;
+}
 
-  const C = components[toolInvocation.toolName] || DefaultTool;
+const ToolBox: React.FC<
+  ToolProps & {
+    addToolResult: (args: { toolCallId: string; result: unknown }) => void;
+  }
+> = ({ toolCall, addToolResult }) => {
+  const { approval, approveTool } = useExecuteTool({
+    toolCall,
+    addToolResult,
+  });
+
+  const C = ToolComponents[toolCall.toolName] || DefaultTool;
 
   return (
     <Box
@@ -60,11 +57,11 @@ export default function ToolBox({
       padding={1}
       gap={1}
     >
-      <C toolInvocation={toolInvocation} />
-      {confirmTool && <ConfirmToolUsage confirm={confirmTool} />}
+      <C toolCall={toolCall} />
+      {approval === "pending" && <ConfirmToolUsage confirm={approveTool} />}
     </Box>
   );
-}
+};
 
 function ConfirmToolUsage({
   confirm,
@@ -85,12 +82,10 @@ function ConfirmToolUsage({
   );
 }
 
-function ApplyDiffTool({
-  toolInvocation,
-}: {
-  toolInvocation: ToolInvocation<ApplyDiffInputType, ApplyDiffOutputType>;
-}) {
-  const { path, diff } = toolInvocation.args;
+const ApplyDiffTool: React.FC<
+  ToolProps<ApplyDiffInputType, ApplyDiffOutputType>
+> = ({ toolCall }) => {
+  const { path, diff } = toolCall.args;
   return (
     <Box flexDirection="column" gap={1}>
       <Box>
@@ -100,17 +95,12 @@ function ApplyDiffTool({
       <Text color="grey">{diff}</Text>
     </Box>
   );
-}
+};
 
-function TaskCompleteTool({
-  toolInvocation,
-}: {
-  toolInvocation: ToolInvocation<
-    AttemptCompletionInputType,
-    AttemptCompletionOutputType
-  >;
-}) {
-  const { result, command } = toolInvocation.args;
+const TaskCompleteTool: React.FC<
+  ToolProps<AttemptCompletionInputType, AttemptCompletionOutputType>
+> = ({ toolCall }) => {
+  const { result, command } = toolCall.args;
   return (
     <Box flexDirection="column">
       <Text color="greenBright">Task Complete</Text>
@@ -118,62 +108,42 @@ function TaskCompleteTool({
       {command && <Text>Please use `{command}` to check the result.</Text>}
     </Box>
   );
-}
+};
 
-function AskFollowupQuestionTool({
-  toolInvocation,
-  submitAnswer,
-}: {
-  toolInvocation: ToolInvocation<
-    AskFollowupQuestionInputType,
-    AskFollowupQuestionOutputType
-  >;
-  submitAnswer?: (answer: string) => void;
-}) {
-  const followUp = (toolInvocation.args.followUp || []).join(", ");
+const AskFollowupQuestionTool: React.FC<
+  ToolProps<AskFollowupQuestionInputType, AskFollowupQuestionOutputType>
+> = ({ toolCall }) => {
+  const followUp = (toolCall.args.followUp || []).join(", ");
   const followUpPrompt = followUp ? `\nPossible follow-ups: ${followUp}` : "";
-  const content = `${toolInvocation.args.question}${followUpPrompt}`;
+  const content = `${toolCall.args.question}${followUpPrompt}`;
+
   return (
     <Box flexDirection="column" gap={1}>
       <Text color="grey">Q: {content}</Text>
-      <Box>
-        <Text color="grey">A: </Text>
-        {toolInvocation.state === "result" && (
-          <Text color="grey">
-            {"answer" in toolInvocation.result
-              ? toolInvocation.result.answer
-              : toolInvocation.result.error}
-          </Text>
-        )}
-        {toolInvocation.state === "call" && (
-          <TextInput
-            onSubmit={submitAnswer}
-            placeholder="Type your answer here..."
-          />
-        )}
-      </Box>
+      {toolCall.state === "result" && "answer" in toolCall.result && (
+        <Text color="grey">A: {toolCall.result.answer}</Text>
+      )}
+      {toolCall.state === "result" && "error" in toolCall.result && (
+        <Text color="red">E: {toolCall.result.error}</Text>
+      )}
     </Box>
   );
-}
+};
 
-function ReadFileTool({
-  toolInvocation,
-}: {
-  toolInvocation: ToolInvocation<ReadFileInputType, ReadFileOutputType>;
-}) {
-  const { path } = toolInvocation.args;
+const ReadFileTool: React.FC<
+  ToolProps<ReadFileInputType, ReadFileOutputType>
+> = ({ toolCall }) => {
+  const { path } = toolCall.args;
   let resultEl: React.ReactNode;
-  if (toolInvocation.state === "result") {
-    if ("error" in toolInvocation.result) {
-      resultEl = (
-        <Text color="redBright"> ({toolInvocation.result.error})</Text>
-      );
+  if (toolCall.state === "result") {
+    if ("error" in toolCall.result) {
+      resultEl = <Text color="redBright"> ({toolCall.result.error})</Text>;
     } else {
-      const { isTruncated } = toolInvocation.result;
+      const { isTruncated } = toolCall.result;
       resultEl = (
         <Text>
           {" "}
-          ({toolInvocation.result.content.length} characters read
+          ({toolCall.result.content.length} characters read
           {isTruncated ? ", truncated" : ""})
         </Text>
       );
@@ -186,7 +156,7 @@ function ReadFileTool({
       {resultEl}
     </Box>
   );
-}
+};
 
 // biome-ignore lint/suspicious/noExplicitAny: args are dynamic
 function ToolArgs({ name, args }: { name: string; args: any }) {
@@ -199,15 +169,13 @@ function ToolArgs({ name, args }: { name: string; args: any }) {
   );
 }
 
-function DefaultTool({
-  toolInvocation,
-}: { toolInvocation: ToolInvocationAny }) {
+function DefaultTool({ toolCall }: { toolCall: ToolInvocationAny }) {
   return (
     <>
-      <ToolArgs name={toolInvocation.toolName} args={toolInvocation.args} />
-      {toolInvocation.state === "result" && toolInvocation.result && (
+      <ToolArgs name={toolCall.toolName} args={toolCall.args} />
+      {toolCall.state === "result" && toolCall.result && (
         <Box marginLeft={1}>
-          <Record value={toolInvocation.result} flexDirection="column" />
+          <Record value={toolCall.result} flexDirection="column" />
         </Box>
       )}
     </>
@@ -244,3 +212,12 @@ function Record({
     </Box>
   );
 }
+
+const ToolComponents: Record<string, React.FC<ToolProps>> = {
+  applyDiff: ApplyDiffTool,
+  attemptCompletion: TaskCompleteTool,
+  askFollowupQuestion: AskFollowupQuestionTool,
+  readFile: ReadFileTool,
+};
+
+export default ToolBox;

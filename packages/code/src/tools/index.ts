@@ -1,6 +1,5 @@
-import type { AskFollowupQuestionOutputType } from "@ragdoll/tools";
-import type { ToolCall } from "ai";
-import { useState } from "react";
+import type { Message, ToolCall, ToolInvocation } from "ai";
+import { useEffect, useRef, useState } from "react";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
 import { attemptCompletion } from "./attempt-completion";
@@ -43,95 +42,108 @@ function safeCall<T>(x: Promise<T>) {
   });
 }
 
-async function invokeTool(tool: {
+export async function invokeTool(tool: {
   toolCall: ToolCall<string, unknown>;
 }) {
   return await safeCall(invokeToolImpl(tool));
 }
 
+type Approval = "approved" | "rejected" | "pending";
+
+interface UseExecuteToolParams {
+  toolCall: ToolInvocation;
+  addToolResult: (args: { toolCallId: string; result: unknown }) => void;
+}
+
+export function useExecuteTool({
+  toolCall,
+  addToolResult,
+}: UseExecuteToolParams) {
+  const { toolName, toolCallId, state } = toolCall;
+  const [approval, setApproval] = useState<Approval>(
+    isToolExemptFromApproval(toolName) ? "approved" : "pending",
+  );
+
+  const approveTool = (approved: boolean) => {
+    setApproval(approved ? "approved" : "rejected");
+  };
+
+  const invokeToolTriggered = useRef(false);
+
+  useEffect(() => {
+    if (isUserInteractiveTool(toolName)) {
+      return;
+    }
+
+    if (approval === "pending") {
+      return;
+    }
+
+    if (invokeToolTriggered.current) {
+      return;
+    }
+
+    if (state === "call") {
+      invokeToolTriggered.current = true;
+      if (approval === "approved") {
+        invokeTool({ toolCall }).then((result) => {
+          addToolResult({ toolCallId, result });
+        });
+      } else if (approval === "rejected") {
+        addToolResult({
+          toolCallId,
+          result: { error: "User rejected tool usage" },
+        });
+      }
+    }
+  }, [approval, toolName, toolCallId, toolCall, state, addToolResult]);
+
+  return {
+    approval,
+    approveTool,
+  };
+}
+
+const UserInteractiveTools = new Set(["askFollowupQuestion"]);
+
+function isUserInteractiveTool(tool: string) {
+  return UserInteractiveTools.has(tool);
+}
+
 const ToolsExemptFromApproval = new Set([
+  ...UserInteractiveTools,
   "listFiles",
   "readFile",
   "attemptCompletion",
-  "askFollowupQuestion",
 ]);
 
-interface PendingTool {
-  toolCallId: string;
-  resolve: (approved: boolean) => void;
-  reject: (reason?: string) => void;
+export function isToolExemptFromApproval(tool: string) {
+  return ToolsExemptFromApproval.has(tool);
 }
 
-interface PendingFollowupQuestion {
-  toolCallId: string;
-  resolve: (answer: string) => void;
-}
-
-export function useOnToolCall() {
-  const [pendingTool, setPendingToolApproval] = useState<PendingTool | null>(
-    null,
-  );
-
-  const confirmTool = (approved: boolean, cancel?: boolean) => {
-    if (pendingTool) {
-      if (cancel) {
-        pendingTool.reject("User cancelled the tool call");
-      } else {
-        pendingTool.resolve(approved);
+export function useUserInteractionTools({ messages }: { messages: Message[] }) {
+  let pendingApproval = false;
+  let pendingFollowupQuestion = null;
+  for (const message of messages) {
+    const parts = message.parts || [];
+    for (const part of parts) {
+      if (
+        part.type === "tool-invocation" &&
+        part.toolInvocation.state === "call"
+      ) {
+        const { toolName, toolCallId } = part.toolInvocation;
+        if (!isToolExemptFromApproval(toolName)) {
+          pendingApproval = true;
+        }
+        if (toolName === "askFollowupQuestion") {
+          pendingFollowupQuestion = toolCallId;
+        }
       }
-      setPendingToolApproval(null);
     }
-  };
-
-  const [pendingFollowupQuestion, setPendingFollowupQuestion] =
-    useState<PendingFollowupQuestion | null>(null);
-
-  const submitAnswer = (answer: string) => {
-    if (pendingFollowupQuestion) {
-      pendingFollowupQuestion.resolve(answer);
-      setPendingFollowupQuestion(null);
-    }
-  };
-
-  const onToolCall = async (tool: { toolCall: ToolCall<string, unknown> }) => {
-    if (tool.toolCall.toolName === "askFollowupQuestion") {
-      const promise = new Promise<string>((resolve) => {
-        setPendingFollowupQuestion({
-          toolCallId: tool.toolCall.toolCallId,
-          resolve,
-        });
-      });
-      return {
-        answer: await promise,
-      } satisfies AskFollowupQuestionOutputType;
-    }
-
-    let approved = true;
-    if (!ToolsExemptFromApproval.has(tool.toolCall.toolName)) {
-      const promise = new Promise<boolean>((resolve, reject) => {
-        setPendingToolApproval({
-          toolCallId: tool.toolCall.toolCallId,
-          resolve,
-          reject,
-        });
-      });
-      approved = await promise;
-    }
-
-    if (approved) {
-      return await invokeTool(tool);
-    }
-
-    return {
-      error: "Tool usage is rejected.",
-    };
-  };
+  }
 
   return {
-    onToolCall,
-    pendingToolCallId: pendingTool?.toolCallId,
-    confirmTool,
-    pendingFollowupQuestionToolCallId: pendingFollowupQuestion?.toolCallId,
-    submitAnswer,
+    pendingApproval,
+    pendingFollowupQuestion,
   };
 }
