@@ -1,4 +1,3 @@
-import { getName } from "@ragdoll/tools";
 import { createFileRoute } from "@tanstack/react-router";
 import logo from "../logo.svg";
 
@@ -7,7 +6,6 @@ export const Route = createFileRoute("/")({
 });
 
 function App() {
-  const name = getName();
   return (
     <div className="text-center">
       <header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
@@ -25,7 +23,6 @@ function App() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn {name}
         </a>
         <a
           className="text-[#61dafb] hover:underline"
