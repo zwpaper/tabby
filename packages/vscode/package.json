@@ -19,9 +19,9 @@
     ]
   },
   "scripts": {
-    "watch": "bun build --watch --format=cjs --target=node --external=vscode src/extension.ts --outdir=dist --outfile=dist/extension.js",
+    "watch": "vite build --watch",
     "vscode": "code --extensionDevelopmentPath=$PWD",
-    "dev": "bun run vscode && bun run watch"
+    "dev": "npm run vscode && npm run watch"
   },
   "devDependencies": {
     "@types/vscode": "^1.98.0",

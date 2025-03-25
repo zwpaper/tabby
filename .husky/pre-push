@@ -4,8 +4,8 @@ check_git_clean() {
 
 main() {
     check_git_clean
-    bun check
-    bun test
+    pnpm run check
+    pnpm run test 
     check_git_clean
 }
 

@@ -1,5 +1,40 @@
-import { describe, expect, it } from "bun:test";
-import app from "../server";
+import { simulateReadableStream } from "ai";
+import { MockLanguageModelV1 } from "ai/test";
+import { Hono } from "hono";
+import { describe, expect, it } from "vitest";
+import { type ContextVariables, api as apiImpl } from "../server";
+
+function getApiWithMockModel() {
+  const app = new Hono<{ Variables: ContextVariables }>();
+  app
+    .use(async (c, next) => {
+      c.set(
+        "model",
+        new MockLanguageModelV1({
+          doStream: async () => ({
+            stream: simulateReadableStream({
+              chunks: [
+                { type: "text-delta", textDelta: "Hello" },
+                { type: "text-delta", textDelta: ", " },
+                { type: "text-delta", textDelta: "world!" },
+                {
+                  type: "finish",
+                  finishReason: "stop",
+                  logprobs: undefined,
+                  usage: { completionTokens: 10, promptTokens: 3 },
+                },
+              ],
+            }),
+            rawCall: { rawPrompt: null, rawSettings: {} },
+          }),
+        }),
+      );
+      await next();
+    })
+    .route("/", apiImpl);
+
+  return app;
+}
 
 describe("My first test", () => {
   it("Should return 200 Response", async () => {
@@ -17,6 +52,7 @@ describe("My first test", () => {
         ],
       }),
     });
+    const app = getApiWithMockModel();
     const res = await app.fetch(req);
     expect(res.status).toBe(200);
   });

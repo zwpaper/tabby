@@ -2,7 +2,7 @@
   "private": true,
   "name": "@ragdoll/code",
   "scripts": {
-    "dev": "bun --watch src/index.tsx"
+    "dev": "vite-node --watch src/index.tsx"
   },
   "dependencies": {
     "@ai-sdk/react": "^1.2.0",

@@ -1,17 +1,19 @@
 {
   "name": "ragdoll",
   "private": true,
-  "workspaces": ["packages/*"],
   "scripts": {
     "check": "biome check --write .",
+    "test": "vitest --run",
     "prepare": "husky"
   },
   "engines": {
-    "bun": ">=1.2.5"
+    "node": ">=20"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@types/bun": "^1.2.5",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "vite": "^6.2.3",
+    "vite-node": "^3.0.9",
+    "vitest": "^3.0.9"
   }
 }
