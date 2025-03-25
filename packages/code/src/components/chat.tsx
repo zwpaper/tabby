@@ -1,4 +1,4 @@
-import { useUserInteractionTools } from "@/tools";
+import { prepareMessages, useIsUserInputTools } from "@/tools";
 import { type Message, useChat } from "@ai-sdk/react";
 import { Spinner, TextInput } from "@inkjs/ui";
 import { Box, Text, useFocus } from "ink";
@@ -12,7 +12,7 @@ function Chat() {
     experimental_prepareRequestBody: prepareRequestBody,
   });
 
-  const { submitAnswer } = useUserInteractionTools({ messages, addToolResult });
+  const { isUserInputTools } = useIsUserInputTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
 
   const renderMessages = [...messages];
@@ -26,22 +26,7 @@ function Chat() {
     });
   }
 
-  const showTextInput = !isLoading || submitAnswer;
-
-  function onChange(value: string) {
-    if (submitAnswer) {
-      return;
-    }
-    setInput(value);
-  }
-
-  function onSubmit(value: string) {
-    if (submitAnswer) {
-      submitAnswer(value);
-    } else {
-      handleSubmit();
-    }
-  }
+  const showTextInput = !isLoading || isUserInputTools;
 
   return (
     <Box flexDirection="column">
@@ -79,7 +64,7 @@ function Chat() {
       )}
 
       {showTextInput && (
-        <UserTextInput onChange={onChange} onSubmit={onSubmit} />
+        <UserTextInput onChange={setInput} onSubmit={() => handleSubmit()} />
       )}
     </Box>
   );
@@ -116,31 +101,8 @@ function prepareRequestBody({
 }: { id: string; messages: Message[] }) {
   return {
     id,
-    messages: cancelPendingToolCall(messages),
+    messages: prepareMessages(messages),
   };
-}
-
-function cancelPendingToolCall(messages: Message[]) {
-  return messages.map((message) => {
-    if (message.role === "assistant" && message.parts) {
-      for (let i = 0; i < message.parts.length; i++) {
-        const part = message.parts[i];
-        if (
-          part.type === "tool-invocation" &&
-          part.toolInvocation.state !== "result"
-        ) {
-          part.toolInvocation = {
-            ...part.toolInvocation,
-            state: "result",
-            result: {
-              error: "User cancelled the tool call.",
-            },
-          };
-        }
-      }
-    }
-    return message;
-  });
 }
 
 export default Chat;

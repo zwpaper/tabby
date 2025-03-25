@@ -1,4 +1,4 @@
-import type { Message, ToolCall, ToolInvocation, ToolResult } from "ai";
+import type { Message, ToolCall, ToolInvocation } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
@@ -61,7 +61,7 @@ export function useExecuteTool({
 }: UseExecuteToolParams) {
   const { toolName, toolCallId, state } = toolCall;
   const [approval, setApproval] = useState<Approval>(
-    isToolExemptFromApproval(toolName) ? "approved" : "pending",
+    ToolsExemptFromApproval.has(toolName) ? "approved" : "pending",
   );
 
   const approveTool = (approved: boolean) => {
@@ -71,7 +71,7 @@ export function useExecuteTool({
   const invokeToolTriggered = useRef(false);
 
   useEffect(() => {
-    if (isUserInteractiveTool(toolName)) {
+    if (UserInputTools.has(toolName)) {
       return;
     }
 
@@ -104,28 +104,20 @@ export function useExecuteTool({
   };
 }
 
-const UserInteractiveTools = new Set(["askFollowupQuestion"]);
-
-function isUserInteractiveTool(tool: string) {
-  return UserInteractiveTools.has(tool);
-}
+const UserInputTools = new Set(["askFollowupQuestion", "attemptCompletion"]);
 
 const ToolsExemptFromApproval = new Set([
-  ...UserInteractiveTools,
+  ...UserInputTools,
   "listFiles",
   "readFile",
-  "attemptCompletion",
 ]);
 
-function isToolExemptFromApproval(tool: string) {
-  return ToolsExemptFromApproval.has(tool);
-}
-
-export function useUserInteractionTools({ messages, addToolResult }: {
-  messages: Message[],
-  addToolResult: (toolResult: { toolCallId: string, result: unknown }) => void
+export function useIsUserInputTools({
+  messages,
+}: {
+  messages: Message[];
 }) {
-  let pendingFollowupQuestionToolCallId = null;
+  let isUserInputTools = false;
   for (const message of messages) {
     const parts = message.parts || [];
     for (const part of parts) {
@@ -133,26 +125,40 @@ export function useUserInteractionTools({ messages, addToolResult }: {
         part.type === "tool-invocation" &&
         part.toolInvocation.state === "call"
       ) {
-        const { toolName, toolCallId } = part.toolInvocation;
-        if (toolName === "askFollowupQuestion") {
-          pendingFollowupQuestionToolCallId = toolCallId;
+        const { toolName } = part.toolInvocation;
+        if (UserInputTools.has(toolName)) {
+          isUserInputTools = true;
         }
       }
     }
   }
 
-  const submitAnswer = (answer: string) => {
-    if (pendingFollowupQuestionToolCallId) {
-      addToolResult({
-        toolCallId: pendingFollowupQuestionToolCallId,
-        result: {
-          answer
-        },
-      });
-    }
-  };
-
   return {
-    submitAnswer: pendingFollowupQuestionToolCallId ? submitAnswer : undefined,
+    isUserInputTools,
   };
+}
+
+export function prepareMessages(messages: Message[]) {
+  return messages.map((message) => {
+    if (message.role === "assistant" && message.parts) {
+      for (let i = 0; i < message.parts.length; i++) {
+        const part = message.parts[i];
+        if (
+          part.type === "tool-invocation" &&
+          part.toolInvocation.state !== "result"
+        ) {
+          part.toolInvocation = {
+            ...part.toolInvocation,
+            state: "result",
+            result: UserInputTools.has(part.toolInvocation.toolName)
+              ? ""
+              : {
+                  error: "User cancelled the tool call.",
+                },
+          };
+        }
+      }
+    }
+    return message;
+  });
 }

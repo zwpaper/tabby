@@ -16,10 +16,6 @@ api.post("/chat/stream", async (c) => {
   c.header("X-Vercel-AI-Data-Stream", "v1");
   c.header("Content-Type", "text/plain; charset=utf-8");
 
-  if (isAttemptCompletion(messages)) {
-    return c.status(200);
-  }
-
   const result = await streamText({
     model: openai("gpt-4o-mini"),
     system: generateSystemPrompt(),
@@ -29,16 +25,6 @@ api.post("/chat/stream", async (c) => {
 
   return stream(c, (stream) => stream.pipe(result.toDataStream()));
 });
-
-function isAttemptCompletion(messages: Message[]) {
-  const message = messages[messages.length - 1];
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolName === "attemptCompletion" &&
-      part.toolInvocation.state === "result",
-  );
-}
 
 export default {
   port: 4111,
