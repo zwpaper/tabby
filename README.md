@@ -3,6 +3,9 @@
 ## Contributing
 
 ```bash
+# init
+bun i
+
 # Run the tests
-pnpm run test
+bun run test
 ```

@@ -3,7 +3,7 @@
   "name": "@ragdoll/code",
   "scripts": {
     "tsc": "tsc --noEmit",
-    "dev": "vite-node --watch src/index.tsx"
+    "dev": "bun --watch src/index.tsx"
   },
   "dependencies": {
     "@ai-sdk/provider-utils": "^2.2.1",

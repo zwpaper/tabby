@@ -5,9 +5,9 @@ check_git_clean() {
 
 main() {
     check_git_clean
-    pnpm run check
-    pnpm run -r tsc
-    pnpm run test 
+    bun run check
+    bun --filter "*" tsc
+    bun run test 
     check_git_clean
 }
 

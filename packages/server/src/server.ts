@@ -1,4 +1,4 @@
-import { createOpenAI } from "@ai-sdk/openai";
+import { openai } from "@ai-sdk/openai";
 import * as tools from "@ragdoll/tools";
 import { type LanguageModel, type Message, streamText } from "ai";
 import { Hono } from "hono";
@@ -20,11 +20,7 @@ api.post("/chat/stream", async (c) => {
   c.header("X-Vercel-AI-Data-Stream", "v1");
   c.header("Content-Type", "text/plain; charset=utf-8");
 
-  const openai = createOpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  });
-
-  const result = await streamText({
+  const result = streamText({
     model: c.get("model") || openai("gpt-4o-mini"),
     system: generateSystemPrompt(),
     messages,
@@ -35,5 +31,6 @@ api.post("/chat/stream", async (c) => {
 });
 
 export default {
+  port: 4111,
   fetch: api.fetch,
 };
