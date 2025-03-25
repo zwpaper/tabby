@@ -15,11 +15,11 @@ class Ragdoll implements WebviewViewProvider {
   private static instance: Ragdoll;
   private view?: WebviewView;
 
-  constructor(private readonly _extensionUri: Uri) {}
+  constructor(private readonly extensionUri: Uri) {}
 
-  public static getInstance(_extensionUri: Uri): Ragdoll {
+  public static getInstance(extensionUri: Uri): Ragdoll {
     if (!Ragdoll.instance) {
-      Ragdoll.instance = new Ragdoll(_extensionUri);
+      Ragdoll.instance = new Ragdoll(extensionUri);
     }
 
     return Ragdoll.instance;
@@ -34,7 +34,7 @@ class Ragdoll implements WebviewViewProvider {
 
     this.view.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri],
+      localResourceRoots: [this.extensionUri],
     };
 
     this.view.webview.html = this.getHtmlForWebview(this.view.webview);
@@ -50,7 +50,7 @@ class Ragdoll implements WebviewViewProvider {
     const isProd = Extension.getInstance().isProductionMode;
     if (isProd) {
       // FIXME: this need to be fixed
-      scriptUri = getUri(webview, this._extensionUri, [
+      scriptUri = getUri(webview, this.extensionUri, [
         "webview-ui",
         "build",
         "assets",
