@@ -1,9 +1,6 @@
 {
   "name": "@ragdoll/tools",
   "main": "src/index.ts",
-  "scripts": {
-    "tsc": "tsc --noEmit"
-  },
   "dependencies": {
     "ai": "^4.2.0",
     "zod": "^3.24.2"
