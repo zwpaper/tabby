@@ -1,8 +1,6 @@
 import type { Message, ToolCall, ToolInvocation } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { applyDiff } from "./apply-diff";
-import { askFollowupQuestion } from "./ask-followup-question";
-import { attemptCompletion } from "./attempt-completion";
 import { executeCommand } from "./execute-command";
 import { listCodeDefinitionNames } from "./list-code-definition-names";
 import { listFiles } from "./list-files";
@@ -17,8 +15,6 @@ const ToolMap: Record<string, (args: any) => Promise<unknown>> = {
   searchFiles,
   applyDiff,
   executeCommand,
-  askFollowupQuestion,
-  attemptCompletion,
   listCodeDefinitionNames,
   writeToFile,
 };

@@ -120,12 +120,6 @@ const AskFollowupQuestionTool: React.FC<
   return (
     <Box flexDirection="column" gap={1}>
       <Text color="grey">Q: {content}</Text>
-      {toolCall.state === "result" && "answer" in toolCall.result && (
-        <Text color="grey">A: {toolCall.result.answer}</Text>
-      )}
-      {toolCall.state === "result" && "error" in toolCall.result && (
-        <Text color="red">E: {toolCall.result.error}</Text>
-      )}
     </Box>
   );
 };
