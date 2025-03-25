@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "vite",
+    "start": "vite --port 4112",
     "build": "vite build && tsc",
     "serve": "vite preview",
     "test": "vitest run"
@@ -31,8 +31,6 @@
     "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^26.0.0",
     "typescript": "^5.7.2",
-    "vite": "^6.1.0",
-    "vitest": "^3.0.5",
     "web-vitals": "^4.2.4"
   }
 }

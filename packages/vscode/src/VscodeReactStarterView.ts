@@ -59,7 +59,7 @@ class VscodeReactStarterView implements WebviewViewProvider {
 
   private getHtmlForWebview(webview: Webview) {
     const file = "src/main.tsx";
-    const localPort = "5174";
+    const localPort = "4112";
     const localServerUrl = `localhost:${localPort}`;
 
     // The CSS file from the React build output
@@ -89,7 +89,7 @@ class VscodeReactStarterView implements WebviewViewProvider {
       </script>`;
 
     const reactRefreshHash =
-      "sha256-LOV2ebCPh3PuVilxaJHVOAM2SXfkqFxE1Fs9LMgsbpk=";
+      "sha256-yL+3q2cca0YKq6RvbZxpS67pnyG8uCKFMrhN3CvGX8A="
 
     const csp = [
       `default-src 'none';`,
