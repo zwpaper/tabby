@@ -2,12 +2,15 @@
   "private": true,
   "name": "@ragdoll/code",
   "scripts": {
+    "build": "tsc --noEmit",
     "dev": "vite-node --watch src/index.tsx"
   },
   "dependencies": {
+    "@ai-sdk/provider-utils": "^2.2.1",
     "@ai-sdk/react": "^1.2.0",
     "@inkjs/ui": "^2.0.0",
     "@mastra/client-js": "^0.1.11",
+    "ai": "^4.2.0",
     "file-type": "^20.4.1",
     "ink": "^5.2.0",
     "marked": "^15.0.7",
