@@ -32,7 +32,8 @@
   },
   "scripts": {
     "watch:webui": "cd ../vscode-webui && npm run start",
-    "watch": "bun build ./src/extension.ts --outdir ./dist --external vscode --format cjs",
+    "build": "bun build ./src/extension.ts --outdir ./dist --external vscode --format cjs",
+    "watch": "bun build ./src/extension.ts --outdir ./dist --external vscode --format cjs --watch",
     "vscode": "code --extensionDevelopmentPath=$PWD",
     "dev": "npm-run-all --parallel watch watch:webui vscode",
     "tsc": "tsc --noEmit"
