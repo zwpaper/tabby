@@ -1,4 +1,5 @@
 check_git_clean() {
+    git diff --exit-code
     git diff --staged --exit-code
 }
 
