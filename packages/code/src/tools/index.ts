@@ -1,3 +1,4 @@
+import type { AskFollowupQuestionOutputType } from "@ragdoll/tools";
 import type { ToolCall } from "ai";
 import { useState } from "react";
 import { applyDiff } from "./apply-diff";
@@ -9,7 +10,6 @@ import { listFiles } from "./list-files";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { writeToFile } from "./write-to-file";
-import type { AskFollowupQuestionOutputType } from "@ragdoll/tools";
 
 // biome-ignore lint/suspicious/noExplicitAny: external call without type information
 const ToolMap: Record<string, (args: any) => Promise<unknown>> = {
@@ -102,8 +102,8 @@ export function useOnToolCall() {
         });
       });
       return {
-        answer: await promise
-      } satisfies AskFollowupQuestionOutputType
+        answer: await promise,
+      } satisfies AskFollowupQuestionOutputType;
     }
 
     let approved = true;
@@ -112,7 +112,7 @@ export function useOnToolCall() {
         setPendingToolApproval({
           toolCallId: tool.toolCall.toolCallId,
           resolve,
-          reject
+          reject,
         });
       });
       approved = await promise;

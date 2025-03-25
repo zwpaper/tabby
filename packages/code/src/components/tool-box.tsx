@@ -19,17 +19,17 @@ import Markdown from "./markdown";
 
 type ToolInvocation<INPUT, OUTPUT> =
   | ({
-    state: "partial-call";
-    step?: number;
-  } & ToolCall<string, INPUT>)
+      state: "partial-call";
+      step?: number;
+    } & ToolCall<string, INPUT>)
   | ({
-    state: "call";
-    step?: number;
-  } & ToolCall<string, INPUT>)
+      state: "call";
+      step?: number;
+    } & ToolCall<string, INPUT>)
   | ({
-    state: "result";
-    step?: number;
-  } & ToolResult<string, INPUT, OUTPUT>);
+      state: "result";
+      step?: number;
+    } & ToolResult<string, INPUT, OUTPUT>);
 
 export default function ToolBox({
   toolInvocation,
@@ -162,7 +162,7 @@ function ReadFileTool({
   toolInvocation: ToolInvocation<ReadFileInputType, ReadFileOutputType>;
 }) {
   const { path } = toolInvocation.args;
-  let resultEl;
+  let resultEl: React.ReactNode;
   if (toolInvocation.state === "result") {
     if ("error" in toolInvocation.result) {
       resultEl = (
@@ -171,7 +171,11 @@ function ReadFileTool({
     } else {
       const { isTruncated } = toolInvocation.result;
       resultEl = (
-        <Text> ({toolInvocation.result.content.length} characters read{isTruncated? ", truncated" : ""})</Text>
+        <Text>
+          {" "}
+          ({toolInvocation.result.content.length} characters read
+          {isTruncated ? ", truncated" : ""})
+        </Text>
       );
     }
   }
