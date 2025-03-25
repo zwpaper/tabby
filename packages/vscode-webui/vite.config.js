@@ -21,4 +21,11 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  server: {
+    cors: true,
+    hmr: {
+      host: "localhost",
+      protocol: "ws",
+    },
+  },
 });

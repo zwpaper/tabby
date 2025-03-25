@@ -11,12 +11,24 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "ragdoll.hello",
-        "title": "Hello Ragdoll"
-      }
-    ]
+    "views": {
+      "ragdoll": [
+        {
+          "id": "ragdollWebui",
+          "type": "webview",
+          "name": "Ragdoll Webui"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ragdoll",
+          "title": "Ragdoll",
+          "icon": "media/icons/refresh.svg"
+        }
+      ]
+    }
   },
   "scripts": {
     "watch": "vite build --watch",

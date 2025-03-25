@@ -1,15 +1,18 @@
-import { Outlet, createRootRoute } from "@tanstack/react-router";
+import { Outlet, createRootRoute, redirect } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-
-import Header from "../components/Header";
 
 export const Route = createRootRoute({
   component: () => (
     <>
-      <Header />
-
       <Outlet />
       <TanStackRouterDevtools />
     </>
   ),
+  loader: async (context) => {
+    if (context.location.pathname === "/index.html") {
+      throw redirect({
+        to: "/",
+      });
+    }
+  },
 });
