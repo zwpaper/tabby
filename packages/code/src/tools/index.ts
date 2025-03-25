@@ -1,4 +1,4 @@
-import type { Message, ToolCall, ToolInvocation } from "ai";
+import type { Message, ToolCall, ToolInvocation, ToolResult } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
@@ -117,13 +117,15 @@ const ToolsExemptFromApproval = new Set([
   "attemptCompletion",
 ]);
 
-export function isToolExemptFromApproval(tool: string) {
+function isToolExemptFromApproval(tool: string) {
   return ToolsExemptFromApproval.has(tool);
 }
 
-export function useUserInteractionTools({ messages }: { messages: Message[] }) {
-  let pendingApproval = false;
-  let pendingFollowupQuestion = null;
+export function useUserInteractionTools({ messages, addToolResult }: {
+  messages: Message[],
+  addToolResult: (toolResult: { toolCallId: string, result: unknown }) => void
+}) {
+  let pendingFollowupQuestionToolCallId = null;
   for (const message of messages) {
     const parts = message.parts || [];
     for (const part of parts) {
@@ -132,18 +134,25 @@ export function useUserInteractionTools({ messages }: { messages: Message[] }) {
         part.toolInvocation.state === "call"
       ) {
         const { toolName, toolCallId } = part.toolInvocation;
-        if (!isToolExemptFromApproval(toolName)) {
-          pendingApproval = true;
-        }
         if (toolName === "askFollowupQuestion") {
-          pendingFollowupQuestion = toolCallId;
+          pendingFollowupQuestionToolCallId = toolCallId;
         }
       }
     }
   }
 
+  const submitAnswer = (answer: string) => {
+    if (pendingFollowupQuestionToolCallId) {
+      addToolResult({
+        toolCallId: pendingFollowupQuestionToolCallId,
+        result: {
+          answer
+        },
+      });
+    }
+  };
+
   return {
-    pendingApproval,
-    pendingFollowupQuestion,
+    submitAnswer: pendingFollowupQuestionToolCallId ? submitAnswer : undefined,
   };
 }

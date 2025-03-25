@@ -12,7 +12,7 @@ function Chat() {
     experimental_prepareRequestBody: prepareRequestBody,
   });
 
-  const { pendingFollowupQuestion } = useUserInteractionTools({ messages });
+  const { submitAnswer } = useUserInteractionTools({ messages, addToolResult });
   const isLoading = status === "submitted" || status === "streaming";
 
   const renderMessages = [...messages];
@@ -26,23 +26,18 @@ function Chat() {
     });
   }
 
-  const showTextInput = !isLoading || pendingFollowupQuestion;
+  const showTextInput = !isLoading || submitAnswer;
 
   function onChange(value: string) {
-    if (pendingFollowupQuestion) {
+    if (submitAnswer) {
       return;
     }
     setInput(value);
   }
 
   function onSubmit(value: string) {
-    if (pendingFollowupQuestion) {
-      addToolResult({
-        toolCallId: pendingFollowupQuestion,
-        result: {
-          answer: value,
-        },
-      });
+    if (submitAnswer) {
+      submitAnswer(value);
     } else {
       handleSubmit();
     }
