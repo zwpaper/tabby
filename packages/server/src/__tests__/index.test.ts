@@ -9,11 +9,13 @@ describe("My first test", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        messages: [{
-          role: "user",
-          content: "Hello World",
-        }]
-      })
+        messages: [
+          {
+            role: "user",
+            content: "Hello World",
+          },
+        ],
+      }),
     });
     const res = await app.fetch(req);
     expect(res.status).toBe(200);

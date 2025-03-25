@@ -1,2 +1,12 @@
-bun check
-bun test
+check_git_clean() {
+    git diff --staged --exit-code
+}
+
+main() {
+    check_git_clean
+    bun check
+    bun test
+    check_git_clean
+}
+
+main
