@@ -11,23 +11,21 @@ import { Extension } from "./helpers/Extension";
 import { getNonce } from "./utils/getNonce";
 import { getUri } from "./utils/getUri";
 
-class VscodeReactStarterView implements WebviewViewProvider {
+class Ragdoll implements WebviewViewProvider {
   public static readonly viewType = "ragdollWebui";
-  private static instance: VscodeReactStarterView;
-  private _disposables: Disposable[] = [];
-
+  private static instance: Ragdoll;
   private view?: WebviewView;
 
   constructor(private readonly _extensionUri: Uri) {}
 
-  public static getInstance(_extensionUri: Uri): VscodeReactStarterView {
-    if (!VscodeReactStarterView.instance) {
-      VscodeReactStarterView.instance = new VscodeReactStarterView(
+  public static getInstance(_extensionUri: Uri): Ragdoll {
+    if (!Ragdoll.instance) {
+      Ragdoll.instance = new Ragdoll(
         _extensionUri,
       );
     }
 
-    return VscodeReactStarterView.instance;
+    return Ragdoll.instance;
   }
 
   public resolveWebviewView(
@@ -43,18 +41,6 @@ class VscodeReactStarterView implements WebviewViewProvider {
     };
 
     this.view.webview.html = this.getHtmlForWebview(this.view.webview);
-  }
-
-  /**
-   * Cleans up and disposes of webview resources when the webview panel is closed.
-   */
-  public dispose() {
-    while (this._disposables.length) {
-      const disposable = this._disposables.pop();
-      if (disposable) {
-        disposable.dispose();
-      }
-    }
   }
 
   private getHtmlForWebview(webview: Webview) {
@@ -89,7 +75,7 @@ class VscodeReactStarterView implements WebviewViewProvider {
       </script>`;
 
     const reactRefreshHash =
-      "sha256-yL+3q2cca0YKq6RvbZxpS67pnyG8uCKFMrhN3CvGX8A="
+      "sha256-yL+3q2cca0YKq6RvbZxpS67pnyG8uCKFMrhN3CvGX8A=";
 
     const csp = [
       `default-src 'none';`,
@@ -129,4 +115,4 @@ class VscodeReactStarterView implements WebviewViewProvider {
   }
 }
 
-export default VscodeReactStarterView;
+export default Ragdoll;

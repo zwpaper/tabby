@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import VscodeReactStarterView from "./VscodeReactStarterView";
+import Ragdoll from "./Ragdoll";
 import { Extension } from "./helpers/Extension";
 
 // This method is called when your extension is activated
@@ -9,12 +9,12 @@ import { Extension } from "./helpers/Extension";
 export function activate(context: vscode.ExtensionContext) {
   Extension.getInstance(context);
 
-  const vscodeReactStarterView = vscode.window.registerWebviewViewProvider(
-    VscodeReactStarterView.viewType,
-    VscodeReactStarterView.getInstance(context.extensionUri),
+  const ragdoll = vscode.window.registerWebviewViewProvider(
+    Ragdoll.viewType,
+    Ragdoll.getInstance(context.extensionUri),
   );
 
-  context.subscriptions.push(vscodeReactStarterView);
+  context.subscriptions.push(ragdoll);
 }
 
 // This method is called when your extension is deactivated
