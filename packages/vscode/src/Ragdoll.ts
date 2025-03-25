@@ -1,6 +1,5 @@
 import {
   type CancellationToken,
-  type Disposable,
   Uri,
   type Webview,
   type WebviewView,
@@ -20,9 +19,7 @@ class Ragdoll implements WebviewViewProvider {
 
   public static getInstance(_extensionUri: Uri): Ragdoll {
     if (!Ragdoll.instance) {
-      Ragdoll.instance = new Ragdoll(
-        _extensionUri,
-      );
+      Ragdoll.instance = new Ragdoll(_extensionUri);
     }
 
     return Ragdoll.instance;
