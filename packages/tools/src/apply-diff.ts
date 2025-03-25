@@ -90,11 +90,7 @@ def calculate_sum(items):
       .describe(
         "The path of the file to modify (relative to the current working directory).",
       ),
-    diff: z
-      .string()
-      .describe(
-        "The search/replace block defining the changes.",
-      ),
+    diff: z.string().describe("The search/replace block defining the changes."),
   }),
   outputSchema: z.boolean(),
 });

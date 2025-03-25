@@ -28,11 +28,11 @@ type ToolOutputTypeNoError<T extends Tool<any, any>> = z.infer<
 >;
 
 // biome-ignore lint/suspicious/noExplicitAny: template matching.
-export type ToolOutputType<T extends Tool<any, any>> = z.infer<
-  Awaited<ReturnType<NonNullable<T["execute"]>>>
-> | {
-  error: string;
-};
+export type ToolOutputType<T extends Tool<any, any>> =
+  | z.infer<Awaited<ReturnType<NonNullable<T["execute"]>>>>
+  | {
+      error: string;
+    };
 
 // biome-ignore lint/suspicious/noExplicitAny: template matching.
 export type ToolFunctionType<T extends Tool<any, any>> = (

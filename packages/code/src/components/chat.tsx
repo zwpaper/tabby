@@ -1,5 +1,5 @@
 import { useOnToolCall } from "@/tools";
-import { useChat, type Message } from "@ai-sdk/react";
+import { type Message, useChat } from "@ai-sdk/react";
 import { Spinner, TextInput } from "@inkjs/ui";
 import { Box, Text, useFocus } from "ink";
 import Markdown from "./markdown";
@@ -60,8 +60,7 @@ function Chat() {
                   }
                   if (part.type === "tool-invocation") {
                     const isToolPending =
-                      part.toolInvocation.toolCallId ===
-                      pendingToolCallId;
+                      part.toolInvocation.toolCallId === pendingToolCallId;
                     const isFollowupQuestionPending =
                       part.toolInvocation.toolCallId ===
                       pendingFollowupQuestionToolCallId;
@@ -115,7 +114,10 @@ function getRoleColor(role: string) {
   return "yellow";
 }
 
-function prepareRequestBody({ id, messages }: { id: string, messages: Message[] }) {
+function prepareRequestBody({
+  id,
+  messages,
+}: { id: string; messages: Message[] }) {
   return {
     id,
     messages: cancelPendingToolCall(messages),
@@ -125,17 +127,21 @@ function prepareRequestBody({ id, messages }: { id: string, messages: Message[] 
 function cancelPendingToolCall(messages: Message[]) {
   return messages.map((message) => {
     if (message.role === "assistant" && message.parts) {
-      message.parts?.forEach((part) => {
-        if (part.type === "tool-invocation" && part.toolInvocation.state !== "result") {
+      for (let i = 0; i < message.parts.length; i++) {
+        const part = message.parts[i];
+        if (
+          part.type === "tool-invocation" &&
+          part.toolInvocation.state !== "result"
+        ) {
           part.toolInvocation = {
             ...part.toolInvocation,
             state: "result",
             result: {
               error: "User cancelled the tool call.",
-            }
-          }
+            },
+          };
         }
-      });
+      }
     }
     return message;
   });

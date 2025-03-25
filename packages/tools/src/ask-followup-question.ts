@@ -19,7 +19,7 @@ export const askFollowupQuestion = declareClientTool({
   }),
   outputSchema: z.object({
     answer: z.string().describe("The user's answer to the question."),
-  })
+  }),
 });
 
 export type AskFollowupQuestionInputType = ToolInputType<
