@@ -4,6 +4,8 @@
   "scripts": {
     "check": "biome check --write .",
     "test": "vitest --run",
+    "tsc": "bun --filter '*' tsc",
+    "build": "bun --filter '*' build",
     "prepare": "husky"
   },
   "workspaces": ["packages/*"],
