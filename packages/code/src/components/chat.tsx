@@ -4,6 +4,7 @@ import { Spinner, TextInput } from "@inkjs/ui";
 import { Box, Text, useFocus } from "ink";
 import Markdown from "./markdown";
 import ToolBox from "./tool-box";
+import type {ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 
 function Chat() {
   const { messages, handleSubmit, setInput, status, addToolResult, error } =
@@ -12,7 +13,7 @@ function Chat() {
       maxSteps: 100,
       experimental_prepareRequestBody: prepareRequestBody,
     });
-
+  
   const { isUserInputTools } = useIsUserInputTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -109,10 +110,13 @@ function getRoleColor(role: string) {
 function prepareRequestBody({
   id,
   messages,
-}: { id: string; messages: Message[] }) {
+}: { id: string; messages: Message[] }): RagdollChatRequest {
   return {
     id,
     messages: prepareMessages(messages),
+    environment: {
+      currentTime: new Date().toString(),
+    }
   };
 }
 

@@ -3,7 +3,10 @@ import * as tools from "@ragdoll/tools";
 import { type LanguageModel, type Message, streamText } from "ai";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import { generateSystemPrompt } from "./prompts";
+import { generateSystemPrompt } from "./prompts/system";
+import { zValidator } from "@hono/zod-validator";
+import { ZodChatRequestType, type Environment } from "./types";
+import { getEnvironmentPrompt as getReadEnvironmentResult } from "./prompts/environment";
 
 export type ContextVariables = {
   model?: LanguageModel;
@@ -11,24 +14,63 @@ export type ContextVariables = {
 
 export const api = new Hono<{ Variables: ContextVariables }>().basePath("/api");
 
-interface ChatRequest {
-  messages: Message[];
-}
-
-api.post("/chat/stream", async (c) => {
-  const { messages } = (await c.req.json()) as ChatRequest;
+api.post("/chat/stream", zValidator("json", ZodChatRequestType), async (c) => {
+  const { messages, environment } = (await c.req.valid("json"));
   c.header("X-Vercel-AI-Data-Stream", "v1");
   c.header("Content-Type", "text/plain; charset=utf-8");
 
+  const processedMessages = injectReadEnvironmentToolCall(messages, environment);
   const result = streamText({
     model: c.get("model") || google("gemini-2.0-flash"),
     system: generateSystemPrompt(),
-    messages,
+    messages: processedMessages,
     tools,
   });
 
   return stream(c, (stream) => stream.pipe(result.toDataStream()));
 });
+
+function injectReadEnvironmentToolCall(messages: Message[], environment?: Environment) {
+  if (environment === undefined) return messages;
+  // There's only user message.
+  if (messages.length === 1 && messages[0].role === "user") {
+    messages = [
+      { id: `environmentMessage-${Date.now()}`, role: "assistant", content: ""},
+      ...messages,
+    ]
+  }
+  const messageToInject = getMessageToInject(messages);
+  if (!messageToInject) return messages;
+
+  const parts = [...(messageToInject.parts || [])];
+
+  // create toolCallId with timestamp
+  const toolCallId = `environmentToolCall-${Date.now()}`;
+  parts.push({
+    type: "tool-invocation",
+    toolInvocation: {
+      toolName: "readEnvironment",
+      state: "result",
+      args: undefined,
+      toolCallId,
+      result: getReadEnvironmentResult(environment),
+    }
+  });
+
+  messageToInject.parts = parts;
+  return messages;
+}
+
+function getMessageToInject(messages: Message[]): Message | undefined {
+  if (messages[messages.length - 1].role === "assistant") {
+    // Last message is a function call result, inject it directly.
+    return messages[messages.length - 1];
+  } else if (messages[messages.length - 2].role === "assistant") {
+    // Last message is a user message, inject to the assistant message.
+    return messages[messages.length - 2];
+  }
+}
+
 
 export default {
   port: 4111,
