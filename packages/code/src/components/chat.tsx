@@ -6,7 +6,7 @@ import Markdown from "./markdown";
 import ToolBox from "./tool-box";
 
 function Chat() {
-  const { messages, handleSubmit, setInput, status, addToolResult } = useChat({
+  const { messages, handleSubmit, setInput, status, addToolResult, error } = useChat({
     api: "http://localhost:4111/api/chat/stream",
     maxSteps: 100,
     experimental_prepareRequestBody: prepareRequestBody,
@@ -30,6 +30,7 @@ function Chat() {
 
   return (
     <Box flexDirection="column">
+      {status === "error" && <ErrorMessage error={error} />}
       {renderMessages.length > 0 && (
         <Box flexDirection="column" padding={1}>
           <Box flexDirection="column" gap={1}>
@@ -66,6 +67,17 @@ function Chat() {
       {showTextInput && (
         <UserTextInput onChange={setInput} onSubmit={() => handleSubmit()} />
       )}
+    </Box>
+  );
+}
+
+function ErrorMessage({
+  error
+}: { error?: Error }) {
+  const message = error?.message || "Something went wrong";
+  return (
+    <Box borderStyle="round" borderColor="red" padding={1}>
+      <Text color="red">{message}</Text>
     </Box>
   );
 }
