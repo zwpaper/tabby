@@ -6,11 +6,12 @@ import Markdown from "./markdown";
 import ToolBox from "./tool-box";
 
 function Chat() {
-  const { messages, handleSubmit, setInput, status, addToolResult, error } = useChat({
-    api: "http://localhost:4111/api/chat/stream",
-    maxSteps: 100,
-    experimental_prepareRequestBody: prepareRequestBody,
-  });
+  const { messages, handleSubmit, setInput, status, addToolResult, error } =
+    useChat({
+      api: "http://localhost:4111/api/chat/stream",
+      maxSteps: 100,
+      experimental_prepareRequestBody: prepareRequestBody,
+    });
 
   const { isUserInputTools } = useIsUserInputTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
@@ -71,9 +72,7 @@ function Chat() {
   );
 }
 
-function ErrorMessage({
-  error
-}: { error?: Error }) {
+function ErrorMessage({ error }: { error?: Error }) {
   const message = error?.message || "Something went wrong";
   return (
     <Box borderStyle="round" borderColor="red" padding={1}>
