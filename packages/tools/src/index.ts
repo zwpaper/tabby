@@ -2,7 +2,6 @@ export * from "./apply-diff";
 export * from "./ask-followup-question";
 export * from "./attempt-completion";
 export * from "./execute-command";
-export * from "./list-code-definition-names";
 export * from "./list-files";
 export * from "./read-file";
 export * from "./search-files";
