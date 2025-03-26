@@ -1,13 +1,13 @@
 import { prepareMessages, useIsUserInputTools } from "@/tools";
+import { listFiles } from "@/tools/list-files";
 import { type Message, useChat } from "@ai-sdk/react";
 import { Spinner, TextInput } from "@inkjs/ui";
+import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
+import type { ListFilesOutputType } from "@ragdoll/tools";
 import { Box, Text, useFocus } from "ink";
+import { useEffect, useState } from "react";
 import Markdown from "./markdown";
 import ToolBox from "./tool-box";
-import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
-import { listFiles } from "@/tools/list-files";
-import { useEffect, useMemo, useState } from "react";
-import type { ListFilesOutputType } from "@ragdoll/tools";
 
 function Chat() {
   const workspaceFiles = useWorkspaceFiles();
@@ -113,8 +113,14 @@ function getRoleColor(role: string) {
 
 function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
   const cwd = process.cwd();
-  const workspaceFiles = "files" in listFilesOutput ? listFilesOutput : { files: [], isTruncated: false };
-  return ({ id, messages }: { id: string; messages: Message[] }): RagdollChatRequest => {
+  const workspaceFiles =
+    "files" in listFilesOutput
+      ? listFilesOutput
+      : { files: [], isTruncated: false };
+  return ({
+    id,
+    messages,
+  }: { id: string; messages: Message[] }): RagdollChatRequest => {
     return {
       id,
       messages: prepareMessages(messages),
@@ -123,22 +129,25 @@ function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
         workspace: {
           ...workspaceFiles,
           cwd,
-        }
-      }
+        },
+      },
     };
-  }
+  };
 }
 
 function useWorkspaceFiles() {
-  const [workspaceFiles, setWorkspaceFiles] = useState<ListFilesOutputType>({ files: [], isTruncated: false });
+  const [workspaceFiles, setWorkspaceFiles] = useState<ListFilesOutputType>({
+    files: [],
+    isTruncated: false,
+  });
   useEffect(() => {
     const handle = setInterval(async () => {
-      const x = await listFiles({ "path": ".", "recursive": true })
-      setWorkspaceFiles(x)
+      const x = await listFiles({ path: ".", recursive: true });
+      setWorkspaceFiles(x);
     }, 5000);
     return () => clearInterval(handle);
-  }, [])
-  return workspaceFiles
+  }, []);
+  return workspaceFiles;
 }
 
 export default Chat;
