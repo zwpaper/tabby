@@ -26,7 +26,19 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
 
     const extractedContent = lines.slice(startIndex, endIndex + 1).join("\n");
 
-    if (extractedContent === searchContent.trim()) {
+    const extractedLines = extractedContent
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const searchLines = searchContent
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (
+      extractedLines.length === searchLines.length &&
+      extractedLines.every((line, index) => line === searchLines[index])
+    ) {
       lines.splice(
         startIndex,
         endIndex - startIndex + 1,
@@ -34,8 +46,9 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
       );
       updatedContent = lines.join("\n");
     } else {
-      console.error("Search content does not match the original file content.");
-      return false;
+      throw new Error(
+        `Search content does not match the original file content.\nOriginal content:\n${extractedLines}\nSearch content:\n${searchLines}\n`,
+      );
     }
   }
 

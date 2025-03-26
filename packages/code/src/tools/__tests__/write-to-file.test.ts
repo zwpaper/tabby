@@ -13,20 +13,16 @@ describe("writeToFile", () => {
 
     await writeToFile({ path: filePath, content: fileContent });
 
-    expect(mockWriteFile).toHaveBeenCalledWith(filePath, fileContent, "utf-8");
+expect(mockWriteFile).toHaveBeenCalledWith(filePath, fileContent, "utf-8");
   });
 
-  it("should throw an error if writing to the file fails", async () => {
+  it("should handle errors during file writing", async () => {
     const mockWriteFile = vi.mocked(fs.writeFile);
-    mockWriteFile.mockRejectedValue(new Error("Write failed"));
+    mockWriteFile.mockRejectedValue(new Error("Test error"));
 
-    const filePath = "test-file.txt";
+    const filePath = "/invalid-directory/test-file.txt";
     const fileContent = "This is a test content.";
 
-    await expect(
-      writeToFile({ path: filePath, content: fileContent }),
-    ).rejects.toThrow("Write failed");
-
-    expect(mockWriteFile).toHaveBeenCalledWith(filePath, fileContent, "utf-8");
+await expect(writeToFile({ path: filePath, content: fileContent })).rejects.toThrowError("Failed to write to file: Error: Test error");
   });
 });

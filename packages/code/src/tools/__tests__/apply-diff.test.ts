@@ -67,9 +67,7 @@ updatedLine3
 
     mockReadFile.mockResolvedValue(fileContent);
 
-    const result = await applyDiff({ path: filePath, diff });
-
-    expect(result).toBe(false);
+    await expect(applyDiff({ path: filePath, diff })).rejects.toThrowError();
     expect(mockReadFile).toHaveBeenCalledWith(filePath, "utf-8");
     expect(mockWriteFile).not.toHaveBeenCalled();
   });
