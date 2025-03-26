@@ -1,6 +1,7 @@
+import fs from "node:fs/promises";
 import type { SearchFilesFunctionType } from "@ragdoll/tools";
+import { fileTypeFromFile } from "file-type";
 import { traverseBFS } from "./file-utils";
-import { readFile } from "./read-file";
 
 export const searchFiles: SearchFilesFunctionType = async ({
   path,
@@ -20,7 +21,13 @@ export const searchFiles: SearchFilesFunctionType = async ({
   const regexPattern = new RegExp(regex, "g");
 
   for (const file of files) {
-    const { content } = await readFile({ path: file });
+    const type = await fileTypeFromFile(file);
+    if (type && !type.mime.startsWith("text/")) {
+      continue;
+    }
+    const buffer = await fs.readFile(path);
+    const content = buffer.toString("utf-8");
+
     const lines = content.split("\n");
 
     lines.forEach((lineContent, index) => {

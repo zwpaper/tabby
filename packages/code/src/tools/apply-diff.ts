@@ -12,8 +12,12 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
     const [searchContent, replaceContent] = rest.split("=======");
     const endReplace = replaceContent.split(">>>>>>> REPLACE")[0];
 
-    const startLine = parseInt(metadata.split(":start_line:")[1].split(":")[0].trim());
-    const endLine = parseInt(metadata.split(":end_line:")[1].split(":")[0].trim());
+    const startLine = Number.parseInt(
+      metadata.split(":start_line:")[1].split(":")[0].trim(),
+    );
+    const endLine = Number.parseInt(
+      metadata.split(":end_line:")[1].split(":")[0].trim(),
+    );
 
     const lines = updatedContent.split("\n");
 
@@ -23,7 +27,11 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
     const extractedContent = lines.slice(startIndex, endIndex + 1).join("\n");
 
     if (extractedContent === searchContent.trim()) {
-      lines.splice(startIndex, endIndex - startIndex + 1, ...endReplace.trim().split("\n"));
+      lines.splice(
+        startIndex,
+        endIndex - startIndex + 1,
+        ...endReplace.trim().split("\n"),
+      );
       updatedContent = lines.join("\n");
     } else {
       console.error("Search content does not match the original file content.");

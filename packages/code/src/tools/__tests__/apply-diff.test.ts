@@ -1,5 +1,5 @@
-import { vi, describe, it, expect, beforeEach } from "vitest";
 import fs from "node:fs/promises";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { applyDiff } from "../apply-diff";
 
 vi.mock("node:fs/promises");
@@ -45,7 +45,7 @@ updatedLine4
     expect(mockWriteFile).toHaveBeenCalledWith(
       filePath,
       "line1\nupdatedLine2\nupdatedLine3\nupdatedLine4\nline5",
-      "utf-8"
+      "utf-8",
     );
   });
 
