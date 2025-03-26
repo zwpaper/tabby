@@ -4,16 +4,20 @@ import { Spinner, TextInput } from "@inkjs/ui";
 import { Box, Text, useFocus } from "ink";
 import Markdown from "./markdown";
 import ToolBox from "./tool-box";
-import type {ChatRequest as RagdollChatRequest } from "@ragdoll/server";
+import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
+import { listFiles } from "@/tools/list-files";
+import { useEffect, useMemo, useState } from "react";
+import type { ListFilesOutputType } from "@ragdoll/tools";
 
 function Chat() {
+  const workspaceFiles = useWorkspaceFiles();
   const { messages, handleSubmit, setInput, status, addToolResult, error } =
     useChat({
       api: "http://localhost:4111/api/chat/stream",
       maxSteps: 100,
-      experimental_prepareRequestBody: prepareRequestBody,
+      experimental_prepareRequestBody: createPrepareRequestBody(workspaceFiles),
     });
-  
+
   const { isUserInputTools } = useIsUserInputTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -107,17 +111,34 @@ function getRoleColor(role: string) {
   return "yellow";
 }
 
-function prepareRequestBody({
-  id,
-  messages,
-}: { id: string; messages: Message[] }): RagdollChatRequest {
-  return {
-    id,
-    messages: prepareMessages(messages),
-    environment: {
-      currentTime: new Date().toString(),
-    }
-  };
+function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
+  const cwd = process.cwd();
+  const workspaceFiles = "files" in listFilesOutput ? listFilesOutput : { files: [], isTruncated: false };
+  return ({ id, messages }: { id: string; messages: Message[] }): RagdollChatRequest => {
+    return {
+      id,
+      messages: prepareMessages(messages),
+      environment: {
+        currentTime: new Date().toString(),
+        workspace: {
+          ...workspaceFiles,
+          cwd,
+        }
+      }
+    };
+  }
+}
+
+function useWorkspaceFiles() {
+  const [workspaceFiles, setWorkspaceFiles] = useState<ListFilesOutputType>({ files: [], isTruncated: false });
+  useEffect(() => {
+    const handle = setInterval(async () => {
+      const x = await listFiles({ "path": ".", "recursive": true })
+      setWorkspaceFiles(x)
+    }, 5000);
+    return () => clearInterval(handle);
+  }, [])
+  return workspaceFiles
 }
 
 export default Chat;

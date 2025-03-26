@@ -7,6 +7,11 @@ export const ZodChatRequestType = z.object({
   messages: z.array(ZodMessageType),
   environment: z.object({
     currentTime: z.string().optional().describe("The current time."),
+    workspace: z.object({
+      cwd: z.string(),
+      files: z.array(z.string()),
+      isTruncated: z.boolean(),
+    }).optional(),
   }).optional(),
 });
 
