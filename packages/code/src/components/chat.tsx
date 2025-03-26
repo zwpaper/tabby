@@ -130,6 +130,11 @@ function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
           ...workspaceFiles,
           cwd,
         },
+        info: {
+          shell: process.env['SHELL'] || "",
+          os: process.platform,
+          homedir: process.env['HOME'] || "",
+        },
       },
     };
   };

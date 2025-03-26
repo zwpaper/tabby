@@ -3,6 +3,7 @@ import type { Environment } from "@/types";
 export function getReadEnvironmentResult(environment: Environment) {
   const sections = [
     getCurrentTime(environment.currentTime),
+    getInfo(environment.info),
     getWorkspaceFiles(environment.workspace),
   ]
     .filter(Boolean)
@@ -13,6 +14,14 @@ export function getReadEnvironmentResult(environment: Environment) {
 function getCurrentTime(currentTime: string | undefined) {
   if (currentTime) {
     return `# Current Time\n${currentTime}`;
+  }
+  return "";
+}
+
+function getInfo(info: Environment["info"]) {
+  if (info) {
+    const { shell, os, homedir } = info;
+    return `# System Info\nShell: ${shell}\nOS: ${os}\nHome Directory: ${homedir}`;
   }
   return "";
 }

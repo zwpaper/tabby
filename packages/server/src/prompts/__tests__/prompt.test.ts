@@ -15,6 +15,11 @@ test("environment", () => {
         cwd: "/home/user/project",
         isTruncated: false,
       },
+      info: {
+        os: "linux",
+        homedir: "/home/user",
+        shell: "bash",
+      }
     }),
   ).toMatchSnapshot();
 });
