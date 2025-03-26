@@ -7,9 +7,7 @@ export function getReadEnvironmentResult(environment: Environment) {
   ]
     .filter(Boolean)
     .join("\n\n");
-  return `<environment_details>
-${sections}
-</environment_details>`;
+  return sections;
 }
 
 function getCurrentTime(currentTime: string | undefined) {

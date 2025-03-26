@@ -1,14 +1,12 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`environment 1`] = `
-"<environment_details>
-# Current Time
+"# Current Time
 2021-01-01T00:00:00.000Z
 
 # Current Working Directory (/home/user/project) Files
 index.ts
-package.json
-</environment_details>"
+package.json"
 `;
 
 exports[`snapshot 1`] = `
