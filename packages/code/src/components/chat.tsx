@@ -131,9 +131,9 @@ function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
           cwd,
         },
         info: {
-          shell: process.env['SHELL'] || "",
+          shell: process.env.SHELL || "",
           os: process.platform,
-          homedir: process.env['HOME'] || "",
+          homedir: process.env.HOME || "",
         },
       },
     };

@@ -19,7 +19,7 @@ test("environment", () => {
         os: "linux",
         homedir: "/home/user",
         shell: "bash",
-      }
+      },
     }),
   ).toMatchSnapshot();
 });
