@@ -44,6 +44,7 @@ describe("My first test", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        id: "0",
         messages: [
           {
             role: "user",

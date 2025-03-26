@@ -1,9 +1,9 @@
 import type { Environment } from "@/types";
 
-export function getEnvironmentPrompt(environment: Environment) {
+export function getReadEnvironmentResult(environment: Environment) {
   const sections = [
-    getCurrentTimePrompt(environment.currentTime),
-    getWorkspaceFilesPrompt(environment.workspace),
+    getCurrentTime(environment.currentTime),
+    getWorkspaceFiles(environment.workspace),
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -12,15 +12,14 @@ ${sections}
 </environment_details>`;
 }
 
-function getCurrentTimePrompt(currentTime: string | undefined) {
+function getCurrentTime(currentTime: string | undefined) {
   if (currentTime) {
     return `# Current Time\n${currentTime}`;
-  } else {
-    return "";
   }
+  return "";
 }
 
-function getWorkspaceFilesPrompt(workspace: Environment["workspace"]) {
+function getWorkspaceFiles(workspace: Environment["workspace"]) {
   if (workspace) {
     const { files, isTruncated } = workspace;
     const filesList = files.join("\n");
@@ -28,7 +27,6 @@ function getWorkspaceFilesPrompt(workspace: Environment["workspace"]) {
       ? "\n(Note: The list of files is truncated. Use listFiles tool to explore if needed)"
       : "";
     return `# Current Working Directory (${workspace.cwd}) Files\n${filesList}${truncatedMessage}`;
-  } else {
-    return "";
   }
+  return "";
 }

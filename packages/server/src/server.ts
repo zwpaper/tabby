@@ -4,7 +4,7 @@ import * as tools from "@ragdoll/tools";
 import { type LanguageModel, type Message, streamText } from "ai";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import { getEnvironmentPrompt as getReadEnvironmentResult } from "./prompts/environment";
+import { getReadEnvironmentResult } from "./prompts/environment";
 import { generateSystemPrompt } from "./prompts/system";
 import { type Environment, ZodChatRequestType } from "./types";
 
@@ -40,14 +40,12 @@ function injectReadEnvironmentToolCall(
   if (environment === undefined) return messages;
   // There's only user message.
   if (messages.length === 1 && messages[0].role === "user") {
-    messages = [
-      {
-        id: `environmentMessage-${Date.now()}`,
-        role: "assistant",
-        content: "",
-      },
-      ...messages,
-    ];
+    // Prepend an empty assistant message.
+    messages.unshift({
+      id: `environmentMessage-${Date.now()}`,
+      role: "assistant",
+      content: "",
+    });
   }
   const messageToInject = getMessageToInject(messages);
   if (!messageToInject) return messages;
@@ -75,7 +73,8 @@ function getMessageToInject(messages: Message[]): Message | undefined {
   if (messages[messages.length - 1].role === "assistant") {
     // Last message is a function call result, inject it directly.
     return messages[messages.length - 1];
-  } else if (messages[messages.length - 2].role === "assistant") {
+  }
+  if (messages[messages.length - 2].role === "assistant") {
     // Last message is a user message, inject to the assistant message.
     return messages[messages.length - 2];
   }
