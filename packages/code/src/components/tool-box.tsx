@@ -15,7 +15,6 @@ import type {
   AttemptCompletionOutputType,
 } from "@ragdoll/tools";
 import { Box, Text, useFocus } from "ink";
-import Collapsible from "./collapsible";
 import Markdown from "./markdown";
 
 type ToolInvocation<INPUT, OUTPUT> =
@@ -68,17 +67,7 @@ const ToolBox: React.FC<
     gap: 1,
   } as const;
 
-  return toolCall.toolName === "attemptCompletion" ? (
-    <Box {...boxProps}>{children}</Box>
-  ) : (
-    <Collapsible
-      open={approval === "pending"}
-      title={toolCall.toolName}
-      {...boxProps}
-    >
-      {children}
-    </Collapsible>
-  );
+  return <Box {...boxProps}>{children}</Box>;
 };
 
 function ConfirmToolUsage({
