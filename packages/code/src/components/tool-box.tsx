@@ -1,3 +1,4 @@
+import * as nodePath from "node:path";
 import type { ToolCall, ToolResult } from "@ai-sdk/provider-utils";
 import type { ToolInvocation as ToolInvocationAny } from "@ai-sdk/ui-utils";
 import { ConfirmInput } from "@inkjs/ui";
@@ -6,8 +7,13 @@ import type {
   ApplyDiffOutputType,
   AskFollowupQuestionInputType,
   AskFollowupQuestionOutputType,
+  ListFilesInputType,
+  ListFilesOutputType,
+  WriteToFileInputType,
+  WriteToFileOutputType,
 } from "@ragdoll/tools";
 import type { ReadFileInputType, ReadFileOutputType } from "@ragdoll/tools";
+import Collapsible from "./collapsible";
 
 import { useExecuteTool } from "@/tools";
 import type {
@@ -93,13 +99,24 @@ const ApplyDiffTool: React.FC<
   ToolProps<ApplyDiffInputType, ApplyDiffOutputType>
 > = ({ toolCall }) => {
   const { path, diff } = toolCall.args;
+
+  // Count the number of lines in the diff
+  const lineCount = diff.split("\n").length;
+  const shouldCollapse = lineCount > 5;
+
   return (
     <Box flexDirection="column" gap={1}>
       <Box>
         <Text>Applying patch to </Text>
         <Text color="yellowBright">{path}</Text>
       </Box>
-      <Text color="grey">{diff}</Text>
+      {shouldCollapse ? (
+        <Collapsible title={`Patch (${lineCount} lines)`} open={false}>
+          <Text color="grey">{diff}</Text>
+        </Collapsible>
+      ) : (
+        <Text color="grey">{diff}</Text>
+      )}
     </Box>
   );
 };
@@ -225,11 +242,111 @@ function Record({
   );
 }
 
+const WriteToFileTool: React.FC<
+  ToolProps<WriteToFileInputType, WriteToFileOutputType>
+> = ({ toolCall }) => {
+  const { path, content } = toolCall.args;
+
+  // Count the number of lines in the content
+  const lineCount = content.split("\n").length;
+  const contentLength = content.length;
+  const shouldCollapse = lineCount > 5;
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Box>
+        <Text>Writing to file </Text>
+        <Text color="yellowBright">{path}</Text>
+        <Text>
+          {" "}
+          ({contentLength} characters, {lineCount} lines)
+        </Text>
+      </Box>
+      {shouldCollapse ? (
+        <Collapsible title={`Content (${lineCount} lines)`} open={false}>
+          <Text color="grey">{content}</Text>
+        </Collapsible>
+      ) : (
+        <Text color="grey">{content}</Text>
+      )}
+    </Box>
+  );
+};
+
+const ListFilesTool: React.FC<
+  ToolProps<ListFilesInputType, ListFilesOutputType>
+> = ({ toolCall }) => {
+  const { path, recursive } = toolCall.args;
+
+  let resultEl: React.ReactNode;
+  if (toolCall.state === "result") {
+    if (!("error" in toolCall.result)) {
+      const { files, isTruncated } = toolCall.result;
+
+      // Group files by directory for better visualization
+      const filesByDir: Record<string, string[]> = {};
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const dirPath = file.split("/").slice(0, -1).join("/") || ".";
+        if (!filesByDir[dirPath]) {
+          filesByDir[dirPath] = [];
+        }
+        filesByDir[dirPath].push(file.split("/").pop() || "");
+      }
+
+      const filesContent = (
+        <Box flexDirection="column">
+          {Object.entries(filesByDir).map(([dir, dirFiles], idx) => (
+            <Box key={idx} flexDirection="column" marginLeft={1} marginTop={1}>
+              <Text color="blueBright">{dir}/</Text>
+              <Box flexDirection="column" marginLeft={2}>
+                <Text color="yellowBright">{dirFiles.join(", ")}</Text>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      );
+
+      // Determine if we should collapse the file list
+      const shouldCollapse = Object.entries(filesByDir).length > 5;
+
+      resultEl = (
+        <Box flexDirection="column">
+          <Text>
+            Found {files.length} files{isTruncated ? " (truncated)" : ""}
+          </Text>
+          {shouldCollapse ? (
+            <Collapsible title={`Files (${files.length})`} open={false}>
+              {filesContent}
+            </Collapsible>
+          ) : (
+            filesContent
+          )}
+        </Box>
+      );
+    }
+  }
+
+  const absolutePath = nodePath.join(process.cwd(), path);
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Box>
+        <Text>Listing files in </Text>
+        <Text color="yellowBright">{absolutePath}</Text>
+        {recursive && <Text> (recursive)</Text>}
+      </Box>
+      {resultEl}
+    </Box>
+  );
+};
+
 const ToolComponents: Record<string, React.FC<ToolProps>> = {
   applyDiff: ApplyDiffTool,
   attemptCompletion: TaskCompleteTool,
   askFollowupQuestion: AskFollowupQuestionTool,
+  listFiles: ListFilesTool,
   readFile: ReadFileTool,
+  writeToFile: WriteToFileTool,
 };
 
 export default ToolBox;

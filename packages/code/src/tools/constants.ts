@@ -14,5 +14,6 @@ export const dirsToIgnore = [
   "deps",
   "pkg",
   "Pods",
+  "coverage",
   ".*",
 ];

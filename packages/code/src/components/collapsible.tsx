@@ -22,7 +22,7 @@ export default function Collapsible({
     }
   });
   return (
-    <Box flexDirection="column" gap={1} {...props}>
+    <Box flexDirection="column" {...props}>
       <Box gap={1}>
         <Text underline={isFocused}>
           [{activate ? "-" : "+"}] {title}

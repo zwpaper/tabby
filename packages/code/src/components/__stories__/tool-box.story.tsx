@@ -29,14 +29,47 @@ function addToolResult() {}
 const storyExport = {
   stories: [
     {
-      id: "applyDiff",
-      title: "Apply Diff",
+      id: "listFiles",
+      title: "List Files",
       component: (
         <ToolBox
-          toolCall={makeToolCall("applyDiff", {
-            path: "/root/abc",
-            diff: "THIS IS PATCH CONTENT",
-          })}
+          toolCall={makeToolCall(
+            "listFiles",
+            {
+              path: ".",
+              recursive: true,
+            },
+            {
+              files: [
+                "README.md",
+                "package.json",
+                "tsconfig.json",
+                "src/index.tsx",
+                "src/tools/execute-command.ts",
+                "src/tools/search-files.ts",
+                "src/tools/apply-diff.ts",
+                "src/tools/read-file.ts",
+                "src/tools/constants.ts",
+                "src/tools/list-files.ts",
+                "src/tools/index.ts",
+                "src/tools/write-to-file.ts",
+                "src/tools/file-utils.ts",
+                "src/components/markdown.tsx",
+                "src/components/tool-box.tsx",
+                "src/components/chat.tsx",
+                "src/components/collapsible.tsx",
+                "src/tools/__tests__/execute-command.test.ts",
+                "src/tools/__tests__/list-files.test.ts",
+                "src/tools/__tests__/file-utils.test.ts",
+                "src/tools/__tests__/write-to-file.test.ts",
+                "src/tools/__tests__/read-file.test.ts",
+                "src/tools/__tests__/apply-diff.test.ts",
+                "src/tools/__tests__/search-files.test.ts",
+                "src/components/__stories__/tool-box.story.tsx",
+                "src/components/__stories__/playground.story.tsx",
+              ],
+            },
+          )}
           addToolResult={addToolResult}
         />
       ),
@@ -50,7 +83,13 @@ const storyExport = {
             "applyDiff",
             {
               path: "/root/abc",
-              diff: "THIS IS PATCH CONTENT",
+              diff: `THIS IS PATCH CONTENT
+THIS IS PATCH CONTENT
+THIS IS PATCH CONTENT
+THIS IS PATCH CONTENT
+THIS IS PATCH CONTENT
+THIS IS PATCH CONTENT
+THIS IS PATCH CONTENT`,
             },
             true,
           )}
