@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import type { ApplyDiffFunctionType } from "@ragdoll/tools";
 
-const WindowToExpandForSearch = 20;
+const WindowToExpandForSearch = 200;
 
 export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
   const fileContent = await fs.readFile(path, "utf-8");

@@ -1,7 +1,12 @@
 import { google } from "@ai-sdk/google";
 import { zValidator } from "@hono/zod-validator";
 import * as tools from "@ragdoll/tools";
-import { type LanguageModel, type Message, streamText } from "ai";
+import {
+  type LanguageModel,
+  type LanguageModelV1,
+  type Message,
+  streamText,
+} from "ai";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { getReadEnvironmentResult } from "./prompts/environment";
@@ -19,14 +24,15 @@ api.post("/chat/stream", zValidator("json", ZodChatRequestType), async (c) => {
   c.header("X-Vercel-AI-Data-Stream", "v1");
   c.header("Content-Type", "text/plain; charset=utf-8");
 
-  const processedMessages = injectReadEnvironmentToolCall(
-    messages,
-    environment,
-  );
+  // const model = openrouter("anthropic/claude-3.7-sonnet");
+  const model = google("gemini-2.5-pro-exp-03-25");
+
+  injectReadEnvironmentToolCall(messages, model, environment);
+
   const result = streamText({
-    model: c.get("model") || google("gemini-2.0-flash"),
+    model: c.get("model") || model,
     system: generateSystemPrompt(),
-    messages: processedMessages,
+    messages,
     tools,
   });
 
@@ -35,20 +41,28 @@ api.post("/chat/stream", zValidator("json", ZodChatRequestType), async (c) => {
 
 function injectReadEnvironmentToolCall(
   messages: Message[],
+  model: LanguageModelV1,
   environment?: Environment,
 ) {
-  if (environment === undefined) return messages;
+  const isOpenRouter = model.provider.includes("openrouter");
+
+  if (environment === undefined) return;
   // There's only user message.
   if (messages.length === 1 && messages[0].role === "user") {
     // Prepend an empty assistant message.
     messages.unshift({
-      id: `environmentMessage-${Date.now()}`,
+      id: `environmentMessage-assistant-${Date.now()}`,
       role: "assistant",
       content: "",
     });
+    messages.unshift({
+      id: `environmentMessage-user-${Date.now()}`,
+      role: "user",
+      content: " ",
+    });
   }
   const messageToInject = getMessageToInject(messages);
-  if (!messageToInject) return messages;
+  if (!messageToInject) return;
 
   const parts = [...(messageToInject.parts || [])];
 
@@ -59,14 +73,13 @@ function injectReadEnvironmentToolCall(
     toolInvocation: {
       toolName: "readEnvironment",
       state: "result",
-      args: undefined,
+      args: isOpenRouter ? "null" : undefined,
       toolCallId,
       result: getReadEnvironmentResult(environment),
     },
   });
 
   messageToInject.parts = parts;
-  return messages;
 }
 
 function getMessageToInject(messages: Message[]): Message | undefined {
