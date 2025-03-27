@@ -8,9 +8,9 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
 
   for (let i = 1; i < diffBlocks.length; i++) {
     const block = diffBlocks[i];
-    const [metadata, rest] = block.split("-------");
-    const [searchContent, replaceContent] = rest.split("=======");
-    const endReplace = replaceContent.split(">>>>>>> REPLACE")[0];
+    const [metadata, rest] = block.split("-------\n");
+    const [searchContent, replaceContent] = rest.split("\n=======\n");
+    const endReplace = replaceContent.split("\n>>>>>>> REPLACE")[0];
 
     const startLine = Number.parseInt(
       metadata.split(":start_line:")[1].split(":")[0].trim(),
@@ -20,29 +20,21 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
     );
 
     const lines = updatedContent.split("\n");
-
     const startIndex = startLine - 1;
     const endIndex = endLine - 1;
 
-    const extractedContent = lines.slice(startIndex, endIndex + 1).join("\n");
-
-    const extractedLines = extractedContent
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+    const extractedLines = lines.slice(startIndex, endIndex + 1);
     const searchLines = searchContent
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+      .split("\n");
 
     if (
       extractedLines.length === searchLines.length &&
-      extractedLines.every((line, index) => line === searchLines[index])
+      extractedLines.every((line, index) => line.trim() === searchLines[index].trim())
     ) {
       lines.splice(
         startIndex,
         endIndex - startIndex + 1,
-        ...endReplace.trim().split("\n"),
+        ...endReplace.split("\n"),
       );
       updatedContent = lines.join("\n");
     } else {
