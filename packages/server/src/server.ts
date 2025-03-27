@@ -1,5 +1,5 @@
-import { google } from "@ai-sdk/google";
 import { zValidator } from "@hono/zod-validator";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 import * as tools from "@ragdoll/tools";
 import {
   type LanguageModel,
@@ -24,8 +24,8 @@ api.post("/chat/stream", zValidator("json", ZodChatRequestType), async (c) => {
   c.header("X-Vercel-AI-Data-Stream", "v1");
   c.header("Content-Type", "text/plain; charset=utf-8");
 
-  // const model = openrouter("anthropic/claude-3.7-sonnet");
-  const model = google("gemini-2.5-pro-exp-03-25");
+  const model = openrouter("anthropic/claude-3.7-sonnet");
+  // const model = google("gemini-2.5-pro-exp-03-25");
 
   injectReadEnvironmentToolCall(messages, model, environment);
 

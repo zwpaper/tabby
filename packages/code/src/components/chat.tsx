@@ -1,7 +1,7 @@
 import { prepareMessages, useIsUserInputTools } from "@/tools";
 import { listFiles } from "@/tools/list-files";
 import { type Message, useChat } from "@ai-sdk/react";
-import { Spinner, TextInput } from "@inkjs/ui";
+import { ConfirmInput, Spinner, TextInput } from "@inkjs/ui";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { ListFilesOutputType } from "@ragdoll/tools";
 import { Box, Text, useFocus } from "ink";
@@ -11,12 +11,20 @@ import ToolBox from "./tool-box";
 
 function Chat() {
   const workspaceFiles = useWorkspaceFiles();
-  const { messages, handleSubmit, setInput, status, addToolResult, error } =
-    useChat({
-      api: "http://localhost:4111/api/chat/stream",
-      maxSteps: 100,
-      experimental_prepareRequestBody: createPrepareRequestBody(workspaceFiles),
-    });
+  const {
+    messages,
+    setMessages,
+    handleSubmit,
+    setInput,
+    status,
+    addToolResult,
+    error,
+    reload,
+  } = useChat({
+    api: "http://localhost:4111/api/chat/stream",
+    maxSteps: 100,
+    experimental_prepareRequestBody: createPrepareRequestBody(workspaceFiles),
+  });
 
   const { isUserInputTools } = useIsUserInputTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
@@ -32,11 +40,21 @@ function Chat() {
     });
   }
 
-  const showTextInput = !isLoading || isUserInputTools;
+  const [showErrorRetry, setShowErrorRetry] = useState(false);
+  useEffect(() => {
+    if (status === "error") {
+      setShowErrorRetry(true);
+    }
+  }, [status]);
 
+  function onRetryCancel() {
+    setShowErrorRetry(false);
+    setMessages(messages.slice(0, -1));
+  }
+
+  const showTextInput = (!isLoading || isUserInputTools) && !showErrorRetry;
   return (
     <Box flexDirection="column">
-      {status === "error" && <ErrorMessage error={error} />}
       {renderMessages.length > 0 && (
         <Box flexDirection="column" padding={1}>
           <Box flexDirection="column" gap={1}>
@@ -70,6 +88,14 @@ function Chat() {
         </Box>
       )}
 
+      {error && showErrorRetry && (
+        <ErrorWithRetry
+          error={error}
+          reload={reload}
+          onCancel={onRetryCancel}
+        />
+      )}
+
       {showTextInput && (
         <UserTextInput onChange={setInput} onSubmit={() => handleSubmit()} />
       )}
@@ -77,11 +103,24 @@ function Chat() {
   );
 }
 
-function ErrorMessage({ error }: { error?: Error }) {
-  const message = error?.message || "Something went wrong";
+function ErrorWithRetry({
+  error,
+  reload,
+  onCancel,
+}: { error?: Error; reload: () => Promise<unknown>; onCancel: () => void }) {
   return (
-    <Box borderStyle="round" borderColor="red" padding={1}>
-      <Text color="red">{message}</Text>
+    <Box
+      borderStyle="round"
+      borderColor="red"
+      padding={1}
+      gap={1}
+      flexDirection="column"
+    >
+      <Text color="red">{error?.message}</Text>
+      <Box>
+        <Text color="grey">Retry? </Text>
+        <ConfirmInput onConfirm={reload} onCancel={onCancel} />
+      </Box>
     </Box>
   );
 }
