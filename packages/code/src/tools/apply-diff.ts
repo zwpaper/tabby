@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import type { ApplyDiffFunctionType } from "@ragdoll/tools";
 
+const WindowToExpandForSearch = 20;
+
 export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
   const fileContent = await fs.readFile(path, "utf-8");
   const diffBlocks = diff.split("<<<<<<< SEARCH");
@@ -20,20 +22,17 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
     );
 
     const lines = updatedContent.split("\n");
-    const startIndex = startLine - 1;
-    const endIndex = endLine - 1;
+    const startIndex = Math.max(startLine - 1 - WindowToExpandForSearch, 0);
+    const endIndex = Math.min(endLine - 1 + 5, lines.length - 1);
 
     const extractedLines = lines.slice(startIndex, endIndex + 1);
-    const searchLines = searchContent
-      .split("\n");
+    const searchLines = searchContent.split("\n");
+    const startIndexInExtractedLines = fuzzyMatch(extractedLines, searchLines);
 
-    if (
-      extractedLines.length === searchLines.length &&
-      extractedLines.every((line, index) => line.trim() === searchLines[index].trim())
-    ) {
+    if (startIndexInExtractedLines >= 0) {
       lines.splice(
-        startIndex,
-        endIndex - startIndex + 1,
+        startIndex + startIndexInExtractedLines,
+        searchLines.length,
         ...endReplace.split("\n"),
       );
       updatedContent = lines.join("\n");
@@ -47,3 +46,21 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
   await fs.writeFile(path, updatedContent, "utf-8");
   return true;
 };
+
+// Extract lines, a slightly larger range than the search lines, to ensure we can find the exact match.
+// Return start_index for the extracted lines (or undefined if not found).
+function fuzzyMatch(extractLines: string[], searchLines: string[]) {
+  const firstLineMatches = extractLines
+    .map((line, index) => (line.trim() === searchLines[0].trim() ? index : -1))
+    .filter((index) => index !== -1);
+  for (const startIndex of firstLineMatches) {
+    if (
+      extractLines
+        .slice(startIndex, startIndex + searchLines.length)
+        .every((line, index) => line.trim() === searchLines[index].trim())
+    ) {
+      return startIndex;
+    }
+  }
+  return -1;
+}
