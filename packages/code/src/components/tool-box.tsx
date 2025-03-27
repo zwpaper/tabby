@@ -15,6 +15,7 @@ import type {
   AttemptCompletionOutputType,
 } from "@ragdoll/tools";
 import { Box, Text, useFocus } from "ink";
+import Collapsible from "./collapsible";
 import Markdown from "./markdown";
 
 type ToolInvocation<INPUT, OUTPUT> =
@@ -47,22 +48,36 @@ const ToolBox: React.FC<
   });
 
   const C = ToolComponents[toolCall.toolName] || DefaultTool;
-
-  return (
-    <Box
-      flexDirection="column"
-      borderStyle="round"
-      borderColor="grey"
-      marginLeft={1}
-      padding={1}
-      gap={1}
-    >
+  const children = (
+    <>
       <C toolCall={toolCall} />
       {approval === "pending" && <ConfirmToolUsage confirm={approveTool} />}
-      {toolCall.state === "result" && (typeof toolCall.result === "object" && "error" in toolCall.result) && (
-        <ErrorResult error={toolCall.result.error} />
-      )}
-    </Box>
+      {toolCall.state === "result" &&
+        typeof toolCall.result === "object" &&
+        "error" in toolCall.result && (
+          <ErrorResult error={toolCall.result.error} />
+        )}
+    </>
+  );
+  const boxProps = {
+    flexDirection: "column",
+    borderStyle: "round",
+    borderColor: "grey",
+    marginLeft: 1,
+    padding: 1,
+    gap: 1,
+  } as const;
+
+  return toolCall.toolName === "attemptCompletion" ? (
+    <Box {...boxProps}>{children}</Box>
+  ) : (
+    <Collapsible
+      open={approval === "pending"}
+      title={toolCall.toolName}
+      {...boxProps}
+    >
+      {children}
+    </Collapsible>
   );
 };
 
@@ -174,10 +189,14 @@ function ErrorResult({ error }: { error: string }) {
 }
 
 function DefaultTool({ toolCall }: { toolCall: ToolInvocationAny }) {
+  const isError =
+    toolCall.state === "result" &&
+    typeof toolCall.result === "object" &&
+    "error" in toolCall.result;
   return (
     <>
       <ToolArgs name={toolCall.toolName} args={toolCall.args} />
-      {toolCall.state === "result" && !("error" in toolCall.result) && (
+      {toolCall.state === "result" && !isError && (
         <Box marginLeft={1}>
           <Record value={toolCall.result} flexDirection="column" />
         </Box>

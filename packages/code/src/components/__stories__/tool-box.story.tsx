@@ -33,14 +33,26 @@ const storyExport = {
       title: "Apply Diff",
       component: (
         <ToolBox
+          toolCall={makeToolCall("applyDiff", {
+            path: "/root/abc",
+            diff: "THIS IS PATCH CONTENT",
+          })}
+          addToolResult={addToolResult}
+        />
+      ),
+    },
+    {
+      id: "applyDiffWithResult",
+      title: "Apply Diff (With Result)",
+      component: (
+        <ToolBox
           toolCall={makeToolCall(
             "applyDiff",
             {
+              path: "/root/abc",
               diff: "THIS IS PATCH CONTENT",
             },
-            {
-              error: "Failed to define",
-            },
+            true,
           )}
           addToolResult={addToolResult}
         />
@@ -51,13 +63,10 @@ const storyExport = {
       title: "Attempt Completion",
       component: (
         <ToolBox
-          toolCall={makeToolCall(
-            "attemptCompletion",
-            {
-              result: "this is result",
-              command: "this is command",
-            },
-          )}
+          toolCall={makeToolCall("attemptCompletion", {
+            result: "this is result",
+            command: "this is command",
+          })}
           addToolResult={addToolResult}
         />
       ),
