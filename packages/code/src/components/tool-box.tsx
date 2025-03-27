@@ -59,6 +59,9 @@ const ToolBox: React.FC<
     >
       <C toolCall={toolCall} />
       {approval === "pending" && <ConfirmToolUsage confirm={approveTool} />}
+      {toolCall.state === "result" && "error" in toolCall.result && (
+        <ErrorResult error={toolCall.result.error} />
+      )}
     </Box>
   );
 };
@@ -130,9 +133,7 @@ const ReadFileTool: React.FC<
   const { path } = toolCall.args;
   let resultEl: React.ReactNode;
   if (toolCall.state === "result") {
-    if ("error" in toolCall.result) {
-      resultEl = <Text color="redBright"> ({toolCall.result.error})</Text>;
-    } else {
+    if (!("error" in toolCall.result)) {
       const { isTruncated } = toolCall.result;
       resultEl = (
         <Text>
@@ -163,11 +164,20 @@ function ToolArgs({ name, args }: { name: string; args: any }) {
   );
 }
 
+function ErrorResult({ error }: { error: string }) {
+  return (
+    <Box>
+      <Text color="grey">error: </Text>
+      <Text>{error}</Text>
+    </Box>
+  );
+}
+
 function DefaultTool({ toolCall }: { toolCall: ToolInvocationAny }) {
   return (
     <>
       <ToolArgs name={toolCall.toolName} args={toolCall.args} />
-      {toolCall.state === "result" && toolCall.result && (
+      {toolCall.state === "result" && !("error" in toolCall.result) && (
         <Box marginLeft={1}>
           <Record value={toolCall.result} flexDirection="column" />
         </Box>

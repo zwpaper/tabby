@@ -23,6 +23,8 @@ describe("writeToFile", () => {
     const filePath = "test-file.txt";
     const fileContent = "This is a test content.";
 
-    await expect(writeToFile({ path: filePath, content: fileContent })).rejects.toThrow("Failed to write to file: Error: Write failed");
+    await expect(
+      writeToFile({ path: filePath, content: fileContent }),
+    ).rejects.toThrow("Failed to write to file: Error: Write failed");
   });
 });

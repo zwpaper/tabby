@@ -4,7 +4,8 @@
   "scripts": {
     "build": "bun build src/index.tsx --compile --outfile ./dist/code",
     "tsc": "tsc --noEmit",
-    "dev": "bun --watch src/index.tsx"
+    "dev": "bun --watch src/index.tsx",
+    "storybook": "bun ../ink-storybook/src/cli/index.tsx"
   },
   "dependencies": {
     "@ai-sdk/provider-utils": "^2.2.1",
@@ -23,6 +24,7 @@
     "@ragdoll/tools": "workspace:*",
     "@ragdoll/server": "workspace:*",
     "@types/marked-terminal": "^6.1.1",
-    "@types/react": "^18"
+    "@types/react": "^18",
+    "@ragdoll/ink-storybook": "workspace:*"
   }
 }

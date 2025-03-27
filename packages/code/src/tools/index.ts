@@ -55,7 +55,9 @@ export function useExecuteTool({
 }: UseExecuteToolParams) {
   const { toolName, toolCallId, state } = toolCall;
   const [approval, setApproval] = useState<Approval>(
-    ToolsExemptFromApproval.has(toolName) ? "approved" : "pending",
+    ToolsExemptFromApproval.has(toolName) || state === "result"
+      ? "approved"
+      : "pending",
   );
 
   const approveTool = (approved: boolean) => {
@@ -65,6 +67,8 @@ export function useExecuteTool({
   const invokeToolTriggered = useRef(false);
 
   useEffect(() => {
+    if (state === "result") return;
+
     if (UserInputTools.has(toolName)) {
       return;
     }

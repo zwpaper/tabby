@@ -1,0 +1,22 @@
+{
+  "name": "@ragdoll/ink-storybook",
+  "version": "0.2.2",
+  "description": "A storybook-like library for Ink terminal applications",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": "./src/cli/index.tsx",
+  "scripts": {
+    "storybook": "npx . -c examples/storybook/config.ts"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/chokidar": "^1.7.5",
+    "@types/react": "^18"
+  },
+  "peerDependencies": {
+    "ink": "^5.2.0",
+    "react": "^18"
+  }
+}
