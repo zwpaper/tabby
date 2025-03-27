@@ -47,18 +47,15 @@ const storyExport = {
       ),
     },
     {
-      id: "writeToFile",
-      title: "WriteToFile",
+      id: "attemptCompletion",
+      title: "Attempt Completion",
       component: (
         <ToolBox
           toolCall={makeToolCall(
-            "writeToFile",
+            "attemptCompletion",
             {
-              path: "/foo/bar",
-              content: "def",
-            },
-            {
-              error: "/foo/bar doesn't exists",
+              result: "this is result",
+              command: "this is command",
             },
           )}
           addToolResult={addToolResult}

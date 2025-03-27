@@ -59,7 +59,7 @@ const ToolBox: React.FC<
     >
       <C toolCall={toolCall} />
       {approval === "pending" && <ConfirmToolUsage confirm={approveTool} />}
-      {toolCall.state === "result" && "error" in toolCall.result && (
+      {toolCall.state === "result" && (typeof toolCall.result === "object" && "error" in toolCall.result) && (
         <ErrorResult error={toolCall.result.error} />
       )}
     </Box>
@@ -105,10 +105,10 @@ const TaskCompleteTool: React.FC<
 > = ({ toolCall }) => {
   const { result, command } = toolCall.args;
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" gap={1}>
       <Text color="greenBright">Task Complete</Text>
       <Markdown>{result}</Markdown>
-      {command && <Text>Please use `{command}` to check the result.</Text>}
+      {command && <Text>Please run `{command}` to check the result.</Text>}
     </Box>
   );
 };
