@@ -39,6 +39,7 @@
     "packages/ink-storybook": {
       "name": "@ragdoll/ink-storybook",
       "version": "0.2.2",
+      "bin": "./src/cli/index.tsx",
       "dependencies": {
         "chokidar": "^4.0.3",
       },

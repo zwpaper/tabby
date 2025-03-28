@@ -9,8 +9,8 @@ export default {
     // You can customize key bindings here
     next: ["j"],
     previous: ["k"],
-    nextFile: ["l"],
-    prevFile: ["h"],
+    nextFile: ["h"],
+    prevFile: ["l"],
   },
 
   /**

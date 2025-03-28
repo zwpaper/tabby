@@ -3,7 +3,11 @@ import { getReadEnvironmentResult } from "../environment";
 import { generateSystemPrompt } from "../system";
 
 test("snapshot", () => {
-  expect(generateSystemPrompt()).toMatchSnapshot();
+  expect(
+    generateSystemPrompt({
+      cwd: ".",
+    }),
+  ).toMatchSnapshot();
 });
 
 test("environment", () => {

@@ -149,7 +149,7 @@ export function prepareMessages(messages: Message[]) {
             ...part.toolInvocation,
             state: "result",
             result: UserInputTools.has(part.toolInvocation.toolName)
-              ? ""
+              ? { success: true }
               : {
                   error: "User cancelled the tool call.",
                 },

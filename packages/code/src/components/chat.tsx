@@ -189,7 +189,7 @@ function useWorkspaceFiles() {
 
 /**
  * Keep only the last 3 messages from the assistant.
- * 
+ *
  * For tools, we also keep only last 3 invocations.
  */
 function createRenderMessages(messages: Message[], isLoading: boolean) {
@@ -205,9 +205,13 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
     });
   }
 
-  for (const message of x) {
+  for (let i = 0; i < x.length; i++) {
+    const message = x[i];
     if (message.parts) {
-      message.parts = message.parts.slice(-3);
+      x[i] = {
+        ...message,
+        parts: message.parts.slice(-3),
+      };
     }
   }
 

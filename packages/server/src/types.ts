@@ -30,4 +30,4 @@ export type ChatRequest = z.infer<typeof ZodChatRequestType>;
 export type Environment = NonNullable<ChatRequest["environment"]>;
 export type SystemPromptEnvironment = {
   cwd: string;
-}
+};
