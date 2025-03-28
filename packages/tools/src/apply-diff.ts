@@ -16,7 +16,7 @@ If you're not confident in the exact content to search for, use the read_file to
 When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
 
 Parameters:
-- path: (required) The path of the file to modify (relative to the current working directory /Users/meng/Projects/ragdoll)
+- path: (required) The path of the file to modify (relative to the current working directory)
 - diff: (required) The search/replace block defining the changes.
 - start_line: (required) The line number where the search block starts.
 - end_line: (required) The line number where the search block ends.
