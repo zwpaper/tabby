@@ -29,16 +29,7 @@ function Chat() {
   const { isUserInputTools } = useIsUserInputTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
 
-  const renderMessages = [...messages];
-  if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
-    // Add a placeholder message to show the spinner
-    renderMessages.push({
-      id: "",
-      role: "assistant",
-      content: "",
-      parts: [],
-    });
-  }
+  const renderMessages = createRenderMessages(messages, isLoading);
 
   const [showErrorRetry, setShowErrorRetry] = useState(false);
   useEffect(() => {
@@ -58,7 +49,7 @@ function Chat() {
       {renderMessages.length > 0 && (
         <Box flexDirection="column" padding={1}>
           <Box flexDirection="column" gap={1}>
-            {renderMessages.slice(-3).map((message) => (
+            {renderMessages.map((message) => (
               <Box key={message.id} flexDirection="column" gap={1}>
                 <Box gap={1}>
                   <Text color={getRoleColor(message.role)}>
@@ -70,14 +61,14 @@ function Chat() {
                       <Spinner />
                     )}
                 </Box>
-                {message.parts.slice(-3).map((part, index) => {
+                {message.parts?.map((part, index) => {
                   if (part.type === "text") {
                     return <Markdown key={index}>{part.text}</Markdown>;
                   }
                   if (part.type === "tool-invocation") {
                     return (
                       <ToolBox
-                        key={index}
+                        key={part.toolInvocation.toolCallId}
                         toolCall={part.toolInvocation}
                         addToolResult={addToolResult}
                       />
@@ -194,6 +185,33 @@ function useWorkspaceFiles() {
     return () => clearInterval(handle);
   }, []);
   return workspaceFiles;
+}
+
+/**
+ * Keep only the last 3 messages from the assistant.
+ * 
+ * For tools, we also keep only last 3 invocations.
+ */
+function createRenderMessages(messages: Message[], isLoading: boolean) {
+  const x = [...messages];
+
+  if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
+    // Add a placeholder message to show the spinner
+    x.push({
+      id: "",
+      role: "assistant",
+      content: "",
+      parts: [],
+    });
+  }
+
+  for (const message of x) {
+    if (message.parts) {
+      message.parts = message.parts.slice(-3);
+    }
+  }
+
+  return x.slice(-3);
 }
 
 export default Chat;
