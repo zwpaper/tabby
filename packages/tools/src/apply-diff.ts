@@ -14,19 +14,20 @@ Only a single operation is allowed per tool use.
 The SEARCH section must exactly match existing content including whitespace and indentation.
 If you're not confident in the exact content to search for, use the read_file tool first to get the exact content.
 When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
-ALWAYS make as many changes in a single request as possible using multiple SEARCH/REPLACE blocks
+
+Parameters:
+- path: (required) The path of the file to modify (relative to the current working directory /Users/meng/Projects/ragdoll)
+- diff: (required) The search/replace block defining the changes.
+- start_line: (required) The line number where the search block starts.
+- end_line: (required) The line number where the search block ends.
 
 Diff format:
 \`\`\`
 <<<<<<< SEARCH
-:start_line: (required) The line number of original content where the search block starts.
-:end_line: (required) The line number of original content  where the search block ends.
--------
 [exact content to find including whitespace]
 =======
 [new content to replace with]
 >>>>>>> REPLACE
-
 \`\`\`
 
 Example:
@@ -43,9 +44,6 @@ Original file:
 Search/Replace content:
 \`\`\`
 <<<<<<< SEARCH
-:start_line:1
-:end_line:5
--------
 def calculate_total(items):
     total = 0
     for item in items:
@@ -56,32 +54,6 @@ def calculate_total(items):
     """Calculate total with 10% markup"""
     return sum(item * 1.1 for item in items)
 >>>>>>> REPLACE
-
-\`\`\`
-
-Search/Replace content with multi edits:
-\`\`\`
-<<<<<<< SEARCH
-:start_line:1
-:end_line:2
--------
-def calculate_sum(items):
-    sum = 0
-=======
-def calculate_sum(items):
-    sum = 0
->>>>>>> REPLACE
-
-<<<<<<< SEARCH
-:start_line:4
-:end_line:5
--------
-        total += item
-    return total
-=======
-        sum += item
-    return sum 
->>>>>>> REPLACE
 \`\`\`
 `,
   inputSchema: z.object({
@@ -91,6 +63,12 @@ def calculate_sum(items):
         "The path of the file to modify (relative to the current working directory).",
       ),
     diff: z.string().describe("The search/replace block defining the changes."),
+    startLine: z
+      .number()
+      .describe("The line number where the search block starts."),
+    endLine: z
+      .number()
+      .describe("The line number where the search block ends."),
   }),
   outputSchema: z.object({
     success: z

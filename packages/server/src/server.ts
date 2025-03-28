@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { zValidator } from "@hono/zod-validator";
 import * as tools from "@ragdoll/tools";
 import {
@@ -25,8 +25,8 @@ api.post("/chat/stream", zValidator("json", ZodChatRequestType), async (c) => {
   c.header("Content-Type", "text/plain; charset=utf-8");
 
   // const model = openrouter("anthropic/claude-3.7-sonnet");
-  // const model = google("gemini-2.5-pro-exp-03-25");
-  const model = openai("gpt-4o-mini");
+  const model = google("gemini-2.5-pro-exp-03-25");
+  // const model = openai("gpt-4o-mini");
 
   injectReadEnvironmentToolCall(messages, model, environment);
 

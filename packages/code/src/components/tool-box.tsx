@@ -254,11 +254,10 @@ const WriteToFileTool: React.FC<
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Box>
-        <Text>Writing to file </Text>
+      <Box gap={1}>
+        <Text>Writing to file</Text>
         <Text color="yellowBright">{path}</Text>
         <Text>
-          {" "}
           ({contentLength} characters, {lineCount} lines)
         </Text>
       </Box>

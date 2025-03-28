@@ -1,46 +1,41 @@
 import fs from "node:fs/promises";
 import type { ApplyDiffFunctionType } from "@ragdoll/tools";
 
-const WindowToExpandForSearch = 200;
+const WindowToExpandForSearch = 5;
 
-export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
+export const applyDiff: ApplyDiffFunctionType = async ({
+  path,
+  diff,
+  startLine,
+  endLine,
+}) => {
   const fileContent = await fs.readFile(path, "utf-8");
-  const diffBlocks = diff.split("<<<<<<< SEARCH");
   let updatedContent = fileContent;
 
-  for (let i = 1; i < diffBlocks.length; i++) {
-    const block = diffBlocks[i];
-    const [metadata, rest] = block.split("-------\n");
-    const [searchContent, replaceContent] = rest.split("\n=======\n");
-    const endReplace = replaceContent.split("\n>>>>>>> REPLACE")[0];
+  const diffBlocks = diff.split("\n=======\n");
+  if (diffBlocks.length !== 2) {
+    throw new Error("Invalid diff format");
+  }
+  const searchContent = removeSearchPrefix(diffBlocks[0]);
+  const replaceContent = removeReplaceSuffix(diffBlocks[1]);
 
-    const startLine = Number.parseInt(
-      metadata.split(":start_line:")[1].split(":")[0].trim(),
+  const lines = fileContent.split("\n");
+  const startIndex = Math.max(startLine - 1 - WindowToExpandForSearch, 0);
+  const endIndex = Math.min(endLine - 1 + 5, lines.length - 1);
+
+  const extractedLines = lines.slice(startIndex, endIndex + 1);
+  const searchLines = searchContent.split("\n");
+  const startIndexInExtractedLines = fuzzyMatch(extractedLines, searchLines);
+
+  if (startIndexInExtractedLines >= 0) {
+    lines.splice(
+      startIndex + startIndexInExtractedLines,
+      searchLines.length,
+      ...replaceContent.split("\n"),
     );
-    const endLine = Number.parseInt(
-      metadata.split(":end_line:")[1].split(":")[0].trim(),
-    );
-
-    const lines = updatedContent.split("\n");
-    const startIndex = Math.max(startLine - 1 - WindowToExpandForSearch, 0);
-    const endIndex = Math.min(endLine - 1 + 5, lines.length - 1);
-
-    const extractedLines = lines.slice(startIndex, endIndex + 1);
-    const searchLines = searchContent.split("\n");
-    const startIndexInExtractedLines = fuzzyMatch(extractedLines, searchLines);
-
-    if (startIndexInExtractedLines >= 0) {
-      lines.splice(
-        startIndex + startIndexInExtractedLines,
-        searchLines.length,
-        ...endReplace.split("\n"),
-      );
-      updatedContent = lines.join("\n");
-    } else {
-      throw new Error(
-        `Search content does not match the original file content.\nOriginal content:\n${extractedLines}\nSearch content:\n${searchLines}\n`,
-      );
-    }
+    updatedContent = lines.join("\n");
+  } else {
+    throw new Error("Search content does not match the original file content.");
   }
 
   await fs.writeFile(path, updatedContent, "utf-8");
@@ -63,4 +58,24 @@ function fuzzyMatch(extractLines: string[], searchLines: string[]) {
     }
   }
   return -1;
+}
+
+function removeSearchPrefix(content: string) {
+  const prefix = "<<<<<<< SEARCH\n";
+  if (content.startsWith(prefix)) {
+    return content.slice(prefix.length);
+  }
+  throw new Error(
+    `Diff formatis incorrect. Expected '${prefix.trim()}' prefix.`,
+  );
+}
+
+function removeReplaceSuffix(content: string) {
+  const suffix = "\n>>>>>>> REPLACE";
+  if (content.endsWith(suffix)) {
+    return content.slice(0, -suffix.length);
+  }
+  throw new Error(
+    `Diff format is incorrect. Expected '${suffix.trim()}' suffix.`,
+  );
 }
