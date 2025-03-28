@@ -12,7 +12,7 @@ export const applyDiff: ApplyDiffFunctionType = async ({
   const fileContent = await fs.readFile(path, "utf-8");
   let updatedContent = fileContent;
 
-  const diffBlocks = diff.split("\n=======\n");
+  const diffBlocks = diff.trim().split("\n=======\n");
   if (diffBlocks.length !== 2) {
     throw new Error("Invalid diff format");
   }

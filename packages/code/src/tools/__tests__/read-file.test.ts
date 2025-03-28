@@ -66,13 +66,14 @@ describe("readFile", () => {
     const result = await readFile({ path: "large-file.txt" });
 
     // Check if the byte length is within the limit (accounting for line numbers)
-    expect(Buffer.byteLength(result.content, "utf-8")).toBeLessThanOrEqual(1_048_576);
+    expect(Buffer.byteLength(result.content, "utf-8")).toBeLessThanOrEqual(
+      1_048_576,
+    );
     expect(result.isTruncated).toBe(true);
 
     // Also check that the first line has the correct line number format
     expect(result.content.startsWith("1 | ")).toBe(true);
   });
-
 
   it("should throw an error if the file does not exist", async () => {
     // Mock fileTypeFromFile to simulate file check before fs.readFile
@@ -85,8 +86,9 @@ describe("readFile", () => {
 
     // Option 2: fs.readFile throws (more common for 'not found')
     mockFileTypeFromFile.mockResolvedValue({ mime: "text/plain" } as any); // Assume it looks like a text file initially
-    mockReadFile.mockRejectedValue(new Error("ENOENT: no such file or directory")); // Simulate fs error
-
+    mockReadFile.mockRejectedValue(
+      new Error("ENOENT: no such file or directory"),
+    ); // Simulate fs error
 
     await expect(readFile({ path: "non-existent-file.txt" })).rejects.toThrow(); // Check for any error related to file access/reading
   });

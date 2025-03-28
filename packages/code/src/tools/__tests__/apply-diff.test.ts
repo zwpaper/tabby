@@ -7,7 +7,8 @@ vi.mock("node:fs/promises");
 describe("applyDiff", () => {
   const mockFilePath = "mock-file.txt";
   const mockFileContent = "line1\nline2\nline3\nline4\nline5";
-  const validDiff = `<<<<<<< SEARCH\nline2\n=======\nupdated-line2\n>>>>>>> REPLACE`;
+  const validDiff =
+    "<<<<<<< SEARCH\nline2\n=======\nupdated-line2\n>>>>>>> REPLACE";
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,7 +35,8 @@ describe("applyDiff", () => {
   });
 
   it("should throw an error if search content does not match", async () => {
-    const invalidDiff = `<<<<<<< SEARCH\nnon-matching-line\n=======\nupdated-line\n>>>>>>> REPLACE`;
+    const invalidDiff =
+      "<<<<<<< SEARCH\nnon-matching-line\n=======\nupdated-line\n>>>>>>> REPLACE";
 
     await expect(
       applyDiff({
@@ -49,7 +51,7 @@ describe("applyDiff", () => {
   });
 
   it("should throw an error for invalid diff format (missing separator)", async () => {
-    const invalidDiffFormat = `invalid diff format`;
+    const invalidDiffFormat = "invalid diff format";
 
     await expect(
       applyDiff({
@@ -62,7 +64,8 @@ describe("applyDiff", () => {
   });
 
   it("should throw an error for invalid diff format (missing SEARCH prefix)", async () => {
-    const invalidDiffFormat = `SEARCH\nline2\n=======\nupdated-line2\n>>>>>>> REPLACE`;
+    const invalidDiffFormat =
+      "SEARCH\nline2\n=======\nupdated-line2\n>>>>>>> REPLACE";
 
     await expect(
       applyDiff({
@@ -77,7 +80,8 @@ describe("applyDiff", () => {
   });
 
   it("should throw an error for invalid diff format (missing REPLACE suffix)", async () => {
-    const invalidDiffFormat = `<<<<<<< SEARCH\nline2\n=======\nupdated-line2\nREPLACE`;
+    const invalidDiffFormat =
+      "<<<<<<< SEARCH\nline2\n=======\nupdated-line2\nREPLACE";
 
     await expect(
       applyDiff({

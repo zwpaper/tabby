@@ -58,15 +58,17 @@ function Chat() {
       {renderMessages.length > 0 && (
         <Box flexDirection="column" padding={1}>
           <Box flexDirection="column" gap={1}>
-            {renderMessages.slice(-3).map((message, index) => (
+            {renderMessages.slice(-3).map((message) => (
               <Box key={message.id} flexDirection="column" gap={1}>
                 <Box gap={1}>
                   <Text color={getRoleColor(message.role)}>
                     {message.role === "user" ? "You" : "Ragdoll"}
                   </Text>
-                  {isLoading && index === renderMessages.length - 1 && (
-                    <Spinner />
-                  )}
+                  {isLoading &&
+                    message.id ===
+                      renderMessages[renderMessages.length - 1].id && (
+                      <Spinner />
+                    )}
                 </Box>
                 {message.parts.slice(-3).map((part, index) => {
                   if (part.type === "text") {

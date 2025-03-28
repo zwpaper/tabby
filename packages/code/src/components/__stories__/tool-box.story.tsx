@@ -55,6 +55,22 @@ drwxr-xr-x 3 user staff 96 Mar 27 15:30 storybook
 -rw-r--r-- 1 user staff 3141 Mar 28 10:58 node_modules/.vite/deps/chunk-YZ123490.js
 `;
 
+const longErrorMessage = `Error: Failed to execute command 'cat non_existent_file'.
+Details: cat: non_existent_file: No such file or directory
+Stack Trace:
+  at ChildProcess.exithandler (node:child_process:422:12)
+  at ChildProcess.emit (node:events:518:28)
+  at maybeClose (node:internal/child_process:1105:16)
+  at Socket.<anonymous> (node:internal/child_process:457:11)
+  at Socket.emit (node:events:518:28)
+  at Pipe.<anonymous> (node:net:345:12)
+  at Pipe.callbackTrampoline (node:internal/async_hooks:130:17)
+This is an additional line to make the error message longer.
+And another one to ensure it exceeds the collapse threshold.
+Yet another line for good measure.
+Final extra line to demonstrate the collapsing behavior clearly.
+`;
+
 const searchResults: Exclude<
   SearchFilesOutputType,
   { error: string }
@@ -171,7 +187,7 @@ const storyExport = {
               path: "/root/abc",
               startLine: 1,
               endLine: 5,
-              diff: `<<<<<<< SEARCH\noriginal content line 1\noriginal content line 2\n=======\nnew content line 1\nnew content line 2\n>>>>>>> REPLACE`,
+              diff: "<<<<<<< SEARCH\noriginal content line 1\noriginal content line 2\n=======\nnew content line 1\nnew content line 2\n>>>>>>> REPLACE",
             },
             undefined,
             "call",
@@ -191,7 +207,7 @@ const storyExport = {
               path: "/root/abc",
               startLine: 10,
               endLine: 12,
-              diff: `<<<<<<< SEARCH\nOLD LINE 10\nOLD LINE 11\nOLD LINE 12\n=======\nNEW LINE 10\nNEW LINE 11\n>>>>>>> REPLACE`,
+              diff: "<<<<<<< SEARCH\nOLD LINE 10\nOLD LINE 11\nOLD LINE 12\n=======\nNEW LINE 10\nNEW LINE 11\n>>>>>>> REPLACE",
             },
             { success: true },
             "result",
@@ -393,6 +409,37 @@ const storyExport = {
             },
             undefined, // No result for this tool
             "call", // Always in 'call' state visually
+          )}
+          addToolResult={addToolResult}
+        />
+      ),
+    },
+    // --- Tool Error ---
+    {
+      id: "toolErrorShort",
+      title: "Tool Error (Short Message)",
+      component: (
+        <ToolBox
+          toolCall={makeToolCall(
+            "readFile",
+            { path: "non-existent-file.txt" },
+            { error: "File not found." },
+            "result",
+          )}
+          addToolResult={addToolResult}
+        />
+      ),
+    },
+    {
+      id: "toolErrorLong",
+      title: "Tool Error (Long Message)",
+      component: (
+        <ToolBox
+          toolCall={makeToolCall(
+            "executeCommand",
+            { command: "cat non_existent_file" },
+            { error: longErrorMessage },
+            "result",
           )}
           addToolResult={addToolResult}
         />
