@@ -58,7 +58,7 @@ function Chat() {
       {renderMessages.length > 0 && (
         <Box flexDirection="column" padding={1}>
           <Box flexDirection="column" gap={1}>
-            {renderMessages.map((message, index) => (
+            {renderMessages.slice(0, -3).map((message, index) => (
               <Box key={message.id} flexDirection="column" gap={1}>
                 <Box gap={1}>
                   <Text color={getRoleColor(message.role)}>
@@ -68,7 +68,7 @@ function Chat() {
                     <Spinner />
                   )}
                 </Box>
-                {message.parts.map((part, index) => {
+                {message.parts.slice(0, -3).map((part, index) => {
                   if (part.type === "text") {
                     return <Markdown key={index}>{part.text}</Markdown>;
                   }
