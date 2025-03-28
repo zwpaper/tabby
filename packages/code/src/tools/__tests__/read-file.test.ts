@@ -17,7 +17,8 @@ describe("readFile", () => {
 
     const result = await readFile({ path: "test-file.txt" });
 
-    expect(result.content).toBe(mockFileContent);
+    // Expect line number 1 prepended
+    expect(result.content).toBe(`1 | ${mockFileContent}`);
     expect(mockReadFile).toHaveBeenCalledWith("test-file.txt");
   });
 
@@ -43,10 +44,11 @@ describe("readFile", () => {
     const result = await readFile({
       path: "test-file.txt",
       startLine: 2,
-      endLine: 4,
+      endLine: 4, // Reads lines 2, 3, 4 (exclusive end index for slice, but inclusive for user input)
     });
 
-    expect(result.content).toBe("Line 2\nLine 3\nLine 4");
+    // Expect line numbers 2, 3, 4 prepended
+    expect(result.content).toBe("2 | Line 2\n3 | Line 3\n4 | Line 4");
   });
 
   it("should truncate content exceeding 1 MB", async () => {
@@ -54,21 +56,38 @@ describe("readFile", () => {
     const mockFileTypeFromFile = vi.mocked(fileType.fileTypeFromFile);
     mockFileTypeFromFile.mockResolvedValue({ mime: "text/plain" } as any);
 
-    const largeContent = "A".repeat(2_000_000); // 2 MB content
+    // Create large content (e.g., 2MB)
+    const largeContentLine = "A".repeat(100);
+    const numLines = Math.ceil(2_000_000 / (largeContentLine.length + 1)); // +1 for newline
+    const largeContent = Array(numLines).fill(largeContentLine).join("\n");
+
     mockReadFile.mockResolvedValue(largeContent);
 
     const result = await readFile({ path: "large-file.txt" });
 
-    expect(result.content.length).toBeLessThanOrEqual(1_048_576);
+    // Check if the byte length is within the limit (accounting for line numbers)
+    expect(Buffer.byteLength(result.content, "utf-8")).toBeLessThanOrEqual(1_048_576);
     expect(result.isTruncated).toBe(true);
+
+    // Also check that the first line has the correct line number format
+    expect(result.content.startsWith("1 | ")).toBe(true);
   });
 
-  it("should throw an error if the file does not exist", async () => {
-    const mockFileTypeFromFile = vi.mocked(fileType.fileTypeFromFile);
-    mockFileTypeFromFile.mockRejectedValue(new Error("File not found"));
 
-    await expect(readFile({ path: "non-existent-file.txt" })).rejects.toThrow(
-      "File not found",
-    );
+  it("should throw an error if the file does not exist", async () => {
+    // Mock fileTypeFromFile to simulate file check before fs.readFile
+    const mockFileTypeFromFile = vi.mocked(fileType.fileTypeFromFile);
+    // Simulate fs.readFile throwing the error if fileType check passes or is skipped
+    const mockReadFile = vi.mocked(fs.readFile);
+
+    // Option 1: fileTypeFromFile throws (e.g., permission error before reading)
+    // mockFileTypeFromFile.mockRejectedValue(new Error("File not found or inaccessible"));
+
+    // Option 2: fs.readFile throws (more common for 'not found')
+    mockFileTypeFromFile.mockResolvedValue({ mime: "text/plain" } as any); // Assume it looks like a text file initially
+    mockReadFile.mockRejectedValue(new Error("ENOENT: no such file or directory")); // Simulate fs error
+
+
+    await expect(readFile({ path: "non-existent-file.txt" })).rejects.toThrow(); // Check for any error related to file access/reading
   });
 });

@@ -24,13 +24,24 @@ export const readFile: ReadFileFunctionType = async ({
   const start = startLine ? startLine - 1 : 0;
   const end = endLine ? endLine : lines.length;
 
-  let selectedLines = lines.slice(start, end).join("\n");
+  // Select the relevant lines
+  const selectedLines = lines.slice(start, end);
+
+  // Add line numbers
+  const numberedLines = selectedLines.map(
+    (line, index) => `${start + index + 1} | ${line}`,
+  );
+
+  let contentWithLineNumbers = numberedLines.join("\n");
 
   let isTruncated = false;
-  if (Buffer.byteLength(selectedLines, "utf-8") > 1_048_576) {
-    selectedLines = selectedLines.slice(0, 1_048_576);
+  // Check byte length and truncate if necessary
+  if (Buffer.byteLength(contentWithLineNumbers, "utf-8") > 1_048_576) {
+    // This truncation might cut off mid-line or mid-number, which is a simplification.
+    // A more robust solution would truncate line by line, but this matches the previous behavior's limit.
+    contentWithLineNumbers = contentWithLineNumbers.slice(0, 1_048_576);
     isTruncated = true;
   }
 
-  return { content: selectedLines, isTruncated };
+  return { content: contentWithLineNumbers, isTruncated };
 };
