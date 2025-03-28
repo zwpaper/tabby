@@ -9,10 +9,11 @@ import type {
   AskFollowupQuestionOutputType,
   ListFilesInputType,
   ListFilesOutputType,
+  ReadFileInputType,
+  ReadFileOutputType,
   WriteToFileInputType,
   WriteToFileOutputType,
 } from "@ragdoll/tools";
-import type { ReadFileInputType, ReadFileOutputType } from "@ragdoll/tools";
 import Collapsible from "./collapsible";
 
 import { useExecuteTool } from "@/tools";
@@ -98,17 +99,21 @@ function ConfirmToolUsage({
 const ApplyDiffTool: React.FC<
   ToolProps<ApplyDiffInputType, ApplyDiffOutputType>
 > = ({ toolCall }) => {
-  const { path, diff } = toolCall.args;
+  const { path, diff, startLine, endLine } = toolCall.args;
 
   // Count the number of lines in the diff
   const lineCount = diff.split("\n").length;
   const shouldCollapse = lineCount > 5;
 
+  // Create the line range string
+  const lineRange = `[lines ${startLine}-${endLine}]`;
+
   return (
     <Box flexDirection="column" gap={1}>
-      <Box>
-        <Text>Applying patch to </Text>
+      <Box gap={1}>
+        <Text>Applying patch to</Text>
         <Text color="yellowBright">{path}</Text>
+        <Text color="grey">{lineRange}</Text>
       </Box>
       {shouldCollapse ? (
         <Collapsible title={`Patch (${lineCount} lines)`} open={false}>
@@ -151,24 +156,33 @@ const AskFollowupQuestionTool: React.FC<
 const ReadFileTool: React.FC<
   ToolProps<ReadFileInputType, ReadFileOutputType>
 > = ({ toolCall }) => {
-  const { path } = toolCall.args;
+  const { path, startLine, endLine } = toolCall.args; // Extract startLine and endLine
   let resultEl: React.ReactNode;
   if (toolCall.state === "result") {
     if (!("error" in toolCall.result)) {
       const { isTruncated } = toolCall.result;
       resultEl = (
         <Text>
-          {" "}
-          ({toolCall.result.content.length} characters read
-          {isTruncated ? ", truncated" : ""})
+          {toolCall.result.content.length} characters read
+          {isTruncated ? ", truncated" : ""}
         </Text>
       );
     }
   }
+
+  // Conditionally create the line range string
+  const lineRange =
+    startLine !== undefined || endLine !== undefined
+      ? `[lines ${startLine ?? 1}-${endLine ?? "end"}]`
+      : "";
+
   return (
-    <Box>
-      <Text>Reading file </Text>
-      <Text color="yellowBright">{path}</Text>
+    <Box gap={1} flexDirection="column">
+      <Box gap={1}>
+        <Text>Reading file</Text>
+        <Text color="yellowBright">{path}</Text>
+        {lineRange && <Text color="grey">{lineRange}</Text>}
+      </Box>
       {resultEl}
     </Box>
   );

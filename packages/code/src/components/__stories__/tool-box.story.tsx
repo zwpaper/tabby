@@ -75,6 +75,27 @@ const storyExport = {
       ),
     },
     {
+      id: "readFileWithLines",
+      title: "Read File (With Lines)",
+      component: (
+        <ToolBox
+          toolCall={makeToolCall(
+            "readFile",
+            {
+              path: "src/example.txt",
+              startLine: 10,
+              endLine: 20,
+            },
+            {
+              content: "This is the content read from lines 10 to 20.",
+              isTruncated: false,
+            },
+          )}
+          addToolResult={addToolResult}
+        />
+      ),
+    },
+    {
       id: "applyDiffWithResult",
       title: "Apply Diff (With Result)",
       component: (
@@ -83,6 +104,8 @@ const storyExport = {
             "applyDiff",
             {
               path: "/root/abc",
+              startLine: 10, // Added example startLine
+              endLine: 20, // Added example endLine
               diff: `THIS IS PATCH CONTENT
 THIS IS PATCH CONTENT
 THIS IS PATCH CONTENT
