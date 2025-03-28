@@ -17,7 +17,7 @@ export const writeToFile: WriteToFileFunctionType = async ({
 
     // Write the content to the file
     await fs.writeFile(path, content, "utf-8");
-    return true;
+    return { success: true };
   } catch (error) {
     throw new Error(`Failed to write to file: ${error}`);
   }

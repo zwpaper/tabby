@@ -16,7 +16,8 @@ describe("writeToFile", () => {
     const filePath = "test-file.txt";
     const fileContent = "This is a test content.";
 
-    await writeToFile({ path: filePath, content: fileContent });
+    const result = await writeToFile({ path: filePath, content: fileContent });
+    expect(result).toEqual({ success: true });
 
     expect(mockMkdir).toHaveBeenCalled();
     expect(mockWriteFile).toHaveBeenCalledWith(filePath, fileContent, "utf-8");

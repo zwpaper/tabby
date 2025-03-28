@@ -92,7 +92,11 @@ def calculate_sum(items):
       ),
     diff: z.string().describe("The search/replace block defining the changes."),
   }),
-  outputSchema: z.boolean(),
+  outputSchema: z.object({
+    success: z
+      .boolean()
+      .describe("Indicates whether the operation was successful."),
+  }),
 });
 
 export type ApplyDiffInputType = ToolInputType<typeof applyDiff>;

@@ -17,7 +17,11 @@ export const askFollowupQuestion = declareClientTool({
         "A list of 2-4 suggested answers that logically follow from the question.",
       ),
   }),
-  outputSchema: z.void(),
+  outputSchema: z.object({
+    success: z
+      .boolean()
+      .describe("Indicates whether the question was successfully asked."),
+  }),
 });
 
 export type AskFollowupQuestionInputType = ToolInputType<

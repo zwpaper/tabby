@@ -44,7 +44,7 @@ export const applyDiff: ApplyDiffFunctionType = async ({ path, diff }) => {
   }
 
   await fs.writeFile(path, updatedContent, "utf-8");
-  return true;
+  return { success: true };
 };
 
 // Extract lines, a slightly larger range than the search lines, to ensure we can find the exact match.

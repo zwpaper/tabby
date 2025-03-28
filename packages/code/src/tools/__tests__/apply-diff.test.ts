@@ -40,7 +40,7 @@ updatedLine4
 
     const result = await applyDiff({ path: filePath, diff });
 
-    expect(result).toBe(true);
+    expect(result).toEqual({ success: true });
     expect(mockReadFile).toHaveBeenCalledWith(filePath, "utf-8");
     expect(mockWriteFile).toHaveBeenCalledWith(
       filePath,
@@ -91,7 +91,7 @@ updatedLine3
 
     const result = await applyDiff({ path: filePath, diff });
 
-    expect(result).toBe(true);
+    expect(result).toEqual({ success: true });
     expect(mockReadFile).toHaveBeenCalledWith(filePath, "utf-8");
     expect(mockWriteFile).toHaveBeenCalledWith(
       filePath,

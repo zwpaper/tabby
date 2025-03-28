@@ -17,7 +17,11 @@ export const writeToFile = declareClientTool({
       ),
     content: z.string().describe("The content to write to the file."),
   }),
-  outputSchema: z.boolean(),
+  outputSchema: z.object({
+    success: z
+      .boolean()
+      .describe("Indicates whether the file was successfully written."),
+  }),
 });
 
 export type WriteToFileInputType = ToolInputType<typeof writeToFile>;
