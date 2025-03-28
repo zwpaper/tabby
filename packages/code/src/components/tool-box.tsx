@@ -1,16 +1,19 @@
 import * as nodePath from "node:path";
 import type { ToolCall, ToolResult } from "@ai-sdk/provider-utils";
-import type { ToolInvocation as ToolInvocationAny } from "@ai-sdk/ui-utils";
 import { ConfirmInput } from "@inkjs/ui";
 import type {
   ApplyDiffInputType,
   ApplyDiffOutputType,
   AskFollowupQuestionInputType,
   AskFollowupQuestionOutputType,
+  ExecuteCommandInputType,
+  ExecuteCommandOutputType,
   ListFilesInputType,
   ListFilesOutputType,
   ReadFileInputType,
   ReadFileOutputType,
+  SearchFilesInputType,
+  SearchFilesOutputType,
   WriteToFileInputType,
   WriteToFileOutputType,
 } from "@ragdoll/tools";
@@ -53,15 +56,16 @@ const ToolBox: React.FC<
     addToolResult,
   });
 
-  const C = ToolComponents[toolCall.toolName] || DefaultTool;
+  const C = ToolComponents[toolCall.toolName];
   const children = (
     <>
       <C toolCall={toolCall} />
       {approval === "pending" && <ConfirmToolUsage confirm={approveTool} />}
       {toolCall.state === "result" &&
         typeof toolCall.result === "object" &&
+        toolCall.result !== null && // Added null check for safety
         "error" in toolCall.result && (
-          <ErrorResult error={toolCall.result.error} />
+          <ErrorResult error={(toolCall.result as { error: string }).error} /> // Type assertion
         )}
     </>
   );
@@ -108,6 +112,17 @@ const ApplyDiffTool: React.FC<
   // Create the line range string
   const lineRange = `[lines ${startLine}-${endLine}]`;
 
+  let resultEl: React.ReactNode = undefined;
+  if (
+    toolCall.state === "result" &&
+    typeof toolCall.result === "object" &&
+    toolCall.result !== null && // Added null check
+    !("error" in toolCall.result)
+    // Assuming a successful result doesn't contain an 'error' key
+  ) {
+    resultEl = <Text color="greenBright">Patch applied successfully.</Text>;
+  }
+
   return (
     <Box flexDirection="column" gap={1}>
       <Box gap={1}>
@@ -122,6 +137,7 @@ const ApplyDiffTool: React.FC<
       ) : (
         <Text color="grey">{diff}</Text>
       )}
+      {resultEl}
     </Box>
   );
 };
@@ -188,70 +204,125 @@ const ReadFileTool: React.FC<
   );
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: args are dynamic
-function ToolArgs({ name, args }: { name: string; args: any }) {
+const ExecuteCommandTool: React.FC<
+  ToolProps<ExecuteCommandInputType, ExecuteCommandOutputType>
+> = ({ toolCall }) => {
+  const { command, cwd } = toolCall.args;
+  let resultEl: React.ReactNode;
+
+  if (toolCall.state === "result") {
+    if (!("error" in toolCall.result)) {
+      let { output } = toolCall.result;
+      output = output.trim();
+      const outputLines = output?.split("\n") || [];
+      const shouldCollapse = outputLines.length > 5;
+
+      resultEl = (
+        <Box flexDirection="column" gap={1}>
+          {shouldCollapse ? (
+            <Collapsible
+              title={`Output (${outputLines.length} lines)`}
+              open={false}
+            >
+              <Text color="grey">{output}</Text>
+            </Collapsible>
+          ) : (
+            <Text color="grey">{output}</Text>
+          )}
+        </Box>
+      );
+    }
+  }
+
   return (
-    <Box>
-      <Text color="whiteBright">{name}( </Text>
-      <Record value={args} />
-      <Text color="whiteBright"> )</Text>
+    <Box flexDirection="column" gap={1}>
+      <Box gap={1}>
+        <Text>Executing command</Text>
+        <Text color="yellowBright">{command}</Text>
+        {cwd && (
+          <>
+            <Text>in</Text>
+            <Text color="blueBright">{cwd}</Text>
+          </>
+        )}
+      </Box>
+      {resultEl}
     </Box>
   );
-}
+};
+
+const SearchFilesTool: React.FC<
+  ToolProps<SearchFilesInputType, SearchFilesOutputType>
+> = ({ toolCall }) => {
+  const { path, regex, filePattern } = toolCall.args;
+  let resultEl: React.ReactNode;
+
+  if (toolCall.state === "result") {
+    // Check if the result is an object and not an error
+    if (
+      typeof toolCall.result === "object" &&
+      toolCall.result !== null &&
+      !("error" in toolCall.result)
+    ) {
+      // Correctly destructure the matches array
+      const { matches } = toolCall.result;
+      const matchCount = matches.length;
+      const shouldCollapse = matchCount > 5;
+
+      const resultsContent = (
+        <Box flexDirection="column" gap={1}>
+          {matches.map((match, index) => (
+            <Box key={index} flexDirection="column" paddingX={1}>
+              <Box gap={1}>
+                <Text color="yellowBright">{match.file}</Text>
+                <Text color="grey">[line {match.line}]</Text>
+              </Box>
+              <Text color="grey">{match.context}</Text>
+            </Box>
+          ))}
+        </Box>
+      );
+
+      resultEl = (
+        <Box flexDirection="column" gap={1}>
+          {!shouldCollapse && <Text>Found {matchCount} matches</Text>}
+          {matchCount > 0 &&
+            (shouldCollapse ? (
+              <Collapsible title={`Found ${matchCount} matches`} open={false}>
+                {resultsContent}
+              </Collapsible>
+            ) : (
+              resultsContent
+            ))}
+        </Box>
+      );
+    }
+  }
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Box gap={1}>
+        <Text>Searching in</Text>
+        <Text color="yellowBright">{path}</Text>
+        <Text>for</Text>
+        <Text color="magentaBright">/{regex}/</Text>
+        {filePattern && (
+          <>
+            <Text>matching</Text>
+            <Text color="cyanBright">{filePattern}</Text>
+          </>
+        )}
+      </Box>
+      {resultEl}
+    </Box>
+  );
+};
 
 function ErrorResult({ error }: { error: string }) {
   return (
     <Box>
       <Text color="grey">error: </Text>
       <Text>{error}</Text>
-    </Box>
-  );
-}
-
-function DefaultTool({ toolCall }: { toolCall: ToolInvocationAny }) {
-  const isError =
-    toolCall.state === "result" &&
-    typeof toolCall.result === "object" &&
-    "error" in toolCall.result;
-  return (
-    <>
-      <ToolArgs name={toolCall.toolName} args={toolCall.args} />
-      {toolCall.state === "result" && !isError && (
-        <Box marginLeft={1}>
-          <Record value={toolCall.result} flexDirection="column" />
-        </Box>
-      )}
-    </>
-  );
-}
-
-function Record({
-  value,
-  flexDirection,
-}: {
-  value: Record<string, unknown> | Array<unknown>;
-  flexDirection?: "row" | "column";
-}) {
-  if (!Array.isArray(value)) {
-    return (
-      <Box gap={1} flexDirection={flexDirection}>
-        {Object.entries(value).map(([key, value]) => (
-          <Box key={key} gap={1}>
-            <Text color="grey">{key}:</Text>
-            <Text color="whiteBright">{JSON.stringify(value)}</Text>
-          </Box>
-        ))}
-      </Box>
-    );
-  }
-  return (
-    <Box gap={1} flexDirection={flexDirection}>
-      {value.map((item, index) => (
-        <Box key={index} gap={1}>
-          <Text color="grey">{index}:</Text>
-          <Text color="whiteBright">{JSON.stringify(item)}</Text>
-        </Box>
-      ))}
     </Box>
   );
 }
@@ -265,6 +336,16 @@ const WriteToFileTool: React.FC<
   const lineCount = content.split("\n").length;
   const contentLength = content.length;
   const shouldCollapse = lineCount > 5;
+
+  let resultEl: React.ReactNode;
+  if (
+    toolCall.state === "result" &&
+    typeof toolCall.result === "object" &&
+    toolCall.result !== null && // Added null check
+    !("error" in toolCall.result)
+  ) {
+    resultEl = <Text color="greenBright">File written successfully.</Text>;
+  }
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -282,6 +363,7 @@ const WriteToFileTool: React.FC<
       ) : (
         <Text color="grey">{content}</Text>
       )}
+      {resultEl}
     </Box>
   );
 };
@@ -357,8 +439,10 @@ const ToolComponents: Record<string, React.FC<ToolProps>> = {
   applyDiff: ApplyDiffTool,
   attemptCompletion: TaskCompleteTool,
   askFollowupQuestion: AskFollowupQuestionTool,
+  executeCommand: ExecuteCommandTool,
   listFiles: ListFilesTool,
   readFile: ReadFileTool,
+  searchFiles: SearchFilesTool,
   writeToFile: WriteToFileTool,
 };
 
