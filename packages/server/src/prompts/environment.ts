@@ -10,7 +10,7 @@ export function getReadEnvironmentResult(environment: Environment) {
   return sections;
 }
 
-function getCurrentTime(currentTime: string | undefined) {
+function getCurrentTime(currentTime: string) {
   if (currentTime) {
     return `# Current Time\n${currentTime}`;
   }
@@ -21,13 +21,10 @@ function getWorkspaceFiles(
   workspace: Environment["workspace"],
   info: Environment["info"],
 ) {
-  if (workspace && info) {
-    const { files, isTruncated } = workspace;
-    const filesList = files.join("\n");
-    const truncatedMessage = isTruncated
-      ? "\n(Note: The list of files is truncated. Use listFiles tool to explore if needed)"
-      : "";
-    return `# Current Working Directory (${info.cwd}) Files\n${filesList}${truncatedMessage}`;
-  }
-  return "";
+  const { files, isTruncated } = workspace;
+  const filesList = files.join("\n");
+  const truncatedMessage = isTruncated
+    ? "\n(Note: The list of files is truncated. Use listFiles tool to explore if needed)"
+    : "";
+  return `# Current Working Directory (${info.cwd}) Files\n${filesList}${truncatedMessage}`;
 }

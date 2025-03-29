@@ -7,21 +7,17 @@ export const ZodChatRequestType = z.object({
   messages: z.array(ZodMessageType),
   environment: z
     .object({
-      currentTime: z.string().optional().describe("The current time."),
-      workspace: z
-        .object({
-          files: z.array(z.string()),
-          isTruncated: z.boolean(),
-        })
-        .optional(),
-      info: z
-        .object({
-          cwd: z.string().describe("The current working directory."),
-          shell: z.string().describe("The default shell."),
-          os: z.string().describe("The operating system."),
-          homedir: z.string().describe("The home directory."),
-        })
-        .optional(),
+      currentTime: z.string().describe("The current time."),
+      workspace: z.object({
+        files: z.array(z.string()),
+        isTruncated: z.boolean(),
+      }),
+      info: z.object({
+        cwd: z.string().describe("The current working directory."),
+        shell: z.string().describe("The default shell."),
+        os: z.string().describe("The operating system."),
+        homedir: z.string().describe("The home directory."),
+      }),
     })
     .optional(),
 });
