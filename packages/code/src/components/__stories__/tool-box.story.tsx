@@ -293,7 +293,7 @@ const storyExport = {
           toolCall={makeToolCall(
             "executeCommand",
             { command: "echo 'Success!'" },
-            { output: "Success!\n" } as ExecuteCommandOutputType,
+            { stdout: "Success!\n", stderr: "" } as ExecuteCommandOutputType,
             "result",
           )}
           addToolResult={addToolResult}
@@ -309,7 +309,8 @@ const storyExport = {
             "executeCommand",
             { command: "cat non_existent_file" },
             {
-              output: "cat: non_existent_file: No such file or directory\n",
+              stdout: "",
+              stderr: "cat: non_existent_file: No such file or directory\n",
             } as ExecuteCommandOutputType,
             "result",
           )}
@@ -326,7 +327,8 @@ const storyExport = {
             "executeCommand",
             { command: "ls -la /", cwd: "/" },
             {
-              output: longCommandOutput,
+              stdout: longCommandOutput,
+              stderr: "",
             } as ExecuteCommandOutputType,
             "result",
           )}
