@@ -1,5 +1,5 @@
-import { prepareMessages, useIsUserInputTools } from "@/tools";
-import { listFiles } from "@/tools/list-files";
+import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
+import { listFiles } from "@/lib/tools/list-files";
 import { type Message, useChat } from "@ai-sdk/react";
 import { ConfirmInput, Spinner, TextInput } from "@inkjs/ui";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";

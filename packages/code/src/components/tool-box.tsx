@@ -1,4 +1,4 @@
-import { useExecuteTool } from "@/tools";
+import { useExecuteTool } from "@/lib/tools";
 import { Box } from "ink";
 import {
   ApplyDiffTool,
