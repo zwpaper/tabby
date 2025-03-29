@@ -12,6 +12,7 @@ import { stream } from "hono/streaming";
 import { getReadEnvironmentResult } from "./prompts/environment";
 import { generateSystemPrompt } from "./prompts/system";
 import { type Environment, ZodChatRequestType } from "./types";
+import { authRequest } from "./auth";
 
 export type ContextVariables = {
   model?: LanguageModel;
@@ -19,7 +20,7 @@ export type ContextVariables = {
 
 export const api = new Hono<{ Variables: ContextVariables }>().basePath("/api");
 
-api.post("/chat/stream", zValidator("json", ZodChatRequestType), async (c) => {
+api.post("/chat/stream", zValidator("json", ZodChatRequestType), authRequest, async (c) => {
   const { messages, environment } = await c.req.valid("json");
   c.header("X-Vercel-AI-Data-Stream", "v1");
   c.header("Content-Type", "text/plain; charset=utf-8");
