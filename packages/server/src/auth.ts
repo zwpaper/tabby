@@ -4,13 +4,13 @@ import { db } from "./db";
 
 function makeAuthRequest(): MiddlewareHandler {
   if (process.env.DISABLE_AUTH) {
-    return async (c, next) => {
+    return async (_, next) => {
       await next();
     };
   }
 
   return bearerAuth({
-    async verifyToken(token, c) {
+    async verifyToken(token) {
       const user = await db.auth.verifyToken(token);
       return !!user;
     },
