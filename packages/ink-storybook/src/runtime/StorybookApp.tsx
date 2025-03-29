@@ -161,7 +161,8 @@ export function StorybookApp({
 
         {/* Story content */}
         {currentStory ? (
-          <Wrapper title={`${currentFile.name} / ${currentStory.title}`}
+          <Wrapper key={currentStory.id}
+            title={`${currentFile.name} / ${currentStory.title}`}
             description={currentStory.description}
           >{currentStory.component}</Wrapper>
         ) : (

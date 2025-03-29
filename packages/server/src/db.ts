@@ -15,5 +15,5 @@ export function db() {
   }
 
   dbInstance = init({ appId, adminToken });
-  return dbInstance
+  return dbInstance;
 }

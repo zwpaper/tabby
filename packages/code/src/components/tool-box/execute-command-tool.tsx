@@ -19,7 +19,10 @@ const renderOutput = (
       <Text color={color}>{output}</Text>
     </Collapsible>
   ) : (
-    <Text color={color}>{output}</Text>
+    <Box flexDirection="column" gap={1}>
+      <Text color="grey">{title}</Text>
+      <Text color={color}>{output}</Text>
+    </Box>
   );
 };
 import Collapsible from "../collapsible";
@@ -38,7 +41,7 @@ export const ExecuteCommandTool: React.FC<
       resultEl = (
         <Box flexDirection="column" gap={1}>
           {renderOutput(stdout, "Stdout", "grey")}
-          {renderOutput(stderr, "Stderr", "red")}
+          {renderOutput(stderr, "Stderr", "grey")}
         </Box>
       );
     }
