@@ -3,6 +3,25 @@ import type {
   ExecuteCommandOutputType,
 } from "@ragdoll/tools";
 import { Box, Text } from "ink";
+
+const renderOutput = (
+  output: string | undefined,
+  title: string,
+  color: string,
+): React.ReactNode => {
+  if (!output) return null;
+
+  const outputLines = output.trim().split("\n");
+  const shouldCollapse = outputLines.length > 5;
+
+  return shouldCollapse ? (
+    <Collapsible title={`${title} (${outputLines.length} lines)`} open={false}>
+      <Text color={color}>{output}</Text>
+    </Collapsible>
+  ) : (
+    <Text color={color}>{output}</Text>
+  );
+};
 import Collapsible from "../collapsible";
 import type { ToolProps } from "./types";
 
@@ -14,23 +33,12 @@ export const ExecuteCommandTool: React.FC<
 
   if (toolCall.state === "result") {
     if (!("error" in toolCall.result)) {
-      let { output } = toolCall.result;
-      output = output.trim();
-      const outputLines = output?.split("\n") || [];
-      const shouldCollapse = outputLines.length > 5;
+      const { stdout, stderr } = toolCall.result;
 
       resultEl = (
         <Box flexDirection="column" gap={1}>
-          {shouldCollapse ? (
-            <Collapsible
-              title={`Output (${outputLines.length} lines)`}
-              open={false}
-            >
-              <Text color="grey">{output}</Text>
-            </Collapsible>
-          ) : (
-            <Text color="grey">{output}</Text>
-          )}
+          {renderOutput(stdout, "Stdout", "grey")}
+          {renderOutput(stderr, "Stderr", "red")}
         </Box>
       );
     }

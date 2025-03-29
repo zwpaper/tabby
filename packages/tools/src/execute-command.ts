@@ -21,7 +21,8 @@ export const executeCommand = declareClientTool({
       .describe("The working directory to execute the command in."),
   }),
   outputSchema: z.object({
-    output: z.string().describe("The output of the executed command."),
+    stdout: z.string().describe("The standard output of the command."),
+    stderr: z.string().describe("The standard error of the command."),
   }),
 });
 

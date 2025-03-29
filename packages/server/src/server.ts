@@ -9,10 +9,10 @@ import {
 } from "ai";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
+import { authRequest } from "./auth";
 import { getReadEnvironmentResult } from "./prompts/environment";
 import { generateSystemPrompt } from "./prompts/system";
 import { type Environment, ZodChatRequestType } from "./types";
-import { authRequest } from "./auth";
 
 export type ContextVariables = {
   model?: LanguageModel;
@@ -20,30 +20,35 @@ export type ContextVariables = {
 
 export const api = new Hono<{ Variables: ContextVariables }>().basePath("/api");
 
-api.post("/chat/stream", zValidator("json", ZodChatRequestType), authRequest, async (c) => {
-  const { messages, environment } = await c.req.valid("json");
-  c.header("X-Vercel-AI-Data-Stream", "v1");
-  c.header("Content-Type", "text/plain; charset=utf-8");
+api.post(
+  "/chat/stream",
+  zValidator("json", ZodChatRequestType),
+  authRequest,
+  async (c) => {
+    const { messages, environment } = await c.req.valid("json");
+    c.header("X-Vercel-AI-Data-Stream", "v1");
+    c.header("Content-Type", "text/plain; charset=utf-8");
 
-  // const model = openrouter("anthropic/claude-3.7-sonnet");
-  const model = google("gemini-2.5-pro-exp-03-25");
-  // const model = openai("gpt-4o-mini");
+    // const model = openrouter("anthropic/claude-3.7-sonnet");
+    const model = google("gemini-2.5-pro-exp-03-25");
+    // const model = openai("gpt-4o-mini");
 
-  injectReadEnvironmentToolCall(messages, model, environment);
+    injectReadEnvironmentToolCall(messages, model, environment);
 
-  const result = streamText({
-    model: c.get("model") || model,
-    system: environment?.info && generateSystemPrompt(environment.info),
-    messages,
-    tools,
-    onError: (error) => {
-      console.error(error);
-      console.error(JSON.stringify(messages));
-    },
-  });
+    const result = streamText({
+      model: c.get("model") || model,
+      system: environment?.info && generateSystemPrompt(environment.info),
+      messages,
+      tools,
+      onError: (error) => {
+        console.error(error);
+        console.error(JSON.stringify(messages));
+      },
+    });
 
-  return stream(c, (stream) => stream.pipe(result.toDataStream()));
-});
+    return stream(c, (stream) => stream.pipe(result.toDataStream()));
+  },
+);
 
 function injectReadEnvironmentToolCall(
   messages: Message[],

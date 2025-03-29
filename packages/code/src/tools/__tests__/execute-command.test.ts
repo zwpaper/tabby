@@ -4,7 +4,7 @@ import { executeCommand } from "../execute-command";
 describe("executeCommand", () => {
   it("should execute a valid command and return stdout", async () => {
     const result = await executeCommand({ command: "echo Hello, World!" });
-    expect(result.output).toBe("Hello, World!\n");
+    expect(result.stdout).toBe("Hello, World!\n");
   });
 
   it("should throw an error if command is missing", async () => {
@@ -24,6 +24,6 @@ describe("executeCommand", () => {
       command: "pwd",
       cwd: "/",
     });
-    expect(result.output.trim()).toBe("/");
+    expect(result.stdout.trim()).toBe("/");
   });
 });

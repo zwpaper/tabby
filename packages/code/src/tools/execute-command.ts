@@ -14,6 +14,7 @@ export const executeCommand: ExecuteCommandFunctionType = async ({
 
   const { stdout, stderr } = await execPromise(command, { cwd });
   return {
-    output: stdout || stderr,
+    stdout,
+    stderr,
   };
 };
