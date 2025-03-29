@@ -10,13 +10,13 @@ export const ZodChatRequestType = z.object({
       currentTime: z.string().optional().describe("The current time."),
       workspace: z
         .object({
-          cwd: z.string(),
           files: z.array(z.string()),
           isTruncated: z.boolean(),
         })
         .optional(),
       info: z
         .object({
+          cwd: z.string().describe("The current working directory."),
           shell: z.string().describe("The default shell."),
           os: z.string().describe("The operating system."),
           homedir: z.string().describe("The home directory."),
@@ -28,6 +28,6 @@ export const ZodChatRequestType = z.object({
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;
 export type Environment = NonNullable<ChatRequest["environment"]>;
-export type SystemPromptEnvironment = {
-  cwd: string;
-};
+export type SystemPromptEnvironment = NonNullable<
+  NonNullable<ChatRequest["environment"]>["info"]
+>;

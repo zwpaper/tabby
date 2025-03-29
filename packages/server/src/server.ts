@@ -32,7 +32,7 @@ api.post("/chat/stream", zValidator("json", ZodChatRequestType), async (c) => {
 
   const result = streamText({
     model: c.get("model") || model,
-    system: generateSystemPrompt({ cwd: environment?.workspace?.cwd || "." }),
+    system: environment?.info && generateSystemPrompt(environment.info),
     messages,
     tools,
     onError: (error) => {

@@ -5,7 +5,10 @@ import { generateSystemPrompt } from "../system";
 test("snapshot", () => {
   expect(
     generateSystemPrompt({
-      cwd: ".",
+      cwd: "/home/user/project",
+      os: "linux",
+      homedir: "/home/user",
+      shell: "bash",
     }),
   ).toMatchSnapshot();
 });
@@ -16,10 +19,10 @@ test("environment", () => {
       currentTime: "2021-01-01T00:00:00.000Z",
       workspace: {
         files: ["index.ts", "package.json"],
-        cwd: "/home/user/project",
         isTruncated: false,
       },
       info: {
+        cwd: "/home/user/project",
         os: "linux",
         homedir: "/home/user",
         shell: "bash",

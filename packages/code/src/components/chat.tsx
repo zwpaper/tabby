@@ -145,7 +145,7 @@ function getRoleColor(role: string) {
 
 function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
   const cwd = process.cwd();
-  const workspaceFiles =
+  const workspace =
     "files" in listFilesOutput
       ? listFilesOutput
       : { files: [], isTruncated: false };
@@ -158,11 +158,9 @@ function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
       messages: prepareMessages(messages),
       environment: {
         currentTime: new Date().toString(),
-        workspace: {
-          ...workspaceFiles,
-          cwd,
-        },
+        workspace,
         info: {
+          cwd,
           shell: process.env.SHELL || "",
           os: process.platform,
           homedir: process.env.HOME || "",
