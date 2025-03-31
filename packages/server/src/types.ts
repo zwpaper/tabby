@@ -17,6 +17,7 @@ export const ZodChatRequestType = z.object({
         shell: z.string().describe("The default shell."),
         os: z.string().describe("The operating system."),
         homedir: z.string().describe("The home directory."),
+        customRules: z.string().optional(),
       }),
     })
     .optional(),

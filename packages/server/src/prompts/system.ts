@@ -7,6 +7,7 @@ ${getCapabilitiesPrompt(environment)}
 ${getRulesPrompt(environment)}
 ${getSystemInfoPrompt(environment)}
 ${getObjectivePrompt()}
+${getCustomRulesPrompt(environment)}
 `;
   return prompt.trim();
 }
@@ -93,5 +94,22 @@ You accomplish a given task iteratively, breaking it down into clear steps and w
 5. The user may provide feedback, which you can use to make improvements and try again. But DO NOT continue in pointless back and forth conversations, i.e. don't end your responses with questions or offers for further assistance.
 `;
 
+  return prompt;
+}
+
+function getCustomRulesPrompt(environment: SystemPromptEnvironment) {
+  const { customRules } = environment;
+  if (!customRules) return "";
+  const prompt = `====
+USER'S CUSTOM INSTRUCTIONS
+
+The following additional instructions are provided by the user, and should be followed to the best of your ability without interfering with the TOOL USE guidelines.
+
+Language Preference:
+You should always speak and think in the "en" language unless the user gives you instructions below to do otherwise.
+
+Rules:
+${customRules}
+`;
   return prompt;
 }

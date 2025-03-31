@@ -9,6 +9,7 @@ test("snapshot", () => {
       os: "linux",
       homedir: "/home/user",
       shell: "bash",
+      customRules: `# Rules from (abc)`,
     }),
   ).toMatchSnapshot();
 });
