@@ -107,4 +107,17 @@ describe("applyDiff", () => {
       }),
     ).rejects.toThrow("File not found");
   });
+
+  it("should should work for an empty replace section", async () => {
+    const diff = "<<<<<<< SEARCH\nline2\n=======\n>>>>>>> REPLACE";
+
+    const result = await applyDiff({
+      path: mockFilePath,
+      diff,
+      startLine: 2,
+      endLine: 2,
+    });
+
+    expect(result.success).toBe(true);
+  });
 });

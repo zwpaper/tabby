@@ -5,8 +5,10 @@ import { ConfirmInput, Spinner, TextInput } from "@inkjs/ui";
 import type { User } from "@instantdb/react";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { ListFilesOutputType } from "@ragdoll/tools";
+import type { LanguageModelUsage } from "ai";
 import { Box, Text, useFocus } from "ink";
 import { useEffect, useState } from "react";
+import ChatHeader from "./chat/header";
 import Markdown from "./markdown";
 import ToolBox from "./tool-box";
 
@@ -15,6 +17,7 @@ interface ChatProps {
 }
 
 function Chat({ user }: ChatProps) {
+  const { tokenUsage, trackTokenUsage } = useTokenUsage();
   const workspaceFiles = useWorkspaceFiles();
   const {
     messages,
@@ -31,6 +34,9 @@ function Chat({ user }: ChatProps) {
     experimental_prepareRequestBody: createPrepareRequestBody(workspaceFiles),
     headers: {
       Authorization: `Bearer ${user.refresh_token}`,
+    },
+    onFinish(_, { usage }) {
+      trackTokenUsage(usage);
     },
   });
 
@@ -54,6 +60,8 @@ function Chat({ user }: ChatProps) {
   const showTextInput = (!isLoading || isUserInputTools) && !showErrorRetry;
   return (
     <Box flexDirection="column">
+      <ChatHeader user={user} tokenUsage={tokenUsage} />
+
       {renderMessages.length > 0 && (
         <Box flexDirection="column" padding={1}>
           <Box flexDirection="column" gap={1}>
@@ -222,6 +230,27 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
   }
 
   return x.slice(-3);
+}
+
+function useTokenUsage() {
+  const [tokenUsage, setTokenUsage] = useState<LanguageModelUsage>({
+    completionTokens: 0,
+    promptTokens: 0,
+    totalTokens: 0,
+  });
+
+  const trackTokenUsage = (usage: LanguageModelUsage) => {
+    setTokenUsage((prev) => ({
+      completionTokens: prev.completionTokens + usage.completionTokens,
+      promptTokens: prev.promptTokens + usage.promptTokens,
+      totalTokens: prev.totalTokens + usage.totalTokens,
+    }));
+  };
+
+  return {
+    tokenUsage,
+    trackTokenUsage,
+  };
 }
 
 export default Chat;

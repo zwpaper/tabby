@@ -4,6 +4,7 @@
   "scripts": {
     "check": "npm-run-all check:default check:test",
     "check:default": "biome check --config-path=./biome.default.json --write .",
+    "check:default-unsafe": "biome check --config-path=./biome.default.json --unsafe --write .",
     "check:test": "biome check --config-path=./biome.test.json --write .",
     "test": "vitest --run",
     "tsc": "bun --filter '*' tsc",

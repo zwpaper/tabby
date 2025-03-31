@@ -71,11 +71,17 @@ function removeSearchPrefix(content: string) {
 }
 
 function removeReplaceSuffix(content: string) {
-  const suffix = "\n>>>>>>> REPLACE";
-  if (content.endsWith(suffix)) {
-    return content.slice(0, -suffix.length);
+  const suffixWithNewline = "\n>>>>>>> REPLACE";
+  const suffixWithoutNewline = ">>>>>>> REPLACE"; // Handle empty replace case
+
+  if (content.endsWith(suffixWithNewline)) {
+    return content.slice(0, -suffixWithNewline.length);
+  }
+  if (content === suffixWithoutNewline) {
+    // If the content is exactly the suffix (empty replace), return empty string
+    return "";
   }
   throw new Error(
-    `Diff format is incorrect. Expected '${suffix.trim()}' suffix.`,
+    `Diff format is incorrect. Expected '${suffixWithoutNewline}' suffix.`,
   );
 }
