@@ -108,6 +108,7 @@ const ToolsExemptFromApproval = new Set([
   ...UserInputTools,
   "listFiles",
   "readFile",
+  "searchFiles",
 ]);
 
 export function useIsUserInputTools({
