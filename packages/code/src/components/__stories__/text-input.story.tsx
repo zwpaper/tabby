@@ -1,6 +1,6 @@
+import { Box, Text } from "ink";
 import React, { useState } from "react";
 import TextInput from "../text-input"; // Adjust the import path as needed
-import { Box, Text } from "ink";
 
 // Wrapper component to manage state for the TextInput
 const TextInputWrapper: React.FC<{
@@ -13,7 +13,7 @@ const TextInputWrapper: React.FC<{
   const onSubmit = (value: string) => {
     setSubmittedValue(value);
     setValue(""); // Clear the input after submission
-  }
+  };
 
   return (
     <Box flexDirection="column">

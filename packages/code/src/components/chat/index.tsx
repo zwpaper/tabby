@@ -1,11 +1,11 @@
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
+import { useAuth } from "@/lib/auth";
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
 import { type Message, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
-import type { User } from "@instantdb/react";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
@@ -16,11 +16,12 @@ import ErrorWithRetry from "./error";
 import ChatHeader from "./header";
 import UserTextInput from "./user-text-input";
 
-interface ChatProps {
-  user: User;
-}
+function Chat() {
+  const { user, logout } = useAuth();
+  if (!user) {
+    return <Text>Please log in to use the chat.</Text>;
+  }
 
-function Chat({ user }: ChatProps) {
   const { tokenUsage, trackTokenUsage } = useTokenUsage();
   const environment = useEnvironment();
   const {
@@ -125,6 +126,7 @@ function Chat({ user }: ChatProps) {
       {/* Show text input only when ready */}
       {showTextInput && (
         <UserTextInput
+          onLogout={logout}
           onChange={setInput}
           onSubmit={() => {
             // Double check environment before submitting

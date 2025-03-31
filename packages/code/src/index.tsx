@@ -10,10 +10,10 @@ const customTheme = extendTheme(defaultTheme, {
   components: {},
 });
 
-const ChatPage = (props: React.ComponentProps<typeof Chat>) => {
+const ChatPage = () => {
   return (
     <Box margin={1} flexDirection="column">
-      <Chat {...props} />
+      <Chat />
     </Box>
   );
 };
@@ -39,7 +39,7 @@ const Router = () => {
     );
   }
 
-  return user ? <ChatPage user={user} /> : <LoginPage />;
+  return user ? <ChatPage /> : <LoginPage />;
 };
 
 const App = () => {

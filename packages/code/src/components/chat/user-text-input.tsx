@@ -1,5 +1,4 @@
 import TextInput from "@/components/text-input";
-import { useAuth } from "@/lib/auth"; // Import useAuth
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import Fuse from "fuse.js";
 import { Box, Text, useFocus, useInput } from "ink";
@@ -30,11 +29,15 @@ interface Command {
 export default function UserTextInput({
   onChange,
   onSubmit,
-}: { onChange: (input: string) => void; onSubmit: (input: string) => void }) {
+  onLogout,
+}: {
+  onChange: (input: string) => void;
+  onSubmit: (input: string) => void;
+  onLogout: () => void;
+}) {
   const { isFocused } = useFocus({ autoFocus: true });
   const borderColor = isFocused ? "white" : "gray";
   const [inputValue, setInputValue] = useState("");
-  const { logout } = useAuth(); // Get logout function from auth context
 
   // File Picker State
   const [isFilePickerActive, setIsFilePickerActive] = useState(false);
@@ -138,7 +141,7 @@ export default function UserTextInput({
     // Activate File Picker?
     if (
       atIndex !== -1 &&
-      (nextSpaceAfterAt === -1 || nextSpaceAfterAt > atIndex) &&
+      nextSpaceAfterAt === -1 &&
       atIndex > slashIndex // Ensure '@' is after the last '/' or if no '/' exists
     ) {
       const currentQuery = finalValue.substring(atIndex + 1);
@@ -159,7 +162,7 @@ export default function UserTextInput({
     // Activate Command Picker?
     if (
       slashIndex !== -1 &&
-      (nextSpaceAfterSlash === -1 || nextSpaceAfterSlash > slashIndex) &&
+      nextSpaceAfterSlash === -1 &&
       slashIndex > atIndex // Ensure '/' is after the last '@' or if no '@' exists
     ) {
       const currentQuery = finalValue.substring(slashIndex + 1);
@@ -217,8 +220,7 @@ export default function UserTextInput({
     if (selectedCommand && commandTriggerIndex !== -1) {
       // Execute command action
       if (selectedCommand.name === "/logout") {
-        logout(); // Call the logout function
-        // Optionally clear input or show a message
+        onLogout();
         setInputValue("");
         onChange("");
       } else {
