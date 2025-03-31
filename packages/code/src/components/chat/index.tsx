@@ -1,13 +1,15 @@
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
+import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
-import { useWorkspaceFiles } from "@/lib/hooks/use-workspace-files";
 import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
 import { type Message, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
 import type { User } from "@instantdb/react";
-import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
-import type { ListFilesOutputType } from "@ragdoll/tools";
+import type {
+  Environment,
+  ChatRequest as RagdollChatRequest,
+} from "@ragdoll/server";
 import { Box, Text } from "ink";
 import { useEffect, useState } from "react";
 import ErrorWithRetry from "./error";
@@ -20,7 +22,7 @@ interface ChatProps {
 
 function Chat({ user }: ChatProps) {
   const { tokenUsage, trackTokenUsage } = useTokenUsage();
-  const workspaceFiles = useWorkspaceFiles();
+  const environment = useEnvironment();
   const {
     messages,
     setMessages,
@@ -33,7 +35,9 @@ function Chat({ user }: ChatProps) {
   } = useChat({
     api: "http://localhost:4111/api/chat/stream",
     maxSteps: 100,
-    experimental_prepareRequestBody: createPrepareRequestBody(workspaceFiles),
+    // Pass a function that calls prepareRequestBody with the current environment
+    experimental_prepareRequestBody: (request) =>
+      prepareRequestBody(request, environment), // Updated call
     headers: {
       Authorization: `Bearer ${user.refresh_token}`,
     },
@@ -59,7 +63,11 @@ function Chat({ user }: ChatProps) {
     setMessages(messages.slice(0, -1));
   }
 
-  const showTextInput = (!isLoading || isUserInputTools) && !showErrorRetry;
+  // Show text input only if not loading OR user input tools are active,
+  // AND environment is loaded, AND no error retry is shown
+  const showTextInput =
+    (!isLoading || isUserInputTools) && environment && !showErrorRetry;
+
   return (
     <Box flexDirection="column">
       <ChatHeader user={user} tokenUsage={tokenUsage} />
@@ -107,8 +115,24 @@ function Chat({ user }: ChatProps) {
         />
       )}
 
+      {/* Show loading indicator if environment is not yet loaded */}
+      {!environment && !error && status !== "ready" && (
+        <Box padding={1}>
+          <Text>Loading environment...</Text>
+        </Box>
+      )}
+
+      {/* Show text input only when ready */}
       {showTextInput && (
-        <UserTextInput onChange={setInput} onSubmit={() => handleSubmit()} />
+        <UserTextInput
+          onChange={setInput}
+          onSubmit={() => {
+            // Double check environment before submitting
+            if (environment) {
+              handleSubmit();
+            }
+          }}
+        />
       )}
     </Box>
   );
@@ -121,30 +145,26 @@ function getRoleColor(role: string) {
   return "yellow";
 }
 
-function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
-  const cwd = process.cwd();
-  const workspace =
-    "files" in listFilesOutput
-      ? listFilesOutput
-      : { files: [], isTruncated: false };
-  return ({
-    id,
-    messages,
-  }: { id: string; messages: Message[] }): RagdollChatRequest => {
-    return {
-      id,
-      messages: prepareMessages(messages),
-      environment: {
-        currentTime: new Date().toString(),
-        workspace,
-        info: {
-          cwd,
-          shell: process.env.SHELL || "",
-          os: process.platform,
-          homedir: process.env.HOME || "",
-        },
-      },
-    };
+// This function now directly prepares the body when called by useChat
+function prepareRequestBody(
+  request: { id: string; messages: Message[] },
+  environment: Environment | null,
+): RagdollChatRequest | null {
+  if (!environment) {
+    // Handle the case where environment is not loaded.
+    // Returning null might cause issues depending on how useChat handles it.
+    // Log an error for debugging. useChat might need adjustments if null is problematic.
+    console.error("Environment not loaded, cannot prepare request body.");
+    // Returning null might break useChat, consider throwing or returning a dummy request
+    // For now, let's return null and see if useChat handles it gracefully.
+    // If not, we might need to prevent submission earlier or throw an error.
+    return null;
+  }
+
+  return {
+    id: request.id,
+    messages: prepareMessages(request.messages),
+    environment, // Use the loaded environment
   };
 }
 
@@ -159,24 +179,26 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
   if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
     // Add a placeholder message to show the spinner
     x.push({
-      id: "",
+      id: "", // Consider using a unique temporary ID if needed
       role: "assistant",
       content: "",
       parts: [],
     });
   }
 
+  // Limit parts per message (optional, kept from original)
   for (let i = 0; i < x.length; i++) {
     const message = x[i];
     if (message.parts) {
       x[i] = {
         ...message,
-        parts: message.parts.slice(-3),
+        parts: message.parts.slice(-3), // Keep last 3 parts
       };
     }
   }
 
-  return x.slice(-3);
+  // Limit total messages displayed
+  return x.slice(-3); // Keep last 3 messages
 }
 
 export default Chat;
