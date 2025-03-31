@@ -1,6 +1,7 @@
 import Database from "bun:sqlite";
+import path from "node:path";
 
-const sqliteName = "instantdb.sqlite";
+const sqliteName = path.join(process.env.HOME || "", ".ragdoll", "db.sqlite");
 
 export default class Storage {
   readonly #database: Database;
