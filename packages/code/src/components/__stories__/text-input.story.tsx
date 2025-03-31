@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import TextInput from "../text-input"; // Adjust the import path as needed
+import { Box, Text } from "ink";
 
 // Wrapper component to manage state for the TextInput
 const TextInputWrapper: React.FC<{
@@ -7,17 +8,25 @@ const TextInputWrapper: React.FC<{
   placeholder?: string;
 }> = ({ initialValue = "", placeholder = "" }) => {
   const [value, setValue] = useState(initialValue);
+  const [submittedValue, setSubmittedValue] = useState("");
+
+  const onSubmit = (value: string) => {
+    setSubmittedValue(value);
+    setValue(""); // Clear the input after submission
+  }
 
   return (
-    <TextInput
-      value={value}
-      onChange={setValue}
-      placeholder={placeholder}
-      onSubmit={(submittedValue) => {
-        // Optional: Log submitted value in Storybook console or actions tab if configured
-        console.log("Submitted:", submittedValue);
-      }}
-    />
+    <Box flexDirection="column">
+      <TextInput
+        value={value}
+        onChange={setValue}
+        placeholder={placeholder}
+        onSubmit={onSubmit}
+      />
+      <Box marginTop={1}>
+        <Text>Submitted Value: {submittedValue}</Text>
+      </Box>
+    </Box>
   );
 };
 
