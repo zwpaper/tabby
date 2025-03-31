@@ -1,14 +1,16 @@
+import { useTokenUsage } from "@/lib/hooks/use-token-usage";
+import { useWorkspaceFiles } from "@/lib/hooks/use-workspace-files";
 import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
-import { listFiles } from "@/lib/tools/list-files";
 import { type Message, useChat } from "@ai-sdk/react";
-import { ConfirmInput, Spinner, TextInput } from "@inkjs/ui";
+import { Spinner } from "@inkjs/ui";
 import type { User } from "@instantdb/react";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { ListFilesOutputType } from "@ragdoll/tools";
-import type { LanguageModelUsage } from "ai";
-import { Box, Text, useFocus } from "ink";
+import { Box, Text } from "ink";
 import { useEffect, useState } from "react";
+import ErrorWithRetry from "./chat/error";
 import ChatHeader from "./chat/header";
+import UserTextInput from "./chat/user-text-input";
 import Markdown from "./markdown";
 import ToolBox from "./tool-box";
 
@@ -112,46 +114,6 @@ function Chat({ user }: ChatProps) {
   );
 }
 
-function ErrorWithRetry({
-  error,
-  reload,
-  onCancel,
-}: { error?: Error; reload: () => Promise<unknown>; onCancel: () => void }) {
-  return (
-    <Box
-      borderStyle="round"
-      borderColor="red"
-      padding={1}
-      gap={1}
-      flexDirection="column"
-    >
-      <Text color="red">{error?.message}</Text>
-      <Box>
-        <Text color="grey">Retry? </Text>
-        <ConfirmInput onConfirm={reload} onCancel={onCancel} />
-      </Box>
-    </Box>
-  );
-}
-
-function UserTextInput({
-  onChange,
-  onSubmit,
-}: { onChange: (input: string) => void; onSubmit: (input: string) => void }) {
-  const { isFocused } = useFocus({ autoFocus: true });
-  const borderColor = isFocused ? "white" : "gray";
-  return (
-    <Box borderStyle="round" borderColor={borderColor} padding={1}>
-      <TextInput
-        isDisabled={!isFocused}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        placeholder="Type your message here..."
-      />
-    </Box>
-  );
-}
-
 function getRoleColor(role: string) {
   if (role === "user") {
     return "blue";
@@ -186,21 +148,6 @@ function createPrepareRequestBody(listFilesOutput: ListFilesOutputType) {
   };
 }
 
-function useWorkspaceFiles() {
-  const [workspaceFiles, setWorkspaceFiles] = useState<ListFilesOutputType>({
-    files: [],
-    isTruncated: false,
-  });
-  useEffect(() => {
-    const handle = setInterval(async () => {
-      const x = await listFiles({ path: ".", recursive: true });
-      setWorkspaceFiles(x);
-    }, 5000);
-    return () => clearInterval(handle);
-  }, []);
-  return workspaceFiles;
-}
-
 /**
  * Keep only the last 3 messages from the assistant.
  *
@@ -230,27 +177,6 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
   }
 
   return x.slice(-3);
-}
-
-function useTokenUsage() {
-  const [tokenUsage, setTokenUsage] = useState<LanguageModelUsage>({
-    completionTokens: 0,
-    promptTokens: 0,
-    totalTokens: 0,
-  });
-
-  const trackTokenUsage = (usage: LanguageModelUsage) => {
-    setTokenUsage((prev) => ({
-      completionTokens: prev.completionTokens + usage.completionTokens,
-      promptTokens: prev.promptTokens + usage.promptTokens,
-      totalTokens: prev.totalTokens + usage.totalTokens,
-    }));
-  };
-
-  return {
-    tokenUsage,
-    trackTokenUsage,
-  };
 }
 
 export default Chat;
