@@ -19,6 +19,7 @@
         "@ai-sdk/provider-utils": "^2.2.1",
         "@ai-sdk/react": "^1.2.0",
         "@inkjs/ui": "^2.0.0",
+        "@instantdb/react": "^0.17.32",
         "ai": "^4.2.0",
         "file-type": "^20.4.1",
         "ink": "^5.2.0",
@@ -261,6 +262,8 @@
     "@instantdb/admin": ["@instantdb/admin@0.17.32", "", { "dependencies": { "@instantdb/core": "v0.17.32" } }, "sha512-L8F6bMuGSbi5wYIno7SYy6p92TZDZDXPmFLS2CDoZTvUiT20h/hpAGBKGBWIJIic8XN+uEag+Y8C4BmHveHp2Q=="],
 
     "@instantdb/core": ["@instantdb/core@0.17.32", "", { "dependencies": { "mutative": "^1.0.10", "uuid": "^9.0.0" } }, "sha512-+0EU70BJoTt/xCHnU5FNyetQBBZF5ltzzJeRxo/20W5Yv/mwKtrqRUAlQf8Y8sQO3gou1QkLJqTK3HjwyYb+mQ=="],
+
+    "@instantdb/react": ["@instantdb/react@0.17.32", "", { "dependencies": { "@instantdb/core": "v0.17.32" }, "peerDependencies": { "react": ">=16" } }, "sha512-Wfgrbh9BZbiEErFasTjMLC1jYLm+eT7zm6ekbtUvUnb1sVLWkH2/6u61Q/st4qQcUIbzS0Cfsiy+ewCOeafdZQ=="],
 
     "@isaacs/cliui": ["@isaacs/cliui@8.0.2", "", { "dependencies": { "string-width": "^5.1.2", "string-width-cjs": "npm:string-width@^4.2.0", "strip-ansi": "^7.0.1", "strip-ansi-cjs": "npm:strip-ansi@^6.0.1", "wrap-ansi": "^8.1.0", "wrap-ansi-cjs": "npm:wrap-ansi@^7.0.0" } }, "sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA=="],
 

@@ -4,15 +4,13 @@ import type React from "react";
 import { useState } from "react";
 
 interface EmailLoginProps {
-  sendMagicCode: (email: string) => Promise<boolean>;
-  verifyMagicCode: (email: string, code: string) => Promise<boolean>;
-  onLoginSuccess?: (email: string) => void; // Optional callback on successful login
+  sendMagicCode: (email: string) => Promise<void>;
+  verifyMagicCode: (email: string, code: string) => Promise<void>;
 }
 
 const EmailLogin: React.FC<EmailLoginProps> = ({
   sendMagicCode,
   verifyMagicCode,
-  onLoginSuccess,
 }) => {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -34,16 +32,14 @@ const EmailLogin: React.FC<EmailLoginProps> = ({
     setIsLoading(true);
     setErrorMessage("");
     try {
-      const success = await sendMagicCode(email);
-      if (success) {
-        setStep("code");
-      } else {
-        setErrorMessage("Failed to send magic code. Please try again.");
-        setStep("error");
-      }
+      await sendMagicCode(email);
+      setStep("code");
       // biome-ignore lint/suspicious/noExplicitAny: catching any error
     } catch (error: any) {
-      setErrorMessage(error || "An error occurred. Please try again.");
+      setErrorMessage(
+        `Failed to send magic code: ${error?.message}` ||
+          "An error occurred. Please try again.",
+      );
       setStep("error");
     }
     setIsLoading(false);
@@ -54,18 +50,13 @@ const EmailLogin: React.FC<EmailLoginProps> = ({
     setIsLoading(true);
     setErrorMessage("");
     try {
-      const success = await verifyMagicCode(email, code);
-      if (success) {
-        setStep("loggedIn");
-        onLoginSuccess?.(email); // Call the success callback
-      } else {
-        setErrorMessage("Invalid magic code. Please try again.");
-        setStep("error");
-      }
+      await verifyMagicCode(email, code);
+      setStep("loggedIn");
       // biome-ignore lint/suspicious/noExplicitAny: catching any error
     } catch (error: any) {
       setErrorMessage(
-        error?.message || "An error occurred during verification.",
+        `Failed to verify magic code: ${error?.message}` ||
+          "An error occurred. Please try again.",
       );
       setStep("error");
     }

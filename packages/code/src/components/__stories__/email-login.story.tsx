@@ -1,22 +1,24 @@
 import EmailLogin from "../email-login"; // Adjust the import path as needed
 
 // Mock API functions for Storybook
-const mockSendMagicCode = async (email: string): Promise<boolean> => {
+const mockSendMagicCode = async (email: string): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
   // Simulate success or failure for testing
-  return !email.includes("fail");
+  if (email.includes("fail")) {
+    throw new Error("Failed to send code"); // Simulate failure by throwing an error
+  }
 };
 
 const mockVerifyMagicCode = async (
   _email: string,
   code: string,
-): Promise<boolean> => {
+): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
   const success = code === "123456"; // Simulate verification
-  return success;
+  if (!success) {
+    throw new Error("Invalid code"); // Simulate failure by throwing an error
+  }
 };
-
-const handleLoginSuccess = (_email: string) => {};
 
 const storyExport = {
   stories: [
@@ -27,7 +29,6 @@ const storyExport = {
         <EmailLogin
           sendMagicCode={mockSendMagicCode}
           verifyMagicCode={mockVerifyMagicCode}
-          onLoginSuccess={handleLoginSuccess}
         />
       ),
     },
@@ -38,10 +39,9 @@ const storyExport = {
         <EmailLogin
           sendMagicCode={async () => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            return false;
+            throw new Error("Simulated send failure");
           }}
           verifyMagicCode={mockVerifyMagicCode}
-          onLoginSuccess={handleLoginSuccess}
         />
       ),
     },
@@ -53,9 +53,8 @@ const storyExport = {
           sendMagicCode={mockSendMagicCode}
           verifyMagicCode={async () => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            return false;
+            throw new Error("Simulated verify failure");
           }}
-          onLoginSuccess={handleLoginSuccess}
         />
       ),
     },

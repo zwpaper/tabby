@@ -11,6 +11,7 @@
     "@ai-sdk/provider-utils": "^2.2.1",
     "@ai-sdk/react": "^1.2.0",
     "@inkjs/ui": "^2.0.0",
+    "@instantdb/react": "^0.17.32",
     "ai": "^4.2.0",
     "file-type": "^20.4.1",
     "ink": "^5.2.0",

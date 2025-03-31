@@ -2,6 +2,7 @@ import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
 import { listFiles } from "@/lib/tools/list-files";
 import { type Message, useChat } from "@ai-sdk/react";
 import { ConfirmInput, Spinner, TextInput } from "@inkjs/ui";
+import type { User } from "@instantdb/react";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { ListFilesOutputType } from "@ragdoll/tools";
 import { Box, Text, useFocus } from "ink";
@@ -9,7 +10,11 @@ import { useEffect, useState } from "react";
 import Markdown from "./markdown";
 import ToolBox from "./tool-box";
 
-function Chat() {
+interface ChatProps {
+  user: User;
+}
+
+function Chat({ user }: ChatProps) {
   const workspaceFiles = useWorkspaceFiles();
   const {
     messages,
@@ -24,6 +29,9 @@ function Chat() {
     api: "http://localhost:4111/api/chat/stream",
     maxSteps: 100,
     experimental_prepareRequestBody: createPrepareRequestBody(workspaceFiles),
+    headers: {
+      Authorization: `Bearer ${user.refresh_token}`,
+    },
   });
 
   const { isUserInputTools } = useIsUserInputTools({ messages });
