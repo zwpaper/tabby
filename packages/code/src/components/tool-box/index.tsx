@@ -1,18 +1,16 @@
 import { useExecuteTool } from "@/lib/tools";
 import { Box } from "ink";
-import {
-  ApplyDiffTool,
-  AskFollowupQuestionTool,
-  ConfirmToolUsage,
-  ErrorResult,
-  ExecuteCommandTool,
-  ListFilesTool,
-  ReadFileTool,
-  SearchFilesTool,
-  TaskCompleteTool,
-  WriteToFileTool,
-} from "./tool-box/index"; // Import from the new index file
-import type { ToolProps } from "./tool-box/types"; // Import types
+import { ApplyDiffTool } from "./apply-diff-tool";
+import { AskFollowupQuestionTool } from "./ask-followup-question-tool";
+import { ConfirmToolUsage } from "./confirm-tool-usage";
+import { ErrorResult } from "./error-result";
+import { ExecuteCommandTool } from "./execute-command-tool";
+import { ListFilesTool } from "./list-files-tool";
+import { ReadFileTool } from "./read-file-tool";
+import { SearchFilesTool } from "./search-files-tool";
+import { TaskCompleteTool } from "./task-complete-tool";
+import type { ToolProps } from "./types"; // Import types
+import { WriteToFileTool } from "./write-to-file-tool";
 
 const ToolComponents: Record<string, React.FC<ToolProps>> = {
   applyDiff: ApplyDiffTool,

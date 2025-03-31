@@ -1,3 +1,5 @@
+import Markdown from "@/components/markdown";
+import ToolBox from "@/components/tool-box";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { useWorkspaceFiles } from "@/lib/hooks/use-workspace-files";
 import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
@@ -8,11 +10,9 @@ import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { ListFilesOutputType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import { useEffect, useState } from "react";
-import ErrorWithRetry from "./chat/error";
-import ChatHeader from "./chat/header";
-import UserTextInput from "./chat/user-text-input";
-import Markdown from "./markdown";
-import ToolBox from "./tool-box";
+import ErrorWithRetry from "./error";
+import ChatHeader from "./header";
+import UserTextInput from "./user-text-input";
 
 interface ChatProps {
   user: User;
