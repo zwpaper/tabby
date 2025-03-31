@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 interface TextInputProps {
   value: string;
+  disabled?: boolean;
   onChange: (value: string) => void;
   onSubmit?: (value: string) => void;
   placeholder?: string;
@@ -12,6 +13,7 @@ interface TextInputProps {
 const TextInput: React.FC<TextInputProps> = ({
   value,
   onChange,
+  disabled = false,
   onSubmit = () => {},
   placeholder = "",
 }) => {
@@ -80,7 +82,7 @@ const TextInput: React.FC<TextInputProps> = ({
         setCursorOffset(newCursorOffset);
       }
     },
-    // Input is always active now
+    { isActive: !disabled },
   );
 
   const showPlaceholder = !value && placeholder;

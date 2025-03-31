@@ -1,8 +1,31 @@
 import TextInput from "@/components/text-input";
+import { useAuth } from "@/lib/auth"; // Import useAuth
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import Fuse from "fuse.js";
 import { Box, Text, useFocus, useInput } from "ink";
 import { useEffect, useState } from "react";
+
+// Define commands
+const COMMANDS = [
+  { name: "/logout", description: "Log out from the application", prompt: "" },
+  {
+    name: "/test",
+    description: "Run unit tests",
+    prompt: "Please run the unit tests and fix any errors",
+  },
+  {
+    name: "/lint",
+    description: "Run linter",
+    prompt: "Please run the linter and fix any errors",
+  },
+];
+
+// Command type
+interface Command {
+  name: string;
+  description: string;
+  prompt: string;
+}
 
 export default function UserTextInput({
   onChange,
@@ -11,41 +34,70 @@ export default function UserTextInput({
   const { isFocused } = useFocus({ autoFocus: true });
   const borderColor = isFocused ? "white" : "gray";
   const [inputValue, setInputValue] = useState("");
+  const { logout } = useAuth(); // Get logout function from auth context
+
+  // File Picker State
   const [isFilePickerActive, setIsFilePickerActive] = useState(false);
   const [fileQuery, setFileQuery] = useState("");
   const [filteredFiles, setFilteredFiles] = useState<string[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [triggerIndex, setTriggerIndex] = useState(-1); // Index where '@' was typed
+  const [selectedFileIndex, setSelectedFileIndex] = useState(0);
+  const [fileTriggerIndex, setFileTriggerIndex] = useState(-1); // Index where '@' was typed
+
+  // Command Picker State
+  const [isCommandPickerActive, setIsCommandPickerActive] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
+  const [filteredCommands, setFilteredCommands] = useState<Command[]>([]);
+  const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
+  const [commandTriggerIndex, setCommandTriggerIndex] = useState(-1); // Index where '/' was typed
 
   // FIXME: list files without using the environment hook
   const environment = useEnvironment();
   const files = environment?.workspace.files;
 
-  const fuse = new Fuse(files || [], {
-    // Fuse.js options
+  const fileFuse = new Fuse(files || [], {
     threshold: 0.4,
   });
 
+  const commandFuse = new Fuse(COMMANDS, {
+    keys: ["name", "description"],
+    threshold: 0.4,
+  });
+
+  // Effect for File Picker Filtering
   useEffect(() => {
     if (isFilePickerActive) {
       if (fileQuery === "") {
-        // Show all files initially or based on context if needed
         setFilteredFiles(files?.slice(0, 10) || []); // Limit initial display
       } else {
-        const results = fuse.search(fileQuery);
+        const results = fileFuse.search(fileQuery);
         setFilteredFiles(results.map((result) => result.item).slice(0, 10)); // Limit results
       }
-      setSelectedIndex(0); // Reset selection when query changes
+      setSelectedFileIndex(0); // Reset selection when query changes
     } else {
       setFilteredFiles([]);
     }
-  }, [fileQuery, isFilePickerActive, files, fuse.search]);
+  }, [fileQuery, isFilePickerActive, files, fileFuse.search]); // Ensure fileFuse.search is stable or memoized if needed
+
+  // Effect for Command Picker Filtering
+  useEffect(() => {
+    if (isCommandPickerActive) {
+      if (commandQuery === "") {
+        setFilteredCommands(COMMANDS.slice(0, 10)); // Show all commands initially
+      } else {
+        const results = commandFuse.search(commandQuery);
+        setFilteredCommands(results.map((result) => result.item).slice(0, 10)); // Limit results
+      }
+      setSelectedCommandIndex(0); // Reset selection when query changes
+    } else {
+      setFilteredCommands([]);
+    }
+  }, [commandQuery, isCommandPickerActive, commandFuse.search]); // Ensure commandFuse.search is stable or memoized if needed
 
   const handleInputChange = (newValue: string) => {
     let finalValue = newValue;
-    // Check if this change was a single character deletion (likely backspace)
+
+    // --- Existing Backspace Logic for File Paths --- //
     if (newValue.length === inputValue.length - 1) {
-      // Find the approximate deletion index by comparing old and new values
       let deletionIndex = -1;
       for (let i = 0; i < inputValue.length; i++) {
         if (i >= newValue.length || inputValue[i] !== newValue[i]) {
@@ -53,129 +105,252 @@ export default function UserTextInput({
           break;
         }
       }
-
       if (deletionIndex !== -1) {
         const valueBeforeDeletion = inputValue.substring(0, deletionIndex);
-
-        // Check if the character before the deleted one ends a potential file path
-        // Regex: ends with './' followed by non-space characters
         const filePathRegex = /\.\/[^\s]+$/;
         if (filePathRegex.test(valueBeforeDeletion)) {
-          // Find the start of this file path
           const pathStartIndex = valueBeforeDeletion.lastIndexOf("./");
           if (pathStartIndex !== -1) {
-            // Construct the new value by removing the entire path
             finalValue =
               inputValue.substring(0, pathStartIndex) +
               inputValue.substring(deletionIndex + 1);
-            // We directly manipulate finalValue here, which will be used below.
           }
         }
       }
     }
+    // --- End Backspace Logic --- //
 
-    // Update state with the potentially modified value
     setInputValue(finalValue);
     onChange(finalValue); // Propagate change
 
-    // --- Existing file picker logic --- //
+    // --- Picker Activation Logic --- //
     const atIndex = finalValue.lastIndexOf("@");
-    // Find the next space *after* the potential '@' trigger
-    const nextSpaceIndex = finalValue.indexOf(" ", atIndex > -1 ? atIndex : 0);
+    const slashIndex = finalValue.lastIndexOf("/");
+    const nextSpaceAfterAt = finalValue.indexOf(
+      " ",
+      atIndex > -1 ? atIndex : 0,
+    );
+    const nextSpaceAfterSlash = finalValue.indexOf(
+      " ",
+      slashIndex > -1 ? slashIndex : 0,
+    );
 
-    if (atIndex !== -1 && (nextSpaceIndex === -1 || nextSpaceIndex > atIndex)) {
-      // If '@' exists and there's no space immediately after it
+    // Activate File Picker?
+    if (
+      atIndex !== -1 &&
+      (nextSpaceAfterAt === -1 || nextSpaceAfterAt > atIndex) &&
+      atIndex > slashIndex // Ensure '@' is after the last '/' or if no '/' exists
+    ) {
       const currentQuery = finalValue.substring(atIndex + 1);
       if (!isFilePickerActive) {
         setIsFilePickerActive(true);
-        setTriggerIndex(atIndex);
+        setIsCommandPickerActive(false); // Deactivate command picker
+        setFileTriggerIndex(atIndex);
       }
       setFileQuery(currentQuery);
     } else {
-      // If no '@' trigger or there's a space after it
       if (isFilePickerActive) {
         setIsFilePickerActive(false);
         setFileQuery("");
-        setTriggerIndex(-1);
+        setFileTriggerIndex(-1);
       }
+    }
+
+    // Activate Command Picker?
+    if (
+      slashIndex !== -1 &&
+      (nextSpaceAfterSlash === -1 || nextSpaceAfterSlash > slashIndex) &&
+      slashIndex > atIndex // Ensure '/' is after the last '@' or if no '@' exists
+    ) {
+      const currentQuery = finalValue.substring(slashIndex + 1);
+      if (!isCommandPickerActive) {
+        setIsCommandPickerActive(true);
+        setIsFilePickerActive(false); // Deactivate file picker
+        setCommandTriggerIndex(slashIndex);
+      }
+      setCommandQuery(currentQuery);
+    } else {
+      if (isCommandPickerActive) {
+        setIsCommandPickerActive(false);
+        setCommandQuery("");
+        setCommandTriggerIndex(-1);
+      }
+    }
+
+    // Deactivate both if conditions aren't met (e.g., space added, trigger char deleted)
+    if (
+      isFilePickerActive &&
+      (atIndex === -1 ||
+        (nextSpaceAfterAt !== -1 && nextSpaceAfterAt === atIndex + 1))
+    ) {
+      setIsFilePickerActive(false);
+      setFileQuery("");
+      setFileTriggerIndex(-1);
+    }
+    if (
+      isCommandPickerActive &&
+      (slashIndex === -1 ||
+        (nextSpaceAfterSlash !== -1 && nextSpaceAfterSlash === slashIndex + 1))
+    ) {
+      setIsCommandPickerActive(false);
+      setCommandQuery("");
+      setCommandTriggerIndex(-1);
     }
   };
 
   const handleSelectFile = (selectedFile: string | null) => {
-    if (selectedFile && triggerIndex !== -1) {
-      const newValue = `${inputValue.substring(0, triggerIndex)}./${selectedFile} `; // Add space after selection
+    if (selectedFile && fileTriggerIndex !== -1) {
+      const newValue = `${inputValue.substring(
+        0,
+        fileTriggerIndex,
+      )}./${selectedFile} `; // Add space after selection
       setInputValue(newValue);
       onChange(newValue); // Propagate change
     }
     setIsFilePickerActive(false);
     setFileQuery("");
     setFilteredFiles([]);
-    setTriggerIndex(-1);
+    setFileTriggerIndex(-1);
+  };
+
+  const handleSelectCommand = (selectedCommand: Command | null) => {
+    if (selectedCommand && commandTriggerIndex !== -1) {
+      // Execute command action
+      if (selectedCommand.name === "/logout") {
+        logout(); // Call the logout function
+        // Optionally clear input or show a message
+        setInputValue("");
+        onChange("");
+      } else {
+        // Handle other commands or insert command name if needed
+        const newValue = `${inputValue.substring(
+          0,
+          commandTriggerIndex,
+        )}${selectedCommand.prompt}`;
+        setInputValue(newValue);
+        onChange(newValue);
+      }
+    }
+    // Reset command picker state
+    setIsCommandPickerActive(false);
+    setCommandQuery("");
+    setFilteredCommands([]);
+    setCommandTriggerIndex(-1);
   };
 
   useInput(
     (_, key) => {
-      if (!isFilePickerActive) {
-        return; // Ignore input if picker is not active
-      }
-
-      if (key.upArrow) {
-        setSelectedIndex((prevIndex) => Math.max(0, prevIndex - 1));
-      } else if (key.downArrow) {
-        setSelectedIndex((prevIndex) =>
-          Math.min(filteredFiles.length - 1, prevIndex + 1),
-        );
-      } else if (key.return) {
-        if (filteredFiles.length > 0 && selectedIndex < filteredFiles.length) {
-          handleSelectFile(filteredFiles[selectedIndex]);
-        } else {
-          handleSelectFile(null); // Or potentially insert query as is?
+      if (isFilePickerActive) {
+        if (key.upArrow) {
+          setSelectedFileIndex((prevIndex) => Math.max(0, prevIndex - 1));
+        } else if (key.downArrow) {
+          setSelectedFileIndex((prevIndex) =>
+            Math.min(filteredFiles.length - 1, prevIndex + 1),
+          );
+        } else if (key.return) {
+          if (
+            filteredFiles.length > 0 &&
+            selectedFileIndex < filteredFiles.length
+          ) {
+            handleSelectFile(filteredFiles[selectedFileIndex]);
+          } else {
+            handleSelectFile(null); // Or potentially insert query as is?
+          }
+        } else if (key.escape) {
+          handleSelectFile(null); // Cancel
         }
-      } else if (key.escape) {
-        handleSelectFile(null); // Cancel
+      } else if (isCommandPickerActive) {
+        if (key.upArrow) {
+          setSelectedCommandIndex((prevIndex) => Math.max(0, prevIndex - 1));
+        } else if (key.downArrow) {
+          setSelectedCommandIndex((prevIndex) =>
+            Math.min(filteredCommands.length - 1, prevIndex + 1),
+          );
+        } else if (key.return) {
+          if (
+            filteredCommands.length > 0 &&
+            selectedCommandIndex < filteredCommands.length
+          ) {
+            handleSelectCommand(filteredCommands[selectedCommandIndex]);
+          } else {
+            handleSelectCommand(null); // Or potentially insert query as is?
+          }
+        } else if (key.escape) {
+          handleSelectCommand(null); // Cancel
+        }
       }
-      // Prevent TextInput from processing these keys when picker is active
     },
-    { isActive: isFilePickerActive }, // Only active when picker is shown
+    { isActive: isFilePickerActive || isCommandPickerActive }, // Active if either picker is shown
   );
 
   const handleSubmit = () => {
-    if (!isFilePickerActive) {
+    // Prevent submit if a picker is active and waiting for selection
+    if (!isFilePickerActive && !isCommandPickerActive) {
       onSubmit(inputValue);
       setInputValue(""); // Clear input after submit
       onChange(""); // Also clear parent state if needed
+    } else if (isFilePickerActive) {
+      // Optionally handle Enter press when file picker is active but no file selected
+      handleSelectFile(null); // Cancel picker on submit? Or select current?
+    } else if (isCommandPickerActive) {
+      // Optionally handle Enter press when command picker is active but no command selected
+      handleSelectCommand(null); // Cancel picker on submit? Or select current?
     }
   };
 
   return (
     <Box flexDirection="column">
+      {/* Text Input Area */}
+      <Box borderStyle="round" borderColor={borderColor} padding={1}>
+        <TextInput
+          disabled={!isFocused}
+          value={inputValue}
+          onChange={handleInputChange}
+          onSubmit={handleSubmit}
+          placeholder="Type @ to mention files or / for commands..." // Updated placeholder
+        />
+      </Box>
+
+      {/* Command Picker */}
+      {isCommandPickerActive && filteredCommands.length > 0 && (
+        <Box
+          flexDirection="column"
+          borderStyle="round"
+          borderColor="green" // Different color for command picker
+          paddingX={1}
+        >
+          {filteredCommands.map((command, index) => (
+            <Text
+              key={command.name}
+              color={index === selectedCommandIndex ? "cyan" : undefined}
+            >
+              {index === selectedCommandIndex ? "> " : "  "}
+              {command.name}
+              <Text color="gray"> - {command.description}</Text>
+            </Text>
+          ))}
+        </Box>
+      )}
+
+      {/* File Picker */}
       {isFilePickerActive && filteredFiles.length > 0 && (
         <Box
           flexDirection="column"
           borderStyle="round"
           borderColor="blue"
           paddingX={1}
-          marginBottom={1}
         >
           {filteredFiles.map((file, index) => (
             <Text
               key={file}
-              color={index === selectedIndex ? "cyan" : undefined}
+              color={index === selectedFileIndex ? "cyan" : undefined}
             >
-              {index === selectedIndex ? "> " : "  "}
+              {index === selectedFileIndex ? "> " : "  "}
               {file}
             </Text>
           ))}
         </Box>
       )}
-      <Box borderStyle="round" borderColor={borderColor} padding={1}>
-        <TextInput
-          value={inputValue}
-          onChange={handleInputChange}
-          onSubmit={handleSubmit}
-          placeholder="Type @ to mention files..."
-        />
-      </Box>
     </Box>
   );
 }
