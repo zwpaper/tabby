@@ -182,9 +182,7 @@ export async function loadStoryFile(
   filePath: string
 ): Promise<StoryFile | null> {
   try {
-    // Add a cache-busting timestamp to force re-import
-    const timestamp = Date.now();
-    const fileUrl = `${pathToFileURL(filePath).href}?t=${timestamp}`;
+    const fileUrl = pathToFileURL(filePath).href;
     delete require.cache[require.resolve(fileUrl)];
     const imported = await import(fileUrl);
 

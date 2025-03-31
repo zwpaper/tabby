@@ -73,13 +73,17 @@ export function useStoryFiles(storybookLocation: string) {
           watcher.add(dep); // Add to watch list
         });
 
+        // FIXME(meng): this is really a hack, is there an event to listen for import done?
+        //
+        // Give some time for the watcher to pick up changes
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         // Update React state
         syncState();
         setError(null);
       } catch (err) {
         setError(
-          `Error processing ${filePath}: ${
-            err instanceof Error ? err.message : String(err)
+          `Error processing ${filePath}: ${err instanceof Error ? err.message : String(err)
           }`
         );
       } finally {
@@ -105,8 +109,7 @@ export function useStoryFiles(storybookLocation: string) {
         setError(null);
       } catch (err) {
         setError(
-          `Error removing ${filePath}: ${
-            err instanceof Error ? err.message : String(err)
+          `Error removing ${filePath}: ${err instanceof Error ? err.message : String(err)
           }`
         );
       } finally {
@@ -142,8 +145,7 @@ export function useStoryFiles(storybookLocation: string) {
           )
             .catch((err) => {
               setError(
-                `Error updating dependencies: ${
-                  err instanceof Error ? err.message : String(err)
+                `Error updating dependencies: ${err instanceof Error ? err.message : String(err)
                 }`
               );
             })
