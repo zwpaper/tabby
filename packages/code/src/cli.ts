@@ -1,15 +1,17 @@
-import { parseArgs } from "node:util";
+import { Command } from "commander";
 import { app } from ".";
+import { version } from "../package.json"
 
-const { values: config } = parseArgs({
-  args: Bun.argv,
-  options: {
-    dev: {
-      type: "boolean",
-    },
-  },
-  strict: true,
-  allowPositionals: true,
-});
+const program = new Command();
 
-app(config);
+program.name("ragdoll-code").description("CLI for ragdoll-code").version(version)
+
+program.option("--dev", "Run in development mode").parse(process.argv);
+
+const config = program.opts();
+
+const appConfig = {
+  dev: config.dev || false,
+};
+
+app(appConfig);

@@ -3,7 +3,7 @@ import { createContext, useContext } from "react";
 
 // Define the shape of the application configuration
 export interface AppConfig {
-  dev?: boolean;
+  dev: boolean;
 }
 
 // Create the context with a default value (can be null or a default config object)
