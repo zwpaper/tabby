@@ -14,9 +14,9 @@ describe("executeCommand", () => {
   });
 
   it("should return stderr if the command fails", async () => {
-    await expect(
-      executeCommand({ command: "invalid-command" }),
-    ).rejects.toThrow("/bin/sh: invalid-command: command not found");
+    const result = await executeCommand({ command: "invalid-command" });
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("invalid-command: command not found");
   });
 
   it("should execute a command with a specified working directory", async () => {
