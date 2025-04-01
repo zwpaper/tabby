@@ -3,18 +3,24 @@ import { executeCommand } from "../execute-command";
 
 describe("executeCommand", () => {
   it("should execute a valid command and return stdout", async () => {
-    const result = await executeCommand({ command: "echo Hello, World!" });
+    const result = await executeCommand({
+      command: "echo Hello, World!",
+      requiresApproval: false,
+    });
     expect(result.stdout).toBe("Hello, World!\n");
   });
 
   it("should throw an error if command is missing", async () => {
-    await expect(executeCommand({ command: "" })).rejects.toThrow(
-      "Command is required to execute.",
-    );
+    await expect(
+      executeCommand({ command: "", requiresApproval: false }),
+    ).rejects.toThrow("Command is required to execute.");
   });
 
   it("should return stderr if the command fails", async () => {
-    const result = await executeCommand({ command: "invalid-command" });
+    const result = await executeCommand({
+      command: "invalid-command",
+      requiresApproval: false,
+    });
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toContain("invalid-command: command not found");
   });
@@ -23,6 +29,7 @@ describe("executeCommand", () => {
     const result = await executeCommand({
       command: "pwd",
       cwd: "/",
+      requiresApproval: false,
     });
     expect(result.stdout.trim()).toBe("/");
   });
