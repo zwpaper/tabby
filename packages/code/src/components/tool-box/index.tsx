@@ -5,6 +5,7 @@ import { AskFollowupQuestionTool } from "./ask-followup-question-tool";
 import { ConfirmToolUsage } from "./confirm-tool-usage";
 import { ErrorResult } from "./error-result";
 import { ExecuteCommandTool } from "./execute-command-tool";
+import { GlobFilesTool } from "./glob-files-tool";
 import { ListFilesTool } from "./list-files-tool";
 import { ReadFileTool } from "./read-file-tool";
 import { SearchFilesTool } from "./search-files-tool";
@@ -17,6 +18,7 @@ const ToolComponents: Record<string, React.FC<ToolProps>> = {
   attemptCompletion: TaskCompleteTool,
   askFollowupQuestion: AskFollowupQuestionTool,
   executeCommand: ExecuteCommandTool,
+  globFiles: GlobFilesTool,
   listFiles: ListFilesTool,
   readFile: ReadFileTool,
   searchFiles: SearchFilesTool,

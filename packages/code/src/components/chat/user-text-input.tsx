@@ -17,6 +17,12 @@ const COMMANDS = [
     description: "Run linter",
     prompt: "Please run the linter and fix any errors",
   },
+  {
+    name: "/commit",
+    description: "Generate commit message",
+    prompt:
+      "Please generate a commit message based on the git staging/unstaging diff and commit it",
+  },
 ];
 
 // Command type

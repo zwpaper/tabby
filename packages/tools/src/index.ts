@@ -4,5 +4,6 @@ export * from "./attempt-completion";
 export * from "./execute-command";
 export * from "./list-files";
 export * from "./read-file";
+export * from "./glob-files";
 export * from "./search-files";
 export * from "./write-to-file";

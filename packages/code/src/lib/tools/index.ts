@@ -2,6 +2,7 @@ import type { Message, ToolCall, ToolInvocation } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { applyDiff } from "./apply-diff";
 import { executeCommand } from "./execute-command";
+import { globFiles } from "./glob-files";
 import { listFiles } from "./list-files";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
@@ -10,6 +11,7 @@ import { writeToFile } from "./write-to-file";
 // biome-ignore lint/suspicious/noExplicitAny: external call without type information
 const ToolMap: Record<string, (args: any) => Promise<unknown>> = {
   listFiles,
+  globFiles,
   readFile,
   searchFiles,
   applyDiff,
@@ -107,6 +109,7 @@ const UserInputTools = new Set(["askFollowupQuestion", "attemptCompletion"]);
 const ToolsExemptFromApproval = new Set([
   ...UserInputTools,
   "listFiles",
+  "globFiles",
   "readFile",
   "searchFiles",
 ]);

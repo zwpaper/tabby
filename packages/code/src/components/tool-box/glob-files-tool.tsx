@@ -1,13 +1,13 @@
 import * as nodePath from "node:path";
-import type { ListFilesInputType, ListFilesOutputType } from "@ragdoll/tools";
+import type { GlobFilesInputType, GlobFilesOutputType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import { FileList } from "./file-list"; // Import the new component
 import type { ToolProps } from "./types";
 
-export const ListFilesTool: React.FC<
-  ToolProps<ListFilesInputType, ListFilesOutputType>
+export const GlobFilesTool: React.FC<
+  ToolProps<GlobFilesInputType, GlobFilesOutputType>
 > = ({ toolCall }) => {
-  const { path, recursive } = toolCall.args;
+  const { path, globPattern } = toolCall.args;
 
   let resultEl: React.ReactNode;
   if (toolCall.state === "result") {
@@ -25,18 +25,19 @@ export const ListFilesTool: React.FC<
         />
       );
     }
-    // Note: Error handling could be added here if needed
+    // Note: Error handling could be added here similar to list-files if needed
   }
 
-  // Assuming process.cwd() is available in this environment
-  // If not, this might need adjustment based on how the CWD is obtained.
+  // Assuming process.cwd() is available
   const absolutePath = nodePath.join(process.cwd(), path);
+
   return (
     <Box flexDirection="column" gap={1}>
       <Box>
-        <Text>Listing files in </Text>
+        <Text>Searching files in </Text>
         <Text color="yellowBright">{absolutePath}</Text>
-        {recursive && <Text> (recursive)</Text>}
+        <Text> matching </Text>
+        <Text color="cyanBright">{globPattern}</Text>
       </Box>
       {resultEl}
     </Box>
