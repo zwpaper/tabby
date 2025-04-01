@@ -23,6 +23,11 @@ const COMMANDS = [
     prompt:
       "Generate a concise commit message in conventional commit format based on the staged changes. Then, commit the changes. If there are unstaged changes, stage them first.",
   },
+  {
+    name: "/push",
+    description: "Push changes to remote",
+    prompt: "Please push the current branch to the remote repository.",
+  },
 ];
 
 // Command type
