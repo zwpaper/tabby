@@ -28,6 +28,11 @@ const COMMANDS = [
     description: "Push changes to remote",
     prompt: "Please push the current branch to the remote repository.",
   },
+  {
+    name: "/clear",
+    description: "Clear message history",
+    prompt: "", // No prompt needed, action is immediate
+  },
 ];
 
 // Command type
@@ -41,10 +46,12 @@ export default function UserTextInput({
   onChange,
   onSubmit,
   onLogout,
+  onClearHistory, // Add new prop
 }: {
   onChange: (input: string) => void;
   onSubmit: (input: string) => void;
   onLogout: () => void;
+  onClearHistory: () => void; // Define prop type
 }) {
   const { isFocused } = useFocus({ autoFocus: true });
   const borderColor = isFocused ? "white" : "gray";
@@ -232,6 +239,11 @@ export default function UserTextInput({
       // Execute command action
       if (selectedCommand.name === "/logout") {
         onLogout();
+        setInputValue("");
+        onChange("");
+      } else if (selectedCommand.name === "/clear") {
+        // Handle /clear
+        onClearHistory();
         setInputValue("");
         onChange("");
       } else {

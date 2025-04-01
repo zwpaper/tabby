@@ -64,6 +64,11 @@ function Chat() {
     setMessages(messages.slice(0, -1));
   }
 
+  // Function to clear message history
+  function handleClearHistory() {
+    setMessages([]);
+  }
+
   // Show text input only if not loading OR user input tools are active,
   // AND environment is loaded, AND no error retry is shown
   const showTextInput =
@@ -134,6 +139,7 @@ function Chat() {
               handleSubmit();
             }
           }}
+          onClearHistory={handleClearHistory} // Pass the handler
         />
       )}
     </Box>
