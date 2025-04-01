@@ -16,12 +16,12 @@ const renderOutput = (
 
   return shouldCollapse ? (
     <Collapsible title={`${title} (${outputLines.length} lines)`} open={false}>
-      <Text color={color}>{output}</Text>
+      <Text color={color}>{output.trim()}</Text>
     </Collapsible>
   ) : (
     <Box flexDirection="column" gap={1}>
       <Text color="grey">{title}</Text>
-      <Text color={color}>{output}</Text>
+      <Text color={color}>{output.trim()}</Text>
     </Box>
   );
 };
