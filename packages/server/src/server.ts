@@ -27,16 +27,18 @@ app.get("/health", (c) => c.text("OK"));
 const api = app.basePath("/api");
 
 // Define available models
-const availableModels = [
+const AvailableModels = [
   { id: "google/gemini-2.5-pro-exp-03-25", contextWindow: 1_000_000 },
   { id: "anthropic/claude-3.7-sonnet", contextWindow: 200_000 },
   { id: "openai/gpt-4o-mini", contextWindow: 128_000 },
 ];
 
+const AvailableTools = tools;
+
 // Endpoint to list available models
 const route = api
   .get("/models", (c) => {
-    return c.json(availableModels);
+    return c.json(AvailableModels);
   })
   .post(
     "/chat/stream",
@@ -71,11 +73,13 @@ const route = api
         model: c.get("model") || selectedModel,
         system: environment?.info && generateSystemPrompt(environment.info),
         messages,
-        tools,
+        tools: AvailableTools,
         onError: (error) => {
           console.error(error);
           console.error(JSON.stringify(messages));
         },
+        // biome-ignore lint/suspicious/noExplicitAny: AvailableTools is a record of tools, so this is safe
+        experimental_activeTools: Object.keys(AvailableTools) as any
       });
 
       return stream(c, (stream) => stream.pipe(result.toDataStream()));
