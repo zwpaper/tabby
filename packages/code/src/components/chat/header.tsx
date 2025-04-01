@@ -36,18 +36,17 @@ function ChatHeader({ user, tokenUsage, status }: ChatHeaderProps) {
         borderStyle="round"
         borderColor="cyan"
         paddingX={1}
-        width={32}
+        width={40}
       >
         <Text>Welcome {user.email}</Text>
         <Text>
           Tokens: ↑ {formatTokenCount(tokenUsage.promptTokens)} ↓{" "}
-          {formatTokenCount(tokenUsage.completionTokens)} {" "}
-          ( {status} )
+          {formatTokenCount(tokenUsage.completionTokens)} ( {status} )
         </Text>
       </Box>
       <Box
         flexDirection="column"
-        width={32}
+        width={40}
         borderStyle="round"
         borderColor="blue"
         paddingX={1}

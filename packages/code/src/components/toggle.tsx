@@ -2,7 +2,6 @@ import { Box, Text, useFocus, useInput } from "ink";
 import { useState } from "react";
 
 interface ToggleProps {
-  label: string;
   value: boolean;
   onChange: (value: boolean) => void;
 }

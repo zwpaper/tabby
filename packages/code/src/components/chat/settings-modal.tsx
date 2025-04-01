@@ -1,5 +1,5 @@
 import { Select } from "@inkjs/ui";
-import { Box, Text, useFocus, useInput } from "ink";
+import { Box, Text, useInput } from "ink";
 import { useState } from "react";
 import Toggle from "../toggle";
 
@@ -9,7 +9,6 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [autoApprove, setAutoApprove] = useState(false);
-  const { isFocused } = useFocus({ autoFocus: true });
 
   useInput((_, key) => {
     if (key.escape) {
@@ -23,9 +22,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   return (
     <Box
-      width={65}
+      width={81}
       borderStyle="round"
-      borderColor={isFocused ? "cyan" : "gray"}
       paddingX={1}
       marginTop={1}
       flexDirection="column"
@@ -49,11 +47,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
       <Box justifyContent="space-between">
         <Text>Auto approve all command</Text>
-        <Toggle
-          label="Auto approve"
-          value={autoApprove}
-          onChange={setAutoApprove}
-        />
+        <Toggle value={autoApprove} onChange={setAutoApprove} />
       </Box>
     </Box>
   );

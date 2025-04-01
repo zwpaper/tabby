@@ -20,7 +20,7 @@ const SettingsModalWrapper: React.FC<{}> = () => {
   }
 
   return (
-    <Box flexDirection="column" width={64}>
+    <Box flexDirection="column" width={90}>
       <Text>Settings Modal Story:</Text>
       <SettingsModal onClose={handleClose} />
       {/* You can add other elements around the modal if needed */}
