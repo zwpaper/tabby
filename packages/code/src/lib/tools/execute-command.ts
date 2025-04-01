@@ -12,9 +12,15 @@ export const executeCommand: ExecuteCommandFunctionType = async ({
     throw new Error("Command is required to execute.");
   }
 
-  const { stdout, stderr } = await execPromise(command, { cwd });
-  return {
-    stdout,
-    stderr,
-  };
+  try {
+    const { stdout, stderr } = await execPromise(command, { cwd });
+    return {
+      exitCode: 0,
+      stdout,
+      stderr,
+    };
+  } catch (error: any) {
+    const { stdout, stderr, code } = error;
+    return { stdout, stderr, exitCode: code }
+  }
 };

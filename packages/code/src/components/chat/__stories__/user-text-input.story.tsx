@@ -34,7 +34,7 @@ const UserTextInputWrapper: React.FC<{}> = () => {
         onChange={onChange}
         onSubmit={onSubmit}
         onLogout={() => {}}
-        onClearHistory={() => {}}
+        onClearHistory={() => {}} // Add dummy onClearHistory prop
       />
       <Box marginTop={1}>
         <Text>Current Value: {value}</Text>
