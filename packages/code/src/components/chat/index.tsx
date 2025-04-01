@@ -34,7 +34,9 @@ function Chat() {
     error,
     reload,
   } = useChat({
-    api: "http://localhost:4111/api/chat/stream",
+    api: process.env.RAGDOLL_PROD_BACKEND
+      ? "https://ragdoll-production.up.railway.app/api/chat/stream"
+      : "http://localhost:4111/api/chat/stream",
     maxSteps: 100,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>

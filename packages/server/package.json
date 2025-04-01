@@ -3,7 +3,9 @@
   "main": "src/types.ts",
   "scripts": {
     "tsc": "tsc --noEmit",
-    "dev": "bun --hot src/server.ts"
+    "dev": "bun --hot src/server.ts",
+    "build": "bun build src/server.ts --outdir dist --format cjs",
+    "start": "bun run dist/server.js"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.3",
