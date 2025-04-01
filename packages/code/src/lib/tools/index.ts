@@ -1,3 +1,4 @@
+import type { ExecuteCommandInputType } from "@ragdoll/tools";
 import type { Message, ToolCall, ToolInvocation } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { applyDiff } from "./apply-diff";
@@ -56,11 +57,19 @@ export function useExecuteTool({
   addToolResult,
 }: UseExecuteToolParams) {
   const { toolName, toolCallId, state } = toolCall;
-  const [approval, setApproval] = useState<Approval>(
+  let defaultApproval: Approval =
     ToolsExemptFromApproval.has(toolName) || state === "result"
       ? "approved"
-      : "pending",
-  );
+      : "pending";
+  if (toolName === "executeCommand") {
+    if ((toolCall.args as ExecuteCommandInputType).requiresApproval) {
+      defaultApproval = "pending";
+    } else {
+      defaultApproval = "approved";
+    }
+  }
+
+  const [approval, setApproval] = useState<Approval>(defaultApproval);
 
   const approveTool = (approved: boolean) => {
     setApproval(approved ? "approved" : "rejected");

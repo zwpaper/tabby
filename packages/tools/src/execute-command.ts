@@ -19,6 +19,11 @@ export const executeCommand = declareClientTool({
       .string()
       .optional()
       .describe("The working directory to execute the command in."),
+    requiresApproval: z
+      .boolean()
+      .describe(
+        "Indicates whether the command requires user approval. This should be set to true if the command is not read-only or has side effects.",
+      ),
   }),
   outputSchema: z.object({
     stdout: z.string().describe("The standard output of the command."),
