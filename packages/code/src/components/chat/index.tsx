@@ -1,5 +1,6 @@
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
+import { useAppConfig } from "@/lib/app-config";
 import { useAuth } from "@/lib/auth";
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
@@ -22,6 +23,7 @@ function Chat() {
     return <Text>Please log in to use the chat.</Text>;
   }
 
+  const appConfig = useAppConfig();
   const { tokenUsage, trackTokenUsage } = useTokenUsage();
   const environment = useEnvironment();
   const {
@@ -34,9 +36,9 @@ function Chat() {
     error,
     reload,
   } = useChat({
-    api: process.env.RAGDOLL_PROD_BACKEND
-      ? "https://ragdoll-production.up.railway.app/api/chat/stream"
-      : "http://localhost:4111/api/chat/stream",
+    api: appConfig.dev
+      ? "http://localhost:4111/api/chat/stream"
+      : "https://ragdoll-production.up.railway.app/api/chat/stream",
     maxSteps: 100,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>

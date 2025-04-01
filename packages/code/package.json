@@ -2,9 +2,9 @@
   "private": true,
   "name": "@ragdoll/code",
   "scripts": {
-    "build": "bun build src/index.tsx --compile --outfile ./dist/code",
+    "build": "bun build src/cli.ts --compile --outfile ./dist/code",
     "tsc": "tsc --noEmit",
-    "dev": "bun --watch src/index.tsx",
+    "dev": "bun --watch src/cli.ts --dev",
     "storybook": "bun ../ink-storybook/src/cli/index.tsx"
   },
   "dependencies": {

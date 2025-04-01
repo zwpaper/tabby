@@ -5,6 +5,7 @@ import Chat from "./components/chat";
 import EmailLogin from "./components/email-login";
 
 import { defaultTheme, extendTheme } from "@inkjs/ui";
+import { type AppConfig, AppConfigProvider } from "./lib/app-config";
 
 const customTheme = extendTheme(defaultTheme, {
   components: {},
@@ -42,14 +43,18 @@ const Router = () => {
   return user ? <ChatPage /> : <LoginPage />;
 };
 
-const App = () => {
+const App = ({ config }: { config: AppConfig }) => {
   return (
-    <ThemeProvider theme={customTheme}>
-      <AuthProvider>
-        <Router />
-      </AuthProvider>
-    </ThemeProvider>
+    <AppConfigProvider config={config}>
+      <ThemeProvider theme={customTheme}>
+        <AuthProvider>
+          <Router />
+        </AuthProvider>
+      </ThemeProvider>
+    </AppConfigProvider>
   );
 };
 
-render(<App />);
+export function app(config: AppConfig) {
+  render(<App config={config} />);
+}
