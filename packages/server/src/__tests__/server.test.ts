@@ -2,9 +2,9 @@ import { simulateReadableStream } from "ai";
 import { MockLanguageModelV1 } from "ai/test";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
-import { type ContextVariables, api as apiImpl } from "../server";
+import { type ContextVariables, app as appImpl } from "../server";
 
-function getApiWithMockModel() {
+function getAppWithMockModel() {
   const app = new Hono<{ Variables: ContextVariables }>();
   app
     .use(async (c, next) => {
@@ -31,7 +31,7 @@ function getApiWithMockModel() {
       );
       await next();
     })
-    .route("/", apiImpl);
+    .route("/", appImpl);
 
   return app;
 }
@@ -53,7 +53,7 @@ describe("My first test", () => {
         ],
       }),
     });
-    const app = getApiWithMockModel();
+    const app = getAppWithMockModel();
     const res = await app.fetch(req);
     expect(res.status).toBe(200);
   });

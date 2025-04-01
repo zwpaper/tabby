@@ -3,3 +3,5 @@ buildCommand = "bun run build"
 
 [deploy]
 startCommand = "cd packages/server && bun start"
+healthcheckPath = "/health"
+healthcheckTimeout = 100

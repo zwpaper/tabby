@@ -18,7 +18,11 @@ export type ContextVariables = {
   model?: LanguageModel;
 };
 
-export const api = new Hono<{ Variables: ContextVariables }>().basePath("/api");
+export const app = new Hono<{ Variables: ContextVariables }>();
+
+app.get("/health", (c) => c.text("OK"));
+
+const api = app.basePath("/api");
 
 api.post(
   "/chat/stream",
@@ -107,6 +111,6 @@ function getMessageToInject(messages: Message[]): Message | undefined {
 
 export default {
   port: 4111,
-  fetch: api.fetch,
+  fetch: app.fetch,
   idleTimeout: 60,
 };
