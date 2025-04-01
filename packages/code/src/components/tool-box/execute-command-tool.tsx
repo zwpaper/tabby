@@ -10,17 +10,19 @@ const renderOutput = (
   color: string,
 ): React.ReactNode => {
   if (!output) return null;
+  const x = output.trim();
+  if (!x) return null;
 
-  const outputLines = output.trim().split("\n");
+  const outputLines = x.split("\n");
   const shouldCollapse = outputLines.length > 5;
 
   return shouldCollapse ? (
     <Collapsible title={`${title} (${outputLines.length} lines)`} open={false}>
-      <Text color={color}>{output.trim()}</Text>
+      <Text color={color}>{x}</Text>
     </Collapsible>
   ) : (
     <Box flexDirection="column" gap={1}>
-      <Text color={color}>{output.trim()}</Text>
+      <Text color={color}>{x}</Text>
     </Box>
   );
 };
