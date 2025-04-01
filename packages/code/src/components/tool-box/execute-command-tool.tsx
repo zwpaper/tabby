@@ -40,8 +40,8 @@ export const ExecuteCommandTool: React.FC<
       resultEl = (
         <Box flexDirection="column" gap={1}>
           {exitCode !== 0 && <Text color="red">Exit Code: {exitCode}</Text>}
-          {renderOutput(stdout, "Stdout", "grey")}
-          {renderOutput(stderr, "Stderr", "grey")}
+          {renderOutput(stdout, "stdout", "grey")}
+          {renderOutput(stderr, "stderr", "grey")}
         </Box>
       );
     }

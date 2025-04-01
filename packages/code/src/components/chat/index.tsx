@@ -15,6 +15,7 @@ import { Box, Text } from "ink";
 import { useEffect, useState } from "react";
 import ErrorWithRetry from "./error";
 import ChatHeader from "./header";
+import SettingsModal from "./settings-modal";
 import UserTextInput from "./user-text-input";
 
 function Chat() {
@@ -63,6 +64,7 @@ function Chat() {
   };
 
   const [initialPromptSent, setInitialPromptSent] = useState(false);
+  const [showSettings, setShowSettings] = useState(false); // State for settings dialog
   // Handle initial prompt
   useEffect(() => {
     if (appConfig.prompt && environment && !initialPromptSent) {
@@ -95,16 +97,26 @@ function Chat() {
     setMessages([]);
   }
 
+  // Function to toggle settings dialog
+  function handleOpenSettings() {
+    setShowSettings((prev) => !prev);
+  }
+
+  const showRenderMessages = !showSettings && renderMessages.length > 0;
+
   // Show text input only if not loading OR user input tools are active,
   // AND environment is loaded, AND no error retry is shown
   const showTextInput =
-    (!isLoading || isUserInputTools) && environment && !showErrorRetry;
+    !showSettings &&
+    (!isLoading || isUserInputTools) &&
+    environment &&
+    !showErrorRetry;
 
   return (
     <Box flexDirection="column">
       <ChatHeader user={user} tokenUsage={tokenUsage} />
 
-      {renderMessages.length > 0 && (
+      {showRenderMessages && (
         <Box flexDirection="column" padding={1}>
           <Box flexDirection="column" gap={1}>
             {renderMessages.map((message) => (
@@ -161,8 +173,11 @@ function Chat() {
           onChange={onChange}
           onSubmit={onSubmit}
           onClearHistory={handleClearHistory} // Pass the handler
+          onOpenSettings={handleOpenSettings} // Pass the settings handler
         />
       )}
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </Box>
   );
 }

@@ -57,19 +57,9 @@ export function useExecuteTool({
   addToolResult,
 }: UseExecuteToolParams) {
   const { toolName, toolCallId, state } = toolCall;
-  let defaultApproval: Approval =
-    ToolsExemptFromApproval.has(toolName) || state === "result"
-      ? "approved"
-      : "pending";
-  if (toolName === "executeCommand") {
-    if ((toolCall.args as ExecuteCommandInputType).requiresApproval) {
-      defaultApproval = "pending";
-    } else {
-      defaultApproval = "approved";
-    }
-  }
-
-  const [approval, setApproval] = useState<Approval>(defaultApproval);
+  const [approval, setApproval] = useState<Approval>(
+    getDefaultApproval(toolCall),
+  );
 
   const approveTool = (approved: boolean) => {
     setApproval(approved ? "approved" : "rejected");
@@ -113,6 +103,22 @@ export function useExecuteTool({
   };
 }
 
+function getDefaultApproval(toolCall: ToolInvocation) {
+  const { toolName, state } = toolCall;
+  let defaultApproval: Approval =
+    ToolsExemptFromApproval.has(toolName) || state === "result"
+      ? "approved"
+      : "pending";
+  if (toolName === "executeCommand") {
+    if ((toolCall.args as ExecuteCommandInputType).requiresApproval) {
+      defaultApproval = "pending";
+    } else {
+      defaultApproval = "approved";
+    }
+  }
+  return defaultApproval;
+}
+
 const UserInputTools = new Set(["askFollowupQuestion", "attemptCompletion"]);
 
 const ToolsExemptFromApproval = new Set([
@@ -137,7 +143,10 @@ export function useIsUserInputTools({
         part.toolInvocation.state === "call"
       ) {
         const { toolName } = part.toolInvocation;
-        if (UserInputTools.has(toolName)) {
+        if (
+          getDefaultApproval(part.toolInvocation) === "pending" ||
+          UserInputTools.has(toolName)
+        ) {
           isUserInputTools = true;
         }
       }

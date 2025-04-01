@@ -33,6 +33,11 @@ const COMMANDS = [
     description: "Clear message history",
     prompt: "", // No prompt needed, action is immediate
   },
+  {
+    name: "/settings",
+    description: "Open settings",
+    prompt: "", // Placeholder, action TBD
+  },
 ];
 
 // Command type
@@ -47,11 +52,13 @@ export default function UserTextInput({
   onSubmit,
   onLogout,
   onClearHistory, // Add new prop
+  onOpenSettings, // Add settings prop
 }: {
   onChange: (input: string) => void;
   onSubmit: (input: string) => void;
   onLogout: () => void;
   onClearHistory: () => void; // Define prop type
+  onOpenSettings: () => void; // Add settings prop type
 }) {
   const { isFocused } = useFocus({ autoFocus: true });
   const borderColor = isFocused ? "white" : "gray";
@@ -75,13 +82,10 @@ export default function UserTextInput({
   const environment = useEnvironment();
   const files = environment?.workspace.files;
 
-  const fileFuse = new Fuse(files || [], {
-    threshold: 0.4,
-  });
+  const fileFuse = new Fuse(files || []);
 
   const commandFuse = new Fuse(COMMANDS, {
     keys: ["name", "description"],
-    threshold: 0.4,
   });
 
   // Effect for File Picker Filtering
@@ -244,6 +248,11 @@ export default function UserTextInput({
       } else if (selectedCommand.name === "/clear") {
         // Handle /clear
         onClearHistory();
+        setInputValue("");
+        onChange("");
+      } else if (selectedCommand.name === "/settings") {
+        // Handle /settings
+        onOpenSettings();
         setInputValue("");
         onChange("");
       } else {
