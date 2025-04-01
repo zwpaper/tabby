@@ -20,7 +20,6 @@ const renderOutput = (
     </Collapsible>
   ) : (
     <Box flexDirection="column" gap={1}>
-      <Text color="grey">{title}</Text>
       <Text color={color}>{output.trim()}</Text>
     </Box>
   );
