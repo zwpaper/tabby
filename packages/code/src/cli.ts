@@ -1,17 +1,24 @@
 import { Command } from "commander";
 import { app } from ".";
-import { version } from "../package.json"
+import { version } from "../package.json";
 
 const program = new Command();
 
-program.name("ragdoll-code").description("CLI for ragdoll-code").version(version)
+program
+  .name("ragdoll-code")
+  .description("CLI for ragdoll-code")
+  .version(version);
 
-program.option("--dev", "Run in development mode").parse(process.argv);
+program
+  .option("--dev", "Run in development mode")
+  .option("-p, --prompt <prompt>", "Initial prompt")
+  .parse(process.argv);
 
 const config = program.opts();
 
 const appConfig = {
   dev: config.dev || false,
+  prompt: config.prompt,
 };
 
 app(appConfig);

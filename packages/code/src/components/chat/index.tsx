@@ -11,7 +11,7 @@ import type {
   Environment,
   ChatRequest as RagdollChatRequest,
 } from "@ragdoll/server";
-import { Box, Text } from "ink";
+import { Box, render, Text } from "ink";
 import { useEffect, useState } from "react";
 import ErrorWithRetry from "./error";
 import ChatHeader from "./header";
@@ -35,6 +35,7 @@ function Chat() {
     addToolResult,
     error,
     reload,
+    append
   } = useChat({
     api: appConfig.dev
       ? "http://localhost:4111/api/chat/stream"
@@ -51,6 +52,28 @@ function Chat() {
     },
   });
 
+  const onChange = (value: string) => {
+    setInput(value);
+  };
+
+  const onSubmit = () => {
+    if (environment) {
+      handleSubmit();
+    }
+  };
+
+  const [initialPromptSent, setInitialPromptSent] = useState(false);
+  // Handle initial prompt
+  useEffect(() => {
+    if (appConfig.prompt && environment && !initialPromptSent) {
+      setInitialPromptSent(true);
+      append({
+        role: "user",
+        content: appConfig.prompt
+      });
+    }
+  }, [appConfig.prompt, environment, initialPromptSent, setInput, handleSubmit, status]);
+
   const { isUserInputTools } = useIsUserInputTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -62,7 +85,6 @@ function Chat() {
       setShowErrorRetry(true);
     }
   }, [status]);
-
   function onRetryCancel() {
     setShowErrorRetry(false);
     setMessages(messages.slice(0, -1));
@@ -93,7 +115,7 @@ function Chat() {
                   </Text>
                   {isLoading &&
                     message.id ===
-                      renderMessages[renderMessages.length - 1].id && (
+                    renderMessages[renderMessages.length - 1].id && (
                       <Spinner />
                     )}
                 </Box>
@@ -136,13 +158,8 @@ function Chat() {
       {showTextInput && (
         <UserTextInput
           onLogout={logout}
-          onChange={setInput}
-          onSubmit={() => {
-            // Double check environment before submitting
-            if (environment) {
-              handleSubmit();
-            }
-          }}
+          onChange={onChange}
+          onSubmit={onSubmit}
           onClearHistory={handleClearHistory} // Pass the handler
         />
       )}
