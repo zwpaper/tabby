@@ -40,10 +40,12 @@ export const ExecuteCommandTool: React.FC<
 
       resultEl = (
         <Box flexDirection="column" gap={1}>
-          {exitCode !== 0 && <Box gap={1}>
-            <Text>Exited:</Text>
-            <Text color="red">{exitCode}</Text>
-          </Box>}
+          {exitCode !== 0 && (
+            <Box gap={1}>
+              <Text>Exited:</Text>
+              <Text color="red">{exitCode}</Text>
+            </Box>
+          )}
           {renderOutput(stdout, "Stdout", "grey")}
           {renderOutput(stderr, "Stderr", "grey")}
         </Box>

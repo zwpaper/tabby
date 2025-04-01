@@ -19,8 +19,28 @@ export const executeCommand: ExecuteCommandFunctionType = async ({
       stdout,
       stderr,
     };
-  } catch (error: any) {
-    const { stdout, stderr, code } = error;
-    return { stdout, stderr, exitCode: code }
+  } catch (error: unknown) {
+    // Type guard for the expected error structure from execPromise
+    if (
+      error &&
+      typeof error === "object" &&
+      "stdout" in error &&
+      "stderr" in error &&
+      "code" in error &&
+      typeof (error as { code: unknown }).code === "number"
+    ) {
+      const execError = error as {
+        stdout: string;
+        stderr: string;
+        code: number;
+      };
+      return {
+        stdout: execError.stdout,
+        stderr: execError.stderr,
+        exitCode: execError.code,
+      };
+    }
+    // Re-throw if it's not the expected error structure or rethrow with more context
+    throw error;
   }
 };
