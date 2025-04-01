@@ -21,7 +21,7 @@ const COMMANDS = [
     name: "/commit",
     description: "Generate commit message",
     prompt:
-      "Please generate a commit message based on the git staging/unstaging diff and commit it",
+      "Generate a concise commit message in conventional commit format based on the staged changes. Then, commit the changes. If there are unstaged changes, stage them first.",
   },
 ];
 
