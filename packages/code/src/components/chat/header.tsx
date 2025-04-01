@@ -30,13 +30,13 @@ function formatContextWindow(size: number): number {
 
 function ChatHeader({ user, tokenUsage, status }: ChatHeaderProps) {
   return (
-    <Box alignItems="center" gap={1}>
+    <Box alignItems="center" gap={1} width="100%">
       <Box
         flexDirection="column"
         borderStyle="round"
         borderColor="cyan"
         paddingX={1}
-        width={40}
+        width={45}
       >
         <Text>Welcome {user.email}</Text>
         <Text>
@@ -46,7 +46,7 @@ function ChatHeader({ user, tokenUsage, status }: ChatHeaderProps) {
       </Box>
       <Box
         flexDirection="column"
-        width={40}
+        width={45}
         borderStyle="round"
         borderColor="blue"
         paddingX={1}

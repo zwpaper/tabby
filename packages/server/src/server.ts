@@ -79,7 +79,7 @@ const route = api
           console.error(JSON.stringify(messages));
         },
         // biome-ignore lint/suspicious/noExplicitAny: AvailableTools is a record of tools, so this is safe
-        experimental_activeTools: Object.keys(AvailableTools) as any
+        experimental_activeTools: Object.keys(AvailableTools) as any,
       });
 
       return stream(c, (stream) => stream.pipe(result.toDataStream()));

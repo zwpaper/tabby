@@ -4,6 +4,7 @@ import { useChatStreamApi } from "@/lib/api";
 import { useAppConfig } from "@/lib/app-config";
 import { useAuth } from "@/lib/auth";
 import { useEnvironment } from "@/lib/hooks/use-environment";
+import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
 import { type Message, useChat } from "@ai-sdk/react";
@@ -99,7 +100,14 @@ function Chat() {
 
   // Function to clear message history
   function handleClearHistory() {
-    setMessages([]);
+    setMessages(
+      Array.from({ length: 20 }, (_, i) => ({
+        id: `fake-${i}`,
+        role: i % 2 === 0 ? "user" : "assistant",
+        content:
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+      })),
+    );
   }
 
   // Function to toggle settings dialog
@@ -107,7 +115,7 @@ function Chat() {
     setShowSettings((prev) => !prev);
   }
 
-  const showRenderMessages = !showSettings && renderMessages.length > 0;
+  const showRenderMessages = !showSettings;
 
   // Show text input only if not loading OR user input tools are active,
   // AND environment is loaded, AND no error retry is shown
@@ -117,42 +125,45 @@ function Chat() {
     environment &&
     !showErrorRetry;
 
+  const [_, height] = useStdoutDimensions();
   return (
-    <Box flexDirection="column">
-      <ChatHeader status={status} user={user} tokenUsage={tokenUsage} />
-
+    <Box flexDirection="column" padding={1} height="100%" width="100%">
       {showRenderMessages && (
-        <Box flexDirection="column" padding={1}>
-          <Box flexDirection="column" gap={1}>
-            {renderMessages.map((message) => (
-              <Box key={message.id} flexDirection="column" gap={1}>
-                <Box gap={1}>
-                  <Text color={getRoleColor(message.role)}>
-                    {message.role === "user" ? "You" : "Ragdoll"}
-                  </Text>
-                  {isLoading &&
-                    message.id ===
-                      renderMessages[renderMessages.length - 1].id && (
-                      <Spinner />
-                    )}
-                </Box>
-                {message.parts?.map((part, index) => {
-                  if (part.type === "text") {
-                    return <Markdown key={index}>{part.text}</Markdown>;
-                  }
-                  if (part.type === "tool-invocation") {
-                    return (
-                      <ToolBox
-                        key={part.toolInvocation.toolCallId}
-                        toolCall={part.toolInvocation}
-                        addToolResult={addToolResult}
-                      />
-                    );
-                  }
-                })}
+        <Box
+          height={height - 20}
+          flexGrow={1}
+          flexDirection="column"
+          justifyContent="flex-end"
+          gap={1}
+          overflow="hidden"
+          marginBottom={1}
+        >
+          {renderMessages.map((message) => (
+            <Box key={message.id} flexDirection="column" gap={1} flexShrink={0}>
+              <Box gap={1}>
+                <Text color={getRoleColor(message.role)}>
+                  {message.role === "user" ? "You" : "Ragdoll"}
+                </Text>
+                {isLoading &&
+                  message.id ===
+                    renderMessages[renderMessages.length - 1].id && <Spinner />}
               </Box>
-            ))}
-          </Box>
+              {message.parts?.map((part, index) => {
+                if (part.type === "text") {
+                  return <Markdown key={index}>{part.text}</Markdown>;
+                }
+                if (part.type === "tool-invocation") {
+                  return (
+                    <ToolBox
+                      key={part.toolInvocation.toolCallId}
+                      toolCall={part.toolInvocation}
+                      addToolResult={addToolResult}
+                    />
+                  );
+                }
+              })}
+            </Box>
+          ))}
         </Box>
       )}
 
@@ -171,8 +182,10 @@ function Chat() {
         </Box>
       )}
 
+      <ChatHeader status={status} user={user} tokenUsage={tokenUsage} />
+
       {/* Show text input only when ready */}
-      {showTextInput && (
+      {showTextInput ? (
         <UserTextInput
           onLogout={logout}
           onChange={onChange}
@@ -180,6 +193,8 @@ function Chat() {
           onClearHistory={handleClearHistory} // Pass the handler
           onOpenSettings={handleOpenSettings} // Pass the settings handler
         />
+      ) : (
+        <Box minHeight={5} />
       )}
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
@@ -235,19 +250,7 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
     });
   }
 
-  // Limit parts per message (optional, kept from original)
-  for (let i = 0; i < x.length; i++) {
-    const message = x[i];
-    if (message.parts) {
-      x[i] = {
-        ...message,
-        parts: message.parts.slice(-3), // Keep last 3 parts
-      };
-    }
-  }
-
-  // Limit total messages displayed
-  return x.slice(-3); // Keep last 3 messages
+  return x;
 }
 
 export default Chat;

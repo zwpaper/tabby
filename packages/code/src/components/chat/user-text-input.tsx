@@ -36,7 +36,13 @@ const COMMANDS = [
   {
     name: "/settings",
     description: "Open settings",
-    prompt: "", // Placeholder, action TBD
+    prompt: "", // No prompt needed, action is immediate
+  },
+  {
+    name: "/explain",
+    description: "Explain the workspace",
+    prompt:
+      "Please explain what does this workspace do, with brief summary of each component.",
   },
 ];
 
@@ -92,10 +98,10 @@ export default function UserTextInput({
   useEffect(() => {
     if (isFilePickerActive) {
       if (fileQuery === "") {
-        setFilteredFiles(files?.slice(0, 10) || []); // Limit initial display
+        setFilteredFiles(files?.slice(0, 5) || []); // Limit initial display
       } else {
         const results = fileFuse.search(fileQuery);
-        setFilteredFiles(results.map((result) => result.item).slice(0, 10)); // Limit results
+        setFilteredFiles(results.map((result) => result.item).slice(0, 5)); // Limit results
       }
       setSelectedFileIndex(0); // Reset selection when query changes
     } else {
@@ -107,10 +113,10 @@ export default function UserTextInput({
   useEffect(() => {
     if (isCommandPickerActive) {
       if (commandQuery === "") {
-        setFilteredCommands(COMMANDS.slice(0, 10)); // Show all commands initially
+        setFilteredCommands(COMMANDS.slice(0, 5)); // Show all commands initially
       } else {
         const results = commandFuse.search(commandQuery);
-        setFilteredCommands(results.map((result) => result.item).slice(0, 10)); // Limit results
+        setFilteredCommands(results.map((result) => result.item).slice(0, 5)); // Limit results
       }
       setSelectedCommandIndex(0); // Reset selection when query changes
     } else {
@@ -333,7 +339,7 @@ export default function UserTextInput({
   };
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" width="100%">
       {/* Text Input Area */}
       <Box borderStyle="round" borderColor={borderColor} padding={1}>
         <TextInput
