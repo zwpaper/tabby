@@ -110,7 +110,7 @@ function getMessageToInject(messages: Message[]): Message | undefined {
 }
 
 export default {
-  port: 4111,
+  port: process.env.PORT || 4111,
   fetch: app.fetch,
   idleTimeout: 60,
 };
