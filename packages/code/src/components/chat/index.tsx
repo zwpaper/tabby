@@ -120,7 +120,7 @@ function Chat() {
 
   return (
     <Box flexDirection="column">
-      <ChatHeader user={user} tokenUsage={tokenUsage} />
+      <ChatHeader status={status} user={user} tokenUsage={tokenUsage} />
 
       {showRenderMessages && (
         <Box flexDirection="column" padding={1}>

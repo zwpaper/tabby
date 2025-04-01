@@ -1,4 +1,5 @@
 import type { useTokenUsage } from "@/lib/hooks/use-token-usage";
+import type { useChat } from "@ai-sdk/react";
 import { ProgressBar } from "@inkjs/ui";
 import type { User } from "@instantdb/react";
 import { Box, Text } from "ink";
@@ -6,6 +7,7 @@ import { Box, Text } from "ink";
 interface ChatHeaderProps {
   user: User;
   tokenUsage: ReturnType<typeof useTokenUsage>["tokenUsage"];
+  status: ReturnType<typeof useChat>["status"];
 }
 
 function formatTokenCount(count: number): string {
@@ -26,7 +28,7 @@ function formatContextWindow(size: number): number {
   return percentage * 100;
 }
 
-function ChatHeader({ user, tokenUsage }: ChatHeaderProps) {
+function ChatHeader({ user, tokenUsage, status }: ChatHeaderProps) {
   return (
     <Box alignItems="center" gap={1}>
       <Box
@@ -39,7 +41,8 @@ function ChatHeader({ user, tokenUsage }: ChatHeaderProps) {
         <Text>Welcome {user.email}</Text>
         <Text>
           Tokens: ↑ {formatTokenCount(tokenUsage.promptTokens)} ↓{" "}
-          {formatTokenCount(tokenUsage.completionTokens)}
+          {formatTokenCount(tokenUsage.completionTokens)} {" "}
+          ( {status} )
         </Text>
       </Box>
       <Box

@@ -1,11 +1,14 @@
 import { Select } from "@inkjs/ui";
 import { Box, Text, useFocus, useInput } from "ink";
+import { useState } from "react";
+import Toggle from "../toggle";
 
 interface SettingsModalProps {
   onClose: () => void;
 }
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
+  const [autoApprove, setAutoApprove] = useState(false);
   const { isFocused } = useFocus({ autoFocus: true });
 
   useInput((_, key) => {
@@ -46,13 +49,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
       <Box justifyContent="space-between">
         <Text>Auto approve all command</Text>
-        <Box gap={1}>
-          <Text underline bold>
-            Y
-          </Text>
-          <Text>/</Text>
-          <Text>N</Text>
-        </Box>
+        <Toggle
+          label="Auto approve"
+          value={autoApprove}
+          onChange={setAutoApprove}
+        />
       </Box>
     </Box>
   );

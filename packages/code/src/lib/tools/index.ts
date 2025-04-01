@@ -143,10 +143,7 @@ export function useIsUserInputTools({
         part.toolInvocation.state === "call"
       ) {
         const { toolName } = part.toolInvocation;
-        if (
-          getDefaultApproval(part.toolInvocation) === "pending" ||
-          UserInputTools.has(toolName)
-        ) {
+        if (UserInputTools.has(toolName)) {
           isUserInputTools = true;
         }
       }
