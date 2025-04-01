@@ -1,6 +1,6 @@
-import { Select } from "@inkjs/ui";
-import { Box, Text, useInput } from "ink";
-import { useState } from "react";
+import { useModels } from "@/lib/api";
+import { Select as SelectImpl } from "@inkjs/ui";
+import { Box, Text, useFocus, useInput } from "ink";
 import Toggle from "../toggle";
 
 interface SettingsModalProps {
@@ -8,17 +8,13 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
-  const [autoApprove, setAutoApprove] = useState(false);
+  const models = useModels();
 
   useInput((_, key) => {
     if (key.escape) {
       onClose();
     }
   });
-
-  const handleSelect = (item: string) => {
-    console.log(`Selected: ${item}`);
-  };
 
   return (
     <Box
@@ -27,6 +23,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       paddingX={1}
       marginTop={1}
       flexDirection="column"
+      gap={1}
     >
       <Box marginBottom={1} gap={1}>
         <Text bold>Settings</Text>
@@ -36,21 +33,23 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       <Box justifyContent="space-between">
         <Text>Model</Text>
         <Select
-          defaultValue={AvailableModels[0]}
-          options={AvailableModels.map((model) => ({
-            label: model,
-            value: model,
+          defaultValue={models[0]?.id}
+          options={models.map((model) => ({
+            label: model.id,
+            value: model.id,
           }))}
-          onChange={handleSelect}
         />
       </Box>
 
       <Box justifyContent="space-between">
         <Text>Auto approve all command</Text>
-        <Toggle value={autoApprove} onChange={setAutoApprove} />
+        <Toggle />
       </Box>
     </Box>
   );
 }
 
-const AvailableModels = ["gemini-2.5-pro"];
+function Select(props: React.ComponentProps<typeof SelectImpl>) {
+  const { isFocused } = useFocus({ autoFocus: true });
+  return <SelectImpl {...props} isDisabled={!isFocused} />;
+}

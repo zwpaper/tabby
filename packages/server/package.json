@@ -1,6 +1,6 @@
 {
   "name": "@ragdoll/server",
-  "main": "src/types.ts",
+  "main": "src/index.ts",
   "scripts": {
     "tsc": "tsc --noEmit",
     "dev": "bun --hot src/server.ts",

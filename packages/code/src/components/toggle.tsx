@@ -2,8 +2,8 @@ import { Box, Text, useFocus, useInput } from "ink";
 import { useState } from "react";
 
 interface ToggleProps {
-  value: boolean;
-  onChange: (value: boolean) => void;
+  value?: boolean;
+  onChange?: (value: boolean) => void;
 }
 
 export default function Toggle({ value, onChange }: ToggleProps) {
@@ -16,13 +16,13 @@ export default function Toggle({ value, onChange }: ToggleProps) {
       if (input === " ") {
         const newValue = !internalValue;
         setInternalValue(newValue);
-        onChange(newValue);
+        onChange?.(newValue);
       } else if (input.toLowerCase() === "y") {
         setInternalValue(true);
-        onChange(true);
+        onChange?.(true);
       } else if (input.toLowerCase() === "n") {
         setInternalValue(false);
-        onChange(false);
+        onChange?.(false);
       }
     },
     { isActive: isFocused },
@@ -39,7 +39,7 @@ export default function Toggle({ value, onChange }: ToggleProps) {
       </Text>
       <Text {...textProps}> / </Text>
       <Text bold={!internalValue} {...textProps}>
-        N
+        n
       </Text>
     </Box>
   );

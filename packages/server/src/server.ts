@@ -1,5 +1,7 @@
 import { google } from "@ai-sdk/google";
+import { openai } from "@ai-sdk/openai";
 import { zValidator } from "@hono/zod-validator";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 import * as tools from "@ragdoll/tools";
 import {
   type LanguageModel,
@@ -24,35 +26,63 @@ app.get("/health", (c) => c.text("OK"));
 
 const api = app.basePath("/api");
 
-api.post(
-  "/chat/stream",
-  zValidator("json", ZodChatRequestType),
-  authRequest,
-  async (c) => {
-    const { messages, environment } = await c.req.valid("json");
-    c.header("X-Vercel-AI-Data-Stream", "v1");
-    c.header("Content-Type", "text/plain; charset=utf-8");
+// Define available models
+const availableModels = [
+  { id: "google/gemini-2.5-pro-exp-03-25", contextWindow: 1_000_000 },
+  { id: "anthropic/claude-3.7-sonnet", contextWindow: 200_000 },
+  { id: "openai/gpt-4o-mini", contextWindow: 128_000 },
+];
 
-    // const model = openrouter("anthropic/claude-3.7-sonnet");
-    const model = google("gemini-2.5-pro-exp-03-25");
-    // const model = openai("gpt-4o-mini");
+// Endpoint to list available models
+const route = api
+  .get("/models", (c) => {
+    return c.json(availableModels);
+  })
+  .post(
+    "/chat/stream",
+    zValidator("json", ZodChatRequestType),
+    authRequest,
+    async (c) => {
+      const {
+        messages,
+        environment,
+        model: requestedModelId,
+      } = await c.req.valid("json");
+      c.header("X-Vercel-AI-Data-Stream", "v1");
+      c.header("Content-Type", "text/plain; charset=utf-8");
 
-    injectReadEnvironmentToolCall(messages, model, environment);
+      let selectedModel: LanguageModelV1;
+      switch (requestedModelId) {
+        case "anthropic/claude-3.7-sonnet":
+          selectedModel = openrouter("claude-3.7-sonnet");
+          break;
+        case "openai/gpt-4o-mini":
+          selectedModel = openai("gpt-4o-mini");
+          break;
+        // case "google/gemini-2.5-pro-exp-03-25": // Removed redundant case
+        default:
+          selectedModel = google("gemini-2.5-pro-exp-03-25");
+          break;
+      }
 
-    const result = streamText({
-      model: c.get("model") || model,
-      system: environment?.info && generateSystemPrompt(environment.info),
-      messages,
-      tools,
-      onError: (error) => {
-        console.error(error);
-        console.error(JSON.stringify(messages));
-      },
-    });
+      injectReadEnvironmentToolCall(messages, selectedModel, environment);
 
-    return stream(c, (stream) => stream.pipe(result.toDataStream()));
-  },
-);
+      const result = streamText({
+        model: c.get("model") || selectedModel,
+        system: environment?.info && generateSystemPrompt(environment.info),
+        messages,
+        tools,
+        onError: (error) => {
+          console.error(error);
+          console.error(JSON.stringify(messages));
+        },
+      });
+
+      return stream(c, (stream) => stream.pipe(result.toDataStream()));
+    },
+  );
+
+export type AppType = typeof route;
 
 function injectReadEnvironmentToolCall(
   messages: Message[],

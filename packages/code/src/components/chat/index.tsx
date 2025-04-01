@@ -1,5 +1,6 @@
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
+import { useChatStreamApi } from "@/lib/api";
 import { useAppConfig } from "@/lib/app-config";
 import { useAuth } from "@/lib/auth";
 import { useEnvironment } from "@/lib/hooks/use-environment";
@@ -38,9 +39,7 @@ function Chat() {
     reload,
     append,
   } = useChat({
-    api: appConfig.dev
-      ? "http://localhost:4111/api/chat/stream"
-      : "https://ragdoll-production.up.railway.app/api/chat/stream",
+    api: useChatStreamApi(),
     maxSteps: 100,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>

@@ -5,6 +5,7 @@ import Chat from "./components/chat";
 import EmailLogin from "./components/email-login";
 
 import { defaultTheme, extendTheme } from "@inkjs/ui";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type AppConfig, AppConfigProvider } from "./lib/app-config";
 
 const customTheme = extendTheme(defaultTheme, {
@@ -44,14 +45,17 @@ const Router = () => {
 };
 
 const App = ({ config }: { config: AppConfig }) => {
+  const queryClient = new QueryClient();
   return (
-    <AppConfigProvider config={config}>
-      <ThemeProvider theme={customTheme}>
-        <AuthProvider>
-          <Router />
-        </AuthProvider>
-      </ThemeProvider>
-    </AppConfigProvider>
+    <QueryClientProvider client={queryClient}>
+      <AppConfigProvider config={config}>
+        <ThemeProvider theme={customTheme}>
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
+        </ThemeProvider>
+      </AppConfigProvider>
+    </QueryClientProvider>
   );
 };
 
