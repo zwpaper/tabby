@@ -17,11 +17,15 @@ const renderOutput = (
   const shouldCollapse = outputLines.length > 5;
 
   return shouldCollapse ? (
-    <Collapsible title={`${title} (${outputLines.length} lines)`} open={false}>
+    <Collapsible
+      key={title}
+      title={`${title} (${outputLines.length} lines)`}
+      open={false}
+    >
       <Text color={color}>{x}</Text>
     </Collapsible>
   ) : (
-    <Box flexDirection="column" gap={1}>
+    <Box key={title} flexDirection="column" gap={1}>
       <Text color={color}>{x}</Text>
     </Box>
   );
@@ -38,12 +42,18 @@ export const ExecuteCommandTool: React.FC<
   if (toolCall.state === "result") {
     if (!("error" in toolCall.result)) {
       const { stdout, stderr, exitCode } = toolCall.result;
-
-      resultEl = (
+      const children = [
+        exitCode !== 0 && (
+          <Text key="exitCode" color="red">
+            Exit Code: {exitCode}
+          </Text>
+        ),
+        renderOutput(stdout, "stdout", "grey"),
+        renderOutput(stderr, "stderr", "grey"),
+      ].filter(Boolean);
+      resultEl = children.length > 0 && (
         <Box flexDirection="column" gap={1}>
-          {exitCode !== 0 && <Text color="red">Exit Code: {exitCode}</Text>}
-          {renderOutput(stdout, "stdout", "grey")}
-          {renderOutput(stderr, "stderr", "grey")}
+          {children}
         </Box>
       );
     }
