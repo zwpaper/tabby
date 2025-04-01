@@ -48,7 +48,12 @@ function Chat() {
     headers: {
       Authorization: `Bearer ${user.refresh_token}`,
     },
-    onFinish(_, { usage }) {
+    onFinish(_, { finishReason, usage }) {
+      if (finishReason === "unknown") {
+        // Ignore unknown finish reasons
+        return;
+      }
+
       trackTokenUsage(usage);
     },
   });
@@ -87,6 +92,7 @@ function Chat() {
       setShowErrorRetry(true);
     }
   }, [status]);
+
   function onRetryCancel() {
     setShowErrorRetry(false);
     setMessages(messages.slice(0, -1));

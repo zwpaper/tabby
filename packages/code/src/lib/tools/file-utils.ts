@@ -25,9 +25,8 @@ export async function traverseBFS(
 
       if (entry.isDirectory() && recursive) {
         queue.push(fullPath);
-      } else if (entry.isFile()) {
-        files.push(fullPath);
       }
+      files.push(fullPath);
 
       if (maxItems > 0 && files.length >= maxItems) {
         isTruncated = true;

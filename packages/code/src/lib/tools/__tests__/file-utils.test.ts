@@ -25,7 +25,7 @@ describe("traverseBFS", () => {
 
     const result = await traverseBFS("/test", false);
     expect(result).toEqual({
-      files: ["/test/file1.txt"],
+      files: ["/test/file1.txt", "/test/subdir"],
       isTruncated: false,
     });
   });
@@ -54,7 +54,7 @@ describe("traverseBFS", () => {
 
     const result = await traverseBFS("/test", true);
     expect(result).toEqual({
-      files: ["/test/file1.txt", "/test/subdir/file2.txt"],
+      files: ["/test/file1.txt", "/test/subdir", "/test/subdir/file2.txt"],
       isTruncated: false,
     });
   });

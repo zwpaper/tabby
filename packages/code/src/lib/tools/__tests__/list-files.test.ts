@@ -27,7 +27,7 @@ describe("listFiles", () => {
 
     const result = await listFiles({ path: "test-dir", recursive: false });
 
-    expect(result.files).toEqual(["test-dir/file1.txt", "test-dir/file2.txt"]);
+    expect(result.files).toEqual(["test-dir/file1.txt", "test-dir/file2.txt", "test-dir/subdir"]);
     expect(mockReaddir).toHaveBeenCalledWith("test-dir", {
       withFileTypes: true,
     });
