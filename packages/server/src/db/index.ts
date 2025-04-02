@@ -2,7 +2,7 @@ import { type User, id, init } from "@instantdb/admin";
 import type { LanguageModelUsage } from "ai";
 import schema from "../../instant.schema";
 
-let dbInstance: ReturnType<typeof init> | null = null;
+let dbInstance: ReturnType<typeof init<typeof schema>> | null = null;
 
 export function db() {
   if (dbInstance) {
@@ -26,13 +26,18 @@ export async function trackUsage(user: User, usage: LanguageModelUsage) {
     usage,
   );
   db().transact([
-    db().tx.chatCompletions[id()].update({
-      timestamp: JSON.stringify(new Date()),
-      promptTokens: usage.promptTokens,
-      completionTokens: usage.completionTokens,
+    db()
+      .tx.chatCompletions[id()].update({
+        timestamp: JSON.stringify(new Date()),
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+      })
+      .link({
+        user: user.id,
+      }),
+    db().tx.dailyUsages[dailyUsageId].update(dailyUsage).link({
       user: user.id,
     }),
-    db().tx.dailyUsages[dailyUsageId].update(dailyUsage),
   ]);
 }
 
@@ -50,19 +55,12 @@ async function getDailyUsage(user: User, usage: LanguageModelUsage) {
     },
   });
 
-  const dailyUsage = dailyUsages[0] as
-    | {
-        id: string;
-        promptTokens: number;
-        completionTokens: number;
-      }
-    | undefined;
+  const dailyUsage = dailyUsages[0];
 
   return {
     id: dailyUsage?.id ?? id(),
     data: {
       date: todayDate,
-      user: user.id,
       promptTokens: (dailyUsage?.promptTokens || 0) + usage.promptTokens,
       completionTokens:
         (dailyUsage?.completionTokens || 0) + usage.completionTokens,
