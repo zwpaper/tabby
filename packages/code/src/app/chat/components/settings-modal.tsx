@@ -17,33 +17,36 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   });
 
   return (
-    <Box
-      width={81}
-      borderStyle="round"
-      paddingX={1}
-      marginTop={1}
-      flexDirection="column"
-      gap={1}
-    >
-      <Box marginBottom={1} gap={1}>
-        <Text bold>Settings</Text>
-        <Text>(Esc to close)</Text>
-      </Box>
+    <Box width="100%" height="100%" justifyContent="center" alignItems="center">
+      <Box
+        width="100%"
+        borderStyle="round"
+        paddingX={1}
+        flexDirection="column"
+        gap={1}
+      >
+        <Box marginBottom={1} gap={1}>
+          <Text bold>Settings</Text>
+          <Text>(Esc to close)</Text>
+        </Box>
 
-      <Box justifyContent="space-between">
-        <Text>Model</Text>
-        <Select
-          defaultValue={models[0]?.id}
-          options={models.map((model) => ({
-            label: model.id,
-            value: model.id,
-          }))}
-        />
-      </Box>
+        <Box justifyContent="space-between">
+          <Text>Supported Models</Text>
+          <Select
+            isDisabled={true}
+            options={models.map((model) => ({
+              label: model.id,
+              value: model.id,
+            }))}
+          />
+        </Box>
 
-      <Box justifyContent="space-between">
-        <Text>Auto approve all command</Text>
-        <Toggle />
+        {false && (
+          <Box justifyContent="space-between">
+            <Text>Auto approve all command</Text>
+            <Toggle />
+          </Box>
+        )}
       </Box>
     </Box>
   );
@@ -51,5 +54,5 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
 function Select(props: React.ComponentProps<typeof SelectImpl>) {
   const { isFocused } = useFocus({ autoFocus: true });
-  return <SelectImpl {...props} isDisabled={!isFocused} />;
+  return <SelectImpl isDisabled={!isFocused} {...props} />;
 }

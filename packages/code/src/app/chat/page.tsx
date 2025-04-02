@@ -109,6 +109,7 @@ function Chat() {
   }
 
   const showRenderMessages = !showSettings;
+  const showChatHeader = !showSettings;
 
   // Show text input only if not loading OR user input tools are active,
   // AND environment is loaded, AND no error retry is shown
@@ -176,7 +177,9 @@ function Chat() {
         </Box>
       )}
 
-      <ChatHeader status={status} user={user} tokenUsage={tokenUsage} />
+      {showChatHeader && (
+        <ChatHeader status={status} user={user} tokenUsage={tokenUsage} />
+      )}
 
       {/* Show text input only when ready */}
       {showTextInput ? (

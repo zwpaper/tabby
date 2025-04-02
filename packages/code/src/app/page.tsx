@@ -22,10 +22,12 @@ const LoginPage = () => {
   const { sendMagicCode, loginWithMagicCode } = useAuth();
 
   return (
-    <EmailLogin
-      sendMagicCode={sendMagicCode}
-      verifyMagicCode={loginWithMagicCode}
-    />
+    <Box justifyContent="center" alignItems="center" flexGrow={1}>
+      <EmailLogin
+        sendMagicCode={sendMagicCode}
+        verifyMagicCode={loginWithMagicCode}
+      />
+    </Box>
   );
 };
 

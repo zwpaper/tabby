@@ -80,14 +80,18 @@ const EmailLogin: React.FC<EmailLoginProps> = ({
 
   return (
     <Box
+      minWidth={48}
       flexDirection="column"
       padding={1}
       borderStyle="round"
       borderColor="cyan"
     >
-      <Text bold color="cyan">
-        Magic Link Login
-      </Text>
+      <Box alignSelf="center">
+        <Text bold color="cyan">
+          Magic Link Login
+        </Text>
+      </Box>
+
       {isLoading && <Text color="yellow">Loading...</Text>}
       {errorMessage && (
         <Box flexDirection="column" gap={1}>
