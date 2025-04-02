@@ -10,7 +10,8 @@
     "dev": "bun --hot src/server.ts",
     "build": "bun build src/server.ts --outdir dist --format cjs",
     "start": "bun run dist/server.js",
-    "schema:push": "bunx instant-cli@latest push schema"
+    "push:schema": "bunx instant-cli@latest push schema",
+    "push:perms": "bunx instant-cli@latest push perms"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.3",
