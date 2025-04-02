@@ -50,6 +50,10 @@ const route = api
     async (c) => {
       // User guranteed to be authenticated by authRequest middleware
       const user = c.get("user");
+      if (!user) {
+        // This should theoretically not happen due to authRequest middleware
+        return c.json({ error: "Unauthorized: User context missing" }, 401);
+      }
 
       const {
         messages,

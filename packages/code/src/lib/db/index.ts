@@ -1,7 +1,6 @@
 import {
   InstantReactAbstractDatabase,
   type InstantSchemaDef,
-  i,
 } from "@instantdb/react";
 import schema from "@ragdoll/server/instant.schema";
 import NetworkListener from "./network-listener";
