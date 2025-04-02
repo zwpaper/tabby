@@ -1,14 +1,14 @@
+import EmailLogin from "@/components/email-login";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Spinner, ThemeProvider } from "@inkjs/ui";
 import { Box, type BoxProps, render } from "ink";
-import Chat from "./components/chat";
-import EmailLogin from "./components/email-login";
+import Chat from "./chat/page";
 
+import { type AppConfig, AppConfigProvider } from "@/lib/app-config";
+import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
 import { defaultTheme, extendTheme } from "@inkjs/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
-import { type AppConfig, AppConfigProvider } from "./lib/app-config";
-import { useStdoutDimensions } from "./lib/hooks/use-stdout-dimensions";
 
 const customTheme = extendTheme(defaultTheme, {
   components: {},

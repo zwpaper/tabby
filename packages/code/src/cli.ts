@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { app } from ".";
 import { version } from "../package.json";
+import { app } from "./app/page";
 
 const program = new Command();
 

@@ -1,7 +1,7 @@
+import Toggle from "@/components/toggle";
 import { useModels } from "@/lib/api";
 import { Select as SelectImpl } from "@inkjs/ui";
 import { Box, Text, useFocus, useInput } from "ink";
-import Toggle from "../toggle";
 
 interface SettingsModalProps {
   onClose: () => void;
