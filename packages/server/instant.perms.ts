@@ -13,6 +13,13 @@ const rules = {
     },
     bind: ["isOwner", "auth.id != null && auth.id == data.user.id"],
   },
+  dailyUsages: {
+    allow: {
+      view: "isOwner",
+      $default: "false",
+    },
+    bind: ["isOwner", "auth.id != null && auth.id == data.user.id"],
+  },
 } satisfies InstantRules;
 
 export default rules;

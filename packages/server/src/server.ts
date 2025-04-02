@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { zValidator } from "@hono/zod-validator";
-import { type User, id } from "@instantdb/admin";
+import type { User } from "@instantdb/admin";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import * as tools from "@ragdoll/tools";
 import {
@@ -13,7 +13,7 @@ import {
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { authRequest } from "./auth";
-import { db } from "./db";
+import { trackUsage } from "./db";
 import { getReadEnvironmentResult } from "./prompts/environment";
 import { generateSystemPrompt } from "./prompts/system";
 import { type Environment, ZodChatRequestType } from "./types";
@@ -91,14 +91,7 @@ const route = api
         // biome-ignore lint/suspicious/noExplicitAny: AvailableTools is a record of tools, so this is safe
         experimental_activeTools: Object.keys(AvailableTools) as any,
         onFinish: ({ usage }) => {
-          db().transact(
-            db().tx.chatCompletions[id()].update({
-              timestamp: JSON.stringify(new Date()),
-              promptTokens: usage.promptTokens,
-              completionTokens: usage.completionTokens,
-              user: user.id,
-            }),
-          );
+          trackUsage(user, usage);
         },
       });
 
