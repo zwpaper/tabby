@@ -1,11 +1,16 @@
 {
   "name": "@ragdoll/server",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./instant.schema": "./instant.schema.ts"
+  },
   "scripts": {
     "tsc": "tsc --noEmit",
     "dev": "bun --hot src/server.ts",
     "build": "bun build src/server.ts --outdir dist --format cjs",
-    "start": "bun run dist/server.js"
+    "start": "bun run dist/server.js",
+    "schema:push": "bunx instant-cli@latest push schema"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.3",

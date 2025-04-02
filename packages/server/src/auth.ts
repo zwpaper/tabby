@@ -5,15 +5,23 @@ import { db } from "./db";
 function makeAuthRequest(): MiddlewareHandler {
   // Disable auth in test mode
   if (process.env.NODE_ENV === "test") {
-    return async (_, next) => {
+    return async (c, next) => {
+      c.set("user", {
+        email: "test@tabbyml.com",
+      });
       await next();
     };
   }
 
   return bearerAuth({
-    async verifyToken(token) {
+    async verifyToken(token, c) {
       const user = await db().auth.verifyToken(token);
-      return !!user;
+      if (!user.email.endsWith("@tabbyml.com")) {
+        return false;
+      }
+
+      c.set("user", user);
+      return true;
     },
   });
 }

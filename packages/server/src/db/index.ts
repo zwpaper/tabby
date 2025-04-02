@@ -1,4 +1,5 @@
 import { init } from "@instantdb/admin";
+import schema from "../../instant.schema";
 
 let dbInstance: ReturnType<typeof init> | null = null;
 
@@ -14,6 +15,6 @@ export function db() {
     throw new Error("Missing INSTANT_APP_ID or INSTANT_APP_ADMIN_TOKEN");
   }
 
-  dbInstance = init({ appId, adminToken });
+  dbInstance = init({ appId, adminToken, schema });
   return dbInstance;
 }

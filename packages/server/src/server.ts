@@ -15,9 +15,12 @@ import { authRequest } from "./auth";
 import { getReadEnvironmentResult } from "./prompts/environment";
 import { generateSystemPrompt } from "./prompts/system";
 import { type Environment, ZodChatRequestType } from "./types";
+import { id, type User } from "@instantdb/admin";
+import { db } from "./db";
 
 export type ContextVariables = {
   model?: LanguageModel;
+  user?: User,
 };
 
 export const app = new Hono<{ Variables: ContextVariables }>();
@@ -45,6 +48,9 @@ const route = api
     zValidator("json", ZodChatRequestType),
     authRequest,
     async (c) => {
+      // User guranteed to be authenticated by authRequest middleware
+      const user = c.get("user")!;
+
       const {
         messages,
         environment,
@@ -80,6 +86,15 @@ const route = api
         },
         // biome-ignore lint/suspicious/noExplicitAny: AvailableTools is a record of tools, so this is safe
         experimental_activeTools: Object.keys(AvailableTools) as any,
+        onFinish: ({ usage }) => {
+          db().transact(
+            db().tx.chatCompletions[id()].update({
+              timestamp: JSON.stringify(new Date()),
+              promptTokens: usage.promptTokens,
+              completionTokens: usage.completionTokens,
+              user: user.id
+            }))
+        },
       });
 
       return stream(c, (stream) => stream.pipe(result.toDataStream()));

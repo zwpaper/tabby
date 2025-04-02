@@ -5,6 +5,7 @@ import {
 } from "@instantdb/react";
 import NetworkListener from "./network-listener";
 import Storage from "./storage";
+import schema from "@ragdoll/server/instant.schema"
 
 class InstantNativeDatabase<
   Schema extends InstantSchemaDef<any, any, any>,
@@ -12,14 +13,6 @@ class InstantNativeDatabase<
   static Storage = Storage;
   static NetworkListener = NetworkListener;
 }
-
-const schema = i.schema({
-  entities: {
-    $users: i.entity({
-      email: i.string().unique().indexed(),
-    }),
-  },
-});
 
 function init() {
   // Convince InstantDB that we're in a browser
