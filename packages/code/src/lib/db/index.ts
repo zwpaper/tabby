@@ -3,9 +3,9 @@ import {
   type InstantSchemaDef,
   i,
 } from "@instantdb/react";
+import schema from "@ragdoll/server/instant.schema";
 import NetworkListener from "./network-listener";
 import Storage from "./storage";
-import schema from "@ragdoll/server/instant.schema"
 
 class InstantNativeDatabase<
   Schema extends InstantSchemaDef<any, any, any>,

@@ -1,6 +1,7 @@
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { zValidator } from "@hono/zod-validator";
+import { type User, id } from "@instantdb/admin";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import * as tools from "@ragdoll/tools";
 import {
@@ -12,15 +13,14 @@ import {
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
 import { authRequest } from "./auth";
+import { db } from "./db";
 import { getReadEnvironmentResult } from "./prompts/environment";
 import { generateSystemPrompt } from "./prompts/system";
 import { type Environment, ZodChatRequestType } from "./types";
-import { id, type User } from "@instantdb/admin";
-import { db } from "./db";
 
 export type ContextVariables = {
   model?: LanguageModel;
-  user?: User,
+  user?: User;
 };
 
 export const app = new Hono<{ Variables: ContextVariables }>();
@@ -49,7 +49,7 @@ const route = api
     authRequest,
     async (c) => {
       // User guranteed to be authenticated by authRequest middleware
-      const user = c.get("user")!;
+      const user = c.get("user");
 
       const {
         messages,
@@ -92,8 +92,9 @@ const route = api
               timestamp: JSON.stringify(new Date()),
               promptTokens: usage.promptTokens,
               completionTokens: usage.completionTokens,
-              user: user.id
-            }))
+              user: user.id,
+            }),
+          );
         },
       });
 

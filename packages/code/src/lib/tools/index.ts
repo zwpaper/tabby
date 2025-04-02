@@ -138,10 +138,7 @@ export function useIsUserInputTools({
   for (const message of messages) {
     const parts = message.parts || [];
     for (const part of parts) {
-      if (
-        part.type === "tool-invocation" &&
-        part.toolInvocation.state === "call"
-      ) {
+      if (part.type === "tool-invocation") {
         const { toolName } = part.toolInvocation;
         if (UserInputTools.has(toolName)) {
           isUserInputTools = true;

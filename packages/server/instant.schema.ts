@@ -1,4 +1,4 @@
-import { i } from '@instantdb/core';
+import { i } from "@instantdb/core";
 
 const schema = i.schema({
   entities: {
@@ -6,15 +6,15 @@ const schema = i.schema({
       email: i.string().unique().indexed(),
     }),
     chatCompletions: i.entity({
-        timestamp: i.date().indexed(),
-        promptTokens: i.number(),
-        completionTokens: i.number(),
+      timestamp: i.date().indexed(),
+      promptTokens: i.number(),
+      completionTokens: i.number(),
     }),
   },
   links: {
     chatCompletionsUser: {
-      forward: { on: 'chatCompletions', has: 'one', label: 'user' },
-      reverse: { on: '$users', has: 'many', label: 'chatCompletions' },
+      forward: { on: "chatCompletions", has: "one", label: "user" },
+      reverse: { on: "$users", has: "many", label: "chatCompletions" },
     },
   },
 });
