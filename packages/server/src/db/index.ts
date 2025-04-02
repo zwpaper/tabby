@@ -2,32 +2,25 @@ import { type User, id, init } from "@instantdb/admin";
 import type { LanguageModelUsage } from "ai";
 import schema from "../../instant.schema";
 
-let dbInstance: ReturnType<typeof init<typeof schema>> | null = null;
+const { INSTANT_APP_ID: appId = "", INSTANT_APP_ADMIN_TOKEN: adminToken = "" } =
+  process.env;
 
-export function db() {
-  if (dbInstance) {
-    return dbInstance;
-  }
-
-  const { INSTANT_APP_ID: appId, INSTANT_APP_ADMIN_TOKEN: adminToken } =
-    process.env;
-
+if (process.env.NODE_ENV !== "test") {
   if (!appId || !adminToken) {
-    throw new Error("Missing INSTANT_APP_ID or INSTANT_APP_ADMIN_TOKEN");
+    throw new Error("INSTANT_APP_ID and INSTANT_APP_ADMIN_TOKEN must be set");
   }
-
-  dbInstance = init({ appId, adminToken, schema });
-  return dbInstance;
 }
+
+const db = init({ appId, adminToken, schema });
 
 export async function trackUsage(user: User, usage: LanguageModelUsage) {
   const { id: dailyUsageId, data: dailyUsage } = await getDailyUsage(
     user,
     usage,
   );
-  db().transact([
-    db()
-      .tx.chatCompletions[id()].update({
+  db.transact([
+    db.tx.chatCompletions[id()]
+      .update({
         timestamp: JSON.stringify(new Date()),
         promptTokens: usage.promptTokens,
         completionTokens: usage.completionTokens,
@@ -35,7 +28,7 @@ export async function trackUsage(user: User, usage: LanguageModelUsage) {
       .link({
         user: user.id,
       }),
-    db().tx.dailyUsages[dailyUsageId].update(dailyUsage).link({
+    db.tx.dailyUsages[dailyUsageId].update(dailyUsage).link({
       user: user.id,
     }),
   ]);
@@ -43,7 +36,7 @@ export async function trackUsage(user: User, usage: LanguageModelUsage) {
 
 async function getDailyUsage(user: User, usage: LanguageModelUsage) {
   const todayDate = new Date().toISOString().split("T")[0];
-  const { dailyUsages } = await db().query({
+  const { dailyUsages } = await db.query({
     dailyUsages: {
       $: {
         where: {
@@ -66,4 +59,12 @@ async function getDailyUsage(user: User, usage: LanguageModelUsage) {
         (dailyUsage?.completionTokens || 0) + usage.completionTokens,
     },
   };
+}
+
+export async function verifyToken(token: string) {
+  const user = await db.auth.verifyToken(token);
+  if (!user || !user.email.endsWith("@tabbyml.com")) {
+    return null;
+  }
+  return user;
 }

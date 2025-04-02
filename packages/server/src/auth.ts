@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
-import { db } from "./db";
+import { verifyToken } from "./db";
 
 function makeAuthRequest(): MiddlewareHandler {
   // Disable auth in test mode
@@ -15,11 +15,8 @@ function makeAuthRequest(): MiddlewareHandler {
 
   return bearerAuth({
     async verifyToken(token, c) {
-      const user = await db().auth.verifyToken(token);
-      if (!user.email.endsWith("@tabbyml.com")) {
-        return false;
-      }
-
+      const user = await verifyToken(token);
+      if (!user) return false;
       c.set("user", user);
       return true;
     },
