@@ -13,9 +13,9 @@
     "@ai-sdk/react": "^1.2.0",
     "@hono/client": "^0.0.3",
     "@inkjs/ui": "^2.0.0",
-    "@instantdb/react": "^0.17.32",
     "@tanstack/react-query": "^5.71.1",
     "ai": "^4.2.0",
+    "better-auth": "^1.2.5",
     "commander": "^13.1.0",
     "file-type": "^20.4.1",
     "fuse.js": "^7.1.0",
@@ -27,10 +27,11 @@
   },
   "devDependencies": {
     "@ai-sdk/ui-utils": "^1.2.0",
-    "@ragdoll/tools": "workspace:*",
+    "@ragdoll/ink-storybook": "workspace:*",
     "@ragdoll/server": "workspace:*",
+    "@ragdoll/tools": "workspace:*",
     "@types/marked-terminal": "^6.1.1",
     "@types/react": "^18",
-    "@ragdoll/ink-storybook": "workspace:*"
+    "kysely-codegen": "^0.18.3"
   }
 }

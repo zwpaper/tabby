@@ -32,7 +32,7 @@ const LoginPage = () => {
 };
 
 const Router = () => {
-  const { user, isLoading } = useAuth();
+  const { data, isLoading } = useAuth();
   if (isLoading) {
     return (
       <Box margin={1} flexDirection="column">
@@ -41,7 +41,7 @@ const Router = () => {
     );
   }
 
-  return user ? <ChatPage /> : <LoginPage />;
+  return data ? <ChatPage /> : <LoginPage />;
 };
 
 const App = ({ config }: { config: AppConfig }) => {

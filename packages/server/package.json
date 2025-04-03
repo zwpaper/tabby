@@ -1,27 +1,27 @@
 {
   "name": "@ragdoll/server",
   "main": "src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./instant.schema": "./instant.schema.ts"
+  "dependencies": {
+    "@ai-sdk/google": "^1.2.3",
+    "@ai-sdk/openai": "^1.3.2",
+    "@hono/zod-validator": "^0.4.3",
+    "@openrouter/ai-sdk-provider": "^0.4.4",
+    "@ragdoll/tools": "workspace:*",
+    "ai": "^4.2.0",
+    "better-auth": "^1.2.5",
+    "hono": "^4.7.5",
+    "kysely-neon": "^1.3.0",
+    "zod": "^3.24.2"
   },
   "scripts": {
     "tsc": "tsc --noEmit",
     "dev": "bun --hot src/server.ts",
     "build": "bun build src/server.ts --outdir dist --format cjs",
     "start": "bun run dist/server.js",
-    "push:schema": "bunx instant-cli@latest push schema",
-    "push:perms": "bunx instant-cli@latest push perms"
+    "db:migrate": "bunx @better-auth/cli migrate -y && bun run scripts/migrate-db-schema.ts",
+    "db:genschema": "kysely-codegen --out-file ./src/db/schema.d.ts"
   },
-  "dependencies": {
-    "@ai-sdk/google": "^1.2.3",
-    "@ai-sdk/openai": "^1.3.2",
-    "@hono/zod-validator": "^0.4.3",
-    "@instantdb/admin": "^0.17.32",
-    "@openrouter/ai-sdk-provider": "^0.4.4",
-    "@ragdoll/tools": "workspace:*",
-    "ai": "^4.2.0",
-    "hono": "^4.7.5",
-    "zod": "^3.24.2"
+  "devDependencies": {
+    "kysely-codegen": "^0.18.3"
   }
 }

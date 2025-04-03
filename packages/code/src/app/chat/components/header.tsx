@@ -1,7 +1,7 @@
 import type { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import type { useChat } from "@ai-sdk/react";
 import { ProgressBar } from "@inkjs/ui";
-import type { User } from "@instantdb/react";
+import type { User } from "better-auth";
 import { Box, Text } from "ink";
 
 interface ChatHeaderProps {

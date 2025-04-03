@@ -1,31 +1,36 @@
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { zValidator } from "@hono/zod-validator";
-import type { User } from "@instantdb/admin";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import * as tools from "@ragdoll/tools";
 import {
   type LanguageModel,
+  type LanguageModelUsage,
   type LanguageModelV1,
   type Message,
   streamText,
 } from "ai";
+import type { User } from "better-auth";
 import { Hono } from "hono";
+import { logger } from "hono/logger";
 import { stream } from "hono/streaming";
-import { authRequest } from "./auth";
-import { trackUsage } from "./db";
+import { auth, authRequest } from "./auth";
+import { db } from "./db";
 import { getReadEnvironmentResult } from "./prompts/environment";
 import { generateSystemPrompt } from "./prompts/system";
 import { type Environment, ZodChatRequestType } from "./types";
 
 export type ContextVariables = {
   model?: LanguageModel;
-  user?: User;
 };
 
 export const app = new Hono<{ Variables: ContextVariables }>();
+app.use(logger());
 
 app.get("/health", (c) => c.text("OK"));
+
+// Auth routes
+app.on(["GET", "POST"], "/api/auth/**", (c) => auth.handler(c.req.raw));
 
 const api = app.basePath("/api");
 
@@ -48,12 +53,7 @@ const route = api
     zValidator("json", ZodChatRequestType),
     authRequest,
     async (c) => {
-      // User guranteed to be authenticated by authRequest middleware
       const user = c.get("user");
-      if (!user) {
-        // This should theoretically not happen due to authRequest middleware
-        return c.json({ error: "Unauthorized: User context missing" }, 401);
-      }
 
       const {
         messages,
@@ -88,8 +88,6 @@ const route = api
           console.error(error);
           console.error(JSON.stringify(messages));
         },
-        // biome-ignore lint/suspicious/noExplicitAny: AvailableTools is a record of tools, so this is safe
-        experimental_activeTools: Object.keys(AvailableTools) as any,
         onFinish: ({ usage }) => {
           trackUsage(user, usage);
         },
@@ -153,6 +151,37 @@ function getMessageToInject(messages: Message[]): Message | undefined {
   if (messages[messages.length - 2].role === "assistant") {
     // Last message is a user message, inject to the assistant message.
     return messages[messages.length - 2];
+  }
+}
+
+async function trackUsage(user: User, usage: LanguageModelUsage) {
+  const date = new Date(new Date().toISOString().split("T")[0]);
+  const usageRowId = (
+    await db
+      .selectFrom("dailyUsage")
+      .select("id")
+      .where("userId", "=", user.id)
+      .where("date", "=", date)
+      .executeTakeFirst()
+  )?.id;
+  if (usageRowId) {
+    db.updateTable("dailyUsage")
+      .set((eb) => ({
+        promptTokens: eb("promptTokens", "+", usage.promptTokens),
+        completionTokens: eb("completionTokens", "+", usage.completionTokens),
+      }))
+      .where("id", "=", usageRowId)
+      .execute();
+  } else {
+    await db
+      .insertInto("dailyUsage")
+      .values({
+        userId: user.id,
+        date,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+      })
+      .execute();
   }
 }
 

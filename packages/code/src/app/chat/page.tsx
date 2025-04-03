@@ -21,8 +21,8 @@ import SettingsModal from "./components/settings-modal";
 import UserTextInput from "./components/user-text-input";
 
 function Chat() {
-  const { user, logout } = useAuth();
-  if (!user) {
+  const { data, logout } = useAuth();
+  if (!data) {
     return <Text>Please log in to use the chat.</Text>;
   }
 
@@ -46,7 +46,7 @@ function Chat() {
     experimental_prepareRequestBody: (request) =>
       prepareRequestBody(request, environment), // Updated call
     headers: {
-      Authorization: `Bearer ${user.refresh_token}`,
+      Authorization: `Bearer ${data.session.token}`,
     },
     onFinish(_, { finishReason, usage }) {
       if (finishReason === "unknown") {
@@ -178,7 +178,7 @@ function Chat() {
       )}
 
       {showChatHeader && (
-        <ChatHeader status={status} user={user} tokenUsage={tokenUsage} />
+        <ChatHeader status={status} user={data.user} tokenUsage={tokenUsage} />
       )}
 
       {/* Show text input only when ready */}

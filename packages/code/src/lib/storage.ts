@@ -1,4 +1,5 @@
 import Database from "bun:sqlite";
+import { mkdirSync } from "node:fs";
 import path from "node:path";
 
 const sqliteName = path.join(process.env.HOME || "", ".ragdoll", "db.sqlite");
@@ -10,7 +11,7 @@ export default class Storage {
   #set;
 
   constructor(dbName: string) {
-    dbName = dbName.replace(/[^a-zA-Z0-9_]/g, "_");
+    mkdirSync(path.dirname(sqliteName), { recursive: true });
     this.#database = new Database(sqliteName, {
       create: true,
       readwrite: true,
@@ -18,7 +19,7 @@ export default class Storage {
     this.#database.exec(
       "PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;",
     );
-    this.#table = dbName;
+    this.#table = dbName.replace(/[^a-zA-Z0-9_]/g, "_");
     this.#database
       .prepare(
         `
@@ -37,12 +38,12 @@ export default class Storage {
     );
   }
 
-  async getItem(key: string) {
+  getItem(key: string) {
     const row = this.#select.get(key) as { value: string } | null;
     return row?.value || null;
   }
 
-  async setItem(key: string, value: string) {
+  setItem(key: string, value: string) {
     this.#set.run(key, value);
   }
 }
