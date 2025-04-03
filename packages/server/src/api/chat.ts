@@ -63,7 +63,10 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         console.error(error);
         console.error(JSON.stringify(messages));
       },
-      onFinish: ({ usage }) => {
+      onFinish: ({ usage, finishReason }) => {
+        if (finishReason !== "unknown") {
+          return;
+        }
         trackUsage(user, usage);
       },
     });

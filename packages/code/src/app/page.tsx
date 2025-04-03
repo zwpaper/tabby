@@ -45,7 +45,7 @@ const Router = () => {
 };
 
 const App = ({ config }: { config: AppConfig }) => {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({});
   return (
     <QueryClientProvider client={queryClient}>
       <AppConfigProvider config={config}>

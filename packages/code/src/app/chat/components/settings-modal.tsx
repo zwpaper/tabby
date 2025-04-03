@@ -1,6 +1,6 @@
 import Toggle from "@/components/toggle";
-import { useModels } from "@/lib/api";
-import { Select as SelectImpl } from "@inkjs/ui";
+import { useModels, useTodayUsage } from "@/lib/api";
+import { Select as SelectImpl, Spinner } from "@inkjs/ui";
 import { Box, Text, useFocus, useInput } from "ink";
 
 interface SettingsModalProps {
@@ -9,6 +9,7 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const models = useModels();
+  const todayUsage = useTodayUsage();
 
   useInput((_, key) => {
     if (key.escape) {
@@ -28,6 +29,18 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         <Box marginBottom={1} gap={1}>
           <Text bold>Settings</Text>
           <Text>(Esc to close)</Text>
+        </Box>
+
+        <Box justifyContent="space-between">
+          <Text>Today's Token Usage</Text>
+          {todayUsage ? (
+            <Box flexDirection="column">
+              <Text>Prompt: {todayUsage.promptTokens}</Text>
+              <Text>Completion: {todayUsage.completionTokens}</Text>
+            </Box>
+          ) : (
+            <Spinner />
+          )}
         </Box>
 
         <Box justifyContent="space-between">

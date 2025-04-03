@@ -24,6 +24,19 @@ export function useModels() {
   return query.data || [];
 }
 
+export function useTodayUsage() {
+  const app = useApp();
+
+  const query = useQuery({
+    queryKey: ["todayUsage"],
+    queryFn: async () => {
+      const res = await app.api.usages.today.$get();
+      return await res.json();
+    },
+  });
+  return query.data || null;
+}
+
 export function useChatStreamApi(): string {
   const app = useApp();
   return app.api.chat.stream.$url().toString();
@@ -129,6 +142,16 @@ export function useAuthApi() {
 
 function useApp() {
   const appConfig = useAppConfig();
-  const app = hc<AppType>(appConfig.dev ? DevBaseUrl : ProdBaseUrl);
+  const app = hc<AppType>(appConfig.dev ? DevBaseUrl : ProdBaseUrl, {
+    fetch: (input: RequestInfo | URL, requestInit?: RequestInit) => {
+      return fetch(input, {
+        ...requestInit,
+        headers: {
+          ...requestInit?.headers,
+          Authorization: `Bearer ${getToken()}`,
+        },
+      });
+    },
+  });
   return app;
 }
