@@ -31,7 +31,7 @@ const route = api
 export type AppType = typeof route;
 
 export default {
-  port: process.env.PORT || 4111,
+  port: process.env.PORT || 4113,
   fetch: app.fetch,
   idleTimeout: 60,
 };

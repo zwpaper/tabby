@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "vite --port 4113",
+    "start": "vite --port 4111",
     "build": "vite build && tsc",
     "serve": "vite preview",
     "test": "vitest run",
@@ -11,6 +11,8 @@
     "dev:server": "npm start"
   },
   "dependencies": {
+    "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-slot": "^1.1.2",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-router": "^1.114.3",
     "@tanstack/react-router-devtools": "^1.114.3",
