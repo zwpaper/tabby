@@ -22,16 +22,16 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { User } from "better-auth/types";
 import { authClient } from "@/lib/auth-client";
 import { useNavigate } from "@tanstack/react-router";
+import type { User } from "better-auth/types";
 
 export function NavUser({
   user,
 }: {
   user: User;
 }) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const { isMobile } = useSidebar();
 
@@ -93,7 +93,11 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => authClient.signOut().then(() => navigate({ to: "/" }))}>
+            <DropdownMenuItem
+              onSelect={() =>
+                authClient.signOut().then(() => navigate({ to: "/" }))
+              }
+            >
               <IconLogout />
               Log out
             </DropdownMenuItem>
