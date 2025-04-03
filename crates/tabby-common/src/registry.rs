@@ -40,6 +40,7 @@ fn models_json_file(registry: &str) -> PathBuf {
 }
 
 async fn load_remote_registry(registry: &str) -> Result<Vec<ModelInfo>> {
+    println!("before load remote");
     let model_info = reqwest::get(format!(
         "https://raw.githubusercontent.com/{}/registry-tabby/main/models.json",
         registry
@@ -88,9 +89,10 @@ impl ModelRegistry {
         Self {
             name: registry.to_owned(),
             models: load_remote_registry(registry).await.unwrap_or_else(|err| {
-                load_local_registry(registry).unwrap_or_else(|_| {
+                println!("Failed to load remote registry: {:?}", err);
+                load_local_registry(registry).unwrap_or_else(|e| {
                     panic!(
-                        "Failed to fetch model organization <{}>: {:?}",
+                        "Failed to fetch model organization <{}>: {:?}: {e}",
                         registry, err
                     )
                 })

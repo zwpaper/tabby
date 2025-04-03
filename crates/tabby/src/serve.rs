@@ -108,7 +108,9 @@ pub struct ServeArgs {
 pub async fn main(config: &Config, args: &ServeArgs) {
     let config = merge_args(config, args);
 
+    println!("before load models");
     load_model(&config).await;
+    println!("load models");
 
     let tx = try_run_spinner();
 

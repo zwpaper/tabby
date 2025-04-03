@@ -152,7 +152,7 @@ async fn download_model_impl(
             let filename = filename.clone();
             let address = address.clone();
 
-            // it's ok to use unwrap here, because we've checked the availability of URLs
+            println!("Downloading {}/{} from {address}", registry.name, name);
             download_file(address, dir, filename, &url.1)
         })
         .await?;
@@ -196,7 +196,9 @@ pub enum ModelKind {
 pub async fn download_model(model_id: &str, prefer_local_file: bool, kind: Option<ModelKind>) {
     let (registry, name) = parse_model_id(model_id);
 
+    println!("before registry");
     let registry = ModelRegistry::new(registry).await;
+    println!("after registry");
 
     if let Some(kind) = kind {
         let model_info = registry.get_model_info(name);
