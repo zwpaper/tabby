@@ -8,6 +8,13 @@ import { auth } from "./auth";
 export const app = new Hono();
 app.use(logger());
 
+// static
+if (process.env.NODE_ENV !== "test") {
+  import("hono/bun").then(({ serveStatic }) => {
+    app.use("/*", serveStatic({ root: "../website/dist" }));
+  });
+}
+
 app.get("/health", (c) => c.text("OK"));
 
 // Auth routes

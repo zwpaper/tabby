@@ -9,6 +9,7 @@
     "test": "vitest --run",
     "tsc": "bun --filter '*' tsc",
     "build": "bun --filter '*' build",
+    "dev:server": "bun --filter '*' dev:server",
     "prepare": "husky"
   },
   "workspaces": ["packages/*"],
