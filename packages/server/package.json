@@ -18,8 +18,7 @@
   "scripts": {
     "tsc": "tsc --noEmit",
     "dev": "bun --hot src/server.ts",
-    "build": "bun build src/server.ts --outdir dist --format cjs",
-    "start": "bun run dist/server.js",
+    "start": "bun run src/server.ts",
     "db:migrate": "bunx @better-auth/cli migrate -y && bun run scripts/migrate-db-schema.ts",
     "db:genschema": "kysely-codegen --out-file ./src/db/schema.d.ts"
   },
