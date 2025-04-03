@@ -4,158 +4,158 @@ import { zValidator } from "@hono/zod-validator";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import * as tools from "@ragdoll/tools";
 import {
-    type LanguageModel,
-    type LanguageModelUsage,
-    type LanguageModelV1,
-    type Message,
-    streamText,
+  type LanguageModel,
+  type LanguageModelUsage,
+  type LanguageModelV1,
+  type Message,
+  streamText,
 } from "ai";
 import type { User } from "better-auth";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import { authRequest } from "../auth";
-import { db } from "../db";
-import { getReadEnvironmentResult } from "../prompts/environment";
-import { generateSystemPrompt } from "../prompts/system";
-import { type Environment, ZodChatRequestType } from "../types";
+import { authRequest } from "#auth";
+import { db } from "#db";
+import { getReadEnvironmentResult } from "#prompts/environment";
+import { generateSystemPrompt } from "#prompts/system";
+import { type Environment, ZodChatRequestType } from "#types";
 
 export type ContextVariables = {
-    model?: LanguageModel;
+  model?: LanguageModel;
 };
 
 const chat = new Hono<{ Variables: ContextVariables }>().post(
-    "/stream",
-    zValidator("json", ZodChatRequestType),
-    authRequest,
-    async (c) => {
-        const user = c.get("user");
+  "/stream",
+  zValidator("json", ZodChatRequestType),
+  authRequest,
+  async (c) => {
+    const user = c.get("user");
 
-        const {
-            messages,
-            environment,
-            model: requestedModelId,
-        } = await c.req.valid("json");
-        c.header("X-Vercel-AI-Data-Stream", "v1");
-        c.header("Content-Type", "text/plain; charset=utf-8");
+    const {
+      messages,
+      environment,
+      model: requestedModelId,
+    } = await c.req.valid("json");
+    c.header("X-Vercel-AI-Data-Stream", "v1");
+    c.header("Content-Type", "text/plain; charset=utf-8");
 
-        let selectedModel: LanguageModelV1;
-        switch (requestedModelId) {
-            case "anthropic/claude-3.7-sonnet":
-                selectedModel = openrouter("claude-3.7-sonnet");
-                break;
-            case "openai/gpt-4o-mini":
-                selectedModel = openai("gpt-4o-mini");
-                break;
-            // case "google/gemini-2.5-pro-exp-03-25": // Removed redundant case
-            default:
-                selectedModel = google("gemini-2.5-pro-exp-03-25");
-                break;
-        }
+    let selectedModel: LanguageModelV1;
+    switch (requestedModelId) {
+      case "anthropic/claude-3.7-sonnet":
+        selectedModel = openrouter("claude-3.7-sonnet");
+        break;
+      case "openai/gpt-4o-mini":
+        selectedModel = openai("gpt-4o-mini");
+        break;
+      // case "google/gemini-2.5-pro-exp-03-25": // Removed redundant case
+      default:
+        selectedModel = google("gemini-2.5-pro-exp-03-25");
+        break;
+    }
 
-        injectReadEnvironmentToolCall(messages, selectedModel, environment);
+    injectReadEnvironmentToolCall(messages, selectedModel, environment);
 
-        const result = streamText({
-            model: c.get("model") || selectedModel,
-            system: environment?.info && generateSystemPrompt(environment.info),
-            messages,
-            tools,
-            onError: (error) => {
-                console.error(error);
-                console.error(JSON.stringify(messages));
-            },
-            onFinish: ({ usage }) => {
-                trackUsage(user, usage);
-            },
-        });
+    const result = streamText({
+      model: c.get("model") || selectedModel,
+      system: environment?.info && generateSystemPrompt(environment.info),
+      messages,
+      tools,
+      onError: (error) => {
+        console.error(error);
+        console.error(JSON.stringify(messages));
+      },
+      onFinish: ({ usage }) => {
+        trackUsage(user, usage);
+      },
+    });
 
-        return stream(c, (stream) => stream.pipe(result.toDataStream()));
-    },
+    return stream(c, (stream) => stream.pipe(result.toDataStream()));
+  },
 );
 
 function injectReadEnvironmentToolCall(
-    messages: Message[],
-    model: LanguageModelV1,
-    environment?: Environment,
+  messages: Message[],
+  model: LanguageModelV1,
+  environment?: Environment,
 ) {
-    const isOpenRouter = model.provider.includes("openrouter");
-    const isOpenAI = model.provider.includes("openai");
+  const isOpenRouter = model.provider.includes("openrouter");
+  const isOpenAI = model.provider.includes("openai");
 
-    if (environment === undefined) return;
-    // There's only user message.
-    if (messages.length === 1 && messages[0].role === "user") {
-        // Prepend an empty assistant message.
-        messages.unshift({
-            id: `environmentMessage-assistant-${Date.now()}`,
-            role: "assistant",
-            content: "",
-        });
-        messages.unshift({
-            id: `environmentMessage-user-${Date.now()}`,
-            role: "user",
-            content: " ",
-        });
-    }
-    const messageToInject = getMessageToInject(messages);
-    if (!messageToInject) return;
-
-    const parts = [...(messageToInject.parts || [])];
-
-    // create toolCallId with timestamp
-    const toolCallId = `environmentToolCall-${Date.now()}`;
-    parts.push({
-        type: "tool-invocation",
-        toolInvocation: {
-            toolName: "readEnvironment",
-            state: "result",
-            args: isOpenAI || isOpenRouter ? "null" : undefined,
-            toolCallId,
-            result: getReadEnvironmentResult(environment),
-        },
+  if (environment === undefined) return;
+  // There's only user message.
+  if (messages.length === 1 && messages[0].role === "user") {
+    // Prepend an empty assistant message.
+    messages.unshift({
+      id: `environmentMessage-assistant-${Date.now()}`,
+      role: "assistant",
+      content: "",
     });
+    messages.unshift({
+      id: `environmentMessage-user-${Date.now()}`,
+      role: "user",
+      content: " ",
+    });
+  }
+  const messageToInject = getMessageToInject(messages);
+  if (!messageToInject) return;
 
-    messageToInject.parts = parts;
+  const parts = [...(messageToInject.parts || [])];
+
+  // create toolCallId with timestamp
+  const toolCallId = `environmentToolCall-${Date.now()}`;
+  parts.push({
+    type: "tool-invocation",
+    toolInvocation: {
+      toolName: "readEnvironment",
+      state: "result",
+      args: isOpenAI || isOpenRouter ? "null" : undefined,
+      toolCallId,
+      result: getReadEnvironmentResult(environment),
+    },
+  });
+
+  messageToInject.parts = parts;
 }
 
 function getMessageToInject(messages: Message[]): Message | undefined {
-    if (messages[messages.length - 1].role === "assistant") {
-        // Last message is a function call result, inject it directly.
-        return messages[messages.length - 1];
-    }
-    if (messages[messages.length - 2].role === "assistant") {
-        // Last message is a user message, inject to the assistant message.
-        return messages[messages.length - 2];
-    }
+  if (messages[messages.length - 1].role === "assistant") {
+    // Last message is a function call result, inject it directly.
+    return messages[messages.length - 1];
+  }
+  if (messages[messages.length - 2].role === "assistant") {
+    // Last message is a user message, inject to the assistant message.
+    return messages[messages.length - 2];
+  }
 }
 
 async function trackUsage(user: User, usage: LanguageModelUsage) {
-    const date = new Date(new Date().toISOString().split("T")[0]);
-    const usageRowId = (
-        await db
-            .selectFrom("dailyUsage")
-            .select("id")
-            .where("userId", "=", user.id)
-            .where("date", "=", date)
-            .executeTakeFirst()
-    )?.id;
-    if (usageRowId) {
-        db.updateTable("dailyUsage")
-            .set((eb) => ({
-                promptTokens: eb("promptTokens", "+", usage.promptTokens),
-                completionTokens: eb("completionTokens", "+", usage.completionTokens),
-            }))
-            .where("id", "=", usageRowId)
-            .execute();
-    } else {
-        await db
-            .insertInto("dailyUsage")
-            .values({
-                userId: user.id,
-                date,
-                promptTokens: usage.promptTokens,
-                completionTokens: usage.completionTokens,
-            })
-            .execute();
-    }
+  const date = new Date(new Date().toISOString().split("T")[0]);
+  const usageRowId = (
+    await db
+      .selectFrom("dailyUsage")
+      .select("id")
+      .where("userId", "=", user.id)
+      .where("date", "=", date)
+      .executeTakeFirst()
+  )?.id;
+  if (usageRowId) {
+    db.updateTable("dailyUsage")
+      .set((eb) => ({
+        promptTokens: eb("promptTokens", "+", usage.promptTokens),
+        completionTokens: eb("completionTokens", "+", usage.completionTokens),
+      }))
+      .where("id", "=", usageRowId)
+      .execute();
+  } else {
+    await db
+      .insertInto("dailyUsage")
+      .values({
+        userId: user.id,
+        date,
+        promptTokens: usage.promptTokens,
+        completionTokens: usage.completionTokens,
+      })
+      .execute();
+  }
 }
 
 export default chat;
