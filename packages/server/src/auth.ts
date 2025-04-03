@@ -13,8 +13,8 @@ export const auth = betterAuth({
   plugins: [
     bearer(),
     magicLink({
-      sendMagicLink: async ({ email, token }) => {
-        console.log(`Magic link: ${email}: ${token}`);
+      sendMagicLink: async ({ email, token, url }) => {
+        console.log(`Magic link: ${email}: ${token} | ${url}`);
       },
       generateToken(_email) {
         // Generate 6-digits number

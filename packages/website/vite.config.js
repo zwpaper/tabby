@@ -24,8 +24,11 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:4111",
-        changeOrigin: true,
+        target: "http://localhost:4113",
+        chaddngeOrigin: true,
+        onProxyReq: (request) => {
+          request.setHeader("origin", "http://localhost:4113");
+        },
       },
     },
   },

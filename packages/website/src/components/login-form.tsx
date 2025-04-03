@@ -8,12 +8,26 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import type React from "react";
+import { type FormEvent, useState } from "react";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const [email, setEmail] = useState("");
+
+  const signInWithMagicLink = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    return authClient.signIn.magicLink({
+      email,
+      callbackURL: "/",
+    });
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -22,7 +36,7 @@ export function LoginForm({
           <CardDescription>Login with your Github account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={signInWithMagicLink}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -52,6 +66,7 @@ export function LoginForm({
                     id="email"
                     type="email"
                     placeholder="user@example.com"
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
