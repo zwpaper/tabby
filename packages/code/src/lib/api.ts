@@ -5,19 +5,17 @@ import { magicLinkClient } from "better-auth/client/plugins";
 import { hc } from "hono/client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppConfig } from "./app-config";
-import Storage from "./storage";
+import { authStorage } from "./storage";
 
 const DevBaseUrl = "http://localhost:4111";
 const ProdBaseUrl = "https://ragdoll-production.up.railway.app";
 
-const authStore = new Storage("authStore");
-
 function setToken(token: string) {
-  authStore.setItem("authToken", token);
+  authStorage.setItem("authToken", token);
 }
 
 function getToken() {
-  return authStore.getItem("authToken") || "";
+  return authStorage.getItem("authToken") || "";
 }
 
 export function useAuthApi() {

@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
+import { useLocalSettings } from "@/lib/storage";
 import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
 import { type Message, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
@@ -26,6 +27,7 @@ function ChatPage() {
     return <Text>Please log in to use the chat.</Text>;
   }
 
+  const [{ model }] = useLocalSettings();
   const appConfig = useAppConfig();
   const { tokenUsage, trackTokenUsage } = useTokenUsage();
   const environment = useEnvironment();
@@ -44,7 +46,7 @@ function ChatPage() {
     maxSteps: 100,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(request, environment), // Updated call
+      prepareRequestBody(model, request, environment), // Updated call
     headers: {
       Authorization: `Bearer ${data.session.token}`,
     },
@@ -208,6 +210,7 @@ function getRoleColor(role: string) {
 
 // This function now directly prepares the body when called by useChat
 function prepareRequestBody(
+  model: string,
   request: { id: string; messages: Message[] },
   environment: Environment | null,
 ): RagdollChatRequest | null {
@@ -225,6 +228,7 @@ function prepareRequestBody(
   return {
     id: request.id,
     messages: prepareMessages(request.messages),
+    model,
     environment, // Use the loaded environment
   };
 }

@@ -1,5 +1,6 @@
 import Toggle from "@/components/toggle";
 import { useApiClient } from "@/lib/api";
+import { useLocalSettings } from "@/lib/storage";
 import { Select as SelectImpl, Spinner } from "@inkjs/ui";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Box, Text, useFocus, useInput } from "ink";
@@ -70,7 +71,7 @@ function TokenUsage() {
 
 function ModelList() {
   const apiClient = useApiClient();
-
+  const [{ model }, updateSettings] = useLocalSettings();
   const { data: models } = useSuspenseQuery({
     queryKey: ["models"],
     queryFn: async () => {
@@ -78,12 +79,12 @@ function ModelList() {
       return await res.json();
     },
   });
-
   return (
     <Box justifyContent="space-between">
       <Text>Supported Models</Text>
       <Select
-        isDisabled={true}
+        onChange={(x) => updateSettings({ model: x })}
+        defaultValue={model}
         options={models.map((model) => ({
           label: model.id,
           value: model.id,
