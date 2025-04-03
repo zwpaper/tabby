@@ -27,10 +27,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { User } from "better-auth/types";
+import { NavUser } from ".//nav-user";
 import { NavDocuments } from "./nav-documents";
 import { NavMain } from "./nav-main";
 import { NavSecondary } from "./nav-secondary";
-import { NavUser } from "./nav-user";
 
 const data = {
   user: {

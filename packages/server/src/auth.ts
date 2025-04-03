@@ -1,5 +1,5 @@
 import { type User, betterAuth } from "better-auth";
-import { bearer, magicLink } from "better-auth/plugins";
+import { bearer, magicLink, oAuthProxy } from "better-auth/plugins";
 import type { MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { createMiddleware } from "hono/factory";
@@ -10,8 +10,17 @@ export const auth = betterAuth({
     db,
     type: "postgres",
   },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      redirectURI:
+        "https://ragdoll-production.up.railway.app/api/auth/callback/github",
+    },
+  },
   plugins: [
     bearer(),
+    oAuthProxy(),
     magicLink({
       sendMagicLink: async ({ email, token, url }) => {
         console.log(`Magic link: ${email}: ${token} | ${url}`);
