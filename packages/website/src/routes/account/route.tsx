@@ -21,7 +21,7 @@ function App() {
   } = Route.useLoaderData();
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">
