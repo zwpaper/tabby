@@ -119,10 +119,10 @@ export function useAuthApi() {
       renewToken(data.token);
     },
     async logout() {
+      renewToken("");
       await authClient.revokeSession({
         token: getToken(),
       });
-      renewToken("");
     },
   };
 }
