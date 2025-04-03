@@ -1,7 +1,6 @@
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { zValidator } from "@hono/zod-validator";
-import { openrouter } from "@openrouter/ai-sdk-provider";
 import * as tools from "@ragdoll/tools";
 import {
   type LanguageModel,
@@ -40,9 +39,6 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     let selectedModel: LanguageModelV1;
     switch (requestedModelId) {
-      case "anthropic/claude-3.7-sonnet":
-        selectedModel = openrouter("claude-3.7-sonnet");
-        break;
       case "openai/gpt-4o-mini":
         selectedModel = openai("gpt-4o-mini");
         break;
@@ -80,7 +76,6 @@ function injectReadEnvironmentToolCall(
   model: LanguageModelV1,
   environment?: Environment,
 ) {
-  const isOpenRouter = model.provider.includes("openrouter");
   const isOpenAI = model.provider.includes("openai");
 
   if (environment === undefined) return;
@@ -110,7 +105,7 @@ function injectReadEnvironmentToolCall(
     toolInvocation: {
       toolName: "readEnvironment",
       state: "result",
-      args: isOpenAI || isOpenRouter ? "null" : undefined,
+      args: isOpenAI ? "null" : undefined,
       toolCallId,
       result: getReadEnvironmentResult(environment),
     },
