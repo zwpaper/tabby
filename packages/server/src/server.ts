@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import chat from "#api/chat";
-import models from "#api/models";
-import { auth } from "#auth";
+import chat from "./api/chat";
+import models from "./api/models";
+import { auth } from "./auth";
 
 export const app = new Hono();
 app.use(logger());

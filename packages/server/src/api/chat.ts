@@ -13,11 +13,11 @@ import {
 import type { User } from "better-auth";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import { authRequest } from "#auth";
-import { db } from "#db";
-import { getReadEnvironmentResult } from "#prompts/environment";
-import { generateSystemPrompt } from "#prompts/system";
-import { type Environment, ZodChatRequestType } from "#types";
+import { authRequest } from "../auth";
+import { db } from "../db";
+import { getReadEnvironmentResult } from "../prompts/environment";
+import { generateSystemPrompt } from "../prompts/system";
+import { type Environment, ZodChatRequestType } from "../types";
 
 export type ContextVariables = {
   model?: LanguageModel;

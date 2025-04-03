@@ -1,4 +1,4 @@
-import type { Environment } from "#types";
+import type { Environment } from "../types";
 
 export function getReadEnvironmentResult(environment: Environment) {
   const sections = [
