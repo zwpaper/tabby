@@ -1,42 +1,30 @@
-import EmailLogin from "@/components/email-login";
-import { AuthProvider, useAuth } from "@/lib/auth";
-import { Spinner, ThemeProvider } from "@inkjs/ui";
-import { Box, type BoxProps, render } from "ink";
-import Chat from "./chat/page";
-
 import { type AppConfig, AppConfigProvider } from "@/lib/app-config";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
+import { Spinner, ThemeProvider } from "@inkjs/ui";
 import { defaultTheme, extendTheme } from "@inkjs/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Box, type BoxProps, render } from "ink";
 import type { PropsWithChildren } from "react";
+import ChatPage from "./chat/page";
+import LoginPage from "./login/page";
 
 const customTheme = extendTheme(defaultTheme, {
   components: {},
 });
 
-const ChatPage = () => {
-  return <Chat />;
-};
-
-const LoginPage = () => {
-  const { sendMagicCode, loginWithMagicCode } = useAuth();
-
-  return (
-    <Box justifyContent="center" alignItems="center" flexGrow={1}>
-      <EmailLogin
-        sendMagicCode={sendMagicCode}
-        verifyMagicCode={loginWithMagicCode}
-      />
-    </Box>
-  );
-};
-
 const Router = () => {
   const { data, isLoading } = useAuth();
   if (isLoading) {
     return (
-      <Box margin={1} flexDirection="column">
-        <Spinner />
+      <Box
+        flexDirection="column"
+        width="100%"
+        height="100%"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Spinner label="Loading" />
       </Box>
     );
   }

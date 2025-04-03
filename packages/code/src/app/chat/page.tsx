@@ -20,7 +20,7 @@ import ChatHeader from "./components/header";
 import SettingsModal from "./components/settings-modal";
 import UserTextInput from "./components/user-text-input";
 
-function Chat() {
+function ChatPage() {
   const { data, logout } = useAuth();
   if (!data) {
     return <Text>Please log in to use the chat.</Text>;
@@ -250,4 +250,4 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
   return x;
 }
 
-export default Chat;
+export default ChatPage;
