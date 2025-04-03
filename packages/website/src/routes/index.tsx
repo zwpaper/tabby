@@ -1,26 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-  loader: async () => {
-    const { data: session } = await authClient.getSession();
-    if (!session) {
-      throw redirect({ to: "/login" });
-    }
-    return { session };
+  beforeLoad: async () => {
+    throw redirect({ to: "/account" });
   },
   component: App,
 });
 
 function App() {
-  const { session } = Route.useLoaderData();
-  return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        {session.user.email}
-        <Button onClick={() => authClient.signOut()}>Sign out</Button>
-      </div>
-    </div>
-  );
+  return <></>;
 }

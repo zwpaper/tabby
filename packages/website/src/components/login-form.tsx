@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { Check, Loader2 } from "lucide-react";
 import type React from "react";
 import { type FormEvent, useState } from "react";
 
@@ -18,14 +19,26 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
-  const signInWithMagicLink = (e: FormEvent<HTMLFormElement>) => {
+  const signInWithMagicLink = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
 
-    return authClient.signIn.magicLink({
+    const resp = await authClient.signIn.magicLink({
       email,
       callbackURL: "/",
     });
+
+    if (resp.data?.status) {
+      setSuccess(true);
+    } else {
+      setError(resp.error?.message || "Something went wrong");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -70,9 +83,22 @@ export function LoginForm({
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full">
-                  Login
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading || success}
+                >
+                  {loading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : success ? (
+                    <Check />
+                  ) : (
+                    "Login"
+                  )}
                 </Button>
+                {error && (
+                  <p className="text-sm text-red-500 text-center">{error}</p>
+                )}
               </div>
             </div>
           </form>
