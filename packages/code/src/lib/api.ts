@@ -1,5 +1,4 @@
 import type { AppType } from "@ragdoll/server";
-import { useQuery } from "@tanstack/react-query";
 import type { Session, User } from "better-auth";
 import { createAuthClient } from "better-auth/client";
 import { magicLinkClient } from "better-auth/client/plugins";
@@ -10,37 +9,6 @@ import Storage from "./storage";
 
 const DevBaseUrl = "http://localhost:4111";
 const ProdBaseUrl = "https://ragdoll-production.up.railway.app";
-
-export function useModels() {
-  const app = useApp();
-
-  const query = useQuery({
-    queryKey: ["models"],
-    queryFn: async () => {
-      const res = await app.api.models.$get();
-      return await res.json();
-    },
-  });
-  return query.data || [];
-}
-
-export function useTodayUsage() {
-  const app = useApp();
-
-  const query = useQuery({
-    queryKey: ["todayUsage"],
-    queryFn: async () => {
-      const res = await app.api.usages.today.$get();
-      return await res.json();
-    },
-  });
-  return query.data || null;
-}
-
-export function useChatStreamApi(): string {
-  const app = useApp();
-  return app.api.chat.stream.$url().toString();
-}
 
 const authStore = new Storage("authStore");
 
@@ -140,7 +108,7 @@ export function useAuthApi() {
   };
 }
 
-function useApp() {
+export function useApiClient() {
   const appConfig = useAppConfig();
   const app = hc<AppType>(appConfig.dev ? DevBaseUrl : ProdBaseUrl, {
     fetch: (input: RequestInfo | URL, requestInit?: RequestInit) => {

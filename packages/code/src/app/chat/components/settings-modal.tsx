@@ -1,16 +1,15 @@
 import Toggle from "@/components/toggle";
-import { useModels, useTodayUsage } from "@/lib/api";
+import { useApiClient } from "@/lib/api";
 import { Select as SelectImpl, Spinner } from "@inkjs/ui";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Box, Text, useFocus, useInput } from "ink";
+import { Suspense } from "react";
 
 interface SettingsModalProps {
   onClose: () => void;
 }
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
-  const models = useModels();
-  const todayUsage = useTodayUsage();
-
   useInput((_, key) => {
     if (key.escape) {
       onClose();
@@ -19,48 +18,77 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   return (
     <Box width="100%" height="100%" justifyContent="center" alignItems="center">
-      <Box
-        width="100%"
-        borderStyle="round"
-        paddingX={1}
-        flexDirection="column"
-        gap={1}
-      >
-        <Box marginBottom={1} gap={1}>
-          <Text bold>Settings</Text>
-          <Text>(Esc to close)</Text>
-        </Box>
+      <Suspense fallback={<Spinner />}>
+        <Box
+          width="100%"
+          borderStyle="round"
+          paddingX={1}
+          flexDirection="column"
+          gap={1}
+        >
+          <Box marginBottom={1} gap={1}>
+            <Text bold>Settings</Text>
+            <Text>(Esc to close)</Text>
+          </Box>
 
-        <Box justifyContent="space-between">
-          <Text>Today's Token Usage</Text>
-          {todayUsage ? (
-            <Box flexDirection="column">
-              <Text>Prompt: {todayUsage.promptTokens}</Text>
-              <Text>Completion: {todayUsage.completionTokens}</Text>
+          <TokenUsage />
+          <ModelList />
+
+          {false && (
+            <Box justifyContent="space-between">
+              <Text>Auto approve all command</Text>
+              <Toggle />
             </Box>
-          ) : (
-            <Spinner />
           )}
         </Box>
+      </Suspense>
+    </Box>
+  );
+}
 
-        <Box justifyContent="space-between">
-          <Text>Supported Models</Text>
-          <Select
-            isDisabled={true}
-            options={models.map((model) => ({
-              label: model.id,
-              value: model.id,
-            }))}
-          />
-        </Box>
+function TokenUsage() {
+  const app = useApiClient();
 
-        {false && (
-          <Box justifyContent="space-between">
-            <Text>Auto approve all command</Text>
-            <Toggle />
-          </Box>
-        )}
+  const { data: todayUsage } = useSuspenseQuery({
+    queryKey: ["todayUsage"],
+    queryFn: async () => {
+      const res = await app.api.usages.today.$get();
+      return await res.json();
+    },
+  });
+
+  return (
+    <Box justifyContent="space-between">
+      <Text>Today's Token Usage</Text>
+      <Box flexDirection="column">
+        <Text>Prompt: {todayUsage.promptTokens}</Text>
+        <Text>Completion: {todayUsage.completionTokens}</Text>
       </Box>
+    </Box>
+  );
+}
+
+function ModelList() {
+  const apiClient = useApiClient();
+
+  const { data: models } = useSuspenseQuery({
+    queryKey: ["models"],
+    queryFn: async () => {
+      const res = await apiClient.api.models.$get();
+      return await res.json();
+    },
+  });
+
+  return (
+    <Box justifyContent="space-between">
+      <Text>Supported Models</Text>
+      <Select
+        isDisabled={true}
+        options={models.map((model) => ({
+          label: model.id,
+          value: model.id,
+        }))}
+      />
     </Box>
   );
 }
