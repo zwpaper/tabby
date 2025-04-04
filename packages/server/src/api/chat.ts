@@ -59,11 +59,11 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         console.error(error);
         console.error(JSON.stringify(messages));
       },
-      onFinish: ({ usage, finishReason }) => {
-        if (finishReason !== "unknown") {
+      onFinish: async ({ usage, finishReason }) => {
+        if (finishReason === "unknown") {
           return;
         }
-        trackUsage(user, usage);
+        await trackUsage(user, usage);
       },
     });
 
@@ -136,7 +136,8 @@ async function trackUsage(user: User, usage: LanguageModelUsage) {
       .executeTakeFirst()
   )?.id;
   if (usageRowId) {
-    db.updateTable("dailyUsage")
+    await db
+      .updateTable("dailyUsage")
       .set((eb) => ({
         promptTokens: eb("promptTokens", "+", usage.promptTokens),
         completionTokens: eb("completionTokens", "+", usage.completionTokens),
