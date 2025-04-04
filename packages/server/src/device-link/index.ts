@@ -56,7 +56,8 @@ export const deviceLink = () => {
             value: JSON.stringify({ deviceName }),
             expiresAt: new Date(Date.now() + 60 * 5 * 1000),
           });
-          const approveLink = `${ctx.context.baseURL}/device-link/approve?token=${token}`;
+          const baseURL = new URL(ctx.context.baseURL);
+          const approveLink = `${baseURL.origin}/auth/device-link?token=${token}`;
           return ctx.json({ token, approveLink });
         },
       ),
@@ -156,11 +157,73 @@ export const deviceLink = () => {
           });
         },
       ),
-      approveDeviceLink: createAuthEndpoint(
-        "/device-link/approve",
+      infoDeviceLink: createAuthEndpoint(
+        "/device-link/info",
         {
           method: "GET",
           query: z.object({
+            token: z.string({
+              description: "Device link token",
+            }),
+          }),
+          requireHeaders: true,
+          metadata: {
+            openapi: {
+              description: "Get basic info about device link",
+              responses: {
+                200: {
+                  description: "Success",
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "object",
+                        properties: {
+                          deviceName: {
+                            type: "string",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        async (ctx) => {
+          const { token } = ctx.query;
+          const tokenValue =
+            await ctx.context.internalAdapter.findVerificationValue(token);
+          if (!tokenValue) {
+            return ctx.error(400, { message: "INVALID_TOKEN" });
+          }
+          if (tokenValue.expiresAt < new Date()) {
+            await ctx.context.internalAdapter.deleteVerificationValue(
+              tokenValue.id,
+            );
+            return ctx.error(400, { message: "EXPIRED_TOKEN" });
+          }
+          const parsedTokenValue: TokenValue = JSON.parse(tokenValue.value);
+          // value is already set by another approval.
+          if (parsedTokenValue.userId) {
+            return ctx.error(400, { message: "INVALID_TOKEN" });
+          }
+
+          const session = await getSessionFromCtx(ctx);
+          if (!session) {
+            return ctx.error(401, { message: "UNAUTHORIZED" });
+          }
+
+          return ctx.json({
+            deviceName: parsedTokenValue.deviceName,
+          });
+        },
+      ),
+      approveDeviceLink: createAuthEndpoint(
+        "/device-link/approve",
+        {
+          method: "POST",
+          body: z.object({
             token: z.string({
               description: "Device link token",
             }),
@@ -178,29 +241,27 @@ export const deviceLink = () => {
           },
         },
         async (ctx) => {
-          const { token } = ctx.query;
+          const { token } = ctx.body;
           const tokenValue =
             await ctx.context.internalAdapter.findVerificationValue(token);
           if (!tokenValue) {
-            return ctx.json({ error: "INVALID_TOKEN" }, { status: 400 });
+            return ctx.error(400, { message: "INVALID_TOKEN" });
           }
           if (tokenValue.expiresAt < new Date()) {
             await ctx.context.internalAdapter.deleteVerificationValue(
               tokenValue.id,
             );
-            return ctx.json({ error: "EXPIRED_TOKEN" }, { status: 400 });
+            return ctx.error(400, { message: "EXPIRED_TOKEN" });
           }
           const parsedTokenValue: TokenValue = JSON.parse(tokenValue.value);
           // value is already set by another approval.
           if (parsedTokenValue.userId) {
-            return ctx.json({ error: "INVALID_TOKEN" }, { status: 400 });
+            return ctx.error(400, { message: "INVALID_TOKEN" });
           }
 
           const session = await getSessionFromCtx(ctx);
           if (!session) {
-            return ctx.redirect(
-              `/auth/sign-in?redirectTo=${encodeURIComponent(ctx.request?.url || "")}&deviceName=${encodeURIComponent(parsedTokenValue.deviceName)}`,
-            );
+            return ctx.error(401, { message: "UNAUTHORIZED" });
           }
           // approve verification token to be logined as the current user.
           await ctx.context.internalAdapter.updateVerificationValue(
@@ -213,7 +274,7 @@ export const deviceLink = () => {
             },
           );
 
-          throw ctx.redirect("/");
+          return ctx.json({ success: true });
         },
       ),
     },

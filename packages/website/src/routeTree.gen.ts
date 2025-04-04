@@ -16,6 +16,7 @@ import { Route as IndexImport } from './routes/index'
 import { Route as SettingsUsageImport } from './routes/settings/usage'
 import { Route as SettingsBillingImport } from './routes/settings/billing'
 import { Route as SettingsAccountImport } from './routes/settings/account'
+import { Route as AuthDeviceLinkImport } from './routes/auth/device-link'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 
 // Create/Update Routes
@@ -50,6 +51,12 @@ const SettingsAccountRoute = SettingsAccountImport.update({
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 
+const AuthDeviceLinkRoute = AuthDeviceLinkImport.update({
+  id: '/auth/device-link',
+  path: '/auth/device-link',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const AuthPathnameRoute = AuthPathnameImport.update({
   id: '/auth/$pathname',
   path: '/auth/$pathname',
@@ -79,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/$pathname'
       fullPath: '/auth/$pathname'
       preLoaderRoute: typeof AuthPathnameImport
+      parentRoute: typeof rootRoute
+    }
+    '/auth/device-link': {
+      id: '/auth/device-link'
+      path: '/auth/device-link'
+      fullPath: '/auth/device-link'
+      preLoaderRoute: typeof AuthDeviceLinkImport
       parentRoute: typeof rootRoute
     }
     '/settings/account': {
@@ -127,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/auth/device-link': typeof AuthDeviceLinkRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/billing': typeof SettingsBillingRoute
   '/settings/usage': typeof SettingsUsageRoute
@@ -136,6 +151,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/auth/device-link': typeof AuthDeviceLinkRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/billing': typeof SettingsBillingRoute
   '/settings/usage': typeof SettingsUsageRoute
@@ -146,6 +162,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/auth/device-link': typeof AuthDeviceLinkRoute
   '/settings/account': typeof SettingsAccountRoute
   '/settings/billing': typeof SettingsBillingRoute
   '/settings/usage': typeof SettingsUsageRoute
@@ -157,6 +174,7 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/auth/$pathname'
+    | '/auth/device-link'
     | '/settings/account'
     | '/settings/billing'
     | '/settings/usage'
@@ -165,6 +183,7 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/auth/$pathname'
+    | '/auth/device-link'
     | '/settings/account'
     | '/settings/billing'
     | '/settings/usage'
@@ -173,6 +192,7 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/auth/$pathname'
+    | '/auth/device-link'
     | '/settings/account'
     | '/settings/billing'
     | '/settings/usage'
@@ -183,12 +203,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AuthPathnameRoute: typeof AuthPathnameRoute
+  AuthDeviceLinkRoute: typeof AuthDeviceLinkRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AuthPathnameRoute: AuthPathnameRoute,
+  AuthDeviceLinkRoute: AuthDeviceLinkRoute,
 }
 
 export const routeTree = rootRoute
@@ -203,7 +225,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/settings",
-        "/auth/$pathname"
+        "/auth/$pathname",
+        "/auth/device-link"
       ]
     },
     "/": {
@@ -219,6 +242,9 @@ export const routeTree = rootRoute
     },
     "/auth/$pathname": {
       "filePath": "auth/$pathname.tsx"
+    },
+    "/auth/device-link": {
+      "filePath": "auth/device-link.tsx"
     },
     "/settings/account": {
       "filePath": "settings/account.tsx",
