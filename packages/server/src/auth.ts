@@ -4,6 +4,7 @@ import type { MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { createMiddleware } from "hono/factory";
 import { db } from "./db";
+import { deviceLink } from "./device-link";
 
 export const auth = betterAuth({
   database: {
@@ -38,6 +39,7 @@ export const auth = betterAuth({
         console.log(`Magic link: ${email} | ${url}`);
       },
     }),
+    deviceLink(),
   ],
 });
 

@@ -10,9 +10,9 @@ interface AuthContextType {
     session: Session;
   } | null;
   isLoading: boolean;
+  authClient: ReturnType<typeof useAuthApi>["authClient"];
+  renewToken: (token: string) => void;
   error: { message: string } | null;
-  sendMagicCode: (email: string) => Promise<void>;
-  loginWithMagicCode: (email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { data, isLoading, error, sendMagicCode, loginWithMagicCode, logout } =
+  const { data, isLoading, error, renewToken, authClient, logout } =
     useAuthApi();
 
   return (
@@ -29,8 +29,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       value={{
         data,
         isLoading,
-        sendMagicCode,
-        loginWithMagicCode,
+        renewToken,
+        authClient,
         logout,
         error,
       }}

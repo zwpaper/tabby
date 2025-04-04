@@ -15,9 +15,14 @@ import type React from "react";
 import { type FormEvent, useState } from "react";
 
 export function LoginForm({
+  callbackURL = "/",
+  deviceName,
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & {
+  callbackURL: string;
+  deviceName?: string;
+}) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -29,7 +34,7 @@ export function LoginForm({
 
     const resp = await authClient.signIn.magicLink({
       email,
-      callbackURL: "/",
+      callbackURL,
     });
 
     if (resp.data?.status) {
@@ -42,18 +47,21 @@ export function LoginForm({
   };
 
   const signInWithSocial = async (provider: "github") => {
-    const resp = await authClient.signIn.social({ provider, callbackURL: "/" });
+    const resp = await authClient.signIn.social({ provider, callbackURL });
     if (resp?.error) {
       setError(resp.error.message || "Something went wrong");
     }
   };
 
+  const description = deviceName
+    ? `You're trying to login from ${deviceName}`
+    : "";
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>Login with your Github account</CardDescription>
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6">

@@ -1,4 +1,4 @@
-import type { AppType } from "@ragdoll/server";
+import { type AppType, deviceLinkClient } from "@ragdoll/server";
 import type { Session, User } from "better-auth";
 import { createAuthClient } from "better-auth/client";
 import { emailOTPClient } from "better-auth/client/plugins";
@@ -24,7 +24,7 @@ export function useAuthApi() {
     () =>
       createAuthClient({
         baseURL: appConfig.dev ? DevBaseUrl : ProdBaseUrl,
-        plugins: [emailOTPClient()],
+        plugins: [emailOTPClient(), deviceLinkClient()],
         fetchOptions: {
           auth: {
             type: "Bearer",
@@ -34,7 +34,6 @@ export function useAuthApi() {
       }),
     [appConfig],
   );
-
   const [data, setData] = useState<{ user: User; session: Session } | null>(
     null,
   );
@@ -83,22 +82,8 @@ export function useAuthApi() {
     isLoading,
     error,
     refetch,
-    async sendMagicCode(email: string) {
-      await authClient.emailOtp.sendVerificationOtp({
-        email,
-        type: "sign-in",
-      });
-    },
-    async loginWithMagicCode(email: string, code: string) {
-      const { data, error } = await authClient.signIn.emailOtp({
-        email,
-        otp: code,
-      });
-      if (error) {
-        throw new Error(error.statusText);
-      }
-      renewToken(data.token);
-    },
+    authClient,
+    renewToken,
     async logout() {
       renewToken("");
       await authClient.revokeSession({
