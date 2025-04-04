@@ -85,10 +85,10 @@ export function useAuthApi() {
     authClient,
     renewToken,
     async logout() {
-      renewToken("");
       await authClient.revokeSession({
         token: getToken(),
       });
+      renewToken("");
     },
   };
 }

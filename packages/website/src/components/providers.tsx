@@ -26,6 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           signUp={false}
           settingsUrl="/settings/account"
           avatar
+          credentials={false}
         >
           {children}
         </AuthUIProviderTanstack>

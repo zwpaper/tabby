@@ -9,7 +9,13 @@ function Auth() {
   const { pathname } = Route.useParams();
   return (
     <div className="flex flex-col grow size-full min-h-screen items-center justify-center gap-3">
-      <AuthCard pathname={pathname} />
+      <AuthCard
+        pathname={pathname}
+        classNames={{
+          header: "pb-4",
+          content: "pt-0",
+        }}
+      />
     </div>
   );
 }

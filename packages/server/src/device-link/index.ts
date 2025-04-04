@@ -132,7 +132,7 @@ export const deviceLink = () => {
 
           const session = await ctx.context.internalAdapter.createSession(
             user.id,
-            ctx.headers,
+            ctx.request,
           );
 
           if (!session) {
@@ -199,7 +199,7 @@ export const deviceLink = () => {
           const session = await getSessionFromCtx(ctx);
           if (!session) {
             return ctx.redirect(
-              `/login?callbackURL=${encodeURIComponent(ctx.request?.url || "")}&deviceName=${encodeURIComponent(parsedTokenValue.deviceName)}`,
+              `/auth/sign-in?redirectTo=${encodeURIComponent(ctx.request?.url || "")}&deviceName=${encodeURIComponent(parsedTokenValue.deviceName)}`,
             );
           }
           // approve verification token to be logined as the current user.
