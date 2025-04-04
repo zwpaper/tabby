@@ -2,7 +2,18 @@ import { AppSidebar } from "@/components/settings/app-sidebar";
 import { SiteHeader } from "@/components/settings/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import {
+  type Icon,
+  IconChartBar,
+  IconCreditCard,
+  IconUserCircle,
+} from "@tabler/icons-react";
+import {
+  Outlet,
+  createFileRoute,
+  redirect,
+  useRouterState,
+} from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings")({
   beforeLoad: async (ctx) => {
@@ -19,15 +30,53 @@ export const Route = createFileRoute("/settings")({
       });
     }
   },
-  component: App,
+  component: Settings,
 });
 
-function App() {
+interface Pane {
+  title: string;
+  url: string;
+  icon: Icon;
+  active?: boolean;
+}
+
+const MainPanes: Pane[] = [
+  {
+    title: "Account",
+    url: "/settings/account",
+    icon: IconUserCircle,
+  },
+  {
+    title: "Usage",
+    url: "/settings/usage",
+    icon: IconChartBar,
+  },
+  {
+    title: "Billing",
+    url: "/settings/billing",
+    icon: IconCreditCard,
+  },
+];
+
+function Settings() {
+  const {
+    location: { pathname },
+  } = useRouterState();
+  let activePane: Pane | undefined;
+  for (const item of MainPanes) {
+    if (item.url === pathname) {
+      item.active = true;
+      activePane = item;
+    } else {
+      item.active = false;
+    }
+  }
+
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" panes={MainPanes} />
       <SidebarInset>
-        <SiteHeader />
+        <SiteHeader title={activePane?.title} />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

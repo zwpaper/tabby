@@ -6,7 +6,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { Icon } from "@tabler/icons-react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 export function NavMain({
   items,
@@ -14,12 +14,10 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: Icon;
+    icon: Icon;
+    active?: boolean;
   }[];
 }) {
-  const {
-    location: { pathname },
-  } = useRouterState();
   const navigate = useNavigate();
   return (
     <SidebarGroup>
@@ -30,7 +28,7 @@ export function NavMain({
               <SidebarMenuButton
                 tooltip={item.title}
                 onClick={() => navigate({ to: item.url })}
-                isActive={pathname === item.url}
+                isActive={item.active}
               >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>

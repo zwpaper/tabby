@@ -1,4 +1,5 @@
 import {
+  type Icon,
   IconCamera,
   IconChartBar,
   IconCreditCard,
@@ -132,7 +133,12 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  panes,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & {
+  panes: { title: string; url: string; icon: Icon; active?: boolean }[];
+}) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -151,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={panes} />
         {false && <NavDocuments items={data.documents} />}
         {false && (
           <NavSecondary items={data.navSecondary} className="mt-auto" />
