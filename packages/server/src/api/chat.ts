@@ -42,6 +42,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       case "openai/gpt-4o-mini":
         selectedModel = openai("gpt-4o-mini");
         break;
+      // case "anthropic/claude-3.7-sonnet":
+      //   selectedModel = openrouter("anthropic/claude-3.7-sonnet");
+      //   break;
       // case "google/gemini-2.5-pro-exp-03-25": // Removed redundant case
       default:
         selectedModel = google("gemini-2.5-pro-exp-03-25");
@@ -55,12 +58,12 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       system: environment?.info && generateSystemPrompt(environment.info),
       messages,
       tools,
-      onError: (error) => {
+      onError: async (error) => {
         console.error(error);
-        console.error(JSON.stringify(messages));
+        console.log((await result.request).body);
       },
       onFinish: async ({ usage, finishReason }) => {
-        if (finishReason === "unknown") {
+        if (finishReason === "unknown" || finishReason === "error") {
           return;
         }
         await trackUsage(user, usage);
@@ -76,7 +79,7 @@ function injectReadEnvironmentToolCall(
   model: LanguageModelV1,
   environment?: Environment,
 ) {
-  const isOpenAI = model.provider.includes("openai");
+  const isGemini = model.provider.includes("gemini");
 
   if (environment === undefined) return;
   // There's only user message.
@@ -85,7 +88,7 @@ function injectReadEnvironmentToolCall(
     messages.unshift({
       id: `environmentMessage-assistant-${Date.now()}`,
       role: "assistant",
-      content: "",
+      content: " ",
     });
     messages.unshift({
       id: `environmentMessage-user-${Date.now()}`,
@@ -105,7 +108,7 @@ function injectReadEnvironmentToolCall(
     toolInvocation: {
       toolName: "readEnvironment",
       state: "result",
-      args: isOpenAI ? "null" : undefined,
+      args: isGemini ? undefined : null,
       toolCallId,
       result: getReadEnvironmentResult(environment),
     },
