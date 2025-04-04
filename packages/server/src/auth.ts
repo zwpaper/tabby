@@ -1,5 +1,5 @@
 import { type User, betterAuth } from "better-auth";
-import { bearer, magicLink, oAuthProxy } from "better-auth/plugins";
+import { bearer, emailOTP, magicLink, oAuthProxy } from "better-auth/plugins";
 import type { MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { createMiddleware } from "hono/factory";
@@ -21,13 +21,18 @@ export const auth = betterAuth({
   plugins: [
     bearer(),
     oAuthProxy(),
-    magicLink({
-      sendMagicLink: async ({ email, token, url }) => {
-        console.log(`Magic link: ${email}: ${token} | ${url}`);
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        if (type !== "sign-in") {
+          return;
+        }
+
+        console.log("Sending OTP to", email, otp);
       },
-      generateToken(_email) {
-        // Generate 6-digits number
-        return Math.floor(100000 + Math.random() * 900000).toString();
+    }),
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        console.log(`Magic link: ${email} | ${url}`);
       },
     }),
   ],

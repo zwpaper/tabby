@@ -1,7 +1,7 @@
 import type { AppType } from "@ragdoll/server";
 import type { Session, User } from "better-auth";
 import { createAuthClient } from "better-auth/client";
-import { magicLinkClient } from "better-auth/client/plugins";
+import { emailOTPClient } from "better-auth/client/plugins";
 import { hc } from "hono/client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppConfig } from "./app-config";
@@ -24,7 +24,7 @@ export function useAuthApi() {
     () =>
       createAuthClient({
         baseURL: appConfig.dev ? DevBaseUrl : ProdBaseUrl,
-        plugins: [magicLinkClient()],
+        plugins: [emailOTPClient()],
         fetchOptions: {
           auth: {
             type: "Bearer",
@@ -84,13 +84,15 @@ export function useAuthApi() {
     error,
     refetch,
     async sendMagicCode(email: string) {
-      await authClient.signIn.magicLink({ email });
+      await authClient.emailOtp.sendVerificationOtp({
+        email,
+        type: "sign-in",
+      });
     },
-    async loginWithMagicCode(_email: string, code: string) {
-      const { data, error } = await authClient.magicLink.verify({
-        query: {
-          token: code,
-        },
+    async loginWithMagicCode(email: string, code: string) {
+      const { data, error } = await authClient.signIn.emailOtp({
+        email,
+        otp: code,
       });
       if (error) {
         throw new Error(error.statusText);
