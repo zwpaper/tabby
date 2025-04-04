@@ -1,27 +1,31 @@
-import { AppSidebar } from "@/components/account/app-sidebar";
-import { SiteHeader } from "@/components/account/site-header";
+import { AppSidebar } from "@/components/settings/app-sidebar";
+import { SiteHeader } from "@/components/settings/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/account")({
+export const Route = createFileRoute("/settings")({
+  beforeLoad: async (ctx) => {
+    if (ctx.location.pathname === "/settings") {
+      throw redirect({ to: "/settings/account" });
+    }
+  },
   loader: async () => {
     const { data } = await authClient.getSession();
     if (!data?.user) {
-      throw redirect({ to: "/login" });
+      throw redirect({
+        to: "/auth/$pathname",
+        params: { pathname: "sign-in" },
+      });
     }
-    return { data };
   },
   component: App,
 });
 
 function App() {
-  const {
-    data: { user },
-  } = Route.useLoaderData();
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" user={user} />
+      <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">

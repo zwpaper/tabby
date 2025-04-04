@@ -11,22 +11,18 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as LoginImport } from './routes/login'
-import { Route as AccountRouteImport } from './routes/account/route'
+import { Route as SettingsRouteImport } from './routes/settings/route'
 import { Route as IndexImport } from './routes/index'
-import { Route as AccountIndexImport } from './routes/account/index'
+import { Route as SettingsUsageImport } from './routes/settings/usage'
+import { Route as SettingsBillingImport } from './routes/settings/billing'
+import { Route as SettingsAccountImport } from './routes/settings/account'
+import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 
 // Create/Update Routes
 
-const LoginRoute = LoginImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const AccountRouteRoute = AccountRouteImport.update({
-  id: '/account',
-  path: '/account',
+const SettingsRouteRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -36,10 +32,28 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AccountIndexRoute = AccountIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AccountRouteRoute,
+const SettingsUsageRoute = SettingsUsageImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+
+const SettingsBillingRoute = SettingsBillingImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+
+const SettingsAccountRoute = SettingsAccountImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+
+const AuthPathnameRoute = AuthPathnameImport.update({
+  id: '/auth/$pathname',
+  path: '/auth/$pathname',
+  getParentRoute: () => rootRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -53,84 +67,128 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/account': {
-      id: '/account'
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRoute
+    }
+    '/auth/$pathname': {
+      id: '/auth/$pathname'
+      path: '/auth/$pathname'
+      fullPath: '/auth/$pathname'
+      preLoaderRoute: typeof AuthPathnameImport
+      parentRoute: typeof rootRoute
+    }
+    '/settings/account': {
+      id: '/settings/account'
       path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AccountRouteImport
-      parentRoute: typeof rootRoute
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof SettingsAccountImport
+      parentRoute: typeof SettingsRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginImport
-      parentRoute: typeof rootRoute
+    '/settings/billing': {
+      id: '/settings/billing'
+      path: '/billing'
+      fullPath: '/settings/billing'
+      preLoaderRoute: typeof SettingsBillingImport
+      parentRoute: typeof SettingsRouteImport
     }
-    '/account/': {
-      id: '/account/'
-      path: '/'
-      fullPath: '/account/'
-      preLoaderRoute: typeof AccountIndexImport
-      parentRoute: typeof AccountRouteImport
+    '/settings/usage': {
+      id: '/settings/usage'
+      path: '/usage'
+      fullPath: '/settings/usage'
+      preLoaderRoute: typeof SettingsUsageImport
+      parentRoute: typeof SettingsRouteImport
     }
   }
 }
 
 // Create and export the route tree
 
-interface AccountRouteRouteChildren {
-  AccountIndexRoute: typeof AccountIndexRoute
+interface SettingsRouteRouteChildren {
+  SettingsAccountRoute: typeof SettingsAccountRoute
+  SettingsBillingRoute: typeof SettingsBillingRoute
+  SettingsUsageRoute: typeof SettingsUsageRoute
 }
 
-const AccountRouteRouteChildren: AccountRouteRouteChildren = {
-  AccountIndexRoute: AccountIndexRoute,
+const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
+  SettingsAccountRoute: SettingsAccountRoute,
+  SettingsBillingRoute: SettingsBillingRoute,
+  SettingsUsageRoute: SettingsUsageRoute,
 }
 
-const AccountRouteRouteWithChildren = AccountRouteRoute._addFileChildren(
-  AccountRouteRouteChildren,
+const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
+  SettingsRouteRouteChildren,
 )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/account': typeof AccountRouteRouteWithChildren
-  '/login': typeof LoginRoute
-  '/account/': typeof AccountIndexRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
+  '/auth/$pathname': typeof AuthPathnameRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/billing': typeof SettingsBillingRoute
+  '/settings/usage': typeof SettingsUsageRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
-  '/account': typeof AccountIndexRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
+  '/auth/$pathname': typeof AuthPathnameRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/billing': typeof SettingsBillingRoute
+  '/settings/usage': typeof SettingsUsageRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/account': typeof AccountRouteRouteWithChildren
-  '/login': typeof LoginRoute
-  '/account/': typeof AccountIndexRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
+  '/auth/$pathname': typeof AuthPathnameRoute
+  '/settings/account': typeof SettingsAccountRoute
+  '/settings/billing': typeof SettingsBillingRoute
+  '/settings/usage': typeof SettingsUsageRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/account' | '/login' | '/account/'
+  fullPaths:
+    | '/'
+    | '/settings'
+    | '/auth/$pathname'
+    | '/settings/account'
+    | '/settings/billing'
+    | '/settings/usage'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/account'
-  id: '__root__' | '/' | '/account' | '/login' | '/account/'
+  to:
+    | '/'
+    | '/settings'
+    | '/auth/$pathname'
+    | '/settings/account'
+    | '/settings/billing'
+    | '/settings/usage'
+  id:
+    | '__root__'
+    | '/'
+    | '/settings'
+    | '/auth/$pathname'
+    | '/settings/account'
+    | '/settings/billing'
+    | '/settings/usage'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AccountRouteRoute: typeof AccountRouteRouteWithChildren
-  LoginRoute: typeof LoginRoute
+  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  AuthPathnameRoute: typeof AuthPathnameRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AccountRouteRoute: AccountRouteRouteWithChildren,
-  LoginRoute: LoginRoute,
+  SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  AuthPathnameRoute: AuthPathnameRoute,
 }
 
 export const routeTree = rootRoute
@@ -144,25 +202,35 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/account",
-        "/login"
+        "/settings",
+        "/auth/$pathname"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/account": {
-      "filePath": "account/route.tsx",
+    "/settings": {
+      "filePath": "settings/route.tsx",
       "children": [
-        "/account/"
+        "/settings/account",
+        "/settings/billing",
+        "/settings/usage"
       ]
     },
-    "/login": {
-      "filePath": "login.tsx"
+    "/auth/$pathname": {
+      "filePath": "auth/$pathname.tsx"
     },
-    "/account/": {
-      "filePath": "account/index.tsx",
-      "parent": "/account"
+    "/settings/account": {
+      "filePath": "settings/account.tsx",
+      "parent": "/settings"
+    },
+    "/settings/billing": {
+      "filePath": "settings/billing.tsx",
+      "parent": "/settings"
+    },
+    "/settings/usage": {
+      "filePath": "settings/usage.tsx",
+      "parent": "/settings"
     }
   }
 }

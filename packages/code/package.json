@@ -13,7 +13,7 @@
     "@ai-sdk/react": "^1.2.0",
     "@hono/client": "^0.0.3",
     "@inkjs/ui": "^2.0.0",
-    "@tanstack/react-query": "^5.71.1",
+    "@tanstack/react-query": "^5.71.5",
     "ai": "^4.2.0",
     "better-auth": "^1.2.5",
     "commander": "^13.1.0",
