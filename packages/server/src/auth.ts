@@ -11,12 +11,15 @@ export const auth = betterAuth({
     type: "postgres",
   },
   socialProviders: {
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-      redirectURI:
-        "https://ragdoll-production.up.railway.app/api/auth/callback/github",
-    },
+    github:
+      process.env.NODE_ENV !== "test"
+        ? {
+            clientId: process.env.GITHUB_CLIENT_ID as string,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+            redirectURI:
+              "https://ragdoll-production.up.railway.app/api/auth/callback/github",
+          }
+        : undefined,
   },
   plugins: [
     bearer(),
