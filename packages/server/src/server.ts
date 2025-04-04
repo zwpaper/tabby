@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import chat from "./api/chat";
@@ -12,6 +13,8 @@ app.use(logger());
 if (process.env.NODE_ENV !== "test") {
   import("hono/bun").then(({ serveStatic }) => {
     app.use("/*", serveStatic({ root: "../website/dist" }));
+    const html = readFileSync("../website/dist/index.html", "utf-8");
+    app.get("*", async (c) => c.html(html));
   });
 }
 
