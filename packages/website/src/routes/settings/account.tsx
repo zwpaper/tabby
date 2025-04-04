@@ -11,13 +11,6 @@ function Account() {
       <SettingsCards
         classNames={{
           base: "mx-auto max-w-2xl",
-          card: {
-            avatar: {
-              base: "mr-2",
-              image: "max-w-[64px]",
-            },
-            cell: "py-2",
-          },
         }}
       />
     </>
