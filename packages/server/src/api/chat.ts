@@ -12,7 +12,7 @@ import {
 import type { User } from "better-auth";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import { authRequest, requireAuth } from "../auth";
+import { requireAuth } from "../auth";
 import { db } from "../db";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
@@ -129,7 +129,11 @@ function getMessageToInject(messages: Message[]): Message | undefined {
   }
 }
 
-async function trackUsage(user: User, modelId: string, usage: LanguageModelUsage) {
+async function trackUsage(
+  user: User,
+  modelId: string,
+  usage: LanguageModelUsage,
+) {
   await db
     .insertInto("chatCompletion")
     .values({

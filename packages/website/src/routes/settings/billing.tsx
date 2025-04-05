@@ -124,52 +124,48 @@ function Billing() {
 
   return (
     <div className="container max-w-4xl">
-      <p className="text-muted-foreground">Manage your subscription plan</p>
-
-      <div className="mt-6">
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Current Plan</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Billing Cycle:
-              </span>
-              <Select value={billingCycle} onValueChange={setBillingCycle}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Select billing cycle" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly (Save 20%)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Current Plan</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Billing Cycle:
+            </span>
+            <Select value={billingCycle} onValueChange={setBillingCycle}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Select billing cycle" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly (Save 20%)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+        </div>
 
-          <div className="flex gap-4 mb-8 justify-around">
-            {plans.map((plan) => (
-              <SubscriptionPlan
-                key={plan.id}
-                name={plan.name}
-                price={plan.price}
-                description={plan.description}
-                features={plan.features}
-                isPopular={plan.isPopular}
-                isActive={plan.id === selectedPlan}
-                onSelect={() => handlePlanChange(plan.id)}
-              />
-            ))}
-          </div>
+        <div className="flex gap-4 mb-8 justify-around">
+          {plans.map((plan) => (
+            <SubscriptionPlan
+              key={plan.id}
+              name={plan.name}
+              price={plan.price}
+              description={plan.description}
+              features={plan.features}
+              isPopular={plan.isPopular}
+              isActive={plan.id === selectedPlan}
+              onSelect={() => handlePlanChange(plan.id)}
+            />
+          ))}
+        </div>
 
-          <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-            <div>
-              <h3 className="font-medium">Need a custom plan?</h3>
-              <p className="text-sm text-muted-foreground">
-                Contact us for a tailored solution for your specific needs
-              </p>
-            </div>
-            <Button variant="outline">Contact Sales</Button>
+        <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+          <div>
+            <h3 className="font-medium">Need a custom plan?</h3>
+            <p className="text-sm text-muted-foreground">
+              Contact us for a tailored solution for your specific needs
+            </p>
           </div>
+          <Button variant="outline">Contact Sales</Button>
         </div>
       </div>
     </div>

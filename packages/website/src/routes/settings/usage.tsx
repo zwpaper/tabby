@@ -2,20 +2,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import moment from "moment";
-import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/auth-client";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
+import moment from "moment";
+import { useState } from "react";
+import {
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export const Route = createFileRoute("/settings/usage")({
   component: Usage,
 });
 
 function Usage() {
-  const [startDate, setStartDate] = useState(moment().subtract(30, "days").format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState(
+    moment().subtract(30, "days").format("YYYY-MM-DD"),
+  );
   const [endDate, setEndDate] = useState(moment().format("YYYY-MM-DD"));
 
   // Query for usage data
@@ -25,18 +35,19 @@ function Usage() {
       // Build the URL parameters for the date range
       const params: Record<string, string> = {
         start: startDate,
-        end: endDate
+        end: endDate,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
-      
+
       // Using the apiClient to make the API call
       const response = await apiClient.api.usages.chat.$get({
-        query: params
+        query: params,
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch usage data");
       }
-      
+
       return response.json();
     },
   });
@@ -49,15 +60,13 @@ function Usage() {
 
   return (
     <div className="container max-w-5xl">
-      <p className="text-muted-foreground">View your token usage statistics below.</p>
-      
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Usage By Date Range</CardTitle>
-        </CardHeader>
+      <Card>
         <CardContent>
-          <form onSubmit={handleRangeSubmit} className="mb-6 grid gap-4 md:grid-cols-3">
-            <div>
+          <form
+            onSubmit={handleRangeSubmit}
+            className="mb-6 grid gap-4 md:grid-cols-3"
+          >
+            <div className="flex flex-col gap-2">
               <Label htmlFor="startDate">Start Date</Label>
               <Input
                 id="startDate"
@@ -68,7 +77,7 @@ function Usage() {
                 required
               />
             </div>
-            <div>
+            <div className="flex flex-col gap-2">
               <Label htmlFor="endDate">End Date</Label>
               <Input
                 id="endDate"
@@ -80,7 +89,11 @@ function Usage() {
               />
             </div>
             <div className="flex items-end">
-              <Button type="submit" className="w-full" disabled={usageQuery.isFetching}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={usageQuery.isFetching}
+              >
                 {usageQuery.isFetching ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
@@ -102,33 +115,42 @@ function Usage() {
               <div className="mb-6 grid gap-4 md:grid-cols-3">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Total Tokens</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Total Tokens
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {usageQuery.data.summary.totalTokens?.toLocaleString() || 0}
+                      {usageQuery.data.summary.totalTokens?.toLocaleString() ||
+                        0}
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Prompt Tokens</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Prompt Tokens
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {usageQuery.data.summary.promptTokens?.toLocaleString() || 0}
+                      {usageQuery.data.summary.promptTokens?.toLocaleString() ||
+                        0}
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Completion Tokens</CardTitle>
+                    <CardTitle className="text-sm font-medium">
+                      Completion Tokens
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {usageQuery.data.summary.completionTokens?.toLocaleString() || 0}
+                      {usageQuery.data.summary.completionTokens?.toLocaleString() ||
+                        0}
                     </div>
                   </CardContent>
                 </Card>
@@ -142,26 +164,26 @@ function Usage() {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="promptTokens" 
+                      <Line
+                        type="monotone"
+                        dataKey="promptTokens"
                         name="Prompt Tokens"
-                        stroke="#8884d8" 
-                        strokeWidth={2} 
+                        stroke="#8884d8"
+                        strokeWidth={2}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="completionTokens" 
+                      <Line
+                        type="monotone"
+                        dataKey="completionTokens"
                         name="Completion Tokens"
-                        stroke="#82ca9d" 
-                        strokeWidth={2} 
+                        stroke="#82ca9d"
+                        strokeWidth={2}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="totalTokens" 
+                      <Line
+                        type="monotone"
+                        dataKey="totalTokens"
                         name="Total Tokens"
-                        stroke="#ff7300" 
-                        strokeWidth={2} 
+                        stroke="#ff7300"
+                        strokeWidth={2}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -173,7 +195,9 @@ function Usage() {
               )}
             </>
           ) : (
-            <div className="text-center">Please select a date range and generate a report</div>
+            <div className="text-center">
+              Please select a date range and generate a report
+            </div>
           )}
         </CardContent>
       </Card>

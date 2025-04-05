@@ -1,8 +1,6 @@
 import { stripe } from "@better-auth/stripe";
 import { type BetterAuthPlugin, type User, betterAuth } from "better-auth";
 import { bearer, emailOTP, magicLink, oAuthProxy } from "better-auth/plugins";
-import type { MiddlewareHandler } from "hono";
-import { bearerAuth } from "hono/bearer-auth";
 import { createMiddleware } from "hono/factory";
 import Stripe from "stripe";
 import { db } from "./db";
@@ -92,8 +90,8 @@ export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
         c.set("user", session.user);
       }
       await next();
-    }
-  })()
+    };
+  })(),
 );
 
 export const requireAuth = createMiddleware<{ Variables: { user: User } }>(

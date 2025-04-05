@@ -1,77 +1,81 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
+import { sql } from "kysely";
+import moment from "moment"
+import "moment-timezone";
 
 // Define the schema for query parameters
 const UsageQuerySchema = z.object({
   start: z.string().optional(), // start date in ISO format (YYYY-MM-DD)
-  end: z.string().optional(),   // end date in ISO format (YYYY-MM-DD)
+  end: z.string().optional(), // end date in ISO format (YYYY-MM-DD)
+  tz: z.string().optional(), // timezone offset in minutes
 });
 
-const usages = new Hono()
-  .get("/chat", requireAuth, zValidator("query", UsageQuerySchema), async (c) => {
+const usages = new Hono().get(
+  "/chat",
+  requireAuth,
+  zValidator("query", UsageQuerySchema),
+  async (c) => {
     const user = c.get("user");
-    const { start, end } = c.req.valid("query");
-    
+    const { start, end, tz = "UTC" } = c.req.valid("query");
+
     // Default to last 30 days if no date range is provided
-    const endDate = end ? new Date(end) : new Date();
-    const startDate = start ? new Date(start) : new Date(endDate);
-    
-    // If no start date provided, default to 30 days before end date
-    if (!start) {
-      startDate.setDate(endDate.getDate() - 30);
-    }
-    
+    const endDate = end ? moment.tz(end, tz).add(1, "day").subtract(1, "second").toDate() : new Date();
+    const startDate = start
+      ? moment.tz(start, tz).toDate()
+      : moment.tz(endDate, tz).subtract(30, "days").toDate();
+
     // Query to get aggregate data across the date range
     const aggregateResult = await db
       .selectFrom("chatCompletion")
       .select([
         db.fn.sum("promptTokens").as("totalPromptTokens"),
         db.fn.sum("completionTokens").as("totalCompletionTokens"),
-        db.fn.count("id").as("completionCount")
+        db.fn.count("id").as("completionCount"),
       ])
       .where("userId", "=", user.id)
       .where("createdAt", ">=", startDate)
-      .where("createdAt", "<", endDate)
+      .where("createdAt", "<=", endDate)
       .executeTakeFirst();
-    
-    // Query to get daily breakdowns
+
+    // Query to get daily breakdowns, adjusting for user's timezone
     const dailyResults = await db
       .selectFrom("chatCompletion")
       .select([
-        db.fn("date", ["createdAt"]).as("date"),
+        sql<Date>`DATE(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE ${tz})`.as("date"),
         db.fn.sum("promptTokens").as("promptTokens"),
         db.fn.sum("completionTokens").as("completionTokens"),
-        db.fn.count("id").as("count")
+        db.fn.count("id").as("count"),
       ])
       .where("userId", "=", user.id)
       .where("createdAt", ">=", startDate)
-      .where("createdAt", "<", endDate)
+      .where("createdAt", "<=", endDate)
       .groupBy("date")
       .orderBy("date")
       .execute();
-    
+
     return c.json({
-      range: {
-        start: startDate.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0]
-      },
       summary: {
         promptTokens: Number(aggregateResult?.totalPromptTokens || 0),
         completionTokens: Number(aggregateResult?.totalCompletionTokens || 0),
         completionCount: Number(aggregateResult?.completionCount || 0),
-        totalTokens: Number(aggregateResult?.totalPromptTokens || 0) + Number(aggregateResult?.totalCompletionTokens || 0)
+        totalTokens:
+          Number(aggregateResult?.totalPromptTokens || 0) +
+          Number(aggregateResult?.totalCompletionTokens || 0),
       },
-      daily: dailyResults.map(day => ({
-        date: day.date,
+      daily: dailyResults.map((day) => ({
+        date: moment(day.date).utcOffset(tz).format("YYYY-MM-DD"),
         promptTokens: Number(day.promptTokens || 0),
         completionTokens: Number(day.completionTokens || 0),
         completionCount: Number(day.count || 0),
-        totalTokens: Number(day.promptTokens || 0) + Number(day.completionTokens || 0)
-      }))
+        totalTokens:
+          Number(day.promptTokens || 0) + Number(day.completionTokens || 0),
+      })),
     });
-  });
+  },
+);
 
 export default usages;

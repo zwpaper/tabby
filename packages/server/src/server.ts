@@ -5,9 +5,7 @@ import models from "./api/models";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
 
-export const app = new Hono()
-  .use(logger())
-  .use(authRequest);
+export const app = new Hono().use(logger()).use(authRequest);
 
 // Static file serving with dynamic import
 if (process.env.NODE_ENV !== "test") {
