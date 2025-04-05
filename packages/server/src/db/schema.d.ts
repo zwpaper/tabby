@@ -27,10 +27,11 @@ export interface Account {
   userId: string;
 }
 
-export interface DailyUsage {
+export interface ChatCompletion {
   completionTokens: number;
-  date: Timestamp;
+  createdAt: Generated<Timestamp>;
   id: Generated<number>;
+  modelId: string;
   promptTokens: number;
   userId: string;
 }
@@ -81,7 +82,7 @@ export interface Verification {
 
 export interface DB {
   account: Account;
-  dailyUsage: DailyUsage;
+  chatCompletion: ChatCompletion;
   session: Session;
   subscription: Subscription;
   user: User;

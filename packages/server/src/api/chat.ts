@@ -45,10 +45,11 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       // case "anthropic/claude-3.7-sonnet":
       //   selectedModel = openrouter("anthropic/claude-3.7-sonnet");
       //   break;
-      // case "google/gemini-2.5-pro-exp-03-25": // Removed redundant case
-      default:
+      case "google/gemini-2.5-pro-exp-03-25": // Removed redundant case
         selectedModel = google("gemini-2.5-pro-exp-03-25");
         break;
+      default:
+        return c.json({ error: "Invalid model" }, 400);
     }
 
     injectReadEnvironmentToolCall(messages, selectedModel, environment);
@@ -66,7 +67,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         if (finishReason === "unknown" || finishReason === "error") {
           return;
         }
-        await trackUsage(user, usage);
+        await trackUsage(user, requestedModelId, usage);
       },
     });
 
@@ -128,36 +129,16 @@ function getMessageToInject(messages: Message[]): Message | undefined {
   }
 }
 
-async function trackUsage(user: User, usage: LanguageModelUsage) {
-  const date = new Date(new Date().toISOString().split("T")[0]);
-  const usageRowId = (
-    await db
-      .selectFrom("dailyUsage")
-      .select("id")
-      .where("userId", "=", user.id)
-      .where("date", "=", date)
-      .executeTakeFirst()
-  )?.id;
-  if (usageRowId) {
-    await db
-      .updateTable("dailyUsage")
-      .set((eb) => ({
-        promptTokens: eb("promptTokens", "+", usage.promptTokens),
-        completionTokens: eb("completionTokens", "+", usage.completionTokens),
-      }))
-      .where("id", "=", usageRowId)
-      .execute();
-  } else {
-    await db
-      .insertInto("dailyUsage")
-      .values({
-        userId: user.id,
-        date,
-        promptTokens: usage.promptTokens,
-        completionTokens: usage.completionTokens,
-      })
-      .execute();
-  }
+async function trackUsage(user: User, modelId: string, usage: LanguageModelUsage) {
+  await db
+    .insertInto("chatCompletion")
+    .values({
+      modelId,
+      userId: user.id,
+      promptTokens: usage.promptTokens,
+      completionTokens: usage.completionTokens,
+    })
+    .execute();
 }
 
 export default chat;
