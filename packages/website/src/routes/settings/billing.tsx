@@ -52,7 +52,7 @@ function SubscriptionPlan({
   onSelect: () => void;
 }) {
   return (
-    <Card className="flex flex-col max-w-md grow">
+    <Card className="flex flex-col max-w-sm grow">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{name}</CardTitle>
@@ -123,7 +123,7 @@ function Billing() {
   };
 
   return (
-    <div className="container max-w-5xl mx-auto">
+    <div className="container max-w-4xl">
       <p className="text-muted-foreground">Manage your subscription plan</p>
 
       <div className="mt-6">
