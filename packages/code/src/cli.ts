@@ -12,6 +12,10 @@ program
 program
   .option("--dev", "Run in development mode")
   .option("-p, --prompt <prompt>", "Initial prompt")
+  .option(
+    "--projects-dir <directory>",
+    "Projects directory (default: ~/RagdollProjects)",
+  )
   .parse(process.argv);
 
 const config = program.opts();
@@ -19,6 +23,7 @@ const config = program.opts();
 const appConfig = {
   dev: config.dev || false,
   prompt: config.prompt,
+  projectsDir: config.projectsDir,
 };
 
 app(appConfig);
