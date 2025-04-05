@@ -1,8 +1,10 @@
-import { type User, betterAuth } from "better-auth";
+import { stripe } from "@better-auth/stripe";
+import { type BetterAuthPlugin, type User, betterAuth } from "better-auth";
 import { bearer, emailOTP, magicLink, oAuthProxy } from "better-auth/plugins";
 import type { MiddlewareHandler } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { createMiddleware } from "hono/factory";
+import Stripe from "stripe";
 import { db } from "./db";
 import { deviceLink } from "./device-link";
 
@@ -12,15 +14,7 @@ export const auth = betterAuth({
     type: "postgres",
   },
   socialProviders: {
-    github:
-      process.env.NODE_ENV !== "test"
-        ? {
-            clientId: process.env.GITHUB_CLIENT_ID as string,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-            redirectURI:
-              "https://ragdoll-production.up.railway.app/api/auth/callback/github",
-          }
-        : undefined,
+    github: createGithubProvider(),
   },
   plugins: [
     bearer(),
@@ -40,8 +34,36 @@ export const auth = betterAuth({
       },
     }),
     deviceLink(),
-  ],
+    createStripePlugin(),
+  ].filter(Boolean) as BetterAuthPlugin[],
 });
+
+function createGithubProvider() {
+  if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+    console.warn("Github is not configured");
+    return undefined;
+  }
+  return {
+    clientId: process.env.GITHUB_CLIENT_ID as string,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    redirectURI:
+      "https://ragdoll-production.up.railway.app/api/auth/callback/github",
+  };
+}
+
+function createStripePlugin() {
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    console.warn("Stripe is not configured");
+    return null;
+  }
+
+  const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
+  return stripe({
+    stripeClient,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    createCustomerOnSignUp: true,
+  });
+}
 
 function makeAuthRequest(): MiddlewareHandler {
   // Disable auth in test mode
