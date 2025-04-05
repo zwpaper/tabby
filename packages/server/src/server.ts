@@ -1,21 +1,23 @@
-import { readFileSync } from "node:fs";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import chat from "./api/chat";
 import models from "./api/models";
-import usages from "./api/usages"; // Add this import
+import usages from "./api/usages";
 import { auth } from "./auth";
 
 export const app = new Hono();
 app.use(logger());
 
-// static
+// Static file serving with dynamic import
 if (process.env.NODE_ENV !== "test") {
-  import("hono/bun").then(({ serveStatic }) => {
+  (async () => {
+    const { serveStatic } = await import("hono/bun");
+    const { readFile } = await import("node:fs/promises");
+    const html = await readFile("../website/dist/index.html", "utf-8");
+
     app.use("/*", serveStatic({ root: "../website/dist" }));
-    const html = readFileSync("../website/dist/index.html", "utf-8");
-    app.get("*", async (c) => c.html(html));
-  });
+    app.get("*", (c) => c.html(html));
+  })();
 }
 
 app.get("/health", (c) => c.text("OK"));
