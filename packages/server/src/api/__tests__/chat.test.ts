@@ -2,11 +2,13 @@ import { simulateReadableStream } from "ai";
 import { MockLanguageModelV1 } from "ai/test";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
+import { authRequest } from "../../auth";
 import chatImpl, { type ContextVariables } from "../chat";
 
 function getAppWithMockModel() {
   const app = new Hono<{ Variables: ContextVariables }>();
   app
+    .use(authRequest)
     .use(async (c, next) => {
       c.set(
         "model",

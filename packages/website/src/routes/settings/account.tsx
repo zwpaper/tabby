@@ -9,7 +9,7 @@ function Account() {
   return (
     <SettingsCards
       classNames={{
-        base: "max-w-2xl"
+        base: "max-w-2xl",
       }}
     />
   );

@@ -1,202 +1,400 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { apiClient } from "@/lib/auth-client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import moment from "moment";
-import { useState } from "react";
-import {
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useEffect, useMemo, useState } from "react"; // Import useMemo
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
 export const Route = createFileRoute("/settings/usage")({
   component: Usage,
 });
 
+const chartConfig = {
+  promptTokens: {
+    label: "Prompt Tokens",
+    color: "hsl(var(--chart-1))",
+  },
+  completionTokens: {
+    label: "Completion Tokens",
+    color: "hsl(var(--chart-2))",
+  },
+  // We are stacking prompt and completion, so totalTokens might be redundant in the chart itself
+  // but useful for the summary card.
+} satisfies ChartConfig;
+
+// Helper function to calculate date range based on the string identifier
+const calculateDateRange = (range: string) => {
+  const end = moment();
+  let start = moment();
+  let daysToSubtract = 0;
+  switch (range) {
+    case "90d":
+      start = moment().subtract(90, "days");
+      daysToSubtract = 90;
+      break;
+    case "30d":
+      start = moment().subtract(30, "days");
+      daysToSubtract = 30;
+      break;
+    // case "7d":
+    default:
+      start = moment().subtract(7, "days");
+      daysToSubtract = 7;
+      break;
+  }
+  return {
+    startDate: start.format("YYYY-MM-DD"),
+    endDate: end.format("YYYY-MM-DD"),
+    days: daysToSubtract,
+  };
+};
+
+// Define the fetch function separately for reusability
+const fetchUsageData = async (timeRange: string) => {
+  const { startDate, endDate } = calculateDateRange(timeRange);
+  const params: Record<string, string> = {
+    start: startDate,
+    end: endDate,
+    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  };
+
+  const response = await apiClient.api.usages.chat.$get({ query: params });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch usage data for ${timeRange}`);
+  }
+
+  return response.json();
+};
+
 function Usage() {
-  const [startDate, setStartDate] = useState(
-    moment().subtract(30, "days").format("YYYY-MM-DD"),
-  );
-  const [endDate, setEndDate] = useState(moment().format("YYYY-MM-DD"));
+  const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const [timeRange, setTimeRange] = useState("30d");
 
-  // Query for usage data
-  const usageQuery = useQuery({
-    queryKey: ["usages", "chat", startDate + "-" + endDate],
-    queryFn: async () => {
-      // Build the URL parameters for the date range
-      const params: Record<string, string> = {
-        start: startDate,
-        end: endDate,
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      };
+  useEffect(() => {
+    setTimeRange(isMobile ? "7d" : "30d");
+  }, [isMobile]);
 
-      // Using the apiClient to make the API call
-      const response = await apiClient.api.usages.chat.$get({
-        query: params,
+  useEffect(() => {
+    const timeRanges = ["7d", "30d", "90d"];
+    for (const range of timeRanges) {
+      queryClient.prefetchQuery({
+        queryKey: ["usages", "chat", range],
+        queryFn: () => fetchUsageData(range),
       });
+    }
+  }, [queryClient]);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch usage data");
-      }
-
-      return response.json();
-    },
+  const usageQuery = useQuery({
+    queryKey: ["usages", "chat", timeRange],
+    queryFn: () => fetchUsageData(timeRange),
   });
 
-  const handleRangeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Trigger a new query by refreshing the query
-    usageQuery.refetch();
+  // Memoize the padded chart data calculation
+  const paddedChartData = useMemo(() => {
+    if (!usageQuery.data?.daily) {
+      // Return empty array or handle loading state appropriately if needed before data arrives
+      return [];
+    }
+
+    const { startDate, days } = calculateDateRange(timeRange);
+    const dailyDataMap = new Map(
+      usageQuery.data.daily.map((item) => [item.date, item]),
+    );
+
+    const allDatesData = [];
+    const currentMoment = moment(startDate);
+
+    // Generate data points for the entire selected range
+    // Iterate days + 1 times to include both start and end date if end date is today
+    for (let i = 0; i <= days; i++) {
+      const dateStr = currentMoment.format("YYYY-MM-DD");
+      const existingData = dailyDataMap.get(dateStr);
+
+      allDatesData.push(
+        existingData || {
+          date: dateStr,
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+        },
+      );
+      currentMoment.add(1, "day");
+    }
+
+    return allDatesData;
+  }, [usageQuery.data?.daily, timeRange]);
+
+  const renderSummaryCards = () => {
+    // Initial loading state (before first fetch completes)
+    if (usageQuery.isLoading && !usageQuery.data) {
+      return (
+        <div className="grid gap-4 md:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-3/5" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-4/5" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    // Error state
+    if (usageQuery.isError) {
+      return (
+        <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-center text-destructive">
+          Error loading summary data: {(usageQuery.error as Error).message}
+        </div>
+      );
+    }
+
+    // Data loaded successfully
+    if (usageQuery.data?.summary) {
+      const summary = usageQuery.data.summary;
+      return (
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Total Tokens
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {summary.totalTokens?.toLocaleString() || 0}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Prompt Tokens
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {summary.promptTokens?.toLocaleString() || 0}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Completion Tokens
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {summary.completionTokens?.toLocaleString() || 0}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // No summary data, but not loading or error (e.g., empty response)
+    return (
+      <div className="rounded-md border border-border bg-muted/40 p-4 text-center text-muted-foreground">
+        No summary data available for the selected period.
+      </div>
+    );
   };
 
   return (
-    <div className="container max-w-5xl">
-      <Card>
-        <CardContent>
-          <form
-            onSubmit={handleRangeSubmit}
-            className="mb-6 grid gap-4 md:grid-cols-3"
-          >
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="startDate">Start Date</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                max={endDate}
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="endDate">End Date</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                required
-              />
-            </div>
-            <div className="flex items-end">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={usageQuery.isFetching}
-              >
-                {usageQuery.isFetching ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
-                Generate Report
-              </Button>
-            </div>
-          </form>
+    <div className="container max-w-5xl space-y-6">
+      {/* Render Summary Cards Section */}
+      {renderSummaryCards()}
 
-          {usageQuery.isLoading ? (
+      {/* Main Chart Card */}
+      <Card className="@container/card">
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <CardTitle>Token Usage</CardTitle>
+          <div className="flex items-center gap-2">
+            {/* Show loading spinner only when fetching for the *current* view */}
+            {usageQuery.isFetching && (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            )}
+            {/* Desktop Toggle */}
+            <ToggleGroup
+              type="single"
+              value={timeRange}
+              onValueChange={(value) => {
+                if (value) setTimeRange(value);
+              }}
+              variant="outline"
+              className="hidden @[767px]/card:flex [&>button]:px-4"
+              size="sm"
+            >
+              <ToggleGroupItem value="90d">Last 3 months</ToggleGroupItem>
+              <ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
+              <ToggleGroupItem value="7d">Last 7 days</ToggleGroupItem>
+            </ToggleGroup>
+            {/* Mobile Select */}
+            <Select
+              value={timeRange}
+              onValueChange={(value) => {
+                if (value) setTimeRange(value);
+              }}
+            >
+              <SelectTrigger
+                className="flex w-auto @[767px]/card:hidden"
+                size="sm"
+                aria-label="Select time range"
+              >
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="90d" className="rounded-lg">
+                  Last 3 months
+                </SelectItem>
+                <SelectItem value="30d" className="rounded-lg">
+                  Last 30 days
+                </SelectItem>
+                <SelectItem value="7d" className="rounded-lg">
+                  Last 7 days
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+          {/* Chart Area or Loading/Error/No Data message for chart */}
+          {usageQuery.isLoading && !usageQuery.data ? (
             <div className="flex h-64 items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : usageQuery.isError ? (
-            <div className="text-center text-red-500">
-              Error loading data: {(usageQuery.error as Error).message}
+            <div className="flex h-64 items-center justify-center text-center text-red-500">
+              Error loading chart data: {(usageQuery.error as Error).message}
             </div>
-          ) : usageQuery.data?.summary ? (
-            <>
-              <div className="mb-6 grid gap-4 md:grid-cols-3">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Tokens
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {usageQuery.data.summary.totalTokens?.toLocaleString() ||
-                        0}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Prompt Tokens
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {usageQuery.data.summary.promptTokens?.toLocaleString() ||
-                        0}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Completion Tokens
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {usageQuery.data.summary.completionTokens?.toLocaleString() ||
-                        0}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {usageQuery.data.daily && usageQuery.data.daily.length > 0 ? (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={usageQuery.data.daily}>
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="promptTokens"
-                        name="Prompt Tokens"
-                        stroke="#8884d8"
-                        strokeWidth={2}
+          ) : paddedChartData.length > 0 ? ( // Use paddedChartData here
+            <div className="h-80">
+              <ChartContainer config={chartConfig} className="h-full w-full">
+                <AreaChart
+                  accessibilityLayer
+                  data={paddedChartData} // Use the padded data
+                  margin={{
+                    left: 12,
+                    right: 12,
+                  }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    minTickGap={32}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      // Add check for invalid date string before formatting
+                      if (Number.isNaN(date.getTime())) return "";
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    }}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        indicator="dot"
+                        labelFormatter={(value) => {
+                          const date = new Date(value);
+                          if (Number.isNaN(date.getTime())) return "";
+                          return date.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        }}
                       />
-                      <Line
-                        type="monotone"
-                        dataKey="completionTokens"
-                        name="Completion Tokens"
-                        stroke="#82ca9d"
-                        strokeWidth={2}
+                    }
+                  />
+                  <defs>
+                    <linearGradient
+                      id="fillPromptTokens"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-promptTokens)"
+                        stopOpacity={0.8}
                       />
-                      <Line
-                        type="monotone"
-                        dataKey="totalTokens"
-                        name="Total Tokens"
-                        stroke="#ff7300"
-                        strokeWidth={2}
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-promptTokens)"
+                        stopOpacity={0.1}
                       />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="flex h-40 items-center justify-center text-muted-foreground">
-                  No data available for the selected date range
-                </div>
-              )}
-            </>
+                    </linearGradient>
+                    <linearGradient
+                      id="fillCompletionTokens"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="var(--color-completionTokens)"
+                        stopOpacity={0.8}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--color-completionTokens)"
+                        stopOpacity={0.1}
+                      />
+                    </linearGradient>
+                  </defs>
+                  {/* Stacked Areas */}
+                  <Area
+                    dataKey="completionTokens"
+                    type="natural"
+                    fill="url(#fillCompletionTokens)"
+                    stroke="var(--color-completionTokens)"
+                    stackId="a"
+                  />
+                  <Area
+                    dataKey="promptTokens"
+                    type="natural"
+                    fill="url(#fillPromptTokens)"
+                    stroke="var(--color-promptTokens)"
+                    stackId="a"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            </div>
           ) : (
-            <div className="text-center">
-              Please select a date range and generate a report
+            <div className="flex h-40 items-center justify-center text-muted-foreground">
+              No daily data available for the selected date range
             </div>
           )}
         </CardContent>

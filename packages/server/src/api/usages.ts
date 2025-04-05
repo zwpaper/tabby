@@ -1,10 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { sql } from "kysely";
+import moment from "moment";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
-import { sql } from "kysely";
-import moment from "moment"
 import "moment-timezone";
 
 // Define the schema for query parameters
@@ -23,7 +23,9 @@ const usages = new Hono().get(
     const { start, end, tz = "UTC" } = c.req.valid("query");
 
     // Default to last 30 days if no date range is provided
-    const endDate = end ? moment.tz(end, tz).add(1, "day").subtract(1, "second").toDate() : new Date();
+    const endDate = end
+      ? moment.tz(end, tz).add(1, "day").subtract(1, "second").toDate()
+      : new Date();
     const startDate = start
       ? moment.tz(start, tz).toDate()
       : moment.tz(endDate, tz).subtract(30, "days").toDate();
@@ -45,7 +47,9 @@ const usages = new Hono().get(
     const dailyResults = await db
       .selectFrom("chatCompletion")
       .select([
-        sql<Date>`DATE(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE ${tz})`.as("date"),
+        sql<Date>`DATE(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE ${tz})`.as(
+          "date",
+        ),
         db.fn.sum("promptTokens").as("promptTokens"),
         db.fn.sum("completionTokens").as("completionTokens"),
         db.fn.count("id").as("count"),

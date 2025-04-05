@@ -1,10 +1,12 @@
-import { sql, type Kysely } from "kysely";
+import { type Kysely, sql } from "kysely";
 
 export async function up(db: Kysely<any>) {
   await db.schema
     .createTable("chatCompletion")
     .addColumn("id", "serial", (cb) => cb.primaryKey())
-    .addColumn("createdAt", "timestamp", (cb) => cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`))
+    .addColumn("createdAt", "timestamp", (cb) =>
+      cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
+    )
     .addColumn("modelId", "text", (cb) => cb.notNull())
     .addColumn("userId", "text", (cb) => cb.notNull())
     .addColumn("promptTokens", "integer", (cb) => cb.notNull())

@@ -32,20 +32,20 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     const {
       messages,
       environment,
-      model: requestedModelId,
+      model: requestedModelId = "google/gemini-2.5-pro-exp-03-25",
     } = await c.req.valid("json");
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
 
     let selectedModel: LanguageModelV1;
     switch (requestedModelId) {
-      case "openai/gpt-4o-mini":
-        selectedModel = openai("gpt-4o-mini");
-        break;
       // case "anthropic/claude-3.7-sonnet":
       //   selectedModel = openrouter("anthropic/claude-3.7-sonnet");
       //   break;
-      case "google/gemini-2.5-pro-exp-03-25": // Removed redundant case
+      case "openai/gpt-4o-mini":
+        selectedModel = openai("gpt-4o-mini");
+        break;
+      case "google/gemini-2.5-pro-exp-03-25":
         selectedModel = google("gemini-2.5-pro-exp-03-25");
         break;
       default:
