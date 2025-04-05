@@ -12,7 +12,7 @@ import {
 import type { User } from "better-auth";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import { authRequest } from "../auth";
+import { authRequest, requireAuth } from "../auth";
 import { db } from "../db";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
@@ -25,7 +25,7 @@ export type ContextVariables = {
 const chat = new Hono<{ Variables: ContextVariables }>().post(
   "/stream",
   zValidator("json", ZodChatRequestType),
-  authRequest,
+  requireAuth,
   async (c) => {
     const user = c.get("user");
 

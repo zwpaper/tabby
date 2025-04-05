@@ -3,10 +3,11 @@ import { logger } from "hono/logger";
 import chat from "./api/chat";
 import models from "./api/models";
 import usages from "./api/usages";
-import { auth } from "./auth";
+import { auth, authRequest } from "./auth";
 
-export const app = new Hono();
-app.use(logger());
+export const app = new Hono()
+  .use(logger())
+  .use(authRequest);
 
 // Static file serving with dynamic import
 if (process.env.NODE_ENV !== "test") {
@@ -23,7 +24,7 @@ if (process.env.NODE_ENV !== "test") {
 app.get("/health", (c) => c.text("OK"));
 
 // Auth routes
-app.on(["GET", "POST"], "/api/auth/**", (c) => auth.handler(c.req.raw));
+app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 const api = app.basePath("/api");
 

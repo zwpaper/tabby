@@ -9,7 +9,7 @@ export const Route = createFileRoute("/settings/account")({
 function Account() {
   const maxWidth = "max-w-2xl";
   return (
-    <div className={cn("container py-10 mx-auto", maxWidth)}>
+    <div className={cn("container mx-auto", maxWidth)}>
       <div className="flex flex-col gap-2">
         <p className="text-muted-foreground">
           Manage your account settings and preferences.

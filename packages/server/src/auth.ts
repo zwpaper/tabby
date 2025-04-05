@@ -74,32 +74,34 @@ function createStripePlugin() {
   });
 }
 
-function makeAuthRequest(): MiddlewareHandler {
-  // Disable auth in test mode
-  if (process.env.NODE_ENV === "test") {
+export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
+  (() => {
+    // Disable auth in test mode
+    if (process.env.NODE_ENV === "test") {
+      return async (c, next) => {
+        c.set("user", {
+          email: "test@tabbyml.com",
+        } as User);
+        await next();
+      };
+    }
+
     return async (c, next) => {
-      c.set("user", {
-        email: "test@tabbyml.com",
-      });
+      const session = await auth.api.getSession({ headers: c.req.raw.headers });
+      if (session) {
+        c.set("user", session.user);
+      }
       await next();
-    };
-  }
+    }
+  })()
+);
 
-  return bearerAuth({
-    async verifyToken(token, c) {
-      const headers = new Headers({
-        authorization: `Bearer ${token}`,
-      });
-      const session = await auth.api.getSession({
-        headers,
-      });
-      if (!session) return false;
-      c.set("user", session.user);
-      return true;
-    },
-  });
-}
-
-export const authRequest = createMiddleware<{ Variables: { user: User } }>(
-  makeAuthRequest(),
+export const requireAuth = createMiddleware<{ Variables: { user: User } }>(
+  async (c, next) => {
+    const user = c.get("user");
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    await next();
+  },
 );

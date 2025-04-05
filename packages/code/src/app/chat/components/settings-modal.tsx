@@ -32,7 +32,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             <Text>(Esc to close)</Text>
           </Box>
 
-          <TokenUsage />
           <ModelList />
 
           {false && (
@@ -43,28 +42,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           )}
         </Box>
       </Suspense>
-    </Box>
-  );
-}
-
-function TokenUsage() {
-  const app = useApiClient();
-
-  const { data: todayUsage } = useSuspenseQuery({
-    queryKey: ["todayUsage"],
-    queryFn: async () => {
-      const res = await app.api.usages.today.$get();
-      return await res.json();
-    },
-  });
-
-  return (
-    <Box justifyContent="space-between">
-      <Text>Today's Token Usage</Text>
-      <Box flexDirection="column">
-        <Text>Prompt: {todayUsage.promptTokens}</Text>
-        <Text>Completion: {todayUsage.completionTokens}</Text>
-      </Box>
     </Box>
   );
 }

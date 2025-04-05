@@ -123,7 +123,7 @@ function Billing() {
   };
 
   return (
-    <div className="container py-10 max-w-5xl mx-auto">
+    <div className="container max-w-5xl mx-auto">
       <p className="text-muted-foreground">Manage your subscription plan</p>
 
       <div className="mt-6">
