@@ -46,6 +46,19 @@ export interface Session {
   userId: string;
 }
 
+export interface Subscription {
+  cancelAtPeriodEnd: boolean | null;
+  id: string;
+  periodEnd: Timestamp | null;
+  periodStart: Timestamp | null;
+  plan: string;
+  referenceId: string;
+  seats: number | null;
+  status: string;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+}
+
 export interface User {
   createdAt: Timestamp;
   email: string;
@@ -53,6 +66,7 @@ export interface User {
   id: string;
   image: string | null;
   name: string;
+  stripeCustomerId: string | null;
   updatedAt: Timestamp;
 }
 
@@ -69,6 +83,7 @@ export interface DB {
   account: Account;
   dailyUsage: DailyUsage;
   session: Session;
+  subscription: Subscription;
   user: User;
   verification: Verification;
 }
