@@ -64,8 +64,13 @@ function createStripePlugin() {
     createCustomerOnSignUp: true,
     subscription: {
       enabled: true,
-      plans: []
-    }
+      plans: [
+        {
+          name: "Pro",
+          priceId: "price_0987654321",
+        },
+      ],
+    },
   });
 }
 
