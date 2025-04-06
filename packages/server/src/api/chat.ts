@@ -11,9 +11,12 @@ import {
 } from "ai";
 import type { User } from "better-auth";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
 import { requireAuth } from "../auth";
 import { db } from "../db";
+import { readCurrentMonthQuota } from "../lib/billing";
+import { AvailableModels } from "../lib/constants";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
@@ -27,8 +30,6 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
   zValidator("json", ZodChatRequestType),
   requireAuth,
   async (c) => {
-    const user = c.get("user");
-
     const {
       messages,
       environment,
@@ -36,6 +37,22 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     } = await c.req.valid("json");
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
+
+    const user = c.get("user");
+    const quota = await readCurrentMonthQuota(user, c.req);
+    const modelCostType = AvailableModels.find(
+      (model) => model.id === requestedModelId,
+    )?.costType;
+    if (!modelCostType) {
+      throw new HTTPException(400, { message: "Invalid model" });
+    }
+    if (!user.email.endsWith("@tabbyml.com")) {
+      if (quota.limits[modelCostType] - quota.usages[modelCostType] <= 0) {
+        throw new HTTPException(400, {
+          message: `You have reached the quota limit for ${modelCostType}. Please upgrade your plan or try again later.`,
+        });
+      }
+    }
 
     let selectedModel: LanguageModelV1;
     switch (requestedModelId) {
@@ -49,7 +66,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         selectedModel = google("gemini-2.5-pro-exp-03-25");
         break;
       default:
-        return c.json({ error: "Invalid model" }, 400);
+        throw new HTTPException(400, { message: "Invalid model" });
     }
 
     injectReadEnvironmentToolCall(messages, selectedModel, environment);
