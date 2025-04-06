@@ -2,6 +2,7 @@ import {
   type Icon,
   IconCamera,
   IconChartBar,
+  IconCode,
   IconCreditCard,
   IconDatabase,
   IconFileAi,
@@ -31,6 +32,7 @@ import { NavDocuments } from "./nav-documents";
 import { NavMain } from "./nav-main";
 import { NavSecondary } from "./nav-secondary";
 import { QuotaDisplay } from "./quota-display"; // Import the new component
+import { Terminal } from "lucide-react";
 
 const data = {
   navMain: [
@@ -150,7 +152,7 @@ export function AppSidebar({
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <Link to="/">
-                <IconInnerShadowTop className="!size-5" />
+                <Terminal className="!size-5 animate-[spin_6s_linear_infinite]" />
                 <span className="text-base font-semibold">Pochi</span>
               </Link>
             </SidebarMenuButton>
