@@ -63,7 +63,7 @@ function SubscriptionPlan({
     price !== "Free" ? (billingCycle === "yearly" ? "/year" : "/month") : "";
 
   return (
-    <Card className="flex flex-col max-w-sm grow">
+    <Card className="flex flex-col  min-w-xs max-w-sm grow">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{name}</CardTitle>
@@ -158,7 +158,7 @@ function Billing() {
           </div>
         </div>
 
-        <div className="flex gap-4 mb-8 justify-around">
+        <div className="flex gap-4 mb-8 justify-around flex-wrap">
           {plans.map((plan) => (
             <SubscriptionPlan
               key={plan.id}
