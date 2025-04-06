@@ -7,7 +7,7 @@ import { routeTree } from "./routeTree.gen";
 
 import "./styles.css";
 import { Loader2 } from "lucide-react";
-import { Providers } from "./components/providers.tsx";
+import { Providers } from "./providers.tsx";
 import { useSession } from "./lib/auth-hooks.ts";
 import reportWebVitals from "./reportWebVitals.ts";
 
