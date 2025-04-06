@@ -195,82 +195,74 @@ function BillingHistory() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Invoice History</CardTitle>
-          <CardDescription>
-            View and download your past invoices.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : error ? (
-            <p className="text-red-600">Error: {error}</p>
-          ) : invoices.length === 0 ? (
-            <p>No invoices found.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Invoice</TableHead>
+      <div>
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : error ? (
+          <p className="text-red-600">Error: {error}</p>
+        ) : invoices.length === 0 ? (
+          <p>No invoices found.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Invoice</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((invoice) => (
+                <TableRow key={invoice.id}>
+                  <TableCell>
+                    {moment(new Date(invoice.created * 1000)).format(
+                      "MMMM D, YYYY",
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={getStatusBadgeVariant(invoice.status)}
+                      className="capitalize"
+                    >
+                      {invoice.status || "N/A"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(invoice.total, invoice.currency)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {invoice.url ? (
+                      <Button variant="outline" size="sm" asChild>
+                        <a
+                          href={invoice.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          View <IconExternalLink className="ml-1 h-3 w-3" />
+                        </a>
+                      </Button>
+                    ) : (
+                      "N/A"
+                    )}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                      {moment(new Date(invoice.created * 1000)).format(
-                        "MMMM D, YYYY",
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={getStatusBadgeVariant(invoice.status)}
-                        className="capitalize"
-                      >
-                        {invoice.status || "N/A"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(invoice.total, invoice.currency)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {invoice.url ? (
-                        <Button variant="outline" size="sm" asChild>
-                          <a
-                            href={invoice.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            View <IconExternalLink className="ml-1 h-3 w-3" />
-                          </a>
-                        </Button>
-                      ) : (
-                        "N/A"
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
+              ))}
+            </TableBody>
+          </Table>
+        )}
         {hasMore && !loading && !error && (
-          <CardFooter className="justify-center">
+          <div className="w-full flex justify-center mt-1">
             <Button onClick={loadMore} disabled={loadingMore} variant="outline">
               {loadingMore ? "Loading..." : "Load More"}
             </Button>
-          </CardFooter>
+          </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
@@ -326,14 +318,14 @@ function Billing() {
     <div className="container max-w-4xl">
       <Tabs defaultValue="plans">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="plans">Subscription Plans</TabsTrigger>
-          <TabsTrigger value="history">Billing History</TabsTrigger>
+          <TabsTrigger value="plans">Subscription</TabsTrigger>
+          <TabsTrigger value="history">Invoices</TabsTrigger>
         </TabsList>
 
         <TabsContent value="plans">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Current Plan</h2>
+              <h2 className="text-xl font-semibold">Plans</h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
                   Billing Cycle:
