@@ -131,7 +131,7 @@ const TextInput: React.FC<TextInputProps> = ({
     }
   }
 
-  return <Box>{textElements}</Box>;
+  return <Box flexWrap="wrap">{textElements}</Box>;
 };
 
 export default TextInput;
