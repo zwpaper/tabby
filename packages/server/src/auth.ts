@@ -5,7 +5,7 @@ import { createMiddleware } from "hono/factory";
 import Stripe from "stripe";
 import { db } from "./db";
 import { deviceLink } from "./lib/device-link";
-import { StripePlans } from "./constants";
+import { StripePlans } from "./lib/constants";
 
 export const auth = betterAuth({
   session: {

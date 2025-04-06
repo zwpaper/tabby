@@ -3,12 +3,8 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import Stripe from "stripe";
 import { z } from "zod";
-import { auth, requireAuth } from "../auth";
+import { requireAuth } from "../auth";
 import type { DB } from "../db/schema"; // Import DB type if needed for context typing
-import { db } from "../db";
-import { AvailableModels, StripePlans } from "../constants";
-import moment from "moment";
-import { sql } from "kysely";
 import { readCurrentMonthQuota } from "../lib/billing";
 
 // Define the schema for query parameters for history endpoint

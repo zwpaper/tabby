@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AvailableModels } from "../constants";
+import { AvailableModels } from "../lib/constants";
 
 const models = new Hono().get("/", (c) => {
   return c.json(AvailableModels);

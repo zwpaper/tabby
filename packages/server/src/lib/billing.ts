@@ -3,7 +3,7 @@ import moment from "moment";
 import { sql } from "kysely";
 import { auth } from "../auth";
 import { db } from "../db";
-import { AvailableModels, StripePlans } from "../constants";
+import { AvailableModels, StripePlans } from "./constants";
 import type { User } from "better-auth";
 
 export async function readActiveSubscriptionLimits(user: User, r: HonoRequest) {
