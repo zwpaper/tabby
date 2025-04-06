@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
 import {
   Check as IconCheck,
+  CreditCard as IconCreditCard,
   ExternalLink as IconExternalLink,
+  Receipt as IconReceipt,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -319,8 +321,14 @@ function Billing() {
     <div className="container max-w-4xl">
       <Tabs defaultValue="plans">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="plans">Subscription</TabsTrigger>
-          <TabsTrigger value="history">Invoices</TabsTrigger>
+          <TabsTrigger value="plans">
+            <IconCreditCard className="mr-2 h-4 w-4" />
+            Subscription
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <IconReceipt className="mr-2 h-4 w-4" />
+            Invoices
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="plans">
