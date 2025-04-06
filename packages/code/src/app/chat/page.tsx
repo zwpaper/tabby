@@ -257,10 +257,11 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
 
   for (const message of x) {
     if (message.parts) {
-      const parts = message.parts;
+      const parts = [...message.parts];
       if (parts.length > 5) {
         parts.splice(0, parts.length - 5);
       }
+      message.parts = parts;
     }
   }
 
