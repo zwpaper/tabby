@@ -251,6 +251,19 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
     });
   }
 
+  if (x.length > 5) {
+    x.splice(0, x.length - 5);
+  }
+
+  for (const message of x) {
+    if (message.parts) {
+      const parts = message.parts;
+      if (parts.length > 5) {
+        parts.splice(0, parts.length - 5);
+      }
+    }
+  }
+
   return x;
 }
 

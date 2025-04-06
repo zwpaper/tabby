@@ -34,23 +34,34 @@ export const Route = createFileRoute("/settings/billing")({
   component: Billing,
 });
 
+type BillingCycle = "monthly" | "yearly";
+
 function SubscriptionPlan({
   name,
   price,
+  yearlyPrice,
   description,
   features,
   isPopular,
   isActive,
+  billingCycle,
   onSelect,
 }: {
   name: string;
   price: string;
+  yearlyPrice?: string;
   description: string;
   features: string[];
   isPopular?: boolean;
   isActive?: boolean;
+  billingCycle: BillingCycle;
   onSelect: () => void;
 }) {
+  const displayPrice =
+    billingCycle === "yearly" && yearlyPrice ? yearlyPrice : price;
+  const frequencyText =
+    price !== "Free" ? (billingCycle === "yearly" ? "/year" : "/month") : "";
+
   return (
     <Card className="flex flex-col max-w-sm grow">
       <CardHeader>
@@ -60,9 +71,9 @@ function SubscriptionPlan({
           {isActive && <Badge>Current Plan</Badge>}
         </div>
         <div className="flex items-baseline">
-          <span className="text-3xl font-bold">{price}</span>
-          {price !== "Free" && (
-            <span className="text-muted-foreground ml-1">/month</span>
+          <span className="text-3xl font-bold">{displayPrice}</span>
+          {frequencyText && (
+            <span className="text-muted-foreground ml-1">{frequencyText}</span>
           )}
         </div>
         <CardDescription>{description}</CardDescription>
@@ -92,7 +103,7 @@ function SubscriptionPlan({
 
 function Billing() {
   const [selectedPlan, setSelectedPlan] = useState("free");
-  const [billingCycle, setBillingCycle] = useState("monthly");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
 
   const plans = [
     {
@@ -106,6 +117,7 @@ function Billing() {
       id: "pro",
       name: "Pro",
       price: "$19",
+      yearlyPrice: "$182.4", // Added yearly price
       description: "Everything in Free, plus more power and features",
       features: [
         "5 users",
@@ -131,8 +143,11 @@ function Billing() {
             <span className="text-sm text-muted-foreground">
               Billing Cycle:
             </span>
-            <Select value={billingCycle} onValueChange={setBillingCycle}>
-              <SelectTrigger className="w-[160px]">
+            <Select
+              value={billingCycle}
+              onValueChange={(value) => setBillingCycle(value as BillingCycle)}
+            >
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select billing cycle" />
               </SelectTrigger>
               <SelectContent>
@@ -149,10 +164,12 @@ function Billing() {
               key={plan.id}
               name={plan.name}
               price={plan.price}
+              yearlyPrice={plan.yearlyPrice} // Pass yearly price
               description={plan.description}
               features={plan.features}
               isPopular={plan.isPopular}
               isActive={plan.id === selectedPlan}
+              billingCycle={billingCycle} // Pass billing cycle
               onSelect={() => handlePlanChange(plan.id)}
             />
           ))}
