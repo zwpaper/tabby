@@ -1,6 +1,6 @@
 import { Box, Text, useInput } from "ink";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface TextInputProps {
   value: string;
@@ -18,13 +18,23 @@ const TextInput: React.FC<TextInputProps> = ({
   placeholder = "",
 }) => {
   // Ensure cursorOffset is within bounds of the actual value length
-  const [cursorOffset, setCursorOffset] = useState(
-    Math.min((value || "").length, (value || "").length),
-  );
+  const [cursorOffset, setCursorOffset] = useState(value.length);
 
   // Reset cursor when value changes externally
+  const lastValueLengthRef = useRef(value.length);
+
   useEffect(() => {
-    setCursorOffset(Math.min((value || "").length, (value || "").length));
+    const newLength = value.length;
+    const oldLength = lastValueLengthRef.current;
+    const lengthDifference = Math.abs(newLength - oldLength);
+
+    if (lengthDifference >= 2) {
+      setCursorOffset(newLength);
+    } else {
+      setCursorOffset(Math.min(newLength, cursorOffset));
+    }
+
+    lastValueLengthRef.current = newLength;
   }, [value]);
 
   useInput(
