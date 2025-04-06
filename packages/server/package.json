@@ -16,7 +16,7 @@
     "moment-timezone": "^0.5.48",
     "pg": "^8.14.1",
     "pg-connection-string": "^2.7.0",
-    "stripe": "^18.0.0",
+    "stripe": "17",
     "zod": "^3.24.2"
   },
   "scripts": {
