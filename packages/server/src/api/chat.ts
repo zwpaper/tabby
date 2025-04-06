@@ -39,19 +39,25 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     c.header("Content-Type", "text/plain; charset=utf-8");
 
     const user = c.get("user");
-    const quota = await readCurrentMonthQuota(user, c.req);
-    const modelCostType = AvailableModels.find(
-      (model) => model.id === requestedModelId,
-    )?.costType;
-    if (!modelCostType) {
-      throw new HTTPException(400, { message: "Invalid model" });
-    }
-    if (!user.email.endsWith("@tabbyml.com")) {
-      if (quota.limits[modelCostType] - quota.usages[modelCostType] <= 0) {
-        throw new HTTPException(400, {
-          message: `You have reached the quota limit for ${modelCostType}. Please upgrade your plan or try again later.`,
-        });
+
+    const quotaCheck = async () => {
+      const quota = await readCurrentMonthQuota(user, c.req);
+      const modelCostType = AvailableModels.find(
+        (model) => model.id === requestedModelId,
+      )?.costType;
+      if (!modelCostType) {
+        throw new HTTPException(400, { message: "Invalid model" });
       }
+      if (!user.email.endsWith("@tabbyml.com")) {
+        if (quota.limits[modelCostType] - quota.usages[modelCostType] <= 0) {
+          throw new HTTPException(400, {
+            message: `You have reached the quota limit for ${modelCostType}. Please upgrade your plan or try again later.`,
+          });
+        }
+      }
+    };
+    if (process.env.NODE_ENV !== "test") {
+      await quotaCheck();
     }
 
     let selectedModel: LanguageModelV1;

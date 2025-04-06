@@ -14,7 +14,7 @@ export const AvailableModels: {
 
 export const StripePlans = [
   {
-    name: "Free",
+    name: "Community",
     limits: {
       basic: 10,
       premium: 5,

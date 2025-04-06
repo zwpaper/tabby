@@ -2,14 +2,12 @@ import {
   type Icon,
   IconCamera,
   IconChartBar,
-  IconCode,
   IconCreditCard,
   IconDatabase,
   IconFileAi,
   IconFileDescription,
   IconFileWord,
   IconHelp,
-  IconInnerShadowTop,
   IconReport,
   IconSearch,
   IconSettings,
@@ -28,11 +26,11 @@ import {
 } from "@/components/ui/sidebar";
 import { UserButton } from "@daveyplate/better-auth-ui";
 import { Link } from "@tanstack/react-router";
+import { Terminal } from "lucide-react";
 import { NavDocuments } from "./nav-documents";
 import { NavMain } from "./nav-main";
 import { NavSecondary } from "./nav-secondary";
 import { QuotaDisplay } from "./quota-display"; // Import the new component
-import { Terminal } from "lucide-react";
 
 const data = {
   navMain: [
