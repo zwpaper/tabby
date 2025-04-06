@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { authClient } from "@/lib/auth-client";
 
-export const Route = createFileRoute("/settings/billing")({
+export const Route = createFileRoute("/_auth/settings/billing")({
   loader: async () => {
     const { data, error } = await authClient.subscription.list();
     if (error) {

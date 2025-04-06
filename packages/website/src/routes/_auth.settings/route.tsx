@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/settings/app-sidebar";
 import { SiteHeader } from "@/components/settings/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { authClient } from "@/lib/auth-client";
 import {
   type Icon,
   IconChartBar,
@@ -15,19 +14,10 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_auth/settings")({
   beforeLoad: async (ctx) => {
     if (ctx.location.pathname === "/settings") {
       throw redirect({ to: "/settings/account" });
-    }
-  },
-  loader: async () => {
-    const { data } = await authClient.getSession();
-    if (!data?.user) {
-      throw redirect({
-        to: "/auth/$pathname",
-        params: { pathname: "sign-in" },
-      });
     }
   },
   component: Settings,

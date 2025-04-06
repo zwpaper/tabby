@@ -11,19 +11,19 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings/route'
+import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
-import { Route as SettingsUsageImport } from './routes/settings/usage'
-import { Route as SettingsBillingImport } from './routes/settings/billing'
-import { Route as SettingsAccountImport } from './routes/settings/account'
-import { Route as AuthDeviceLinkImport } from './routes/auth/device-link'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
+import { Route as AuthSettingsRouteImport } from './routes/_auth.settings/route'
+import { Route as AuthSettingsUsageImport } from './routes/_auth.settings/usage'
+import { Route as AuthSettingsBillingImport } from './routes/_auth.settings/billing'
+import { Route as AuthSettingsAccountImport } from './routes/_auth.settings/account'
+import { Route as AuthAuthDeviceLinkImport } from './routes/_auth.auth/device-link'
 
 // Create/Update Routes
 
-const SettingsRouteRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const AuthRoute = AuthImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -33,34 +33,40 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const SettingsUsageRoute = SettingsUsageImport.update({
-  id: '/usage',
-  path: '/usage',
-  getParentRoute: () => SettingsRouteRoute,
-} as any)
-
-const SettingsBillingRoute = SettingsBillingImport.update({
-  id: '/billing',
-  path: '/billing',
-  getParentRoute: () => SettingsRouteRoute,
-} as any)
-
-const SettingsAccountRoute = SettingsAccountImport.update({
-  id: '/account',
-  path: '/account',
-  getParentRoute: () => SettingsRouteRoute,
-} as any)
-
-const AuthDeviceLinkRoute = AuthDeviceLinkImport.update({
-  id: '/auth/device-link',
-  path: '/auth/device-link',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const AuthPathnameRoute = AuthPathnameImport.update({
   id: '/auth/$pathname',
   path: '/auth/$pathname',
   getParentRoute: () => rootRoute,
+} as any)
+
+const AuthSettingsRouteRoute = AuthSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const AuthSettingsUsageRoute = AuthSettingsUsageImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
+
+const AuthSettingsBillingRoute = AuthSettingsBillingImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
+
+const AuthSettingsAccountRoute = AuthSettingsAccountImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthSettingsRouteRoute,
+} as any)
+
+const AuthAuthDeviceLinkRoute = AuthAuthDeviceLinkImport.update({
+  id: '/auth/device-link',
+  path: '/auth/device-link',
+  getParentRoute: () => AuthRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -74,12 +80,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/settings': {
-      id: '/settings'
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthImport
+      parentRoute: typeof rootRoute
+    }
+    '/_auth/settings': {
+      id: '/_auth/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthSettingsRouteImport
+      parentRoute: typeof AuthImport
     }
     '/auth/$pathname': {
       id: '/auth/$pathname'
@@ -88,90 +101,105 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathnameImport
       parentRoute: typeof rootRoute
     }
-    '/auth/device-link': {
-      id: '/auth/device-link'
+    '/_auth/auth/device-link': {
+      id: '/_auth/auth/device-link'
       path: '/auth/device-link'
       fullPath: '/auth/device-link'
-      preLoaderRoute: typeof AuthDeviceLinkImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof AuthAuthDeviceLinkImport
+      parentRoute: typeof AuthImport
     }
-    '/settings/account': {
-      id: '/settings/account'
+    '/_auth/settings/account': {
+      id: '/_auth/settings/account'
       path: '/account'
       fullPath: '/settings/account'
-      preLoaderRoute: typeof SettingsAccountImport
-      parentRoute: typeof SettingsRouteImport
+      preLoaderRoute: typeof AuthSettingsAccountImport
+      parentRoute: typeof AuthSettingsRouteImport
     }
-    '/settings/billing': {
-      id: '/settings/billing'
+    '/_auth/settings/billing': {
+      id: '/_auth/settings/billing'
       path: '/billing'
       fullPath: '/settings/billing'
-      preLoaderRoute: typeof SettingsBillingImport
-      parentRoute: typeof SettingsRouteImport
+      preLoaderRoute: typeof AuthSettingsBillingImport
+      parentRoute: typeof AuthSettingsRouteImport
     }
-    '/settings/usage': {
-      id: '/settings/usage'
+    '/_auth/settings/usage': {
+      id: '/_auth/settings/usage'
       path: '/usage'
       fullPath: '/settings/usage'
-      preLoaderRoute: typeof SettingsUsageImport
-      parentRoute: typeof SettingsRouteImport
+      preLoaderRoute: typeof AuthSettingsUsageImport
+      parentRoute: typeof AuthSettingsRouteImport
     }
   }
 }
 
 // Create and export the route tree
 
-interface SettingsRouteRouteChildren {
-  SettingsAccountRoute: typeof SettingsAccountRoute
-  SettingsBillingRoute: typeof SettingsBillingRoute
-  SettingsUsageRoute: typeof SettingsUsageRoute
+interface AuthSettingsRouteRouteChildren {
+  AuthSettingsAccountRoute: typeof AuthSettingsAccountRoute
+  AuthSettingsBillingRoute: typeof AuthSettingsBillingRoute
+  AuthSettingsUsageRoute: typeof AuthSettingsUsageRoute
 }
 
-const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
-  SettingsAccountRoute: SettingsAccountRoute,
-  SettingsBillingRoute: SettingsBillingRoute,
-  SettingsUsageRoute: SettingsUsageRoute,
+const AuthSettingsRouteRouteChildren: AuthSettingsRouteRouteChildren = {
+  AuthSettingsAccountRoute: AuthSettingsAccountRoute,
+  AuthSettingsBillingRoute: AuthSettingsBillingRoute,
+  AuthSettingsUsageRoute: AuthSettingsUsageRoute,
 }
 
-const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
-  SettingsRouteRouteChildren,
-)
+const AuthSettingsRouteRouteWithChildren =
+  AuthSettingsRouteRoute._addFileChildren(AuthSettingsRouteRouteChildren)
+
+interface AuthRouteChildren {
+  AuthSettingsRouteRoute: typeof AuthSettingsRouteRouteWithChildren
+  AuthAuthDeviceLinkRoute: typeof AuthAuthDeviceLinkRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthSettingsRouteRoute: AuthSettingsRouteRouteWithChildren,
+  AuthAuthDeviceLinkRoute: AuthAuthDeviceLinkRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteRouteWithChildren
+  '': typeof AuthRouteWithChildren
+  '/settings': typeof AuthSettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
-  '/auth/device-link': typeof AuthDeviceLinkRoute
-  '/settings/account': typeof SettingsAccountRoute
-  '/settings/billing': typeof SettingsBillingRoute
-  '/settings/usage': typeof SettingsUsageRoute
+  '/auth/device-link': typeof AuthAuthDeviceLinkRoute
+  '/settings/account': typeof AuthSettingsAccountRoute
+  '/settings/billing': typeof AuthSettingsBillingRoute
+  '/settings/usage': typeof AuthSettingsUsageRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteRouteWithChildren
+  '': typeof AuthRouteWithChildren
+  '/settings': typeof AuthSettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
-  '/auth/device-link': typeof AuthDeviceLinkRoute
-  '/settings/account': typeof SettingsAccountRoute
-  '/settings/billing': typeof SettingsBillingRoute
-  '/settings/usage': typeof SettingsUsageRoute
+  '/auth/device-link': typeof AuthAuthDeviceLinkRoute
+  '/settings/account': typeof AuthSettingsAccountRoute
+  '/settings/billing': typeof AuthSettingsBillingRoute
+  '/settings/usage': typeof AuthSettingsUsageRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteRouteWithChildren
+  '/_auth': typeof AuthRouteWithChildren
+  '/_auth/settings': typeof AuthSettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
-  '/auth/device-link': typeof AuthDeviceLinkRoute
-  '/settings/account': typeof SettingsAccountRoute
-  '/settings/billing': typeof SettingsBillingRoute
-  '/settings/usage': typeof SettingsUsageRoute
+  '/_auth/auth/device-link': typeof AuthAuthDeviceLinkRoute
+  '/_auth/settings/account': typeof AuthSettingsAccountRoute
+  '/_auth/settings/billing': typeof AuthSettingsBillingRoute
+  '/_auth/settings/usage': typeof AuthSettingsUsageRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | ''
     | '/settings'
     | '/auth/$pathname'
     | '/auth/device-link'
@@ -181,6 +209,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | ''
     | '/settings'
     | '/auth/$pathname'
     | '/auth/device-link'
@@ -190,27 +219,26 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/settings'
+    | '/_auth'
+    | '/_auth/settings'
     | '/auth/$pathname'
-    | '/auth/device-link'
-    | '/settings/account'
-    | '/settings/billing'
-    | '/settings/usage'
+    | '/_auth/auth/device-link'
+    | '/_auth/settings/account'
+    | '/_auth/settings/billing'
+    | '/_auth/settings/usage'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  AuthRoute: typeof AuthRouteWithChildren
   AuthPathnameRoute: typeof AuthPathnameRoute
-  AuthDeviceLinkRoute: typeof AuthDeviceLinkRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  AuthRoute: AuthRouteWithChildren,
   AuthPathnameRoute: AuthPathnameRoute,
-  AuthDeviceLinkRoute: AuthDeviceLinkRoute,
 }
 
 export const routeTree = rootRoute
@@ -224,39 +252,47 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/settings",
-        "/auth/$pathname",
-        "/auth/device-link"
+        "/_auth",
+        "/auth/$pathname"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/settings": {
-      "filePath": "settings/route.tsx",
+    "/_auth": {
+      "filePath": "_auth.tsx",
       "children": [
-        "/settings/account",
-        "/settings/billing",
-        "/settings/usage"
+        "/_auth/settings",
+        "/_auth/auth/device-link"
+      ]
+    },
+    "/_auth/settings": {
+      "filePath": "_auth.settings/route.tsx",
+      "parent": "/_auth",
+      "children": [
+        "/_auth/settings/account",
+        "/_auth/settings/billing",
+        "/_auth/settings/usage"
       ]
     },
     "/auth/$pathname": {
       "filePath": "auth/$pathname.tsx"
     },
-    "/auth/device-link": {
-      "filePath": "auth/device-link.tsx"
+    "/_auth/auth/device-link": {
+      "filePath": "_auth.auth/device-link.tsx",
+      "parent": "/_auth"
     },
-    "/settings/account": {
-      "filePath": "settings/account.tsx",
-      "parent": "/settings"
+    "/_auth/settings/account": {
+      "filePath": "_auth.settings/account.tsx",
+      "parent": "/_auth/settings"
     },
-    "/settings/billing": {
-      "filePath": "settings/billing.tsx",
-      "parent": "/settings"
+    "/_auth/settings/billing": {
+      "filePath": "_auth.settings/billing.tsx",
+      "parent": "/_auth/settings"
     },
-    "/settings/usage": {
-      "filePath": "settings/usage.tsx",
-      "parent": "/settings"
+    "/_auth/settings/usage": {
+      "filePath": "_auth.settings/usage.tsx",
+      "parent": "/_auth/settings"
     }
   }
 }

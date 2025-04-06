@@ -20,35 +20,32 @@ const deviceLinkSearchSchema = z.object({
   token: z.string(),
 });
 
-export const Route = createFileRoute("/auth/device-link")({
+export const Route = createFileRoute("/_auth/auth/device-link")({
   loaderDeps({ search }: { search: z.infer<typeof deviceLinkSearchSchema> }) {
     return { ...search };
   },
   async loader({ deps: { token } }) {
-    const { data, error } = await authClient.deviceLink.info({
+    let { data, error } = await authClient.deviceLink.info({
       query: { token },
     });
-    if (error) {
-      throw redirect({ to: "/" });
-    }
 
-    if (data instanceof APIError) {
-      throw redirect({ to: "/" });
+    return {
+      data: data instanceof APIError ? null : data,
+      error: error?.message || (data instanceof APIError ? data.message : null),
     }
-
-    return data;
   },
   component: DeviceLinkConfirmationPage,
   validateSearch: (search) => deviceLinkSearchSchema.parse(search),
 });
 
 function DeviceLinkConfirmationPage() {
-  const { deviceName } = Route.useLoaderData();
+  const loaderData = Route.useLoaderData();
+  const deviceName = loaderData.data?.deviceName ?? "Unknown Device";
 
   // Extract validated search parameters
   const { token } = useSearch({ from: Route.id });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(loaderData.error ?? null);
   const [isApproved, setIsApproved] = useState(false); // State to track approval success
 
   const handleConfirm = async () => {
@@ -99,7 +96,7 @@ function DeviceLinkConfirmationPage() {
           )}
         </CardContent>
         <CardFooter className="flex justify-end space-x-2">
-          {!isApproved && ( // Only show button if not yet approved
+          {!error && !isApproved && ( // Only show button if not yet approved
             <Button onClick={handleConfirm} disabled={isLoading}>
               {isLoading ? (
                 <>

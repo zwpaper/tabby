@@ -7,16 +7,23 @@ import { routeTree } from "./routeTree.gen";
 
 import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
+import { Providers } from "./components/providers.tsx";
+import { useSession } from "./lib/auth-hooks.ts";
+import { Loader2 } from "lucide-react";
 
 // Create a new router instance
 const router = createRouter({
   routeTree,
-  context: {},
+  context: {
+    auth: null,
+  },
   defaultPreload: "intent",
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
 });
+
+export type Router = typeof router;
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
@@ -25,15 +32,27 @@ declare module "@tanstack/react-router" {
   }
 }
 
+function InnerApp() {
+  const { session: auth, isPending } = useSession();
+  if (isPending) {
+    return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="animate-spin" /></div>
+  }
+  return <StrictMode>
+    <RouterProvider router={router} context={{ auth }} />
+  </StrictMode>
+}
+
+function App() {
+  return <Providers router={router}>
+    <InnerApp />
+  </Providers>
+}
+
 // Render the app
 const rootElement = document.getElementById("app");
 if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <StrictMode>
-      <RouterProvider router={router} />
-    </StrictMode>,
-  );
+  root.render(<App />);
 }
 
 // If you want to start measuring performance in your app, pass a function

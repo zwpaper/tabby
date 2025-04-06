@@ -1,13 +1,18 @@
-import { Providers } from "@/components/providers";
-import { Outlet, createRootRoute } from "@tanstack/react-router";
+import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import type { Session, User } from "better-auth";
 
-export const Route = createRootRoute({
+interface RouterContext {
+  auth: {
+    user: User;
+    session: Session;
+  } | null,
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
-      <Providers>
         <Outlet />
-      </Providers>
       <TanStackRouterDevtools position="bottom-right" />
     </>
   ),
