@@ -1,5 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import Stripe from "stripe";
 import { z } from "zod";
 import { requireAuth } from "../auth";
@@ -19,12 +20,13 @@ const billing = new Hono().get(
     const { limit, after } = c.req.valid("query");
 
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.error("Stripe secret key is not configured.");
-      return c.json({ error: "Billing system not configured." }, 500);
+      throw new HTTPException(500, {
+        message: "Billing system not configured.",
+      });
     }
 
     if (!user.stripeCustomerId) {
-      return c.json({ error: "User is not a customer." }, 400);
+      throw new HTTPException(400, { message: "User is not a customer." });
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -44,16 +46,18 @@ const billing = new Hono().get(
           status: invoice.status,
           total: invoice.total,
           currency: invoice.currency,
+          url: invoice.hosted_invoice_url,
         })),
         hasMore: invoices.has_more,
       });
     } catch (error) {
-      console.error("Error fetching Stripe invoices:", error);
       // Check for specific Stripe errors if needed
       if (error instanceof Stripe.errors.StripeError) {
-        return c.json({ error: error.message }, 400);
+        throw new HTTPException(400, { message: error.message });
       }
-      return c.json({ error: "Failed to fetch billing history." }, 500);
+      throw new HTTPException(500, {
+        message: "Failed to fetch billing history.",
+      });
     }
   },
 );

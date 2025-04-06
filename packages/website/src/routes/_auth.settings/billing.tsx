@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check as IconCheck } from "lucide-react";
-import { useState } from "react";
+import type { InferResponseType } from "hono/client";
+import {
+  Check as IconCheck,
+  ExternalLink as IconExternalLink,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +23,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { authClient } from "@/lib/auth-client";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiClient, authClient } from "@/lib/auth-client";
+import moment from "moment";
 
 export const Route = createFileRoute("/_auth/settings/billing")({
   loader: async () => {
@@ -63,7 +78,7 @@ function SubscriptionPlan({
     price !== "Free" ? (billingCycle === "yearly" ? "/year" : "/month") : "";
 
   return (
-    <Card className="flex flex-col  min-w-xs max-w-sm grow">
+    <Card className="flex flex-col min-w-xs max-w-sm grow">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{name}</CardTitle>
@@ -93,11 +108,170 @@ function SubscriptionPlan({
           className="w-full"
           variant={isActive ? "outline" : "default"}
           onClick={onSelect}
+          disabled={isActive} // Disable button if it's the active plan
         >
           {isActive ? "Current Plan" : "Select Plan"}
         </Button>
       </CardFooter>
     </Card>
+  );
+}
+
+type Invoice = InferResponseType<
+  typeof apiClient.api.billing.history.$get
+>["data"][0];
+
+function BillingHistory() {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const fetchInvoices = useCallback(async (after?: string) => {
+    if (!after) setLoading(true);
+    else setLoadingMore(true);
+    setError(null);
+
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.set("limit", "10"); // Fetch 10 invoices per page
+      if (after) {
+        queryParams.set("after", after);
+      }
+
+      const response = await apiClient.api.billing.history.$get({
+        query: Object.fromEntries(queryParams.entries()),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch billing history: ${response.statusText}`,
+        );
+      }
+
+      const responseData = await response.json();
+
+      setInvoices((prevInvoices) =>
+        after ? [...prevInvoices, ...responseData.data] : responseData.data,
+      );
+      setHasMore(responseData.hasMore);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred.",
+      );
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
+
+  const loadMore = () => {
+    if (hasMore && invoices.length > 0) {
+      const lastInvoiceId = invoices[invoices.length - 1].id;
+      fetchInvoices(lastInvoiceId);
+    }
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(amount / 100); // Amount is in cents
+  };
+
+  const getStatusBadgeVariant = (status: string | null) => {
+    switch (status) {
+      case "paid":
+        return "default";
+      default:
+        return "outline";
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Invoice History</CardTitle>
+          <CardDescription>
+            View and download your past invoices.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : error ? (
+            <p className="text-red-600">Error: {error}</p>
+          ) : invoices.length === 0 ? (
+            <p>No invoices found.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Invoice</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoices.map((invoice) => (
+                  <TableRow key={invoice.id}>
+                    <TableCell>
+                      {moment(new Date(invoice.created * 1000)).format(
+                        "MMMM D, YYYY",
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={getStatusBadgeVariant(invoice.status)}
+                        className="capitalize"
+                      >
+                        {invoice.status || "N/A"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(invoice.total, invoice.currency)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {invoice.url ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <a
+                            href={invoice.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            View <IconExternalLink className="ml-1 h-3 w-3" />
+                          </a>
+                        </Button>
+                      ) : (
+                        "N/A"
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+        {hasMore && !loading && !error && (
+          <CardFooter className="justify-center">
+            <Button onClick={loadMore} disabled={loadingMore} variant="outline">
+              {loadingMore ? "Loading..." : "Load More"}
+            </Button>
+          </CardFooter>
+        )}
+      </Card>
+    </div>
   );
 }
 
@@ -132,71 +306,88 @@ function Billing() {
   ];
 
   const handlePlanChange = async (planId: string) => {
+    if (planId === selectedPlan) return; // Do nothing if the selected plan is clicked
+
     if (planId === "pro") {
       await authClient.subscription.upgrade({
         plan: "pro",
-        successUrl: "/",
-        cancelUrl: "/settings/billing",
+        successUrl: window.location.href, // Return to current page
+        cancelUrl: window.location.href, // Return to current page
       });
     }
     if (planId === "free") {
       await authClient.subscription.cancel({
-        returnUrl: "/settings/billing",
+        returnUrl: window.location.href, // Return to current page
       });
     }
   };
 
   return (
     <div className="container max-w-4xl">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Current Plan</h2>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              Billing Cycle:
-            </span>
-            <Select
-              value={billingCycle}
-              onValueChange={(value) => setBillingCycle(value as BillingCycle)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select billing cycle" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly (Save 20%)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+      <Tabs defaultValue="plans">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="plans">Subscription Plans</TabsTrigger>
+          <TabsTrigger value="history">Billing History</TabsTrigger>
+        </TabsList>
 
-        <div className="flex gap-4 mb-8 justify-around flex-wrap">
-          {plans.map((plan) => (
-            <SubscriptionPlan
-              key={plan.id}
-              name={plan.name}
-              price={plan.price}
-              yearlyPrice={plan.yearlyPrice} // Pass yearly price
-              description={plan.description}
-              features={plan.features}
-              isPopular={plan.isPopular}
-              isActive={plan.id === selectedPlan}
-              billingCycle={billingCycle} // Pass billing cycle
-              onSelect={() => handlePlanChange(plan.id)}
-            />
-          ))}
-        </div>
+        <TabsContent value="plans">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Current Plan</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Billing Cycle:
+                </span>
+                <Select
+                  value={billingCycle}
+                  onValueChange={(value) =>
+                    setBillingCycle(value as BillingCycle)
+                  }
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select billing cycle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly (Save 20%)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
-          <div>
-            <h3 className="font-medium">Need a custom plan?</h3>
-            <p className="text-sm text-muted-foreground">
-              Contact us for a tailored solution for your specific needs
-            </p>
+            <div className="flex gap-4 mb-8 justify-around flex-wrap">
+              {plans.map((plan) => (
+                <SubscriptionPlan
+                  key={plan.id}
+                  name={plan.name}
+                  price={plan.price}
+                  yearlyPrice={plan.yearlyPrice} // Pass yearly price
+                  description={plan.description}
+                  features={plan.features}
+                  isPopular={plan.isPopular}
+                  isActive={plan.id === selectedPlan}
+                  billingCycle={billingCycle} // Pass billing cycle
+                  onSelect={() => handlePlanChange(plan.id)}
+                />
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+              <div>
+                <h3 className="font-medium">Need a custom plan?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Contact us for a tailored solution for your specific needs
+                </p>
+              </div>
+              <Button variant="outline">Contact Sales</Button>
+            </div>
           </div>
-          <Button variant="outline">Contact Sales</Button>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="history">
+          <BillingHistory />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
