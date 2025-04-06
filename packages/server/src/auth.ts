@@ -7,6 +7,12 @@ import { db } from "./db";
 import { deviceLink } from "./device-link";
 
 export const auth = betterAuth({
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 60, // 1 hour
+    },
+  },
   database: {
     db,
     type: "postgres",

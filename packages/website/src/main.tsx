@@ -6,10 +6,10 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
 import "./styles.css";
-import reportWebVitals from "./reportWebVitals.ts";
+import { Loader2 } from "lucide-react";
 import { Providers } from "./components/providers.tsx";
 import { useSession } from "./lib/auth-hooks.ts";
-import { Loader2 } from "lucide-react";
+import reportWebVitals from "./reportWebVitals.ts";
 
 // Create a new router instance
 const router = createRouter({
@@ -35,17 +35,25 @@ declare module "@tanstack/react-router" {
 function InnerApp() {
   const { session: auth, isPending } = useSession();
   if (isPending) {
-    return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="animate-spin" /></div>
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
   }
-  return <StrictMode>
-    <RouterProvider router={router} context={{ auth }} />
-  </StrictMode>
+  return (
+    <StrictMode>
+      <RouterProvider router={router} context={{ auth }} />
+    </StrictMode>
+  );
 }
 
 function App() {
-  return <Providers router={router}>
-    <InnerApp />
-  </Providers>
+  return (
+    <Providers router={router}>
+      <InnerApp />
+    </Providers>
+  );
 }
 
 // Render the app

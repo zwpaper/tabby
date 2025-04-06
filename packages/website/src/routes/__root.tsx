@@ -6,13 +6,13 @@ interface RouterContext {
   auth: {
     user: User;
     session: Session;
-  } | null,
+  } | null;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
-        <Outlet />
+      <Outlet />
       <TanStackRouterDevtools position="bottom-right" />
     </>
   ),

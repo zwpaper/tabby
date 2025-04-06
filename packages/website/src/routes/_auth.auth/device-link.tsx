@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { authClient } from "@/lib/auth-client";
-import { createFileRoute, redirect, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { APIError } from "better-auth/api";
 import { Loader2 } from "lucide-react"; // Import a spinner icon
 import { useState } from "react";
@@ -25,14 +25,14 @@ export const Route = createFileRoute("/_auth/auth/device-link")({
     return { ...search };
   },
   async loader({ deps: { token } }) {
-    let { data, error } = await authClient.deviceLink.info({
+    const { data, error } = await authClient.deviceLink.info({
       query: { token },
     });
 
     return {
       data: data instanceof APIError ? null : data,
       error: error?.message || (data instanceof APIError ? data.message : null),
-    }
+    };
   },
   component: DeviceLinkConfirmationPage,
   validateSearch: (search) => deviceLinkSearchSchema.parse(search),
@@ -96,18 +96,19 @@ function DeviceLinkConfirmationPage() {
           )}
         </CardContent>
         <CardFooter className="flex justify-end space-x-2">
-          {!error && !isApproved && ( // Only show button if not yet approved
-            <Button onClick={handleConfirm} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Approving...
-                </>
-              ) : (
-                "Yes, Approve Sign-in"
-              )}
-            </Button>
-          )}
+          {!error &&
+            !isApproved && ( // Only show button if not yet approved
+              <Button onClick={handleConfirm} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Approving...
+                  </>
+                ) : (
+                  "Yes, Approve Sign-in"
+                )}
+              </Button>
+            )}
         </CardFooter>
       </Card>
     </div>

@@ -4,10 +4,13 @@ import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
 import { AuthUIProviderTanstack } from "@daveyplate/better-auth-ui/tanstack";
 
 import { authClient } from "@/lib/auth-client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Router } from "@/main";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-export function Providers({ router, children }: { router: Router, children: React.ReactNode }) {
+export function Providers({
+  router,
+  children,
+}: { router: Router; children: React.ReactNode }) {
   const queryClient = new QueryClient();
 
   return (
