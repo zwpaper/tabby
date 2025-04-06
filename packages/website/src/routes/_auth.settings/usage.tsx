@@ -26,13 +26,9 @@ export const Route = createFileRoute("/_auth/settings/usage")({
   component: Usage,
 });
 
-const chartConfig = {
-  completionCount: {
-    label: "Count",
-    color: "hsl(var(--chart-1))",
-  },
-  // We are stacking prompt and completion, so totalTokens might be redundant in the chart itself
-  // but useful for the summary card.
+// Base chart config (can be extended dynamically)
+const baseChartConfig = {
+  // Example static entry if needed, otherwise can be empty
 } satisfies ChartConfig;
 
 // Helper function to calculate date range based on the string identifier
@@ -77,6 +73,7 @@ const fetchUsageData = async (timeRange: string) => {
     throw new Error(`Failed to fetch usage data for ${timeRange}`);
   }
 
+  // Assuming the API returns { summary: {...}, daily: [{ date, modelId, completionCount }] }
   return response.json();
 };
 
@@ -104,6 +101,9 @@ function formatTokens(tokens: number | null | undefined): string {
   return tokens.toString(); // Return the number as is if less than 1k
 }
 
+// Helper to generate valid CSS variable names and gradient IDs from model IDs
+const sanitizeId = (id: string) => id.replace(/[^a-zA-Z0-9]/g, "");
+
 function Usage() {
   const queryClient = useQueryClient();
   const [timeRange, setTimeRange] = useState("7d");
@@ -123,38 +123,71 @@ function Usage() {
     queryFn: () => fetchUsageData(timeRange),
   });
 
-  // Memoize the padded chart data calculation
-  const paddedChartData = useMemo(() => {
+  // Memoize the processed chart data calculation
+  const processedChartData = useMemo(() => {
     if (!usageQuery.data?.daily) {
-      // Return empty array or handle loading state appropriately if needed before data arrives
-      return [];
+      return { data: [], models: [], dynamicConfig: {} };
     }
 
+    const dailyData = usageQuery.data.daily;
     const { startDate, days } = calculateDateRange(timeRange);
-    const dailyDataMap = new Map(
-      usageQuery.data.daily.map((item) => [item.date, item]),
-    );
 
-    const allDatesData = [];
+    // 1. Find all unique models and group data by date
+    const models = new Set<string>();
+    const dataByDate = new Map<string, Record<string, number>>();
+
+    for (const item of dailyData) {
+      // Ensure modelId is treated as a string, handle potential null/undefined
+      const modelIdStr = String(item.modelId || "unknown");
+      models.add(modelIdStr);
+      const dateEntry = dataByDate.get(item.date) || {};
+      // Sum counts for the same model on the same date (though API should aggregate this)
+      dateEntry[modelIdStr] =
+        (dateEntry[modelIdStr] || 0) + (item.completionCount || 0);
+      dataByDate.set(item.date, dateEntry);
+    }
+
+    const uniqueModels = Array.from(models).sort(); // Sort for consistent color assignment
+
+    // 2. Generate dynamic chart config for models
+    const dynamicConfig: ChartConfig = {};
+    uniqueModels.forEach((modelId, index) => {
+      const sanitized = sanitizeId(modelId);
+      // Simple hue rotation for colors (adjust saturation/lightness as needed)
+      dynamicConfig[sanitized] = {
+        label: modelId, // Use modelId directly as label
+        color: `hsl(var(--chart-${(index % 5) + 1}))`,
+      };
+    });
+
+    // 3. Pad data for the entire date range
+    const paddedData = [];
     const currentMoment = moment(startDate);
 
-    // Generate data points for the entire selected range
-    // Iterate days + 1 times to include both start and end date if end date is today
     for (let i = 0; i <= days; i++) {
       const dateStr = currentMoment.format("YYYY-MM-DD");
-      const existingData = dailyDataMap.get(dateStr);
+      const existingData = dataByDate.get(dateStr) || {};
 
-      allDatesData.push(
-        existingData || {
-          date: dateStr,
-          completionCount: 0,
-        },
-      );
+      const dayData: Record<string, string | number> = { date: dateStr };
+      for (const modelId of uniqueModels) {
+        dayData[modelId] = existingData[modelId] || 0; // Default to 0
+      }
+
+      paddedData.push(dayData);
       currentMoment.add(1, "day");
     }
 
-    return allDatesData;
+    return { data: paddedData, models: uniqueModels, dynamicConfig };
   }, [usageQuery.data?.daily, timeRange]);
+
+  // Combine base and dynamic config
+  const finalChartConfig = useMemo<ChartConfig>(
+    () => ({
+      ...baseChartConfig,
+      ...processedChartData.dynamicConfig,
+    }),
+    [processedChartData.dynamicConfig],
+  );
 
   const renderSummaryCards = () => {
     // Initial loading state (before first fetch completes)
@@ -245,7 +278,7 @@ function Usage() {
       {/* Main Chart Card */}
       <Card className="@container/card">
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle># Requests</CardTitle>
+          <CardTitle># Requests by Model</CardTitle> {/* Updated Title */}
           <div className="flex items-center gap-2">
             {/* Show loading spinner only when fetching for the *current* view */}
             {usageQuery.isFetching && (
@@ -297,19 +330,30 @@ function Usage() {
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
           {/* Chart Area or Loading/Error/No Data message for chart */}
           {usageQuery.isLoading && !usageQuery.data ? (
-            <div className="flex h-64 items-center justify-center">
+            <div className="flex h-80 items-center justify-center">
+              {" "}
+              {/* Adjusted height */}
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : usageQuery.isError ? (
-            <div className="flex h-64 items-center justify-center text-center text-red-500">
+            <div className="flex h-80 items-center justify-center text-center text-red-500">
+              {" "}
+              {/* Adjusted height */}
               Error loading chart data: {(usageQuery.error as Error).message}
             </div>
-          ) : paddedChartData.length > 0 ? ( // Use paddedChartData here
+          ) : processedChartData.data.length > 0 &&
+            processedChartData.models.length > 0 ? ( // Check for models too
             <div className="h-80">
-              <ChartContainer config={chartConfig} className="h-full w-full">
+              {" "}
+              {/* Ensure consistent height */}
+              <ChartContainer
+                config={finalChartConfig}
+                className="h-full w-full"
+              >
+                {/* Use finalChartConfig */}
                 <AreaChart
                   accessibilityLayer
-                  data={paddedChartData} // Use the padded data
+                  data={processedChartData.data} // Use the processed data
                   margin={{
                     left: 12,
                     right: 12,
@@ -324,7 +368,6 @@ function Usage() {
                     minTickGap={32}
                     tickFormatter={(value) => {
                       const date = new Date(value);
-                      // Add check for invalid date string before formatting
                       if (Number.isNaN(date.getTime())) return "";
                       return date.toLocaleDateString("en-US", {
                         month: "short",
@@ -345,42 +388,78 @@ function Usage() {
                             day: "numeric",
                           });
                         }}
+                        // Custom formatter to show model breakdown
+                        formatter={(value, name) => {
+                          // 'name' will be the modelId (dataKey)
+                          // 'value' will be the count for that model on that date
+                          // Check if the key exists in our config (filters out 'date')
+                          const sanitized = sanitizeId(name as string);
+                          if (finalChartConfig[sanitized]) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div className="flex flex-1 justify-between leading-none gap-1">
+                                  <span className="text-muted-foreground">
+                                    {finalChartConfig[sanitized].label}
+                                  </span>
+                                  <span>{value}</span> {/* The count */}
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null; // Don't render if name not in config
+                        }}
                       />
                     }
                   />
                   <defs>
-                    <linearGradient
-                      id="fillCompletionCount"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="5%"
-                        stopColor="var(--color-completionCount)"
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor="var(--color-completionCount)"
-                        stopOpacity={0.1}
-                      />
-                    </linearGradient>
+                    {/* Dynamically generate gradients for each model */}
+                    {processedChartData.models.map((modelId) => {
+                      const sanitized = sanitizeId(modelId); // Sanitize ID
+                      return (
+                        <linearGradient
+                          key={modelId}
+                          id={`fill${sanitized}`} // Use sanitized ID
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor={`var(--color-${sanitized})`} // Use original modelId for CSS var
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor={`var(--color-${sanitized})`} // Use original modelId for CSS var
+                            stopOpacity={0.1}
+                          />
+                        </linearGradient>
+                      );
+                    })}
                   </defs>
-                  {/* Stacked Areas */}
-                  <Area
-                    dataKey="completionCount"
-                    type="natural"
-                    fill="url(#fillCompletionCount)"
-                    stroke="var(--color-completionCount)"
-                    stackId="a"
-                  />
+                  {/* Dynamically generate Area components for each model */}
+                  {processedChartData.models.map((modelId) => {
+                    const sanitized = sanitizeId(modelId); // Sanitize ID
+                    return (
+                      <Area
+                        key={modelId}
+                        dataKey={modelId} // Use original modelId as dataKey
+                        type="natural"
+                        fill={`url(#fill${sanitized})`} // Reference sanitized gradient ID
+                        stroke={`var(--color-${sanitized})`} // Use original modelId for CSS var
+                        stackId="a" // Stack all areas together
+                        name={modelId} // Ensure name prop is set for tooltip mapping
+                      />
+                    );
+                  })}
                 </AreaChart>
               </ChartContainer>
             </div>
           ) : (
-            <div className="flex h-40 items-center justify-center text-muted-foreground">
+            <div className="flex h-80 items-center justify-center text-muted-foreground">
+              {" "}
+              {/* Adjusted height */}
               No daily data available for the selected date range
             </div>
           )}

@@ -50,14 +50,13 @@ const usages = new Hono().get(
         sql<Date>`DATE(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE ${tz})`.as(
           "date",
         ),
-        db.fn.sum("promptTokens").as("promptTokens"),
-        db.fn.sum("completionTokens").as("completionTokens"),
+        "modelId",
         db.fn.count("id").as("count"),
       ])
       .where("userId", "=", user.id)
       .where("createdAt", ">=", startDate)
       .where("createdAt", "<=", endDate)
-      .groupBy("date")
+      .groupBy(["date", "modelId"])
       .orderBy("date")
       .execute();
 
@@ -72,11 +71,8 @@ const usages = new Hono().get(
       },
       daily: dailyResults.map((day) => ({
         date: moment(day.date).utcOffset(tz).format("YYYY-MM-DD"),
-        promptTokens: Number(day.promptTokens || 0),
-        completionTokens: Number(day.completionTokens || 0),
+        modelId: day.modelId,
         completionCount: Number(day.count || 0),
-        totalTokens:
-          Number(day.promptTokens || 0) + Number(day.completionTokens || 0),
       })),
     });
   },
