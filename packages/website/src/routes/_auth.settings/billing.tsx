@@ -4,8 +4,8 @@ import {
   Check as IconCheck,
   CreditCard as IconCreditCard,
   ExternalLink as IconExternalLink,
-  Receipt as IconReceipt,
   Loader2 as IconLoader, // Added loader icon
+  Receipt as IconReceipt,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -115,7 +115,11 @@ function SubscriptionPlan({
           onClick={onSelect}
           disabled={isActive || isLoading} // Disable button if it's the active plan
         >
-          {isActive ? "Current Plan" : "Select Plan"}
+          {isActive
+            ? "Current Plan"
+            : price === "Free"
+              ? "Downgrade"
+              : "Select Plan"}
           {isLoading && !isActive && <IconLoader className="animate-spin" />}
         </Button>
       </CardFooter>
@@ -282,7 +286,7 @@ function Billing() {
   const plans = [
     {
       id: "free",
-      name: "Free",
+      name: "Community",
       price: "Free",
       description: "Basic features for personal projects",
       features: [

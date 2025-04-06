@@ -4,8 +4,8 @@ import { bearer, emailOTP, magicLink, oAuthProxy } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
 import Stripe from "stripe";
 import { db } from "./db";
-import { deviceLink } from "./lib/device-link";
 import { StripePlans } from "./lib/constants";
+import { deviceLink } from "./lib/device-link";
 
 export const auth = betterAuth({
   session: {

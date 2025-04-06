@@ -161,7 +161,7 @@ async function trackUsage(
       oc
         .columns(["userId", "startDayOfMonth", "modelId"])
         .doUpdateSet((eb) => ({
-          count: eb('monthlyUsage.count', '+', 1)
+          count: eb("monthlyUsage.count", "+", 1),
         })),
     )
     .execute();
