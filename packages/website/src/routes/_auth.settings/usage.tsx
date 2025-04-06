@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { apiClient } from "@/lib/auth-client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -28,13 +27,9 @@ export const Route = createFileRoute("/_auth/settings/usage")({
 });
 
 const chartConfig = {
-  promptTokens: {
-    label: "Prompt Tokens",
+  completionCount: {
+    label: "Count",
     color: "hsl(var(--chart-1))",
-  },
-  completionTokens: {
-    label: "Completion Tokens",
-    color: "hsl(var(--chart-2))",
   },
   // We are stacking prompt and completion, so totalTokens might be redundant in the chart itself
   // but useful for the summary card.
@@ -85,14 +80,33 @@ const fetchUsageData = async (timeRange: string) => {
   return response.json();
 };
 
-function Usage() {
-  const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
-  const [timeRange, setTimeRange] = useState("30d");
+// Helper function to format token counts
+function formatTokens(tokens: number | null | undefined): string {
+  if (tokens == null || tokens === 0) {
+    return "0";
+  }
+  const k = 1000;
+  const m = k * 1000;
+  const g = m * 1000;
+  // Add T, P, E if needed
 
-  useEffect(() => {
-    setTimeRange(isMobile ? "7d" : "30d");
-  }, [isMobile]);
+  if (tokens >= g) {
+    return `${(tokens / g).toFixed(1)}G`;
+  }
+  if (tokens >= m) {
+    return `${(tokens / m).toFixed(1)}M`;
+  }
+  if (tokens >= k) {
+    // Use toFixed(0) for k to avoid decimals like 1.2k, show 1k instead
+    // Or use toFixed(1) if decimals are desired for k range as well
+    return `${(tokens / k).toFixed(0)}k`;
+  }
+  return tokens.toString(); // Return the number as is if less than 1k
+}
+
+function Usage() {
+  const queryClient = useQueryClient();
+  const [timeRange, setTimeRange] = useState("7d");
 
   useEffect(() => {
     const timeRanges = ["7d", "30d", "90d"];
@@ -133,9 +147,7 @@ function Usage() {
       allDatesData.push(
         existingData || {
           date: dateStr,
-          promptTokens: 0,
-          completionTokens: 0,
-          totalTokens: 0,
+          completionCount: 0,
         },
       );
       currentMoment.add(1, "day");
@@ -185,7 +197,7 @@ function Usage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {summary.totalTokens?.toLocaleString() || 0}
+                {formatTokens(summary.totalTokens)}
               </div>
             </CardContent>
           </Card>
@@ -197,7 +209,7 @@ function Usage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {summary.promptTokens?.toLocaleString() || 0}
+                {formatTokens(summary.promptTokens)}
               </div>
             </CardContent>
           </Card>
@@ -209,7 +221,7 @@ function Usage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {summary.completionTokens?.toLocaleString() || 0}
+                {formatTokens(summary.completionTokens)}
               </div>
             </CardContent>
           </Card>
@@ -233,7 +245,7 @@ function Usage() {
       {/* Main Chart Card */}
       <Card className="@container/card">
         <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle>Token Usage</CardTitle>
+          <CardTitle># Requests</CardTitle>
           <div className="flex items-center gap-2">
             {/* Show loading spinner only when fetching for the *current* view */}
             {usageQuery.isFetching && (
@@ -250,9 +262,9 @@ function Usage() {
               className="hidden @[767px]/card:flex [&>button]:px-4"
               size="sm"
             >
-              <ToggleGroupItem value="90d">Last 3 months</ToggleGroupItem>
-              <ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
               <ToggleGroupItem value="7d">Last 7 days</ToggleGroupItem>
+              <ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
+              <ToggleGroupItem value="90d">Last 3 months</ToggleGroupItem>
             </ToggleGroup>
             {/* Mobile Select */}
             <Select
@@ -338,7 +350,7 @@ function Usage() {
                   />
                   <defs>
                     <linearGradient
-                      id="fillPromptTokens"
+                      id="fillCompletionCount"
                       x1="0"
                       y1="0"
                       x2="0"
@@ -346,47 +358,22 @@ function Usage() {
                     >
                       <stop
                         offset="5%"
-                        stopColor="var(--color-promptTokens)"
+                        stopColor="var(--color-completionCount)"
                         stopOpacity={0.8}
                       />
                       <stop
                         offset="95%"
-                        stopColor="var(--color-promptTokens)"
-                        stopOpacity={0.1}
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="fillCompletionTokens"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="5%"
-                        stopColor="var(--color-completionTokens)"
-                        stopOpacity={0.8}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor="var(--color-completionTokens)"
+                        stopColor="var(--color-completionCount)"
                         stopOpacity={0.1}
                       />
                     </linearGradient>
                   </defs>
                   {/* Stacked Areas */}
                   <Area
-                    dataKey="completionTokens"
+                    dataKey="completionCount"
                     type="natural"
-                    fill="url(#fillCompletionTokens)"
-                    stroke="var(--color-completionTokens)"
-                    stackId="a"
-                  />
-                  <Area
-                    dataKey="promptTokens"
-                    type="natural"
-                    fill="url(#fillPromptTokens)"
-                    stroke="var(--color-promptTokens)"
+                    fill="url(#fillCompletionCount)"
+                    stroke="var(--color-completionCount)"
                     stackId="a"
                   />
                 </AreaChart>
