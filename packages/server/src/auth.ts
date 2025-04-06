@@ -5,6 +5,7 @@ import { createMiddleware } from "hono/factory";
 import Stripe from "stripe";
 import { db } from "./db";
 import { deviceLink } from "./device-link";
+import { StripePlans } from "./constants";
 
 export const auth = betterAuth({
   session: {
@@ -62,13 +63,7 @@ function createStripePlugin() {
     createCustomerOnSignUp: true,
     subscription: {
       enabled: true,
-      plans: [
-        {
-          name: "Pro",
-          priceId: "price_1RApQzDZw4FSeDxlCtidLAf5",
-          annualDiscountPriceId: "price_1RApRUDZw4FSeDxlDrULHG4Z",
-        },
-      ],
+      plans: StripePlans,
     },
   });
 }
