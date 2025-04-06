@@ -255,16 +255,18 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
     x.splice(0, x.length - 5);
   }
 
-  for (const message of x) {
+  for (const [i, message] of x.entries()) {
     if (message.parts) {
       const parts = [...message.parts];
       if (parts.length > 5) {
         parts.splice(0, parts.length - 5);
       }
-      message.parts = parts;
+      x[i] = {
+        ...message,
+        parts,
+      };
     }
   }
-
   return x;
 }
 
