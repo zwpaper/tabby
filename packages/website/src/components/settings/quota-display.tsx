@@ -46,7 +46,7 @@ export function QuotaDisplay() {
         {data.plan}
       </div>
       <div className="space-y-2">
-        {data.plan === "Free" && (
+        {data.plan === "Community" && (
           <div className="flex flex-col gap-1">
             <div className="flex justify-between text-xs mb-0.5">
               <span className="text-muted-foreground">Basic</span>

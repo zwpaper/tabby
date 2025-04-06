@@ -299,7 +299,7 @@ function Billing() {
       name: "Pro",
       price: "$19",
       yearlyPrice: "$182", // Added yearly price
-      description: "Everything in Free, plus more power and features",
+      description: "Everything in Community, plus more power and features",
       features: [
         "Unlimited basic model requests",
         "500 premium model requests per month",
