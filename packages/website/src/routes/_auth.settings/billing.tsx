@@ -278,7 +278,10 @@ function Billing() {
       name: "Free",
       price: "Free",
       description: "Basic features for personal projects",
-      features: ["1 user", "3 projects", "500 MB storage", "Basic analytics"],
+      features: [
+        "10 basic model requests per month",
+        "5 premium model requests per month",
+      ],
     },
     {
       id: "pro",
@@ -287,11 +290,8 @@ function Billing() {
       yearlyPrice: "$182", // Added yearly price
       description: "Everything in Free, plus more power and features",
       features: [
-        "5 users",
-        "Unlimited projects",
-        "10 GB storage",
-        "Advanced analytics",
-        "Priority support",
+        "Unlimited basic model requests",
+        "500 premium model requests per month",
       ],
       isPopular: true,
     },
@@ -302,6 +302,7 @@ function Billing() {
 
     if (planId === "pro") {
       await authClient.subscription.upgrade({
+        annual: billingCycle === "yearly",
         plan: "pro",
         successUrl: window.location.href, // Return to current page
         cancelUrl: window.location.href, // Return to current page
