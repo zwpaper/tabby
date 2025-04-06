@@ -3,6 +3,7 @@ import { logger } from "hono/logger";
 import chat from "./api/chat";
 import models from "./api/models";
 import usages from "./api/usages";
+import billing from "./api/billing";
 import { auth, authRequest } from "./auth";
 
 export const app = new Hono().use(logger()).use(authRequest);
@@ -30,7 +31,8 @@ const api = app.basePath("/api");
 const route = api
   .route("/models", models)
   .route("/chat", chat)
-  .route("/usages", usages);
+  .route("/usages", usages)
+  .route("/billing", billing); // Add billing history route
 
 export type AppType = typeof route;
 

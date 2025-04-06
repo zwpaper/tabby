@@ -1,5 +1,5 @@
 import { stripe } from "@better-auth/stripe";
-import { type BetterAuthPlugin, type User, betterAuth } from "better-auth";
+import { betterAuth } from "better-auth";
 import { bearer, emailOTP, magicLink, oAuthProxy } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
 import Stripe from "stripe";
@@ -39,31 +39,22 @@ export const auth = betterAuth({
     }),
     deviceLink(),
     createStripePlugin(),
-  ].filter(Boolean) as BetterAuthPlugin[],
+  ]
 });
 
 function createGithubProvider() {
-  if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
-    console.warn("Github is not configured");
-    return undefined;
-  }
   return {
-    clientId: process.env.GITHUB_CLIENT_ID as string,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    clientId: process.env.GITHUB_CLIENT_ID || "GITHUB_CLIENT_ID is not set",
+    clientSecret: process.env.GITHUB_CLIENT_SECRET || "GITHUB_CLIENT_SECRET is not set",
     redirectURI: "https://app.getpochi.com/api/auth/callback/github",
   };
 }
 
 function createStripePlugin() {
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-    console.warn("Stripe is not configured");
-    return null;
-  }
-
-  const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY || "STRIPE_SECRET_KEY is not set");
   return stripe({
     stripeClient,
-    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "STRIPE_WEBHOOK_SECRET is not set",
     createCustomerOnSignUp: true,
     subscription: {
       enabled: true,
@@ -77,6 +68,7 @@ function createStripePlugin() {
   });
 }
 
+type User = typeof auth.$Infer.Session.user;
 export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
   (() => {
     // Disable auth in test mode
