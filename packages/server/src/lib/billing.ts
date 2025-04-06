@@ -13,7 +13,11 @@ export async function readActiveSubscriptionLimits(user: User, r: HonoRequest) {
         },
         headers: r.raw.headers,
     }).then(r => r[0]);
-    return activeSubscription?.limits ?? StripePlans[0].limits
+
+    return {
+        plan: activeSubscription?.plan ?? StripePlans[0].name,
+        limits: activeSubscription?.limits ?? StripePlans[0].limits,
+    }
 }
 
 export async function readCurrentMonthQuota(user: User, r: HonoRequest) {
@@ -21,7 +25,7 @@ export async function readCurrentMonthQuota(user: User, r: HonoRequest) {
     const now = moment.utc();
     const startOfMonth = now.startOf("month").startOf("hour").toDate()
 
-    const limits = await readActiveSubscriptionLimits(user, r);
+    const { plan, limits } = await readActiveSubscriptionLimits(user, r);
 
     // Query the total usage count for the current month.
     // Ensure the timestamp comparison works correctly with the database timezone (assuming UTC)
@@ -49,6 +53,7 @@ export async function readCurrentMonthQuota(user: User, r: HonoRequest) {
     }
 
     return {
+        plan,
         usages,
         limits,
     }

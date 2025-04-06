@@ -30,6 +30,7 @@ import { Link } from "@tanstack/react-router";
 import { NavDocuments } from "./nav-documents";
 import { NavMain } from "./nav-main";
 import { NavSecondary } from "./nav-secondary";
+import { QuotaDisplay } from "./quota-display"; // Import the new component
 
 const data = {
   navMain: [
@@ -164,6 +165,7 @@ export function AppSidebar({
         )}
       </SidebarContent>
       <SidebarFooter>
+        <QuotaDisplay /> {/* Add the QuotaDisplay component here */}
         <UserButton size="full" />
       </SidebarFooter>
     </Sidebar>
