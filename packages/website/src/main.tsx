@@ -7,8 +7,8 @@ import { routeTree } from "./routeTree.gen";
 
 import "./styles.css";
 import { Loader2 } from "lucide-react";
-import { Providers } from "./providers.tsx";
 import { useSession } from "./lib/auth-hooks.ts";
+import { Providers } from "./providers.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
 
 // Create a new router instance
