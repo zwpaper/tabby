@@ -8,7 +8,7 @@ import { useAppConfig } from "./app-config";
 import { authStorage } from "./storage";
 
 const DevBaseUrl = "http://localhost:4111";
-const ProdBaseUrl = "https://ragdoll-production.up.railway.app";
+const ProdBaseUrl = "https://app.getpochi.com";
 
 function setToken(token: string) {
   authStorage.setItem("authToken", token);

@@ -30,8 +30,6 @@ const TextInput: React.FC<TextInputProps> = ({
 
     if (lengthDifference >= 2) {
       setCursorOffset(newLength);
-    } else {
-      setCursorOffset(Math.min(newLength, cursorOffset));
     }
 
     lastValueLengthRef.current = newLength;

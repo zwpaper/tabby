@@ -44,8 +44,7 @@ function createGithubProvider() {
   return {
     clientId: process.env.GITHUB_CLIENT_ID as string,
     clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-    redirectURI:
-      "https://ragdoll-production.up.railway.app/api/auth/callback/github",
+    redirectURI: "https://app.getpochi.com/api/auth/callback/github",
   };
 }
 
