@@ -5,6 +5,7 @@ import {
   CreditCard as IconCreditCard,
   ExternalLink as IconExternalLink,
   Receipt as IconReceipt,
+  Loader2 as IconLoader, // Added loader icon
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -63,6 +64,7 @@ function SubscriptionPlan({
   isActive,
   billingCycle,
   onSelect,
+  isLoading,
 }: {
   name: string;
   price: string;
@@ -73,6 +75,7 @@ function SubscriptionPlan({
   isActive?: boolean;
   billingCycle: BillingCycle;
   onSelect: () => void;
+  isLoading: boolean; // Added loading prop
 }) {
   const displayPrice =
     billingCycle === "yearly" && yearlyPrice ? yearlyPrice : price;
@@ -110,9 +113,10 @@ function SubscriptionPlan({
           className="w-full"
           variant={isActive ? "outline" : "default"}
           onClick={onSelect}
-          disabled={isActive} // Disable button if it's the active plan
+          disabled={isActive || isLoading} // Disable button if it's the active plan
         >
           {isActive ? "Current Plan" : "Select Plan"}
+          {isLoading && !isActive && <IconLoader className="animate-spin" />}
         </Button>
       </CardFooter>
     </Card>
@@ -273,6 +277,7 @@ function Billing() {
   const { activeSubscriptions } = Route.useLoaderData();
   const selectedPlan = activeSubscriptions?.[0]?.plan || "free";
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null); // Track loading state for specific plan
 
   const plans = [
     {
@@ -300,20 +305,28 @@ function Billing() {
   ];
 
   const handlePlanChange = async (planId: string) => {
-    if (planId === selectedPlan) return; // Do nothing if the selected plan is clicked
+    if (planId === selectedPlan || loadingPlan) return; // Do nothing if the selected plan is clicked or already loading
 
-    if (planId === "pro") {
-      await authClient.subscription.upgrade({
-        annual: billingCycle === "yearly",
-        plan: "pro",
-        successUrl: window.location.href, // Return to current page
-        cancelUrl: window.location.href, // Return to current page
-      });
-    }
-    if (planId === "free") {
-      await authClient.subscription.cancel({
-        returnUrl: window.location.href, // Return to current page
-      });
+    setLoadingPlan(planId); // Set loading state for this plan
+    try {
+      if (planId === "pro") {
+        await authClient.subscription.upgrade({
+          annual: billingCycle === "yearly",
+          plan: "pro",
+          successUrl: window.location.href, // Return to current page
+          cancelUrl: window.location.href, // Return to current page
+        });
+      }
+      if (planId === "free") {
+        await authClient.subscription.cancel({
+          returnUrl: window.location.href, // Return to current page
+        });
+      }
+    } catch (error) {
+      console.error("Failed to change plan:", error);
+      // Optionally: show an error message to the user
+    } finally {
+      setLoadingPlan(null); // Reset loading state regardless of success or failure
     }
   };
 
@@ -369,6 +382,7 @@ function Billing() {
                   isActive={plan.id === selectedPlan}
                   billingCycle={billingCycle} // Pass billing cycle
                   onSelect={() => handlePlanChange(plan.id)}
+                  isLoading={!!loadingPlan}
                 />
               ))}
             </div>
