@@ -134,6 +134,7 @@ async function trackUsage(
   modelId: string,
   usage: LanguageModelUsage,
 ) {
+  // Track individual completion details
   await db
     .insertInto("chatCompletion")
     .values({
@@ -142,6 +143,27 @@ async function trackUsage(
       promptTokens: usage.promptTokens,
       completionTokens: usage.completionTokens,
     })
+    .execute();
+
+  // Track monthly usage count
+  const now = new Date();
+  const startDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  await db
+    .insertInto("monthlyUsage")
+    .values({
+      userId: user.id,
+      modelId,
+      startDayOfMonth,
+      count: 1, // Start count at 1 for a new entry
+    })
+    .onConflict((oc) =>
+      oc
+        .columns(["userId", "startDayOfMonth", "modelId"])
+        .doUpdateSet((eb) => ({
+          count: eb('monthlyUsage.count', '+', 1)
+        })),
+    )
     .execute();
 }
 

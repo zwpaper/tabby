@@ -36,6 +36,14 @@ export interface ChatCompletion {
   userId: string;
 }
 
+export interface MonthlyUsage {
+  count: Generated<number>;
+  id: Generated<number>;
+  modelId: string;
+  startDayOfMonth: Timestamp;
+  userId: string;
+}
+
 export interface Session {
   createdAt: Timestamp;
   expiresAt: Timestamp;
@@ -83,6 +91,7 @@ export interface Verification {
 export interface DB {
   account: Account;
   chatCompletion: ChatCompletion;
+  monthlyUsage: MonthlyUsage;
   session: Session;
   subscription: Subscription;
   user: User;
