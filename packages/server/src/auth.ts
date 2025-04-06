@@ -39,29 +39,34 @@ export const auth = betterAuth({
     }),
     deviceLink(),
     createStripePlugin(),
-  ]
+  ],
 });
 
 function createGithubProvider() {
   return {
     clientId: process.env.GITHUB_CLIENT_ID || "GITHUB_CLIENT_ID is not set",
-    clientSecret: process.env.GITHUB_CLIENT_SECRET || "GITHUB_CLIENT_SECRET is not set",
+    clientSecret:
+      process.env.GITHUB_CLIENT_SECRET || "GITHUB_CLIENT_SECRET is not set",
     redirectURI: "https://app.getpochi.com/api/auth/callback/github",
   };
 }
 
 function createStripePlugin() {
-  const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY || "STRIPE_SECRET_KEY is not set");
+  const stripeClient = new Stripe(
+    process.env.STRIPE_SECRET_KEY || "STRIPE_SECRET_KEY is not set",
+  );
   return stripe({
     stripeClient,
-    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "STRIPE_WEBHOOK_SECRET is not set",
+    stripeWebhookSecret:
+      process.env.STRIPE_WEBHOOK_SECRET || "STRIPE_WEBHOOK_SECRET is not set",
     createCustomerOnSignUp: true,
     subscription: {
       enabled: true,
       plans: [
         {
           name: "Pro",
-          priceId: "price_0987654321",
+          priceId: "price_1RApQzDZw4FSeDxlCtidLAf5",
+          annualDiscountPriceId: "price_1RApRUDZw4FSeDxlDrULHG4Z",
         },
       ],
     },

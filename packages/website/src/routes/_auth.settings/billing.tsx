@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_auth/settings/billing")({
   loader: async () => {
     const { data, error } = await authClient.subscription.list();
     if (error) {
-      throw error;
+      throw new Error(error.message);
     }
     return {
       activeSubscriptions: data || null,
@@ -102,7 +102,8 @@ function SubscriptionPlan({
 }
 
 function Billing() {
-  const [selectedPlan, setSelectedPlan] = useState("free");
+  const { activeSubscriptions } = Route.useLoaderData();
+  const selectedPlan = activeSubscriptions?.[0]?.plan || "free";
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
 
   const plans = [
@@ -117,7 +118,7 @@ function Billing() {
       id: "pro",
       name: "Pro",
       price: "$19",
-      yearlyPrice: "$182.4", // Added yearly price
+      yearlyPrice: "$182", // Added yearly price
       description: "Everything in Free, plus more power and features",
       features: [
         "5 users",
@@ -130,8 +131,19 @@ function Billing() {
     },
   ];
 
-  const handlePlanChange = (planId: string) => {
-    setSelectedPlan(planId);
+  const handlePlanChange = async (planId: string) => {
+    if (planId === "pro") {
+      await authClient.subscription.upgrade({
+        plan: "pro",
+        successUrl: "/",
+        cancelUrl: "/settings/billing",
+      });
+    }
+    if (planId === "free") {
+      await authClient.subscription.cancel({
+        returnUrl: "/settings/billing",
+      });
+    }
   };
 
   return (

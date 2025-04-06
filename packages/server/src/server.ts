@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
+import billing from "./api/billing";
 import chat from "./api/chat";
 import models from "./api/models";
 import usages from "./api/usages";
-import billing from "./api/billing";
 import { auth, authRequest } from "./auth";
 
 export const app = new Hono().use(logger()).use(authRequest);
