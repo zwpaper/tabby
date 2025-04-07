@@ -2,7 +2,7 @@ import { useApiClient } from "@/lib/api";
 import type { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { useLocalSettings } from "@/lib/storage";
 import type { useChat } from "@ai-sdk/react";
-import { ProgressBar } from "@inkjs/ui";
+import { ProgressBar, Spinner } from "@inkjs/ui";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { User } from "better-auth";
 import { Box, Text } from "ink";
@@ -83,7 +83,7 @@ function HeaderContent({ tokenUsage, status }: ChatHeaderProps) {
 
 function ChatHeader(props: ChatHeaderProps) {
   return (
-    <Suspense>
+    <Suspense fallback={<Spinner />}>
       <HeaderContent {...props} />
     </Suspense>
   );
