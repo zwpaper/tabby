@@ -10,10 +10,11 @@ function Auth() {
   return (
     <div className="flex flex-col grow size-full min-h-screen items-center justify-center gap-3">
       <AuthCard
+        socialLayout="vertical"
         pathname={pathname}
         classNames={{
-          header: "pb-4",
-          content: "pt-0",
+          base: "gap-0",
+          content: "[&>form]:gap-4 [&>form>div:nth-child(2)]:hidden",
         }}
       />
     </div>
