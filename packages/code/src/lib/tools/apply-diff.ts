@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import type { ApplyDiffFunctionType } from "@ragdoll/tools";
 
-const WindowToExpandForSearch = 5;
+const WindowToExpandForSearch = 15;
 
 export const applyDiff: ApplyDiffFunctionType = async ({
   path,

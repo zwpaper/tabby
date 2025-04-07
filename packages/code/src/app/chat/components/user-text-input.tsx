@@ -1,5 +1,5 @@
 import TextInput from "@/components/text-input";
-import { useEnvironment } from "@/lib/hooks/use-environment";
+import { traverseBFS } from "@/lib/tools/file-utils";
 import Fuse from "fuse.js";
 import { Box, Text, useFocus, useInput } from "ink";
 import { useEffect, useState } from "react";
@@ -84,9 +84,12 @@ export default function UserTextInput({
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const [commandTriggerIndex, setCommandTriggerIndex] = useState(-1); // Index where '/' was typed
 
-  // FIXME: list files without using the environment hook
-  const environment = useEnvironment();
-  const files = environment?.workspace.files;
+  const [files, setFiles] = useState<string[]>([]);
+  useEffect(() => {
+    if (isFilePickerActive) {
+      traverseBFS(".", true, 5000).then((data) => setFiles(data.files));
+    }
+  }, [isFilePickerActive]);
 
   const fileFuse = new Fuse(files || []);
 

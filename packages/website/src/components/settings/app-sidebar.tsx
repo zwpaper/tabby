@@ -1,5 +1,4 @@
 import {
-  type Icon,
   IconCamera,
   IconChartBar,
   IconCreditCard,
@@ -138,7 +137,7 @@ export function AppSidebar({
   panes,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
-  panes: { title: string; url: string; icon: Icon; active?: boolean }[];
+  panes: { title: string; url: string; icon: React.FC; active?: boolean }[];
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>

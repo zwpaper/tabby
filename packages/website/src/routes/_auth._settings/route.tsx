@@ -2,7 +2,6 @@ import { AppSidebar } from "@/components/settings/app-sidebar";
 import { SiteHeader } from "@/components/settings/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import {
-  type Icon,
   IconChartBar,
   IconCreditCard,
   IconUserCircle,
@@ -13,6 +12,7 @@ import {
   redirect,
   useRouterState,
 } from "@tanstack/react-router";
+import { BrainCircuit } from "lucide-react";
 
 export const Route = createFileRoute("/_auth/_settings")({
   beforeLoad: async (ctx) => {
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_auth/_settings")({
 interface Pane {
   title: string;
   url: string;
-  icon: Icon;
+  icon: React.FC;
   active?: boolean;
 }
 
@@ -45,6 +45,11 @@ const MainPanes: Pane[] = [
     title: "Billing",
     url: "/billing",
     icon: IconCreditCard,
+  },
+  {
+    title: "Model",
+    url: "/model",
+    icon: BrainCircuit,
   },
 ];
 
