@@ -1,5 +1,3 @@
-import { google } from "@ai-sdk/google";
-import { openai } from "@ai-sdk/openai";
 import { zValidator } from "@hono/zod-validator";
 import * as tools from "@ragdoll/tools";
 import {
@@ -16,7 +14,7 @@ import { stream } from "hono/streaming";
 import { requireAuth } from "../auth";
 import { db } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
-import { AvailableModels } from "../lib/constants";
+import { AvailableModels, getModelById } from "../lib/constants";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
@@ -63,19 +61,11 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       throw new HTTPException(400, { message: "Internal user only" });
     }
 
-    let selectedModel: LanguageModelV1;
-    switch (requestedModelId) {
-      // case "anthropic/claude-3.7-sonnet":
-      //   selectedModel = openrouter("anthropic/claude-3.7-sonnet");
-      //   break;
-      case "openai/gpt-4o-mini":
-        selectedModel = openai("gpt-4o-mini");
-        break;
-      case "google/gemini-2.5-pro-exp-03-25":
-        selectedModel = google("gemini-2.5-pro-exp-03-25");
-        break;
-      default:
-        throw new HTTPException(400, { message: "Invalid model" });
+    const selectedModel = getModelById(requestedModelId);
+    if (!selectedModel) {
+      throw new HTTPException(400, {
+        message: `Invalid model '${requestedModelId}'`,
+      });
     }
 
     injectReadEnvironmentToolCall(messages, selectedModel, environment);

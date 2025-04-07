@@ -1,3 +1,9 @@
+// packages/server/src/lib/constants.ts
+
+import { google } from "@ai-sdk/google";
+import { openai } from "@ai-sdk/openai";
+import type { LanguageModelV1 } from "ai";
+
 // Define available models
 export const AvailableModels: {
   id: string;
@@ -9,6 +15,7 @@ export const AvailableModels: {
     contextWindow: 1_000_000,
     costType: "premium",
   },
+  { id: "openai/gpt-4o", contextWindow: 128_000, costType: "premium" },
   { id: "openai/gpt-4o-mini", contextWindow: 128_000, costType: "basic" },
 ];
 
@@ -30,3 +37,18 @@ export const StripePlans = [
     },
   },
 ];
+
+export function getModelById(modelId: string): LanguageModelV1 | null {
+  switch (modelId) {
+    // case "anthropic/claude-3.7-sonnet":
+    //   return openrouter("anthropic/claude-3.7-sonnet");
+    case "openai/gpt-4o-mini":
+      return openai("gpt-4o-mini");
+    case "openai/gpt-4o":
+      return openai("gpt-4o");
+    case "google/gemini-2.5-pro-exp-03-25":
+      return google("gemini-2.5-pro-exp-03-25");
+    default:
+      return null;
+  }
+}
