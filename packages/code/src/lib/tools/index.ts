@@ -80,30 +80,6 @@ const ToolsExemptFromApproval = new Set([
   "searchFiles",
 ]);
 
-export function hasPendingUserInputTool({
-  messages,
-}: {
-  messages: Message[];
-}) {
-  let isUserInputTools = false;
-  for (const message of messages) {
-    const parts = message.parts || [];
-    for (const part of parts) {
-      if (
-        part.type === "tool-invocation" &&
-        part.toolInvocation.state === "call"
-      ) {
-        const { toolName } = part.toolInvocation;
-        if (UserInputTools.has(toolName)) {
-          isUserInputTools = true;
-        }
-      }
-    }
-  }
-
-  return isUserInputTools;
-}
-
 export function prepareMessages(messages: Message[]) {
   return messages.map((message) => {
     if (message.role === "assistant" && message.parts) {
