@@ -22,7 +22,7 @@ export const executeCommand = declareClientTool({
     requiresApproval: z
       .boolean()
       .describe(
-        "Indicates whether the command requires user approval. This should be set to true if the command is not read-only or has side effects.",
+        "Indicates whether the command requires user approval. This should be set to true if the command is not read-only or has side effects. If user has approved the command previously in the same session, this flag should be set to false.",
       ),
   }),
   outputSchema: z.object({
