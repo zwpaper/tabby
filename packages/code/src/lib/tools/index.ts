@@ -1,6 +1,6 @@
 import type { ExecuteCommandInputType } from "@ragdoll/tools";
 import type { Message, ToolCall, ToolInvocation } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { applyDiff } from "./apply-diff";
 import { executeCommand } from "./execute-command";
 import { globFiles } from "./glob-files";
@@ -20,7 +20,10 @@ const ToolMap: Record<string, (args: any) => Promise<unknown>> = {
   writeToFile,
 };
 
-async function invokeToolImpl(tool: { toolCall: ToolCall<string, unknown> }) {
+async function invokeToolImpl(tool: {
+  toolCall: ToolCall<string, unknown>;
+  signal: AbortSignal;
+}) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   const toolFunction = ToolMap[tool.toolCall.toolName];
@@ -28,7 +31,15 @@ async function invokeToolImpl(tool: { toolCall: ToolCall<string, unknown> }) {
     throw new Error(`${tool.toolCall.toolName} is not implemented`);
   }
 
-  return toolFunction(tool.toolCall.args);
+  // biome-ignore lint/suspicious/noExplicitAny: inject signal into args
+  const args = tool.toolCall.args as any;
+
+  try {
+    args.signal = tool.signal;
+    return await toolFunction(tool.toolCall.args);
+  } finally {
+    args.signal = undefined;
+  }
 }
 
 function safeCall<T>(x: Promise<T>) {
@@ -41,11 +52,12 @@ function safeCall<T>(x: Promise<T>) {
 
 export async function invokeTool(tool: {
   toolCall: ToolCall<string, unknown>;
+  signal: AbortSignal;
 }) {
   return await safeCall(invokeToolImpl(tool));
 }
 
-type Approval = "approved" | "rejected" | "pending";
+type Approval = "approved" | "rejected" | "pending" | "aborted";
 
 interface UseExecuteToolParams {
   toolCall: ToolInvocation;
@@ -60,6 +72,7 @@ export function useExecuteTool({
   const [approval, setApproval] = useState<Approval>(
     getDefaultApproval(toolCall),
   );
+  const abortController = useMemo(() => new AbortController(), []);
 
   const approveTool = (approved: boolean) => {
     setApproval(approved ? "approved" : "rejected");
@@ -85,9 +98,11 @@ export function useExecuteTool({
     if (state === "call") {
       invokeToolTriggered.current = true;
       if (approval === "approved") {
-        invokeTool({ toolCall }).then((result) => {
-          addToolResult({ toolCallId, result });
-        });
+        invokeTool({ toolCall, signal: abortController.signal }).then(
+          (result) => {
+            addToolResult({ toolCallId, result });
+          },
+        );
       } else if (approval === "rejected") {
         addToolResult({
           toolCallId,
@@ -95,11 +110,23 @@ export function useExecuteTool({
         });
       }
     }
-  }, [approval, toolName, toolCallId, toolCall, state, addToolResult]);
+  }, [
+    approval,
+    toolName,
+    toolCallId,
+    toolCall,
+    state,
+    addToolResult,
+    abortController.signal,
+  ]);
 
   return {
     approval,
     approveTool,
+    abortTool: () => {
+      setApproval("aborted");
+      abortController.abort();
+    },
   };
 }
 
@@ -121,6 +148,10 @@ function getDefaultApproval(toolCall: ToolInvocation) {
 
 const UserInputTools = new Set(["askFollowupQuestion", "attemptCompletion"]);
 
+export function isUserInputTool(toolName: string) {
+  return UserInputTools.has(toolName);
+}
+
 const ToolsExemptFromApproval = new Set([
   ...UserInputTools,
   "listFiles",
@@ -135,6 +166,7 @@ export function useIsUserInputTools({
   messages: Message[];
 }) {
   let isUserInputTools = false;
+  let isToolRunning = false;
   for (const message of messages) {
     const parts = message.parts || [];
     for (const part of parts) {
@@ -143,12 +175,18 @@ export function useIsUserInputTools({
         if (UserInputTools.has(toolName)) {
           isUserInputTools = true;
         }
+
+        // FIXME(meng): this is really a hack, we shall track all invokeTool pending promise to accurately track the tool running state.
+        if (part.toolInvocation.args.signal) {
+          isToolRunning = true;
+        }
       }
     }
   }
 
   return {
     isUserInputTools,
+    isToolRunning,
   };
 }
 

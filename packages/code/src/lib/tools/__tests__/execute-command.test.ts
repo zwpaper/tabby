@@ -2,17 +2,19 @@ import { describe, expect, it } from "vitest";
 import { executeCommand } from "../execute-command";
 
 describe("executeCommand", () => {
+  const signal = new AbortController().signal;
   it("should execute a valid command and return stdout", async () => {
     const result = await executeCommand({
       command: "echo Hello, World!",
       requiresApproval: false,
+      signal,
     });
     expect(result.stdout).toBe("Hello, World!\n");
   });
 
   it("should throw an error if command is missing", async () => {
     await expect(
-      executeCommand({ command: "", requiresApproval: false }),
+      executeCommand({ command: "", requiresApproval: false, signal }),
     ).rejects.toThrow("Command is required to execute.");
   });
 
@@ -20,6 +22,7 @@ describe("executeCommand", () => {
     const result = await executeCommand({
       command: "invalid-command",
       requiresApproval: false,
+      signal,
     });
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toContain("invalid-command: command not found");
@@ -30,6 +33,7 @@ describe("executeCommand", () => {
       command: "pwd",
       cwd: "/",
       requiresApproval: false,
+      signal,
     });
     expect(result.stdout.trim()).toBe("/");
   });

@@ -4,16 +4,19 @@ import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 
 const execPromise = promisify(exec);
 
-export const executeCommand: ExecuteCommandFunctionType = async ({
+export const executeCommand = async ({
   command,
   cwd,
-}) => {
+  signal,
+}: Parameters<ExecuteCommandFunctionType>[0] & {
+  signal: AbortSignal;
+}): Promise<ReturnType<ExecuteCommandFunctionType>> => {
   if (!command) {
     throw new Error("Command is required to execute.");
   }
 
   try {
-    const { stdout, stderr } = await execPromise(command, { cwd });
+    const { stdout, stderr } = await execPromise(command, { cwd, signal });
     return {
       exitCode: 0,
       stdout,

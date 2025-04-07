@@ -83,7 +83,7 @@ function ChatPage() {
     }
   }, [appConfig.prompt, environment, initialPromptSent, append]);
 
-  const { isUserInputTools } = useIsUserInputTools({ messages });
+  const { isUserInputTools, isToolRunning } = useIsUserInputTools({ messages });
   const isLoading = status === "submitted" || status === "streaming";
 
   const renderMessages = createRenderMessages(messages, isLoading);
@@ -117,9 +117,9 @@ function ChatPage() {
   // AND environment is loaded, AND no error retry is shown
   const showTextInput =
     !showSettings &&
-    (!isLoading || isUserInputTools) &&
     environment &&
-    !showErrorRetry;
+    !showErrorRetry &&
+    (isUserInputTools || (!isLoading && !isToolRunning));
 
   const [_, height] = useStdoutDimensions();
 

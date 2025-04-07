@@ -1,15 +1,16 @@
 import { ConfirmInput } from "@inkjs/ui";
 import { Box, Text, useFocus } from "ink";
 
-export function ConfirmToolUsage({
+export function ConfirmPrompt({
   confirm,
-}: { confirm: (approved: boolean) => void }) {
+  prompt,
+}: { confirm: (result: boolean) => void; prompt: string }) {
   const { isFocused } = useFocus({ autoFocus: true });
 
   return (
     <Box gap={1}>
       <Text color="whiteBright" underline={isFocused}>
-        Allow this tool to run?
+        {prompt}
       </Text>
       <ConfirmInput
         isDisabled={!isFocused}

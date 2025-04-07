@@ -1,8 +1,10 @@
-import { useExecuteTool } from "@/lib/tools";
+import { isUserInputTool, useExecuteTool } from "@/lib/tools";
+import { Spinner } from "@inkjs/ui";
 import { Box } from "ink";
+import { useEffect, useState } from "react";
 import { ApplyDiffTool } from "./apply-diff-tool";
 import { AskFollowupQuestionTool } from "./ask-followup-question-tool";
-import { ConfirmToolUsage } from "./confirm-tool-usage";
+import { ConfirmPrompt } from "./confirm-prompt";
 import { ErrorResult } from "./error-result";
 import { ExecuteCommandTool } from "./execute-command-tool";
 import { GlobFilesTool } from "./glob-files-tool";
@@ -30,11 +32,22 @@ const ToolBox: React.FC<
     addToolResult: (args: { toolCallId: string; result: unknown }) => void;
   }
 > = ({ toolCall, addToolResult }) => {
-  const { approval, approveTool } = useExecuteTool({
+  const { approval, approveTool, abortTool } = useExecuteTool({
     toolCall,
     addToolResult,
   });
 
+  const isRunning =
+    toolCall.state === "call" &&
+    approval === "approved" &&
+    !isUserInputTool(toolCall.toolName);
+  const [showAbortConfirm, setShowAbortConfirm] = useState(false);
+  useEffect(() => {
+    if (isRunning) {
+      const timeoutId = setTimeout(() => setShowAbortConfirm(true), 1500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isRunning]);
   const C = ToolComponents[toolCall.toolName];
   const children = (
     <>
@@ -43,7 +56,16 @@ const ToolBox: React.FC<
       ) : (
         <Box>Unknown tool: {toolCall.toolName}</Box>
       )}
-      {approval === "pending" && <ConfirmToolUsage confirm={approveTool} />}
+      {approval === "pending" && (
+        <ConfirmPrompt confirm={approveTool} prompt="Allow this tool to run?" />
+      )}
+      {isRunning && <Spinner />}
+      {approval !== "aborted" && showAbortConfirm && (
+        <ConfirmPrompt
+          confirm={(result) => result && abortTool()}
+          prompt="Abort this tool?"
+        />
+      )}
       {toolCall.state === "result" &&
         typeof toolCall.result === "object" &&
         toolCall.result !== null && // Added null check for safety
