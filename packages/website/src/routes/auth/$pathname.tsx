@@ -9,14 +9,7 @@ function Auth() {
   const { pathname } = Route.useParams();
   return (
     <div className="flex flex-col grow size-full min-h-screen items-center justify-center gap-3">
-      <AuthCard
-        socialLayout="vertical"
-        pathname={pathname}
-        classNames={{
-          base: "gap-0",
-          content: "[&>form]:gap-4 [&>form>div:nth-child(2)]:hidden",
-        }}
-      />
+      <AuthCard socialLayout="vertical" pathname={pathname} />
     </div>
   );
 }

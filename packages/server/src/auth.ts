@@ -1,19 +1,27 @@
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
-import {
-  admin,
-  bearer,
-  emailOTP,
-  magicLink,
-  oAuthProxy,
-} from "better-auth/plugins";
+import { admin, bearer, magicLink, oAuthProxy } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
 import Stripe from "stripe";
 import { db } from "./db";
 import { StripePlans } from "./lib/constants";
 import { deviceLink } from "./lib/device-link";
+import { resend } from "./lib/resend";
 
 export const auth = betterAuth({
+  user: {
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailVerification: async ({ newEmail, url }) => {
+        await resend.emails.send({
+          from: "Pochi <noreply@getpochi.com>",
+          to: newEmail,
+          subject: "Verify your new email",
+          html: `<p>Click <a href="${url}">here</a> to verify your new email.</p>`,
+        });
+      },
+    },
+  },
   trustedOrigins: [
     "https://app.getpochi.com",
     "https://ragdoll-production.up.railway.app",
@@ -46,18 +54,14 @@ export const auth = betterAuth({
     admin(),
     bearer(),
     oAuthProxy(),
-    emailOTP({
-      async sendVerificationOTP({ email, otp, type }) {
-        if (type !== "sign-in") {
-          return;
-        }
-
-        console.log("Sending OTP to", email, otp);
-      },
-    }),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        console.log(`Magic link: ${email} | ${url}`);
+        await resend.emails.send({
+          from: "Pochi <noreply@getpochi.com>",
+          to: email,
+          subject: "Login to Pochi",
+          html: `Click <a href="${url}">here</a> to login to Pochi.`,
+        });
       },
     }),
     deviceLink(),

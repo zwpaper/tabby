@@ -29,6 +29,7 @@ export function Providers({
           settingsUrl="/account"
           avatar
           credentials={false}
+          magicLink={true}
         >
           {children}
         </AuthUIProviderTanstack>
