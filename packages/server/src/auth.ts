@@ -19,7 +19,18 @@ export const auth = betterAuth({
     type: "postgres",
   },
   socialProviders: {
-    github: createGithubProvider(),
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || "GITHUB_CLIENT_ID is not set",
+      clientSecret:
+        process.env.GITHUB_CLIENT_SECRET || "GITHUB_CLIENT_SECRET is not set",
+      redirectURI: "https://app.getpochi.com/api/auth/callback/github",
+    },
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || "GOOGLE_CLIENT_ID is not set",
+      clientSecret:
+        process.env.GOOGLE_CLIENT_SECRET || "GOOGLE_CLIENT_SECRET is not set",
+      redirectURI: "https://app.getpochi.com/api/auth/callback/google",
+    },
   },
   plugins: [
     bearer(),
@@ -42,15 +53,6 @@ export const auth = betterAuth({
     createStripePlugin(),
   ],
 });
-
-function createGithubProvider() {
-  return {
-    clientId: process.env.GITHUB_CLIENT_ID || "GITHUB_CLIENT_ID is not set",
-    clientSecret:
-      process.env.GITHUB_CLIENT_SECRET || "GITHUB_CLIENT_SECRET is not set",
-    redirectURI: "https://app.getpochi.com/api/auth/callback/github",
-  };
-}
 
 function createStripePlugin() {
   const stripeClient = new Stripe(
