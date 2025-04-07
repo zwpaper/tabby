@@ -14,10 +14,10 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_auth/settings")({
+export const Route = createFileRoute("/_auth/_settings")({
   beforeLoad: async (ctx) => {
     if (ctx.location.pathname === "/settings") {
-      throw redirect({ to: "/settings/account" });
+      throw redirect({ to: "/account" });
     }
   },
   component: Settings,
@@ -33,17 +33,17 @@ interface Pane {
 const MainPanes: Pane[] = [
   {
     title: "Account",
-    url: "/settings/account",
+    url: "/account",
     icon: IconUserCircle,
   },
   {
     title: "Usage",
-    url: "/settings/usage",
+    url: "/usage",
     icon: IconChartBar,
   },
   {
     title: "Billing",
-    url: "/settings/billing",
+    url: "/billing",
     icon: IconCreditCard,
   },
 ];

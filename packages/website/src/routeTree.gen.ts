@@ -14,11 +14,11 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
-import { Route as AuthSettingsRouteImport } from './routes/_auth.settings/route'
-import { Route as AuthSettingsUsageImport } from './routes/_auth.settings/usage'
-import { Route as AuthSettingsBillingImport } from './routes/_auth.settings/billing'
-import { Route as AuthSettingsAccountImport } from './routes/_auth.settings/account'
+import { Route as AuthSettingsRouteImport } from './routes/_auth._settings/route'
 import { Route as AuthAuthDeviceLinkImport } from './routes/_auth.auth/device-link'
+import { Route as AuthSettingsUsageImport } from './routes/_auth._settings/usage'
+import { Route as AuthSettingsBillingImport } from './routes/_auth._settings/billing'
+import { Route as AuthSettingsAccountImport } from './routes/_auth._settings/account'
 
 // Create/Update Routes
 
@@ -40,8 +40,13 @@ const AuthPathnameRoute = AuthPathnameImport.update({
 } as any)
 
 const AuthSettingsRouteRoute = AuthSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+  id: '/_settings',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const AuthAuthDeviceLinkRoute = AuthAuthDeviceLinkImport.update({
+  id: '/auth/device-link',
+  path: '/auth/device-link',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -63,12 +68,6 @@ const AuthSettingsAccountRoute = AuthSettingsAccountImport.update({
   getParentRoute: () => AuthSettingsRouteRoute,
 } as any)
 
-const AuthAuthDeviceLinkRoute = AuthAuthDeviceLinkImport.update({
-  id: '/auth/device-link',
-  path: '/auth/device-link',
-  getParentRoute: () => AuthRoute,
-} as any)
-
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -87,10 +86,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthImport
       parentRoute: typeof rootRoute
     }
-    '/_auth/settings': {
-      id: '/_auth/settings'
-      path: '/settings'
-      fullPath: '/settings'
+    '/_auth/_settings': {
+      id: '/_auth/_settings'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof AuthSettingsRouteImport
       parentRoute: typeof AuthImport
     }
@@ -101,33 +100,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathnameImport
       parentRoute: typeof rootRoute
     }
+    '/_auth/_settings/account': {
+      id: '/_auth/_settings/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthSettingsAccountImport
+      parentRoute: typeof AuthSettingsRouteImport
+    }
+    '/_auth/_settings/billing': {
+      id: '/_auth/_settings/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthSettingsBillingImport
+      parentRoute: typeof AuthSettingsRouteImport
+    }
+    '/_auth/_settings/usage': {
+      id: '/_auth/_settings/usage'
+      path: '/usage'
+      fullPath: '/usage'
+      preLoaderRoute: typeof AuthSettingsUsageImport
+      parentRoute: typeof AuthSettingsRouteImport
+    }
     '/_auth/auth/device-link': {
       id: '/_auth/auth/device-link'
       path: '/auth/device-link'
       fullPath: '/auth/device-link'
       preLoaderRoute: typeof AuthAuthDeviceLinkImport
       parentRoute: typeof AuthImport
-    }
-    '/_auth/settings/account': {
-      id: '/_auth/settings/account'
-      path: '/account'
-      fullPath: '/settings/account'
-      preLoaderRoute: typeof AuthSettingsAccountImport
-      parentRoute: typeof AuthSettingsRouteImport
-    }
-    '/_auth/settings/billing': {
-      id: '/_auth/settings/billing'
-      path: '/billing'
-      fullPath: '/settings/billing'
-      preLoaderRoute: typeof AuthSettingsBillingImport
-      parentRoute: typeof AuthSettingsRouteImport
-    }
-    '/_auth/settings/usage': {
-      id: '/_auth/settings/usage'
-      path: '/usage'
-      fullPath: '/settings/usage'
-      preLoaderRoute: typeof AuthSettingsUsageImport
-      parentRoute: typeof AuthSettingsRouteImport
     }
   }
 }
@@ -163,36 +162,34 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '': typeof AuthRouteWithChildren
-  '/settings': typeof AuthSettingsRouteRouteWithChildren
+  '': typeof AuthSettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/account': typeof AuthSettingsAccountRoute
+  '/billing': typeof AuthSettingsBillingRoute
+  '/usage': typeof AuthSettingsUsageRoute
   '/auth/device-link': typeof AuthAuthDeviceLinkRoute
-  '/settings/account': typeof AuthSettingsAccountRoute
-  '/settings/billing': typeof AuthSettingsBillingRoute
-  '/settings/usage': typeof AuthSettingsUsageRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '': typeof AuthRouteWithChildren
-  '/settings': typeof AuthSettingsRouteRouteWithChildren
+  '': typeof AuthSettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/account': typeof AuthSettingsAccountRoute
+  '/billing': typeof AuthSettingsBillingRoute
+  '/usage': typeof AuthSettingsUsageRoute
   '/auth/device-link': typeof AuthAuthDeviceLinkRoute
-  '/settings/account': typeof AuthSettingsAccountRoute
-  '/settings/billing': typeof AuthSettingsBillingRoute
-  '/settings/usage': typeof AuthSettingsUsageRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
-  '/_auth/settings': typeof AuthSettingsRouteRouteWithChildren
+  '/_auth/_settings': typeof AuthSettingsRouteRouteWithChildren
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/_auth/_settings/account': typeof AuthSettingsAccountRoute
+  '/_auth/_settings/billing': typeof AuthSettingsBillingRoute
+  '/_auth/_settings/usage': typeof AuthSettingsUsageRoute
   '/_auth/auth/device-link': typeof AuthAuthDeviceLinkRoute
-  '/_auth/settings/account': typeof AuthSettingsAccountRoute
-  '/_auth/settings/billing': typeof AuthSettingsBillingRoute
-  '/_auth/settings/usage': typeof AuthSettingsUsageRoute
 }
 
 export interface FileRouteTypes {
@@ -200,32 +197,30 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | ''
-    | '/settings'
     | '/auth/$pathname'
+    | '/account'
+    | '/billing'
+    | '/usage'
     | '/auth/device-link'
-    | '/settings/account'
-    | '/settings/billing'
-    | '/settings/usage'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | ''
-    | '/settings'
     | '/auth/$pathname'
+    | '/account'
+    | '/billing'
+    | '/usage'
     | '/auth/device-link'
-    | '/settings/account'
-    | '/settings/billing'
-    | '/settings/usage'
   id:
     | '__root__'
     | '/'
     | '/_auth'
-    | '/_auth/settings'
+    | '/_auth/_settings'
     | '/auth/$pathname'
+    | '/_auth/_settings/account'
+    | '/_auth/_settings/billing'
+    | '/_auth/_settings/usage'
     | '/_auth/auth/device-link'
-    | '/_auth/settings/account'
-    | '/_auth/settings/billing'
-    | '/_auth/settings/usage'
   fileRoutesById: FileRoutesById
 }
 
@@ -262,37 +257,37 @@ export const routeTree = rootRoute
     "/_auth": {
       "filePath": "_auth.tsx",
       "children": [
-        "/_auth/settings",
+        "/_auth/_settings",
         "/_auth/auth/device-link"
       ]
     },
-    "/_auth/settings": {
-      "filePath": "_auth.settings/route.tsx",
+    "/_auth/_settings": {
+      "filePath": "_auth._settings/route.tsx",
       "parent": "/_auth",
       "children": [
-        "/_auth/settings/account",
-        "/_auth/settings/billing",
-        "/_auth/settings/usage"
+        "/_auth/_settings/account",
+        "/_auth/_settings/billing",
+        "/_auth/_settings/usage"
       ]
     },
     "/auth/$pathname": {
       "filePath": "auth/$pathname.tsx"
     },
+    "/_auth/_settings/account": {
+      "filePath": "_auth._settings/account.tsx",
+      "parent": "/_auth/_settings"
+    },
+    "/_auth/_settings/billing": {
+      "filePath": "_auth._settings/billing.tsx",
+      "parent": "/_auth/_settings"
+    },
+    "/_auth/_settings/usage": {
+      "filePath": "_auth._settings/usage.tsx",
+      "parent": "/_auth/_settings"
+    },
     "/_auth/auth/device-link": {
       "filePath": "_auth.auth/device-link.tsx",
       "parent": "/_auth"
-    },
-    "/_auth/settings/account": {
-      "filePath": "_auth.settings/account.tsx",
-      "parent": "/_auth/settings"
-    },
-    "/_auth/settings/billing": {
-      "filePath": "_auth.settings/billing.tsx",
-      "parent": "/_auth/settings"
-    },
-    "/_auth/settings/usage": {
-      "filePath": "_auth.settings/usage.tsx",
-      "parent": "/_auth/settings"
     }
   }
 }

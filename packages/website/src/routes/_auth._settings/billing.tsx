@@ -39,7 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient, authClient } from "@/lib/auth-client";
 import moment from "moment";
 
-export const Route = createFileRoute("/_auth/settings/billing")({
+export const Route = createFileRoute("/_auth/_settings/billing")({
   loader: async () => {
     const { data, error } = await authClient.subscription.list();
     if (error) {

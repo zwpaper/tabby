@@ -26,7 +26,7 @@ export function Providers({
           }
           providers={["github"]}
           signUp={false}
-          settingsUrl="/settings/account"
+          settingsUrl="/account"
           avatar
           credentials={false}
         >
