@@ -23,6 +23,6 @@ jobs:
           allowUpdates: true
           prerelease: true
           makeLatest: false
-          artifacts: "packages/code/dist/*.tar.gz"
+          artifacts: "packages/code/dist/*"
           tag: latest
           removeArtifacts: true
