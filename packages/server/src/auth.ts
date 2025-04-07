@@ -1,6 +1,12 @@
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
-import { bearer, emailOTP, magicLink, oAuthProxy } from "better-auth/plugins";
+import {
+  admin,
+  bearer,
+  emailOTP,
+  magicLink,
+  oAuthProxy,
+} from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
 import Stripe from "stripe";
 import { db } from "./db";
@@ -33,6 +39,7 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    admin(),
     bearer(),
     oAuthProxy(),
     emailOTP({

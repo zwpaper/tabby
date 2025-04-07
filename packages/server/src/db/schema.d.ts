@@ -48,6 +48,7 @@ export interface Session {
   createdAt: Timestamp;
   expiresAt: Timestamp;
   id: string;
+  impersonatedBy: string | null;
   ipAddress: string | null;
   token: string;
   updatedAt: Timestamp;
@@ -69,12 +70,16 @@ export interface Subscription {
 }
 
 export interface User {
+  banExpires: Timestamp | null;
+  banned: boolean | null;
+  banReason: string | null;
   createdAt: Timestamp;
   email: string;
   emailVerified: boolean;
   id: string;
   image: string | null;
   name: string;
+  role: string | null;
   stripeCustomerId: string | null;
   updatedAt: Timestamp;
 }
