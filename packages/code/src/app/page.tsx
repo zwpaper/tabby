@@ -15,6 +15,8 @@ const customTheme = extendTheme(defaultTheme, {
 
 const Router = () => {
   const { data, isLoading } = useAuth();
+  if (data) return <ChatPage />;
+
   if (isLoading) {
     return (
       <Box
@@ -29,7 +31,7 @@ const Router = () => {
     );
   }
 
-  return data ? <ChatPage /> : <LoginPage />;
+  return <LoginPage />;
 };
 
 const App = ({ config }: { config: AppConfig }) => {

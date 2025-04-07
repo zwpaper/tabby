@@ -1,4 +1,5 @@
 import type { useTokenUsage } from "@/lib/hooks/use-token-usage";
+import { useLocalSettings } from "@/lib/storage";
 import type { useChat } from "@ai-sdk/react";
 import { ProgressBar } from "@inkjs/ui";
 import type { User } from "better-auth";
@@ -28,7 +29,9 @@ function formatContextWindow(size: number): number {
   return percentage * 100;
 }
 
-function ChatHeader({ user, tokenUsage, status }: ChatHeaderProps) {
+function ChatHeader({ tokenUsage, status }: ChatHeaderProps) {
+  const [{ model }] = useLocalSettings();
+
   return (
     <Box alignItems="center" gap={1} width="100%">
       <Box
@@ -38,7 +41,7 @@ function ChatHeader({ user, tokenUsage, status }: ChatHeaderProps) {
         paddingX={1}
         width={45}
       >
-        <Text>Welcome {user.email}</Text>
+        <Text>Model: {model}</Text>
         <Text>
           Tokens: ↑ {formatTokenCount(tokenUsage.promptTokens)} ↓{" "}
           {formatTokenCount(tokenUsage.completionTokens)} ( {status} )

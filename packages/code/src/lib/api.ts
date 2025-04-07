@@ -10,6 +10,14 @@ import { authStorage } from "./storage";
 const DevBaseUrl = "http://localhost:4111";
 const ProdBaseUrl = "https://app.getpochi.com";
 
+function setAuthData(data: { user: User; session: Session } | null) {
+  authStorage.setItem("authData", JSON.stringify(data));
+}
+
+function getAuthData() {
+  return JSON.parse(authStorage.getItem("authData") || "null");
+}
+
 function setToken(token: string) {
   authStorage.setItem("authToken", token);
 }
@@ -35,8 +43,12 @@ export function useAuthApi() {
     [appConfig],
   );
   const [data, setData] = useState<{ user: User; session: Session } | null>(
-    null,
+    getAuthData(),
   );
+  useEffect(() => {
+    setAuthData(data);
+  }, [data]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<{ message: string } | null>(null);
 
