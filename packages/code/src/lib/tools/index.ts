@@ -1,6 +1,5 @@
 import type { ExecuteCommandInputType } from "@ragdoll/tools";
 import type { Message, ToolCall, ToolInvocation } from "ai";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { applyDiff } from "./apply-diff";
 import { executeCommand } from "./execute-command";
 import { globFiles } from "./glob-files";
@@ -57,90 +56,15 @@ export async function invokeTool(tool: {
   return await safeCall(invokeToolImpl(tool));
 }
 
-type Approval = "approved" | "rejected" | "pending" | "aborted";
-
-interface UseExecuteToolParams {
-  toolCall: ToolInvocation;
-  addToolResult: (args: { toolCallId: string; result: unknown }) => void;
-}
-
-export function useExecuteTool({
-  toolCall,
-  addToolResult,
-}: UseExecuteToolParams) {
-  const { toolName, toolCallId, state } = toolCall;
-  const [approval, setApproval] = useState<Approval>(
-    getDefaultApproval(toolCall),
-  );
-  const abortController = useMemo(() => new AbortController(), []);
-
-  const approveTool = (approved: boolean) => {
-    setApproval(approved ? "approved" : "rejected");
-  };
-
-  const invokeToolTriggered = useRef(false);
-
-  useEffect(() => {
-    if (state === "result") return;
-
-    if (UserInputTools.has(toolName)) {
-      return;
-    }
-
-    if (approval === "pending") {
-      return;
-    }
-
-    if (invokeToolTriggered.current) {
-      return;
-    }
-
-    if (state === "call") {
-      invokeToolTriggered.current = true;
-      if (approval === "approved") {
-        invokeTool({ toolCall, signal: abortController.signal }).then(
-          (result) => {
-            addToolResult({ toolCallId, result });
-          },
-        );
-      } else if (approval === "rejected") {
-        addToolResult({
-          toolCallId,
-          result: { error: "User rejected tool usage" },
-        });
-      }
-    }
-  }, [
-    approval,
-    toolName,
-    toolCallId,
-    toolCall,
-    state,
-    addToolResult,
-    abortController.signal,
-  ]);
-
-  return {
-    approval,
-    approveTool,
-    abortTool: () => {
-      setApproval("aborted");
-      abortController.abort();
-    },
-  };
-}
-
-function getDefaultApproval(toolCall: ToolInvocation) {
+export function isDefaultApproved(toolCall: ToolInvocation) {
   const { toolName, state } = toolCall;
-  let defaultApproval: Approval =
+  let defaultApproval: boolean =
     ToolsExemptFromApproval.has(toolName) || state === "result"
-      ? "approved"
-      : "pending";
   if (toolName === "executeCommand") {
     if ((toolCall.args as ExecuteCommandInputType).requiresApproval) {
-      defaultApproval = "pending";
+      defaultApproval = false
     } else {
-      defaultApproval = "approved";
+      defaultApproval = true
     }
   }
   return defaultApproval;
@@ -160,34 +84,28 @@ const ToolsExemptFromApproval = new Set([
   "searchFiles",
 ]);
 
-export function useIsUserInputTools({
+export function hasPendingUserInputTool({
   messages,
 }: {
   messages: Message[];
 }) {
   let isUserInputTools = false;
-  let isToolRunning = false;
   for (const message of messages) {
     const parts = message.parts || [];
     for (const part of parts) {
-      if (part.type === "tool-invocation") {
+      if (
+        part.type === "tool-invocation" &&
+        part.toolInvocation.state === "call"
+      ) {
         const { toolName } = part.toolInvocation;
         if (UserInputTools.has(toolName)) {
           isUserInputTools = true;
-        }
-
-        // FIXME(meng): this is really a hack, we shall track all invokeTool pending promise to accurately track the tool running state.
-        if (part.toolInvocation.args.signal) {
-          isToolRunning = true;
         }
       }
     }
   }
 
-  return {
-    isUserInputTools,
-    isToolRunning,
-  };
+  return isUserInputTools;
 }
 
 export function prepareMessages(messages: Message[]) {

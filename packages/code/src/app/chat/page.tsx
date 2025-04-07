@@ -1,5 +1,6 @@
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
+import type { ToolProps } from "@/components/tool-box/types";
 import { useApiClient } from "@/lib/api";
 import { useAppConfig } from "@/lib/app-config";
 import { useAuth } from "@/lib/auth";
@@ -7,7 +8,11 @@ import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { useLocalSettings } from "@/lib/storage";
-import { prepareMessages, useIsUserInputTools } from "@/lib/tools";
+import {
+  hasPendingUserInputTool,
+  invokeTool,
+  prepareMessages,
+} from "@/lib/tools";
 import { type Message, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
 import type {
@@ -15,7 +20,7 @@ import type {
   ChatRequest as RagdollChatRequest,
 } from "@ragdoll/server";
 import { Box, Text } from "ink";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import SettingsModal from "./components/settings-modal";
@@ -83,7 +88,45 @@ function ChatPage() {
     }
   }, [appConfig.prompt, environment, initialPromptSent, append]);
 
-  const { isUserInputTools, isToolRunning } = useIsUserInputTools({ messages });
+  const abortController = useRef<AbortController | null>(null);
+  const [runningToolCall, setRunningToolCall] = useState<
+    ToolProps["toolCall"] | null
+  >(null);
+  const hasRunningToolCall = !!runningToolCall;
+  const onToolCall = async (
+    toolCall: ToolProps["toolCall"],
+    approved: boolean,
+  ) => {
+    if (runningToolCall) {
+      throw new Error("Cannot call a tool while another tool is running");
+    }
+
+    if (approved) {
+      abortController.current = new AbortController();
+      setRunningToolCall(toolCall);
+      const result = await invokeTool({
+        toolCall,
+        signal: abortController.current.signal,
+      });
+      addToolResult({ toolCallId: toolCall.toolCallId, result });
+      setRunningToolCall(null);
+    } else {
+      addToolResult({
+        toolCallId: toolCall.toolCallId,
+        result: { error: "User rejected tool usage" },
+      });
+    }
+  };
+
+  const abortToolCall = () => {
+    if (runningToolCall) {
+      abortController.current?.abort();
+      abortController.current = null;
+      setRunningToolCall(null);
+    }
+  };
+
+  const hasPendingUserInput = hasPendingUserInputTool({ messages });
   const isLoading = status === "submitted" || status === "streaming";
 
   const renderMessages = createRenderMessages(messages, isLoading);
@@ -119,7 +162,7 @@ function ChatPage() {
     !showSettings &&
     environment &&
     !showErrorRetry &&
-    (isUserInputTools || (!isLoading && !isToolRunning));
+    (hasPendingUserInput || (!isLoading && !hasRunningToolCall));
 
   const [_, height] = useStdoutDimensions();
 
@@ -154,7 +197,9 @@ function ChatPage() {
                     <ToolBox
                       key={part.toolInvocation.toolCallId}
                       toolCall={part.toolInvocation}
-                      addToolResult={addToolResult}
+                      runningToolCall={runningToolCall}
+                      onToolCall={onToolCall}
+                      abortToolCall={abortToolCall}
                     />
                   );
                 }
