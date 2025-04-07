@@ -10,13 +10,18 @@ export const AvailableModels: {
   contextWindow: number;
   costType: "basic" | "premium";
 }[] = [
-  {
-    id: "google/gemini-2.5-pro-exp-03-25",
-    contextWindow: 1_000_000,
-    costType: "premium",
-  },
   { id: "openai/gpt-4o", contextWindow: 128_000, costType: "premium" },
   { id: "openai/gpt-4o-mini", contextWindow: 128_000, costType: "basic" },
+  {
+    id: "google/gemini-2.5-pro-exp-03-25",
+    contextWindow: 1_048_576,
+    costType: "premium",
+  },
+  {
+    id: "google/gemini-2.0-flash",
+    contextWindow: 1_048_576,
+    costType: "basic",
+  },
 ];
 
 export const StripePlans = [
@@ -48,6 +53,8 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
       return openai("gpt-4o");
     case "google/gemini-2.5-pro-exp-03-25":
       return google("gemini-2.5-pro-exp-03-25");
+    case "google/gemini-2.0-flash":
+      return google("gemini-2.0-flash");
     default:
       return null;
   }
