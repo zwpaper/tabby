@@ -26,5 +26,6 @@ jobs:
           artifacts: "packages/code/dist/*"
           tag: latest
           removeArtifacts: true
-          repo: https://github.com/getpochi/code
+          owner: getpochi
+          repo: code
           token: ${{ secrets.POCHI_GITHUB_TOKEN }}
