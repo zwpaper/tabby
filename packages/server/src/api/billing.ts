@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth";
 import type { DB } from "../db/schema"; // Import DB type if needed for context typing
 import { readCurrentMonthQuota } from "../lib/billing";
+import { stripeClient } from "../lib/stripe";
 
 // Define the schema for query parameters for history endpoint
 const BillingHistoryQuerySchema = z.object({
@@ -22,20 +23,12 @@ const billing = new Hono<{ Variables: { db: DB } }>() // Add DB type to Hono var
       const user = c.get("user");
       const { limit, after } = c.req.valid("query");
 
-      if (!process.env.STRIPE_SECRET_KEY) {
-        throw new HTTPException(500, {
-          message: "Billing system not configured.",
-        });
-      }
-
       if (!user.stripeCustomerId) {
         throw new HTTPException(400, { message: "User is not a customer." });
       }
 
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
       try {
-        const invoices = await stripe.invoices.list({
+        const invoices = await stripeClient.invoices.list({
           customer: user.stripeCustomerId,
           limit: limit,
           starting_after: after,

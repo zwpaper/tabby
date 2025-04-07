@@ -2,11 +2,11 @@ import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { admin, bearer, magicLink, oAuthProxy } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
-import Stripe from "stripe";
 import { db } from "./db";
 import { StripePlans } from "./lib/constants";
 import { deviceLink } from "./lib/device-link";
 import { resend } from "./lib/resend";
+import { stripeClient } from "./lib/stripe";
 
 export const auth = betterAuth({
   user: {
@@ -65,25 +65,18 @@ export const auth = betterAuth({
       },
     }),
     deviceLink(),
-    createStripePlugin(),
+    stripe({
+      stripeClient,
+      stripeWebhookSecret:
+        process.env.STRIPE_WEBHOOK_SECRET || "STRIPE_WEBHOOK_SECRET is not set",
+      createCustomerOnSignUp: true,
+      subscription: {
+        enabled: true,
+        plans: StripePlans,
+      },
+    }),
   ],
 });
-
-function createStripePlugin() {
-  const stripeClient = new Stripe(
-    process.env.STRIPE_SECRET_KEY || "STRIPE_SECRET_KEY is not set",
-  );
-  return stripe({
-    stripeClient,
-    stripeWebhookSecret:
-      process.env.STRIPE_WEBHOOK_SECRET || "STRIPE_WEBHOOK_SECRET is not set",
-    createCustomerOnSignUp: true,
-    subscription: {
-      enabled: true,
-      plans: StripePlans,
-    },
-  });
-}
 
 type User = typeof auth.$Infer.Session.user;
 export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
