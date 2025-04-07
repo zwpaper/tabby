@@ -20,7 +20,7 @@ import type {
   ChatRequest as RagdollChatRequest,
 } from "@ragdoll/server";
 import { Box, Text } from "ink";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import SettingsModal from "./components/settings-modal";
@@ -93,38 +93,38 @@ function ChatPage() {
     ToolProps["toolCall"] | null
   >(null);
   const hasRunningToolCall = !!runningToolCall;
-  const onToolCall = async (
-    toolCall: ToolProps["toolCall"],
-    approved: boolean,
-  ) => {
-    if (runningToolCall) {
-      throw new Error("Cannot call a tool while another tool is running");
-    }
+  const onToolCall = useCallback(
+    async (toolCall: ToolProps["toolCall"], approved: boolean) => {
+      if (runningToolCall) {
+        throw new Error("Cannot call a tool while another tool is running");
+      }
 
-    if (approved) {
-      abortController.current = new AbortController();
-      setRunningToolCall(toolCall);
-      const result = await invokeTool({
-        toolCall,
-        signal: abortController.current.signal,
-      });
-      addToolResult({ toolCallId: toolCall.toolCallId, result });
-      setRunningToolCall(null);
-    } else {
-      addToolResult({
-        toolCallId: toolCall.toolCallId,
-        result: { error: "User rejected tool usage" },
-      });
-    }
-  };
+      if (approved) {
+        abortController.current = new AbortController();
+        setRunningToolCall(toolCall);
+        const result = await invokeTool({
+          toolCall,
+          signal: abortController.current.signal,
+        });
+        addToolResult({ toolCallId: toolCall.toolCallId, result });
+        setRunningToolCall(null);
+      } else {
+        addToolResult({
+          toolCallId: toolCall.toolCallId,
+          result: { error: "User rejected tool usage" },
+        });
+      }
+    },
+    [runningToolCall, addToolResult],
+  );
 
-  const abortToolCall = () => {
+  const abortToolCall = useCallback(() => {
     if (runningToolCall) {
       abortController.current?.abort();
       abortController.current = null;
       setRunningToolCall(null);
     }
-  };
+  }, [runningToolCall]);
 
   const hasPendingUserInput = hasPendingUserInputTool({ messages });
   const isLoading = status === "submitted" || status === "streaming";
