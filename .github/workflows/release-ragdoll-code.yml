@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: cd packages/code && bun run release && ls -R dist
+      
+      - uses: ncipollo/release-action@v1
+        if: github.event_name == 'push'
+        with:
+          allowUpdates: true
+          prerelease: true
+          makeLatest: false
+          artifacts: "packages/code/dist/*.tar.gz"
+          tag: latest
+          removeArtifacts: true

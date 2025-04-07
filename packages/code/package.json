@@ -6,7 +6,8 @@
     "build": "bun build src/cli.ts --compile --outfile ./dist/code",
     "tsc": "tsc --noEmit",
     "dev": "bun --watch src/cli.ts --dev",
-    "storybook": "bun ../ink-storybook/src/cli/index.tsx"
+    "storybook": "bun ../ink-storybook/src/cli/index.tsx",
+    "release": "./scripts/build-platform-binary.sh"
   },
   "dependencies": {
     "@ai-sdk/provider-utils": "^2.2.1",
