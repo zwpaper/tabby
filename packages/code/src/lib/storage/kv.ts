@@ -2,7 +2,12 @@ import Database from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 
-const sqliteName = path.join(process.env.HOME || "", ".ragdoll", "db.sqlite");
+const sqliteName = path.join(
+  process.env.HOME || "",
+  ".ragdoll",
+  "data",
+  "db.sqlite",
+);
 
 export class KV {
   readonly #database: Database;
