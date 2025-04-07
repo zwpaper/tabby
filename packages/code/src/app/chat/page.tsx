@@ -55,6 +55,11 @@ function ChatPage() {
     headers: {
       Authorization: `Bearer ${data.session.token}`,
     },
+    onResponse(response) {
+      if (response.status === 401) {
+        logout();
+      }
+    },
     onFinish(_, { finishReason, usage }) {
       if (finishReason === "unknown") {
         // Ignore unknown finish reasons
