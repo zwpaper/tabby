@@ -14,6 +14,10 @@ import { StripePlans } from "./lib/constants";
 import { deviceLink } from "./lib/device-link";
 
 export const auth = betterAuth({
+  trustedOrigins: [
+    "https://app.getpochi.com",
+    "https://ragdoll-production.up.railway.app",
+  ],
   session: {
     cookieCache: {
       enabled: true,
