@@ -47,6 +47,8 @@ const ToolBox: React.FC<
       const timeoutId = setTimeout(() => setShowAbortConfirm(true), 1500);
       return () => clearTimeout(timeoutId);
     }
+
+    setShowAbortConfirm(false);
   }, [isRunning]);
   const C = ToolComponents[toolCall.toolName];
   const children = (
