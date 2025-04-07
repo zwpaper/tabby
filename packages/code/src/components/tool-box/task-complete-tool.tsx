@@ -1,13 +1,10 @@
-import type {
-  AttemptCompletionInputType,
-  AttemptCompletionOutputType,
-} from "@ragdoll/tools";
+import type { AttemptCompletionFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import Markdown from "../markdown";
 import type { ToolProps } from "./types";
 
 export const TaskCompleteTool: React.FC<
-  ToolProps<AttemptCompletionInputType, AttemptCompletionOutputType>
+  ToolProps<AttemptCompletionFunctionType>
 > = ({ toolCall }) => {
   const { result, command } = toolCall.args;
   return (

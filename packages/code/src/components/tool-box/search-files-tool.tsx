@@ -1,14 +1,11 @@
-import type {
-  SearchFilesInputType,
-  SearchFilesOutputType,
-} from "@ragdoll/tools";
+import type { SearchFilesFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import Collapsible from "../collapsible";
 import type { ToolProps } from "./types";
 
-export const SearchFilesTool: React.FC<
-  ToolProps<SearchFilesInputType, SearchFilesOutputType>
-> = ({ toolCall }) => {
+export const SearchFilesTool: React.FC<ToolProps<SearchFilesFunctionType>> = ({
+  toolCall,
+}) => {
   const { path, regex, filePattern } = toolCall.args;
   let resultEl: React.ReactNode;
 

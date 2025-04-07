@@ -1,7 +1,3 @@
-import type {
-  ExecuteCommandInputType,
-  ExecuteCommandOutputType,
-} from "@ragdoll/tools";
 import { Box, Text } from "ink";
 
 const renderOutput = (
@@ -30,11 +26,12 @@ const renderOutput = (
     </Box>
   );
 };
+import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 import Collapsible from "../collapsible";
 import type { ToolProps } from "./types";
 
 export const ExecuteCommandTool: React.FC<
-  ToolProps<ExecuteCommandInputType, ExecuteCommandOutputType>
+  ToolProps<ExecuteCommandFunctionType>
 > = ({ toolCall }) => {
   const { command, cwd } = toolCall.args;
   let resultEl: React.ReactNode;

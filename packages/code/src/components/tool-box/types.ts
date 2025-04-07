@@ -14,7 +14,15 @@ export type ToolInvocation<INPUT, OUTPUT> =
       step?: number;
     } & ToolResult<string, INPUT, OUTPUT>);
 
-// biome-ignore lint/suspicious/noExplicitAny: external function def.
-export interface ToolProps<INPUT = any, OUTPUT = any> {
-  toolCall: ToolInvocation<INPUT, OUTPUT>;
+export interface ToolProps<
+  // biome-ignore lint/suspicious/noExplicitAny: external function def.
+  T extends (...args: any[]) => any = (...args: any[]) => any,
+> {
+  toolCall: ToolInvocation<
+    InputType<T>,
+    Awaited<ReturnType<T>> | { error: string }
+  >;
 }
+
+// biome-ignore lint/suspicious/noExplicitAny: external function def.
+type InputType<T extends (...args: any[]) => any> = Parameters<T>[0];

@@ -1,11 +1,11 @@
-import type { ApplyDiffInputType, ApplyDiffOutputType } from "@ragdoll/tools";
+import type { ApplyDiffFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import Collapsible from "../collapsible";
 import type { ToolProps } from "./types";
 
-export const ApplyDiffTool: React.FC<
-  ToolProps<ApplyDiffInputType, ApplyDiffOutputType>
-> = ({ toolCall }) => {
+export const ApplyDiffTool: React.FC<ToolProps<ApplyDiffFunctionType>> = ({
+  toolCall,
+}) => {
   const { path, diff, startLine, endLine } = toolCall.args;
 
   // Count the number of lines in the diff

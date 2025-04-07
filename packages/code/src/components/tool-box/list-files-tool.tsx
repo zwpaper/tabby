@@ -1,12 +1,12 @@
 import * as nodePath from "node:path";
-import type { ListFilesInputType, ListFilesOutputType } from "@ragdoll/tools";
+import type { ListFilesFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import { FileList } from "./file-list"; // Import the new component
 import type { ToolProps } from "./types";
 
-export const ListFilesTool: React.FC<
-  ToolProps<ListFilesInputType, ListFilesOutputType>
-> = ({ toolCall }) => {
+export const ListFilesTool: React.FC<ToolProps<ListFilesFunctionType>> = ({
+  toolCall,
+}) => {
   const { path, recursive } = toolCall.args;
 
   let resultEl: React.ReactNode;

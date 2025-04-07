@@ -1,10 +1,10 @@
-import type { ReadFileInputType, ReadFileOutputType } from "@ragdoll/tools";
+import type { ReadFileFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import type { ToolProps } from "./types";
 
-export const ReadFileTool: React.FC<
-  ToolProps<ReadFileInputType, ReadFileOutputType>
-> = ({ toolCall }) => {
+export const ReadFileTool: React.FC<ToolProps<ReadFileFunctionType>> = ({
+  toolCall,
+}) => {
   const { path, startLine, endLine } = toolCall.args; // Extract startLine and endLine
   let resultEl: React.ReactNode;
   if (toolCall.state === "result") {

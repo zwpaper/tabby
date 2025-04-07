@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  type ToolFunctionType,
-  type ToolInputType,
-  type ToolOutputType,
-  declareClientTool,
-} from "./types";
+import { type ToolFunctionType, declareClientTool } from "./types";
 
 export const globFiles = declareClientTool({
   description:
@@ -32,6 +27,4 @@ export const globFiles = declareClientTool({
   }),
 });
 
-export type GlobFilesInputType = ToolInputType<typeof globFiles>;
-export type GlobFilesOutputType = ToolOutputType<typeof globFiles>;
 export type GlobFilesFunctionType = ToolFunctionType<typeof globFiles>;

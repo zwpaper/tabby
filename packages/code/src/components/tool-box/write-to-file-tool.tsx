@@ -1,14 +1,11 @@
-import type {
-  WriteToFileInputType,
-  WriteToFileOutputType,
-} from "@ragdoll/tools";
+import type { WriteToFileFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import Collapsible from "../collapsible";
 import type { ToolProps } from "./types";
 
-export const WriteToFileTool: React.FC<
-  ToolProps<WriteToFileInputType, WriteToFileOutputType>
-> = ({ toolCall }) => {
+export const WriteToFileTool: React.FC<ToolProps<WriteToFileFunctionType>> = ({
+  toolCall,
+}) => {
   const { path, content } = toolCall.args;
 
   // Count the number of lines in the content

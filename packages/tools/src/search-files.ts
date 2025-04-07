@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  type ToolFunctionType,
-  type ToolInputType,
-  type ToolOutputType,
-  declareClientTool,
-} from "./types";
+import { type ToolFunctionType, declareClientTool } from "./types";
 
 export const searchFiles = declareClientTool({
   description:
@@ -36,6 +31,4 @@ export const searchFiles = declareClientTool({
   }),
 });
 
-export type SearchFilesInputType = ToolInputType<typeof searchFiles>;
-export type SearchFilesOutputType = ToolOutputType<typeof searchFiles>;
 export type SearchFilesFunctionType = ToolFunctionType<typeof searchFiles>;

@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  type ToolFunctionType,
-  type ToolInputType,
-  type ToolOutputType,
-  declareClientTool,
-} from "./types";
+import { type ToolFunctionType, declareClientTool } from "./types";
 
 export const executeCommand = declareClientTool({
   description:
@@ -34,8 +29,6 @@ export const executeCommand = declareClientTool({
   }),
 });
 
-export type ExecuteCommandInputType = ToolInputType<typeof executeCommand>;
-export type ExecuteCommandOutputType = ToolOutputType<typeof executeCommand>;
 export type ExecuteCommandFunctionType = ToolFunctionType<
   typeof executeCommand
 >;

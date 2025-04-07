@@ -1,4 +1,4 @@
-import type { ExecuteCommandInputType } from "@ragdoll/tools";
+import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 import type { Message, ToolCall, ToolInvocation } from "ai";
 import { applyDiff } from "./apply-diff";
 import { executeCommand } from "./execute-command";
@@ -8,8 +8,11 @@ import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { writeToFile } from "./write-to-file";
 
-// biome-ignore lint/suspicious/noExplicitAny: external call without type information
-const ToolMap: Record<string, (args: any) => Promise<unknown>> = {
+const ToolMap: Record<
+  string,
+  // biome-ignore lint/suspicious/noExplicitAny: external call without type information
+  (args: any, signal: AbortSignal) => Promise<unknown>
+> = {
   listFiles,
   globFiles,
   readFile,
@@ -30,15 +33,7 @@ async function invokeToolImpl(tool: {
     throw new Error(`${tool.toolCall.toolName} is not implemented`);
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: inject signal into args
-  const args = tool.toolCall.args as any;
-
-  try {
-    args.signal = tool.signal;
-    return await toolFunction(tool.toolCall.args);
-  } finally {
-    args.signal = undefined;
-  }
+  return await toolFunction(tool.toolCall.args, tool.signal);
 }
 
 function safeCall<T>(x: Promise<T>) {
@@ -57,14 +52,15 @@ export async function invokeTool(tool: {
 }
 
 export function isDefaultApproved(toolCall: ToolInvocation) {
+  type ExecuteCommandInputType = Parameters<ExecuteCommandFunctionType>[0];
   const { toolName, state } = toolCall;
   let defaultApproval: boolean =
-    ToolsExemptFromApproval.has(toolName) || state === "result"
+    ToolsExemptFromApproval.has(toolName) || state === "result";
   if (toolName === "executeCommand") {
     if ((toolCall.args as ExecuteCommandInputType).requiresApproval) {
-      defaultApproval = false
+      defaultApproval = false;
     } else {
-      defaultApproval = true
+      defaultApproval = true;
     }
   }
   return defaultApproval;

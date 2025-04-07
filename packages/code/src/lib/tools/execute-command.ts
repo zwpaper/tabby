@@ -1,16 +1,13 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
+import type { AbortableFunctionType } from "./types";
 
 const execPromise = promisify(exec);
 
-export const executeCommand = async ({
-  command,
-  cwd,
-  signal,
-}: Parameters<ExecuteCommandFunctionType>[0] & {
-  signal: AbortSignal;
-}): Promise<ReturnType<ExecuteCommandFunctionType>> => {
+export const executeCommand: AbortableFunctionType<
+  ExecuteCommandFunctionType
+> = async ({ command, cwd }, signal) => {
   if (!command) {
     throw new Error("Command is required to execute.");
   }

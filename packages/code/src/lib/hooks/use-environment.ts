@@ -2,8 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { listFiles } from "@/lib/tools/list-files";
 import type { Environment } from "@ragdoll/server";
-import type { ListFilesOutputType } from "@ragdoll/tools";
+import type { ListFilesFunctionType } from "@ragdoll/tools";
 import { useEffect, useState } from "react";
+
+type ListFilesOutputType = Awaited<ReturnType<ListFilesFunctionType>>;
 
 export function useEnvironment() {
   const listFilesOutput = useWorkspaceFiles();

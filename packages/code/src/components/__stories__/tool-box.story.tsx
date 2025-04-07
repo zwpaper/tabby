@@ -1,13 +1,11 @@
-import type {
-  ExecuteCommandOutputType,
-  SearchFilesOutputType,
-} from "@ragdoll/tools";
 import type { ToolInvocation } from "ai";
 import ToolBox from "../tool-box";
 
 function makeToolCall(
   toolName: string,
+  // biome-ignore lint/suspicious/noExplicitAny: storybook data
   args: any,
+  // biome-ignore lint/suspicious/noExplicitAny: storybook data
   result?: any,
   state: "call" | "result" = "call",
 ): ToolInvocation {
@@ -27,8 +25,6 @@ function makeToolCall(
     result,
   };
 }
-
-function addToolResult() {}
 
 const longContent = `Line 1: This is the first line of a long file content.
 Line 2: It demonstrates the collapsible feature.
@@ -71,10 +67,8 @@ Yet another line for good measure.
 Final extra line to demonstrate the collapsing behavior clearly.
 `;
 
-const searchResults: Exclude<
-  SearchFilesOutputType,
-  { error: string }
->["matches"] = [
+// biome-ignore lint/suspicious/noExplicitAny: storybook data
+const searchResults: any[] = [
   {
     file: "src/components/tool-box.tsx",
     line: 42,
@@ -94,7 +88,7 @@ const searchResults: Exclude<
     file: "src/components/__stories__/tool-box.story.tsx",
     line: 45,
     context:
-      '      component: <ToolBox toolCall={makeToolCall("listFiles", { path: ".", recursive: true }, { files: ["README.md", "package.json"] })} addToolResult={addToolResult} />',
+      '      component: <ToolBox toolCall={makeToolCall("listFiles", { path: ".", recursive: true }, { files: ["README.md", "package.json"] })} />',
   },
   {
     file: "src/index.tsx",
@@ -134,7 +128,9 @@ const storyExport = {
             },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -152,7 +148,9 @@ const storyExport = {
             },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -171,7 +169,9 @@ const storyExport = {
             },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -192,7 +192,9 @@ const storyExport = {
             undefined,
             "call",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -212,7 +214,9 @@ const storyExport = {
             { success: true },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -231,7 +235,9 @@ const storyExport = {
             { success: true },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -246,7 +252,9 @@ const storyExport = {
             { success: true },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -265,7 +273,9 @@ const storyExport = {
             undefined, // No result for this tool
             "call", // Always in 'call' state visually
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -281,7 +291,9 @@ const storyExport = {
             undefined,
             "call",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -293,10 +305,12 @@ const storyExport = {
           toolCall={makeToolCall(
             "executeCommand",
             { command: "echo 'Success!'" },
-            { stdout: "Success!\n", stderr: "" } as ExecuteCommandOutputType,
+            { stdout: "Success!\n", stderr: "" },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -311,10 +325,12 @@ const storyExport = {
             {
               stdout: "",
               stderr: "cat: non_existent_file: No such file or directory\n",
-            } as ExecuteCommandOutputType,
+            },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -329,10 +345,12 @@ const storyExport = {
             {
               stdout: longCommandOutput,
               stderr: "",
-            } as ExecuteCommandOutputType,
+            },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -348,7 +366,9 @@ const storyExport = {
             undefined,
             "call",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -360,10 +380,12 @@ const storyExport = {
           toolCall={makeToolCall(
             "searchFiles",
             { path: "src", regex: "consts+w+s*=s*" },
-            { matches: searchResults.slice(0, 3) } as SearchFilesOutputType,
+            { matches: searchResults.slice(0, 3) },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -375,10 +397,12 @@ const storyExport = {
           toolCall={makeToolCall(
             "searchFiles",
             { path: ".", regex: "xyz123__nomatch__abc" },
-            { matches: [] } as SearchFilesOutputType,
+            { matches: [] },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -390,10 +414,12 @@ const storyExport = {
           toolCall={makeToolCall(
             "searchFiles",
             { path: "src", regex: "import" },
-            { matches: searchResults } as SearchFilesOutputType, // Use all results
+            { matches: searchResults }, // Use all results
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -412,7 +438,9 @@ const storyExport = {
             undefined, // No result for this tool
             "call", // Always in 'call' state visually
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -428,7 +456,9 @@ const storyExport = {
             { error: "File not found." },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },
@@ -443,7 +473,9 @@ const storyExport = {
             { error: longErrorMessage },
             "result",
           )}
-          addToolResult={addToolResult}
+          onToolCall={() => {}}
+          abortToolCall={() => {}}
+          runningToolCall={null}
         />
       ),
     },

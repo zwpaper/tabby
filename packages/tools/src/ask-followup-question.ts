@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  type ToolFunctionType,
-  type ToolInputType,
-  type ToolOutputType,
-  declareClientTool,
-} from "./types";
+import { type ToolFunctionType, declareClientTool } from "./types";
 
 export const askFollowupQuestion = declareClientTool({
   description:
@@ -23,13 +18,6 @@ export const askFollowupQuestion = declareClientTool({
       .describe("Indicates whether the question was successfully asked."),
   }),
 });
-
-export type AskFollowupQuestionInputType = ToolInputType<
-  typeof askFollowupQuestion
->;
-export type AskFollowupQuestionOutputType = ToolOutputType<
-  typeof askFollowupQuestion
->;
 
 export type AskFollowupQuestionFunctionType = ToolFunctionType<
   typeof askFollowupQuestion
