@@ -155,7 +155,7 @@ function ChatPage() {
                 </Text>
                 {isLoading &&
                   message.id ===
-                  renderMessages[renderMessages.length - 1].id && <Spinner />}
+                    renderMessages[renderMessages.length - 1].id && <Spinner />}
               </Box>
               {message.parts?.map((part, index) => {
                 if (part.type === "text") {

@@ -2,12 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { listFiles } from "@/lib/tools/list-files";
 import type { Environment } from "@ragdoll/server";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 export function useEnvironment() {
   const environment = useRef<Environment | null>(null);
 
-  const reload = async () => {
+  const reload = useCallback(async () => {
     const listFilesOutput = await listFiles({ path: ".", recursive: true });
     const cwd = process.cwd();
     const workspace =
@@ -28,11 +28,11 @@ export function useEnvironment() {
       workspace,
       info,
     };
-  };
+  }, []);
 
   useEffect(() => {
     reload();
-  }, []);
+  }, [reload]);
 
   return { environment, reload };
 }
