@@ -59,6 +59,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     if (process.env.NODE_ENV !== "test") {
       await quotaCheck();
     }
+    if (!user.email.endsWith("@tabbyml.com")) {
+      throw new HTTPException(400, { message: "Internal user only" });
+    }
 
     let selectedModel: LanguageModelV1;
     switch (requestedModelId) {
