@@ -20,7 +20,7 @@ const deviceLinkSearchSchema = z.object({
   token: z.string(),
 });
 
-export const Route = createFileRoute("/_auth/auth/device-link")({
+export const Route = createFileRoute("/_authenticated/auth/device-link")({
   loaderDeps({ search }: { search: z.infer<typeof deviceLinkSearchSchema> }) {
     return { ...search };
   },

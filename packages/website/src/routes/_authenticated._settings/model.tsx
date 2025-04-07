@@ -14,7 +14,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 
 // Define the route with loader
-export const Route = createFileRoute("/_auth/_settings/model")({
+export const Route = createFileRoute("/_authenticated/_settings/model")({
   async loader() {
     const data = await apiClient.api.models.$get();
     if (data.ok) {

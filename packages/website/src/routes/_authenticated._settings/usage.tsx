@@ -22,7 +22,7 @@ import moment from "moment";
 import { useEffect, useMemo, useState } from "react"; // Import useMemo
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
-export const Route = createFileRoute("/_auth/_settings/usage")({
+export const Route = createFileRoute("/_authenticated/_settings/usage")({
   component: Usage,
 });
 

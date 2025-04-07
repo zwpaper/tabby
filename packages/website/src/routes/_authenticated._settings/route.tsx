@@ -14,7 +14,7 @@ import {
 } from "@tanstack/react-router";
 import { BrainCircuit } from "lucide-react";
 
-export const Route = createFileRoute("/_auth/_settings")({
+export const Route = createFileRoute("/_authenticated/_settings")({
   beforeLoad: async (ctx) => {
     if (ctx.location.pathname === "/settings") {
       throw redirect({ to: "/account" });
