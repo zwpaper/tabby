@@ -2,21 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { listFiles } from "@/lib/tools/list-files";
 import type { Environment } from "@ragdoll/server";
-import type { ListFilesFunctionType } from "@ragdoll/tools";
-import { useEffect, useState } from "react";
-
-type ListFilesOutputType = Awaited<ReturnType<ListFilesFunctionType>>;
+import { useEffect, useRef } from "react";
 
 export function useEnvironment() {
-  const listFilesOutput = useWorkspaceFiles();
-  const [environment, setEnvironment] = useState<Environment | null>(null);
+  const environment = useRef<Environment | null>(null);
 
-  useEffect(() => {
-    // Ensure listFilesOutput is loaded before setting the environment
-    if (!listFilesOutput) {
-      return;
-    }
-
+  const reload = async () => {
+    const listFilesOutput = await listFiles({ path: ".", recursive: true });
     const cwd = process.cwd();
     const workspace =
       "files" in listFilesOutput
@@ -31,33 +23,18 @@ export function useEnvironment() {
       customRules,
     };
 
-    setEnvironment({
+    environment.current = {
       currentTime: new Date().toString(),
       workspace,
       info,
-    });
-  }, [listFilesOutput]); // Re-run if listFilesOutput changes
+    };
+  };
 
-  return environment;
-}
-
-function useWorkspaceFiles() {
-  const [workspaceFiles, setWorkspaceFiles] = useState<ListFilesOutputType>({
-    files: [],
-    isTruncated: false,
-  });
   useEffect(() => {
-    // Initial fetch
-    listFiles({ path: ".", recursive: true }).then(setWorkspaceFiles);
-
-    // Fetch every 5 seconds
-    const handle = setInterval(async () => {
-      const x = await listFiles({ path: ".", recursive: true });
-      setWorkspaceFiles(x);
-    }, 5000);
-    return () => clearInterval(handle);
+    reload();
   }, []);
-  return workspaceFiles;
+
+  return { environment, reload };
 }
 
 // Recursively read `.cursorrules` files from cwd to root, concat them in order

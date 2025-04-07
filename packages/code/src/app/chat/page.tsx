@@ -31,7 +31,7 @@ function ChatPage() {
   const [{ model }] = useLocalSettings();
   const appConfig = useAppConfig();
   const { tokenUsage, trackTokenUsage } = useTokenUsage();
-  const environment = useEnvironment();
+  const { environment, reload: reloadEnvironment } = useEnvironment();
   const {
     messages,
     setMessages,
@@ -47,7 +47,7 @@ function ChatPage() {
     maxSteps: 100,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(model, request, environment), // Updated call
+      prepareRequestBody(model, request, environment.current), // Updated call
     headers: {
       Authorization: `Bearer ${data.session.token}`,
     },
@@ -62,6 +62,7 @@ function ChatPage() {
         return;
       }
 
+      reloadEnvironment();
       trackTokenUsage(usage);
     },
   });
@@ -154,7 +155,7 @@ function ChatPage() {
                 </Text>
                 {isLoading &&
                   message.id ===
-                    renderMessages[renderMessages.length - 1].id && <Spinner />}
+                  renderMessages[renderMessages.length - 1].id && <Spinner />}
               </Box>
               {message.parts?.map((part, index) => {
                 if (part.type === "text") {
