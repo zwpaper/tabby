@@ -1,9 +1,12 @@
+import { useApiClient } from "@/lib/api";
 import type { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { useLocalSettings } from "@/lib/storage";
 import type { useChat } from "@ai-sdk/react";
 import { ProgressBar } from "@inkjs/ui";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import type { User } from "better-auth";
 import { Box, Text } from "ink";
+import { Suspense } from "react";
 
 interface ChatHeaderProps {
   user: User;
@@ -21,16 +24,24 @@ function formatTokenCount(count: number): string {
   return `${(count / 1000000).toFixed(1)}m`;
 }
 
-const MaxContextWindow = 128_000;
-
-function formatContextWindow(size: number): number {
-  // Total context window is 1M
-  const percentage = size / MaxContextWindow;
+function formatContextWindow(size: number, maxWindow: number): number {
+  const percentage = size / maxWindow;
   return percentage * 100;
 }
 
-function ChatHeader({ tokenUsage, status }: ChatHeaderProps) {
+function HeaderContent({ tokenUsage, status }: ChatHeaderProps) {
+  const apiClient = useApiClient();
   const [{ model }] = useLocalSettings();
+  const { data: models } = useSuspenseQuery({
+    queryKey: ["models"],
+    queryFn: async () => {
+      const res = await apiClient.api.models.$get();
+      return await res.json();
+    },
+  });
+
+  const currentModel = models.find((m) => m.id === model);
+  const maxContextWindow = currentModel?.contextWindow ?? 128_000;
 
   return (
     <Box alignItems="center" gap={1} width="100%">
@@ -57,11 +68,24 @@ function ChatHeader({ tokenUsage, status }: ChatHeaderProps) {
         <Text>Context Window:</Text>
         <Box gap={1}>
           <Text>{formatTokenCount(tokenUsage.contextTokens)}</Text>
-          <ProgressBar value={formatContextWindow(tokenUsage.contextTokens)} />
-          <Text>{formatTokenCount(MaxContextWindow)}</Text>
+          <ProgressBar
+            value={formatContextWindow(
+              tokenUsage.contextTokens,
+              maxContextWindow,
+            )}
+          />
+          <Text>{formatTokenCount(maxContextWindow)}</Text>
         </Box>
       </Box>
     </Box>
+  );
+}
+
+function ChatHeader(props: ChatHeaderProps) {
+  return (
+    <Suspense>
+      <HeaderContent {...props} />
+    </Suspense>
   );
 }
 
