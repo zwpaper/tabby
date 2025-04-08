@@ -6,7 +6,7 @@ import type { ToolProps } from "./types";
 export const TaskCompleteTool: React.FC<
   ToolProps<AttemptCompletionFunctionType>
 > = ({ toolCall }) => {
-  const { result, command } = toolCall.args;
+  const { result = "", command = undefined } = toolCall.args || {};
   return (
     <Box flexDirection="column" gap={1}>
       <Text color="greenBright">Task Complete</Text>

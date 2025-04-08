@@ -4,7 +4,7 @@ export type ToolInvocation<INPUT, OUTPUT> =
   | ({
       state: "partial-call";
       step?: number;
-    } & ToolCall<string, INPUT>)
+    } & ToolCall<string, Optional<INPUT> | undefined>)
   | ({
       state: "call";
       step?: number;
@@ -26,3 +26,5 @@ export interface ToolProps<
 
 // biome-ignore lint/suspicious/noExplicitAny: external function def.
 type InputType<T extends (...args: any[]) => any> = Parameters<T>[0];
+
+type Optional<T> = { [K in keyof T]: T[K] | undefined };

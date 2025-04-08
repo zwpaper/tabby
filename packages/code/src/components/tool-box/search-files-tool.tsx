@@ -6,7 +6,11 @@ import type { ToolProps } from "./types";
 export const SearchFilesTool: React.FC<ToolProps<SearchFilesFunctionType>> = ({
   toolCall,
 }) => {
-  const { path, regex, filePattern } = toolCall.args;
+  const {
+    path = "",
+    regex = "",
+    filePattern = undefined,
+  } = toolCall.args || {};
   let resultEl: React.ReactNode;
 
   if (toolCall.state === "result") {

@@ -5,7 +5,11 @@ import type { ToolProps } from "./types";
 export const ReadFileTool: React.FC<ToolProps<ReadFileFunctionType>> = ({
   toolCall,
 }) => {
-  const { path, startLine, endLine } = toolCall.args; // Extract startLine and endLine
+  const {
+    path = "",
+    startLine = undefined,
+    endLine = undefined,
+  } = toolCall.args || {}; // Extract startLine and endLine
   let resultEl: React.ReactNode;
   if (toolCall.state === "result") {
     if (!("error" in toolCall.result)) {

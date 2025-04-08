@@ -33,7 +33,7 @@ import type { ToolProps } from "./types";
 export const ExecuteCommandTool: React.FC<
   ToolProps<ExecuteCommandFunctionType>
 > = ({ toolCall }) => {
-  const { command, cwd } = toolCall.args;
+  const { command = "", cwd = undefined } = toolCall.args || {};
   let resultEl: React.ReactNode;
 
   if (toolCall.state === "result") {

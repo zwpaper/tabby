@@ -6,7 +6,7 @@ import type { ToolProps } from "./types";
 export const WriteToFileTool: React.FC<ToolProps<WriteToFileFunctionType>> = ({
   toolCall,
 }) => {
-  const { path, content } = toolCall.args;
+  const { path = "", content = "" } = toolCall.args || {};
 
   // Count the number of lines in the content
   const lineCount = content.split("\n").length;

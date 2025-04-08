@@ -7,7 +7,7 @@ import type { ToolProps } from "./types";
 export const GlobFilesTool: React.FC<ToolProps<GlobFilesFunctionType>> = ({
   toolCall,
 }) => {
-  const { path, globPattern } = toolCall.args;
+  const { path = "", globPattern = "" } = toolCall.args || {};
 
   let resultEl: React.ReactNode;
   if (toolCall.state === "result") {

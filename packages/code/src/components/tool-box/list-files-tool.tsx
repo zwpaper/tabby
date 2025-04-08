@@ -7,7 +7,7 @@ import type { ToolProps } from "./types";
 export const ListFilesTool: React.FC<ToolProps<ListFilesFunctionType>> = ({
   toolCall,
 }) => {
-  const { path, recursive } = toolCall.args;
+  const { path = "", recursive = false } = toolCall.args || {};
 
   let resultEl: React.ReactNode;
   if (toolCall.state === "result") {

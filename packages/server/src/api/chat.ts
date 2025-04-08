@@ -72,6 +72,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     preprocessMessages(messages, selectedModel, environment);
 
     const result = streamText({
+      toolCallStreaming: true,
       model: c.get("model") || selectedModel,
       system: environment?.info && generateSystemPrompt(environment.info),
       messages,

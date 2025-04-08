@@ -6,7 +6,12 @@ import type { ToolProps } from "./types";
 export const ApplyDiffTool: React.FC<ToolProps<ApplyDiffFunctionType>> = ({
   toolCall,
 }) => {
-  const { path, diff, startLine, endLine } = toolCall.args;
+  const {
+    path = "",
+    diff = "",
+    startLine = 0,
+    endLine = 0,
+  } = toolCall.args || {};
 
   // Count the number of lines in the diff
   const lineCount = diff.split("\n").length;
