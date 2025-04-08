@@ -61,7 +61,7 @@ export const SearchFilesTool: React.FC<ToolProps<SearchFilesFunctionType>> = ({
         <Text>Searching in</Text>
         <Text color="yellowBright">{path}</Text>
         <Text>for</Text>
-        <Text color="magentaBright">/{regex}/</Text>
+        <Text color="magentaBright">{regex}</Text>
         {filePattern && (
           <>
             <Text>matching</Text>
