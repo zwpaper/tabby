@@ -1,3 +1,4 @@
+import { ConfirmPrompt } from "@/components/confirm-prompt";
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
 import { useApiClient } from "@/lib/api";
@@ -39,6 +40,7 @@ function ChatPage() {
     setInput,
     status,
     addToolResult,
+    stop,
     error,
     reload,
     append,
@@ -133,6 +135,18 @@ function ChatPage() {
     !isLoading &&
     !hasRunningToolCall;
 
+  const [showAbortRequest, setShowAbortRequest] = useState(false);
+  useEffect(() => {
+    if (status === "streaming") {
+      const timeoutId = setTimeout(() => {
+        setShowAbortRequest(true);
+      }, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+
+    setShowAbortRequest(false);
+  }, [status]);
+
   const [_, height] = useStdoutDimensions();
 
   return (
@@ -214,7 +228,14 @@ function ChatPage() {
           onOpenSettings={handleOpenSettings} // Pass the settings handler
         />
       ) : (
-        <Box minHeight={5} />
+        <Box minHeight={5} alignItems="center">
+          {showAbortRequest && (
+            <ConfirmPrompt
+              prompt="Abort current request?"
+              confirm={(result) => result && stop()}
+            />
+          )}
+        </Box>
       )}
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
