@@ -14,7 +14,7 @@ export const AvailableModels: {
   { id: "openai/gpt-4o", contextWindow: 128_000, costType: "premium" },
   { id: "openai/gpt-4o-mini", contextWindow: 128_000, costType: "basic" },
   {
-    id: "google/gemini-2.5-pro-exp-03-25",
+    id: "google/gemini-2.5-pro",
     contextWindow: 1_048_576,
     costType: "premium",
   },
@@ -57,8 +57,8 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
       return openai("gpt-4o-mini");
     case "openai/gpt-4o":
       return openai("gpt-4o");
-    case "google/gemini-2.5-pro-exp-03-25":
-      return google("gemini-2.5-pro-exp-03-25");
+    case "google/gemini-2.5-pro":
+      return google("gemini-2.5-pro-preview-03-25");
     case "google/gemini-2.0-flash":
       return google("gemini-2.0-flash");
     default:

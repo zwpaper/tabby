@@ -21,11 +21,7 @@ export const executeCommand = declareClientTool({
       ),
   }),
   outputSchema: z.object({
-    stdout: z.string().describe("The standard output of the command."),
-    stderr: z.string().describe("The standard error of the command."),
-    exitCode: z
-      .number()
-      .describe("The exit code of the command, 0 indicates success."),
+    output : z.string().describe("The output of the command (including stdout and stderr)."),
   }),
 });
 

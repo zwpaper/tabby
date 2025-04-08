@@ -24,7 +24,8 @@
     "marked": "^15.0.7",
     "marked-terminal": "^7.3.0",
     "react": "^18",
-    "react-devtools-core": "^6.1.1"
+    "react-devtools-core": "^6.1.1",
+    "strip-ansi": "^7.1.0"
   },
   "devDependencies": {
     "@ai-sdk/ui-utils": "^1.2.0",
