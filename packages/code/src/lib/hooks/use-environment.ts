@@ -3,7 +3,6 @@ import path from "node:path";
 import { listFiles } from "@/lib/tools/list-files";
 import type { Environment } from "@ragdoll/server";
 import { useCallback, useEffect, useRef } from "react";
-import { getServerPaneLog } from "../window-manager";
 
 export function useEnvironment() {
   const environment = useRef<Environment | null>(null);
@@ -24,12 +23,10 @@ export function useEnvironment() {
       customRules,
     };
 
-    const devServerLog = await getServerPaneLog().catch(() => undefined);
     environment.current = {
       currentTime: new Date().toString(),
       workspace,
       info,
-      devServerLog,
     };
   }, []);
 
