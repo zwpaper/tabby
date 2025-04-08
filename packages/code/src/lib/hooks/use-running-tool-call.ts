@@ -23,6 +23,10 @@ export function useRunningToolCall(
         return;
       }
 
+      if (toolCall.state !== "call") {
+        return;
+      }
+
       if (approved) {
         abortController.current = new AbortController();
         setRunningToolCall(toolCall);
