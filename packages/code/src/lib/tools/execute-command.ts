@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { promisify } from "node:util";
 import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 import stripAnsi from "strip-ansi";
+import { getCommandPaneId } from "../window-manager";
 import type { AbortableFunctionType } from "./types";
 
 const execPromise = promisify(exec);
@@ -13,52 +14,6 @@ const execPromise = promisify(exec);
  * Finds an existing right pane or creates a new one
  * @returns The ID of the tmux pane to use
  */
-async function findOrCreateRightPane(): Promise<string> {
-  try {
-    // Get pane information including position and count
-    const { stdout: paneList } = await execPromise(
-      'tmux list-panes -F "#{pane_id}:#{pane_at_right}:#{pane_index}:#{window_panes}"',
-    );
-
-    // Parse pane information and find a proper right pane (if it exists)
-    const panes = paneList
-      .split("\n")
-      .filter((line) => line.trim())
-      .map((line) => {
-        const [id, atRight, index, totalPanes] = line.split(":");
-        return {
-          id,
-          atRight: atRight === "1",
-          index: Number.parseInt(index, 10),
-          totalPanes: Number.parseInt(totalPanes, 10),
-        };
-      });
-
-    // Find an actual right pane - must have atRight=true AND multiple panes must exist
-    const rightPane = panes.find((pane) => pane.atRight && pane.totalPanes > 1);
-
-    if (rightPane) {
-      // Reuse existing right pane
-      const paneId = rightPane.id;
-
-      // Clear the pane
-      await execPromise(`tmux send-keys -t ${paneId} C-c`); // Send Ctrl+C to interrupt any running command
-      await execPromise(`tmux send-keys -t ${paneId} "clear" Enter`);
-      return paneId;
-    }
-    // No right pane found, create a new one
-    const { stdout: newPaneId } = await execPromise(
-      'tmux split-window -h -d -P -F "#{pane_id}"',
-    );
-    return newPaneId.trim();
-  } catch (err) {
-    // Fallback to creating a new pane if there's any issue detecting existing panes
-    const { stdout: newPaneId } = await execPromise(
-      'tmux split-window -h -d -P -F "#{pane_id}"',
-    );
-    return newPaneId.trim();
-  }
-}
 
 /**
  * Alternative implementation using tmux pipe-pane for more reliable output capture
@@ -76,7 +31,7 @@ async function tmuxPipePaneExecuteCommand(
   const scriptFile = path.join(tmpDir, "wrapper.sh");
 
   // Get or create a tmux pane
-  const paneId = await findOrCreateRightPane();
+  const paneId = await getCommandPaneId();
   await fs.writeFile(paneIdFile, paneId);
 
   // Set up pipe-pane to capture output
@@ -174,48 +129,10 @@ export const executeCommand: AbortableFunctionType<
     throw new Error("Command is required to execute.");
   }
 
-  const interactive = !!process.env.TMUX;
-
-  if (interactive) {
-    // Choose between the two tmux implementation methods
-    return await tmuxPipePaneExecuteCommand(command, cwd, signal);
+  if (!process.env.TMUX) {
+    throw new Error("executeCommand is only supported in tmux.");
   }
 
-  let result: { exitCode: number; stdout: string; stderr: string };
-  try {
-    const { stdout, stderr } = await execPromise(command, { cwd, signal });
-    result = {
-      exitCode: 0,
-      stdout,
-      stderr,
-    };
-  } catch (error: unknown) {
-    // Type guard for the expected error structure from execPromise
-    if (
-      error &&
-      typeof error === "object" &&
-      "stdout" in error &&
-      "stderr" in error &&
-      "code" in error &&
-      typeof (error as { code: unknown }).code === "number"
-    ) {
-      const { stdout, stderr, code } = error as {
-        stdout: string;
-        stderr: string;
-        code: number;
-      };
-      result = {
-        exitCode: code,
-        stdout,
-        stderr,
-      };
-    } else {
-      // Re-throw if it's not the expected error structure or rethrow with more context
-      throw error;
-    }
-  }
-
-  return {
-    output: `Exit code ${result.exitCode}\n\n${result.stdout}\n${result.stderr}`,
-  };
+  // Choose between the two tmux implementation methods
+  return await tmuxPipePaneExecuteCommand(command, cwd, signal);
 };
