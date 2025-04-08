@@ -19,7 +19,7 @@ export function useRunningToolCall(
 
   const onToolCall = useCallback(
     async (toolCall: ToolProps["toolCall"], approved: boolean) => {
-      if (runningToolCall) {
+      if (abortController.current) {
         return;
       }
 
@@ -40,7 +40,7 @@ export function useRunningToolCall(
         });
       }
     },
-    [runningToolCall, addToolResult],
+    [addToolResult],
   );
 
   const abortToolCall = useCallback(() => {
