@@ -1,5 +1,5 @@
 import { ConfirmInput } from "@inkjs/ui";
-import { Box, Text } from "ink";
+import { Box, Text, useFocus } from "ink";
 
 interface ErrorWithRetryProps {
   error?: Error;
@@ -8,6 +8,7 @@ interface ErrorWithRetryProps {
 }
 
 function ErrorWithRetry({ error, reload, onCancel }: ErrorWithRetryProps) {
+  const { isFocused } = useFocus({ autoFocus: false });
   return (
     <Box
       borderStyle="round"
@@ -18,7 +19,9 @@ function ErrorWithRetry({ error, reload, onCancel }: ErrorWithRetryProps) {
     >
       <Text color="red">{error?.message}</Text>
       <Box>
-        <Text color="grey">Retry? </Text>
+        <Text color="grey" underline={isFocused}>
+          Retry?{" "}
+        </Text>
         <ConfirmInput onConfirm={reload} onCancel={onCancel} />
       </Box>
     </Box>

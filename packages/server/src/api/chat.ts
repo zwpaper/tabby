@@ -11,6 +11,7 @@ import type { User } from "better-auth";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
+import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
@@ -74,7 +75,13 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       model: c.get("model") || selectedModel,
       system: environment?.info && generateSystemPrompt(environment.info),
       messages,
-      tools,
+      tools: {
+        ...tools,
+        readEnvironment: {
+          description: "Read the environment",
+          parameters: z.object({}),
+        },
+      },
       onError: async (error) => {
         console.error(error);
         console.log((await result.request).body);

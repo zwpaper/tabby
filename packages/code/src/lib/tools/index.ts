@@ -83,6 +83,11 @@ const ToolsExemptFromApproval = new Set([
 export function prepareMessages(messages: Message[]) {
   return messages.map((message) => {
     if (message.role === "assistant" && message.parts) {
+      message.parts = message.parts.filter(
+        (part) =>
+          part.type !== "tool-invocation" ||
+          part.toolInvocation.toolName !== "readEnvironment",
+      );
       for (let i = 0; i < message.parts.length; i++) {
         const part = message.parts[i];
         if (

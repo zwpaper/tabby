@@ -34,6 +34,8 @@ const ToolBox: React.FC<
     abortToolCall: () => void;
   }
 > = ({ toolCall, onToolCall, abortToolCall, runningToolCall }) => {
+  if (toolCall.toolName === "readEnvironment") return null;
+
   const pendingApproval =
     runningToolCall === null &&
     toolCall.state === "call" &&

@@ -1,0 +1,6 @@
+main() {
+    bun check
+    bun tsc
+}
+
+main
