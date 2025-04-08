@@ -9,7 +9,7 @@ import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { useLocalSettings } from "@/lib/storage";
 import { prepareMessages } from "@/lib/tools";
-import { type Message, useChat } from "@ai-sdk/react";
+import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
 import type {
   Environment,
@@ -181,7 +181,14 @@ function ChatPage() {
       {error && showErrorRetry && (
         <ErrorWithRetry
           error={error}
-          reload={reload}
+          reload={() =>
+            reloadWithAssistantMessage({
+              messages,
+              setMessages,
+              append,
+              reload,
+            })
+          }
           onCancel={onRetryCancel}
         />
       )}
@@ -282,6 +289,37 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
     }
   }
   return x;
+}
+
+async function reloadWithAssistantMessage({
+  messages,
+  append,
+  setMessages,
+  reload,
+}: {
+  messages: Message[];
+  append: UseChatHelpers["append"];
+  setMessages: UseChatHelpers["setMessages"];
+  reload: UseChatHelpers["reload"];
+}) {
+  if (messages.length === 0) {
+    return;
+  }
+
+  const lastMessage = messages[messages.length - 1];
+  if (lastMessage.role === "assistant") {
+    const lastPart = lastMessage.parts?.[lastMessage.parts.length - 1];
+    if (
+      lastPart &&
+      lastPart.type === "tool-invocation" &&
+      lastPart.toolInvocation.state === "result"
+    ) {
+      setMessages(messages.slice(0, -1));
+      return await append(lastMessage);
+    }
+  }
+
+  return await reload();
 }
 
 export default ChatPage;

@@ -89,6 +89,8 @@ async function tmuxPipePaneExecuteCommand(
 # Change directory if specified
 ${cwd ? `cd "${cwd}" || { echo "Failed to change to directory: ${cwd}"; exit 1; }` : ""}
 
+export PAGER=""
+
 # Execute the main command
 ${command}
 
