@@ -49,8 +49,12 @@ const App = ({ config }: { config: AppConfig }) => {
   );
 };
 
-export function app(config: AppConfig) {
-  renderFullScreen(<App config={config} />);
+export function app(config: AppConfig, fullscreen: boolean) {
+  if (fullscreen) {
+    renderFullScreen(<App config={config} />);
+  } else {
+    render(<App config={config} />);
+  }
 }
 
 const FullScreen: React.FC<PropsWithChildren<BoxProps>> = ({

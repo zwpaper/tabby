@@ -1,6 +1,11 @@
+check_git_clean() {
+    git diff --exit-code
+}
+
 main() {
     bun check
     bun tsc
+    check_git_clean
 }
 
 main

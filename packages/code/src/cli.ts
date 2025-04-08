@@ -13,6 +13,7 @@ program
   .option("--dev", "Run in development mode")
   .option("-p, --prompt <prompt>", "Initial prompt")
   .option("-a, --auto-approve", "Auto approve all tool calls")
+  .option("--no-fullscreen", "Disable full screen mode")
   .option(
     "--projects-dir <directory>",
     "Projects directory (default: ~/RagdollProjects)",
@@ -28,4 +29,4 @@ const appConfig = {
   autoApprove: config.autoApprove || false,
 };
 
-app(appConfig);
+app(appConfig, !!config.fullscreen);

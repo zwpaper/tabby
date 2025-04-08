@@ -69,7 +69,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       });
     }
 
-    injectReadEnvironmentToolCall(messages, selectedModel, environment);
+    preprocessMessages(messages, selectedModel, environment);
 
     const result = streamText({
       model: c.get("model") || selectedModel,
@@ -80,6 +80,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         readEnvironment: {
           description: "Read the environment",
           parameters: z.object({}),
+          execute: async () => {
+            return "Pending";
+          },
         },
       },
       onError: async (error) => {
@@ -98,11 +101,24 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
   },
 );
 
-function injectReadEnvironmentToolCall(
+function preprocessMessages(
   messages: Message[],
   model: LanguageModelV1,
   environment?: Environment,
 ) {
+  // We always inject readEnvironment automatically, so we can remove all non injected readEnvironment calls (which might wrongly be invoked by LLM)
+  for (const x of messages) {
+    if (x.parts) {
+      x.parts = x.parts.filter((x) => {
+        if (x.type !== "tool-invocation") return true;
+        if (x.toolInvocation.toolName !== "readEnvironment") return true;
+        if (x.toolInvocation.toolCallId.startsWith("environmentToolCall-"))
+          return true;
+        return false;
+      });
+    }
+  }
+
   const isGemini = model.provider.includes("gemini");
 
   if (environment === undefined) return;
