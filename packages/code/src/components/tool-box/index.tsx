@@ -1,3 +1,4 @@
+import { useAppConfig } from "@/lib/app-config";
 import { isDefaultApproved, isUserInputTool } from "@/lib/tools";
 import { Spinner } from "@inkjs/ui";
 import { Box } from "ink";
@@ -36,15 +37,20 @@ const ToolBox: React.FC<
 > = ({ toolCall, onToolCall, abortToolCall, runningToolCall }) => {
   if (toolCall.toolName === "readEnvironment") return null;
 
+  const appConfig = useAppConfig();
+
   const pendingApproval =
     runningToolCall === null &&
     toolCall.state === "call" &&
     !isUserInputTool(toolCall.toolName);
   useEffect(() => {
-    if (pendingApproval && isDefaultApproved(toolCall)) {
+    if (
+      pendingApproval &&
+      (appConfig.autoApprove || isDefaultApproved(toolCall))
+    ) {
       onToolCall(toolCall, true);
     }
-  }, [pendingApproval, onToolCall, toolCall]);
+  }, [pendingApproval, onToolCall, toolCall, appConfig]);
 
   const isRunning = runningToolCall?.toolCallId === toolCall.toolCallId;
   const [showAbort, setShowAbort] = useState(false);

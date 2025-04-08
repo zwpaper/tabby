@@ -6,6 +6,7 @@ import { createContext, useContext } from "react";
 // Define the shape of the application configuration
 export interface AppConfig {
   dev: boolean;
+  autoApprove: boolean;
   prompt?: string;
   projectsDir?: string;
 }

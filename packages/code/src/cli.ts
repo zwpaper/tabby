@@ -12,6 +12,7 @@ program
 program
   .option("--dev", "Run in development mode")
   .option("-p, --prompt <prompt>", "Initial prompt")
+  .option("-a, --auto-approve", "Auto approve all tool calls")
   .option(
     "--projects-dir <directory>",
     "Projects directory (default: ~/RagdollProjects)",
@@ -24,6 +25,7 @@ const appConfig = {
   dev: config.dev || false,
   prompt: config.prompt,
   projectsDir: config.projectsDir,
+  autoApprove: config.autoApprove || false,
 };
 
 app(appConfig);
