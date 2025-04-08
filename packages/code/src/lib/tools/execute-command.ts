@@ -92,7 +92,7 @@ ${cwd ? `cd "${cwd}" || { echo "Failed to change to directory: ${cwd}"; exit 1; 
 export PAGER=""
 
 # Execute the main command
-${command}
+${command} < /dev/null
 
 # Save exit code
 echo $? > "${exitCodeFile}"
