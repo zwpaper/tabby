@@ -18,15 +18,10 @@ export function useRunningToolCall(
   const hasRunningToolCall = !!runningToolCall;
 
   const onToolCall = useCallback(
-    async (toolCall: ToolProps["toolCall"], approved: boolean) => {
-      if (abortController.current) {
-        return;
-      }
-
-      if (toolCall.state !== "call") {
-        return;
-      }
-
+    async (
+      toolCall: ToolProps["toolCall"] & { _invoked?: boolean },
+      approved: boolean,
+    ) => {
       if (approved) {
         abortController.current = new AbortController();
         setRunningToolCall(toolCall);
@@ -35,8 +30,8 @@ export function useRunningToolCall(
           signal: abortController.current.signal,
         });
         await addToolResult({ toolCallId: toolCall.toolCallId, result });
-        setRunningToolCall(null);
         abortController.current = null; // Clear controller after use
+        setRunningToolCall(null);
       } else {
         await addToolResult({
           toolCallId: toolCall.toolCallId,

@@ -2,7 +2,7 @@ import { useAppConfig } from "@/lib/app-config";
 import { isDefaultApproved, isUserInputTool } from "@/lib/tools";
 import { Spinner } from "@inkjs/ui";
 import { Box } from "ink";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ConfirmPrompt } from "../confirm-prompt";
 import { ApplyDiffTool } from "./apply-diff-tool";
 import { AskFollowupQuestionTool } from "./ask-followup-question-tool";
@@ -39,18 +39,15 @@ const ToolBox: React.FC<
 
   const appConfig = useAppConfig();
 
-  const onToolCallInvoked = useRef(false);
   const pendingApproval =
     runningToolCall === null &&
     toolCall.state === "call" &&
     !isUserInputTool(toolCall.toolName);
   useEffect(() => {
     if (
-      !onToolCallInvoked.current &&
       pendingApproval &&
       (appConfig.autoApprove || isDefaultApproved(toolCall))
     ) {
-      onToolCallInvoked.current = true;
       onToolCall(toolCall, true);
     }
   }, [pendingApproval, onToolCall, toolCall, appConfig]);
