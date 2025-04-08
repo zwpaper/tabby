@@ -82,12 +82,13 @@ async function tmuxPipePaneExecuteCommand(
   // Set up pipe-pane to capture output
   await execPromise(`tmux pipe-pane -t ${paneId} "cat > ${outputFile}"`);
 
+  const workingDir = cwd || process.cwd();
   // Create wrapper script to execute the command
   const scriptContent = `#!/bin/bash
 # Wrapper script for command execution with proper capture
 
 # Change directory if specified
-${cwd ? `cd "${cwd}" || { echo "Failed to change to directory: ${cwd}"; exit 1; }` : ""}
+${workingDir ? `cd "${workingDir}" || { echo "Failed to change to directory: ${workingDir}"; exit 1; }` : ""}
 
 export PAGER=""
 
