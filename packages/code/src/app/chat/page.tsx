@@ -74,7 +74,7 @@ function ChatPage() {
   };
 
   const onSubmit = () => {
-    if (environment) {
+    if (environment.current) {
       handleSubmit();
     }
   };
@@ -88,14 +88,14 @@ function ChatPage() {
 
   // Handle initial prompt
   useEffect(() => {
-    if (appConfig.prompt && environment && !initialPromptSent) {
+    if (appConfig.prompt && environment.current && !initialPromptSent) {
       setInitialPromptSent(true);
       append({
         role: "user",
         content: appConfig.prompt,
       });
     }
-  }, [appConfig.prompt, environment, initialPromptSent, append]);
+  }, [appConfig.prompt, environment.current, initialPromptSent, append]);
 
   const isLoading = status === "submitted" || status === "streaming";
 
