@@ -4,6 +4,7 @@ export function getReadEnvironmentResult(environment: Environment) {
   const sections = [
     getCurrentTime(environment.currentTime),
     getWorkspaceFiles(environment.workspace, environment.info),
+    getDevServerLog(environment.devServerLog),
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -27,4 +28,11 @@ function getWorkspaceFiles(
     ? "\n(Note: The list of files is truncated. Use listFiles tool to explore if needed)"
     : "";
   return `# Current Working Directory (${info.cwd}) Files\n${filesList}${truncatedMessage}`;
+}
+
+function getDevServerLog(devServerLog: Environment["devServerLog"]) {
+  if (!devServerLog) {
+    return;
+  }
+  return `# Dev Server Log\n${devServerLog}`;
 }

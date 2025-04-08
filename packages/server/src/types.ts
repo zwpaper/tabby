@@ -20,6 +20,10 @@ export const ZodChatRequestType = z.object({
         homedir: z.string().describe("The home directory."),
         customRules: z.string().optional(),
       }),
+      devServerLog: z
+        .string()
+        .optional()
+        .describe("Log from running dev server"),
     })
     .optional(),
 });

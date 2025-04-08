@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { promisify } from "node:util";
 import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 import stripAnsi from "strip-ansi";
-import { getCommandPaneId, getServerPaneId } from "../window-manager"; // Import getServerPaneId
+import { getCommandPaneId, startDevServer } from "../window-manager"; // Import windowManager
 import type { AbortableFunctionType } from "./types";
 
 const execPromise = promisify(exec);
@@ -137,16 +137,7 @@ export const executeCommand: AbortableFunctionType<
     return await tmuxPipePaneExecuteCommand(command, cwd, signal);
   }
 
-  // Get the dedicated server pane ID
-  const serverPaneId = await getServerPaneId();
-
-  // Construct the command to be sent, including changing directory if needed
-  const commandToSend = cwd ? `cd "${cwd}" && ${command}` : command;
-
-  // Send the command to the server pane
-  await execPromise(
-    `tmux send-keys -t ${serverPaneId} "${commandToSend.replace(/"/g, '\\"')}" Enter`,
-  );
+  await startDevServer(command, cwd);
 
   // For dev servers, we don't wait for output. Return immediately.
   // Consider adding a mechanism to monitor the server pane if needed later.

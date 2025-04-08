@@ -17,4 +17,5 @@ export const dirsToIgnore = [
   "coverage",
   ".git",
   ".*",
+  ".next",
 ];

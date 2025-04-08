@@ -1,10 +1,15 @@
 import type { ToolProps } from "@/components/tool-box/types";
 import { invokeTool } from "@/lib/tools";
-import type { useChat } from "@ai-sdk/react";
 import { useCallback, useRef, useState } from "react";
 
 export function useRunningToolCall(
-  addToolResult: ReturnType<typeof useChat>["addToolResult"],
+  addToolResult: ({
+    toolCallId,
+    result,
+  }: {
+    toolCallId: string;
+    result: unknown;
+  }) => Promise<void>,
 ) {
   const abortController = useRef<AbortController | null>(null);
   const [runningToolCall, setRunningToolCall] = useState<
@@ -25,11 +30,11 @@ export function useRunningToolCall(
           toolCall,
           signal: abortController.current.signal,
         });
-        addToolResult({ toolCallId: toolCall.toolCallId, result });
+        await addToolResult({ toolCallId: toolCall.toolCallId, result });
         setRunningToolCall(null);
         abortController.current = null; // Clear controller after use
       } else {
-        addToolResult({
+        await addToolResult({
           toolCallId: toolCall.toolCallId,
           result: { error: "User rejected tool usage" },
         });

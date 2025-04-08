@@ -17,7 +17,7 @@ import type {
   ChatRequest as RagdollChatRequest,
 } from "@ragdoll/server";
 import { Box, Text } from "ink";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import SettingsModal from "./components/settings-modal";
@@ -64,7 +64,6 @@ function ChatPage() {
         return;
       }
 
-      reloadEnvironment();
       trackTokenUsage(usage);
     },
   });
@@ -73,18 +72,25 @@ function ChatPage() {
     setInput(value);
   };
 
-  const onSubmit = () => {
-    if (environment.current) {
-      handleSubmit();
-    }
+  const onSubmit = async () => {
+    await reloadEnvironment();
+    handleSubmit();
   };
+
+  const hookAddToolResult = useCallback(
+    async (...args: Parameters<typeof addToolResult>) => {
+      await reloadEnvironment();
+      addToolResult(...args);
+    },
+    [addToolResult, reloadEnvironment],
+  );
 
   const [initialPromptSent, setInitialPromptSent] = useState(false);
   const [showSettings, setShowSettings] = useState(false); // State for settings dialog
 
   // Use the custom hook for tool call logic
   const { runningToolCall, hasRunningToolCall, onToolCall, abortToolCall } =
-    useRunningToolCall(addToolResult);
+    useRunningToolCall(hookAddToolResult);
 
   // Handle initial prompt
   useEffect(() => {

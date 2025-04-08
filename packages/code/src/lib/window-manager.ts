@@ -16,6 +16,7 @@ interface TmuxPane {
 class WindowManager {
   private commandPaneId: string | null = null; // Top-right (index 1)
   private serverPaneId: string | null = null; // Bottom-right (index 2)
+  private devServerStarted = false;
 
   /**
    * Initializes the WindowManager and ensures the 3-pane layout.
@@ -68,6 +69,27 @@ class WindowManager {
       );
     }
     return this.serverPaneId;
+  }
+
+  /**
+   * Starts a command in the dedicated server pane.
+   * Ensures the layout is set up before sending the command.
+   * @param command The command to execute.
+   * @param cwd Optional working directory for the command.
+   */
+  async startDevServer(command: string, cwd?: string): Promise<void> {
+    await this.setupLayout(); // Ensure panes are ready
+    const serverPaneId = this.getServerPaneId();
+
+    // Construct the command to be sent, including changing directory if needed
+    const commandToSend = cwd ? `cd "${cwd}" && ${command}` : command;
+
+    // Send the command to the server pane
+    await execPromise(
+      `tmux send-keys -t ${serverPaneId} "${commandToSend.replace(/\"/g, '\\"')}" Enter`,
+    );
+
+    this.devServerStarted = true;
   }
 
   private async getPanes(): Promise<TmuxPane[]> {
@@ -207,6 +229,26 @@ class WindowManager {
     }
   }
 
+  /**
+   * Captures and returns the last 10 lines from the server pane.
+   * Throws an error if setupLayout() hasn't successfully completed.
+   */
+  async getServerPaneLog(): Promise<string> {
+    if (!this.devServerStarted) throw new Error("Server pane not ready yet.");
+    const serverPaneId = this.getServerPaneId(); // Ensures setup and throws if not ready
+    try {
+      const { stdout } = await execPromise(
+        `tmux capture-pane -p -t ${serverPaneId} -S -10`,
+      );
+      return stdout.trim();
+    } catch (err) {
+      throw new Error(
+        `Could not capture log from server pane: ${serverPaneId}`,
+        { cause: err },
+      );
+    }
+  }
+
   private async getPaneGeometry(
     paneId: string,
   ): Promise<{ top: number; bottom: number; left: number; right: number }> {
@@ -220,12 +262,19 @@ class WindowManager {
 
 const windowManager = new WindowManager();
 
+// Export functions that use the instance
 export async function getCommandPaneId(): Promise<string> {
   await windowManager.setupLayout();
   return windowManager.getCommandPaneId();
 }
 
-export async function getServerPaneId(): Promise<string> {
-  await windowManager.setupLayout();
-  return windowManager.getServerPaneId();
+export async function getServerPaneLog(): Promise<string> {
+  return windowManager.getServerPaneLog();
+}
+
+export async function startDevServer(
+  command: string,
+  cwd?: string,
+): Promise<void> {
+  await windowManager.startDevServer(command, cwd);
 }
