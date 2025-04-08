@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { promisify } from "node:util";
 import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 import stripAnsi from "strip-ansi";
-import { getCommandPaneId } from "../window-manager";
+import { getCommandPaneId, getServerPaneId } from "../window-manager"; // Import getServerPaneId
 import type { AbortableFunctionType } from "./types";
 
 const execPromise = promisify(exec);
@@ -124,7 +124,7 @@ function postProcessTmuxOutput(output: string): string {
 
 export const executeCommand: AbortableFunctionType<
   ExecuteCommandFunctionType
-> = async ({ command, cwd }, signal) => {
+> = async ({ command, cwd, isDevServer }, signal) => {
   if (!command) {
     throw new Error("Command is required to execute.");
   }
@@ -133,6 +133,22 @@ export const executeCommand: AbortableFunctionType<
     throw new Error("executeCommand is only supported in tmux.");
   }
 
-  // Choose between the two tmux implementation methods
-  return await tmuxPipePaneExecuteCommand(command, cwd, signal);
+  if (!isDevServer) {
+    return await tmuxPipePaneExecuteCommand(command, cwd, signal);
+  }
+
+  // Get the dedicated server pane ID
+  const serverPaneId = await getServerPaneId();
+
+  // Construct the command to be sent, including changing directory if needed
+  const commandToSend = cwd ? `cd "${cwd}" && ${command}` : command;
+
+  // Send the command to the server pane
+  await execPromise(
+    `tmux send-keys -t ${serverPaneId} "${commandToSend.replace(/"/g, '\\"')}" Enter`,
+  );
+
+  // For dev servers, we don't wait for output. Return immediately.
+  // Consider adding a mechanism to monitor the server pane if needed later.
+  return { output: `"${command}" started as dev server.` };
 };

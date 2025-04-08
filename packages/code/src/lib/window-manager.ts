@@ -164,11 +164,8 @@ class WindowManager {
 
       this.commandPaneId = commandPane.id;
 
-      // Clear both panes
+      // Only clear the command pane, server pane might have long running processes
       await this.clearPane(this.commandPaneId);
-      if (this.serverPaneId) {
-        await this.clearPane(this.serverPaneId);
-      }
     }
   }
 
@@ -226,4 +223,9 @@ const windowManager = new WindowManager();
 export async function getCommandPaneId(): Promise<string> {
   await windowManager.setupLayout();
   return windowManager.getCommandPaneId();
+}
+
+export async function getServerPaneId(): Promise<string> {
+  await windowManager.setupLayout();
+  return windowManager.getServerPaneId();
 }
