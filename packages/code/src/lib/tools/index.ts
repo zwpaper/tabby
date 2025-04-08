@@ -1,4 +1,3 @@
-import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
 import type { Message, ToolCall, ToolInvocation } from "ai";
 import { applyDiff } from "./apply-diff";
 import { executeCommand } from "./execute-command";
@@ -52,17 +51,9 @@ export async function invokeTool(tool: {
 }
 
 export function isDefaultApproved(toolCall: ToolInvocation) {
-  type ExecuteCommandInputType = Parameters<ExecuteCommandFunctionType>[0];
   const { toolName, state } = toolCall;
-  let defaultApproval: boolean =
+  const defaultApproval: boolean =
     ToolsExemptFromApproval.has(toolName) || state === "result";
-  if (toolName === "executeCommand") {
-    if ((toolCall.args as ExecuteCommandInputType).requiresApproval) {
-      defaultApproval = false;
-    } else {
-      defaultApproval = true;
-    }
-  }
   return defaultApproval;
 }
 
