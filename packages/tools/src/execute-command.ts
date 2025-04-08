@@ -21,7 +21,9 @@ export const executeCommand = declareClientTool({
       ),
   }),
   outputSchema: z.object({
-    output : z.string().describe("The output of the command (including stdout and stderr)."),
+    output: z
+      .string()
+      .describe("The output of the command (including stdout and stderr)."),
   }),
 });
 

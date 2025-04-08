@@ -39,9 +39,7 @@ export const ExecuteCommandTool: React.FC<
   if (toolCall.state === "result") {
     if (!("error" in toolCall.result)) {
       const { output } = toolCall.result;
-      const children = [
-        renderOutput(output, "Output", "grey"),
-      ].filter(Boolean);
+      const children = [renderOutput(output, "Output", "grey")].filter(Boolean);
       resultEl = children.length > 0 && (
         <Box flexDirection="column" gap={1}>
           {children}

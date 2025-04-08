@@ -41,7 +41,9 @@ describe("executeCommand", () => {
       },
       signal,
     );
-    expect(result.output).toMatch(/invalid-command.*not found|command not found.*invalid-command/);
+    expect(result.output).toMatch(
+      /invalid-command.*not found|command not found.*invalid-command/,
+    );
   });
 
   it("should execute a command with a specified working directory", async () => {
