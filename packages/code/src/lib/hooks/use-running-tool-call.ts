@@ -15,7 +15,6 @@ export function useRunningToolCall(
   const [runningToolCall, setRunningToolCall] = useState<
     ToolProps["toolCall"] | null
   >(null);
-  const hasRunningToolCall = !!runningToolCall;
   const onToolCall = useCallback(
     async (toolCall: ToolProps["toolCall"], approved: boolean) => {
       if (abortController.current) {
@@ -54,7 +53,6 @@ export function useRunningToolCall(
 
   return {
     runningToolCall,
-    hasRunningToolCall,
     onToolCall,
     abortToolCall,
   };

@@ -89,7 +89,7 @@ function ChatPage() {
   const [showSettings, setShowSettings] = useState(false); // State for settings dialog
 
   // Use the custom hook for tool call logic
-  const { runningToolCall, hasRunningToolCall, onToolCall, abortToolCall } =
+  const { runningToolCall, onToolCall, abortToolCall } =
     useRunningToolCall(hookAddToolResult);
 
   // Handle initial prompt
@@ -139,7 +139,7 @@ function ChatPage() {
     environment &&
     !showErrorRetry &&
     !isLoading &&
-    !hasRunningToolCall;
+    !runningToolCall;
 
   const [showAbortRequest, setShowAbortRequest] = useState(false);
   useEffect(() => {
@@ -198,9 +198,9 @@ function ChatPage() {
         </Box>
       )}
 
-      {error && showErrorRetry && (
+      {showErrorRetry && (
         <ErrorWithRetry
-          error={error}
+          error={error || new Error("Unknown error")}
           reload={() =>
             reloadWithAssistantMessage({
               messages,
