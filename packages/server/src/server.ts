@@ -44,5 +44,5 @@ export type AppType = typeof route;
 export default {
   port: process.env.PORT || 4113,
   fetch: app.fetch,
-  idleTimeout: 600,
+  idleTimeout: 255,
 };
