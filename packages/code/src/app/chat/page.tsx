@@ -171,7 +171,7 @@ function ChatPage() {
             <Box key={message.id} flexDirection="column" gap={1} flexShrink={0}>
               <Box gap={1}>
                 <Text color={getRoleColor(message.role)}>
-                  {message.role === "user" ? "You" : "Ragdoll"}
+                  {message.role === "user" ? "You" : "Pochi"}
                 </Text>
                 {isLoading &&
                   message.id ===

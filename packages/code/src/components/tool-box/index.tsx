@@ -44,8 +44,11 @@ const ToolBox: React.FC<
   const [approval, setApproval] = useState<ApprovalStatus>("pending");
   const invokeTool = useCallback(
     (approved: boolean) => {
-      setApproval(approved ? "approved" : "denied");
-      onToolCall(toolCall, approved);
+      setApproval((prev) => {
+        if (prev !== "pending") return prev;
+        onToolCall(toolCall, approved);
+        return approved ? "approved" : "denied";
+      });
     },
     [onToolCall, toolCall],
   );
@@ -61,12 +64,13 @@ const ToolBox: React.FC<
 
   useEffect(() => {
     if (
+      !runningToolCall &&
       pendingApproval &&
       (appConfig.autoApprove || isDefaultApproved(toolCall))
     ) {
       invokeTool(true);
     }
-  }, [invokeTool, pendingApproval, toolCall, appConfig]);
+  }, [runningToolCall, invokeTool, pendingApproval, toolCall, appConfig]);
 
   const isRunning = runningToolCall?.toolCallId === toolCall.toolCallId;
   const [showAbort, setShowAbort] = useState(false);

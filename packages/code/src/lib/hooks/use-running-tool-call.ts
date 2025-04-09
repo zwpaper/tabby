@@ -19,7 +19,9 @@ export function useRunningToolCall(
   const onToolCall = useCallback(
     async (toolCall: ToolProps["toolCall"], approved: boolean) => {
       if (abortController.current) {
-        throw new Error("Tool call already running");
+        throw new Error(
+          `Tool call already running\nRunning: ${runningToolCall?.toolName}: ${runningToolCall?.toolCallId} (${JSON.stringify(runningToolCall?.args)})\nNew: ${toolCall.toolName}: ${toolCall.toolCallId} (${JSON.stringify(toolCall.args)})`,
+        );
       }
 
       if (approved) {
@@ -39,7 +41,7 @@ export function useRunningToolCall(
         });
       }
     },
-    [addToolResult],
+    [runningToolCall, addToolResult],
   );
 
   const abortToolCall = useCallback(() => {
