@@ -108,15 +108,16 @@ function ChatPage() {
 
   const renderMessages = createRenderMessages(messages, isLoading);
 
-  const [showErrorRetry, setShowErrorRetry] = useState(false);
-  useEffect(() => {
-    if (status === "error") {
-      setShowErrorRetry(true);
-    }
-  }, [status]);
+  async function onRetryAccept() {
+    await reloadWithAssistantMessage({
+      messages,
+      setMessages,
+      append,
+      reload,
+    });
+  }
 
   function onRetryCancel() {
-    setShowErrorRetry(false);
     setMessages(messages.slice(0, -1));
   }
 
@@ -136,11 +137,7 @@ function ChatPage() {
   // Show text input only if not loading OR user input tools are active,
   // AND environment is loaded, AND no error retry is shown
   const showTextInput =
-    !showSettings &&
-    environment &&
-    !showErrorRetry &&
-    !isLoading &&
-    !runningToolCall;
+    !showSettings && environment && !isLoading && !runningToolCall;
 
   const [showAbortRequest, setShowAbortRequest] = useState(false);
   useEffect(() => {
@@ -211,17 +208,11 @@ function ChatPage() {
         </Box>
       )}
 
-      {showErrorRetry && (
+      {error && (
         <ErrorWithRetry
-          error={error || new Error("Unknown error")}
-          reload={() =>
-            reloadWithAssistantMessage({
-              messages,
-              setMessages,
-              append,
-              reload,
-            })
-          }
+          isLoading={isLoading}
+          error={error}
+          onRetry={onRetryAccept}
           onCancel={onRetryCancel}
         />
       )}

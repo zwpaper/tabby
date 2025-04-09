@@ -3,28 +3,36 @@ import { Box, Text, useFocus } from "ink";
 
 interface ErrorWithRetryProps {
   error?: Error;
-  reload: () => Promise<unknown>;
+  onRetry: () => Promise<unknown>;
   onCancel: () => void;
+  isLoading: boolean;
 }
 
-function ErrorWithRetry({ error, reload, onCancel }: ErrorWithRetryProps) {
+function ErrorWithRetry({
+  error,
+  onRetry,
+  onCancel,
+  isLoading,
+}: ErrorWithRetryProps) {
   const { isFocused } = useFocus({ autoFocus: false });
   return (
-    <Box
-      borderStyle="round"
-      borderColor="red"
-      padding={1}
-      gap={1}
-      flexDirection="column"
-    >
-      <Text color="red">{error?.message}</Text>
-      <Box>
-        <Text color="grey" underline={isFocused}>
-          Retry?{" "}
-        </Text>
-        <ConfirmInput onConfirm={reload} onCancel={onCancel} />
+    !isLoading && (
+      <Box
+        borderStyle="round"
+        borderColor="red"
+        padding={1}
+        gap={1}
+        flexDirection="column"
+      >
+        <Text color="red">{error?.message}</Text>
+        <Box>
+          <Text color="grey" underline={isFocused}>
+            Retry?{" "}
+          </Text>
+          <ConfirmInput onConfirm={onRetry} onCancel={onCancel} />
+        </Box>
       </Box>
-    </Box>
+    )
   );
 }
 
