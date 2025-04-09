@@ -6,12 +6,20 @@ if (process.env.DEV === "true") {
 import { Command } from "commander";
 import { version } from "../package.json";
 
+function getVersion() {
+  if (version.endsWith("-dev")) {
+    return version + (process.env.INLINE_COMMIT_HASH || "");
+  }
+
+  return version;
+}
+
 const program = new Command();
 
 program
-  .name("ragdoll-code")
-  .description("CLI for ragdoll-code")
-  .version(version);
+  .name("pochi-code")
+  .description("CLI for pochi-code")
+  .version(getVersion());
 
 program
   .option("--dev", "Run in development mode")
@@ -20,7 +28,7 @@ program
   .option("--no-fullscreen", "Disable full screen mode")
   .option(
     "--projects-dir <directory>",
-    "Projects directory (default: ~/RagdollProjects)",
+    "Projects directory (default: ~/PochiProjects)",
   )
   .parse(process.argv);
 

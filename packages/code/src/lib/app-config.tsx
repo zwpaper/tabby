@@ -14,7 +14,7 @@ export interface AppConfig {
 
 // Default values for optional config properties
 const DEFAULT_CONFIG = {
-  projectsDir: path.join(os.homedir(), "RagdollProjects"),
+  projectsDir: path.join(os.homedir(), "PochiProjects"),
 };
 
 // Create the context with a default value (can be null or a default config object)

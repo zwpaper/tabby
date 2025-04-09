@@ -7,12 +7,12 @@ build() {
     local target=$1
     local platform=$2
     local ext=$3
-    bun run build -- --target=$target --outfile=./dist/$platform/ragdoll-code
+    bun run build -- --target=$target --outfile=./dist/$platform/pochi-code
     # generate .tar.gz for linux and mac, generate .zip for windows
     if [ "$platform" == "windows-x64" ]; then
-        zip -r ./dist/ragdoll-code-$platform.zip -j ./dist/$platform/*
+        zip -r ./dist/pochi-code-$platform.zip -j ./dist/$platform/*
     else
-        tar -czvf ./dist/ragdoll-code-$platform.tar.gz -C ./dist/$platform .
+        tar -czvf ./dist/pochi-code-$platform.tar.gz -C ./dist/$platform .
     fi
     rm -rf ./dist/$platform
 }

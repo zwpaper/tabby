@@ -3,7 +3,7 @@
   "name": "@ragdoll/code",
   "version": "0.0.1-dev",
   "scripts": {
-    "build": "bun build src/cli.ts --compile --outfile ./dist/code",
+    "build": "INLINE_COMMIT_HASH=-$(git describe --always --dirty) bun build src/cli.ts --env=INLINE_* --compile --outfile ./dist/code",
     "tsc": "tsc --noEmit",
     "dev": "DEV=true bun --watch src/cli.ts",
     "storybook": "bun ../ink-storybook/src/cli/index.tsx",

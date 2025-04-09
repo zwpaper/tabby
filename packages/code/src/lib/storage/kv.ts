@@ -4,7 +4,7 @@ import path from "node:path";
 
 const sqliteName = path.join(
   process.env.HOME || "",
-  ".ragdoll",
+  ".pochi",
   "data",
   "db.sqlite",
 );

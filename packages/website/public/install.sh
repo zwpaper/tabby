@@ -8,7 +8,7 @@ download_release_from_repo() {
   local os_info="$2"
   local tmpdir="$3"
 
-  local filename="ragdoll-code-$os_info.tar.gz"
+  local filename="pochi-code-$os_info.tar.gz"
   local download_file="$tmpdir/$filename"
   local archive_url="$(release_url)/download/$version/$filename"
 
@@ -104,7 +104,7 @@ create_tree() {
 
   info 'Creating' "directory layout"
 
-  # .ragdoll/
+  # .pochi/
   #     bin/
 
   mkdir -p "$install_dir" && mkdir -p "$install_dir"/bin
@@ -134,7 +134,7 @@ install_version() {
 
   if [ "$?" == 0 ]
   then
-    "$install_dir"/bin/ragdoll-code --version &>/dev/null # creates the default shims
+    "$install_dir"/bin/pochi-code --version &>/dev/null # creates the default shims
     info 'Finished' "Ragdoll Code is installed at $install_dir/bin"
   fi
 }
@@ -193,7 +193,7 @@ install_from_file() {
 # return if sourced (for testing the functions above)
 return 0 2>/dev/null
 
-install_dir="${RAGDOLL_HOME:-"$HOME/.ragdoll"}"
+install_dir="${POCHI_HOME:-"$HOME/.pochi"}"
 
 # parse command line options
 while [ $# -gt 0 ]
