@@ -7,6 +7,7 @@ import { createContext, useContext } from "react";
 export interface AppConfig {
   dev: boolean;
   autoApprove: boolean;
+  fullscreen: boolean;
   prompt?: string;
   projectsDir?: string;
 }

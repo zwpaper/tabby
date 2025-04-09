@@ -49,8 +49,8 @@ const App = ({ config }: { config: AppConfig }) => {
   );
 };
 
-export function app(config: AppConfig, fullscreen: boolean) {
-  if (fullscreen) {
+export function app(config: AppConfig) {
+  if (config.fullscreen) {
     renderFullScreen(<App config={config} />);
   } else {
     render(<App config={config} />);

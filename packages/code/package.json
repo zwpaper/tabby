@@ -5,9 +5,10 @@
   "scripts": {
     "build": "bun build src/cli.ts --compile --outfile ./dist/code",
     "tsc": "tsc --noEmit",
-    "dev": "bun --watch src/cli.ts --dev",
+    "dev": "DEV=true bun --watch src/cli.ts",
     "storybook": "bun ../ink-storybook/src/cli/index.tsx",
-    "release": "./scripts/build-platform-binary.sh"
+    "release": "./scripts/build-platform-binary.sh",
+    "devtools": "bunx react-devtools@4"
   },
   "dependencies": {
     "@ai-sdk/provider-utils": "^2.2.1",
@@ -24,8 +25,8 @@
     "marked": "^15.0.7",
     "marked-terminal": "^7.3.0",
     "react": "^18",
-    "react-devtools-core": "^6.1.1",
-    "strip-ansi": "^7.1.0"
+    "strip-ansi": "^7.1.0",
+    "react-devtools-core": "^4"
   },
   "devDependencies": {
     "@ai-sdk/ui-utils": "^1.2.0",

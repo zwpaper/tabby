@@ -1,6 +1,10 @@
+if (process.env.DEV === "true") {
+  // HACK to make devtools work in bun.
+  await import("../../../node_modules/ink/build/devtools-window-polyfill.js");
+}
+
 import { Command } from "commander";
 import { version } from "../package.json";
-import { app } from "./app/page";
 
 const program = new Command();
 
@@ -27,6 +31,8 @@ const appConfig = {
   prompt: config.prompt,
   projectsDir: config.projectsDir,
   autoApprove: config.autoApprove || false,
+  fullscreen: config.fullscreen === undefined ? true : config.fullscreen,
 };
 
-app(appConfig, !!config.fullscreen);
+const { app } = await import("./app/page");
+app(appConfig);

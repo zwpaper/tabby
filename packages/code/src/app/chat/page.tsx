@@ -159,7 +159,7 @@ function ChatPage() {
     <Box flexDirection="column" padding={1} height="100%" width="100%">
       {showRenderMessages && (
         <Box
-          height={height - 20}
+          height={appConfig.fullscreen ? height - 20 : undefined}
           flexGrow={1}
           flexDirection="column"
           justifyContent="flex-end"

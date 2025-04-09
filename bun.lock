@@ -31,7 +31,7 @@
         "marked": "^15.0.7",
         "marked-terminal": "^7.3.0",
         "react": "^18",
-        "react-devtools-core": "^6.1.1",
+        "react-devtools-core": "^4",
         "strip-ansi": "^7.1.0",
       },
       "devDependencies": {
@@ -1422,7 +1422,7 @@
 
     "react": ["react@18.3.1", "", { "dependencies": { "loose-envify": "^1.1.0" } }, "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ=="],
 
-    "react-devtools-core": ["react-devtools-core@6.1.1", "", { "dependencies": { "shell-quote": "^1.6.1", "ws": "^7" } }, "sha512-TFo1MEnkqE6hzAbaztnyR5uLTMoz6wnEWwWBsCUzNt+sVXJycuRJdDqvL078M4/h65BI/YO5XWTaxZDWVsW0fw=="],
+    "react-devtools-core": ["react-devtools-core@4.28.5", "", { "dependencies": { "shell-quote": "^1.6.1", "ws": "^7" } }, "sha512-cq/o30z9W2Wb4rzBefjv5fBalHU0rJGZCHAkf/RHSBWSSYwh8PlQTqqOJmgIIbBtpj27T6FIPXeomIjZtCNVqA=="],
 
     "react-dom": ["react-dom@19.0.0", "", { "dependencies": { "scheduler": "^0.25.0" }, "peerDependencies": { "react": "^19.0.0" } }, "sha512-4GV5sHFG0e/0AD4X+ySy6UJd3jVl1iNsNHdpad0qhABJ11twS3TTBnseqsKurKcsNqCEFeGL3uLpVChpIO3QfQ=="],
 

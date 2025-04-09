@@ -5,6 +5,7 @@ check_git_clean() {
 
 main() {
     check_git_clean
+    bun check
     bun run test 
     check_git_clean
 }
