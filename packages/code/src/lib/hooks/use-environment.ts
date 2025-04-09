@@ -37,12 +37,13 @@ export function useEnvironment() {
   return { environment, reload };
 }
 
-// Recursively read `.cursorrules` files from cwd to root, concat them in order
+// Recursively read `README.pochi.md` files from cwd to root, concat them in order
+// Skip if go over .git boundary
 function collectCustomRules() {
   let rules = "";
   let cwd = process.cwd();
   while (cwd !== "/") {
-    const rulePath = path.join(cwd, ".cursorrules");
+    const rulePath = path.join(cwd, "README.pochi.md");
     try {
       if (fs.existsSync(rulePath)) {
         const rule = fs.readFileSync(rulePath, "utf8");
@@ -51,6 +52,12 @@ function collectCustomRules() {
     } catch (error) {
       // Ignore errors
     }
+
+    // Skip if go over .git boundary
+    if (fs.existsSync(path.join(cwd, ".git"))) {
+      break;
+    }
+
     cwd = path.dirname(cwd);
   }
   if (rules.length === 0) {
