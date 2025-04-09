@@ -28,6 +28,11 @@ export const AvailableModels: {
     contextWindow: 200_000,
     costType: "premium",
   },
+  {
+    id: "anthropic/claude-3.7-sonnet",
+    contextWindow: 200_000,
+    costType: "premium",
+  },
 ];
 
 export const StripePlans = [
@@ -53,6 +58,8 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
   switch (modelId) {
     case "anthropic/claude-3.5-sonnet":
       return openrouter("anthropic/claude-3.5-sonnet");
+    case "anthropic/claude-3.7-sonnet":
+      return openrouter("anthropic/claude-3.7-sonnet");
     case "openai/gpt-4o-mini":
       return openai("gpt-4o-mini");
     case "openai/gpt-4o":
