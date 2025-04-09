@@ -38,7 +38,6 @@ export function useEnvironment() {
 }
 
 // Recursively read `README.pochi.md` files from cwd to root, concat them in order
-// Skip if go over .git boundary
 function collectCustomRules() {
   let rules = "";
   let cwd = process.cwd();
@@ -51,11 +50,6 @@ function collectCustomRules() {
       }
     } catch (error) {
       // Ignore errors
-    }
-
-    // Skip if go over .git boundary
-    if (fs.existsSync(path.join(cwd, ".git"))) {
-      break;
     }
 
     cwd = path.dirname(cwd);
