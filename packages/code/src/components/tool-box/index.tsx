@@ -2,7 +2,7 @@ import { useAppConfig } from "@/lib/app-config";
 import { isDefaultApproved, isUserInputTool } from "@/lib/tools";
 import { Spinner } from "@inkjs/ui";
 import { Box } from "ink";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ConfirmPrompt } from "../confirm-prompt";
 import { ApplyDiffTool } from "./apply-diff-tool";
 import { AskFollowupQuestionTool } from "./ask-followup-question-tool";
@@ -28,6 +28,8 @@ const ToolComponents: Record<string, React.FC<ToolProps>> = {
   writeToFile: WriteToFileTool,
 };
 
+type ApprovalStatus = "approved" | "denied" | "pending" | "aborted";
+
 const ToolBox: React.FC<
   ToolProps & {
     runningToolCall: ToolProps["toolCall"] | null;
@@ -39,18 +41,29 @@ const ToolBox: React.FC<
 
   const appConfig = useAppConfig();
 
-  const pendingApproval =
-    runningToolCall === null &&
-    toolCall.state === "call" &&
-    !isUserInputTool(toolCall.toolName);
+  const [approval, setApproval] = useState<ApprovalStatus>("pending");
+  const invokeTool = useCallback(
+    (approved: boolean) => {
+      setApproval(approved ? "approved" : "denied");
+      onToolCall(toolCall, approved);
+    },
+    [onToolCall, toolCall],
+  );
+  const abortTool = useCallback(() => {
+    setApproval("aborted");
+    abortToolCall();
+  }, [abortToolCall]);
+
   useEffect(() => {
     if (
-      pendingApproval &&
+      approval === "pending" &&
+      toolCall.state === "call" &&
+      !isUserInputTool(toolCall.toolName) &&
       (appConfig.autoApprove || isDefaultApproved(toolCall))
     ) {
-      onToolCall(toolCall, true);
+      invokeTool(true);
     }
-  }, [pendingApproval, onToolCall, toolCall, appConfig]);
+  }, [invokeTool, approval, toolCall, appConfig]);
 
   const isRunning = runningToolCall?.toolCallId === toolCall.toolCallId;
   const [showAbort, setShowAbort] = useState(false);
@@ -70,16 +83,13 @@ const ToolBox: React.FC<
       ) : (
         <Box>Unknown tool: {toolCall.toolName}</Box>
       )}
-      {pendingApproval && (
-        <ConfirmPrompt
-          confirm={(approved) => onToolCall(toolCall, approved)}
-          prompt="Allow this tool to run?"
-        />
+      {approval === "pending" && (
+        <ConfirmPrompt confirm={invokeTool} prompt="Allow this tool to run?" />
       )}
       {isRunning && <Spinner />}
       {showAbort && isRunning && (
         <ConfirmPrompt
-          confirm={(yes) => yes && abortToolCall()}
+          confirm={(yes) => yes && abortTool()}
           prompt="Abort this tool?"
         />
       )}

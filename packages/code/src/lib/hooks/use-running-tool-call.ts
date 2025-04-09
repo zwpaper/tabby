@@ -16,12 +16,12 @@ export function useRunningToolCall(
     ToolProps["toolCall"] | null
   >(null);
   const hasRunningToolCall = !!runningToolCall;
-
   const onToolCall = useCallback(
-    async (
-      toolCall: ToolProps["toolCall"] & { _invoked?: boolean },
-      approved: boolean,
-    ) => {
+    async (toolCall: ToolProps["toolCall"], approved: boolean) => {
+      if (abortController.current) {
+        throw new Error("Tool call already running");
+      }
+
       if (approved) {
         abortController.current = new AbortController();
         setRunningToolCall(toolCall);
@@ -30,6 +30,12 @@ export function useRunningToolCall(
           signal: abortController.current.signal,
         });
         await addToolResult({ toolCallId: toolCall.toolCallId, result });
+        console.log(
+          "Clearing ToolCall",
+          approved,
+          toolCall.toolCallId,
+          toolCall.toolName,
+        );
         abortController.current = null; // Clear controller after use
         setRunningToolCall(null);
       } else {
