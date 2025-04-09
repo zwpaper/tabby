@@ -1,7 +1,6 @@
-import os from "node:os";
-import path from "node:path";
 import type React from "react";
 import { createContext, useContext } from "react";
+import { PochiProjectsPath } from "./paths";
 
 // Define the shape of the application configuration
 export interface AppConfig {
@@ -14,7 +13,7 @@ export interface AppConfig {
 
 // Default values for optional config properties
 const DEFAULT_CONFIG = {
-  projectsDir: path.join(os.homedir(), "PochiProjects"),
+  projectsDir: PochiProjectsPath,
 };
 
 // Create the context with a default value (can be null or a default config object)

@@ -3,9 +3,9 @@
   "private": true,
   "scripts": {
     "check": "npm-run-all check:default check:test",
-    "check:default": "biome check --config-path=./biome.default.json --write .",
-    "check:default-unsafe": "biome check --config-path=./biome.default.json --unsafe --write .",
-    "check:test": "biome check --config-path=./biome.test.json --write .",
+    "fix": "npm-run-all 'check:default -- --write' 'check:test -- --write'",
+    "check:default": "biome check --config-path=./biome.default.json .",
+    "check:test": "biome check --config-path=./biome.test.json .",
     "test": "vitest --run",
     "tsc": "bun --filter '*' tsc",
     "build": "bun --filter '*' build",

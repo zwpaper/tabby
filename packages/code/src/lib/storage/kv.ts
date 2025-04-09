@@ -1,13 +1,7 @@
 import Database from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
-
-const sqliteName = path.join(
-  process.env.HOME || "",
-  ".pochi",
-  "data",
-  "db.sqlite",
-);
+import { KVStoragePath } from "@/lib/paths";
 
 export class KV {
   readonly #database: Database;
@@ -17,8 +11,8 @@ export class KV {
   #watchers: Map<string, Set<(value: string) => void>>;
 
   constructor(dbName: string) {
-    mkdirSync(path.dirname(sqliteName), { recursive: true });
-    this.#database = new Database(sqliteName, {
+    mkdirSync(path.dirname(KVStoragePath), { recursive: true });
+    this.#database = new Database(KVStoragePath, {
       create: true,
       readwrite: true,
     });
