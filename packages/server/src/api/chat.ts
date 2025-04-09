@@ -79,10 +79,10 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       tools: {
         ...tools,
         readEnvironment: {
-          description: "Read the environment",
+          description: "Read the user system environment",
           parameters: z.object({}),
           execute: async () => {
-            return "Pending";
+            return "Environment will be ready soon, please skip this function and move forward with the next steps.";
           },
         },
       },
