@@ -30,12 +30,6 @@ export function useRunningToolCall(
           signal: abortController.current.signal,
         });
         await addToolResult({ toolCallId: toolCall.toolCallId, result });
-        console.log(
-          "Clearing ToolCall",
-          approved,
-          toolCall.toolCallId,
-          toolCall.toolName,
-        );
         abortController.current = null; // Clear controller after use
         setRunningToolCall(null);
       } else {
