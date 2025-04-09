@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 release_url() {
   echo "https://github.com/getpochi/code/releases"
 }
@@ -17,10 +18,10 @@ download_release_from_repo() {
 
 usage() {
     cat >&2 <<END_USAGE
-ragdoll-install: The installer for Ragdoll Code
+pochi-install: The installer for Pochi Code
 
 USAGE:
-    ragdoll-install [FLAGS] [OPTIONS]
+    pochi-install [FLAGS] [OPTIONS]
 
 FLAGS:
     -h, --help                  Prints help information
@@ -122,12 +123,12 @@ install_version() {
   case "$version_to_install" in
     latest)
       local latest_version="latest"
-      info 'Installing' "latest version of Ragdoll Code ($latest_version)"
+      info 'Installing' "latest version of Pochi Code ($latest_version)"
       install_release "$latest_version" "$install_dir"
       ;;
     *)
       # assume anything else is a specific version
-      info 'Installing' "Ragdoll Code version $version_to_install"
+      info 'Installing' "Pochi Code version $version_to_install"
       install_release "$version_to_install" "$install_dir"
       ;;
   esac
@@ -135,7 +136,7 @@ install_version() {
   if [ "$?" == 0 ]
   then
     "$install_dir"/bin/pochi-code --version &>/dev/null # creates the default shims
-    info 'Finished' "Ragdoll Code is installed at $install_dir/bin"
+    info 'Finished' "Pochi Code is installed at $install_dir/bin"
   fi
 }
 
@@ -143,14 +144,14 @@ install_release() {
   local version="$1"
   local install_dir="$2"
 
-  info 'Checking' "for existing Ragdoll Code installation"
+  info 'Checking' "for existing Pochi Code installation"
   if upgrade_is_ok "$version" "$install_dir"
   then
     download_archive="$(download_release "$version"; exit "$?")"
     exit_status="$?"
     if [ "$exit_status" != 0 ]
     then
-      error "Could not download Ragdoll Code version '$version'. See $(release_url) for a list of available releases"
+      error "Could not download Pochi Code version '$version'. See $(release_url) for a list of available releases"
       return "$exit_status"
     fi
 
@@ -168,7 +169,7 @@ download_release() {
   local os_info
   os_info="$(parse_os_info "$uname_str")"
   if [ "$?" != 0 ]; then
-    error "The current operating system ($uname_str) does not appear to be supported by Ragdoll Code."
+    error "The current operating system ($uname_str) does not appear to be supported by Pochi Code."
     return 1
   fi
   local pretty_os_name="$(parse_os_pretty "$uname_str")"
@@ -185,7 +186,7 @@ install_from_file() {
 
   create_tree "$install_dir"
 
-  info 'Extracting' "Ragdoll Code binaries and launchers"
+  info 'Extracting' "Pochi Code binaries and launchers"
   # extract the files to the specified directory
   tar -xf "$archive" -C "$install_dir"/bin
 }
