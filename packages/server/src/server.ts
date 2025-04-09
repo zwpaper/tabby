@@ -6,7 +6,12 @@ import models from "./api/models";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
 
-export const app = new Hono().use(logger()).use(authRequest);
+export const app = new Hono().use(authRequest);
+
+// Only use logger in development / testing.
+if (process.env.NODE_ENV !== "production") {
+  app.use(logger());
+}
 
 // Static file serving with dynamic import
 if (process.env.NODE_ENV !== "test") {
