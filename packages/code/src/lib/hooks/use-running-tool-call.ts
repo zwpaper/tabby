@@ -17,7 +17,7 @@ export function useRunningToolCall(
   >(null);
   const onToolCall = useCallback(
     async (toolCall: ToolProps["toolCall"], approved: boolean) => {
-      if (abortController.current) {
+      if (abortController.current && approved) {
         throw new Error(
           `Tool call already running\nRunning: ${runningToolCall?.toolName}: ${runningToolCall?.toolCallId} (${JSON.stringify(runningToolCall?.args)})\nNew: ${toolCall.toolName}: ${toolCall.toolCallId} (${JSON.stringify(toolCall.args)})`,
         );

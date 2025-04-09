@@ -81,9 +81,6 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         readEnvironment: {
           description: "Read the user system environment",
           parameters: z.object({}),
-          execute: async () => {
-            return "Environment will be ready soon, please skip this function and move forward with the next steps.";
-          },
         },
       },
       onError: async (error) => {

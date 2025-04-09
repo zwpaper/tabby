@@ -1,6 +1,7 @@
 import { ConfirmPrompt } from "@/components/confirm-prompt";
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
+import type { ToolProps } from "@/components/tool-box/types";
 import { useApiClient } from "@/lib/api";
 import { useAppConfig } from "@/lib/app-config";
 import { useAuth } from "@/lib/auth";
@@ -17,7 +18,7 @@ import type {
   ChatRequest as RagdollChatRequest,
 } from "@ragdoll/server";
 import { Box, Text } from "ink";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import SettingsModal from "./components/settings-modal";
@@ -182,6 +183,18 @@ function ChatPage() {
                   return <Markdown key={index}>{part.text}</Markdown>;
                 }
                 if (part.type === "tool-invocation") {
+                  // readEnvironment is a special tool that is handled by server side, but sometimes LLM might wrongly call it.
+                  // Here we can simply ignore it.
+                  if (part.toolInvocation.toolName === "readEnvironment") {
+                    return (
+                      <ReadEnvironment
+                        key={part.toolInvocation.toolCallId}
+                        toolCall={part.toolInvocation}
+                        onToolCall={onToolCall}
+                      />
+                    );
+                  }
+
                   return (
                     <ToolBox
                       key={part.toolInvocation.toolCallId}
@@ -247,6 +260,22 @@ function ChatPage() {
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </Box>
   );
+}
+
+function ReadEnvironment({
+  toolCall,
+  onToolCall,
+}: ToolProps & {
+  onToolCall: (toolCall: ToolProps["toolCall"], approved: boolean) => void;
+}) {
+  const rejected = useRef(false);
+  useEffect(() => {
+    if (!rejected.current) {
+      rejected.current = true;
+      onToolCall(toolCall, false);
+    }
+  }, [toolCall, onToolCall]);
+  return null;
 }
 
 function getRoleColor(role: string) {
