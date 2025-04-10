@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { logger } from "hono/logger";
 import billing from "./api/billing";
 import chat from "./api/chat";
+import events, { websocket } from "./api/events";
 import models from "./api/models";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
@@ -34,6 +35,7 @@ const api = app.basePath("/api");
 
 // Endpoint to list available models
 const route = api
+  .route("/events", events)
   .route("/models", models)
   .route("/chat", chat)
   .route("/usages", usages)
@@ -41,8 +43,17 @@ const route = api
 
 export type AppType = typeof route;
 
-export default {
+const server = Bun.serve({
   port: process.env.PORT || 4113,
   fetch: app.fetch,
   idleTimeout: 255,
-};
+  websocket,
+});
+
+export function getUserEventChannel(userId: string) {
+  return `user-events:${userId}`;
+}
+
+export function publishUserEvent(userId: string, event: unknown) {
+  server.publish(getUserEventChannel(userId), JSON.stringify(event));
+}

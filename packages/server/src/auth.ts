@@ -25,6 +25,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     "https://app.getpochi.com",
     "https://ragdoll-production.up.railway.app",
+    "http://localhost:4111",
   ],
   session: {
     cookieCache: {
@@ -78,7 +79,7 @@ export const auth = betterAuth({
   ],
 });
 
-type User = typeof auth.$Infer.Session.user;
+export type User = typeof auth.$Infer.Session.user;
 export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
   (() => {
     // Disable auth in test mode

@@ -28,10 +28,12 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "http://localhost:4113",
-        chaddngeOrigin: true,
-        onProxyReq: (request) => {
-          request.setHeader("origin", "http://localhost:4113");
-        },
+        changeOrigin: true,
+      },
+      "/api/events": {
+        target: "ws://localhost:4113",
+        changeOrigin: true,
+        ws: true,
       },
     },
   },
