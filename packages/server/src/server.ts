@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
+import type { UserEvent } from ".";
 import billing from "./api/billing";
 import chat from "./api/chat";
 import events, { websocket } from "./api/events";
@@ -54,6 +55,6 @@ export function getUserEventChannel(userId: string) {
   return `user-events:${userId}`;
 }
 
-export function publishUserEvent(userId: string, event: unknown) {
+export function publishUserEvent(userId: string, event: UserEvent) {
   server.publish(getUserEventChannel(userId), JSON.stringify(event));
 }
