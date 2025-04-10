@@ -66,6 +66,7 @@ function ModelList() {
           label: model.id,
           value: model.id,
         }))}
+        visibleOptionCount={10}
       />
     </Box>
   );
