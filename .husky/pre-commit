@@ -1,5 +1,5 @@
 main() {
-    bun check
+    bun check || "echo please use 'bun fix' to fix these errors"
     bun tsc
 }
 

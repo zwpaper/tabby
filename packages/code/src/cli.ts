@@ -30,6 +30,7 @@ program
     "--projects-dir <directory>",
     "Projects directory (default: ~/PochiProjects)",
   )
+  .option("--custom-rules <rules...>", "Custom rule files for the project")
   .parse(process.argv);
 
 const config = program.opts();
@@ -40,6 +41,7 @@ const appConfig = {
   projectsDir: config.projectsDir,
   autoApprove: config.autoApprove || false,
   fullscreen: config.fullscreen === undefined ? true : config.fullscreen,
+  customRuleFiles: config.customRules || [],
 };
 
 const { app } = await import("./app/page");

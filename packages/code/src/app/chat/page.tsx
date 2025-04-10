@@ -33,7 +33,9 @@ function ChatPage() {
   const [{ model }] = useLocalSettings();
   const appConfig = useAppConfig();
   const { tokenUsage, trackTokenUsage } = useTokenUsage();
-  const { environment, reload: reloadEnvironment } = useEnvironment();
+  const { environment, reload: reloadEnvironment } = useEnvironment(
+    appConfig.customRuleFiles,
+  );
   const {
     messages,
     setMessages,
@@ -108,7 +110,13 @@ function ChatPage() {
 
   const renderMessages = createRenderMessages(messages, isLoading);
 
+  const [errorRef, setErrorRef] = useState<typeof error>();
+  useEffect(() => {
+    setErrorRef(error);
+  }, [error]);
+
   async function onRetryAccept() {
+    setErrorRef(undefined);
     await reloadWithAssistantMessage({
       messages,
       setMessages,
@@ -118,7 +126,7 @@ function ChatPage() {
   }
 
   function onRetryCancel() {
-    setMessages(messages.slice(0, -1));
+    setErrorRef(undefined);
   }
 
   // Function to clear message history
@@ -137,7 +145,7 @@ function ChatPage() {
   // Show text input only if not loading OR user input tools are active,
   // AND environment is loaded, AND no error retry is shown
   const showTextInput =
-    !showSettings && environment && !isLoading && !runningToolCall;
+    !showSettings && environment && !isLoading && !runningToolCall && !errorRef;
 
   const [showAbortRequest, setShowAbortRequest] = useState(false);
   useEffect(() => {
@@ -208,10 +216,10 @@ function ChatPage() {
         </Box>
       )}
 
-      {error && (
+      {errorRef && (
         <ErrorWithRetry
           isLoading={isLoading}
-          error={error}
+          error={errorRef}
           onRetry={onRetryAccept}
           onCancel={onRetryCancel}
         />

@@ -4,7 +4,7 @@ import { listFiles } from "@/lib/tools/list-files";
 import type { Environment } from "@ragdoll/server";
 import { useCallback, useEffect, useRef } from "react";
 
-export function useEnvironment() {
+export function useEnvironment(customRuleFiles: string[]) {
   const environment = useRef<Environment | null>(null);
 
   const reload = useCallback(async () => {
@@ -14,7 +14,7 @@ export function useEnvironment() {
       "files" in listFilesOutput
         ? listFilesOutput
         : { files: [], isTruncated: false }; // Default or handle loading state
-    const customRules = collectCustomRules();
+    const customRules = collectCustomRules(customRuleFiles);
     const info = {
       cwd,
       shell: process.env.SHELL || "",
@@ -28,7 +28,7 @@ export function useEnvironment() {
       workspace,
       info,
     };
-  }, []);
+  }, [customRuleFiles]);
 
   useEffect(() => {
     reload();
@@ -37,23 +37,26 @@ export function useEnvironment() {
   return { environment, reload };
 }
 
-// Recursively read `README.pochi.md` files from cwd to root, concat them in order
-function collectCustomRules() {
+// try read `README.pochi.md` from cwd, also collect custom rules from `customRuleFiles`
+function collectCustomRules(customRuleFiles: string[]) {
+  const cwd = process.cwd();
   let rules = "";
-  let cwd = process.cwd();
-  while (cwd !== "/") {
-    const rulePath = path.join(cwd, "README.pochi.md");
-    try {
-      if (fs.existsSync(rulePath)) {
-        const rule = fs.readFileSync(rulePath, "utf8");
-        rules += `# Rules from ${rulePath}\n${rule}\n`;
-      }
-    } catch (error) {
-      // Ignore errors
-    }
 
-    cwd = path.dirname(cwd);
+  try {
+    const rulePath = path.join(cwd, "README.pochi.md");
+    if (fs.existsSync(rulePath)) {
+      const rule = fs.readFileSync(rulePath, "utf-8");
+      rules += `# Rules from ${rulePath}\n${rule}\n`;
+    }
+  } catch (error) {
+    // Ignore errors
   }
+
+  for (const rulePath of customRuleFiles) {
+    const rule = fs.readFileSync(rulePath, "utf-8");
+    rules += `# Rules from ${rulePath}\n${rule}\n`;
+  }
+
   if (rules.length === 0) {
     return undefined;
   }

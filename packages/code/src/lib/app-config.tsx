@@ -9,6 +9,7 @@ export interface AppConfig {
   fullscreen: boolean;
   prompt?: string;
   projectsDir?: string;
+  customRuleFiles: string[];
 }
 
 // Default values for optional config properties
