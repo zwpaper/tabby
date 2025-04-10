@@ -4,7 +4,7 @@
   "scripts": {
     "check": "npm-run-all check:default check:test",
     "fix": "npm-run-all 'check:default -- --write' 'check:test -- --write'",
-    "check:default": "biome check --config-path=./biome.default.json .",
+    "check:default": "biome check .",
     "check:test": "biome check --config-path=./biome.test.json .",
     "test": "vitest --run",
     "tsc": "bun --filter '*' tsc",

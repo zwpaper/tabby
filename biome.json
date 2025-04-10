@@ -7,7 +7,16 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["**/*/routeTree.gen.ts", "packages/ink-storybook"]
+    "ignore": [
+      "**/*/routeTree.gen.ts",
+      "packages/ink-storybook",
+      "*.test.ts",
+      "*.story.tsx",
+      "packages/website/src/components/ui/*.tsx",
+      "packages/code/src/lib/db/*.ts",
+      "packages/server/migrations/*.ts",
+      "packages/server/scripts/migrate-db-schema.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
