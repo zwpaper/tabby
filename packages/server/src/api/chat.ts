@@ -1,10 +1,12 @@
 import { zValidator } from "@hono/zod-validator";
 import * as tools from "@ragdoll/tools";
 import {
+  APICallError,
   type LanguageModel,
   type LanguageModelUsage,
   type LanguageModelV1,
   type Message,
+  RetryError,
   streamText,
 } from "ai";
 import type { User } from "better-auth";
@@ -83,8 +85,17 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
           parameters: z.object({}),
         },
       },
-      onError: async (error) => {
-        console.error(error);
+      onError: async ({ error }) => {
+        if (RetryError.isInstance(error)) {
+          if (APICallError.isInstance(error.lastError)) {
+            if (error.lastError.statusCode === 429) {
+              console.error("Rate limit exceeded");
+              return;
+            }
+          }
+        }
+
+        console.error("error", error);
         console.log((await result.request).body);
       },
       onFinish: async ({ usage, finishReason }) => {
