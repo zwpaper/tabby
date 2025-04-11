@@ -7,6 +7,7 @@ import events, { websocket } from "./api/events";
 import models from "./api/models";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
+import slack from "./slack";
 
 export const app = new Hono().use(authRequest);
 
@@ -28,6 +29,8 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 app.get("/health", (c) => c.text("OK"));
+
+app.on(["GET", "POST"], "/slack/*", (c) => slack.handler(c.req.raw));
 
 // Auth routes
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));

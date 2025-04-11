@@ -26,6 +26,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      "/slack": {
+        target: "http://localhost:4113",
+        changeOrigin: true,
+      },
       "/api": {
         target: "http://localhost:4113",
         changeOrigin: true,
