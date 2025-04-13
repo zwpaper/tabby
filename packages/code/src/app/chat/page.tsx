@@ -77,11 +77,12 @@ function ChatUI({ event }: { event?: UserEvent }) {
     reload,
     append,
   } = useChat({
+    initialInput: appConfig.prompt,
     api: apiClient.api.chat.stream.$url().toString(),
     maxSteps: 100,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(model, request, environment), // Updated call
+      prepareRequestBody(model, request, environment.current), // Updated call
     headers: {
       Authorization: `Bearer ${data.session.token}`,
     },
@@ -117,23 +118,20 @@ function ChatUI({ event }: { event?: UserEvent }) {
     [addToolResult, reloadEnvironment],
   );
 
-  const [initialPromptSent, setInitialPromptSent] = useState(false);
+  // Handle initial prompt
+  const initialPromptSent = useRef<boolean>(false);
+  useEffect(() => {
+    if (appConfig.prompt && !initialPromptSent.current) {
+      initialPromptSent.current = true;
+      onSubmit();
+    }
+  }, [appConfig.prompt, initialPromptSent, onSubmit]);
+
   const [showSettings, setShowSettings] = useState(false); // State for settings dialog
 
   // Use the custom hook for tool call logic
   const { runningToolCall, onToolCall, abortToolCall } =
     useRunningToolCall(hookAddToolResult);
-
-  // Handle initial prompt
-  useEffect(() => {
-    if (appConfig.prompt && environment && !initialPromptSent) {
-      setInitialPromptSent(true);
-      append({
-        role: "user",
-        content: appConfig.prompt,
-      });
-    }
-  }, [appConfig.prompt, environment, initialPromptSent, append]);
 
   const isLoading = status === "submitted" || status === "streaming";
 

@@ -2,10 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { listFiles } from "@/lib/tools/list-files";
 import type { Environment, UserEvent } from "@ragdoll/server";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 export function useEnvironment(customRuleFiles: string[], event?: UserEvent) {
-  const [environment, setEnvironment] = useState<Environment | null>(null);
+  const environment = useRef<Environment|null>(null);
 
   const reload = useCallback(async () => {
     const listFilesOutput = await listFiles({ path: ".", recursive: true });
@@ -24,11 +24,11 @@ export function useEnvironment(customRuleFiles: string[], event?: UserEvent) {
       event,
     };
 
-    setEnvironment({
+    environment.current = {
       currentTime: new Date().toString(),
       workspace,
       info,
-    });
+    };
   }, [customRuleFiles, event]);
 
   useEffect(() => {
