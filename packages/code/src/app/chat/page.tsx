@@ -105,10 +105,10 @@ function ChatUI({ event }: { event?: UserEvent }) {
     setInput(value);
   };
 
-  const onSubmit = async () => {
+  const onSubmit = useCallback(async () => {
     await reloadEnvironment();
     handleSubmit();
-  };
+  }, [handleSubmit, reloadEnvironment]);
 
   const hookAddToolResult = useCallback(
     async (...args: Parameters<typeof addToolResult>) => {
@@ -125,7 +125,7 @@ function ChatUI({ event }: { event?: UserEvent }) {
       initialPromptSent.current = true;
       onSubmit();
     }
-  }, [appConfig.prompt, initialPromptSent, onSubmit]);
+  }, [appConfig.prompt, onSubmit]);
 
   const [showSettings, setShowSettings] = useState(false); // State for settings dialog
 

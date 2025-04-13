@@ -5,7 +5,7 @@ import type { Environment, UserEvent } from "@ragdoll/server";
 import { useCallback, useEffect, useRef } from "react";
 
 export function useEnvironment(customRuleFiles: string[], event?: UserEvent) {
-  const environment = useRef<Environment|null>(null);
+  const environment = useRef<Environment | null>(null);
 
   const reload = useCallback(async () => {
     const listFilesOutput = await listFiles({ path: ".", recursive: true });
