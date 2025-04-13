@@ -2,7 +2,7 @@ import { ConfirmPrompt } from "@/components/confirm-prompt";
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
 import type { ToolProps } from "@/components/tool-box/types";
-import { useApiClient } from "@/lib/api";
+import { apiClient, createUserEventSource } from "@/lib/api";
 import { useAppConfig } from "@/lib/app-config";
 import { useAuth } from "@/lib/auth";
 import { useEnvironment } from "@/lib/hooks/use-environment";
@@ -16,6 +16,7 @@ import { Spinner } from "@inkjs/ui";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
+  UserEvent,
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
 import { Box, Text } from "ink";
@@ -25,7 +26,33 @@ import ChatHeader from "./components/header";
 import SettingsModal from "./components/settings-modal";
 import UserTextInput from "./components/user-text-input";
 
-function ChatPage() {
+export default function ChatPage() {
+  const { listen } = useAppConfig();
+  if (!listen) {
+    return <ChatUI />;
+  }
+
+  const [event, setEvent] = useState<UserEvent | null>();
+  useEffect(() => {
+    const source = createUserEventSource();
+    source.subscribe(listen, setEvent);
+    return () => source.dispose();
+  }, [listen]);
+
+  if (!event) {
+    return <Text>Waiting for event...</Text>;
+  }
+
+  const key = JSON.stringify(event);
+
+  if (event) {
+    return <ChatUI key={key} event={event} />;
+  }
+
+  return;
+}
+
+function ChatUI({ event }: { event?: UserEvent }) {
   const { data, logout } = useAuth();
   if (!data) {
     return <Text>Please log in to use the chat.</Text>;
@@ -36,6 +63,7 @@ function ChatPage() {
   const { tokenUsage, trackTokenUsage } = useTokenUsage();
   const { environment, reload: reloadEnvironment } = useEnvironment(
     appConfig.customRuleFiles,
+    event,
   );
   const {
     messages,
@@ -49,11 +77,11 @@ function ChatPage() {
     reload,
     append,
   } = useChat({
-    api: useApiClient().api.chat.stream.$url().toString(),
+    api: apiClient.api.chat.stream.$url().toString(),
     maxSteps: 100,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(model, request, environment.current), // Updated call
+      prepareRequestBody(model, request, environment), // Updated call
     headers: {
       Authorization: `Bearer ${data.session.token}`,
     },
@@ -98,14 +126,14 @@ function ChatPage() {
 
   // Handle initial prompt
   useEffect(() => {
-    if (appConfig.prompt && environment.current && !initialPromptSent) {
+    if (appConfig.prompt && environment && !initialPromptSent) {
       setInitialPromptSent(true);
       append({
         role: "user",
         content: appConfig.prompt,
       });
     }
-  }, [appConfig.prompt, environment.current, initialPromptSent, append]);
+  }, [appConfig.prompt, environment, initialPromptSent, append]);
 
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -375,5 +403,3 @@ async function reloadWithAssistantMessage({
 
   return await reload();
 }
-
-export default ChatPage;

@@ -1,5 +1,5 @@
 import Toggle from "@/components/toggle";
-import { useApiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api";
 import { useLocalSettings } from "@/lib/storage";
 import { Select as SelectImpl, Spinner } from "@inkjs/ui";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -47,7 +47,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 }
 
 function ModelList() {
-  const apiClient = useApiClient();
   const [{ model }, updateSettings] = useLocalSettings();
   const { data: models } = useSuspenseQuery({
     queryKey: ["models"],

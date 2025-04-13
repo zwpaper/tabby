@@ -4,12 +4,14 @@ import { PochiProjectsPath } from "./paths";
 
 // Define the shape of the application configuration
 export interface AppConfig {
-  dev: boolean;
   autoApprove: boolean;
   fullscreen: boolean;
   prompt?: string;
   projectsDir?: string;
   customRuleFiles: string[];
+
+  // Events to listen to
+  listen?: string;
 }
 
 // Default values for optional config properties

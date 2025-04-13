@@ -7,6 +7,7 @@ ${getCapabilitiesPrompt(environment)}
 ${getRulesPrompt(environment)}
 ${getSystemInfoPrompt(environment)}
 ${getObjectivePrompt()}
+${getEventPrompt(environment)}
 ${getCustomRulesPrompt(environment)}
 `;
   return prompt.trim();
@@ -77,7 +78,7 @@ When the user initially gives you a task, a recursive list of all filepaths in t
 }
 
 function getObjectivePrompt() {
-  const prompt = `===
+  const prompt = `====
 
 OBJECTIVE
 
@@ -106,6 +107,22 @@ You should always speak and think in the "en" language unless the user gives you
 
 Rules:
 ${customRules}
+`;
+  return prompt;
+}
+
+function getEventPrompt(environment: SystemPromptEnvironment) {
+  const { event } = environment;
+  if (!event) return "";
+  const prompt = `====
+EVENT
+
+Below is the event that triggered the assistant:
+
+\`\`\`json
+${JSON.stringify(event, null, 2)}
+\`\`\`
+
 `;
   return prompt;
 }

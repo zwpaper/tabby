@@ -1,10 +1,13 @@
-import { type AppType, deviceLinkClient } from "@ragdoll/server";
+import {
+  type AppType,
+  UserEventSource,
+  deviceLinkClient,
+} from "@ragdoll/server";
 import type { Session, User } from "better-auth";
 import { createAuthClient } from "better-auth/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { hc } from "hono/client";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAppConfig } from "./app-config";
+import { useCallback, useEffect, useState } from "react";
 import { authStorage } from "./storage";
 
 const DevBaseUrl = "http://localhost:4111";
@@ -26,22 +29,18 @@ function getToken() {
   return authStorage.getItem("authToken") || "";
 }
 
+const authClient = createAuthClient({
+  baseURL: isDev() ? DevBaseUrl : ProdBaseUrl,
+  plugins: [emailOTPClient(), deviceLinkClient()],
+  fetchOptions: {
+    auth: {
+      type: "Bearer",
+      token: getToken,
+    },
+  },
+});
+
 export function useAuthApi() {
-  const appConfig = useAppConfig();
-  const authClient = useMemo(
-    () =>
-      createAuthClient({
-        baseURL: appConfig.dev ? DevBaseUrl : ProdBaseUrl,
-        plugins: [emailOTPClient(), deviceLinkClient()],
-        fetchOptions: {
-          auth: {
-            type: "Bearer",
-            token: getToken,
-          },
-        },
-      }),
-    [appConfig],
-  );
   const [data, setData] = useState<{ user: User; session: Session } | null>(
     getAuthData(),
   );
@@ -71,7 +70,7 @@ export function useAuthApi() {
       setError({ message: error.statusText });
     }
     setIsLoading(false);
-  }, [authClient]);
+  }, []);
 
   useEffect(() => {
     refetch();
@@ -105,9 +104,12 @@ export function useAuthApi() {
   };
 }
 
-export function useApiClient() {
-  const appConfig = useAppConfig();
-  const app = hc<AppType>(appConfig.dev ? DevBaseUrl : ProdBaseUrl, {
+function isDev() {
+  return !!process.env.POCHI_DEV_SERVER;
+}
+
+function createApiClient() {
+  const app = hc<AppType>(isDev() ? DevBaseUrl : ProdBaseUrl, {
     fetch: (input: RequestInfo | URL, requestInit?: RequestInit) => {
       return fetch(input, {
         ...requestInit,
@@ -119,4 +121,14 @@ export function useApiClient() {
     },
   });
   return app;
+}
+
+export const apiClient = createApiClient();
+
+export function createUserEventSource() {
+  const eventSource = new UserEventSource(
+    isDev() ? DevBaseUrl : ProdBaseUrl,
+    getToken(),
+  );
+  return eventSource;
 }

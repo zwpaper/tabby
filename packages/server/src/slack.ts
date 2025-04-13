@@ -128,7 +128,7 @@ class SlackService {
 
       publishUserEvent(integration.userId, {
         type: "slack:message",
-        payload: message,
+        data: message,
       });
     });
   }

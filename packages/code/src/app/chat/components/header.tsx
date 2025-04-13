@@ -1,4 +1,4 @@
-import { useApiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api";
 import type { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { useLocalSettings } from "@/lib/storage";
 import type { useChat } from "@ai-sdk/react";
@@ -30,7 +30,6 @@ function formatContextWindow(size: number, maxWindow: number): number {
 }
 
 function HeaderContent({ tokenUsage, status }: ChatHeaderProps) {
-  const apiClient = useApiClient();
   const [{ model }] = useLocalSettings();
   const { data: models } = useSuspenseQuery({
     queryKey: ["models"],
