@@ -1,6 +1,7 @@
 import { useAppConfig } from "@/lib/app-config";
-import { isDefaultApproved, isUserInputTool } from "@/lib/tools";
+import { isDefaultApproved } from "@/lib/tools";
 import { Spinner } from "@inkjs/ui";
+import { isUserInputTool } from "@ragdoll/tools";
 import { Box } from "ink";
 import { useCallback, useEffect, useState } from "react";
 import { ConfirmPrompt } from "../confirm-prompt";

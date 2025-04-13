@@ -1,3 +1,4 @@
+import { isUserInputTool } from "@ragdoll/tools";
 import type { Message, ToolCall, ToolInvocation } from "ai";
 import { applyDiff } from "./apply-diff";
 import { executeCommand } from "./execute-command";
@@ -53,18 +54,13 @@ export async function invokeTool(tool: {
 export function isDefaultApproved(toolCall: ToolInvocation) {
   const { toolName, state } = toolCall;
   const defaultApproval: boolean =
-    ToolsExemptFromApproval.has(toolName) || state === "result";
+    isUserInputTool(toolName) ||
+    ToolsExemptFromApproval.has(toolName) ||
+    state === "result";
   return defaultApproval;
 }
 
-const UserInputTools = new Set(["askFollowupQuestion", "attemptCompletion"]);
-
-export function isUserInputTool(toolName: string) {
-  return UserInputTools.has(toolName);
-}
-
 const ToolsExemptFromApproval = new Set([
-  ...UserInputTools,
   "listFiles",
   "globFiles",
   "readFile",
@@ -83,7 +79,7 @@ export function prepareMessages(messages: Message[]) {
           part.toolInvocation = {
             ...part.toolInvocation,
             state: "result",
-            result: UserInputTools.has(part.toolInvocation.toolName)
+            result: isUserInputTool(part.toolInvocation.toolName)
               ? { success: true }
               : {
                   error: "User cancelled the tool call.",

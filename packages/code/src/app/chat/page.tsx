@@ -17,6 +17,7 @@ import type {
   Environment,
   ChatRequest as RagdollChatRequest,
 } from "@ragdoll/server";
+import { isAutoInjectTool } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ErrorWithRetry from "./components/error";
@@ -188,11 +189,9 @@ function ChatPage() {
                   return <Markdown key={index}>{part.text}</Markdown>;
                 }
                 if (part.type === "tool-invocation") {
-                  // readEnvironment is a special tool that is handled by server side, but sometimes LLM might wrongly call it.
-                  // Here we can simply ignore it.
-                  if (part.toolInvocation.toolName === "readEnvironment") {
+                  if (isAutoInjectTool(part.toolInvocation.toolName)) {
                     return (
-                      <ReadEnvironment
+                      <AutoInjectTool
                         key={part.toolInvocation.toolCallId}
                         toolCall={part.toolInvocation}
                         onToolCall={onToolCall}
@@ -261,7 +260,7 @@ function ChatPage() {
   );
 }
 
-function ReadEnvironment({
+function AutoInjectTool({
   toolCall,
   onToolCall,
 }: ToolProps & {

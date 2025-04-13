@@ -5,12 +5,14 @@ import { auth } from "./auth";
 import { db } from "./db";
 import type { JsonObject, JsonValue } from "./db/schema";
 import { connectToWeb } from "./lib/connect";
+import { publishUserEvent } from "./server";
 
 class SlackService {
   private app: App;
 
   constructor() {
     this.app = new App({
+      // logLevel: LogLevel.DEBUG,
       signingSecret: process.env.SLACK_SIGNING_SECRET,
       clientId: process.env.SLACK_CLIENT_ID,
       clientSecret: process.env.SLACK_CLIENT_SECRET,
@@ -106,6 +108,28 @@ class SlackService {
             .execute();
         },
       },
+    });
+
+    // @ts-expect-error
+    this.app.receiver.client.start().then(() => this.registerEvents());
+  }
+
+  private registerEvents() {
+    this.app.message(/.*/, async ({ context, message }) => {
+      const vendorIntegrationId = context.teamId || context.enterpriseId;
+      if (!vendorIntegrationId) return;
+      const integration = await db
+        .selectFrom("externalIntegration")
+        .select("userId")
+        .where("provider", "=", "slack")
+        .where("vendorIntegrationId", "=", vendorIntegrationId)
+        .executeTakeFirst();
+      if (!integration) return;
+
+      publishUserEvent(integration.userId, {
+        type: "slack:message",
+        payload: message,
+      });
     });
   }
 

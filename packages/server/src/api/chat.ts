@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import * as tools from "@ragdoll/tools";
+import { Tools, isAutoInjectTool } from "@ragdoll/tools";
 import {
   APICallError,
   type LanguageModel,
@@ -13,7 +13,6 @@ import type { User } from "better-auth";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
-import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
@@ -78,13 +77,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       model: c.get("model") || selectedModel,
       system: environment?.info && generateSystemPrompt(environment.info),
       messages,
-      tools: {
-        ...tools,
-        readEnvironment: {
-          description: "Read the user system environment",
-          parameters: z.object({}),
-        },
-      },
+      tools: Tools,
       onError: async ({ error }) => {
         if (RetryError.isInstance(error)) {
           if (APICallError.isInstance(error.lastError)) {
@@ -115,15 +108,16 @@ function preprocessMessages(
   model: LanguageModelV1,
   environment?: Environment,
 ) {
-  // We always inject readEnvironment automatically, so we can remove all non injected readEnvironment calls (which might wrongly be invoked by LLM)
+  // We always inject readEnvironment automatically, so we can remove all previous readEnvironment calls (which might wrongly be invoked by LLM)
   for (const x of messages) {
     if (x.parts) {
       x.parts = x.parts.filter((x) => {
-        if (x.type !== "tool-invocation") return true;
-        if (x.toolInvocation.toolName !== "readEnvironment") return true;
-        if (x.toolInvocation.toolCallId.startsWith("environmentToolCall-"))
-          return true;
-        return false;
+        if (
+          x.type === "tool-invocation" &&
+          isAutoInjectTool(x.toolInvocation.toolName)
+        )
+          return false;
+        return true;
       });
     }
   }
