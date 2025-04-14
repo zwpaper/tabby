@@ -14,12 +14,6 @@ export const executeCommand = declareClientTool({
       .string()
       .optional()
       .describe("The working directory to execute the command in."),
-    isDevServer: z
-      .boolean()
-      .optional()
-      .describe(
-        "Whether the command is being executed as development server for current task.",
-      ),
   }),
   outputSchema: z.object({
     output: z

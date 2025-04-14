@@ -25,7 +25,6 @@
     "marked": "^15.0.7",
     "marked-terminal": "^7.3.0",
     "react": "^18",
-    "strip-ansi": "^7.1.0",
     "react-devtools-core": "^4"
   },
   "devDependencies": {
