@@ -100,14 +100,11 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         console.log((await result.request).body);
       },
       onFinish: async ({ usage, finishReason, response }) => {
-        if (finishReason === "unknown" || finishReason === "error") {
-          return;
-        }
-
         await db
           .updateTable("task")
           .set({
             environment,
+            finishReason,
             messages: JSON.stringify(
               postProcessMessages(
                 appendResponseMessages({
@@ -122,7 +119,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
           .executeTakeFirstOrThrow()
           .catch(console.error);
 
-        await trackUsage(user, requestedModelId, usage);
+        if (!Number.isNaN(usage.totalTokens)) {
+          await trackUsage(user, requestedModelId, usage);
+        }
       },
     });
 

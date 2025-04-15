@@ -11,21 +11,13 @@ export async function up(db: Kysely<any>) {
       cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
     .addColumn("userId", "text", (cb) => cb.notNull())
+    .addColumn("finishReason", "text", (cb) => cb.notNull().defaultTo("stop"))
     .addColumn("environment", "jsonb", (cb) => cb.notNull().defaultTo("{}"))
     .addColumn("messages", "jsonb", (cb) => cb.notNull().defaultTo("[]"))
     .addForeignKeyConstraint("task_userId_fk", ["userId"], "user", ["id"])
     .execute();
-
-  // Create an index on the messages JSONB column
-  await db.schema
-    .createIndex('task_messages_idx')
-    .on('task')
-    .column('messages')
-    .execute();
 }
 
 export async function down(db: Kysely<any>) {
-  // Drop the index on the messages JSONB column
-  await db.schema.dropIndex('task_messages_idx').execute();
   await db.schema.dropTable("task").execute();
 }
