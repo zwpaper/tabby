@@ -81,7 +81,7 @@ function TaskList({
       onSelectTask(tasks[selectedIndex]);
     } else if (key.tab || input === "n") {
       // Next page
-      if (pagination.after) {
+      if (pagination.after && tasks.length >= pagination.limit) {
         setAfter(pagination.after);
         setSelectedIndex(0);
       }
@@ -116,7 +116,7 @@ function TaskList({
               bold={selectedIndex === index}
               color={selectedIndex === index ? "white" : "gray"}
             >
-              {index + 1}
+              {String(index + 1).padStart(3, '0')}
             </Text>
             <Text> | </Text>
             <Text color={selectedIndex === index ? "white" : "gray"}>
@@ -132,11 +132,11 @@ function TaskList({
 
       <Box flexDirection="column">
         <Box justifyContent="space-between" paddingX={1}>
-          <Text dimColor={!pagination.after}>← (p) Prev</Text>
+          <Text dimColor={!after}>← (p) Prev</Text>
           <Text>
             Showing {tasks.length} of {pagination.totalCount} tasks
           </Text>
-          <Text dimColor={!pagination.after}>Next (n) →</Text>
+          <Text dimColor={!pagination.after || tasks.length < pagination.limit}>Next (n) →</Text>
         </Box>
 
         <Box paddingX={1} alignItems="center" justifyContent="center">

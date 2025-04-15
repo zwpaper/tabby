@@ -28,6 +28,7 @@ const tasks = new Hono()
     const tasksQuery = db
       .selectFrom("task")
       .where("userId", "=", user.id)
+      .where("id", ">", after ? decodeTaskId(after) : 0)
       .select([
         "id",
         sql<Date>`"createdAt" AT TIME ZONE 'UTC'`.as("createdAt"),
@@ -35,12 +36,7 @@ const tasks = new Hono()
         "finishReason",
         sql<string>`messages[0]->'content'`.as("abstract"),
       ])
-      .limit(limit)
-      .orderBy("createdAt", "desc");
-
-    if (after) {
-      tasksQuery.where("id", ">", decodeTaskId(after));
-    }
+      .limit(limit);
 
     const tasks = await tasksQuery.execute();
 
@@ -56,7 +52,7 @@ const tasks = new Hono()
     // Transform the response to use encoded task IDs
     const transformedTasks = tasks.map((task) => ({
       ...task,
-      abstract: task.abstract.split("\n")[0].slice(0, 48),
+      abstract: task.abstract?.split("\n")[0].slice(0, 48) || "(empty)",
       id: encodeTaskId(task.id),
     }));
 

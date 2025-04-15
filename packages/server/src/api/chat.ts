@@ -324,6 +324,7 @@ async function getTask(
       .returning("id")
       .returning("messages")
       .executeTakeFirstOrThrow();
+    console.log("creating new chat", data.id);
     id = data.id;
     messages = data.messages as unknown as Message[];
   }
