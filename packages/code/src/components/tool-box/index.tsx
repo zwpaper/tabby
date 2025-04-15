@@ -56,20 +56,17 @@ const ToolBox: React.FC<
     abortToolCall();
   }, [abortToolCall]);
 
+  const isAutoApproved = appConfig.autoApprove || isDefaultApproved(toolCall);
   const pendingApproval =
     approval === "pending" &&
     toolCall.state === "call" &&
     !isUserInputTool(toolCall.toolName);
 
   useEffect(() => {
-    if (
-      !runningToolCall &&
-      pendingApproval &&
-      (appConfig.autoApprove || isDefaultApproved(toolCall))
-    ) {
+    if (!runningToolCall && pendingApproval && isAutoApproved) {
       invokeTool(true);
     }
-  }, [runningToolCall, invokeTool, pendingApproval, toolCall, appConfig]);
+  }, [runningToolCall, invokeTool, pendingApproval, isAutoApproved]);
 
   const isRunning = runningToolCall?.toolCallId === toolCall.toolCallId;
   const [showAbort, setShowAbort] = useState(false);
@@ -89,7 +86,7 @@ const ToolBox: React.FC<
       ) : (
         <Box>Unknown tool: {toolCall.toolName}</Box>
       )}
-      {pendingApproval && (
+      {pendingApproval && !isAutoApproved && (
         <ConfirmPrompt confirm={invokeTool} prompt="Allow this tool to run?" />
       )}
       {isRunning && <Spinner />}
