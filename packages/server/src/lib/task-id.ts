@@ -1,7 +1,7 @@
 import Hashids from "hashids";
 import type { NumberLike } from "hashids/util";
 
-const hashids = new Hashids("ragdoll-taskid-salt");
+const hashids = new Hashids("ragdoll-taskid-salt", 10);
 
 /**
  * Encodes a numeric task ID to a hashed string

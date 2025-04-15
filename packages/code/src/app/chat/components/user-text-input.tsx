@@ -45,6 +45,11 @@ const COMMANDS = [
     prompt:
       "Please explain what does this workspace do, with brief summary of each component.",
   },
+  {
+    name: "/quit",
+    description: "Exit chat",
+    prompt: "", // No prompt needed, action is immediate
+  },
 ];
 
 // Command type
@@ -65,7 +70,7 @@ export default function UserTextInput({
   onLogout: () => void;
   onClearHistory: () => void; // Define prop type
 }) {
-  const { navigate } = useRouter();
+  const { navigate, back } = useRouter();
   const { isFocused } = useFocus({ autoFocus: true });
   const borderColor = isFocused ? "white" : "gray";
   const [inputValue, setInputValue] = useState("");
@@ -254,6 +259,8 @@ export default function UserTextInput({
         onLogout();
         setInputValue("");
         onChange("");
+      } else if (selectedCommand.name === "/quit") {
+        back();
       } else if (selectedCommand.name === "/clear") {
         // Handle /clear
         onClearHistory();

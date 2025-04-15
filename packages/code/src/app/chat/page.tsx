@@ -18,6 +18,7 @@ import type {
   UserEvent,
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
+import { useQuery } from "@tanstack/react-query";
 import type { JSONValue } from "ai";
 import { Box, Text } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -25,12 +26,48 @@ import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import UserTextInput from "./components/user-text-input";
 
-export default function ChatPage() {
+export default function ChatPage({ taskId }: { taskId?: string }) {
   const { listen } = useAppConfig();
-  if (!listen) {
-    return <ChatUI />;
+  if (listen) {
+    return <ChatEvent listen={listen} />;
   }
 
+  if (!taskId) return <ChatUI />;
+
+  const { data } = useQuery({
+    queryKey: ["task", taskId],
+    queryFn: async () => {
+      const res = await apiClient.api.tasks[":id"].$get({
+        param: { id: taskId },
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch task: ${res.statusText}`);
+      }
+      return res.json();
+    },
+  });
+
+  // Display loading spinner while task is loading
+  if (!data) {
+    return (
+      <Box
+        flexDirection="column"
+        width="100%"
+        height="100%"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Spinner label="Loading task..." />
+      </Box>
+    );
+  }
+
+  // @ts-expect-error
+  const initialMessages: Message[] = data.messages;
+  return <ChatUI taskId={taskId} initialMessages={initialMessages} />;
+}
+
+function ChatEvent({ listen }: { listen: string }) {
   const [event, setEvent] = useState<UserEvent | null>();
   useEffect(() => {
     const source = createUserEventSource();
@@ -47,11 +84,17 @@ export default function ChatPage() {
   if (event) {
     return <ChatUI key={key} event={event} />;
   }
-
-  return;
 }
 
-function ChatUI({ event }: { event?: UserEvent }) {
+function ChatUI({
+  event,
+  taskId,
+  initialMessages,
+}: {
+  event?: UserEvent;
+  taskId?: string;
+  initialMessages?: Message[];
+}) {
   const { data: authData, logout } = useAuth();
   if (!authData) {
     return <Text>Please log in to use the chat.</Text>;
@@ -64,6 +107,7 @@ function ChatUI({ event }: { event?: UserEvent }) {
     appConfig.customRuleFiles,
     event,
   );
+
   const {
     data,
     messages,
@@ -80,9 +124,11 @@ function ChatUI({ event }: { event?: UserEvent }) {
     initialInput: appConfig.prompt,
     api: apiClient.api.chat.stream.$url().toString(),
     maxSteps: 100,
+    id: taskId, // Use the taskId as the chat ID when provided
+    initialMessages,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(data, model, request, environment.current), // Updated call
+      prepareRequestBody(data, model, request, environment.current),
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },

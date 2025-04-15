@@ -9,9 +9,12 @@ type RouterContextType = {
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
 
+const defaultRoute = "/tasks";
+// const defaultRoute = "/chat";
+
 export function RouterProvider({ children }: { children: React.ReactNode }) {
-  const [path, setPath] = useState<string>("/chat");
-  const [history, setHistory] = useState<string[]>(["/chat"]);
+  const [path, setPath] = useState<string>(defaultRoute);
+  const [history, setHistory] = useState<string[]>([defaultRoute]);
 
   const navigate = (newPath: string, options?: { replace?: boolean }) => {
     setPath(newPath);

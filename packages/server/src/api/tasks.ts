@@ -1,5 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { sql } from "kysely";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
@@ -26,7 +28,13 @@ const tasks = new Hono()
     const tasksQuery = db
       .selectFrom("task")
       .where("userId", "=", user.id)
-      .select(["id", "createdAt", "updatedAt", "finishReason"])
+      .select([
+        "id",
+        sql<Date>`"createdAt" AT TIME ZONE 'UTC'`.as("createdAt"),
+        sql<Date>`"updatedAt" AT TIME ZONE 'UTC'`.as("updatedAt"),
+        "finishReason",
+        sql<string>`messages[0]->'content'`.as("abstract"),
+      ])
       .limit(limit)
       .orderBy("createdAt", "desc");
 
@@ -48,6 +56,7 @@ const tasks = new Hono()
     // Transform the response to use encoded task IDs
     const transformedTasks = tasks.map((task) => ({
       ...task,
+      abstract: task.abstract.split("\n")[0].slice(0, 48),
       id: encodeTaskId(task.id),
     }));
 
@@ -71,28 +80,24 @@ const tasks = new Hono()
       const { id } = c.req.valid("param");
       const user = c.get("user");
 
-      try {
-        const numericId = decodeTaskId(id);
+      const numericId = decodeTaskId(id);
 
-        const task = await db
-          .selectFrom("task")
-          .where("id", "=", numericId)
-          .where("userId", "=", user.id)
-          .select(["id", "createdAt", "updatedAt", "finishReason", "messages"])
-          .executeTakeFirst();
+      const task = await db
+        .selectFrom("task")
+        .where("id", "=", numericId)
+        .where("userId", "=", user.id)
+        .select(["id", "createdAt", "updatedAt", "finishReason", "messages"])
+        .executeTakeFirst();
 
-        if (!task) {
-          return c.json({ error: "Task not found" }, 404);
-        }
-
-        // Transform the response to include the encoded ID
-        return c.json({
-          ...task,
-          encodedId: encodeTaskId(task.id),
-        });
-      } catch (error) {
-        return c.json({ error: "Invalid task ID" }, 400);
+      if (!task) {
+        throw new HTTPException(404, { message: "Task not found" });
       }
+
+      // Transform the response to include the encoded ID
+      return c.json({
+        ...task,
+        id,
+      });
     },
   );
 

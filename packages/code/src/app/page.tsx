@@ -10,6 +10,7 @@ import type { PropsWithChildren } from "react";
 import ChatPage from "./chat/page";
 import LoginPage from "./login/page";
 import SettingsPage from "./settings/page";
+import TasksPage from "./tasks/page";
 
 const customTheme = extendTheme(defaultTheme, {
   components: {},
@@ -37,9 +38,17 @@ const Router = () => {
     return <LoginPage />;
   }
 
+  // Handle chat with task ID (chat/:id pattern)
+  if (path.startsWith("/chat/")) {
+    const taskId = path.substring("/chat/".length);
+    return <ChatPage taskId={taskId} />;
+  }
+
   switch (path) {
     case "/settings":
       return <SettingsPage />;
+    case "/tasks":
+      return <TasksPage />;
     // case "/chat":
     default:
       return <ChatPage />;
