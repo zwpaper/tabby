@@ -5,6 +5,7 @@ import billing from "./api/billing";
 import chat from "./api/chat";
 import events, { websocket } from "./api/events";
 import models from "./api/models";
+import tasks from "./api/tasks";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
 import slack from "./slack";
@@ -43,7 +44,8 @@ const route = api
   .route("/models", models)
   .route("/chat", chat)
   .route("/usages", usages)
-  .route("/billing", billing); // Add billing history route
+  .route("/billing", billing)
+  .route("/tasks", tasks);
 
 export type AppType = typeof route;
 

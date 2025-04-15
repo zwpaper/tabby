@@ -16,10 +16,12 @@ import type { User } from "better-auth";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
+import { sql } from "kysely";
 import { requireAuth } from "../auth";
 import { db } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
 import { AvailableModels, getModelById } from "../lib/constants";
+import { decodeTaskId, encodeTaskId } from "../lib/task-id";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
@@ -130,7 +132,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     const dataStream = createDataStream({
       execute(dataStream) {
         dataStream.writeData({
-          id: encodeId(id),
+          id: encodeTaskId(id),
         });
         result.mergeIntoDataStream(dataStream);
       },
@@ -296,35 +298,17 @@ async function trackUsage(
     .execute();
 }
 
-import Hashids from "hashids";
-import type { NumberLike } from "hashids/util";
-import { sql } from "kysely";
-
-const hashids = new Hashids("ragdoll-taskid-salt");
-
-function encodeId(id: NumberLike): string {
-  return hashids.encode(id);
-}
-
-function decodeId(taskId: string): NumberLike {
-  const x = hashids.decode(taskId)[0];
-  if (x === undefined) {
-    throw new Error(`Invalid id: ${taskId}`);
-  }
-  return x;
-}
-
 async function getTask(
   user: User,
   chatId?: string,
 ): Promise<{
-  id: NumberLike;
+  id: number;
   messages: Message[];
 }> {
-  let id: NumberLike;
+  let id: number;
   let messages: Message[];
   if (chatId !== undefined) {
-    id = decodeId(chatId);
+    id = decodeTaskId(chatId);
     const data = await db
       .selectFrom("task")
       .select(["messages"])
