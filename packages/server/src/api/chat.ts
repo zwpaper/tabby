@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { Tools, isAutoInjectTool } from "@ragdoll/tools";
+import { Tools, isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 import {
   APICallError,
   type LanguageModel,
@@ -7,6 +7,9 @@ import {
   type LanguageModelV1,
   type Message,
   RetryError,
+  appendClientMessage,
+  appendResponseMessages,
+  createDataStream,
   streamText,
 } from "ai";
 import type { User } from "better-auth";
@@ -30,11 +33,12 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
   zValidator("json", ZodChatRequestType),
   requireAuth,
   async (c) => {
+    const req = await c.req.valid("json");
     const {
-      messages,
+      message,
       environment,
       model: requestedModelId = "google/gemini-2.5-pro",
-    } = await c.req.valid("json");
+    } = req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
 
@@ -70,13 +74,17 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       });
     }
 
-    preprocessMessages(messages, selectedModel, environment);
+    const { id, messages: previousMessages } = await getTask(user, req.id);
+    const messages = appendClientMessage({
+      messages: previousMessages,
+      message,
+    });
 
     const result = streamText({
       toolCallStreaming: true,
       model: c.get("model") || selectedModel,
       system: environment?.info && generateSystemPrompt(environment.info),
-      messages,
+      messages: preprocessMessages(messages, selectedModel, environment),
       tools: Tools,
       onError: async ({ error }) => {
         if (RetryError.isInstance(error)) {
@@ -91,27 +99,64 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         console.error("error", error);
         console.log((await result.request).body);
       },
-      onFinish: async ({ usage, finishReason }) => {
+      onFinish: async ({ usage, finishReason, response }) => {
         if (finishReason === "unknown" || finishReason === "error") {
           return;
         }
+
+        await db
+          .updateTable("task")
+          .set({
+            environment,
+            messages: JSON.stringify(
+              postProcessMessages(
+                appendResponseMessages({
+                  messages,
+                  responseMessages: response.messages,
+                }),
+              ),
+            ),
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          })
+          .where("id", "=", id as number)
+          .executeTakeFirstOrThrow()
+          .catch(console.error);
+
         await trackUsage(user, requestedModelId, usage);
       },
     });
 
-    return stream(c, (stream) => stream.pipe(result.toDataStream()));
+    result.consumeStream();
+
+    const dataStream = createDataStream({
+      execute(dataStream) {
+        dataStream.writeData({
+          id: encodeId(id),
+        });
+        result.mergeIntoDataStream(dataStream);
+      },
+    });
+
+    return stream(c, (stream) => {
+      return stream.pipe(dataStream);
+    });
   },
 );
 
-function preprocessMessages(
-  messages: Message[],
-  model: LanguageModelV1,
-  environment?: Environment,
-) {
-  // We always inject readEnvironment automatically, so we can remove all previous readEnvironment calls (which might wrongly be invoked by LLM)
+function removeAutoInject(messages: Message[]) {
+  const ret = [];
   for (const x of messages) {
-    if (x.parts) {
-      x.parts = x.parts.filter((x) => {
+    // Remove environment message
+    if (x.id.startsWith("environmentMessage-")) {
+      continue;
+    }
+
+    const m = {
+      ...x,
+    };
+
+    if (m.parts) {
+      m.parts = m.parts.filter((x) => {
         if (
           x.type === "tool-invocation" &&
           isAutoInjectTool(x.toolInvocation.toolName)
@@ -120,7 +165,49 @@ function preprocessMessages(
         return true;
       });
     }
+
+    ret.push(m);
   }
+  return ret;
+}
+
+function postProcessMessages(messages: Message[]) {
+  const ret = removeAutoInject(messages);
+  for (const x of ret) {
+    x.toolInvocations = undefined;
+  }
+
+  return ret;
+}
+
+function preprocessMessages(
+  inputMessages: Message[],
+  model: LanguageModelV1,
+  environment?: Environment,
+) {
+  // Auto reject User input tools.
+  const messages = inputMessages.map((message) => {
+    if (message.role === "assistant" && message.parts) {
+      for (let i = 0; i < message.parts.length; i++) {
+        const part = message.parts[i];
+        if (
+          part.type === "tool-invocation" &&
+          part.toolInvocation.state !== "result"
+        ) {
+          part.toolInvocation = {
+            ...part.toolInvocation,
+            state: "result",
+            result: isUserInputTool(part.toolInvocation.toolName)
+              ? { success: true }
+              : {
+                  error: "User cancelled the tool call.",
+                },
+          };
+        }
+      }
+    }
+    return message;
+  });
 
   const isGemini = model.provider.includes("gemini");
 
@@ -158,6 +245,7 @@ function preprocessMessages(
   });
 
   messageToInject.parts = parts;
+  return messages;
 }
 
 function getMessageToInject(messages: Message[]): Message | undefined {
@@ -207,6 +295,60 @@ async function trackUsage(
         })),
     )
     .execute();
+}
+
+import Hashids from "hashids";
+import type { NumberLike } from "hashids/util";
+import { sql } from "kysely";
+
+const hashids = new Hashids("ragdoll-taskid-salt");
+
+function encodeId(id: NumberLike): string {
+  return hashids.encode(id);
+}
+
+function decodeId(taskId: string): NumberLike {
+  const x = hashids.decode(taskId)[0];
+  if (x === undefined) {
+    throw new Error(`Invalid id: ${taskId}`);
+  }
+  return x;
+}
+
+async function getTask(
+  user: User,
+  chatId?: string,
+): Promise<{
+  id: NumberLike;
+  messages: Message[];
+}> {
+  let id: NumberLike;
+  let messages: Message[];
+  if (chatId !== undefined) {
+    id = decodeId(chatId);
+    const data = await db
+      .selectFrom("task")
+      .select(["messages"])
+      .where("id", "=", id as number)
+      .executeTakeFirstOrThrow();
+    messages = data.messages as unknown as Message[];
+  } else {
+    const data = await db
+      .insertInto("task")
+      .values({
+        userId: user.id,
+      })
+      .returning("id")
+      .returning("messages")
+      .executeTakeFirstOrThrow();
+    id = data.id;
+    messages = data.messages as unknown as Message[];
+  }
+
+  return {
+    id,
+    messages,
+  };
 }
 
 export default chat;

@@ -10,7 +10,6 @@ import { useRunningToolCall } from "@/lib/hooks/use-running-tool-call"; // Added
 import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
 import { useLocalSettings } from "@/lib/storage";
-import { prepareMessages } from "@/lib/tools";
 import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
 import type {
@@ -19,6 +18,7 @@ import type {
   UserEvent,
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
+import type { JSONValue } from "ai";
 import { Box, Text } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ErrorWithRetry from "./components/error";
@@ -53,8 +53,8 @@ export default function ChatPage() {
 }
 
 function ChatUI({ event }: { event?: UserEvent }) {
-  const { data, logout } = useAuth();
-  if (!data) {
+  const { data: authData, logout } = useAuth();
+  if (!authData) {
     return <Text>Please log in to use the chat.</Text>;
   }
 
@@ -66,6 +66,7 @@ function ChatUI({ event }: { event?: UserEvent }) {
     event,
   );
   const {
+    data,
     messages,
     setMessages,
     handleSubmit,
@@ -82,9 +83,9 @@ function ChatUI({ event }: { event?: UserEvent }) {
     maxSteps: 100,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(model, request, environment.current), // Updated call
+      prepareRequestBody(data, model, request, environment.current), // Updated call
     headers: {
-      Authorization: `Bearer ${data.session.token}`,
+      Authorization: `Bearer ${authData.session.token}`,
     },
     onResponse(response) {
       if (response.status === 401) {
@@ -200,7 +201,7 @@ function ChatUI({ event }: { event?: UserEvent }) {
           overflow="hidden"
           marginBottom={1}
         >
-          {renderMessages.map((message) => (
+          {renderMessages.map((message, messageIdx) => (
             <Box key={message.id} flexDirection="column" gap={1} flexShrink={0}>
               <Box gap={1}>
                 <Text color={getRoleColor(message.role)}>
@@ -232,6 +233,7 @@ function ChatUI({ event }: { event?: UserEvent }) {
                       runningToolCall={runningToolCall}
                       onToolCall={onToolCall}
                       abortToolCall={abortToolCall}
+                      disallowApproval={messageIdx < messages.length - 1}
                     />
                   );
                 }
@@ -258,7 +260,11 @@ function ChatUI({ event }: { event?: UserEvent }) {
       )}
 
       {showChatHeader && (
-        <ChatHeader status={status} user={data.user} tokenUsage={tokenUsage} />
+        <ChatHeader
+          status={status}
+          user={authData.user}
+          tokenUsage={tokenUsage}
+        />
       )}
 
       {/* Show text input only when ready */}
@@ -311,8 +317,9 @@ function getRoleColor(role: string) {
 
 // This function now directly prepares the body when called by useChat
 function prepareRequestBody(
+  data: JSONValue[] | undefined,
   model: string,
-  request: { id: string; messages: Message[] },
+  request: { messages: Message[] },
   environment: Environment | null,
 ): RagdollChatRequest | null {
   if (!environment) {
@@ -326,9 +333,14 @@ function prepareRequestBody(
     return null;
   }
 
+  let id: string | undefined;
+  if (data?.[0]) {
+    id = (data[0] as { id: string }).id;
+  }
+
   return {
-    id: request.id,
-    messages: prepareMessages(request.messages),
+    id,
+    message: request.messages[request.messages.length - 1],
     model,
     environment, // Use the loaded environment
   };

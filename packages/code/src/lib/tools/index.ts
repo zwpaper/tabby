@@ -1,5 +1,5 @@
 import { isUserInputTool } from "@ragdoll/tools";
-import type { Message, ToolCall, ToolInvocation } from "ai";
+import type { ToolCall, ToolInvocation } from "ai";
 import { applyDiff } from "./apply-diff";
 import { executeCommand } from "./execute-command";
 import { globFiles } from "./glob-files";
@@ -66,28 +66,3 @@ const ToolsExemptFromApproval = new Set([
   "readFile",
   "searchFiles",
 ]);
-
-export function prepareMessages(messages: Message[]) {
-  return messages.map((message) => {
-    if (message.role === "assistant" && message.parts) {
-      for (let i = 0; i < message.parts.length; i++) {
-        const part = message.parts[i];
-        if (
-          part.type === "tool-invocation" &&
-          part.toolInvocation.state !== "result"
-        ) {
-          part.toolInvocation = {
-            ...part.toolInvocation,
-            state: "result",
-            result: isUserInputTool(part.toolInvocation.toolName)
-              ? { success: true }
-              : {
-                  error: "User cancelled the tool call.",
-                },
-          };
-        }
-      }
-    }
-    return message;
-  });
-}

@@ -91,6 +91,15 @@ export interface Subscription {
   stripeSubscriptionId: string | null;
 }
 
+export interface Task {
+  createdAt: Generated<Timestamp>;
+  environment: Generated<Json>;
+  id: Generated<number>;
+  messages: Generated<Json>;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+}
+
 export interface User {
   banExpires: Timestamp | null;
   banned: boolean | null;
@@ -122,6 +131,7 @@ export interface DB {
   monthlyUsage: MonthlyUsage;
   session: Session;
   subscription: Subscription;
+  task: Task;
   user: User;
   verification: Verification;
 }

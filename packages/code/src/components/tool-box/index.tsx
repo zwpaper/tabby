@@ -33,11 +33,18 @@ type ApprovalStatus = "approved" | "denied" | "pending" | "aborted";
 
 const ToolBox: React.FC<
   ToolProps & {
+    disallowApproval?: boolean;
     runningToolCall: ToolProps["toolCall"] | null;
     onToolCall: (toolCall: ToolProps["toolCall"], approved: boolean) => void;
     abortToolCall: () => void;
   }
-> = ({ toolCall, onToolCall, abortToolCall, runningToolCall }) => {
+> = ({
+  toolCall,
+  onToolCall,
+  abortToolCall,
+  runningToolCall,
+  disallowApproval,
+}) => {
   const appConfig = useAppConfig();
 
   const [approval, setApproval] = useState<ApprovalStatus>("pending");
@@ -86,7 +93,7 @@ const ToolBox: React.FC<
       ) : (
         <Box>Unknown tool: {toolCall.toolName}</Box>
       )}
-      {pendingApproval && !isAutoApproved && (
+      {!disallowApproval && pendingApproval && !isAutoApproved && (
         <ConfirmPrompt confirm={invokeTool} prompt="Allow this tool to run?" />
       )}
       {isRunning && <Spinner />}

@@ -11,6 +11,7 @@ export async function up(db: Kysely<any>) {
       cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
     .addColumn("userId", "text", (cb) => cb.notNull())
+    .addColumn("environment", "jsonb", (cb) => cb.notNull().defaultTo("{}"))
     .addColumn("messages", "jsonb", (cb) => cb.notNull().defaultTo("[]"))
     .addForeignKeyConstraint("task_userId_fk", ["userId"], "user", ["id"])
     .execute();

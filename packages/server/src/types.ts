@@ -3,9 +3,9 @@ import { z } from "zod";
 
 const ZodMessageType: z.ZodType<Message> = z.any();
 export const ZodChatRequestType = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   model: z.string().optional(), // Added model field
-  messages: z.array(ZodMessageType),
+  message: ZodMessageType,
   environment: z
     .object({
       currentTime: z.string().describe("The current time."),
