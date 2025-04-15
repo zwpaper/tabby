@@ -23,7 +23,6 @@ import { Box, Text } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
-import SettingsModal from "./components/settings-modal";
 import UserTextInput from "./components/user-text-input";
 
 export default function ChatPage() {
@@ -128,8 +127,6 @@ function ChatUI({ event }: { event?: UserEvent }) {
     }
   }, [appConfig.prompt, onSubmit]);
 
-  const [showSettings, setShowSettings] = useState(false); // State for settings dialog
-
   // Use the custom hook for tool call logic
   const { runningToolCall, onToolCall, abortToolCall } =
     useRunningToolCall(hookAddToolResult);
@@ -162,18 +159,13 @@ function ChatUI({ event }: { event?: UserEvent }) {
     setMessages(Array.from([]));
   }
 
-  // Function to toggle settings dialog
-  function handleOpenSettings() {
-    setShowSettings((prev) => !prev);
-  }
-
-  const showRenderMessages = !showSettings;
-  const showChatHeader = !showSettings;
+  const showRenderMessages = true;
+  const showChatHeader = true;
 
   // Show text input only if not loading OR user input tools are active,
   // AND environment is loaded, AND no error retry is shown
   const showTextInput =
-    !showSettings && environment && !isLoading && !runningToolCall && !errorRef;
+    environment && !isLoading && !runningToolCall && !errorRef;
 
   const [showAbortRequest, setShowAbortRequest] = useState(false);
   useEffect(() => {
@@ -274,7 +266,6 @@ function ChatUI({ event }: { event?: UserEvent }) {
           onChange={onChange}
           onSubmit={onSubmit}
           onClearHistory={handleClearHistory} // Pass the handler
-          onOpenSettings={handleOpenSettings} // Pass the settings handler
         />
       ) : (
         <Box minHeight={5} alignItems="center">
@@ -286,8 +277,6 @@ function ChatUI({ event }: { event?: UserEvent }) {
           )}
         </Box>
       )}
-
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </Box>
   );
 }

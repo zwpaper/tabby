@@ -1,4 +1,5 @@
 import TextInput from "@/components/text-input";
+import { useRouter } from "@/lib/router";
 import { traverseBFS } from "@/lib/tools/file-utils";
 import Fuse from "fuse.js";
 import { Box, Text, useFocus, useInput } from "ink";
@@ -58,14 +59,13 @@ export default function UserTextInput({
   onSubmit,
   onLogout,
   onClearHistory, // Add new prop
-  onOpenSettings, // Add settings prop
 }: {
   onChange: (input: string) => void;
   onSubmit: (input: string) => void;
   onLogout: () => void;
   onClearHistory: () => void; // Define prop type
-  onOpenSettings: () => void; // Add settings prop type
 }) {
+  const { navigate } = useRouter();
   const { isFocused } = useFocus({ autoFocus: true });
   const borderColor = isFocused ? "white" : "gray";
   const [inputValue, setInputValue] = useState("");
@@ -260,8 +260,8 @@ export default function UserTextInput({
         setInputValue("");
         onChange("");
       } else if (selectedCommand.name === "/settings") {
-        // Handle /settings
-        onOpenSettings();
+        // Navigate to settings page instead of opening modal
+        navigate("/settings");
         setInputValue("");
         onChange("");
       } else {

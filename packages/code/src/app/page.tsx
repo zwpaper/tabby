@@ -1,6 +1,7 @@
 import { type AppConfig, AppConfigProvider } from "@/lib/app-config";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
+import { RouterProvider, useRouter } from "@/lib/router";
 import { Spinner, ThemeProvider } from "@inkjs/ui";
 import { defaultTheme, extendTheme } from "@inkjs/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,6 +9,7 @@ import { Box, type BoxProps, render } from "ink";
 import type { PropsWithChildren } from "react";
 import ChatPage from "./chat/page";
 import LoginPage from "./login/page";
+import SettingsPage from "./settings/page";
 
 const customTheme = extendTheme(defaultTheme, {
   components: {},
@@ -15,7 +17,7 @@ const customTheme = extendTheme(defaultTheme, {
 
 const Router = () => {
   const { data, isLoading } = useAuth();
-  if (data) return <ChatPage />;
+  const { path } = useRouter();
 
   if (isLoading) {
     return (
@@ -31,7 +33,17 @@ const Router = () => {
     );
   }
 
-  return <LoginPage />;
+  if (!data && !isLoading) {
+    return <LoginPage />;
+  }
+
+  switch (path) {
+    case "/settings":
+      return <SettingsPage />;
+    // case "/chat":
+    default:
+      return <ChatPage />;
+  }
 };
 
 const App = ({ config }: { config: AppConfig }) => {
@@ -40,9 +52,11 @@ const App = ({ config }: { config: AppConfig }) => {
     <QueryClientProvider client={queryClient}>
       <AppConfigProvider config={config}>
         <ThemeProvider theme={customTheme}>
-          <AuthProvider>
-            <Router />
-          </AuthProvider>
+          <RouterProvider>
+            <AuthProvider>
+              <Router />
+            </AuthProvider>
+          </RouterProvider>
         </ThemeProvider>
       </AppConfigProvider>
     </QueryClientProvider>
