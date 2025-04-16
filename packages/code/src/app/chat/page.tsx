@@ -143,12 +143,18 @@ function ChatUI({
     handleSubmit();
   }, [handleSubmit, reloadEnvironment]);
 
+  // Always use the latest addToolResult function as it captures the latest state.
+  const latestAddToolResult = useRef(addToolResult);
+  useEffect(() => {
+    latestAddToolResult.current = addToolResult;
+  }, [addToolResult]);
+
   const hookAddToolResult = useCallback(
     async (...args: Parameters<typeof addToolResult>) => {
       await reloadEnvironment();
-      addToolResult(...args);
+      latestAddToolResult.current(...args);
     },
-    [addToolResult, reloadEnvironment],
+    [reloadEnvironment],
   );
 
   // Handle initial prompt
