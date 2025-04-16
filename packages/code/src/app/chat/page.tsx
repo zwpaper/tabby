@@ -53,7 +53,7 @@ export default function ChatPage({ taskId }: { taskId: string }) {
       back();
     }
     // @ts-expect-error
-  }, [data, data.status, data.messages.length, back, appConfig.listen]);
+  }, [data, data?.status, data?.messages?.length, back, appConfig.listen]);
 
   // Display loading spinner while task is loading
   if (!data) {
