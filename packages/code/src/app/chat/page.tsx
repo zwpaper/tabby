@@ -26,7 +26,11 @@ import ChatHeader from "./components/header";
 import UserTextInput from "./components/user-text-input";
 
 export default function ChatPage({ taskId }: { taskId: string }) {
+  const { back } = useRouter();
+  const appConfig = useAppConfig();
+
   const { data } = useQuery({
+    refetchInterval: 5000,
     queryKey: ["task", taskId],
     queryFn: async () => {
       const res = await apiClient.api.tasks[":id"].$get({
@@ -38,6 +42,18 @@ export default function ChatPage({ taskId }: { taskId: string }) {
       return res.json();
     },
   });
+
+  useEffect(() => {
+    if (
+      appConfig.listen &&
+      data &&
+      data.messages.length > 0 &&
+      ["completed", "pending-input", "failed"].includes(data.status)
+    ) {
+      back();
+    }
+    // @ts-expect-error
+  }, [data, back, appConfig.listen]);
 
   // Display loading spinner while task is loading
   if (!data) {
@@ -54,7 +70,6 @@ export default function ChatPage({ taskId }: { taskId: string }) {
     );
   }
 
-  // @ts-expect-error
   const initialMessages: Message[] = data.messages;
   return (
     <ChatUI key={taskId} taskId={taskId} initialMessages={initialMessages} />

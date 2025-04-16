@@ -21,7 +21,12 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type TaskStatus = "completed" | "failed" | "pending" | "streaming";
+export type TaskStatus =
+  | "completed"
+  | "failed"
+  | "pending-input"
+  | "pending-tool"
+  | "streaming";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 

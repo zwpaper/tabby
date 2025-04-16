@@ -265,7 +265,7 @@ function TaskList({
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Box flexDirection="column" paddingX={1} gap={1}>
+      <Box flexDirection="column" paddingX={1}>
         {tasks.map((task, index) => (
           <Box key={task.id} paddingX={1} paddingY={0}>
             <Text
@@ -327,12 +327,13 @@ function getStatusDisplay(status: Task["status"]): string {
     case "completed":
       statusDisplay = "✅";
       break;
-    case "pending":
+    case "pending-input":
       statusDisplay = "🎹";
       break;
     case "failed":
       statusDisplay = "❌";
       break;
+    case "pending-tool":
     case "streaming":
       statusDisplay = "🏃‍♂️";
       break;

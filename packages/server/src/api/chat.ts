@@ -329,11 +329,11 @@ function getTaskStatus(
   }
 
   if (finishReason === "stop") {
-    return "pending";
+    return "pending-input";
   }
 
   if (finishReason === "tool-calls") {
-    return "pending";
+    return "pending-tool";
   }
 
   return "failed";
