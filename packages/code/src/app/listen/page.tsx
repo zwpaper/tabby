@@ -6,13 +6,14 @@ import { Box } from "ink";
 import { useCallback, useEffect, useState } from "react";
 
 export default function ListenPage({ listen }: { listen: string }) {
-  const { navigate } = useRouter();
+  const { navigate, initialPromptSent } = useRouter();
   const [event, setEvent] = useState<UserEvent | null>();
   useEffect(() => {
+    initialPromptSent.current = false;
     const source = createUserEventSource();
     source.subscribe(listen, setEvent);
     return () => source.dispose();
-  }, [listen]);
+  }, [listen, initialPromptSent]);
 
   const createTask = useCallback(
     async (event: UserEvent) => {

@@ -10,7 +10,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 
 export default function TasksPage() {
   const appConfig = useAppConfig();
-  const { navigate } = useRouter();
+  const { navigate, initialPromptSent } = useRouter();
 
   const [isCreating, setIsCreating] = useState(false);
   const createTask = useCallback(async () => {
@@ -35,10 +35,10 @@ export default function TasksPage() {
   }, [navigate, isCreating]);
 
   useEffect(() => {
-    if (appConfig.prompt) {
+    if (!initialPromptSent.current && appConfig.prompt) {
       createTask();
     }
-  }, [appConfig, createTask]);
+  }, [appConfig, createTask, initialPromptSent.current]);
 
   useInput((input) => {
     if (input === "c") {

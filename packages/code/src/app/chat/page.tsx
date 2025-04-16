@@ -9,6 +9,7 @@ import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useRunningToolCall } from "@/lib/hooks/use-running-tool-call"; // Added import
 import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
 import { useTokenUsage } from "@/lib/hooks/use-token-usage";
+import { useRouter } from "@/lib/router";
 import { useLocalSettings } from "@/lib/storage";
 import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
@@ -78,6 +79,7 @@ function ChatUI({
   const { environment, reload: reloadEnvironment } = useEnvironment(
     appConfig.customRuleFiles,
   );
+  const { initialPromptSent } = useRouter();
 
   const {
     messages,
@@ -135,13 +137,12 @@ function ChatUI({
   );
 
   // Handle initial prompt
-  const initialPromptSent = useRef<boolean>(false);
   useEffect(() => {
     if (appConfig.prompt && !initialPromptSent.current) {
       initialPromptSent.current = true;
       onSubmit();
     }
-  }, [appConfig.prompt, onSubmit]);
+  }, [appConfig.prompt, onSubmit, initialPromptSent]);
 
   // Use the custom hook for tool call logic
   const { runningToolCall, onToolCall, abortToolCall } =

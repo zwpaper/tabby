@@ -1,5 +1,11 @@
 import type React from "react";
-import { createContext, useContext, useState } from "react";
+import {
+  type MutableRefObject,
+  createContext,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 import { useAppConfig } from "./app-config";
 
 type Path =
@@ -22,6 +28,7 @@ type RouterContextType = {
   path: Path;
   navigate: (path: Path, options?: { replace?: boolean }) => void;
   back: () => void;
+  initialPromptSent: MutableRefObject<boolean>;
 };
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
@@ -41,6 +48,7 @@ export function RouterProvider({ children }: { children: React.ReactNode }) {
   }
   const [path, setPath] = useState<Path>(defaultRoute);
   const [history, setHistory] = useState<Path[]>([defaultRoute]);
+  const initialPromptSent = useRef<boolean>(false);
 
   const navigate = (newPath: Path, options?: { replace?: boolean }) => {
     setPath(newPath);
@@ -74,7 +82,14 @@ export function RouterProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <RouterContext.Provider value={{ path, navigate, back }}>
+    <RouterContext.Provider
+      value={{
+        path,
+        navigate,
+        back,
+        initialPromptSent,
+      }}
+    >
       {children}
     </RouterContext.Provider>
   );
