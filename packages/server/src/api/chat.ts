@@ -22,7 +22,11 @@ import { requireAuth } from "../auth";
 import { db } from "../db";
 import type { JsonValue, TaskStatus } from "../db/schema";
 import { readCurrentMonthQuota } from "../lib/billing";
-import { AvailableModels, getModelById } from "../lib/constants";
+import {
+  AvailableModels,
+  WHITELIST_USERS,
+  getModelById,
+} from "../lib/constants";
 import { decodeTaskId } from "../lib/task-id";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
@@ -67,7 +71,10 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     if (process.env.NODE_ENV !== "test") {
       await quotaCheck();
     }
-    if (!user.email.endsWith("@tabbyml.com")) {
+    if (
+      !user.email.endsWith("@tabbyml.com") &&
+      !WHITELIST_USERS.includes(user.email)
+    ) {
       throw new HTTPException(400, { message: "Internal user only" });
     }
 

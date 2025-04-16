@@ -72,3 +72,5 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
       return null;
   }
 }
+
+export const WHITELIST_USERS = ["yetoneful@gmail.com"];
