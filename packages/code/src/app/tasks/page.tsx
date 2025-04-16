@@ -333,7 +333,7 @@ function getStatusDisplay(status: Task["status"]): string {
     case "failed":
       statusDisplay = "❌";
       break;
-    case "running":
+    case "streaming":
       statusDisplay = "🏃‍♂️";
       break;
   }

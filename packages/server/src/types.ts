@@ -29,3 +29,5 @@ export type Environment = NonNullable<ChatRequest["environment"]>;
 export type SystemPromptEnvironment = NonNullable<
   NonNullable<ChatRequest["environment"]>["info"]
 >;
+
+export type TaskStatus = "streaming" | "pending" | "completed" | "failed";

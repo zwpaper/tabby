@@ -1,5 +1,4 @@
 import { zValidator } from "@hono/zod-validator";
-import type { FinishReason, Message } from "ai";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
@@ -7,6 +6,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
 import { decodeTaskId, encodeTaskId } from "../lib/task-id";
+import type { TaskStatus } from "../types";
 
 // Define validation schemas
 const PaginationSchema = z.object({
@@ -51,9 +51,7 @@ const tasks = new Hono()
         "id",
         "createdAt",
         "updatedAt",
-        "finishReason",
-        "messages",
-        "streaming",
+        "status",
         sql<string>`messages[0]->'content'`.as("abstract"),
       ]);
 
@@ -92,18 +90,11 @@ const tasks = new Hono()
 
     // Transform the response to use encoded task IDs
     const transformedTasks = tasks.map((task) => {
-      const status = getTaskStatus(
-        task.streaming,
-        task.messages as unknown as Message[],
-        task.finishReason as FinishReason,
-      );
       return {
         ...task,
         abstract: task.abstract?.split("\n")[0].slice(0, 48) || "(empty)",
         id: encodeTaskId(task.id),
-        status,
-        messages: undefined,
-        streaming: undefined,
+        status: task.status as TaskStatus,
       };
     });
 
@@ -177,33 +168,19 @@ const tasks = new Hono()
         .selectFrom("task")
         .where("id", "=", numericId)
         .where("userId", "=", user.id)
-        .select([
-          "id",
-          "createdAt",
-          "updatedAt",
-          "finishReason",
-          "messages",
-          "streaming",
-        ])
+        .select(["id", "createdAt", "updatedAt", "status", "messages"])
         .executeTakeFirst();
 
       if (!task) {
         throw new HTTPException(404, { message: "Task not found" });
       }
 
-      // Calculate task status
-      const status = getTaskStatus(
-        task.streaming,
-        task.messages as unknown as Message[],
-        task.finishReason as FinishReason,
-      );
-
       // Transform the response to include the encoded ID
       return c.json({
         ...task,
         id,
         streaming: undefined,
-        status,
+        status: task.status as TaskStatus,
       });
     },
   )
@@ -243,41 +220,3 @@ const tasks = new Hono()
   );
 
 export default tasks;
-
-function getTaskStatus(
-  streaming: boolean,
-  messages: Message[],
-  finishReason: FinishReason,
-): "running" | "pending" | "completed" | "failed" {
-  if (streaming) {
-    return "running";
-  }
-  if (
-    finishReason === "tool-calls" &&
-    hasAttemptCompletion(messages[messages.length - 1])
-  ) {
-    return "completed";
-  }
-
-  if (finishReason === "stop") {
-    return "pending";
-  }
-
-  if (finishReason === "tool-calls") {
-    return "pending";
-  }
-
-  return "failed";
-}
-
-function hasAttemptCompletion(message: Message): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolName === "attemptCompletion",
-  );
-}

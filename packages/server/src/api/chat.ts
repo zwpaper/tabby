@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Tools, isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 import {
   APICallError,
+  type FinishReason,
   type LanguageModel,
   type LanguageModelUsage,
   type LanguageModelV1,
@@ -25,7 +26,11 @@ import { AvailableModels, getModelById } from "../lib/constants";
 import { decodeTaskId } from "../lib/task-id";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
-import { type Environment, ZodChatRequestType } from "../types";
+import {
+  type Environment,
+  type TaskStatus,
+  ZodChatRequestType,
+} from "../types";
 
 export type ContextVariables = {
   model?: LanguageModel;
@@ -89,7 +94,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     await db
       .updateTable("task")
-      .set({ streaming: true })
+      .set({ status: "streaming" })
       .where("id", "=", id)
       .execute();
 
@@ -113,20 +118,18 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         console.log((await result.request).body);
       },
       onFinish: async ({ usage, finishReason, response }) => {
+        const messagesToSave = postProcessMessages(
+          appendResponseMessages({
+            messages,
+            responseMessages: response.messages,
+          }),
+        );
         await db
           .updateTable("task")
           .set({
             environment,
-            finishReason,
-            streaming: false,
-            messages: JSON.stringify(
-              postProcessMessages(
-                appendResponseMessages({
-                  messages,
-                  responseMessages: response.messages,
-                }),
-              ),
-            ),
+            status: getTaskStatus(messagesToSave, finishReason),
+            messages: JSON.stringify(messagesToSave),
             updatedAt: sql`CURRENT_TIMESTAMP`,
           })
           .where("id", "=", id as number)
@@ -317,3 +320,37 @@ async function getTask(user: User, chatId: string) {
 }
 
 export default chat;
+
+function getTaskStatus(
+  messages: Message[],
+  finishReason: FinishReason,
+): TaskStatus {
+  if (
+    finishReason === "tool-calls" &&
+    hasAttemptCompletion(messages[messages.length - 1])
+  ) {
+    return "completed";
+  }
+
+  if (finishReason === "stop") {
+    return "pending";
+  }
+
+  if (finishReason === "tool-calls") {
+    return "pending";
+  }
+
+  return "failed";
+}
+
+function hasAttemptCompletion(message: Message): boolean {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  return !!message.parts?.some(
+    (part) =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation.toolName === "attemptCompletion",
+  );
+}

@@ -11,8 +11,7 @@ export async function up(db: Kysely<any>) {
       cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
     .addColumn("userId", "text", (cb) => cb.notNull())
-    .addColumn("streaming", "boolean", (cb) => cb.notNull().defaultTo(false))
-    .addColumn("finishReason", "text", (cb) => cb.notNull().defaultTo("stop"))
+    .addColumn("status", "text", (cb) => cb.notNull().defaultTo("pending"))
     .addColumn("environment", "jsonb", (cb) => cb.notNull().defaultTo("{}"))
     // Event that triggered the task, optional
     .addColumn("event", "jsonb")
