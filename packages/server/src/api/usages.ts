@@ -47,9 +47,7 @@ const usages = new Hono().get(
     const dailyResults = await db
       .selectFrom("chatCompletion")
       .select([
-        sql<Date>`DATE(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE ${tz})`.as(
-          "date",
-        ),
+        sql<Date>`DATE("createdAt" AT TIME ZONE ${tz})`.as("date"),
         "modelId",
         db.fn.count("id").as("count"),
       ])

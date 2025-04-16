@@ -31,8 +31,8 @@ const tasks = new Hono()
       .where("id", ">", after ? decodeTaskId(after) : 0)
       .select([
         "id",
-        sql<Date>`"createdAt" AT TIME ZONE 'UTC'`.as("createdAt"),
-        sql<Date>`"updatedAt" AT TIME ZONE 'UTC'`.as("updatedAt"),
+        "createdAt",
+        "updatedAt",
         "finishReason",
         sql<string>`messages[0]->'content'`.as("abstract"),
       ])

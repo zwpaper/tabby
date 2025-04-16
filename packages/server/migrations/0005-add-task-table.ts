@@ -4,10 +4,10 @@ export async function up(db: Kysely<any>) {
   await db.schema
     .createTable("task")
     .addColumn("id", "serial", (cb) => cb.primaryKey())
-    .addColumn("createdAt", "timestamp", (cb) =>
+    .addColumn("createdAt", "timestamptz", (cb) =>
       cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
-    .addColumn("updatedAt", "timestamp", (cb) =>
+    .addColumn("updatedAt", "timestamptz", (cb) =>
       cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
     .addColumn("userId", "text", (cb) => cb.notNull())

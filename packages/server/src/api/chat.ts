@@ -16,6 +16,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
 import { sql } from "kysely";
+import moment from "moment";
 import { requireAuth } from "../auth";
 import { db } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
@@ -265,8 +266,8 @@ async function trackUsage(
     .execute();
 
   // Track monthly usage count
-  const now = new Date();
-  const startDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const now = moment.utc();
+  const startDayOfMonth = now.startOf("month").toDate();
 
   await db
     .insertInto("monthlyUsage")

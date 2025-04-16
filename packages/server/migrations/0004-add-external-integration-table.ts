@@ -4,10 +4,10 @@ export async function up(db: Kysely<any>) {
   await db.schema
     .createTable("externalIntegration")
     .addColumn("id", "serial", (cb) => cb.primaryKey())
-    .addColumn("createdAt", "timestamp", (cb) =>
+    .addColumn("createdAt", "timestamptz", (cb) =>
       cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
-    .addColumn("updatedAt", "timestamp", (cb) =>
+    .addColumn("updatedAt", "timestamptz", (cb) =>
       cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
     // Assuming user.id is text based on 0002-track-usage.ts and 0001-better-auth.sql

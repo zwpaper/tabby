@@ -7,7 +7,7 @@ export async function up(db: Kysely<any>) {
     .addColumn("userId", "text", (cb) => cb.notNull())
     .addColumn("modelId", "text", (cb) => cb.notNull())
     // Stores the first day of the month (e.g., '2025-01-01 00:00:00')
-    .addColumn("startDayOfMonth", "timestamp", (cb) => cb.notNull())
+    .addColumn("startDayOfMonth", "timestamptz", (cb) => cb.notNull())
     // Added count column to track number of completions/calls
     .addColumn("count", "integer", (cb) => cb.notNull().defaultTo(0))
     // Removed token columns
