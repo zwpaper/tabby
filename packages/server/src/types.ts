@@ -19,12 +19,6 @@ export const ZodChatRequestType = z.object({
         os: z.string().describe("The operating system."),
         homedir: z.string().describe("The home directory."),
         customRules: z.string().optional(),
-        event: z
-          .object({
-            type: z.string().describe("The event type."),
-            data: z.any().describe("The event data."),
-          })
-          .optional(),
       }),
     })
     .optional(),

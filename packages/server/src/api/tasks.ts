@@ -17,6 +17,17 @@ const TaskParamsSchema = z.object({
   id: z.string(),
 });
 
+const CreateTaskSchema = z
+  .object({
+    event: z
+      .object({
+        type: z.string().describe("The type of event"),
+        data: z.any().describe("The data of the event"),
+      })
+      .optional(),
+  })
+  .optional();
+
 // Create a tasks router with authentication
 const tasks = new Hono()
   // List tasks with pagination
@@ -68,12 +79,14 @@ const tasks = new Hono()
   })
 
   // Create a task
-  .post("/", requireAuth, async (c) => {
+  .post("/", zValidator("json", CreateTaskSchema), requireAuth, async (c) => {
+    const { event } = (await c.req.valid("json")) || {};
     const user = c.get("user");
     const { id } = await db
       .insertInto("task")
       .values({
         userId: user.id,
+        event,
       })
       .returning("id")
       .executeTakeFirstOrThrow();
@@ -87,7 +100,7 @@ const tasks = new Hono()
     zValidator("param", TaskParamsSchema),
     requireAuth,
     async (c) => {
-      const { id } = c.req.valid("param");
+      const { id } = c.req.valid("param") || {};
       const user = c.get("user");
 
       const numericId = decodeTaskId(id);

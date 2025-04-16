@@ -111,12 +111,11 @@ function isDev() {
 function createApiClient() {
   const app = hc<AppType>(isDev() ? DevBaseUrl : ProdBaseUrl, {
     fetch: (input: RequestInfo | URL, requestInit?: RequestInit) => {
+      const headers = new Headers(requestInit?.headers);
+      headers.append("Authorization", `Bearer ${getToken()}`);
       return fetch(input, {
         ...requestInit,
-        headers: {
-          ...requestInit?.headers,
-          Authorization: `Bearer ${getToken()}`,
-        },
+        headers,
       });
     },
   });

@@ -19,6 +19,7 @@ import { sql } from "kysely";
 import moment from "moment";
 import { requireAuth } from "../auth";
 import { db } from "../db";
+import type { JsonValue } from "../db/schema";
 import { readCurrentMonthQuota } from "../lib/billing";
 import { AvailableModels, getModelById } from "../lib/constants";
 import { decodeTaskId } from "../lib/task-id";
@@ -76,7 +77,11 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       });
     }
 
-    const { id, messages: previousMessages } = await getTask(user, req.id);
+    const {
+      id,
+      messages: previousMessages,
+      event,
+    } = await getTask(user, req.id);
     const messages = appendClientMessage({
       messages: previousMessages,
       message,
@@ -86,7 +91,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       toolCallStreaming: true,
       model: c.get("model") || selectedModel,
       system: environment?.info && generateSystemPrompt(environment.info),
-      messages: preprocessMessages(messages, selectedModel, environment),
+      messages: preprocessMessages(messages, selectedModel, environment, event),
       tools: Tools,
       onError: async ({ error }) => {
         if (RetryError.isInstance(error)) {
@@ -173,7 +178,8 @@ function postProcessMessages(messages: Message[]) {
 function preprocessMessages(
   inputMessages: Message[],
   model: LanguageModelV1,
-  environment?: Environment,
+  environment: Environment | undefined,
+  event: JsonValue,
 ) {
   // Auto reject User input tools.
   const messages = inputMessages.map((message) => {
@@ -230,7 +236,7 @@ function preprocessMessages(
       state: "result",
       args: isGemini ? undefined : null,
       toolCallId,
-      result: getReadEnvironmentResult(environment),
+      result: getReadEnvironmentResult(environment, event),
     },
   });
 
@@ -287,17 +293,11 @@ async function trackUsage(
     .execute();
 }
 
-async function getTask(
-  user: User,
-  chatId: string,
-): Promise<{
-  id: number;
-  messages: Message[];
-}> {
+async function getTask(user: User, chatId: string) {
   const id = decodeTaskId(chatId);
   const data = await db
     .selectFrom("task")
-    .select(["messages"])
+    .select(["messages", "event"])
     .where("id", "=", id as number)
     .where("userId", "=", user.id)
     .executeTakeFirstOrThrow();
@@ -305,6 +305,7 @@ async function getTask(
   return {
     id,
     messages,
+    event: data.event,
   };
 }
 

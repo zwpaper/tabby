@@ -94,6 +94,7 @@ export interface Subscription {
 export interface Task {
   createdAt: Generated<Timestamp>;
   environment: Generated<Json>;
+  event: Json | null;
   finishReason: Generated<string>;
   id: Generated<number>;
   messages: Generated<Json>;

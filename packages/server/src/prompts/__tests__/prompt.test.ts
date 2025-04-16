@@ -28,6 +28,11 @@ test("environment", () => {
         homedir: "/home/user",
         shell: "bash",
       },
+    }, {
+      type: "slack:message",
+      data: {
+        "text": "Hello, world!",
+      }
     }),
   ).toMatchSnapshot();
 });

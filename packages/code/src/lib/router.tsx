@@ -1,4 +1,3 @@
-import type { UserEvent } from "@ragdoll/server";
 import type React from "react";
 import { createContext, useContext, useState } from "react";
 import { useAppConfig } from "./app-config";
@@ -8,7 +7,6 @@ type Path =
       route: "/chat";
       params: {
         id: string;
-        event?: UserEvent;
       };
     }
   | {

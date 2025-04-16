@@ -15,7 +15,6 @@ import { Spinner } from "@inkjs/ui";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
-  UserEvent,
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
@@ -25,10 +24,7 @@ import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import UserTextInput from "./components/user-text-input";
 
-export default function ChatPage({
-  taskId,
-  event,
-}: { taskId: string; event?: UserEvent }) {
+export default function ChatPage({ taskId }: { taskId: string }) {
   const { data } = useQuery({
     queryKey: ["task", taskId],
     queryFn: async () => {
@@ -60,21 +56,14 @@ export default function ChatPage({
   // @ts-expect-error
   const initialMessages: Message[] = data.messages;
   return (
-    <ChatUI
-      key={taskId}
-      taskId={taskId}
-      initialMessages={initialMessages}
-      event={event}
-    />
+    <ChatUI key={taskId} taskId={taskId} initialMessages={initialMessages} />
   );
 }
 
 function ChatUI({
-  event,
   taskId,
   initialMessages,
 }: {
-  event?: UserEvent;
   taskId: string;
   initialMessages?: Message[];
 }) {
@@ -88,7 +77,6 @@ function ChatUI({
   const { tokenUsage, trackTokenUsage } = useTokenUsage();
   const { environment, reload: reloadEnvironment } = useEnvironment(
     appConfig.customRuleFiles,
-    event,
   );
 
   const {

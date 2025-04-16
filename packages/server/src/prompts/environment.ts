@@ -1,9 +1,14 @@
+import type { JsonValue } from "../db/schema";
 import type { Environment } from "../types";
 
-export function getReadEnvironmentResult(environment: Environment) {
+export function getReadEnvironmentResult(
+  environment: Environment,
+  event: JsonValue,
+) {
   const sections = [
     getCurrentTime(environment.currentTime),
     getWorkspaceFiles(environment.workspace, environment.info),
+    getEvent(event),
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -27,4 +32,11 @@ function getWorkspaceFiles(
     ? "\n(Note: The list of files is truncated. Use listFiles tool to explore if needed)"
     : "";
   return `# Current Working Directory (${info.cwd}) Files\n${filesList}${truncatedMessage}`;
+}
+
+function getEvent(event: JsonValue) {
+  if (event) {
+    return `# Event triggered this task\n${JSON.stringify(event, null, 2)}`;
+  }
+  return "";
 }

@@ -16,12 +16,17 @@ export default function ListenPage({ listen }: { listen: string }) {
 
   const createTask = useCallback(
     async (event: UserEvent) => {
-      const res = await apiClient.api.tasks.$post();
+      const res = await apiClient.api.tasks.$post({
+        json: {
+          event,
+        },
+      });
+
       if (res.ok) {
         const { id } = await res.json();
         navigate({
           route: "/chat",
-          params: { id, event },
+          params: { id },
         });
       } else {
         throw new Error("Failed to create task");
