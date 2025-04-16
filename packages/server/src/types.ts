@@ -6,6 +6,10 @@ export const ZodChatRequestType = z.object({
   id: z.string(),
   model: z.string().optional(), // Added model field
   message: ZodMessageType,
+  tools: z
+    .array(z.string())
+    .optional()
+    .describe("Server side tools to use with this request"),
   environment: z
     .object({
       currentTime: z.string().describe("The current time."),

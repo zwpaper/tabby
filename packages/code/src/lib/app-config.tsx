@@ -12,6 +12,9 @@ export interface AppConfig {
 
   // Events to listen to
   listen?: string;
+
+  // Tools to be used in the session
+  tools: string[];
 }
 
 // Default values for optional config properties

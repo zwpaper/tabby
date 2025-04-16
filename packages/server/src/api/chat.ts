@@ -8,6 +8,7 @@ import {
   type LanguageModelV1,
   type Message,
   RetryError,
+  type Tool,
   appendClientMessage,
   appendResponseMessages,
   streamText,
@@ -28,6 +29,7 @@ import {
   getModelById,
 } from "../lib/constants";
 import { decodeTaskId } from "../lib/task-id";
+import { MakeServerTools } from "../lib/tools";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
@@ -101,6 +103,17 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       .where("id", "=", id)
       .execute();
 
+    // Prepare the tools to be used in the streamText call
+    const enabledServerTools: Record<string, Tool> = {};
+    if (req.tools && req.tools.length > 0) {
+      // Only include the requested server tools
+      for (const toolName of req.tools) {
+        if (toolName in MakeServerTools) {
+          enabledServerTools[toolName] = MakeServerTools[toolName](user);
+        }
+      }
+    }
+
     const result = streamText({
       toolCallStreaming: true,
       model: c.get("model") || selectedModel,
@@ -108,7 +121,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       messages: preprocessMessages(messages, selectedModel, environment, event),
       tools: {
         ...Tools,
-        // ...ServerTools
+        ...enabledServerTools, // Add the enabled server tools
       },
       onError: async ({ error }) => {
         if (RetryError.isInstance(error)) {

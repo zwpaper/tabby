@@ -147,12 +147,13 @@ class SlackService {
     }
   }
 
-  async getWebClient(vendorIntegrationId: string) {
+  async getWebClient(userId: string, vendorIntegrationId: string) {
     const { payload } = await db
       .selectFrom("externalIntegration")
       .select("payload")
       .where("provider", "=", "slack")
       .where("vendorIntegrationId", "=", vendorIntegrationId)
+      .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
     const installation = payload as unknown as Installation;
     if (installation.bot?.token) {

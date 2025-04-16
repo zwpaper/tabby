@@ -34,6 +34,7 @@ program
     "-l, --listen <event>",
     "Listen to events from the server to trigger actions, initial prompt is required",
   )
+  .option("-t, --tools <tools...>", "Specify tools to be used in the session")
   .parse(process.argv);
 
 const config = program.opts();
@@ -50,6 +51,7 @@ const appConfig = {
   fullscreen: config.fullscreen === undefined ? true : config.fullscreen,
   customRuleFiles: config.customRules || [],
   listen: config.listen || undefined,
+  tools: config.tools || [],
 };
 
 const { app } = await import("./app/page");

@@ -115,7 +115,7 @@ function ChatUI({
     initialMessages,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(model, request, environment.current),
+      prepareRequestBody(model, appConfig.tools, request, environment.current),
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
@@ -345,6 +345,7 @@ function getRoleColor(role: string) {
 // This function now directly prepares the body when called by useChat
 function prepareRequestBody(
   model: string,
+  tools: string[],
   request: { id: string; messages: Message[] },
   environment: Environment | null,
 ): RagdollChatRequest | null {
@@ -362,6 +363,7 @@ function prepareRequestBody(
   return {
     id: request.id,
     message: request.messages[request.messages.length - 1],
+    tools,
     model,
     environment, // Use the loaded environment
   };

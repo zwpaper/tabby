@@ -1,5 +1,6 @@
 import { defineServerTool } from "@ragdoll/tools";
 import { z } from "zod";
+import type { User } from "../../auth";
 import slack from "../../slack";
 
 // Define the input schema for the slackReplyThread tool
@@ -29,18 +30,20 @@ export const slackReplyThread = defineServerTool({
   description: "Replies to a specific thread in a Slack channel.",
   inputSchema,
   outputSchema,
-  execute: async ({ integrationId, channel, threadTs, text }) => {
-    const client = await slack.getWebClient(integrationId);
-    const result = await client.chat.postMessage({
-      thread_ts: threadTs,
-      channel,
-      text,
-    });
-    if (result.ts) {
-      return {
-        ts: result.ts,
-      };
-    }
-    throw new Error(result.error);
+  makeExecuteFn: (user: User) => {
+    return async ({ integrationId, channel, threadTs, text }) => {
+      const client = await slack.getWebClient(user.id, integrationId);
+      const result = await client.chat.postMessage({
+        thread_ts: threadTs,
+        channel,
+        text,
+      });
+      if (result.ts) {
+        return {
+          ts: result.ts,
+        };
+      }
+      throw new Error(result.error);
+    };
   },
 });
