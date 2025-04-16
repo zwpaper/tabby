@@ -31,3 +31,23 @@ type ToolOutputType<T extends Tool<any, any>> = z.infer<
 export type ToolFunctionType<T extends Tool<any, any>> = (
   args: ToolInputType<T>,
 ) => Promise<ToolOutputType<T>>;
+
+export function defineServerTool<
+  PARAMETERS extends z.ZodTypeAny,
+  RESULT extends z.ZodTypeAny,
+>({
+  description,
+  inputSchema,
+  execute,
+}: {
+  description: string;
+  inputSchema: PARAMETERS;
+  outputSchema: RESULT; // Define the expected output shape
+  execute: ToolFunctionType<Tool<PARAMETERS, RESULT>>; // Use the existing type
+}): Tool<PARAMETERS, RESULT> {
+  return tool({
+    description,
+    parameters: inputSchema,
+    execute,
+  });
+}

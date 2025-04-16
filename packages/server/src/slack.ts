@@ -1,6 +1,7 @@
 import type { Server } from "node:http";
 import { App } from "@slack/bolt";
 import type { Installation } from "@slack/oauth";
+import { WebClient } from "@slack/web-api";
 import { auth } from "./auth";
 import { db } from "./db";
 import type { JsonObject, JsonValue } from "./db/schema";
@@ -144,6 +145,21 @@ class SlackService {
     if (resp) {
       return resp;
     }
+  }
+
+  async getWebClient(vendorIntegrationId: string) {
+    const { payload } = await db
+      .selectFrom("externalIntegration")
+      .select("payload")
+      .where("provider", "=", "slack")
+      .where("vendorIntegrationId", "=", vendorIntegrationId)
+      .executeTakeFirstOrThrow();
+    const installation = payload as unknown as Installation;
+    if (installation.bot?.token) {
+      return new WebClient(installation.bot.token, this.app.webClientOptions);
+    }
+
+    throw new Error("No bot token found");
   }
 }
 

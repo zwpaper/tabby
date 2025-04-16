@@ -42,3 +42,5 @@ export function isAutoInjectTool(toolName: string) {
   if (toolName === "readEnvironment") return true;
   return false;
 }
+
+export { defineServerTool } from "./types";

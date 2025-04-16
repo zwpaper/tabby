@@ -106,7 +106,10 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       model: c.get("model") || selectedModel,
       system: environment?.info && generateSystemPrompt(environment.info),
       messages: preprocessMessages(messages, selectedModel, environment, event),
-      tools: Tools,
+      tools: {
+        ...Tools,
+        // ...ServerTools
+      },
       onError: async ({ error }) => {
         if (RetryError.isInstance(error)) {
           if (APICallError.isInstance(error.lastError)) {

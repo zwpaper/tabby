@@ -2,7 +2,7 @@ import { useAppConfig } from "@/lib/app-config";
 import { isDefaultApproved } from "@/lib/tools";
 import { Spinner } from "@inkjs/ui";
 import { isUserInputTool } from "@ragdoll/tools";
-import { Box } from "ink";
+import { Box, Text } from "ink";
 import { useCallback, useEffect, useState } from "react";
 import { ConfirmPrompt } from "../confirm-prompt";
 import { ApplyDiffTool } from "./apply-diff-tool";
@@ -86,16 +86,23 @@ const ToolBox: React.FC<
   }, [isRunning]);
 
   const C = ToolComponents[toolCall.toolName];
+  const isServerTool = !(toolCall.toolName in ToolComponents);
   const children = (
     <>
-      {C ? (
-        <C toolCall={toolCall} />
+      {isServerTool ? (
+        <Text>{toolCall.toolName}</Text>
       ) : (
-        <Box>Unknown tool: {toolCall.toolName}</Box>
+        <C toolCall={toolCall} />
       )}
-      {!disallowApproval && pendingApproval && !isAutoApproved && (
-        <ConfirmPrompt confirm={invokeTool} prompt="Allow this tool to run?" />
-      )}
+      {!isServerTool &&
+        !disallowApproval &&
+        pendingApproval &&
+        !isAutoApproved && (
+          <ConfirmPrompt
+            confirm={invokeTool}
+            prompt="Allow this tool to run?"
+          />
+        )}
       {isRunning && <Spinner />}
       {showAbort && isRunning && (
         <ConfirmPrompt
