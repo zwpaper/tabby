@@ -1,7 +1,8 @@
 import { apiClient, createUserEventSource } from "@/lib/api";
 import { useRouter } from "@/lib/router";
+import { Spinner } from "@inkjs/ui";
 import type { UserEvent } from "@ragdoll/server";
-import { Text } from "ink";
+import { Box } from "ink";
 import { useCallback, useEffect, useState } from "react";
 
 export default function ListenPage({ listen }: { listen: string }) {
@@ -36,6 +37,15 @@ export default function ListenPage({ listen }: { listen: string }) {
   }, [createTask, event]);
 
   if (!event) {
-    return <Text>Waiting for event...</Text>;
+    return (
+      <Box
+        width="100%"
+        height="100%"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Spinner label="Waiting for event..." />
+      </Box>
+    );
   }
 }

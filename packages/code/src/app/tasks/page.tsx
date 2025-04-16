@@ -12,20 +12,27 @@ export default function TasksPage() {
   const appConfig = useAppConfig();
   const { navigate } = useRouter();
 
+  const [isCreating, setIsCreating] = useState(false);
   const createTask = useCallback(async () => {
-    const res = await apiClient.api.tasks.$post();
-    if (res.ok) {
-      const { id } = await res.json();
-      navigate({
-        route: "/chat",
-        params: {
-          id,
-        },
-      });
-    } else {
-      throw new Error(`Failed to create task ${res.statusText}`);
+    if (isCreating) return;
+    setIsCreating(false);
+    try {
+      const res = await apiClient.api.tasks.$post();
+      if (res.ok) {
+        const { id } = await res.json();
+        navigate({
+          route: "/chat",
+          params: {
+            id,
+          },
+        });
+      } else {
+        throw new Error(`Failed to create task ${res.statusText}`);
+      }
+    } finally {
+      setIsCreating(false);
     }
-  }, [navigate]);
+  }, [navigate, isCreating]);
 
   useEffect(() => {
     if (appConfig.prompt) {
