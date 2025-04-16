@@ -2,7 +2,7 @@ import { ConfirmPrompt } from "@/components/confirm-prompt";
 import Markdown from "@/components/markdown";
 import ToolBox from "@/components/tool-box";
 import type { ToolProps } from "@/components/tool-box/types";
-import { apiClient, createUserEventSource } from "@/lib/api";
+import { apiClient } from "@/lib/api";
 import { useAppConfig } from "@/lib/app-config";
 import { useAuth } from "@/lib/auth";
 import { useEnvironment } from "@/lib/hooks/use-environment";
@@ -19,21 +19,16 @@ import type {
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
-import type { JSONValue } from "ai";
 import { Box, Text } from "ink";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import UserTextInput from "./components/user-text-input";
 
-export default function ChatPage({ taskId }: { taskId?: string }) {
-  const { listen } = useAppConfig();
-  if (listen) {
-    return <ChatEvent listen={listen} />;
-  }
-
-  if (!taskId) return <ChatUI />;
-
+export default function ChatPage({
+  taskId,
+  event,
+}: { taskId: string; event?: UserEvent }) {
   const { data } = useQuery({
     queryKey: ["task", taskId],
     queryFn: async () => {
@@ -64,26 +59,14 @@ export default function ChatPage({ taskId }: { taskId?: string }) {
 
   // @ts-expect-error
   const initialMessages: Message[] = data.messages;
-  return <ChatUI taskId={taskId} initialMessages={initialMessages} />;
-}
-
-function ChatEvent({ listen }: { listen: string }) {
-  const [event, setEvent] = useState<UserEvent | null>();
-  useEffect(() => {
-    const source = createUserEventSource();
-    source.subscribe(listen, setEvent);
-    return () => source.dispose();
-  }, [listen]);
-
-  if (!event) {
-    return <Text>Waiting for event...</Text>;
-  }
-
-  const key = JSON.stringify(event);
-
-  if (event) {
-    return <ChatUI key={key} event={event} />;
-  }
+  return (
+    <ChatUI
+      key={taskId}
+      taskId={taskId}
+      initialMessages={initialMessages}
+      event={event}
+    />
+  );
 }
 
 function ChatUI({
@@ -92,7 +75,7 @@ function ChatUI({
   initialMessages,
 }: {
   event?: UserEvent;
-  taskId?: string;
+  taskId: string;
   initialMessages?: Message[];
 }) {
   const { data: authData, logout } = useAuth();
@@ -109,7 +92,6 @@ function ChatUI({
   );
 
   const {
-    data,
     messages,
     setMessages,
     handleSubmit,
@@ -121,14 +103,14 @@ function ChatUI({
     reload,
     append,
   } = useChat({
+    id: taskId,
     initialInput: appConfig.prompt,
     api: apiClient.api.chat.stream.$url().toString(),
     maxSteps: 100,
-    id: taskId, // Use the taskId as the chat ID when provided
     initialMessages,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(data, model, request, environment.current),
+      prepareRequestBody(model, request, environment.current),
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
@@ -352,9 +334,8 @@ function getRoleColor(role: string) {
 
 // This function now directly prepares the body when called by useChat
 function prepareRequestBody(
-  data: JSONValue[] | undefined,
   model: string,
-  request: { messages: Message[] },
+  request: { id: string; messages: Message[] },
   environment: Environment | null,
 ): RagdollChatRequest | null {
   if (!environment) {
@@ -368,13 +349,8 @@ function prepareRequestBody(
     return null;
   }
 
-  let id: string | undefined;
-  if (data?.[0]) {
-    id = (data[0] as { id: string }).id;
-  }
-
   return {
-    id,
+    id: request.id,
     message: request.messages[request.messages.length - 1],
     model,
     environment, // Use the loaded environment

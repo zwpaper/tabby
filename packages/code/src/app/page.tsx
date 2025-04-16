@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Box, type BoxProps, render } from "ink";
 import type { PropsWithChildren } from "react";
 import ChatPage from "./chat/page";
+import ListenPage from "./listen/page";
 import LoginPage from "./login/page";
 import SettingsPage from "./settings/page";
 import TasksPage from "./tasks/page";
@@ -39,9 +40,20 @@ const Router = () => {
   }
 
   // Handle chat with task ID (chat/:id pattern)
-  if (path.startsWith("/chat/")) {
-    const taskId = path.substring("/chat/".length);
-    return <ChatPage taskId={taskId} />;
+  if (typeof path === "object") {
+    if (path.route === "/listen") {
+      return <ListenPage listen={path.params.listen} />;
+    }
+
+    if (path.route === "/chat") {
+      return (
+        <ChatPage
+          key={path.params.id}
+          taskId={path.params.id}
+          event={path.params.event}
+        />
+      );
+    }
   }
 
   switch (path) {
@@ -49,9 +61,8 @@ const Router = () => {
       return <SettingsPage />;
     case "/tasks":
       return <TasksPage />;
-    // case "/chat":
     default:
-      return <ChatPage />;
+      throw new Error(`Unknown path: ${path}`);
   }
 };
 

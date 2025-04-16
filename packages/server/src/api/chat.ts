@@ -9,7 +9,6 @@ import {
   RetryError,
   appendClientMessage,
   appendResponseMessages,
-  createDataStream,
   streamText,
 } from "ai";
 import type { User } from "better-auth";
@@ -21,7 +20,7 @@ import { requireAuth } from "../auth";
 import { db } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
 import { AvailableModels, getModelById } from "../lib/constants";
-import { decodeTaskId, encodeTaskId } from "../lib/task-id";
+import { decodeTaskId } from "../lib/task-id";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
@@ -129,18 +128,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     result.consumeStream();
 
-    const dataStream = createDataStream({
-      execute(dataStream) {
-        dataStream.writeData({
-          id: encodeTaskId(id),
-        });
-        result.mergeIntoDataStream(dataStream);
-      },
-    });
-
-    return stream(c, (stream) => {
-      return stream.pipe(dataStream);
-    });
+    return stream(c, (stream) => stream.pipe(result.toDataStream()));
   },
 );
 
@@ -300,35 +288,19 @@ async function trackUsage(
 
 async function getTask(
   user: User,
-  chatId?: string,
+  chatId: string,
 ): Promise<{
   id: number;
   messages: Message[];
 }> {
-  let id: number;
-  let messages: Message[];
-  if (chatId !== undefined) {
-    id = decodeTaskId(chatId);
-    const data = await db
-      .selectFrom("task")
-      .select(["messages"])
-      .where("id", "=", id as number)
-      .executeTakeFirstOrThrow();
-    messages = data.messages as unknown as Message[];
-  } else {
-    const data = await db
-      .insertInto("task")
-      .values({
-        userId: user.id,
-      })
-      .returning("id")
-      .returning("messages")
-      .executeTakeFirstOrThrow();
-    console.log("creating new chat", data.id);
-    id = data.id;
-    messages = data.messages as unknown as Message[];
-  }
-
+  const id = decodeTaskId(chatId);
+  const data = await db
+    .selectFrom("task")
+    .select(["messages"])
+    .where("id", "=", id as number)
+    .where("userId", "=", user.id)
+    .executeTakeFirstOrThrow();
+  const messages = data.messages as unknown as Message[];
   return {
     id,
     messages,

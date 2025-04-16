@@ -1,22 +1,50 @@
+import type { UserEvent } from "@ragdoll/server";
 import type React from "react";
 import { createContext, useContext, useState } from "react";
+import { useAppConfig } from "./app-config";
+
+type Path =
+  | {
+      route: "/chat";
+      params: {
+        id: string;
+        event?: UserEvent;
+      };
+    }
+  | {
+      route: "/listen";
+      params: {
+        listen: string;
+      };
+    }
+  | "/tasks"
+  | "/settings";
 
 type RouterContextType = {
-  path: string;
-  navigate: (path: string, options?: { replace?: boolean }) => void;
+  path: Path;
+  navigate: (path: Path, options?: { replace?: boolean }) => void;
   back: () => void;
 };
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
 
-const defaultRoute = "/tasks";
 // const defaultRoute = "/chat";
 
 export function RouterProvider({ children }: { children: React.ReactNode }) {
-  const [path, setPath] = useState<string>(defaultRoute);
-  const [history, setHistory] = useState<string[]>([defaultRoute]);
+  let defaultRoute: Path = "/tasks";
+  const appConfig = useAppConfig();
+  if (appConfig.listen) {
+    defaultRoute = {
+      route: "/listen",
+      params: {
+        listen: appConfig.listen,
+      },
+    };
+  }
+  const [path, setPath] = useState<Path>(defaultRoute);
+  const [history, setHistory] = useState<Path[]>([defaultRoute]);
 
-  const navigate = (newPath: string, options?: { replace?: boolean }) => {
+  const navigate = (newPath: Path, options?: { replace?: boolean }) => {
     setPath(newPath);
 
     if (options?.replace) {

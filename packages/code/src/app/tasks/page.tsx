@@ -1,18 +1,41 @@
 import { apiClient } from "@/lib/api";
+import { useAppConfig } from "@/lib/app-config";
 import { useRouter } from "@/lib/router";
 import { Spinner } from "@inkjs/ui";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { Box, Text, useInput } from "ink";
 import moment from "moment";
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 export default function TasksPage() {
+  const appConfig = useAppConfig();
   const { navigate } = useRouter();
+
+  const createTask = useCallback(async () => {
+    const res = await apiClient.api.tasks.$post();
+    if (res.ok) {
+      const { id } = await res.json();
+      navigate({
+        route: "/chat",
+        params: {
+          id,
+        },
+      });
+    } else {
+      throw new Error(`Failed to create task ${res.statusText}`);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (appConfig.prompt) {
+      createTask();
+    }
+  }, [appConfig, createTask]);
 
   useInput((input) => {
     if (input === "c") {
-      navigate("/chat");
+      createTask();
     }
   });
 
@@ -32,7 +55,11 @@ export default function TasksPage() {
               <Text>(Esc to go back)</Text>
             </Box>
 
-            <TaskList onSelectTask={(task) => navigate(`/chat/${task.id}`)} />
+            <TaskList
+              onSelectTask={(task) =>
+                navigate({ route: "/chat", params: { id: task.id } })
+              }
+            />
           </Box>
         </Suspense>
       </Box>
@@ -116,7 +143,7 @@ function TaskList({
               bold={selectedIndex === index}
               color={selectedIndex === index ? "white" : "gray"}
             >
-              {String(index + 1).padStart(3, '0')}
+              {String(index + 1).padStart(3, "0")}
             </Text>
             <Text> | </Text>
             <Text color={selectedIndex === index ? "white" : "gray"}>
@@ -136,7 +163,9 @@ function TaskList({
           <Text>
             Showing {tasks.length} of {pagination.totalCount} tasks
           </Text>
-          <Text dimColor={!pagination.after || tasks.length < pagination.limit}>Next (n) →</Text>
+          <Text dimColor={!pagination.after || tasks.length < pagination.limit}>
+            Next (n) →
+          </Text>
         </Box>
 
         <Box paddingX={1} alignItems="center" justifyContent="center">

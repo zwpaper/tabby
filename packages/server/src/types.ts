@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const ZodMessageType: z.ZodType<Message> = z.any();
 export const ZodChatRequestType = z.object({
-  id: z.string().optional(),
+  id: z.string(),
   model: z.string().optional(), // Added model field
   message: ZodMessageType,
   environment: z

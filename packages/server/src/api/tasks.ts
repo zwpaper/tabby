@@ -67,6 +67,20 @@ const tasks = new Hono()
     });
   })
 
+  // Create a task
+  .post("/", requireAuth, async (c) => {
+    const user = c.get("user");
+    const { id } = await db
+      .insertInto("task")
+      .values({
+        userId: user.id,
+      })
+      .returning("id")
+      .executeTakeFirstOrThrow();
+
+    return c.json({ id: encodeTaskId(id) });
+  })
+
   // Get a single task by ID
   .get(
     "/:id",
