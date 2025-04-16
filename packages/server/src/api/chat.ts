@@ -87,6 +87,12 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       message,
     });
 
+    await db
+      .updateTable("task")
+      .set({ streaming: true })
+      .where("id", "=", id)
+      .execute();
+
     const result = streamText({
       toolCallStreaming: true,
       model: c.get("model") || selectedModel,
@@ -112,6 +118,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
           .set({
             environment,
             finishReason,
+            streaming: false,
             messages: JSON.stringify(
               postProcessMessages(
                 appendResponseMessages({

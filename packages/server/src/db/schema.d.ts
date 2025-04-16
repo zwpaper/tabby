@@ -98,6 +98,7 @@ export interface Task {
   finishReason: Generated<string>;
   id: Generated<number>;
   messages: Generated<Json>;
+  streaming: Generated<boolean>;
   updatedAt: Generated<Timestamp>;
   userId: string;
 }

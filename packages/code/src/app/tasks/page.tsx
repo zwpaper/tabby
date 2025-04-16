@@ -8,6 +8,8 @@ import { Box, Text, useInput } from "ink";
 import moment from "moment";
 import { Suspense, useCallback, useEffect, useState } from "react";
 
+type Task = InferResponseType<typeof apiClient.api.tasks.$get>["data"][0];
+
 export default function TasksPage() {
   const appConfig = useAppConfig();
   const { navigate, initialPromptSent } = useRouter();
@@ -81,9 +83,7 @@ export default function TasksPage() {
 function TaskList({
   onSelectTask,
 }: {
-  onSelectTask: (
-    task: InferResponseType<typeof apiClient.api.tasks.$get>["data"][0],
-  ) => void;
+  onSelectTask: (task: Task) => void;
 }) {
   const [cursor, setCursor] = useState<{
     after?: string;
@@ -265,7 +265,7 @@ function TaskList({
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Box flexDirection="column" paddingX={1}>
+      <Box flexDirection="column" paddingX={1} gap={1}>
         {tasks.map((task, index) => (
           <Box key={task.id} paddingX={1} paddingY={0}>
             <Text
@@ -277,6 +277,10 @@ function TaskList({
             <Text> | </Text>
             <Text color={selectedIndex === index ? "white" : "gray"}>
               {formatDate(task.createdAt)}
+            </Text>
+            <Text> | </Text>
+            <Text color={selectedIndex === index ? "white" : "gray"}>
+              {getStatusDisplay(task.status)}
             </Text>
             <Text> | </Text>
             <Text color={selectedIndex === index ? "white" : "gray"}>
@@ -313,4 +317,25 @@ function TaskList({
 // Helper function to format date
 function formatDate(dateString: string): string {
   return moment(dateString).format("MM/DD/YYYY, hh:mm:ss a");
+}
+
+// Helper function to get status display
+function getStatusDisplay(status: Task["status"]): string {
+  let statusDisplay: string;
+
+  switch (status) {
+    case "completed":
+      statusDisplay = "✅";
+      break;
+    case "pending":
+      statusDisplay = "🎹";
+      break;
+    case "failed":
+      statusDisplay = "❌";
+      break;
+    case "running":
+      statusDisplay = "🏃‍♂️";
+      break;
+  }
+  return statusDisplay;
 }
