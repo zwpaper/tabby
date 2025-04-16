@@ -9,6 +9,7 @@ import { decodeTaskId, encodeTaskId } from "../lib/task-id";
 
 // Define validation schemas
 const PaginationSchema = z.object({
+  before: z.string().optional(),
   after: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(10),
 });
@@ -32,24 +33,50 @@ const CreateTaskSchema = z
 const tasks = new Hono()
   // List tasks with pagination
   .get("/", zValidator("query", PaginationSchema), requireAuth, async (c) => {
-    const { after, limit } = c.req.valid("query");
+    const { before, after, limit } = c.req.valid("query");
     const user = c.get("user");
 
+    if (before && after) {
+      throw new HTTPException(400, {
+        message: "Cannot specify both before and after parameters",
+      });
+    }
+
     // Get paginated tasks
-    const tasksQuery = db
+    let tasksQuery = db
       .selectFrom("task")
       .where("userId", "=", user.id)
-      .where("id", ">", after ? decodeTaskId(after) : 0)
       .select([
         "id",
         "createdAt",
         "updatedAt",
         "finishReason",
         sql<string>`messages[0]->'content'`.as("abstract"),
-      ])
-      .limit(limit);
+      ]);
 
-    const tasks = await tasksQuery.execute();
+    // Apply cursor pagination
+    if (after) {
+      tasksQuery = tasksQuery
+        .where("id", ">", decodeTaskId(after))
+        .orderBy("id", "asc");
+    } else if (before) {
+      tasksQuery = tasksQuery
+        .where("id", "<", decodeTaskId(before))
+        .orderBy("id", "desc");
+    } else {
+      tasksQuery = tasksQuery.orderBy("id", "asc");
+    }
+
+    // Apply limit
+    tasksQuery = tasksQuery.limit(limit);
+
+    // Execute query
+    let tasks = await tasksQuery.execute();
+
+    // If we used a before cursor, we need to reverse the results to maintain chronological order
+    if (before) {
+      tasks = tasks.reverse();
+    }
 
     // Get total count for pagination
     const countResult = await db
@@ -67,13 +94,41 @@ const tasks = new Hono()
       id: encodeTaskId(task.id),
     }));
 
+    // Determine after and before cursor values for pagination
+    let afterCursor = null;
+    let beforeCursor = null;
+
+    if (tasks.length > 0) {
+      // For bidirectional pagination, we need both after and before cursors
+      const firstItem = tasks[0];
+      const lastItem = tasks[tasks.length - 1];
+
+      // The after cursor points to what comes after the last item
+      afterCursor = encodeTaskId(lastItem.id);
+
+      // The before cursor points to what comes before the first item
+      beforeCursor = encodeTaskId(firstItem.id);
+
+      // Check if we're at the beginning of the collection
+      const isAtStart = !after && !before;
+      if (isAtStart) {
+        beforeCursor = null;
+      }
+
+      // Check if we're at the end of the collection
+      const hasMore = tasks.length === limit;
+      if (!hasMore) {
+        afterCursor = null;
+      }
+    }
+
     return c.json({
       data: transformedTasks,
       pagination: {
         totalCount,
         limit,
-        after:
-          tasks.length > 0 ? encodeTaskId(tasks[tasks.length - 1].id) : null,
+        after: afterCursor,
+        before: beforeCursor,
       },
     });
   })
@@ -121,6 +176,40 @@ const tasks = new Hono()
         ...task,
         id,
       });
+    },
+  )
+
+  // Delete a task by ID
+  .delete(
+    "/:id",
+    zValidator("param", TaskParamsSchema),
+    requireAuth,
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const user = c.get("user");
+
+      const numericId = decodeTaskId(id);
+
+      // Check if the task exists and belongs to the user
+      const task = await db
+        .selectFrom("task")
+        .where("id", "=", numericId)
+        .where("userId", "=", user.id)
+        .select("id")
+        .executeTakeFirst();
+
+      if (!task) {
+        throw new HTTPException(404, { message: "Task not found" });
+      }
+
+      // Delete the task
+      await db
+        .deleteFrom("task")
+        .where("id", "=", numericId)
+        .where("userId", "=", user.id)
+        .execute();
+
+      return c.json({ success: true });
     },
   );
 
