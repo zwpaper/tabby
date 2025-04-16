@@ -5,8 +5,8 @@ import { sql } from "kysely";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
+import type { TaskStatus } from "../db/schema";
 import { decodeTaskId, encodeTaskId } from "../lib/task-id";
-import type { TaskStatus } from "../types";
 
 // Define validation schemas
 const PaginationSchema = z.object({

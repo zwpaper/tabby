@@ -20,17 +20,13 @@ import { sql } from "kysely";
 import moment from "moment";
 import { requireAuth } from "../auth";
 import { db } from "../db";
-import type { JsonValue } from "../db/schema";
+import type { JsonValue, TaskStatus } from "../db/schema";
 import { readCurrentMonthQuota } from "../lib/billing";
 import { AvailableModels, getModelById } from "../lib/constants";
 import { decodeTaskId } from "../lib/task-id";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
-import {
-  type Environment,
-  type TaskStatus,
-  ZodChatRequestType,
-} from "../types";
+import { type Environment, ZodChatRequestType } from "../types";
 
 export type ContextVariables = {
   model?: LanguageModel;
