@@ -90,7 +90,11 @@ const ToolBox: React.FC<
   const children = (
     <>
       {isServerTool ? (
-        <Text>{toolCall.toolName}</Text>
+        <Box>
+          <Text>Executing </Text>
+          <Text color="yellow">{toolCall.toolName}</Text>
+          <Text>...</Text>
+        </Box>
       ) : (
         <C toolCall={toolCall} />
       )}

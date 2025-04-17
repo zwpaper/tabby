@@ -7,10 +7,12 @@ import {
   type LanguageModelUsage,
   type LanguageModelV1,
   type Message,
+  NoSuchToolError,
   RetryError,
   type Tool,
   appendClientMessage,
   appendResponseMessages,
+  createDataStream,
   streamText,
 } from "ai";
 import type { User } from "better-auth";
@@ -123,19 +125,6 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         ...Tools,
         ...enabledServerTools, // Add the enabled server tools
       },
-      onError: async ({ error }) => {
-        if (RetryError.isInstance(error)) {
-          if (APICallError.isInstance(error.lastError)) {
-            if (error.lastError.statusCode === 429) {
-              console.error("Rate limit exceeded");
-              return;
-            }
-          }
-        }
-
-        console.error("error", error);
-        console.log((await result.request).body);
-      },
       onFinish: async ({ usage, finishReason, response }) => {
         const messagesToSave = postProcessMessages(
           appendResponseMessages({
@@ -163,7 +152,29 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     result.consumeStream();
 
-    return stream(c, (stream) => stream.pipe(result.toDataStream()));
+    const dataStream = createDataStream({
+      execute: (stream) => {
+        result.mergeIntoDataStream(stream);
+      },
+      onError(error) {
+        if (RetryError.isInstance(error)) {
+          if (APICallError.isInstance(error.lastError)) {
+            if (error.lastError.statusCode === 429) {
+              return "Too many requests. Please try again later.";
+            }
+          }
+        }
+
+        if (NoSuchToolError.isInstance(error)) {
+          return `${error.toolName} is not a valid tool.`;
+        }
+
+        console.error("error", error);
+        return "Something went wrong. Please try again.";
+      },
+    });
+
+    return stream(c, (stream) => stream.pipe(dataStream));
   },
 );
 
