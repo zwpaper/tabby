@@ -1,26 +1,23 @@
-import { apiClient, createUserEventSource } from "@/lib/api";
+import { apiClient } from "@/lib/api";
 import { useRouter } from "@/lib/router";
+import { useUserEvent } from "@/lib/user-event";
 import { Spinner } from "@inkjs/ui";
 import type { UserEvent } from "@ragdoll/server";
 import { Box } from "ink";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 
-export default function ListenPage({ listen }: { listen: string }) {
+export default function ListenPage() {
   const { navigate, initialPromptSent } = useRouter();
-  const [event, setEvent] = useState<UserEvent | null>();
+  const { dequeueEvent } = useUserEvent(); // Get event from context
+
   useEffect(() => {
     initialPromptSent.current = false;
-    const source = createUserEventSource();
-    source.subscribe(listen, setEvent);
-    return () => source.dispose();
-  }, [listen, initialPromptSent]);
+  }, [initialPromptSent]);
 
   const createTask = useCallback(
     async (event: UserEvent) => {
       const res = await apiClient.api.tasks.$post({
-        json: {
-          event,
-        },
+        json: { event },
       });
 
       if (res.ok) {
@@ -30,6 +27,7 @@ export default function ListenPage({ listen }: { listen: string }) {
           params: { id },
         });
       } else {
+        // TODO: Handle error state more gracefully
         throw new Error("Failed to create task");
       }
     },
@@ -37,21 +35,19 @@ export default function ListenPage({ listen }: { listen: string }) {
   );
 
   useEffect(() => {
-    if (event) {
-      createTask(event);
-    }
-  }, [createTask, event]);
+    const handle = setInterval(() => {
+      const event = dequeueEvent();
+      if (event) {
+        createTask(event);
+      }
+    }, 1000);
+    return () => clearInterval(handle);
+  }, [createTask, dequeueEvent]); // Dependency on event from context
 
-  if (!event) {
-    return (
-      <Box
-        width="100%"
-        height="100%"
-        justifyContent="center"
-        alignItems="center"
-      >
-        <Spinner label="Waiting for event..." />
-      </Box>
-    );
-  }
+  // Always render the spinner while waiting for an event or processing the task creation/navigation
+  return (
+    <Box width="100%" height="100%" justifyContent="center" alignItems="center">
+      <Spinner label="Waiting for event..." />
+    </Box>
+  );
 }

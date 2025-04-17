@@ -2,6 +2,7 @@ import { type AppConfig, AppConfigProvider } from "@/lib/app-config";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { useStdoutDimensions } from "@/lib/hooks/use-stdout-dimensions";
 import { RouterProvider, useRouter } from "@/lib/router";
+import { UserEventProvider } from "@/lib/user-event"; // Import UserEventProvider
 import { Spinner, ThemeProvider } from "@inkjs/ui";
 import { defaultTheme, extendTheme } from "@inkjs/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,10 +40,11 @@ const Router = () => {
     return <LoginPage />;
   }
 
-  // Handle chat with task ID (chat/:id pattern)
+  // Handle routes with parameters
   if (typeof path === "object") {
     if (path.route === "/listen") {
-      return <ListenPage listen={path.params.listen} />;
+      // ListenPage no longer needs the 'listen' prop
+      return <ListenPage />;
     }
 
     if (path.route === "/chat") {
@@ -50,13 +52,16 @@ const Router = () => {
     }
   }
 
+  // Handle simple string paths
   switch (path) {
     case "/settings":
       return <SettingsPage />;
     case "/tasks":
       return <TasksPage />;
     default:
-      throw new Error(`Unknown path: ${path}`);
+      // It's possible the path is an object but didn't match above, or an unknown string
+      // Consider adding a default route or better error handling
+      throw new Error(`Unknown or unhandled path: ${JSON.stringify(path)}`);
   }
 };
 
@@ -68,7 +73,10 @@ const App = ({ config }: { config: AppConfig }) => {
         <ThemeProvider theme={customTheme}>
           <RouterProvider>
             <AuthProvider>
-              <Router />
+              {/* Wrap Router with UserEventProvider */}
+              <UserEventProvider>
+                <Router />
+              </UserEventProvider>
             </AuthProvider>
           </RouterProvider>
         </ThemeProvider>
