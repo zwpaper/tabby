@@ -34,11 +34,7 @@ const COMMANDS = [
     description: "Clear message history",
     prompt: "", // No prompt needed, action is immediate
   },
-  {
-    name: "/settings",
-    description: "Open settings",
-    prompt: "", // No prompt needed, action is immediate
-  },
+
   {
     name: "/explain",
     description: "Explain the workspace",
@@ -72,7 +68,7 @@ export default function UserTextInput({
   onClearHistory: () => void;
   onScroll?: (step: number) => void; // Define optional prop type for scrolling
 }) {
-  const { navigate, back } = useRouter();
+  const { back } = useRouter();
   const { isFocused } = useFocus({ autoFocus: true });
   const borderColor = isFocused ? "white" : "gray";
   const [inputValue, setInputValue] = useState("");
@@ -266,11 +262,6 @@ export default function UserTextInput({
       } else if (selectedCommand.name === "/clear") {
         // Handle /clear
         onClearHistory();
-        setInputValue("");
-        onChange("");
-      } else if (selectedCommand.name === "/settings") {
-        // Navigate to settings page instead of opening modal
-        navigate("/settings");
         setInputValue("");
         onChange("");
       } else {

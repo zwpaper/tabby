@@ -68,11 +68,7 @@ export default function TasksPage() {
               )}
             </Box>
 
-            <TaskList
-              onSelectTask={(task) =>
-                navigate({ route: "/chat", params: { id: task.id } })
-              }
-            />
+            <TaskList />
           </Box>
         </Suspense>
       </Box>
@@ -80,11 +76,8 @@ export default function TasksPage() {
   );
 }
 
-function TaskList({
-  onSelectTask,
-}: {
-  onSelectTask: (task: Task) => void;
-}) {
+function TaskList() {
+  const { navigate } = useRouter(); // Use useRouter hook here
   const [cursor, setCursor] = useState<{
     after?: string;
     before?: string;
@@ -195,7 +188,8 @@ function TaskList({
     } else if (key.upArrow) {
       setSelectedIndex((prev) => Math.max(prev - 1, 0));
     } else if (key.return) {
-      onSelectTask(tasks[selectedIndex]);
+      const selectedTask = tasks[selectedIndex];
+      navigate({ route: "/chat", params: { id: selectedTask.id } });
     } else if (key.tab || input === "n") {
       if (pagination.after) {
         setCursor({ after: pagination.after });
@@ -212,6 +206,8 @@ function TaskList({
       }
     } else if (input === "d") {
       setShowDeleteConfirm(true);
+    } else if (input === "s") {
+      navigate("/settings");
     }
   });
 
@@ -292,22 +288,33 @@ function TaskList({
 
       <Box flexDirection="column">
         <Box justifyContent="space-between" paddingX={1}>
-          <Text dimColor={!canGoPrevious}>← (p) Prev</Text>
+          <Text dimColor={!canGoPrevious}>← (p) Previous page</Text>
           <Text>
             Showing {tasks.length} of {pagination.totalCount} tasks
           </Text>
-          <Text dimColor={!canGoNext}>Next (n) →</Text>
+          <Text dimColor={!canGoNext}>Next page (n) →</Text>
         </Box>
 
-        <Box paddingX={1} alignItems="center" justifyContent="center">
-          <Text bold>↑/↓</Text>
-          <Text> to navigate • </Text>
-          <Text bold>Enter</Text>
-          <Text> to view details • </Text>
-          <Text bold>c</Text>
-          <Text> to create new • </Text>
-          <Text bold>d</Text>
-          <Text> to delete</Text>
+        <Box paddingX={1} alignItems="center" justifyContent="center" gap={1}>
+          <Text>
+            <Text bold>↑/↓</Text> Navigate
+          </Text>
+          <Text>•</Text>
+          <Text>
+            <Text bold>Enter</Text> View details
+          </Text>
+          <Text>•</Text>
+          <Text>
+            <Text bold>c</Text> Create new
+          </Text>
+          <Text>•</Text>
+          <Text>
+            <Text bold>d</Text> Delete
+          </Text>
+          <Text>•</Text>
+          <Text>
+            <Text bold>s</Text> Settings
+          </Text>
         </Box>
       </Box>
     </Box>
