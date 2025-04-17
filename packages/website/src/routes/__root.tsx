@@ -1,18 +1,17 @@
+import { Toaster } from "@/components/ui/sonner";
+import type { authClient } from "@/lib/auth-client";
 import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import type { Session, User } from "better-auth";
 
 interface RouterContext {
-  auth: {
-    user: User;
-    session: Session;
-  } | null;
+  auth: typeof authClient.$Infer.Session | null;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
       <Outlet />
+      <Toaster richColors />
       <TanStackRouterDevtools position="bottom-right" />
     </>
   ),

@@ -14,8 +14,11 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
+import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authenticated.stop-impersonating'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated._settings/route'
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
+import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
 import { Route as AuthenticatedSettingsUsageImport } from './routes/_authenticated._settings/usage'
 import { Route as AuthenticatedSettingsModelImport } from './routes/_authenticated._settings/model'
 import { Route as AuthenticatedSettingsBillingImport } from './routes/_authenticated._settings/billing'
@@ -40,6 +43,19 @@ const AuthPathnameRoute = AuthPathnameImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const AuthenticatedStopImpersonatingRoute =
+  AuthenticatedStopImpersonatingImport.update({
+    id: '/stop-impersonating',
+    path: '/stop-impersonating',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+
 const AuthenticatedSettingsRouteRoute = AuthenticatedSettingsRouteImport.update(
   {
     id: '/_settings',
@@ -53,6 +69,12 @@ const AuthenticatedAuthDeviceLinkRoute =
     path: '/auth/device-link',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
 
 const AuthenticatedSettingsUsageRoute = AuthenticatedSettingsUsageImport.update(
   {
@@ -109,6 +131,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/stop-impersonating': {
+      id: '/_authenticated/stop-impersonating'
+      path: '/stop-impersonating'
+      fullPath: '/stop-impersonating'
+      preLoaderRoute: typeof AuthenticatedStopImpersonatingImport
+      parentRoute: typeof AuthenticatedImport
+    }
     '/auth/$pathname': {
       id: '/auth/$pathname'
       path: '/auth/$pathname'
@@ -144,6 +180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsUsageImport
       parentRoute: typeof AuthenticatedSettingsRouteImport
     }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersImport
+      parentRoute: typeof AuthenticatedAdminRouteImport
+    }
     '/_authenticated/auth/device-link': {
       id: '/_authenticated/auth/device-link'
       path: '/auth/device-link'
@@ -176,13 +219,31 @@ const AuthenticatedSettingsRouteRouteWithChildren =
     AuthenticatedSettingsRouteRouteChildren,
   )
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
 }
 
@@ -193,22 +254,28 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/account': typeof AuthenticatedSettingsAccountRoute
   '/billing': typeof AuthenticatedSettingsBillingRoute
   '/model': typeof AuthenticatedSettingsModelRoute
   '/usage': typeof AuthenticatedSettingsUsageRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/account': typeof AuthenticatedSettingsAccountRoute
   '/billing': typeof AuthenticatedSettingsBillingRoute
   '/model': typeof AuthenticatedSettingsModelRoute
   '/usage': typeof AuthenticatedSettingsUsageRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
 }
 
@@ -217,11 +284,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/_settings': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/_authenticated/_settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/_settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/_authenticated/_settings/model': typeof AuthenticatedSettingsModelRoute
   '/_authenticated/_settings/usage': typeof AuthenticatedSettingsUsageRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
 }
 
@@ -230,32 +300,41 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | ''
+    | '/admin'
+    | '/stop-impersonating'
     | '/auth/$pathname'
     | '/account'
     | '/billing'
     | '/model'
     | '/usage'
+    | '/admin/users'
     | '/auth/device-link'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | ''
+    | '/admin'
+    | '/stop-impersonating'
     | '/auth/$pathname'
     | '/account'
     | '/billing'
     | '/model'
     | '/usage'
+    | '/admin/users'
     | '/auth/device-link'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/_settings'
+    | '/_authenticated/admin'
+    | '/_authenticated/stop-impersonating'
     | '/auth/$pathname'
     | '/_authenticated/_settings/account'
     | '/_authenticated/_settings/billing'
     | '/_authenticated/_settings/model'
     | '/_authenticated/_settings/usage'
+    | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
   fileRoutesById: FileRoutesById
 }
@@ -294,6 +373,8 @@ export const routeTree = rootRoute
       "filePath": "_authenticated.tsx",
       "children": [
         "/_authenticated/_settings",
+        "/_authenticated/admin",
+        "/_authenticated/stop-impersonating",
         "/_authenticated/auth/device-link"
       ]
     },
@@ -306,6 +387,17 @@ export const routeTree = rootRoute
         "/_authenticated/_settings/model",
         "/_authenticated/_settings/usage"
       ]
+    },
+    "/_authenticated/admin": {
+      "filePath": "_authenticated.admin/route.tsx",
+      "parent": "/_authenticated",
+      "children": [
+        "/_authenticated/admin/users"
+      ]
+    },
+    "/_authenticated/stop-impersonating": {
+      "filePath": "_authenticated.stop-impersonating.tsx",
+      "parent": "/_authenticated"
     },
     "/auth/$pathname": {
       "filePath": "auth/$pathname.tsx"
@@ -325,6 +417,10 @@ export const routeTree = rootRoute
     "/_authenticated/_settings/usage": {
       "filePath": "_authenticated._settings/usage.tsx",
       "parent": "/_authenticated/_settings"
+    },
+    "/_authenticated/admin/users": {
+      "filePath": "_authenticated.admin/users.tsx",
+      "parent": "/_authenticated/admin"
     },
     "/_authenticated/auth/device-link": {
       "filePath": "_authenticated.auth/device-link.tsx",

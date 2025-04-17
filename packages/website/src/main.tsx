@@ -33,7 +33,7 @@ declare module "@tanstack/react-router" {
 }
 
 function InnerApp() {
-  const { session: auth, isPending } = useSession();
+  const { data: auth, isPending } = useSession();
   if (isPending) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
