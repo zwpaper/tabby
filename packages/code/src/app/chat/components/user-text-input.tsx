@@ -322,7 +322,7 @@ export default function UserTextInput({
           handleSelectCommand(null); // Cancel
         }
       } else if (onScroll) {
-        const step = key.shift ? 5 : 1;
+        const step = key.meta ? 5 : 1;
         // Handle scrolling when no pickers are active and onScroll is provided
         if (key.upArrow) {
           onScroll(-1 * step);
