@@ -344,19 +344,20 @@ function getTaskStatus(
   messages: Message[],
   finishReason: FinishReason,
 ): TaskStatus {
-  if (
-    finishReason === "tool-calls" &&
-    hasAttemptCompletion(messages[messages.length - 1])
-  ) {
-    return "completed";
+  const lastMessage = messages[messages.length - 1];
+
+  if (finishReason === "tool-calls") {
+    if (hasAttemptCompletion(lastMessage)) {
+      return "completed";
+    }
+    if (hasUserInputTool(lastMessage)) {
+      return "pending-input";
+    }
+    return "pending-tool";
   }
 
   if (finishReason === "stop") {
     return "pending-input";
-  }
-
-  if (finishReason === "tool-calls") {
-    return "pending-tool";
   }
 
   return "failed";
@@ -371,5 +372,17 @@ function hasAttemptCompletion(message: Message): boolean {
     (part) =>
       part.type === "tool-invocation" &&
       part.toolInvocation.toolName === "attemptCompletion",
+  );
+}
+
+function hasUserInputTool(message: Message): boolean {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  return !!message.parts?.some(
+    (part) =>
+      part.type === "tool-invocation" &&
+      isUserInputTool(part.toolInvocation.toolName),
   );
 }
