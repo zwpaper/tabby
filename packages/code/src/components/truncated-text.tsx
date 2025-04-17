@@ -35,9 +35,9 @@ export default function TruncatedText({
   }
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" gap={1}>
       <Text {...props}>{visibleContent}</Text>
-      <Text color="gray">
+      <Text {...props} dimColor>
         ... ( {hiddenCount} {hiddenLinesSuffix} )
       </Text>
     </Box>
