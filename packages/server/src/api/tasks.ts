@@ -10,8 +10,7 @@ import { decodeTaskId, encodeTaskId } from "../lib/task-id";
 
 // Define validation schemas
 const PaginationSchema = z.object({
-  before: z.string().optional(),
-  after: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1), // Changed from before/after to page
   limit: z.coerce.number().int().min(1).max(100).default(10),
 });
 
@@ -34,17 +33,23 @@ const CreateTaskSchema = z
 const tasks = new Hono()
   // List tasks with pagination
   .get("/", zValidator("query", PaginationSchema), requireAuth, async (c) => {
-    const { before, after, limit } = c.req.valid("query");
+    const { page, limit } = c.req.valid("query"); // Use page and limit
     const user = c.get("user");
 
-    if (before && after) {
-      throw new HTTPException(400, {
-        message: "Cannot specify both before and after parameters",
-      });
-    }
+    const offset = (page - 1) * limit; // Calculate offset
 
-    // Get paginated tasks
-    let tasksQuery = db
+    // Get total count first
+    const totalCountResult = await db
+      .selectFrom("task")
+      .where("userId", "=", user.id)
+      .select(db.fn.count("id").as("count"))
+      .executeTakeFirst();
+
+    const totalCount = Number(totalCountResult?.count ?? 0);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Fetch items for the current page
+    const items = await db
       .selectFrom("task")
       .where("userId", "=", user.id)
       .select([
@@ -53,86 +58,26 @@ const tasks = new Hono()
         "updatedAt",
         "status",
         sql<string>`messages[0]->'content'`.as("abstract"),
-      ]);
+      ])
+      .orderBy("id", "desc") // Order by newest first
+      .limit(limit)
+      .offset(offset) // Apply offset
+      .execute();
 
-    // Apply cursor pagination
-    if (after) {
-      tasksQuery = tasksQuery
-        .where("id", "<", decodeTaskId(after))
-        .orderBy("id", "desc");
-    } else if (before) {
-      tasksQuery = tasksQuery
-        .where("id", ">", decodeTaskId(before))
-        .orderBy("id", "asc");
-    } else {
-      tasksQuery = tasksQuery.orderBy("id", "desc");
-    }
-
-    // Apply limit
-    tasksQuery = tasksQuery.limit(limit);
-
-    // Execute query
-    let tasks = await tasksQuery.execute();
-
-    // If we used a before cursor, we need to reverse the results to maintain chronological order
-    if (before) {
-      tasks = tasks.reverse();
-    }
-
-    // Get total count for pagination
-    const countResult = await db
-      .selectFrom("task")
-      .where("userId", "=", user.id)
-      .select(db.fn.count("id").as("count"))
-      .executeTakeFirst();
-
-    const totalCount = Number(countResult?.count || 0);
-
-    // Transform the response to use encoded task IDs
-    const transformedTasks = tasks.map((task) => {
-      return {
-        ...task,
-        abstract: task.abstract?.split("\n")[0].slice(0, 48) || "(empty)",
-        id: encodeTaskId(task.id),
-        status: task.status as TaskStatus,
-      };
-    });
-
-    // Determine after and before cursor values for pagination
-    let afterCursor = null;
-    let beforeCursor = null;
-
-    if (tasks.length > 0) {
-      // For bidirectional pagination, we need both after and before cursors
-      const firstItem = tasks[0];
-      const lastItem = tasks[tasks.length - 1];
-
-      // The after cursor points to what comes after the last item
-      afterCursor = encodeTaskId(lastItem.id);
-
-      // The before cursor points to what comes before the first item
-      beforeCursor = encodeTaskId(firstItem.id);
-
-      // Check if we're at the beginning of the collection
-      const isAtStart = !after && !before;
-      if (isAtStart) {
-        beforeCursor = null;
-      }
-
-      // Check if we're at the end of the collection
-      const hasMore = tasks.length === limit;
-      if (!hasMore) {
-        afterCursor = null;
-      }
-    }
+    const data = items.map((task) => ({
+      ...task,
+      abstract: task.abstract?.split("\n")[0].slice(0, 64) || "(empty)",
+      id: encodeTaskId(task.id),
+      status: task.status as TaskStatus,
+    }));
 
     return c.json({
-      data: transformedTasks,
+      data,
       pagination: {
         totalCount,
         limit,
-        after: afterCursor,
-        before: beforeCursor,
+        currentPage: page, // Return current page
+        totalPages, // Return total pages
       },
     });
   })
@@ -179,7 +124,6 @@ const tasks = new Hono()
       return c.json({
         ...task,
         id,
-        streaming: undefined,
         status: task.status as TaskStatus,
       });
     },

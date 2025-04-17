@@ -2,13 +2,49 @@ import { apiClient } from "@/lib/api";
 import { useAppConfig } from "@/lib/app-config";
 import { useRouter } from "@/lib/router";
 import { Spinner } from "@inkjs/ui";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { Box, Text, useInput } from "ink";
+import { Box, Text, useFocus, useInput } from "ink";
 import moment from "moment";
 import { Suspense, useCallback, useEffect, useState } from "react";
 
-type Task = InferResponseType<typeof apiClient.api.tasks.$get>["data"][0];
+// Define types based on the API response
+type TasksResponse = InferResponseType<typeof apiClient.api.tasks.$get>;
+type Task = TasksResponse["data"][number];
+// Extract pagination type from the response
+type PaginationInfo = TasksResponse["pagination"];
+
+const TASK_LIMIT = 10; // Define page size
+
+// Helper function to format date
+function formatDate(dateString: string): string {
+  return moment(dateString).format("MM/DD/YYYY, hh:mm:ss a");
+}
+
+// Helper function to get status display
+function getStatusDisplay(status: Task["status"]): string {
+  let statusDisplay: string;
+
+  switch (status) {
+    case "completed":
+      statusDisplay = "X";
+      break;
+    case "pending-input":
+      statusDisplay = "P";
+      break;
+    case "failed":
+      statusDisplay = "E";
+      break;
+    case "pending-tool":
+    case "streaming":
+      statusDisplay = "R";
+      break;
+    default:
+      statusDisplay = "?"; // Add a default case
+      break;
+  }
+  return statusDisplay;
+}
 
 export default function TasksPage() {
   const appConfig = useAppConfig();
@@ -77,222 +113,179 @@ export default function TasksPage() {
 }
 
 function TaskList() {
-  const { navigate } = useRouter(); // Use useRouter hook here
-  const [cursor, setCursor] = useState<{
-    after?: string;
-    before?: string;
-  } | null>(null);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [paginationHistory, setPaginationHistory] = useState<
-    Array<{ after?: string; before?: string }>
-  >([]);
-  const [currentHistoryIndex, setCurrentHistoryIndex] = useState(-1);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { navigate } = useRouter();
+  const queryClient = useQueryClient();
+  const [currentPage, setCurrentPage] = useState(1); // Use currentPage state
 
-  const { data, isLoading, refetch } = useSuspenseQuery({
-    queryKey: ["tasks", cursor?.after, cursor?.before],
+  // Use useSuspenseQuery for suspense integration
+  const { data, isFetching } = useSuspenseQuery<TasksResponse, Error>({
+    // Update queryKey to use currentPage
+    queryKey: ["tasks", currentPage, TASK_LIMIT],
     queryFn: async () => {
       const res = await apiClient.api.tasks.$get({
         query: {
-          after: cursor?.after,
-          before: cursor?.before,
-          limit: "10",
+          limit: String(TASK_LIMIT),
+          page: String(currentPage), // Send page parameter
         },
       });
+      if (!res.ok) {
+        throw new Error("Failed to fetch tasks");
+      }
       return await res.json();
     },
   });
 
-  const tasks = data?.data || [];
-  const pagination = data?.pagination || {
-    totalCount: 0,
-    limit: 10,
-    after: null,
-    before: null,
-  };
+  // data is guaranteed to be defined here due to useSuspenseQuery
+  const tasks = data.data;
+  const pagination: PaginationInfo | undefined = data.pagination; // Use extracted type
 
-  const deleteTask = useCallback(async () => {
-    if (tasks.length === 0 || !showDeleteConfirm || isDeleting) return;
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const { isFocused } = useFocus({ autoFocus: true }); // Auto focus the list
 
-    setIsDeleting(true);
-    const taskToDelete = tasks[selectedIndex];
-    try {
-      const res = await apiClient.api.tasks[":id"].$delete({
-        param: { id: taskToDelete.id },
-      });
-
-      if (res.ok) {
-        setShowDeleteConfirm(false);
-        // Refetch tasks after deletion
-        await refetch();
-        // Adjust selected index if needed
-        if (selectedIndex >= tasks.length - 1 && selectedIndex > 0) {
-          setSelectedIndex(selectedIndex - 1);
-        }
-      } else {
-        throw new Error(`Failed to delete task: ${res.statusText}`);
-      }
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [tasks, selectedIndex, showDeleteConfirm, isDeleting, refetch]);
-
+  // Reset selected index when tasks change (e.g., page change, deletion)
   useEffect(() => {
-    if (data && cursor !== null) {
-      const cursorKey = JSON.stringify(cursor);
-      if (
-        (currentHistoryIndex === paginationHistory.length - 1 ||
-          currentHistoryIndex === -1) &&
-        (paginationHistory.length === 0 ||
-          JSON.stringify(paginationHistory[currentHistoryIndex] || {}) !==
-            cursorKey)
-      ) {
-        setPaginationHistory((prev) => {
-          const newHistory = [
-            ...prev.slice(0, currentHistoryIndex + 1),
-            cursor,
-          ];
-          return newHistory;
+    if (tasks) {
+      setSelectedIndex(0);
+    }
+  }, [tasks]);
+
+  const handleNextPage = useCallback(() => {
+    // Use totalPages from pagination info
+    if (pagination && currentPage < pagination.totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  }, [pagination, currentPage]);
+
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  }, [currentPage]);
+
+  const handleDelete = useCallback(
+    async (taskId: string) => {
+      try {
+        const res = await apiClient.api.tasks[":id"].$delete({
+          param: { id: taskId },
         });
-        setCurrentHistoryIndex((prev) => prev + 1);
+        if (res.ok) {
+          // Invalidate tasks query for the current page
+          queryClient.invalidateQueries({
+            queryKey: ["tasks", currentPage, TASK_LIMIT],
+          });
+          // Optionally, check if the deleted item was the last on the page
+          // and navigate to the previous page if necessary and possible.
+          if (tasks.length === 1 && currentPage > 1) {
+            setCurrentPage((prev) => prev - 1);
+          } else {
+            // Reset index safely after invalidation/refetch potentially changes list length
+            setSelectedIndex((prev) =>
+              Math.max(0, Math.min(prev, tasks.length - 2)),
+            ); // Adjust index if needed
+          }
+        } else {
+          console.error("Failed to delete task:", await res.text());
+        }
+      } catch (error) {
+        console.error("Error deleting task:", error);
       }
-    }
-  }, [data, cursor, currentHistoryIndex, paginationHistory]);
+    },
+    [queryClient, currentPage, tasks.length], // Add tasks.length dependency
+  );
 
-  useEffect(() => {
-    if (paginationHistory.length === 0 && data) {
-      setPaginationHistory([{}]);
-      setCurrentHistoryIndex(0);
-    }
-  }, [data, paginationHistory.length]);
+  useInput(
+    (input, key) => {
+      if (!isFocused) return;
 
-  useInput((input, key) => {
-    if (isDeleting) return;
-
-    if (showDeleteConfirm) {
-      if (input === "y" || key.return) {
-        deleteTask();
-      } else if (input === "n" || key.escape) {
-        setShowDeleteConfirm(false);
+      if (key.upArrow) {
+        setSelectedIndex((prev) => Math.max(0, prev - 1));
+      } else if (key.downArrow) {
+        // Ensure index stays within bounds after potential deletion/refetch
+        setSelectedIndex((prev) => Math.min(tasks.length - 1, prev + 1));
+      } else if (key.return) {
+        const selectedTask = tasks[selectedIndex];
+        if (selectedTask) {
+          navigate({ route: "/chat", params: { id: selectedTask.id } });
+        }
+      } else if (input === "n") {
+        handleNextPage();
+      } else if (input === "p") {
+        handlePreviousPage();
+      } else if (input === "d") {
+        // Check if tasks array is not empty before accessing selectedIndex
+        if (
+          tasks.length > 0 &&
+          selectedIndex >= 0 &&
+          selectedIndex < tasks.length
+        ) {
+          const selectedTask = tasks[selectedIndex];
+          if (selectedTask) {
+            handleDelete(selectedTask.id);
+          }
+        }
       }
-      return;
-    }
+    },
+    { isActive: isFocused },
+  );
 
-    if (tasks.length === 0) return;
-
-    if (key.downArrow) {
-      setSelectedIndex((prev) => Math.min(prev + 1, tasks.length - 1));
-    } else if (key.upArrow) {
-      setSelectedIndex((prev) => Math.max(prev - 1, 0));
-    } else if (key.return) {
-      const selectedTask = tasks[selectedIndex];
-      navigate({ route: "/chat", params: { id: selectedTask.id } });
-    } else if (key.tab || input === "n") {
-      if (pagination.after) {
-        setCursor({ after: pagination.after });
-        setSelectedIndex(0);
-      }
-    } else if ((key.shift && key.tab) || input === "p") {
-      if (pagination.before) {
-        setCursor({ before: pagination.before });
-        setSelectedIndex(0);
-      } else if (currentHistoryIndex > 0) {
-        setCurrentHistoryIndex((prev) => prev - 1);
-        setCursor(paginationHistory[currentHistoryIndex - 1] || null);
-        setSelectedIndex(0);
-      }
-    } else if (input === "d") {
-      setShowDeleteConfirm(true);
-    } else if (input === "s") {
-      navigate("/settings");
-    }
-  });
-
-  if (isLoading) {
-    return <Spinner />;
+  // Adjust empty state check for page-based pagination
+  if (!tasks.length && currentPage === 1 && !isFetching) {
+    return <Text>No tasks found. Press 'c' to create one.</Text>;
   }
 
-  if (tasks.length === 0) {
-    return (
-      <Box flexDirection="column" alignItems="center" gap={1}>
-        <Text dimColor>No tasks found</Text>
-        <Text>Press (c) to create a new task</Text>
-      </Box>
-    );
-  }
-
-  if (showDeleteConfirm) {
-    return (
-      <Box
-        flexDirection="column"
-        gap={1}
-        borderStyle="round"
-        borderColor="yellow"
-        padding={1}
-      >
-        <Text bold color="yellow">
-          Delete Confirmation
-        </Text>
-        {isDeleting ? (
-          <Box marginY={1}>
-            <Spinner label="Deleting task..." />
-          </Box>
-        ) : (
-          <>
-            <Text>Are you sure you want to delete this task?</Text>
-            <Text color="gray">{tasks[selectedIndex].abstract}</Text>
-            <Box gap={2} marginTop={1}>
-              <Text bold>(y)</Text>
-              <Text>Yes, delete</Text>
-              <Text bold>(n)</Text>
-              <Text>Cancel</Text>
-            </Box>
-          </>
-        )}
-      </Box>
-    );
-  }
-
-  const canGoNext = !!pagination.after;
-  const canGoPrevious = !!pagination.before || currentHistoryIndex > 0;
+  const canGoPrevious = currentPage > 1;
+  const canGoNext = pagination ? currentPage < pagination.totalPages : false;
 
   return (
-    <Box flexDirection="column" gap={1}>
-      <Box flexDirection="column" paddingX={1}>
-        {tasks.map((task, index) => (
-          <Box key={task.id} paddingX={1} paddingY={0}>
-            <Text
-              bold={selectedIndex === index}
-              color={selectedIndex === index ? "white" : "gray"}
-            >
-              {task.id}
-            </Text>
-            <Text> | </Text>
-            <Text color={selectedIndex === index ? "white" : "gray"}>
-              {formatDate(task.createdAt)}
-            </Text>
-            <Text> | </Text>
-            <Text color={selectedIndex === index ? "white" : "gray"}>
-              {getStatusDisplay(task.status)}
-            </Text>
-            <Text> | </Text>
-            <Text color={selectedIndex === index ? "white" : "gray"}>
-              {task.abstract}
-            </Text>
+    <Box flexDirection="column" width="100%">
+      <Box flexDirection="column" flexGrow={1}>
+        {/* Add explicit types for map parameters */}
+        {tasks.map((task: Task, index: number) => (
+          <Box
+            key={task.id}
+            paddingX={1}
+            justifyContent="space-between"
+            width="100%"
+          >
+            <Box gap={2}>
+              <Text
+                color={
+                  index === selectedIndex && isFocused ? "blue" : undefined
+                }
+              >
+                {getStatusDisplay(task.status)}
+              </Text>
+              <Text
+                color={
+                  index === selectedIndex && isFocused ? "blue" : undefined
+                }
+              >
+                {task.id}
+              </Text>
+              <Text
+                color={
+                  index === selectedIndex && isFocused ? "blue" : undefined
+                }
+              >
+                {task.abstract}
+              </Text>
+            </Box>
+            <Text dimColor>Updated: {formatDate(task.updatedAt)}</Text>
           </Box>
         ))}
       </Box>
 
-      <Box flexDirection="column">
+      {/* Footer with pagination and help text */}
+      <Box flexDirection="column" marginTop={1}>
         <Box justifyContent="space-between" paddingX={1}>
-          <Text dimColor={!canGoPrevious}>← (p) Previous page</Text>
+          <Text dimColor={!canGoPrevious}>← (p) Previous</Text>
+          {/* Display current page and total pages */}
           <Text>
-            Showing {tasks.length} of {pagination.totalCount} tasks
+            {pagination
+              ? `Page ${currentPage} of ${pagination.totalPages} (Total: ${pagination.totalCount})`
+              : ""}
           </Text>
-          <Text dimColor={!canGoNext}>Next page (n) →</Text>
+          <Text dimColor={!canGoNext}>Next (n) →</Text>
         </Box>
 
         <Box paddingX={1} alignItems="center" justifyContent="center" gap={1}>
@@ -301,11 +294,11 @@ function TaskList() {
           </Text>
           <Text>•</Text>
           <Text>
-            <Text bold>Enter</Text> View details
+            <Text bold>Enter</Text> View
           </Text>
           <Text>•</Text>
           <Text>
-            <Text bold>c</Text> Create new
+            <Text bold>c</Text> Create
           </Text>
           <Text>•</Text>
           <Text>
@@ -319,31 +312,4 @@ function TaskList() {
       </Box>
     </Box>
   );
-}
-
-// Helper function to format date
-function formatDate(dateString: string): string {
-  return moment(dateString).format("MM/DD/YYYY, hh:mm:ss a");
-}
-
-// Helper function to get status display
-function getStatusDisplay(status: Task["status"]): string {
-  let statusDisplay: string;
-
-  switch (status) {
-    case "completed":
-      statusDisplay = "✅";
-      break;
-    case "pending-input":
-      statusDisplay = "🎹";
-      break;
-    case "failed":
-      statusDisplay = "❌";
-      break;
-    case "pending-tool":
-    case "streaming":
-      statusDisplay = "🏃‍♂️";
-      break;
-  }
-  return statusDisplay;
 }
