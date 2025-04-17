@@ -21,7 +21,7 @@ export const ListFilesTool: React.FC<ToolProps<ListFilesFunctionType>> = ({
           files={files}
           basePath={absoluteBasePath} // Pass the base path for relative display
           isTruncated={isTruncated}
-          collapseThreshold={5}
+          maxDirectories={5}
         />
       );
     }

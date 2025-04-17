@@ -1,23 +1,18 @@
-import { Box, Text } from "ink";
-import Collapsible from "../collapsible";
+import { Box } from "ink";
+import TruncatedText from "../truncated-text";
 
 const MAX_LINES = 5;
 
 export function ErrorResult({ error }: { error: string }) {
-  const lines = error.split("\n");
-  const isLongError = lines.length > MAX_LINES;
-
-  if (isLongError) {
-    return (
-      <Collapsible title={`Error (${lines.length} lines)`} open={false}>
-        <Text color="grey">{error}</Text>
-      </Collapsible>
-    );
-  }
-
   return (
     <Box>
-      <Text color="grey">{error}</Text>
+      <TruncatedText
+        color="grey"
+        maxLines={MAX_LINES}
+        hiddenLinesSuffix="more error lines"
+      >
+        {error}
+      </TruncatedText>
     </Box>
   );
 }

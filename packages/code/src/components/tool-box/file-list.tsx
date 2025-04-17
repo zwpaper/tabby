@@ -1,13 +1,12 @@
 import * as nodePath from "node:path";
 import { Box, Text } from "ink";
-import Collapsible from "../collapsible";
 
 interface FileListProps {
   files: string[];
   basePath?: string; // Optional base path to make file paths relative if needed
   title?: string;
   isTruncated?: boolean;
-  collapseThreshold?: number; // Number of directories before collapsing
+  maxDirectories?: number; // Number of directories to show before truncating
 }
 
 // Helper function to group files by directory
@@ -38,46 +37,46 @@ export const FileList: React.FC<FileListProps> = ({
   basePath,
   title,
   isTruncated = false,
-  collapseThreshold = 5,
+  maxDirectories = 5,
 }) => {
   if (!files || files.length === 0) {
     return <Text>No files found.</Text>;
   }
 
   const filesByDir = groupFilesByDirectory(files, basePath);
-  const directoryCount = Object.keys(filesByDir).length;
-
-  const filesContent = (
-    <Box flexDirection="column">
-      {Object.entries(filesByDir).map(([dir, dirFiles], idx) => (
-        <Box key={idx} flexDirection="column" marginLeft={1} marginTop={1}>
-          <Text color="blueBright">{dir}/</Text>
-          <Box flexDirection="column" marginLeft={2}>
-            {/* Display files comma-separated */}
-            <Text color="yellowBright">{dirFiles.join(", ")}</Text>
-          </Box>
-        </Box>
-      ))}
-    </Box>
-  );
-
-  const shouldCollapse = directoryCount > collapseThreshold;
+  const directories = Object.entries(filesByDir);
   const displayTitle =
     title ||
     `Found ${files.length} file${files.length !== 1 ? "s" : ""}${isTruncated ? " (truncated)" : ""}`;
 
+  // If we have more directories than the threshold, show only the first maxDirectories
+  const visibleDirectories = directories.slice(0, maxDirectories);
+  const hiddenDirectories =
+    directories.length > maxDirectories
+      ? directories.length - maxDirectories
+      : 0;
+
   return (
     <Box flexDirection="column">
-      {shouldCollapse ? (
-        <Collapsible title={displayTitle} open={false}>
-          {filesContent}
-        </Collapsible>
-      ) : (
-        <>
-          <Text>{displayTitle}</Text>
-          {filesContent}
-        </>
-      )}
+      <Text>{displayTitle}</Text>
+      <Box flexDirection="column">
+        {visibleDirectories.map(([dir, dirFiles], idx) => (
+          <Box key={idx} flexDirection="column" marginLeft={1} marginTop={1}>
+            <Text color="blueBright">{dir}/</Text>
+            <Box flexDirection="column" marginLeft={2}>
+              <Text color="yellowBright">{dirFiles.join(", ")}</Text>
+            </Box>
+          </Box>
+        ))}
+        {hiddenDirectories > 0 && (
+          <Box marginLeft={1} marginTop={1}>
+            <Text color="gray" dimColor>
+              ... ( {hiddenDirectories} more director
+              {hiddenDirectories === 1 ? "y" : "ies"} )
+            </Text>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 };

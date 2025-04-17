@@ -1,6 +1,6 @@
 import type { ApplyDiffFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
-import Collapsible from "../collapsible";
+import TruncatedText from "../truncated-text";
 import type { ToolProps } from "./types";
 
 export const ApplyDiffTool: React.FC<ToolProps<ApplyDiffFunctionType>> = ({
@@ -15,7 +15,6 @@ export const ApplyDiffTool: React.FC<ToolProps<ApplyDiffFunctionType>> = ({
 
   // Count the number of lines in the diff
   const lineCount = diff.split("\n").length;
-  const shouldCollapse = lineCount > 5;
 
   // Create the line range string
   const lineRange = `[lines ${startLine}-${endLine}]`;
@@ -38,13 +37,15 @@ export const ApplyDiffTool: React.FC<ToolProps<ApplyDiffFunctionType>> = ({
         <Text color="yellowBright">{path}</Text>
         <Text color="grey">{lineRange}</Text>
       </Box>
-      {shouldCollapse ? (
-        <Collapsible title={`Patch (${lineCount} lines)`} open={false}>
-          <Text color="grey">{diff}</Text>
-        </Collapsible>
-      ) : (
-        <Text color="grey">{diff}</Text>
-      )}
+      <TruncatedText
+        color="grey"
+        maxLines={5}
+        hiddenLinesSuffix={
+          lineCount > 5 ? `more lines (${lineCount} total)` : "more lines"
+        }
+      >
+        {diff}
+      </TruncatedText>
       {resultEl}
     </Box>
   );

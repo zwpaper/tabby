@@ -1,6 +1,6 @@
 import type { WriteToFileFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
-import Collapsible from "../collapsible";
+import TruncatedText from "../truncated-text";
 import type { ToolProps } from "./types";
 
 export const WriteToFileTool: React.FC<ToolProps<WriteToFileFunctionType>> = ({
@@ -11,7 +11,6 @@ export const WriteToFileTool: React.FC<ToolProps<WriteToFileFunctionType>> = ({
   // Count the number of lines in the content
   const lineCount = content.split("\n").length;
   const contentLength = content.length;
-  const shouldCollapse = lineCount > 5;
 
   let resultEl: React.ReactNode;
   if (
@@ -32,13 +31,13 @@ export const WriteToFileTool: React.FC<ToolProps<WriteToFileFunctionType>> = ({
           ({contentLength} characters, {lineCount} lines)
         </Text>
       </Box>
-      {shouldCollapse ? (
-        <Collapsible title={`Content (${lineCount} lines)`} open={false}>
-          <Text color="grey">{content}</Text>
-        </Collapsible>
-      ) : (
-        <Text color="grey">{content}</Text>
-      )}
+      <TruncatedText
+        color="grey"
+        maxLines={5}
+        hiddenLinesSuffix={`more lines (${lineCount} total)`}
+      >
+        {content}
+      </TruncatedText>
       {resultEl}
     </Box>
   );

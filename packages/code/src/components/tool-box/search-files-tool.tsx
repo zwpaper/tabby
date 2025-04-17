@@ -1,6 +1,5 @@
 import type { SearchFilesFunctionType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
-import Collapsible from "../collapsible";
 import type { ToolProps } from "./types";
 
 export const SearchFilesTool: React.FC<ToolProps<SearchFilesFunctionType>> = ({
@@ -23,33 +22,35 @@ export const SearchFilesTool: React.FC<ToolProps<SearchFilesFunctionType>> = ({
       // Correctly destructure the matches array
       const { matches } = toolCall.result;
       const matchCount = matches.length;
-      const shouldCollapse = matchCount > 5;
 
-      const resultsContent = (
-        <Box flexDirection="column" gap={1}>
-          {matches.map((match, index) => (
-            <Box key={index} flexDirection="column" paddingX={1}>
-              <Box gap={1}>
-                <Text color="yellowBright">{match.file}</Text>
-                <Text color="grey">[line {match.line}]</Text>
-              </Box>
-              <Text color="grey">{match.context}</Text>
-            </Box>
-          ))}
-        </Box>
-      );
+      // Display only up to 5 matches, then show a summary message for the rest
+      const visibleMatches = matches.slice(0, 5);
+      const hiddenMatchCount = matches.length > 5 ? matches.length - 5 : 0;
 
       resultEl = (
         <Box flexDirection="column" gap={1}>
-          {!shouldCollapse && <Text>Found {matchCount} matches</Text>}
-          {matchCount > 0 &&
-            (shouldCollapse ? (
-              <Collapsible title={`Found ${matchCount} matches`} open={false}>
-                {resultsContent}
-              </Collapsible>
-            ) : (
-              resultsContent
-            ))}
+          <Text>Found {matchCount} matches</Text>
+          {matchCount > 0 && (
+            <Box flexDirection="column" gap={1}>
+              {visibleMatches.map((match, index) => (
+                <Box key={index} flexDirection="column" paddingX={1}>
+                  <Box gap={1}>
+                    <Text color="yellowBright">{match.file}</Text>
+                    <Text color="grey">[line {match.line}]</Text>
+                  </Box>
+                  <Text color="grey">{match.context}</Text>
+                </Box>
+              ))}
+              {hiddenMatchCount > 0 && (
+                <Box marginTop={1}>
+                  <Text color="gray" dimColor>
+                    ... ( {hiddenMatchCount} more match
+                    {hiddenMatchCount === 1 ? "" : "es"} )
+                  </Text>
+                </Box>
+              )}
+            </Box>
+          )}
         </Box>
       );
     }

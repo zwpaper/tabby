@@ -9,25 +9,18 @@ const renderOutput = (
   const x = output.trim();
   if (!x) return null;
 
-  const outputLines = x.split("\n");
-  const shouldCollapse = outputLines.length > 5;
-
-  return shouldCollapse ? (
-    <Collapsible
-      key={title}
-      title={`${title} (${outputLines.length} lines)`}
-      open={false}
-    >
-      <Text color={color}>{x}</Text>
-    </Collapsible>
-  ) : (
+  return (
     <Box key={title} flexDirection="column" gap={1}>
-      <Text color={color}>{x}</Text>
+      <Text>{title}:</Text>
+      <TruncatedText color={color} maxLines={5} hiddenLinesSuffix="more lines">
+        {x}
+      </TruncatedText>
     </Box>
   );
 };
+
 import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
-import Collapsible from "../collapsible";
+import TruncatedText from "../truncated-text";
 import type { ToolProps } from "./types";
 
 export const ExecuteCommandTool: React.FC<
