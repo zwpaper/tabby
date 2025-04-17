@@ -58,14 +58,14 @@ const tasks = new Hono()
     // Apply cursor pagination
     if (after) {
       tasksQuery = tasksQuery
-        .where("id", ">", decodeTaskId(after))
-        .orderBy("id", "asc");
+        .where("id", "<", decodeTaskId(after))
+        .orderBy("id", "desc");
     } else if (before) {
       tasksQuery = tasksQuery
-        .where("id", "<", decodeTaskId(before))
-        .orderBy("id", "desc");
+        .where("id", ">", decodeTaskId(before))
+        .orderBy("id", "asc");
     } else {
-      tasksQuery = tasksQuery.orderBy("id", "asc");
+      tasksQuery = tasksQuery.orderBy("id", "desc");
     }
 
     // Apply limit
