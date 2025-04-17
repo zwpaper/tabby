@@ -219,6 +219,17 @@ function ChatUI({
 
   const [_, height] = useStdoutDimensions();
 
+  const [scrollY, setScrollY] = useState(1);
+  // Reset scroll when new messages are rendered
+  useEffect(() => {
+    setScrollY(status && 1);
+  }, [status]);
+
+  function onScroll(step: number) {
+    if (appConfig.fullscreen) {
+      setScrollY((prev) => Math.min(prev + step, 1));
+    }
+  }
   return (
     <Box flexDirection="column" padding={1} height="100%" width="100%">
       {showRenderMessages && (
@@ -229,7 +240,7 @@ function ChatUI({
           justifyContent="flex-end"
           gap={1}
           overflow="hidden"
-          marginBottom={1}
+          marginBottom={scrollY}
         >
           {renderMessages.map((message, messageIdx) => (
             <Box key={message.id} flexDirection="column" gap={1} flexShrink={0}>
@@ -304,6 +315,7 @@ function ChatUI({
           onChange={onChange}
           onSubmit={onSubmit}
           onClearHistory={handleClearHistory} // Pass the handler
+          onScroll={onScroll} // Pass the scroll function
         />
       ) : (
         <Box minHeight={5} alignItems="center">
@@ -385,23 +397,6 @@ function createRenderMessages(messages: Message[], isLoading: boolean) {
       content: "",
       parts: [],
     });
-  }
-
-  if (x.length > 5) {
-    x.splice(0, x.length - 5);
-  }
-
-  for (const [i, message] of x.entries()) {
-    if (message.parts) {
-      const parts = [...message.parts];
-      if (parts.length > 5) {
-        parts.splice(0, parts.length - 5);
-      }
-      x[i] = {
-        ...message,
-        parts,
-      };
-    }
   }
   return x;
 }

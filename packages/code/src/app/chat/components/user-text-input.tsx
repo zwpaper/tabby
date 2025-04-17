@@ -63,12 +63,14 @@ export default function UserTextInput({
   onChange,
   onSubmit,
   onLogout,
-  onClearHistory, // Add new prop
+  onClearHistory,
+  onScroll, // Add new prop for scrolling
 }: {
   onChange: (input: string) => void;
   onSubmit: (input: string) => void;
   onLogout: () => void;
-  onClearHistory: () => void; // Define prop type
+  onClearHistory: () => void;
+  onScroll?: (step: number) => void; // Define optional prop type for scrolling
 }) {
   const { navigate, back } = useRouter();
   const { isFocused } = useFocus({ autoFocus: true });
@@ -328,9 +330,16 @@ export default function UserTextInput({
         } else if (key.escape) {
           handleSelectCommand(null); // Cancel
         }
+      } else if (onScroll) {
+        // Handle scrolling when no pickers are active and onScroll is provided
+        if (key.upArrow) {
+          onScroll(-1);
+        } else if (key.downArrow) {
+          onScroll(1);
+        }
       }
     },
-    { isActive: isFilePickerActive || isCommandPickerActive }, // Active if either picker is shown
+    { isActive: isFilePickerActive || isCommandPickerActive || !!onScroll }, // Active if either picker is shown or scrolling is enabled
   );
 
   const handleSubmit = () => {
