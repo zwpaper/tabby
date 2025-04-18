@@ -54,7 +54,7 @@ function VerifyDeviceLink({
   token,
   onError,
 }: { token: string; onError?: (error: Error) => void }) {
-  const { authClient, renewToken } = useAuth();
+  const { authClient, renewSession } = useAuth();
   useEffect(() => {
     authClient.deviceLink
       .verify({
@@ -73,9 +73,9 @@ function VerifyDeviceLink({
           return;
         }
 
-        renewToken(data.token);
+        renewSession(data);
       });
-  }, [authClient.deviceLink.verify, token, renewToken, onError]);
+  }, [authClient.deviceLink.verify, token, renewSession, onError]);
 
   return <></>;
 }

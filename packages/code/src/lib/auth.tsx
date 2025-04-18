@@ -11,7 +11,9 @@ interface AuthContextType {
   } | null;
   isLoading: boolean;
   authClient: ReturnType<typeof useAuthApi>["authClient"];
-  renewToken: (token: string) => void;
+  renewSession: (
+    session: ReturnType<typeof useAuthApi>["authClient"]["$Infer"]["Session"],
+  ) => void;
   error: { message: string } | null;
   logout: () => Promise<void>;
 }
@@ -21,7 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const { data, isLoading, error, renewToken, authClient, logout } =
+  const { data, isLoading, error, renewSession, authClient, logout } =
     useAuthApi();
 
   return (
@@ -29,7 +31,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       value={{
         data,
         isLoading,
-        renewToken,
+        renewSession,
         authClient,
         logout,
         error,

@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { Extension } from "./helpers/extension";
-import uriHandler from "./helpers/uri-handler";
+import RagdollUriHandler from "./helpers/uri-handler";
 import Ragdoll from "./ragdoll";
 
 // This method is called when your extension is activated
@@ -14,9 +14,12 @@ export function activate(context: vscode.ExtensionContext) {
     Ragdoll.viewType,
     Ragdoll.getInstance(context.extensionUri),
   );
-
   context.subscriptions.push(ragdoll);
-  context.subscriptions.push(vscode.window.registerUriHandler(uriHandler));
+
+  const ragdollUriHandler = new RagdollUriHandler(context);
+  context.subscriptions.push(
+    vscode.window.registerUriHandler(ragdollUriHandler),
+  );
 }
 
 // This method is called when your extension is deactivated

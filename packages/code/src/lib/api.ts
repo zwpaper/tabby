@@ -3,7 +3,6 @@ import {
   UserEventSource,
   deviceLinkClient,
 } from "@ragdoll/server";
-import type { Session, User } from "better-auth";
 import { createAuthClient } from "better-auth/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { hc } from "hono/client";
@@ -13,20 +12,16 @@ import { authStorage } from "./storage";
 const DevBaseUrl = "http://localhost:4111";
 const ProdBaseUrl = "https://app.getpochi.com";
 
-function setAuthData(data: { user: User; session: Session } | null) {
-  authStorage.setItem("authData", JSON.stringify(data));
+function setAuthData(data: typeof authClient.$Infer.Session | null) {
+  authStorage.setItem("authData_v2", JSON.stringify(data));
 }
 
-function getAuthData() {
-  return JSON.parse(authStorage.getItem("authData") || "null");
-}
-
-function setToken(token: string) {
-  authStorage.setItem("authToken", token);
+function getAuthData(): typeof authClient.$Infer.Session | null {
+  return JSON.parse(authStorage.getItem("authData_v2") || "null");
 }
 
 function getToken() {
-  return authStorage.getItem("authToken") || "";
+  return getAuthData()?.session.token || "";
 }
 
 const authClient = createAuthClient({
@@ -41,7 +36,7 @@ const authClient = createAuthClient({
 });
 
 export function useAuthApi() {
-  const [data, setData] = useState<{ user: User; session: Session } | null>(
+  const [data, setData] = useState<typeof authClient.$Infer.Session | null>(
     getAuthData(),
   );
   useEffect(() => {
@@ -63,7 +58,7 @@ export function useAuthApi() {
     if (data) {
       setData(data);
       if (data.session.token !== getToken()) {
-        renewToken(data.session.token);
+        renewSession(data);
       }
     }
     if (error) {
@@ -76,16 +71,14 @@ export function useAuthApi() {
     refetch();
   }, [refetch]);
 
-  const renewToken = useCallback(
-    (token: string) => {
-      setToken(token);
-      if (token) {
-        refetch();
-      } else {
+  const renewSession = useCallback(
+    (session: typeof authClient.$Infer.Session | null) => {
+      setData(session);
+      if (!session) {
         reset();
       }
     },
-    [refetch, reset],
+    [reset],
   );
 
   return {
@@ -94,12 +87,12 @@ export function useAuthApi() {
     error,
     refetch,
     authClient,
-    renewToken,
+    renewSession,
     async logout() {
       await authClient.revokeSession({
         token: getToken(),
       });
-      renewToken("");
+      renewSession(null);
     },
   };
 }
