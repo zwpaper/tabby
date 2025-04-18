@@ -1,8 +1,8 @@
+import type { AuthClient } from "@/lib/auth-client";
 import * as vscode from "vscode";
-import { authClient } from "../lib/auth-client";
 
 class RagdollUriHandler implements vscode.UriHandler {
-  constructor(private context: vscode.ExtensionContext) {}
+  constructor(private authClient: AuthClient) {}
 
   handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
     const searchParams = new URLSearchParams(uri.query);
@@ -13,7 +13,7 @@ class RagdollUriHandler implements vscode.UriHandler {
   }
 
   async loginWithDeviceLink(token: string) {
-    const { data, error } = await authClient.deviceLink.verify({
+    const { data, error } = await this.authClient.deviceLink.verify({
       query: { token },
     });
 
@@ -22,7 +22,8 @@ class RagdollUriHandler implements vscode.UriHandler {
       return;
     }
 
-    this.context.globalState.update("session", data);
+    this.authClient.updateSession(data);
+    vscode.window.showInformationMessage("Successfully logged in!");
   }
 }
 

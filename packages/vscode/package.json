@@ -25,7 +25,13 @@
           "icon": "media/icons/refresh.svg"
         }
       ]
-    }
+    },
+    "commands": [
+      {
+        "command": "ragdoll.accountSettings",
+        "title": "Ragdoll: Account Settings"
+      }
+    ]
   },
   "description": "Ragdoll",
   "displayName": "Ragdoll",
