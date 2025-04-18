@@ -12,6 +12,30 @@
         "isDefault": true
       },
       "isBackground": true
+    },
+    {
+      "type": "shell",
+      "label": "dev:server-server",
+      "command": "bun --filter '@ragdoll/server' dev:server",
+      "group": {
+        "kind": "none",
+        "isDefault": true
+      },
+      "isBackground": true
+    },
+    {
+      "type": "shell",
+      "label": "dev:server-website",
+      "command": "bun --filter '@ragdoll/website' dev:server",
+      "group": {
+        "kind": "none",
+        "isDefault": true
+      },
+      "isBackground": true
+    },
+    {
+      "label": "dev:server",
+      "dependsOn": ["dev:server-website", "dev:server-server"]
     }
   ]
 }

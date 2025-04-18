@@ -6,6 +6,12 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Run dev:server",
+      "type": "node",
+      "request": "launch",
+      "preLaunchTask": "dev:server"
+    },
+    {
       "name": "Run VSCode Extension",
       "type": "extensionHost",
       "request": "launch",
