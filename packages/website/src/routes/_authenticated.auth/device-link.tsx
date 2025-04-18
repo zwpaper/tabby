@@ -18,13 +18,14 @@ import { z } from "zod";
 // Define the expected search parameters schema
 const deviceLinkSearchSchema = z.object({
   token: z.string(),
+  redirectTo: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/auth/device-link")({
   loaderDeps({ search }: { search: z.infer<typeof deviceLinkSearchSchema> }) {
     return { ...search };
   },
-  async loader({ deps: { token } }) {
+  async loader({ deps: { token, redirectTo } }) {
     const { data, error } = await authClient.deviceLink.info({
       query: { token },
     });
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/auth/device-link")({
     return {
       data: data instanceof APIError ? null : data,
       error: error?.message || (data instanceof APIError ? data.message : null),
+      redirectTo,
     };
   },
   component: DeviceLinkConfirmationPage,
@@ -58,6 +60,9 @@ function DeviceLinkConfirmationPage() {
         throw new Error(error.message);
       }
       setIsApproved(true); // Set approval success
+      if (loaderData.redirectTo) {
+        window.location.href = loaderData.redirectTo;
+      }
       toast.success("Device sign-in approved successfully!");
       // Optionally redirect or update UI further upon success
     } catch (err) {

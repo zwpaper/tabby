@@ -17,6 +17,7 @@ import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authenticated.stop-impersonating'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated._settings/route'
+import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authenticated.auth/vscode-link'
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
 import { Route as AuthenticatedSettingsUsageImport } from './routes/_authenticated._settings/usage'
@@ -62,6 +63,13 @@ const AuthenticatedSettingsRouteRoute = AuthenticatedSettingsRouteImport.update(
     getParentRoute: () => AuthenticatedRoute,
   } as any,
 )
+
+const AuthenticatedAuthVscodeLinkRoute =
+  AuthenticatedAuthVscodeLinkImport.update({
+    id: '/auth/vscode-link',
+    path: '/auth/vscode-link',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 const AuthenticatedAuthDeviceLinkRoute =
   AuthenticatedAuthDeviceLinkImport.update({
@@ -194,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuthDeviceLinkImport
       parentRoute: typeof AuthenticatedImport
     }
+    '/_authenticated/auth/vscode-link': {
+      id: '/_authenticated/auth/vscode-link'
+      path: '/auth/vscode-link'
+      fullPath: '/auth/vscode-link'
+      preLoaderRoute: typeof AuthenticatedAuthVscodeLinkImport
+      parentRoute: typeof AuthenticatedImport
+    }
   }
 }
 
@@ -238,6 +253,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
+  AuthenticatedAuthVscodeLinkRoute: typeof AuthenticatedAuthVscodeLinkRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -245,6 +261,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
+  AuthenticatedAuthVscodeLinkRoute: AuthenticatedAuthVscodeLinkRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -263,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/usage': typeof AuthenticatedSettingsUsageRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
+  '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
 }
 
 export interface FileRoutesByTo {
@@ -277,6 +295,7 @@ export interface FileRoutesByTo {
   '/usage': typeof AuthenticatedSettingsUsageRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
+  '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
 }
 
 export interface FileRoutesById {
@@ -293,6 +312,7 @@ export interface FileRoutesById {
   '/_authenticated/_settings/usage': typeof AuthenticatedSettingsUsageRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
+  '/_authenticated/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
 }
 
 export interface FileRouteTypes {
@@ -309,6 +329,7 @@ export interface FileRouteTypes {
     | '/usage'
     | '/admin/users'
     | '/auth/device-link'
+    | '/auth/vscode-link'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -322,6 +343,7 @@ export interface FileRouteTypes {
     | '/usage'
     | '/admin/users'
     | '/auth/device-link'
+    | '/auth/vscode-link'
   id:
     | '__root__'
     | '/'
@@ -336,6 +358,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_settings/usage'
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
+    | '/_authenticated/auth/vscode-link'
   fileRoutesById: FileRoutesById
 }
 
@@ -375,7 +398,8 @@ export const routeTree = rootRoute
         "/_authenticated/_settings",
         "/_authenticated/admin",
         "/_authenticated/stop-impersonating",
-        "/_authenticated/auth/device-link"
+        "/_authenticated/auth/device-link",
+        "/_authenticated/auth/vscode-link"
       ]
     },
     "/_authenticated/_settings": {
@@ -424,6 +448,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/auth/device-link": {
       "filePath": "_authenticated.auth/device-link.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/auth/vscode-link": {
+      "filePath": "_authenticated.auth/vscode-link.tsx",
       "parent": "/_authenticated"
     }
   }
