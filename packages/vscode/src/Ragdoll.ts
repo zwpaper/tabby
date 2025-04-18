@@ -6,9 +6,9 @@ import {
   type WebviewViewProvider,
   type WebviewViewResolveContext,
 } from "vscode";
-import { Extension } from "./helpers/Extension";
-import { getNonce } from "./utils/getNonce";
-import { getUri } from "./utils/getUri";
+import { Extension } from "./helpers/extension";
+import { getNonce } from "./utils/get-nonce";
+import { getUri } from "./utils/get-uri";
 
 class Ragdoll implements WebviewViewProvider {
   public static readonly viewType = "ragdollWebui";
