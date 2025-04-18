@@ -1,15 +1,12 @@
 {
-  "private": true,
   "name": "vscode",
-  "displayName": "Ragdoll",
-  "description": "Ragdoll",
   "version": "0.0.1",
-  "publisher": "com.getpochi",
-  "engines": {
-    "vscode": "^1.82.0"
+  "main": "./dist/extension.js",
+  "devDependencies": {
+    "@types/vscode": "^1.98.0",
+    "@ragdoll/tools": "workspace:*"
   },
   "activationEvents": [],
-  "main": "./dist/extension.js",
   "contributes": {
     "views": {
       "ragdoll": [
@@ -30,6 +27,13 @@
       ]
     }
   },
+  "description": "Ragdoll",
+  "displayName": "Ragdoll",
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "private": true,
+  "publisher": "com.getpochi",
   "scripts": {
     "watch:webui": "cd ../vscode-webui && npm run start",
     "build": "bun build ./src/extension.ts --outdir ./dist --external vscode --format cjs",
@@ -38,12 +42,5 @@
     "vscode": "code --extensionDevelopmentPath=$PWD",
     "dev": "npm-run-all --parallel watch vscode",
     "tsc": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.98.0",
-    "@ragdoll/tools": "workspace:*"
-  },
-  "dependencies": {
-    "better-auth": "^1.2.7"
   }
 }
