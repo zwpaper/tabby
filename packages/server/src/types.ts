@@ -1,5 +1,5 @@
-import type { Message } from "ai";
 import { z } from "zod";
+import type { Message } from "./db/messages";
 
 const ZodMessageType: z.ZodType<Message> = z.any();
 export const ZodChatRequestType = z.object({

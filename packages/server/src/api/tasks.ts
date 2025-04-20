@@ -90,7 +90,7 @@ const tasks = new Hono()
       .insertInto("task")
       .values({
         userId: user.id,
-        event,
+        event: JSON.stringify(event),
       })
       .returning("id")
       .executeTakeFirstOrThrow();

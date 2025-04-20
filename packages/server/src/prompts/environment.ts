@@ -1,9 +1,9 @@
-import type { JsonValue } from "../db/schema";
+import type { UserEvent } from "../db/user-event";
 import type { Environment } from "../types";
 
 export function getReadEnvironmentResult(
   environment: Environment,
-  event: JsonValue,
+  event: UserEvent | null,
 ) {
   const sections = [
     getCurrentTime(environment.currentTime),
@@ -34,7 +34,7 @@ function getWorkspaceFiles(
   return `# Current Working Directory (${info.cwd}) Files\n${filesList}${truncatedMessage}`;
 }
 
-function getEvent(event: JsonValue) {
+function getEvent(event: UserEvent | null) {
   if (event) {
     return `# Event triggered this task\n${JSON.stringify(event, null, 2)}`;
   }

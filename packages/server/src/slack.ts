@@ -4,7 +4,6 @@ import type { Installation } from "@slack/oauth";
 import { WebClient } from "@slack/web-api";
 import { auth } from "./auth";
 import { db } from "./db";
-import type { JsonObject, JsonValue } from "./db/schema";
 import { connectToWeb } from "./lib/connect";
 import { publishUserEvent } from "./server";
 
@@ -53,7 +52,7 @@ class SlackService {
               installation.enterprise?.id || installation.team?.id;
             if (!vendorIntegrationId) return false;
 
-            const payload = installation as unknown as JsonObject;
+            const payload = JSON.stringify(installation);
             await db
               .insertInto("externalIntegration")
               .values({
@@ -83,19 +82,14 @@ class SlackService {
           if (!vendorIntegrationId)
             throw new Error("Integration query is not valid");
 
-          let installation: JsonValue | undefined;
-          installation = await db
+          const { payload } = await db
             .selectFrom("externalIntegration")
             .select("payload")
             .where("provider", "=", "slack")
             .where("vendorIntegrationId", "=", vendorIntegrationId)
-            .executeTakeFirst();
+            .executeTakeFirstOrThrow();
 
-          if (installation) {
-            return installation as unknown as Installation<"v2", boolean>;
-          }
-
-          throw new Error("Failed fetching installation");
+          return payload;
         },
         deleteInstallation: async (installQuery) => {
           const vendorIntegrationId =

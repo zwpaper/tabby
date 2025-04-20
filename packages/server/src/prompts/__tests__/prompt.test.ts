@@ -31,7 +31,15 @@ test("environment", () => {
     }, {
       type: "slack:message",
       data: {
-        "text": "Hello, world!",
+        type: "message",
+        subtype: "bot_message",
+        event_ts: "1234567890.123456",
+        user: "U12345678",
+        text: "Hello, world!",
+        ts: "1234567890.123456",
+        channel: "C12345678",
+        channel_type: "group",
+        bot_id: "B12345678",
       }
     }),
   ).toMatchSnapshot();

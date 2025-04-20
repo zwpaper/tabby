@@ -18,7 +18,7 @@ export async function up(db: Kysely<any>) {
     )
     .addColumn("userId", "text", (cb) => cb.notNull())
     .addColumn("status", sql`task_status`, (cb) => cb.notNull().defaultTo("pending-input"))
-    .addColumn("environment", "jsonb", (cb) => cb.notNull().defaultTo("{}"))
+    .addColumn("environment", "jsonb")
     // Event that triggered the task, optional
     .addColumn("event", "jsonb")
     .addColumn("messages", "jsonb", (cb) => cb.notNull().defaultTo("[]"))

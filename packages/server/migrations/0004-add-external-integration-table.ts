@@ -2,6 +2,11 @@ import { type Kysely, sql } from "kysely";
 
 export async function up(db: Kysely<any>) {
   await db.schema
+    .createType("external_integration_provider")
+    .asEnum(["slack"])
+    .execute();
+
+  await db.schema
     .createTable("externalIntegration")
     .addColumn("id", "serial", (cb) => cb.primaryKey())
     .addColumn("createdAt", "timestamptz", (cb) =>
@@ -13,7 +18,7 @@ export async function up(db: Kysely<any>) {
     // Assuming user.id is text based on 0002-track-usage.ts and 0001-better-auth.sql
     .addColumn("userId", "text", (cb) => cb.notNull()) 
 
-    .addColumn("provider", "text", (cb) => cb.notNull()) // e.g., 'github', 'gitlab', 'slack'
+    .addColumn("provider", sql`external_integration_provider`, (cb) => cb.notNull()) // e.g., 'slack'
 
     // Used to dedupe integrations, e.g., slack integration with the same vendorIntegrationId should be considered the same integration
     .addColumn("vendorIntegrationId", "text", (cb) => cb.notNull())
@@ -36,4 +41,5 @@ export async function down(db: Kysely<any>) {
   // Drop the index on the payload JSONB column
   await db.schema.dropIndex('externalIntegration_payload_idx').execute();
   await db.schema.dropTable("externalIntegration").execute();
+  await db.schema.dropTable("external_integration_provider").execute();
 }

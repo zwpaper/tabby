@@ -13,9 +13,10 @@ import { useRouter } from "@/lib/router";
 import { useLocalSettings } from "@/lib/storage";
 import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
-import type {
-  Environment,
-  ChatRequest as RagdollChatRequest,
+import {
+  type Environment,
+  type ChatRequest as RagdollChatRequest,
+  toAiMessages,
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
@@ -52,7 +53,6 @@ export default function ChatPage({ taskId }: { taskId: string }) {
     ) {
       back();
     }
-    // @ts-expect-error
   }, [data, data?.status, data?.messages?.length, back, appConfig.listen]);
 
   // Display loading spinner while task is loading
@@ -70,7 +70,8 @@ export default function ChatPage({ taskId }: { taskId: string }) {
     );
   }
 
-  const initialMessages: Message[] = data.messages;
+  // @ts-expect-error
+  const initialMessages = toAiMessages(data.messages);
   return (
     <ChatUI key={taskId} taskId={taskId} initialMessages={initialMessages} />
   );

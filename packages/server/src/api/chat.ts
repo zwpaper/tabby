@@ -23,7 +23,9 @@ import { sql } from "kysely";
 import moment from "moment";
 import { requireAuth } from "../auth";
 import { db } from "../db";
-import type { JsonValue, TaskStatus } from "../db/schema";
+import { toAiMessage, toAiMessages } from "../db/messages";
+import type { TaskStatus } from "../db/schema";
+import type { UserEvent } from "../db/user-event";
 import { readCurrentMonthQuota } from "../lib/billing";
 import {
   AvailableModels,
@@ -95,8 +97,8 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       event,
     } = await getTask(user, req.id);
     const messages = appendClientMessage({
-      messages: previousMessages,
-      message,
+      messages: toAiMessages(previousMessages),
+      message: toAiMessage(message),
     });
 
     await db
@@ -135,7 +137,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         await db
           .updateTable("task")
           .set({
-            environment,
+            environment: JSON.stringify(environment),
             status: getTaskStatus(messagesToSave, finishReason),
             messages: JSON.stringify(messagesToSave),
             updatedAt: sql`CURRENT_TIMESTAMP`,
@@ -219,7 +221,7 @@ function preprocessMessages(
   inputMessages: Message[],
   model: LanguageModelV1,
   environment: Environment | undefined,
-  event: JsonValue,
+  event: UserEvent | null,
 ) {
   // Auto reject User input tools.
   const messages = inputMessages.map((message) => {
@@ -341,11 +343,9 @@ async function getTask(user: User, chatId: string) {
     .where("id", "=", id as number)
     .where("userId", "=", user.id)
     .executeTakeFirstOrThrow();
-  const messages = data.messages as unknown as Message[];
   return {
+    ...data,
     id,
-    messages,
-    event: data.event,
   };
 }
 
