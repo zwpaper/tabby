@@ -5,7 +5,6 @@ export type { AppType } from "./server";
 export { deviceLinkClient } from "./lib/device-link/client";
 
 export type { UserEvent };
-export { toAiMessages, fromAiMessage } from "./db";
 
 export class UserEventSource {
   private ws: WebSocket;

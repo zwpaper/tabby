@@ -13,11 +13,9 @@ import { useRouter } from "@/lib/router";
 import { useLocalSettings } from "@/lib/storage";
 import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
-import {
-  type Environment,
-  type ChatRequest as RagdollChatRequest,
-  fromAiMessage,
-  toAiMessages,
+import type {
+  Environment,
+  ChatRequest as RagdollChatRequest,
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
@@ -437,4 +435,15 @@ async function reloadWithAssistantMessage({
   }
 
   return await reload();
+}
+
+export function fromAiMessage(message: Message) {
+  return {
+    ...message,
+    createdAt: message.createdAt?.toISOString(),
+  };
+}
+
+export function fromAiMessages(messages: Message[]) {
+  return messages.map(fromAiMessage);
 }
