@@ -4,8 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import { z } from "zod";
 import { requireAuth } from "../auth";
-import { db } from "../db";
-import type { TaskStatus } from "../db/schema";
+import { type UserEvent, db } from "../db";
 import { decodeTaskId, encodeTaskId } from "../lib/task-id";
 
 // Define validation schemas
@@ -18,14 +17,10 @@ const TaskParamsSchema = z.object({
   id: z.string(),
 });
 
+const ZodEventType: z.ZodType<UserEvent> = z.any();
 const CreateTaskSchema = z
   .object({
-    event: z
-      .object({
-        type: z.string().describe("The type of event"),
-        data: z.any().describe("The data of the event"),
-      })
-      .optional(),
+    event: ZodEventType,
   })
   .optional();
 
@@ -68,7 +63,7 @@ const tasks = new Hono()
       ...task,
       abstract: task.abstract?.split("\n")[0].slice(0, 64) || "(empty)",
       id: encodeTaskId(task.id),
-      status: task.status as TaskStatus,
+      status: task.status,
     }));
 
     return c.json({
@@ -90,7 +85,7 @@ const tasks = new Hono()
       .insertInto("task")
       .values({
         userId: user.id,
-        event: JSON.stringify(event),
+        event,
       })
       .returning("id")
       .executeTakeFirstOrThrow();
@@ -124,7 +119,7 @@ const tasks = new Hono()
       return c.json({
         ...task,
         id,
-        status: task.status as TaskStatus,
+        status: task.status,
       });
     },
   )

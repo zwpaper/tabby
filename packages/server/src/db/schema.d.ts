@@ -3,12 +3,7 @@
  * Please do not edit it manually.
  */
 
-import type { JSONColumnType } from "kysely";
 import type { ColumnType } from "kysely";
-import type { Environment } from "../types";
-import type { ExternalIntegrationSlack } from "./external-integration";
-import type { Message } from "./messages";
-import type { UserEvent } from "./user-event";
 
 export type ExternalIntegrationProvider = "slack";
 
@@ -62,13 +57,15 @@ export interface ChatCompletion {
   userId: string;
 }
 
-export type ExternalIntegration = ExternalIntegrationSlack & {
+export interface ExternalIntegration {
   createdAt: Generated<Timestamp>;
   id: Generated<number>;
+  payload: Json;
+  provider: ExternalIntegrationProvider;
   updatedAt: Generated<Timestamp>;
   userId: string;
   vendorIntegrationId: string;
-};
+}
 
 export interface MonthlyUsage {
   count: Generated<number>;
@@ -105,10 +102,10 @@ export interface Subscription {
 
 export interface Task {
   createdAt: Generated<Timestamp>;
-  environment: JSONColumnType<Environment> | null;
-  event: JSONColumnType<UserEvent> | null;
+  environment: Json | null;
+  event: Json | null;
   id: Generated<number>;
-  messages: Generated<JSONColumnType<Message[]>>;
+  messages: Generated<Json>;
   status: Generated<TaskStatus>;
   updatedAt: Generated<Timestamp>;
   userId: string;

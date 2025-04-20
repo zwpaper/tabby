@@ -4,7 +4,6 @@ import { HTTPException } from "hono/http-exception";
 import Stripe from "stripe";
 import { z } from "zod";
 import { requireAuth } from "../auth";
-import type { DB } from "../db/schema"; // Import DB type if needed for context typing
 import { readCurrentMonthQuota } from "../lib/billing";
 import { stripeClient } from "../lib/stripe";
 
@@ -14,7 +13,7 @@ const BillingHistoryQuerySchema = z.object({
   after: z.string().optional(), // ID of the invoice to start after for pagination
 });
 
-const billing = new Hono<{ Variables: { db: DB } }>() // Add DB type to Hono variables
+const billing = new Hono() // Add DB type to Hono variables
   .get(
     "/history",
     requireAuth,

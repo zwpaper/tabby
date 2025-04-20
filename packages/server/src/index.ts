@@ -1,11 +1,11 @@
 import { WebSocket } from "ws";
-import type { UserEvent } from "./db/user-event";
+import type { UserEvent } from "./db";
 export type * from "./types";
 export type { AppType } from "./server";
 export { deviceLinkClient } from "./lib/device-link/client";
 
 export type { UserEvent };
-export { toAiMessages } from "./db/messages";
+export { toAiMessages, fromAiMessage } from "./db";
 
 export class UserEventSource {
   private ws: WebSocket;

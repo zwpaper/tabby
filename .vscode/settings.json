@@ -1,0 +1,6 @@
+{
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "./packages/server/src/db/schema.d.ts",
+    "./packages/server/src/db/event.ts"
+  ]
+}

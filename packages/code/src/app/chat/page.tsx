@@ -16,6 +16,7 @@ import { Spinner } from "@inkjs/ui";
 import {
   type Environment,
   type ChatRequest as RagdollChatRequest,
+  fromAiMessage,
   toAiMessages,
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
@@ -71,7 +72,7 @@ export default function ChatPage({ taskId }: { taskId: string }) {
   }
 
   // @ts-expect-error
-  const initialMessages = toAiMessages(data.messages);
+  const initialMessages: Message[] = toAiMessages(data.messages);
   return (
     <ChatUI key={taskId} taskId={taskId} initialMessages={initialMessages} />
   );
@@ -375,7 +376,7 @@ function prepareRequestBody(
 
   return {
     id: request.id,
-    message: request.messages[request.messages.length - 1],
+    message: fromAiMessage(request.messages[request.messages.length - 1]),
     tools,
     model,
     environment, // Use the loaded environment

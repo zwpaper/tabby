@@ -22,10 +22,7 @@ import { stream } from "hono/streaming";
 import { sql } from "kysely";
 import moment from "moment";
 import { requireAuth } from "../auth";
-import { db } from "../db";
-import { toAiMessage, toAiMessages } from "../db/messages";
-import type { TaskStatus } from "../db/schema";
-import type { UserEvent } from "../db/user-event";
+import { type DB, db, toAiMessage, toAiMessages } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
 import {
   AvailableModels,
@@ -137,7 +134,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         await db
           .updateTable("task")
           .set({
-            environment: JSON.stringify(environment),
+            environment,
             status: getTaskStatus(messagesToSave, finishReason),
             messages: JSON.stringify(messagesToSave),
             updatedAt: sql`CURRENT_TIMESTAMP`,
@@ -221,7 +218,7 @@ function preprocessMessages(
   inputMessages: Message[],
   model: LanguageModelV1,
   environment: Environment | undefined,
-  event: UserEvent | null,
+  event: DB["task"]["event"],
 ) {
   // Auto reject User input tools.
   const messages = inputMessages.map((message) => {
@@ -351,10 +348,7 @@ async function getTask(user: User, chatId: string) {
 
 export default chat;
 
-function getTaskStatus(
-  messages: Message[],
-  finishReason: FinishReason,
-): TaskStatus {
+function getTaskStatus(messages: Message[], finishReason: FinishReason) {
   const lastMessage = messages[messages.length - 1];
 
   if (finishReason === "tool-calls") {
