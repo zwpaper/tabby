@@ -52,7 +52,7 @@ const tasks = new Hono()
         "createdAt",
         "updatedAt",
         "status",
-        sql<string>`messages[0]->'content'`.as("abstract"),
+        sql<string>`conversation #> '{messages, 0, content}'`.as("abstract"),
       ])
       .orderBy("id", "desc") // Order by newest first
       .limit(limit)
@@ -108,7 +108,7 @@ const tasks = new Hono()
         .selectFrom("task")
         .where("id", "=", numericId)
         .where("userId", "=", user.id)
-        .select(["id", "createdAt", "updatedAt", "status", "messages"])
+        .select(["id", "createdAt", "updatedAt", "status", "conversation"])
         .executeTakeFirst();
 
       if (!task) {
@@ -119,7 +119,6 @@ const tasks = new Hono()
       return c.json({
         ...task,
         id,
-        status: task.status,
       });
     },
   )

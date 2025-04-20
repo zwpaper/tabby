@@ -101,11 +101,11 @@ export interface Subscription {
 }
 
 export interface Task {
+  conversation: Json | null;
   createdAt: Generated<Timestamp>;
   environment: Json | null;
   event: Json | null;
   id: Generated<number>;
-  messages: Generated<Json>;
   status: Generated<TaskStatus>;
   updatedAt: Generated<Timestamp>;
   userId: string;

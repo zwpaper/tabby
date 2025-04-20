@@ -1,16 +1,11 @@
 import type { Message as AiMessage } from "ai";
-import {
-  type ColumnType,
-  type JSONColumnType,
-  Kysely,
-  PostgresDialect,
-} from "kysely";
+import { Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 import { parse } from "pg-connection-string";
 import type { Environment } from "../types";
 import type { UserEvent } from "./event";
 import type { ExternalIntegrationSlack } from "./external-integration";
-import type { DB as DbImpl, Generated } from "./schema";
+import type { DB as DbImpl } from "./schema";
 
 export type { UserEvent };
 
@@ -25,14 +20,10 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
   > &
     ExternalIntegrationSlack;
 
-  task: Omit<DbImpl["task"], "event" | "messages" | "environment"> & {
+  task: Omit<DbImpl["task"], "event" | "conversation" | "environment"> & {
     event: UserEvent | null;
-    messages: Generated<JSONColumnType<Message[]>>;
-    environment: ColumnType<
-      Environment | null,
-      Environment | null,
-      Environment
-    >;
+    conversation: { messages: Message[] } | null;
+    environment: Environment | null;
   };
 };
 
@@ -56,6 +47,10 @@ export function fromAiMessage(message: AiMessage): Message {
     ...message,
     createdAt: message.createdAt?.toISOString(),
   };
+}
+
+export function fromAiMessages(messages: AiMessage[]): Message[] {
+  return messages.map(fromAiMessage);
 }
 
 export const db = new Kysely<DB>({

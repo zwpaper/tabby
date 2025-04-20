@@ -21,7 +21,7 @@ export async function up(db: Kysely<any>) {
     .addColumn("environment", "jsonb")
     // Event that triggered the task, optional
     .addColumn("event", "jsonb")
-    .addColumn("messages", "jsonb", (cb) => cb.notNull().defaultTo("[]"))
+    .addColumn("conversation", "jsonb")
     .addForeignKeyConstraint("task_userId_fk", ["userId"], "user", ["id"])
     .execute();
 }

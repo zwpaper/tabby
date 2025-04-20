@@ -22,7 +22,7 @@ import { stream } from "hono/streaming";
 import { sql } from "kysely";
 import moment from "moment";
 import { requireAuth } from "../auth";
-import { type DB, db, toAiMessage, toAiMessages } from "../db";
+import { type DB, db, fromAiMessages, toAiMessage, toAiMessages } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
 import {
   AvailableModels,
@@ -88,13 +88,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       });
     }
 
-    const {
-      id,
-      messages: previousMessages,
-      event,
-    } = await getTask(user, req.id);
+    const { id, conversation, event } = await getTask(user, req.id);
     const messages = appendClientMessage({
-      messages: toAiMessages(previousMessages),
+      messages: toAiMessages(conversation?.messages || []),
       message: toAiMessage(message),
     });
 
@@ -136,7 +132,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
           .set({
             environment,
             status: getTaskStatus(messagesToSave, finishReason),
-            messages: JSON.stringify(messagesToSave),
+            conversation: {
+              messages: fromAiMessages(messagesToSave),
+            },
             updatedAt: sql`CURRENT_TIMESTAMP`,
           })
           .where("id", "=", id as number)
@@ -336,7 +334,7 @@ async function getTask(user: User, chatId: string) {
   const id = decodeTaskId(chatId);
   const data = await db
     .selectFrom("task")
-    .select(["messages", "event"])
+    .select(["conversation", "event"])
     .where("id", "=", id as number)
     .where("userId", "=", user.id)
     .executeTakeFirstOrThrow();

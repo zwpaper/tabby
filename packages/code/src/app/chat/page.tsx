@@ -48,13 +48,18 @@ export default function ChatPage({ taskId }: { taskId: string }) {
   useEffect(() => {
     if (
       appConfig.listen &&
-      data &&
-      data.messages.length > 0 &&
+      data?.conversation?.messages &&
       ["completed", "pending-input", "failed"].includes(data.status)
     ) {
       back();
     }
-  }, [data, data?.status, data?.messages?.length, back, appConfig.listen]);
+  }, [
+    data,
+    data?.status,
+    data?.conversation?.messages,
+    back,
+    appConfig.listen,
+  ]);
 
   // Display loading spinner while task is loading
   if (!data) {
