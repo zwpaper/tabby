@@ -2,7 +2,7 @@ import { deepEquals } from "bun";
 import { useCallback, useEffect, useState } from "react";
 import { KV } from "./kv";
 
-const localStorage = new KV("local");
+export const localStorage = new KV("local");
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(() => {
