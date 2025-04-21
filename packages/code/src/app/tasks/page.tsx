@@ -116,6 +116,9 @@ function TaskList() {
   const { navigate } = useRouter();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1); // Use currentPage state
+  // Add confirmation state for deletion
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
   // Use useSuspenseQuery for suspense integration
   const { data, isFetching } = useSuspenseQuery<TasksResponse, Error>({
@@ -207,7 +210,12 @@ function TaskList() {
         if (selectedTask) {
           navigate({ route: "/chat", params: { id: selectedTask.id } });
         }
-      } else if (input === "n") {
+      } else if (input === "n" && confirmingDelete) {
+        // Handle canceling deletion first, before next page
+        setConfirmingDelete(false);
+        setTaskToDelete(null);
+      } else if (input === "n" && !confirmingDelete) {
+        // Only go to next page if not confirming a deletion
         handleNextPage();
       } else if (input === "p") {
         handlePreviousPage();
@@ -220,9 +228,16 @@ function TaskList() {
         ) {
           const selectedTask = tasks[selectedIndex];
           if (selectedTask) {
-            handleDelete(selectedTask.id);
+            setConfirmingDelete(true);
+            setTaskToDelete(selectedTask);
           }
         }
+      } else if (input === "s") {
+        navigate("/settings");
+      } else if (input === "y" && confirmingDelete && taskToDelete) {
+        handleDelete(taskToDelete.id);
+        setConfirmingDelete(false);
+        setTaskToDelete(null);
       }
     },
     { isActive: isFocused },
@@ -277,6 +292,29 @@ function TaskList() {
 
       {/* Footer with pagination and help text */}
       <Box flexDirection="column" marginTop={1}>
+        {confirmingDelete && taskToDelete && (
+          <Box
+            borderStyle="round"
+            borderColor="yellow"
+            padding={1}
+            flexDirection="column"
+            alignItems="center"
+            marginBottom={1}
+          >
+            <Text color="yellow" bold>
+              Confirm Delete
+            </Text>
+            <Text>
+              Are you sure you want to delete task: {taskToDelete.id}?
+            </Text>
+            <Box marginTop={1} gap={2}>
+              <Text bold>
+                Press <Text color="green">y</Text> to confirm or{" "}
+                <Text color="red">n</Text> to cancel
+              </Text>
+            </Box>
+          </Box>
+        )}
         <Box justifyContent="space-between" paddingX={1}>
           <Text dimColor={!canGoPrevious}>← (p) Previous</Text>
           {/* Display current page and total pages */}
@@ -308,6 +346,18 @@ function TaskList() {
           <Text>
             <Text bold>s</Text> Settings
           </Text>
+          {confirmingDelete && (
+            <>
+              <Text>•</Text>
+              <Text>
+                <Text bold>y</Text> Confirm Delete
+              </Text>
+              <Text>•</Text>
+              <Text>
+                <Text bold>n</Text> Cancel Delete
+              </Text>
+            </>
+          )}
         </Box>
       </Box>
     </Box>
