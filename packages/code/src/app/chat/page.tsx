@@ -74,8 +74,9 @@ export default function ChatPage({ taskId }: { taskId: string }) {
     );
   }
 
-  // @ts-expect-error
-  const initialMessages: Message[] = toAiMessages(data.messages);
+  const initialMessages: Message[] =
+    // @ts-expect-error - deeply nested types
+    data.conversation?.messages?.map(toAiMessage) || [];
   return (
     <ChatUI key={taskId} taskId={taskId} initialMessages={initialMessages} />
   );
@@ -437,13 +438,18 @@ async function reloadWithAssistantMessage({
   return await reload();
 }
 
+function toAiMessage(
+  message: Omit<Message, "createdAt"> & { createdAt?: Date | string },
+): Message {
+  return {
+    ...message,
+    createdAt: message.createdAt ? new Date(message.createdAt) : undefined,
+  };
+}
+
 export function fromAiMessage(message: Message) {
   return {
     ...message,
     createdAt: message.createdAt?.toISOString(),
   };
-}
-
-export function fromAiMessages(messages: Message[]) {
-  return messages.map(fromAiMessage);
 }
