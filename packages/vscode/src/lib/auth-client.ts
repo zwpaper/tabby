@@ -5,26 +5,19 @@ import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 
 const DevBaseUrl = "http://localhost:4111";
 const ProdBaseUrl = "https://app.getpochi.com";
+const BearerTokenKey = "bearer_token";
 
 function isDev() {
-  return !!process.env.POCHI_DEV_SERVER;
+  return false;
 }
 
 export function createAuthClient(context: vscode.ExtensionContext) {
-  const updateSession = (
-    session:
-      | ReturnType<typeof createAuthClientImpl>["$Infer"]["Session"]
-      | null,
-  ) => {
-    context.globalState.update("session", session);
+  const updateToken = (token: string) => {
+    context.globalState.update(BearerTokenKey, token);
   };
 
   const getToken = () => {
-    const session =
-      context.globalState.get<
-        ReturnType<typeof createAuthClientImpl>["$Infer"]["Session"]
-      >("session") || null;
-    return session?.session.token || "";
+    return context.globalState.get<string>(BearerTokenKey) || "";
   };
 
   const authClient = createAuthClientImpl({
@@ -36,26 +29,16 @@ export function createAuthClient(context: vscode.ExtensionContext) {
         type: "Bearer",
         token: getToken,
       },
+      onResponse: (ctx) => {
+        const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
+        if (authToken) {
+          updateToken(authToken);
+        }
+      },
     },
   });
 
-  if (getToken()) {
-    authClient.getSession().then((session) => {
-      // Refresh session if it exists.
-      updateSession(session.data);
-    });
-  }
-
-  return new Proxy(authClient, {
-    get(target, prop, receiver) {
-      if (prop === "updateSession") {
-        return updateSession;
-      }
-      return Reflect.get(target, prop, receiver);
-    },
-  }) as unknown as typeof authClient & {
-    updateSession: typeof updateSession;
-  };
+  return authClient;
 }
 
 export type AuthClient = ReturnType<typeof createAuthClient>;

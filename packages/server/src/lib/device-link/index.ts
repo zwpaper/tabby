@@ -1,4 +1,5 @@
 import { getSessionFromCtx } from "better-auth/api";
+import { setSessionCookie } from "better-auth/cookies";
 import { generateRandomString } from "better-auth/crypto";
 import { type BetterAuthPlugin, createAuthEndpoint } from "better-auth/plugins";
 import { z } from "zod";
@@ -142,6 +143,11 @@ export const deviceLink = () => {
               { status: 400 },
             );
           }
+
+          await setSessionCookie(ctx, {
+            session,
+            user,
+          });
 
           return ctx.json({
             session,

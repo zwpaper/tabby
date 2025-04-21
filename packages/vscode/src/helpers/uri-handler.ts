@@ -22,7 +22,6 @@ class RagdollUriHandler implements vscode.UriHandler {
       return;
     }
 
-    this.authClient.updateSession(data);
     vscode.window.showInformationMessage("Successfully logged in!");
   }
 }
