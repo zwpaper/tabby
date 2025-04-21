@@ -4,6 +4,7 @@ import type { UserEvent } from ".";
 import billing from "./api/billing";
 import chat from "./api/chat";
 import events, { websocket } from "./api/events";
+import integrations from "./api/integrations";
 import models from "./api/models";
 import tasks from "./api/tasks";
 import usages from "./api/usages";
@@ -45,7 +46,8 @@ const route = api
   .route("/chat", chat)
   .route("/usages", usages)
   .route("/billing", billing)
-  .route("/tasks", tasks);
+  .route("/tasks", tasks)
+  .route("/integrations", integrations);
 
 export type AppType = typeof route;
 

@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/settings/app-sidebar";
 import { SiteHeader } from "@/components/settings/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import {
+  IconBlocks,
   IconChartBar,
   IconCreditCard,
   IconUserCircle,
@@ -45,6 +46,11 @@ const MainPanes: Pane[] = [
     title: "Billing",
     url: "/billing",
     icon: IconCreditCard,
+  },
+  {
+    title: "Integrations",
+    url: "/integrations",
+    icon: IconBlocks,
   },
   {
     title: "Model",

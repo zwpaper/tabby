@@ -22,6 +22,7 @@ import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authentica
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
 import { Route as AuthenticatedSettingsUsageImport } from './routes/_authenticated._settings/usage'
 import { Route as AuthenticatedSettingsModelImport } from './routes/_authenticated._settings/model'
+import { Route as AuthenticatedSettingsIntegrationsImport } from './routes/_authenticated._settings/integrations'
 import { Route as AuthenticatedSettingsBillingImport } from './routes/_authenticated._settings/billing'
 import { Route as AuthenticatedSettingsAccountImport } from './routes/_authenticated._settings/account'
 
@@ -100,6 +101,13 @@ const AuthenticatedSettingsModelRoute = AuthenticatedSettingsModelImport.update(
   } as any,
 )
 
+const AuthenticatedSettingsIntegrationsRoute =
+  AuthenticatedSettingsIntegrationsImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+
 const AuthenticatedSettingsBillingRoute =
   AuthenticatedSettingsBillingImport.update({
     id: '/billing',
@@ -174,6 +182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsBillingImport
       parentRoute: typeof AuthenticatedSettingsRouteImport
     }
+    '/_authenticated/_settings/integrations': {
+      id: '/_authenticated/_settings/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AuthenticatedSettingsIntegrationsImport
+      parentRoute: typeof AuthenticatedSettingsRouteImport
+    }
     '/_authenticated/_settings/model': {
       id: '/_authenticated/_settings/model'
       path: '/model'
@@ -217,6 +232,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedSettingsRouteRouteChildren {
   AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
   AuthenticatedSettingsBillingRoute: typeof AuthenticatedSettingsBillingRoute
+  AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedSettingsModelRoute: typeof AuthenticatedSettingsModelRoute
   AuthenticatedSettingsUsageRoute: typeof AuthenticatedSettingsUsageRoute
 }
@@ -225,6 +241,8 @@ const AuthenticatedSettingsRouteRouteChildren: AuthenticatedSettingsRouteRouteCh
   {
     AuthenticatedSettingsAccountRoute: AuthenticatedSettingsAccountRoute,
     AuthenticatedSettingsBillingRoute: AuthenticatedSettingsBillingRoute,
+    AuthenticatedSettingsIntegrationsRoute:
+      AuthenticatedSettingsIntegrationsRoute,
     AuthenticatedSettingsModelRoute: AuthenticatedSettingsModelRoute,
     AuthenticatedSettingsUsageRoute: AuthenticatedSettingsUsageRoute,
   }
@@ -276,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/account': typeof AuthenticatedSettingsAccountRoute
   '/billing': typeof AuthenticatedSettingsBillingRoute
+  '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/model': typeof AuthenticatedSettingsModelRoute
   '/usage': typeof AuthenticatedSettingsUsageRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -291,6 +310,7 @@ export interface FileRoutesByTo {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/account': typeof AuthenticatedSettingsAccountRoute
   '/billing': typeof AuthenticatedSettingsBillingRoute
+  '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/model': typeof AuthenticatedSettingsModelRoute
   '/usage': typeof AuthenticatedSettingsUsageRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -308,6 +328,7 @@ export interface FileRoutesById {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/_authenticated/_settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/_settings/billing': typeof AuthenticatedSettingsBillingRoute
+  '/_authenticated/_settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/_settings/model': typeof AuthenticatedSettingsModelRoute
   '/_authenticated/_settings/usage': typeof AuthenticatedSettingsUsageRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -325,6 +346,7 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/account'
     | '/billing'
+    | '/integrations'
     | '/model'
     | '/usage'
     | '/admin/users'
@@ -339,6 +361,7 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/account'
     | '/billing'
+    | '/integrations'
     | '/model'
     | '/usage'
     | '/admin/users'
@@ -354,6 +377,7 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/_authenticated/_settings/account'
     | '/_authenticated/_settings/billing'
+    | '/_authenticated/_settings/integrations'
     | '/_authenticated/_settings/model'
     | '/_authenticated/_settings/usage'
     | '/_authenticated/admin/users'
@@ -408,6 +432,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/_settings/account",
         "/_authenticated/_settings/billing",
+        "/_authenticated/_settings/integrations",
         "/_authenticated/_settings/model",
         "/_authenticated/_settings/usage"
       ]
@@ -432,6 +457,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_settings/billing": {
       "filePath": "_authenticated._settings/billing.tsx",
+      "parent": "/_authenticated/_settings"
+    },
+    "/_authenticated/_settings/integrations": {
+      "filePath": "_authenticated._settings/integrations.tsx",
       "parent": "/_authenticated/_settings"
     },
     "/_authenticated/_settings/model": {
