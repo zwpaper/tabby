@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,13 +7,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { apiClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { IconBrandSlack } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -36,7 +44,9 @@ function IntegrationsPage() {
     enabled: !!userId,
   });
 
-  const slackIntegration = integrations?.find((i) => i.provider === "slack");
+  // Filter to get all Slack integrations
+  const slackIntegrations =
+    integrations?.filter((i) => i.provider === "slack") || [];
 
   // Handle Slack disconnection
   const disconnectSlackMutation = useMutation({
@@ -50,12 +60,12 @@ function IntegrationsPage() {
       return response.json();
     },
     onSuccess: () => {
-      toast.success("Slack disconnected successfully");
+      toast.success("Slack workspace disconnected successfully");
       // Refetch integrations after disconnection
       queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
     },
     onError: (error) => {
-      toast.error("Failed to disconnect Slack", {
+      toast.error("Failed to disconnect Slack workspace", {
         description: error.message,
       });
     },
@@ -68,19 +78,8 @@ function IntegrationsPage() {
   };
 
   // Handle disconnect button click
-  const handleDisconnectSlack = () => {
-    if (slackIntegration?.id) {
-      disconnectSlackMutation.mutate(slackIntegration.id);
-    }
-  };
-
-  // Handle toggle change
-  const handleToggleSlack = (checked: boolean) => {
-    if (checked) {
-      handleConnectSlack();
-    } else {
-      handleDisconnectSlack();
-    }
+  const handleDisconnectSlack = (integrationId: number) => {
+    disconnectSlackMutation.mutate(integrationId);
   };
 
   // Check for OAuth redirect completion
@@ -89,13 +88,13 @@ function IntegrationsPage() {
     const success = urlParams.get("slack_connected");
 
     if (success === "true") {
-      toast.success("Slack connected successfully");
+      toast.success("Slack workspace connected successfully");
       // Clean up URL
       window.history.replaceState(null, "", window.location.pathname);
       // Refetch integrations
       queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
     } else if (success === "false") {
-      toast.error("Failed to connect Slack");
+      toast.error("Failed to connect Slack workspace");
       // Clean up URL
       window.history.replaceState(null, "", window.location.pathname);
     }
@@ -103,64 +102,91 @@ function IntegrationsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3">
-        {/* Slack Integration Card */}
-        <Card className="w-full max-w-xs overflow-hidden border border-border bg-card/50 hover:shadow-sm transition-all duration-200">
-          <CardHeader className="flex flex-row items-center justify-between px-4 py-3 pb-2">
-            <div className="flex flex-col gap-1">
-              <CardTitle className="text-base font-medium flex items-center gap-1">
-                <IconBrandSlack size={18} className="text-[#4A154B]" />
-                Slack
+      {/* Slack Integration Section */}
+      <div className="flex flex-col gap-3">
+        <Card className="w-full md:w-[420px] border border-border bg-card/50 overflow-hidden">
+          <CardHeader className="px-6">
+            <div className="flex items-center gap-2">
+              <IconBrandSlack size={20} className="text-[#4A154B]" />
+              <CardTitle className="text-base font-medium">
+                Slack Integration
               </CardTitle>
-              <CardDescription className="text-xs">
-                Connect your workspace to receive messages, and enable tools
-                like sending message to slack.
-              </CardDescription>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleConnectSlack}
+                className="flex items-center gap-1 ml-auto"
+              >
+                <Plus size={16} />
+              </Button>
             </div>
-            {isLoading ? (
-              <Skeleton className="h-6 w-20 rounded-full" />
-            ) : (
-              <div className="flex items-center">
-                {!disconnectSlackMutation.isPending ? (
-                  <Switch
-                    checked={!!slackIntegration}
-                    onCheckedChange={handleToggleSlack}
-                    disabled={disconnectSlackMutation.isPending}
-                    aria-label="Toggle Slack integration"
-                  />
-                ) : (
-                  <Loader2 className="ml-2 h-3 w-3 animate-spin text-muted-foreground" />
-                )}
-              </div>
-            )}
+            <CardDescription>
+              Connect your Slack workspaces to receive messages and enable tools
+              like sending messages to Slack.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="px-4 py-2 text-xs text-muted-foreground">
-            {isLoading ? (
+
+          {isLoading ? (
+            <CardContent>
               <div className="flex flex-col gap-2">
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />
               </div>
-            ) : slackIntegration ? (
-              <div className="flex items-center justify-between">
-                <span>
-                  Connected to{" "}
-                  <a
-                    className="font-medium text-foreground"
-                    href={`https://slack.com/app_redirect?app=${slackIntegration.payload.appId}&team=${slackIntegration.payload.team?.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {slackIntegration.payload.team?.name || "Slack"}
-                  </a>
-                </span>
-                <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-600">
-                  Active
-                </span>
-              </div>
-            ) : (
-              "Connect your Slack workspace to receive notifications and interact with your projects."
-            )}
-          </CardContent>
+            </CardContent>
+          ) : slackIntegrations.length === 0 ? (
+            <CardContent className="flex flex-col items-center justify-center text-center">
+              <p className="text-sm text-muted-foreground">
+                No Slack workspaces connected yet.
+              </p>
+            </CardContent>
+          ) : (
+            <div className="px-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Workspace</TableHead>
+                    <TableHead>Connected On</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {slackIntegrations.map((integration) => (
+                    <TableRow key={integration.id}>
+                      <TableCell className="font-medium">
+                        <a
+                          href={`https://slack.com/app_redirect?app=${integration.payload.appId}&team=${integration.payload.team?.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {integration.payload.team?.name || "Slack Workspace"}
+                        </a>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(integration.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDisconnectSlack(integration.id)}
+                          disabled={disconnectSlackMutation.isPending}
+                          title="Disconnect Workspace"
+                        >
+                          {disconnectSlackMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 size={16} />
+                          )}
+                          <span className="sr-only">Disconnect Workspace</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </Card>
       </div>
     </div>
