@@ -39,6 +39,7 @@ class SlackService {
       installerOptions: {
         authVersion: "v2",
         directInstall: true,
+        redirectUriPath: "/integrations",
         installPath: "/slack/installations",
         stateVerification: false,
         callbackOptions: {
