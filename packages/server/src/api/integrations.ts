@@ -78,10 +78,10 @@ const integrations = new Hono()
 function processPayload(
   provider: DB["externalIntegration"]["provider"],
   payload: DB["externalIntegration"]["payload"]["__select__"],
-) {
+): Partial<DB["externalIntegration"]["payload"]["__select__"]> {
   if (provider === "slack") {
     return {
-      appId: payload,
+      appId: payload.appId,
       team: payload.team,
       enterprise: payload.enterprise,
       enterpriseUrl: payload.enterpriseUrl,
