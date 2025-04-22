@@ -12,7 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
-import { Route as IndexImport } from './routes/index'
+import { Route as AuthenticatedIndexImport } from './routes/_authenticated.index'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authenticated.stop-impersonating'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
@@ -33,10 +33,10 @@ const AuthenticatedRoute = AuthenticatedImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const IndexRoute = IndexImport.update({
+const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
 const AuthPathnameRoute = AuthPathnameImport.update({
@@ -126,13 +126,6 @@ const AuthenticatedSettingsAccountRoute =
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -167,6 +160,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/$pathname'
       preLoaderRoute: typeof AuthPathnameImport
       parentRoute: typeof rootRoute
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedIndexImport
+      parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/_settings/account': {
       id: '/_authenticated/_settings/account'
@@ -270,6 +270,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
   AuthenticatedAuthVscodeLinkRoute: typeof AuthenticatedAuthVscodeLinkRoute
 }
@@ -278,6 +279,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
   AuthenticatedAuthVscodeLinkRoute: AuthenticatedAuthVscodeLinkRoute,
 }
@@ -287,11 +289,11 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/': typeof AuthenticatedIndexRoute
   '/account': typeof AuthenticatedSettingsAccountRoute
   '/billing': typeof AuthenticatedSettingsBillingRoute
   '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -303,11 +305,11 @@ export interface FileRoutesByFullPath {
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/': typeof AuthenticatedIndexRoute
   '/account': typeof AuthenticatedSettingsAccountRoute
   '/billing': typeof AuthenticatedSettingsBillingRoute
   '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -320,12 +322,12 @@ export interface FileRoutesByTo {
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/_settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/_settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/_settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/_authenticated/_settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -339,11 +341,11 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | ''
     | '/admin'
     | '/stop-impersonating'
     | '/auth/$pathname'
+    | '/'
     | '/account'
     | '/billing'
     | '/integrations'
@@ -354,11 +356,11 @@ export interface FileRouteTypes {
     | '/auth/vscode-link'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | ''
     | '/admin'
     | '/stop-impersonating'
     | '/auth/$pathname'
+    | '/'
     | '/account'
     | '/billing'
     | '/integrations'
@@ -369,12 +371,12 @@ export interface FileRouteTypes {
     | '/auth/vscode-link'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
     | '/_authenticated/_settings'
     | '/_authenticated/admin'
     | '/_authenticated/stop-impersonating'
     | '/auth/$pathname'
+    | '/_authenticated/'
     | '/_authenticated/_settings/account'
     | '/_authenticated/_settings/billing'
     | '/_authenticated/_settings/integrations'
@@ -387,13 +389,11 @@ export interface FileRouteTypes {
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthPathnameRoute: typeof AuthPathnameRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthPathnameRoute: AuthPathnameRoute,
 }
@@ -408,13 +408,9 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/",
         "/_authenticated",
         "/auth/$pathname"
       ]
-    },
-    "/": {
-      "filePath": "index.tsx"
     },
     "/_authenticated": {
       "filePath": "_authenticated.tsx",
@@ -422,6 +418,7 @@ export const routeTree = rootRoute
         "/_authenticated/_settings",
         "/_authenticated/admin",
         "/_authenticated/stop-impersonating",
+        "/_authenticated/",
         "/_authenticated/auth/device-link",
         "/_authenticated/auth/vscode-link"
       ]
@@ -450,6 +447,10 @@ export const routeTree = rootRoute
     },
     "/auth/$pathname": {
       "filePath": "auth/$pathname.tsx"
+    },
+    "/_authenticated/": {
+      "filePath": "_authenticated.index.tsx",
+      "parent": "/_authenticated"
     },
     "/_authenticated/_settings/account": {
       "filePath": "_authenticated._settings/account.tsx",
