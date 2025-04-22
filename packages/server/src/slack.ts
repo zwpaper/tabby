@@ -39,8 +39,6 @@ class SlackService {
       installerOptions: {
         authVersion: "v2",
         directInstall: true,
-        redirectUriPath: "/integrations",
-        installPath: "/slack/installations",
         stateVerification: false,
         callbackOptions: {
           afterInstallation: async (installation, _installOptions, req) => {
@@ -70,6 +68,16 @@ class SlackService {
               )
               .execute();
             return true;
+          },
+          success: (_installation, _options, _req, res) => {
+            const redirectUri = "/integrations?slack_connected=true";
+            res.writeHead(302, { Location: redirectUri });
+            res.end();
+          },
+          failure: (_codeError, _options, _req, res) => {
+            const redirectUri = "/integrations?slack_connected=false";
+            res.writeHead(302, { Location: redirectUri });
+            res.end();
           },
         },
       },

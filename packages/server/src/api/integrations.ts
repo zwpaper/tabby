@@ -1,14 +1,14 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requireAuth } from "../auth";
-import { db } from "../db";
+import { type DB, db } from "../db";
 
 const integrations = new Hono()
   // Get all integrations for the current user
   .get("/", requireAuth, async (c) => {
     const user = c.get("user");
     try {
-      const userIntegrations = await db
+      const data = await db
         .selectFrom("externalIntegration")
         .select([
           "id",
@@ -21,6 +21,12 @@ const integrations = new Hono()
         ])
         .where("userId", "=", user.id)
         .execute();
+      const userIntegrations = data.map((x) => {
+        return {
+          ...x,
+          payload: processPayload(x.provider, x.payload),
+        };
+      });
       return c.json(userIntegrations);
     } catch (error) {
       console.error("Failed to fetch integrations:", error);
@@ -68,5 +74,21 @@ const integrations = new Hono()
       throw new HTTPException(500, { message: "Failed to delete integration" });
     }
   });
+
+function processPayload(
+  provider: DB["externalIntegration"]["provider"],
+  payload: DB["externalIntegration"]["payload"]["__select__"],
+) {
+  if (provider === "slack") {
+    return {
+      appId: payload,
+      team: payload.team,
+      enterprise: payload.enterprise,
+      enterpriseUrl: payload.enterpriseUrl,
+    };
+  }
+
+  return payload;
+}
 
 export default integrations;
