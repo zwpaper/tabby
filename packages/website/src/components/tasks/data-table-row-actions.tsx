@@ -11,18 +11,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 import { apiClient } from "@/lib/auth-client";
-import { labels } from "./constants";
 import { taskSchema } from "./types";
 
 interface DataTableRowActionsProps<TData> {
@@ -69,30 +62,6 @@ export function DataTableRowActions<TData>({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        {false && (
-          <>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuRadioGroup value={"Bug"}>
-                  {labels.map((label) => (
-                    <DropdownMenuRadioItem
-                      key={label.value}
-                      value={label.value}
-                    >
-                      {label.label}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuSeparator />
-          </>
-        )}
         <DropdownMenuItem onClick={onDelete} disabled={isDeleting}>
           Delete
           <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>

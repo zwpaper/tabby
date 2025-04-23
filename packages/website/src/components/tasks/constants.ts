@@ -1,7 +1,4 @@
 import {
-  ArrowDown,
-  ArrowRight,
-  ArrowUp,
   Brain,
   CheckCircle,
   Keyboard,
@@ -10,21 +7,6 @@ import {
   Wrench,
 } from "lucide-react";
 import type { Task } from "./types";
-
-export const labels = [
-  {
-    value: "bug",
-    label: "Bug",
-  },
-  {
-    value: "feature",
-    label: "Feature",
-  },
-  {
-    value: "documentation",
-    label: "Documentation",
-  },
-];
 
 export const statuses = [
   {
@@ -57,21 +39,3 @@ export const statuses = [
   label: string;
   icon: LucideIcon;
 }[];
-
-export const priorities = [
-  {
-    label: "Low",
-    value: "low",
-    icon: ArrowDown,
-  },
-  {
-    label: "Medium",
-    value: "medium",
-    icon: ArrowRight,
-  },
-  {
-    label: "High",
-    value: "high",
-    icon: ArrowUp,
-  },
-];
