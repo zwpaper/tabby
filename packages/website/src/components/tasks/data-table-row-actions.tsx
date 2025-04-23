@@ -40,7 +40,7 @@ export function DataTableRowActions<TData>({
     setIsDeleting(true);
     toast.promise(
       apiClient.api.tasks[":id"].$delete({
-        param: { id: task.id },
+        param: { id: task.id.toString() },
       }),
       {
         loading: "Deleting task...",
