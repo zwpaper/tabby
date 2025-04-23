@@ -1,4 +1,4 @@
-import { type Tool, tool } from "ai";
+import { type Tool, type ToolExecutionOptions, tool } from "ai";
 
 import type { z } from "zod";
 
@@ -30,6 +30,7 @@ type ToolOutputType<T extends Tool<any, any>> = z.infer<
 // biome-ignore lint/suspicious/noExplicitAny: template matching.
 export type ToolFunctionType<T extends Tool<any, any>> = (
   args: ToolInputType<T>,
+  options: ToolExecutionOptions,
 ) => Promise<ToolOutputType<T>>;
 
 export function defineServerTool<

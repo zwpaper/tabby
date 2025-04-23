@@ -29,19 +29,28 @@ describe("globFiles", () => {
   });
 
   it("should find files matching a simple pattern", async () => {
-    const result = await globFiles({ path: testDir, globPattern: "*.txt" });
+    const result = await globFiles(
+      { path: testDir, globPattern: "*.txt" },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result.files).toEqual(["file1.txt"]);
     expect(result.isTruncated).toBe(false);
   });
 
   it("should find files matching a pattern with extension", async () => {
-    const result = await globFiles({ path: testDir, globPattern: "*.js" });
+    const result = await globFiles(
+      { path: testDir, globPattern: "*.js" },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result.files).toEqual(["file2.js"]);
     expect(result.isTruncated).toBe(false);
   });
 
   it("should find files recursively using **", async () => {
-    const result = await globFiles({ path: testDir, globPattern: "**/*.txt" });
+    const result = await globFiles(
+      { path: testDir, globPattern: "**/*.txt" },
+      { toolCallId: "dummy", messages: [] },
+    );
     // Sort results for consistent comparison
     result.files.sort();
     expect(result.files).toEqual([
@@ -52,7 +61,10 @@ describe("globFiles", () => {
   });
 
   it("should find all files using **/*", async () => {
-    const result = await globFiles({ path: testDir, globPattern: "**/*" });
+    const result = await globFiles(
+      { path: testDir, globPattern: "**/*" },
+      { toolCallId: "dummy", messages: [] },
+    );
     // Sort results for consistent comparison
     result.files.sort();
     expect(result.files).toEqual([
@@ -65,23 +77,35 @@ describe("globFiles", () => {
   });
 
   it("should return an empty array if no files match", async () => {
-    const result = await globFiles({
-      path: testDir,
-      globPattern: "*.nonexistent",
-    });
+    const result = await globFiles(
+      {
+        path: testDir,
+        globPattern: "*.nonexistent",
+      },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result.files).toEqual([]);
     expect(result.isTruncated).toBe(false);
   });
 
   it("should not return directories", async () => {
-    const result = await globFiles({ path: testDir, globPattern: "subdir" });
+    const result = await globFiles(
+      { path: testDir, globPattern: "subdir" },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result.files).toEqual([]); // 'subdir' itself shouldn't be listed
-    const result2 = await globFiles({
-      path: testDir,
-      globPattern: "empty_dir",
-    });
+    const result2 = await globFiles(
+      {
+        path: testDir,
+        globPattern: "empty_dir",
+      },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result2.files).toEqual([]); // 'empty_dir' itself shouldn't be listed
-    const result3 = await globFiles({ path: testDir, globPattern: "**/*" });
+    const result3 = await globFiles(
+      { path: testDir, globPattern: "**/*" },
+      { toolCallId: "dummy", messages: [] },
+    );
     // Ensure directories are not included even with recursive glob
     expect(result3.files).not.toContain("subdir");
     expect(result3.files).not.toContain("empty_dir");
@@ -94,16 +118,22 @@ describe("globFiles", () => {
     await fs.mkdir(dirWithSpace);
     await fs.writeFile(fileWithSpace, "space content");
 
-    const result = await globFiles({ path: testDir, globPattern: "**/*.txt" });
+    const result = await globFiles(
+      { path: testDir, globPattern: "**/*.txt" },
+      { toolCallId: "dummy", messages: [] },
+    );
     result.files.sort();
     expect(result.files).toContain(
       path.join("dir with space", "file with space.txt"),
     );
 
-    const result2 = await globFiles({
-      path: dirWithSpace,
-      globPattern: "*.txt",
-    });
+    const result2 = await globFiles(
+      {
+        path: dirWithSpace,
+        globPattern: "*.txt",
+      },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result2.files).toEqual(["file with space.txt"]);
   });
 
@@ -122,7 +152,10 @@ describe("globFiles", () => {
     }
     await Promise.all(promises);
 
-    const result = await globFiles({ path: largeDir, globPattern: "*.test" });
+    const result = await globFiles(
+      { path: largeDir, globPattern: "*.test" },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result.files.length).toBe(MAX_FILES);
     expect(result.isTruncated).toBe(true);
 
@@ -131,10 +164,13 @@ describe("globFiles", () => {
   });
 
   it("should return relative paths from the searchPath", async () => {
-    const result = await globFiles({
-      path: testDir,
-      globPattern: "subdir/*.ts",
-    });
+    const result = await globFiles(
+      {
+        path: testDir,
+        globPattern: "subdir/*.ts",
+      },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result.files).toEqual([path.join("subdir", "file4.ts")]); // Path should be relative to testDir
     expect(result.isTruncated).toBe(false);
   });

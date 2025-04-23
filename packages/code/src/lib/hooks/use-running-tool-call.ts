@@ -28,7 +28,7 @@ export function useRunningToolCall(
         setRunningToolCall(toolCall);
         const result = await invokeTool({
           toolCall,
-          signal: abortController.current.signal,
+          abortSignal: abortController.current.signal,
         });
         await addToolResult({ toolCallId: toolCall.toolCallId, result });
         abortController.current = null; // Clear controller after use

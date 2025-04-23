@@ -1,3 +1,4 @@
+export type { ToolFunctionType } from "./types";
 export type { ApplyDiffFunctionType } from "./apply-diff";
 export type { AskFollowupQuestionFunctionType } from "./ask-followup-question";
 export type { AttemptCompletionFunctionType } from "./attempt-completion";

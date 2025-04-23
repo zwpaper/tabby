@@ -275,7 +275,7 @@ function TaskList() {
                   index === selectedIndex && isFocused ? "blue" : undefined
                 }
               >
-                {task.id}
+                {formatTaskId(task.id)}
               </Text>
               <Text
                 color={
@@ -362,4 +362,8 @@ function TaskList() {
       </Box>
     </Box>
   );
+}
+
+function formatTaskId(id: number) {
+  return `TASK-${id.toString().padStart(3, "0")}`;
 }

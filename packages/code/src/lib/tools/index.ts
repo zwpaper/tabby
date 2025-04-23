@@ -1,4 +1,4 @@
-import { isUserInputTool } from "@ragdoll/tools";
+import { type ToolFunctionType, isUserInputTool } from "@ragdoll/tools";
 import type { ToolCall, ToolInvocation } from "ai";
 import { applyDiff } from "./apply-diff";
 import { executeCommand } from "./execute-command";
@@ -11,7 +11,7 @@ import { writeToFile } from "./write-to-file";
 const ToolMap: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-  (args: any, signal: AbortSignal) => Promise<unknown>
+  ToolFunctionType<any>
 > = {
   listFiles,
   globFiles,
@@ -22,18 +22,22 @@ const ToolMap: Record<
   writeToFile,
 };
 
-async function invokeToolImpl(tool: {
+async function invokeToolImpl(args: {
   toolCall: ToolCall<string, unknown>;
-  signal: AbortSignal;
+  abortSignal: AbortSignal;
 }) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  const toolFunction = ToolMap[tool.toolCall.toolName];
+  const toolFunction = ToolMap[args.toolCall.toolName];
   if (!toolFunction) {
-    throw new Error(`${tool.toolCall.toolName} is not implemented`);
+    throw new Error(`${args.toolCall.toolName} is not implemented`);
   }
 
-  return await toolFunction(tool.toolCall.args, tool.signal);
+  return await toolFunction(args.toolCall.args, {
+    messages: [],
+    toolCallId: args.toolCall.toolCallId,
+    abortSignal: args.abortSignal,
+  });
 }
 
 function safeCall<T>(x: Promise<T>) {
@@ -44,11 +48,11 @@ function safeCall<T>(x: Promise<T>) {
   });
 }
 
-export async function invokeTool(tool: {
+export async function invokeTool(args: {
   toolCall: ToolCall<string, unknown>;
-  signal: AbortSignal;
+  abortSignal: AbortSignal;
 }) {
-  return await safeCall(invokeToolImpl(tool));
+  return await safeCall(invokeToolImpl(args));
 }
 
 export function isDefaultApproved(toolCall: ToolInvocation) {

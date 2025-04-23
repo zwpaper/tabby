@@ -19,12 +19,15 @@ describe("applyDiff", () => {
   it("should apply the diff successfully", async () => {
     const mockWriteFile = vi.mocked(fs.writeFile).mockResolvedValue();
 
-    const result = await applyDiff({
-      path: mockFilePath,
-      diff: validDiff,
-      startLine: 2,
-      endLine: 2,
-    });
+    const result = await applyDiff(
+      {
+        path: mockFilePath,
+        diff: validDiff,
+        startLine: 2,
+        endLine: 2,
+      },
+      { toolCallId: "dummy", messages: [] },
+    );
 
     expect(result).toEqual({ success: true });
     expect(mockWriteFile).toHaveBeenCalledWith(
@@ -39,12 +42,15 @@ describe("applyDiff", () => {
       "<<<<<<< SEARCH\nnon-matching-line\n=======\nupdated-line\n>>>>>>> REPLACE";
 
     await expect(
-      applyDiff({
-        path: mockFilePath,
-        diff: invalidDiff,
-        startLine: 2,
-        endLine: 2,
-      }),
+      applyDiff(
+        {
+          path: mockFilePath,
+          diff: invalidDiff,
+          startLine: 2,
+          endLine: 2,
+        },
+        { toolCallId: "dummy", messages: [] },
+      ),
     ).rejects.toThrow(
       "Search content does not match the original file content.",
     );
@@ -54,12 +60,15 @@ describe("applyDiff", () => {
     const invalidDiffFormat = "invalid diff format";
 
     await expect(
-      applyDiff({
-        path: mockFilePath,
-        diff: invalidDiffFormat,
-        startLine: 2,
-        endLine: 2,
-      }),
+      applyDiff(
+        {
+          path: mockFilePath,
+          diff: invalidDiffFormat,
+          startLine: 2,
+          endLine: 2,
+        },
+        { toolCallId: "dummy", messages: [] },
+      ),
     ).rejects.toThrow("Invalid diff format");
   });
 
@@ -68,12 +77,15 @@ describe("applyDiff", () => {
       "SEARCH\nline2\n=======\nupdated-line2\n>>>>>>> REPLACE";
 
     await expect(
-      applyDiff({
-        path: mockFilePath,
-        diff: invalidDiffFormat,
-        startLine: 2,
-        endLine: 2,
-      }),
+      applyDiff(
+        {
+          path: mockFilePath,
+          diff: invalidDiffFormat,
+          startLine: 2,
+          endLine: 2,
+        },
+        { toolCallId: "dummy", messages: [] },
+      ),
     ).rejects.toThrow(
       "Diff formatis incorrect. Expected '<<<<<<< SEARCH' prefix.",
     );
@@ -84,12 +96,15 @@ describe("applyDiff", () => {
       "<<<<<<< SEARCH\nline2\n=======\nupdated-line2\nREPLACE";
 
     await expect(
-      applyDiff({
-        path: mockFilePath,
-        diff: invalidDiffFormat,
-        startLine: 2,
-        endLine: 2,
-      }),
+      applyDiff(
+        {
+          path: mockFilePath,
+          diff: invalidDiffFormat,
+          startLine: 2,
+          endLine: 2,
+        },
+        { toolCallId: "dummy", messages: [] },
+      ),
     ).rejects.toThrow(
       "Diff format is incorrect. Expected '>>>>>>> REPLACE' suffix.",
     );
@@ -99,24 +114,30 @@ describe("applyDiff", () => {
     vi.mocked(fs.readFile).mockRejectedValue(new Error("File not found"));
 
     await expect(
-      applyDiff({
-        path: mockFilePath,
-        diff: validDiff,
-        startLine: 2,
-        endLine: 2,
-      }),
+      applyDiff(
+        {
+          path: mockFilePath,
+          diff: validDiff,
+          startLine: 2,
+          endLine: 2,
+        },
+        { toolCallId: "dummy", messages: [] },
+      ),
     ).rejects.toThrow("File not found");
   });
 
   it("should should work for an empty replace section", async () => {
     const diff = "<<<<<<< SEARCH\nline2\n=======\n>>>>>>> REPLACE";
 
-    const result = await applyDiff({
-      path: mockFilePath,
-      diff,
-      startLine: 2,
-      endLine: 2,
-    });
+    const result = await applyDiff(
+      {
+        path: mockFilePath,
+        diff,
+        startLine: 2,
+        endLine: 2,
+      },
+      { toolCallId: "dummy", messages: [] },
+    );
 
     expect(result.success).toBe(true);
   });

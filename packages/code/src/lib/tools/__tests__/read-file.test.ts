@@ -15,7 +15,10 @@ describe("readFile", () => {
     const mockFileTypeFromFile = vi.mocked(fileType.fileTypeFromFile);
     mockFileTypeFromFile.mockResolvedValue({ mime: "text/plain" } as any);
 
-    const result = await readFile({ path: "test-file.txt" });
+    const result = await readFile(
+      { path: "test-file.txt" },
+      { toolCallId: "dummy", messages: [] },
+    );
 
     // Expect line number 1 prepended
     expect(result.content).toBe(`1 | ${mockFileContent}`);
@@ -28,7 +31,12 @@ describe("readFile", () => {
       mime: "application/octet-stream",
     } as any);
 
-    await expect(readFile({ path: "binary-file.bin" })).rejects.toThrow(
+    await expect(
+      readFile(
+        { path: "binary-file.bin" },
+        { toolCallId: "dummy", messages: [] },
+      ),
+    ).rejects.toThrow(
       "The file is binary or not plain text (detected type: application/octet-stream).",
     );
   });
@@ -41,11 +49,14 @@ describe("readFile", () => {
     const fileContent = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5";
     mockReadFile.mockResolvedValue(fileContent);
 
-    const result = await readFile({
-      path: "test-file.txt",
-      startLine: 2,
-      endLine: 4, // Reads lines 2, 3, 4 (exclusive end index for slice, but inclusive for user input)
-    });
+    const result = await readFile(
+      {
+        path: "test-file.txt",
+        startLine: 2,
+        endLine: 4, // Reads lines 2, 3, 4 (exclusive end index for slice, but inclusive for user input)
+      },
+      { toolCallId: "dummy", messages: [] },
+    );
 
     // Expect line numbers 2, 3, 4 prepended
     expect(result.content).toBe("2 | Line 2\n3 | Line 3\n4 | Line 4");
@@ -63,7 +74,10 @@ describe("readFile", () => {
 
     mockReadFile.mockResolvedValue(largeContent);
 
-    const result = await readFile({ path: "large-file.txt" });
+    const result = await readFile(
+      { path: "large-file.txt" },
+      { toolCallId: "dummy", messages: [] },
+    );
 
     // Check if the byte length is within the limit (accounting for line numbers)
     expect(Buffer.byteLength(result.content, "utf-8")).toBeLessThanOrEqual(
@@ -90,6 +104,11 @@ describe("readFile", () => {
       new Error("ENOENT: no such file or directory"),
     ); // Simulate fs error
 
-    await expect(readFile({ path: "non-existent-file.txt" })).rejects.toThrow(); // Check for any error related to file access/reading
+    await expect(
+      readFile(
+        { path: "non-existent-file.txt" },
+        { toolCallId: "dummy", messages: [] },
+      ),
+    ).rejects.toThrow(); // Check for any error related to file access/reading
   });
 });

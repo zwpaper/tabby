@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { listFiles } from "@/lib/tools/list-files";
+import { traverseBFS } from "@/lib/tools/file-utils";
 import type { Environment } from "@ragdoll/server";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -8,7 +8,7 @@ export function useEnvironment(customRuleFiles: string[]) {
   const environment = useRef<Environment | null>(null);
 
   const reload = useCallback(async () => {
-    const listFilesOutput = await listFiles({ path: ".", recursive: true });
+    const listFilesOutput = await traverseBFS(".", true);
     const cwd = process.cwd();
     const workspace =
       "files" in listFilesOutput

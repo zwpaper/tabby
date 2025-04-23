@@ -25,7 +25,10 @@ describe("listFiles", () => {
     mockStat.mockResolvedValueOnce({ isDirectory: () => false } as any);
     mockStat.mockResolvedValueOnce({ isDirectory: () => true } as any);
 
-    const result = await listFiles({ path: "test-dir", recursive: false });
+    const result = await listFiles(
+      { path: "test-dir", recursive: false },
+      { toolCallId: "dummy", messages: [] },
+    );
 
     expect(result.files).toEqual([
       "test-dir/file1.txt",

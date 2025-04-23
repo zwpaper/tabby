@@ -1,7 +1,6 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import type { SearchFilesFunctionType } from "@ragdoll/tools";
-import type { AbortableFunctionType } from "./types";
 
 const execAsync = promisify(exec);
 
@@ -59,9 +58,10 @@ interface ExecError extends Error {
   stderr?: string;
 }
 
-export const searchFiles: AbortableFunctionType<
-  SearchFilesFunctionType
-> = async ({ path, regex, filePattern }, signal) => {
+export const searchFiles: SearchFilesFunctionType = async (
+  { path, regex, filePattern },
+  { abortSignal },
+) => {
   const matches: { file: string; line: number; context: string }[] = [];
 
   // Construct the rg command
@@ -86,7 +86,7 @@ export const searchFiles: AbortableFunctionType<
       // Set a reasonable maxBuffer size in case of large output
       // Consider streaming if output can be extremely large
       maxBuffer: 1024 * 1024 * 10, // 10MB
-      signal, // Pass the abort signal
+      signal: abortSignal, // Pass the abort signal
     });
 
     if (stderr) {

@@ -16,7 +16,10 @@ describe("writeToFile", () => {
     const filePath = "test-file.txt";
     const fileContent = "This is a test content.";
 
-    const result = await writeToFile({ path: filePath, content: fileContent });
+    const result = await writeToFile(
+      { path: filePath, content: fileContent },
+      { toolCallId: "dummy", messages: [] },
+    );
     expect(result).toEqual({ success: true });
 
     expect(mockMkdir).toHaveBeenCalled();
@@ -31,7 +34,10 @@ describe("writeToFile", () => {
     const fileContent = "This is a test content.";
 
     await expect(
-      writeToFile({ path: filePath, content: fileContent }),
+      writeToFile(
+        { path: filePath, content: fileContent },
+        { toolCallId: "dummy", messages: [] },
+      ),
     ).rejects.toThrow(`Failed to write to file: ${mockError}`);
   });
 });
