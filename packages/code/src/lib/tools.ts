@@ -1,4 +1,4 @@
-import { executeClientTool, isUserInputTool } from "@ragdoll/tools";
+import { executeClientTool } from "@ragdoll/tools";
 import type { ToolCall, ToolInvocation } from "ai";
 
 export async function invokeTool(args: {
@@ -15,9 +15,7 @@ export async function invokeTool(args: {
 export function isDefaultApproved(toolCall: ToolInvocation) {
   const { toolName, state } = toolCall;
   const defaultApproval: boolean =
-    isUserInputTool(toolName) ||
-    ToolsExemptFromApproval.has(toolName) ||
-    state === "result";
+    ToolsExemptFromApproval.has(toolName) || state === "result";
   return defaultApproval;
 }
 
