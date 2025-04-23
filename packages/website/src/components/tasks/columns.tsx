@@ -39,7 +39,9 @@ export const columns: ColumnDef<Task>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Task" />
     ),
-    cell: ({ row }) => <div className="w-[80px]">{row.getValue("id")}</div>,
+    cell: ({ row }) => (
+      <div className="w-[80px]">{formatTaskId(row.getValue("id"))}</div>
+    ),
     enableSorting: false,
     enableHiding: false,
   },
@@ -120,3 +122,7 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ];
+
+function formatTaskId(id: number) {
+  return `TASK-${id.toString().padStart(3, "0")}`;
+}

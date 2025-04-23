@@ -12,7 +12,7 @@ type Path =
   | {
       route: "/chat";
       params: {
-        id: string;
+        id: number;
       };
     }
   | {

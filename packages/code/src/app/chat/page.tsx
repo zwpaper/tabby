@@ -25,7 +25,7 @@ import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import UserTextInput from "./components/user-text-input";
 
-export default function ChatPage({ taskId }: { taskId: string }) {
+export default function ChatPage({ taskId }: { taskId: number }) {
   const { back } = useRouter();
   const appConfig = useAppConfig();
 
@@ -34,7 +34,7 @@ export default function ChatPage({ taskId }: { taskId: string }) {
     queryKey: ["task", taskId],
     queryFn: async () => {
       const res = await apiClient.api.tasks[":id"].$get({
-        param: { id: taskId },
+        param: { id: taskId.toString() },
       });
       if (!res.ok) {
         throw new Error(`Failed to fetch task: ${res.statusText}`);
@@ -86,7 +86,7 @@ function ChatUI({
   taskId,
   initialMessages,
 }: {
-  taskId: string;
+  taskId: number;
   initialMessages?: Message[];
 }) {
   const { data: authData, logout } = useAuth();
@@ -114,7 +114,7 @@ function ChatUI({
     reload,
     append,
   } = useChat({
-    id: taskId,
+    id: taskId.toString(),
     initialInput: appConfig.prompt,
     api: apiClient.api.chat.stream.$url().toString(),
     maxSteps: 100,

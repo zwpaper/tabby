@@ -166,10 +166,10 @@ function TaskList() {
   }, [currentPage]);
 
   const handleDelete = useCallback(
-    async (taskId: string) => {
+    async (taskId: number) => {
       try {
         const res = await apiClient.api.tasks[":id"].$delete({
-          param: { id: taskId },
+          param: { id: taskId.toString() },
         });
         if (res.ok) {
           // Invalidate tasks query for the current page

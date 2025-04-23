@@ -29,7 +29,6 @@ import {
   WHITELIST_USERS,
   getModelById,
 } from "../lib/constants";
-import { decodeTaskId } from "../lib/task-id";
 import { MakeServerTools } from "../lib/tools";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
@@ -331,11 +330,11 @@ async function trackUsage(
 }
 
 async function getTask(user: User, chatId: string) {
-  const id = decodeTaskId(chatId);
+  const id = Number.parseInt(chatId);
   const data = await db
     .selectFrom("task")
     .select(["conversation", "event"])
-    .where("id", "=", id as number)
+    .where("taskId", "=", id)
     .where("userId", "=", user.id)
     .executeTakeFirstOrThrow();
   return {

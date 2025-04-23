@@ -107,7 +107,14 @@ export interface Task {
   event: Json | null;
   id: Generated<number>;
   status: Generated<TaskStatus>;
+  taskId: number;
   updatedAt: Generated<Timestamp>;
+  userId: string;
+}
+
+export interface TaskSequence {
+  id: Generated<number>;
+  nextTaskId: Generated<number>;
   userId: string;
 }
 
@@ -143,6 +150,7 @@ export interface DB {
   session: Session;
   subscription: Subscription;
   task: Task;
+  taskSequence: TaskSequence;
   user: User;
   verification: Verification;
 }

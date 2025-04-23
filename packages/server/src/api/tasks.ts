@@ -5,7 +5,6 @@ import { sql } from "kysely";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 import { type UserEvent, db } from "../db";
-import { decodeTaskId, encodeTaskId } from "../lib/task-id";
 
 // Define validation schemas
 const PaginationSchema = z.object({
@@ -48,7 +47,7 @@ const tasks = new Hono()
       .selectFrom("task")
       .where("userId", "=", user.id)
       .select([
-        "id",
+        "taskId",
         "createdAt",
         "updatedAt",
         "status",
@@ -63,7 +62,7 @@ const tasks = new Hono()
     const data = items.map((task) => ({
       ...task,
       title: task.title || "(empty)",
-      id: encodeTaskId(task.id),
+      id: task.taskId,
       status: task.status,
     }));
 
@@ -82,16 +81,30 @@ const tasks = new Hono()
   .post("/", zValidator("json", CreateTaskSchema), requireAuth, async (c) => {
     const { event } = (await c.req.valid("json")) || {};
     const user = c.get("user");
-    const { id } = await db
-      .insertInto("task")
-      .values({
-        userId: user.id,
-        event,
-      })
-      .returning("id")
-      .executeTakeFirstOrThrow();
+    const { taskId } = await db.transaction().execute(async (trx) => {
+      const { nextTaskId } = await trx
+        .insertInto("taskSequence")
+        .values({ userId: user.id })
+        .onConflict((oc) =>
+          oc
+            .column("userId")
+            .doUpdateSet({ nextTaskId: sql`"taskSequence"."nextTaskId" + 1` }),
+        )
+        .returning("nextTaskId")
+        .executeTakeFirstOrThrow();
 
-    return c.json({ id: encodeTaskId(id) });
+      return await trx
+        .insertInto("task")
+        .values({
+          userId: user.id,
+          taskId: nextTaskId,
+          event,
+        })
+        .returning("taskId")
+        .executeTakeFirstOrThrow();
+    });
+
+    return c.json({ id: taskId });
   })
 
   // Get a single task by ID
@@ -103,11 +116,9 @@ const tasks = new Hono()
       const { id } = c.req.valid("param") || {};
       const user = c.get("user");
 
-      const numericId = decodeTaskId(id);
-
       const task = await db
         .selectFrom("task")
-        .where("id", "=", numericId)
+        .where("taskId", "=", Number.parseInt(id))
         .where("userId", "=", user.id)
         .select(["id", "createdAt", "updatedAt", "status", "conversation"])
         .executeTakeFirst();
@@ -133,12 +144,10 @@ const tasks = new Hono()
       const { id } = c.req.valid("param");
       const user = c.get("user");
 
-      const numericId = decodeTaskId(id);
-
       // Check if the task exists and belongs to the user
       const task = await db
         .selectFrom("task")
-        .where("id", "=", numericId)
+        .where("taskId", "=", Number.parseInt(id))
         .where("userId", "=", user.id)
         .select("id")
         .executeTakeFirst();
@@ -150,7 +159,7 @@ const tasks = new Hono()
       // Delete the task
       await db
         .deleteFrom("task")
-        .where("id", "=", numericId)
+        .where("taskId", "=", Number.parseInt(id))
         .where("userId", "=", user.id)
         .execute();
 
