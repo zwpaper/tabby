@@ -282,7 +282,7 @@ function TaskList() {
                   index === selectedIndex && isFocused ? "blue" : undefined
                 }
               >
-                {task.abstract}
+                {task.title.slice(0, 64)}
               </Text>
             </Box>
             <Text dimColor>Updated: {formatDate(task.updatedAt)}</Text>

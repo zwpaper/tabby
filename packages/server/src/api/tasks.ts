@@ -52,7 +52,8 @@ const tasks = new Hono()
         "createdAt",
         "updatedAt",
         "status",
-        sql<string>`conversation #> '{messages, 0, content}'`.as("abstract"),
+        sql<UserEvent["type"] | null>`event -> 'type'`.as("eventType"),
+        sql<string>`conversation #> '{messages, 0, content}'`.as("title"),
       ])
       .orderBy("id", "desc") // Order by newest first
       .limit(limit)
@@ -61,7 +62,7 @@ const tasks = new Hono()
 
     const data = items.map((task) => ({
       ...task,
-      abstract: task.abstract?.split("\n")[0].slice(0, 64) || "(empty)",
+      title: task.title || "(empty)",
       id: encodeTaskId(task.id),
       status: task.status,
     }));

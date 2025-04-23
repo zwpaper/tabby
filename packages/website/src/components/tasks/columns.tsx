@@ -44,18 +44,18 @@ export const columns: ColumnDef<Task>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "abstract",
+    accessorKey: "title",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Title" />
     ),
     cell: ({ row }) => {
       return (
         <div className="flex space-x-2">
-          <Badge variant="outline">
-            {row.getValue("event") ? "event" : "user"}
-          </Badge>
+          {row.original.eventType && (
+            <Badge variant="outline">{row.original.eventType}</Badge>
+          )}
           <span className="max-w-[500px] truncate font-medium">
-            {row.getValue("abstract")}
+            {row.getValue("title")}
           </span>
         </div>
       );
