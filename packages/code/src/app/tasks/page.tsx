@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api";
 import { useAppConfig } from "@/lib/app-config";
+import { useAuth } from "@/lib/auth";
 import { useRouter } from "@/lib/router";
 import { Spinner } from "@inkjs/ui";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -65,7 +66,9 @@ export default function TasksPage() {
           },
         });
       } else {
-        throw new Error(`Failed to create task ${res.statusText}`);
+        throw new Error(
+          `Failed to create task ${res.status}: ${res.statusText}`,
+        );
       }
     } finally {
       setIsCreating(false);
@@ -113,6 +116,7 @@ export default function TasksPage() {
 }
 
 function TaskList() {
+  const { logout } = useAuth();
   const { navigate } = useRouter();
   const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1); // Use currentPage state
@@ -132,7 +136,13 @@ function TaskList() {
         },
       });
       if (!res.ok) {
-        throw new Error("Failed to fetch tasks");
+        if (res.status === 401) {
+          logout();
+        } else {
+          throw new Error(
+            `Failed to fetch tasks: ${res.status}: ${res.statusText}`,
+          );
+        }
       }
       return await res.json();
     },
