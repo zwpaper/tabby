@@ -32,15 +32,19 @@ export const Tools = {
   readEnvironment,
 };
 
-export function isUserInputTool(toolName: string) {
-  if (toolName === "askFollowupQuestion") return true;
-  if (toolName === "attemptCompletion") return true;
-  return false;
+type ToolName = keyof typeof Tools;
+
+export function isUserInputTool(toolName: string): boolean {
+  const userInputTools: string[] = [
+    "askFollowupQuestion",
+    "attemptCompletion",
+  ] satisfies ToolName[];
+  return userInputTools.includes(toolName);
 }
 
-export function isAutoInjectTool(toolName: string) {
-  if (toolName === "readEnvironment") return true;
-  return false;
+export function isAutoInjectTool(toolName: string): boolean {
+  const autoInjectTools: string[] = ["readEnvironment"] satisfies ToolName[];
+  return autoInjectTools.includes(toolName);
 }
 
 export { defineServerTool } from "./types";
