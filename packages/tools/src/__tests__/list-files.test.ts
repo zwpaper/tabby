@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
-import { listFiles } from "../list-files";
+import { executeListFiles as listFiles } from "../list-files";
 
 vi.mock("node:fs/promises");
 

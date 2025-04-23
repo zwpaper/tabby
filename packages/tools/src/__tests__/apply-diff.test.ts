@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { applyDiff } from "../apply-diff";
+import { executeApplyDiff as applyDiff } from "../apply-diff";
 
 vi.mock("node:fs/promises");
 

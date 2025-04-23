@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { traverseBFS } from "@/lib/tools/file-utils";
+import { traverseBFS } from "@/lib/file-utils";
 import type { Environment } from "@ragdoll/server";
 import { useCallback, useEffect, useRef } from "react";
 

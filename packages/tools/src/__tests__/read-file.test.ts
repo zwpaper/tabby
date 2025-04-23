@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import * as fileType from "file-type";
 import { describe, expect, it, vi } from "vitest";
-import { readFile } from "../read-file";
+import { executeReadFile as readFile } from "../read-file";
 
 vi.mock("node:fs/promises");
 vi.mock("file-type");

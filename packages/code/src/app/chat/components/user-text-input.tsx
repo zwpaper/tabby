@@ -1,6 +1,6 @@
 import TextInput from "@/components/text-input";
+import { traverseBFS } from "@/lib/file-utils";
 import { useRouter } from "@/lib/router";
-import { traverseBFS } from "@/lib/tools/file-utils";
 import Fuse from "fuse.js";
 import { Box, Text, useFocus, useInput } from "ink";
 import { useEffect, useState } from "react";

@@ -1,9 +1,6 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { z } from "zod";
-import { defineClientTool } from "./types";
 
-// Constants previously in packages/code/src/lib/tools/constants.ts
 const dirsToIgnore = [
   "node_modules",
   "__pycache__",
@@ -26,8 +23,7 @@ const dirsToIgnore = [
   ".next",
 ];
 
-// Helper function previously in packages/code/src/lib/tools/file-utils.ts
-async function traverseBFS(
+export async function traverseBFS(
   directory: string,
   recursive: boolean,
   maxItems = 0,
@@ -67,27 +63,3 @@ async function traverseBFS(
 
   return { files, isTruncated };
 }
-
-export const { tool: listFiles, execute: executeListFiles } = defineClientTool({
-  description:
-    "Request to list files and directories within the specified directory. If recursive is true, it will list all files and directories recursively. If recursive is false or not provided, it will only list the top-level contents. Do not use this tool to confirm the existence of files you may have created, as the user will let you know if the files were created successfully or not.",
-  inputSchema: z.object({
-    path: z
-      .string()
-      .describe(
-        "The path of the directory to list contents for (relative to the current working directory)",
-      ),
-    recursive: z
-      .boolean()
-      .optional()
-      .describe("Whether to list files and directories recursively."),
-  }),
-  outputSchema: z.object({
-    files: z.array(z.string()).describe("List of file and directory names"),
-    isTruncated: z.boolean().describe("Whether the list of files is truncated"),
-  }),
-  execute: async ({ path, recursive }) => {
-    // Implementation moved from packages/code/src/lib/tools/list-files.ts
-    return await traverseBFS(path, recursive || false, 300);
-  },
-});

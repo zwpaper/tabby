@@ -1,10 +1,10 @@
-import type { SearchFilesFunctionType } from "@ragdoll/tools";
+import type { ClientTools } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import type { ToolProps } from "./types";
 
-export const SearchFilesTool: React.FC<ToolProps<SearchFilesFunctionType>> = ({
-  toolCall,
-}) => {
+export const SearchFilesTool: React.FC<
+  ToolProps<(typeof ClientTools)["searchFiles"]>
+> = ({ toolCall }) => {
   const {
     path = "",
     regex = "",

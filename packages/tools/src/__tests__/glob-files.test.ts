@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { globFiles } from "../glob-files"; // Adjust the import path as necessary
+import { executeGlobFiles as globFiles} from "../glob-files"; // Adjust the import path as necessary
 
 // Define MAX_FILES based on the source file (or import it if possible)
 const MAX_FILES = 300;

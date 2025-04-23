@@ -1,12 +1,12 @@
 import * as nodePath from "node:path";
-import type { GlobFilesFunctionType } from "@ragdoll/tools";
+import type { ClientTools } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import { FileList } from "./file-list"; // Import the new component
 import type { ToolProps } from "./types";
 
-export const GlobFilesTool: React.FC<ToolProps<GlobFilesFunctionType>> = ({
-  toolCall,
-}) => {
+export const GlobFilesTool: React.FC<
+  ToolProps<(typeof ClientTools)["globFiles"]>
+> = ({ toolCall }) => {
   const { path = "", globPattern = "" } = toolCall.args || {};
 
   let resultEl: React.ReactNode;

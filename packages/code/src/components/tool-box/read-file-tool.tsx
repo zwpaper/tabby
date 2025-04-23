@@ -1,10 +1,10 @@
-import type { ReadFileFunctionType } from "@ragdoll/tools";
+import type { ClientTools } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import type { ToolProps } from "./types";
 
-export const ReadFileTool: React.FC<ToolProps<ReadFileFunctionType>> = ({
-  toolCall,
-}) => {
+export const ReadFileTool: React.FC<
+  ToolProps<(typeof ClientTools)["readFile"]>
+> = ({ toolCall }) => {
   const {
     path = "",
     startLine = undefined,

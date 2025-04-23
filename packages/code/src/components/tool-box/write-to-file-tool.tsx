@@ -1,11 +1,11 @@
-import type { WriteToFileFunctionType } from "@ragdoll/tools";
+import type { ClientTools } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import TruncatedText from "../truncated-text";
 import type { ToolProps } from "./types";
 
-export const WriteToFileTool: React.FC<ToolProps<WriteToFileFunctionType>> = ({
-  toolCall,
-}) => {
+export const WriteToFileTool: React.FC<
+  ToolProps<(typeof ClientTools)["writeToFile"]>
+> = ({ toolCall }) => {
   const { path = "", content = "" } = toolCall.args || {};
 
   // Count the number of lines in the content

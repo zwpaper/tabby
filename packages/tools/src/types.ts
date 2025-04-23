@@ -2,21 +2,29 @@ import { type Tool, type ToolExecutionOptions, tool } from "ai";
 
 import type { z } from "zod";
 
-export function declareClientTool<
+export function defineClientTool<
   PARAMETERS extends z.ZodTypeAny,
   RESULT extends z.ZodTypeAny,
 >({
   description,
   inputSchema,
+  execute,
 }: {
   description: string;
   inputSchema: PARAMETERS;
   outputSchema: RESULT;
-}): Tool<PARAMETERS, RESULT> {
-  return tool({
-    description,
-    parameters: inputSchema,
-  });
+  execute: ToolFunctionType<Tool<PARAMETERS, RESULT>>;
+}): {
+  tool: Tool<PARAMETERS, RESULT>;
+  execute: ToolFunctionType<Tool<PARAMETERS, RESULT>>;
+} {
+  return {
+    tool: tool({
+      description,
+      parameters: inputSchema,
+    }),
+    execute,
+  };
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: template matching.

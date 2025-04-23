@@ -19,12 +19,12 @@ const renderOutput = (
   );
 };
 
-import type { ExecuteCommandFunctionType } from "@ragdoll/tools";
+import type { ClientTools } from "@ragdoll/tools";
 import TruncatedText from "../truncated-text";
 import type { ToolProps } from "./types";
 
 export const ExecuteCommandTool: React.FC<
-  ToolProps<ExecuteCommandFunctionType>
+  ToolProps<(typeof ClientTools)["executeCommand"]>
 > = ({ toolCall }) => {
   const { command = "", cwd = undefined } = toolCall.args || {};
   let resultEl: React.ReactNode;

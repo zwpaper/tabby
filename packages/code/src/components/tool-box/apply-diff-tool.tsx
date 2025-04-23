@@ -1,11 +1,11 @@
-import type { ApplyDiffFunctionType } from "@ragdoll/tools";
+import type { ClientTools } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import TruncatedText from "../truncated-text";
 import type { ToolProps } from "./types";
 
-export const ApplyDiffTool: React.FC<ToolProps<ApplyDiffFunctionType>> = ({
-  toolCall,
-}) => {
+export const ApplyDiffTool: React.FC<
+  ToolProps<(typeof ClientTools)["applyDiff"]>
+> = ({ toolCall }) => {
   const {
     path = "",
     diff = "",

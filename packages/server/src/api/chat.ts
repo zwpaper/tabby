@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { Tools, isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
+import { ClientTools, isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 import {
   APICallError,
   type FinishReason,
@@ -116,7 +116,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       system: environment?.info && generateSystemPrompt(environment.info),
       messages: preprocessMessages(messages, selectedModel, environment, event),
       tools: {
-        ...Tools,
+        ...ClientTools,
         ...enabledServerTools, // Add the enabled server tools
       },
       onFinish: async ({ usage, finishReason, response }) => {

@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { type ToolFunctionType, declareClientTool } from "./types";
+import { type ToolFunctionType, defineClientTool } from "./types";
 
-export const attemptCompletion = declareClientTool({
+export const { tool: attemptCompletion } = defineClientTool({
   description: `After each tool use. Once you've received the results of tool uses and can confirm that the task is complete, use this tool to present the result of your work to the user.`,
   inputSchema: z.object({
     result: z
@@ -21,6 +21,9 @@ export const attemptCompletion = declareClientTool({
       .boolean()
       .describe("Indicates whether the completion was successful."),
   }),
+  execute: () => {
+    throw new Error("Function not implemented.");
+  },
 });
 
 export type AttemptCompletionFunctionType = ToolFunctionType<

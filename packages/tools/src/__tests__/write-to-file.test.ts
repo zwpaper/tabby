@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { writeToFile } from "../write-to-file";
+import { executeWriteToFile as writeToFile } from "../write-to-file";
 
 vi.mock("node:fs/promises");
 

@@ -1,4 +1,6 @@
 import type { ToolCall, ToolResult } from "@ai-sdk/provider-utils";
+import type { ToolFunctionType } from "@ragdoll/tools";
+import type { Tool } from "ai";
 
 export type ToolInvocation<INPUT, OUTPUT> =
   | ({
@@ -14,13 +16,11 @@ export type ToolInvocation<INPUT, OUTPUT> =
       step?: number;
     } & ToolResult<string, INPUT, OUTPUT>);
 
-export interface ToolProps<
-  // biome-ignore lint/suspicious/noExplicitAny: external function def.
-  T extends (...args: any[]) => any = (...args: any[]) => any,
-> {
+// biome-ignore lint/suspicious/noExplicitAny: template matching.
+export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
   toolCall: ToolInvocation<
-    InputType<T>,
-    Awaited<ReturnType<T>> | { error: string }
+    InputType<ToolFunctionType<T>>,
+    Awaited<ReturnType<ToolFunctionType<T>>> | { error: string }
   >;
 }
 
