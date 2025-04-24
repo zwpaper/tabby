@@ -1,7 +1,16 @@
-import { Outlet, createRootRoute, redirect } from "@tanstack/react-router";
+import type { authClient } from "@/lib/auth-client";
+import {
+  Outlet,
+  createRootRouteWithContext,
+  redirect,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
-export const Route = createRootRoute({
+interface RouterContext {
+  auth: typeof authClient.$Infer.Session;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <>
       <Outlet />

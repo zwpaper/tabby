@@ -6,12 +6,17 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
 import "./styles.css";
+import { Loader2 } from "lucide-react";
+import { authClient } from "./lib/auth-client.ts";
 import reportWebVitals from "./reportWebVitals.ts";
 
 // Create a new router instance
 const router = createRouter({
   routeTree,
-  context: {},
+  context: {
+    // @ts-expect-error
+    auth: null,
+  },
   defaultPreload: "intent",
   scrollRestoration: true,
   defaultStructuralSharing: true,
@@ -25,13 +30,30 @@ declare module "@tanstack/react-router" {
   }
 }
 
+function App() {
+  const { data: auth, isPending } = authClient.useSession();
+  if (isPending) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+  return (
+    <StrictMode>
+      {/* @ts-expect-error */}
+      <RouterProvider router={router} context={{ auth }} />
+    </StrictMode>
+  );
+}
+
 // Render the app
 const rootElement = document.getElementById("app");
 if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <App />
     </StrictMode>,
   );
 }
