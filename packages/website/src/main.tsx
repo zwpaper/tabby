@@ -15,6 +15,7 @@ import reportWebVitals from "./reportWebVitals.ts";
 const router = createRouter({
   routeTree,
   context: {
+    // @ts-expect-error
     auth: null,
   },
   defaultPreload: "intent",
