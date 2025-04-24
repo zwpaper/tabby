@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: App,
@@ -41,7 +41,13 @@ function App() {
           ) : (
             tasks.map((task) => (
               <div key={task.id} className="bg-zinc-800 p-2 rounded-xs">
-                <div className="font-bold mb-1">{formatTaskId(task.id)}</div>
+                <Link
+                  to={"/tasks/$id"}
+                  params={{ id: task.id.toString() }}
+                  className="font-bold mb-1"
+                >
+                  {formatTaskId(task.id)}
+                </Link>
                 <div>
                   <p>{task.title}</p>
                 </div>
