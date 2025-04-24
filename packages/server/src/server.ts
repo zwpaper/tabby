@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import type { UserEvent } from ".";
 import billing from "./api/billing";
@@ -33,6 +34,21 @@ if (process.env.NODE_ENV !== "test") {
 app.get("/health", (c) => c.text("OK"));
 
 app.on(["GET", "POST"], "/slack/*", (c) => slack.handler(c.req.raw));
+
+app.use(
+  "/api/*",
+  cors({
+    origin: (origin) => {
+      if (origin.startsWith("vscode-webview://")) {
+        return origin;
+      }
+      return undefined;
+    },
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["POST", "GET", "OPTIONS"],
+    credentials: true,
+  }),
+);
 
 // Auth routes
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
