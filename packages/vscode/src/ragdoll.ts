@@ -168,7 +168,7 @@ class Ragdoll implements WebviewViewProvider {
         <meta charset="UTF-8" />
         <meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>VSCode React Starter</title>
+        <title>Ragdoll</title>
         <style>body { padding: 0; margin: 0; }</style>
       </head>
       <body>

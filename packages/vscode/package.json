@@ -14,7 +14,7 @@
         {
           "id": "ragdollWebui",
           "type": "webview",
-          "name": "Ragdoll Webui"
+          "name": "Ragdoll"
         }
       ]
     },

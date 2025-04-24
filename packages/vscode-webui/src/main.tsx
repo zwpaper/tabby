@@ -8,6 +8,7 @@ import { routeTree } from "./routeTree.gen";
 import "./styles.css";
 import { Loader2 } from "lucide-react";
 import { authClient } from "./lib/auth-client.ts";
+import { Providers } from "./providers.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
 
 // Create a new router instance
@@ -30,7 +31,7 @@ declare module "@tanstack/react-router" {
   }
 }
 
-function App() {
+function InnerApp() {
   const { data: auth, isPending } = authClient.useSession();
   if (isPending) {
     return (
@@ -44,6 +45,14 @@ function App() {
       {/* @ts-expect-error */}
       <RouterProvider router={router} context={{ auth }} />
     </StrictMode>
+  );
+}
+
+function App() {
+  return (
+    <Providers>
+      <InnerApp />
+    </Providers>
   );
 }
 
