@@ -1,13 +1,9 @@
-import { createAuthClient } from "@/lib/auth-client";
-import { getVSCodeHost } from "@/lib/vscode-host";
+import { authClient } from "@/lib/api";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   component: App,
 });
-
-const vscodeHost = getVSCodeHost();
-const authClient = createAuthClient(vscodeHost);
 
 function App() {
   const { data: session, error, isPending } = authClient.useSession();
