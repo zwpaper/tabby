@@ -4,7 +4,7 @@ import {
 } from "better-auth/react";
 import type { VSCodeHost } from "./vscode-host";
 
-const DevBaseUrl = "http://localhost:4111";
+const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";
 
 function isDev() {

@@ -2,7 +2,7 @@ import { deviceLinkClient } from "@ragdoll/server";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 import type { TokenStorage } from "./token-storage";
 
-const DevBaseUrl = "http://localhost:4111";
+const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";
 
 function isDev() {
