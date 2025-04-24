@@ -1,0 +1,5 @@
+{
+  "name": "@ragdoll/vscode-webui-bridge",
+  "private": true,
+  "types": "index.d.ts"
+}

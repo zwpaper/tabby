@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "main": "./dist/extension.js",
   "devDependencies": {
-    "@types/vscode": "^1.98.0",
-    "@ragdoll/tools": "workspace:*"
+    "@ragdoll/tools": "workspace:*",
+    "@ragdoll/vscode-webui-bridge": "workspace:*",
+    "@types/vscode": "^1.99.1"
   },
   "activationEvents": [],
   "contributes": {
@@ -30,8 +31,21 @@
       {
         "command": "ragdoll.accountSettings",
         "title": "Ragdoll: Account Settings"
+      },
+      {
+        "command": "ragdoll.openLoginPage",
+        "title": "Open Login Page",
+        "category": "Ragdoll"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "ragdoll.openLoginPage",
+          "when": "false"
+        }
+      ]
+    }
   },
   "description": "Ragdoll",
   "displayName": "Ragdoll",
@@ -48,5 +62,8 @@
     "vscode": "code --extensionDevelopmentPath=$PWD",
     "dev": "npm-run-all --parallel watch vscode",
     "tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@quilted/threads": "^3.1.3"
   }
 }

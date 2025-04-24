@@ -2,13 +2,24 @@ import type { AuthClient } from "@/lib/auth-client";
 import * as vscode from "vscode";
 
 class RagdollUriHandler implements vscode.UriHandler {
+  readonly loginEvent = new vscode.EventEmitter<void>();
+
   constructor(private authClient: AuthClient) {}
 
   handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
     const searchParams = new URLSearchParams(uri.query);
     const token = searchParams.get("token");
     if (token) {
-      this.loginWithDeviceLink(token);
+      vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          cancellable: false,
+        },
+        async (progress) => {
+          progress.report({ message: "Login in progress, please wait..." });
+          await this.loginWithDeviceLink(token);
+        },
+      );
     }
   }
 
@@ -23,6 +34,7 @@ class RagdollUriHandler implements vscode.UriHandler {
     }
 
     vscode.window.showInformationMessage("Successfully logged in!");
+    this.loginEvent.fire();
   }
 }
 

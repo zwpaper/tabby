@@ -1,26 +1,48 @@
+import { createAuthClient } from "@/lib/auth-client";
+import { getVSCodeHost } from "@/lib/vscode-host";
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: App,
 });
 
+const vscodeHost = getVSCodeHost();
+const authClient = createAuthClient(vscodeHost);
+
 function App() {
+  const { data: session, error, isPending } = authClient.useSession();
+
+  if (isPending) {
+    return (
+      <div className="text-center">
+        <header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
+          <div className="h-[10vmin] w-[10vmin] border-4 border-t-[#61dafb] border-[#282c34] rounded-full animate-spin" />
+        </header>
+      </div>
+    );
+  }
+
+  if (!session || error) {
+    return (
+      <div className="text-center">
+        <header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
+          <a
+            className="text-[#61dafb] hover:underline"
+            href="command:ragdoll.openLoginPage"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Login
+          </a>
+        </header>
+      </div>
+    );
+  }
+
   return (
     <div className="text-center">
       <header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
-        <Camera className="h-[40vmin] pointer-events-none animate-[spin_20s_linear_infinite]" />
-        <p>
-          Edit <code>src/routes/index.tsx</code> and save to reload.
-        </p>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://tanstack.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Hello Ragdoll
-        </a>
+        <p>Welcome, {session.user.name}!</p>
       </header>
     </div>
   );

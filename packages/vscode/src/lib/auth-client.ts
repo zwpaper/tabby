@@ -1,38 +1,32 @@
-import type * as vscode from "vscode";
-
 import { deviceLinkClient } from "@ragdoll/server";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
+import type { TokenStorage } from "./token-storage";
 
 const DevBaseUrl = "http://localhost:4111";
 const ProdBaseUrl = "https://app.getpochi.com";
-const BearerTokenKey = "bearer_token";
 
 function isDev() {
   return false;
 }
 
-export function createAuthClient(context: vscode.ExtensionContext) {
-  const updateToken = (token: string) => {
-    context.globalState.update(BearerTokenKey, token);
-  };
+export function getBaseUrl() {
+  return isDev() ? DevBaseUrl : ProdBaseUrl;
+}
 
-  const getToken = () => {
-    return context.globalState.get<string>(BearerTokenKey) || "";
-  };
-
+export function createAuthClient(tokenStorage: TokenStorage) {
   const authClient = createAuthClientImpl({
-    baseURL: isDev() ? DevBaseUrl : ProdBaseUrl,
+    baseURL: getBaseUrl(),
     plugins: [deviceLinkClient()],
 
     fetchOptions: {
       auth: {
         type: "Bearer",
-        token: getToken,
+        token: () => tokenStorage.getToken(),
       },
       onResponse: (ctx) => {
         const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
         if (authToken) {
-          updateToken(authToken);
+          tokenStorage.setToken(authToken);
         }
       },
     },
