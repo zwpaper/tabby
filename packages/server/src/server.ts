@@ -39,7 +39,12 @@ app.use(
   "/api/*",
   cors({
     origin: (origin) => {
-      if (origin.startsWith("vscode-webview://")) {
+      const AllowedOrigins = [
+        // publisher: com.getpochi, name: vscode
+        "vscode-webview://1s3dnc4dj590d1mf479rfp2n1n552nl97ctfd3t0sdqa72v05jrr",
+      ];
+
+      if (AllowedOrigins.includes(origin)) {
         return origin;
       }
       return undefined;
