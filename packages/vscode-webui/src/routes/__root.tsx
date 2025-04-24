@@ -1,9 +1,5 @@
 import type { authClient } from "@/lib/auth-client";
-import {
-  Outlet,
-  createRootRouteWithContext,
-  redirect,
-} from "@tanstack/react-router";
+import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 interface RouterContext {
@@ -17,11 +13,4 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       <TanStackRouterDevtools />
     </>
   ),
-  loader: async (context) => {
-    if (context.location.pathname === "/index.html") {
-      throw redirect({
-        to: "/",
-      });
-    }
-  },
 });

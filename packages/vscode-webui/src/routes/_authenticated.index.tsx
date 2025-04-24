@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/")({
 function App() {
   const { auth } = Route.useRouteContext();
   const page = 1;
-  const limit = 5;
+  const limit = 20;
   const { data, isLoading } = useQuery({
     queryKey: ["tasks", page, limit],
     queryFn: () =>

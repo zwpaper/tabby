@@ -1,4 +1,8 @@
-import { RouterProvider, createRouter } from "@tanstack/react-router";
+import {
+  RouterProvider,
+  createHashHistory,
+  createRouter,
+} from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
@@ -11,6 +15,8 @@ import { authClient } from "./lib/auth-client.ts";
 import { Providers } from "./providers.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
 
+const hashHistory = createHashHistory();
+
 // Create a new router instance
 const router = createRouter({
   routeTree,
@@ -22,6 +28,7 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
+  history: hashHistory,
 });
 
 // Register the router instance for type safety
