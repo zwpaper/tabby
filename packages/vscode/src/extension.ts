@@ -1,9 +1,10 @@
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { Extension } from "./helpers/extension";
 import RagdollUriHandler from "./helpers/uri-handler";
-import { createAuthClient, getBaseUrl } from "./lib/auth-client";
+import { createAuthClient } from "./lib/auth-client";
 import { TokenStorage } from "./lib/token-storage";
 import Ragdoll from "./ragdoll";
 import createStatusBarItem from "./status-bar";
@@ -80,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand("ragdoll.openLoginPage", async () => {
       vscode.env.openExternal(
-        vscode.Uri.parse(`${getBaseUrl()}/auth/vscode-link`),
+        vscode.Uri.parse(`${getServerBaseUrl()}/auth/vscode-link`),
       );
     }),
   ];

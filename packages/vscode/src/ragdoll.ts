@@ -1,5 +1,8 @@
 import { Thread } from "@quilted/threads";
-import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import {
+  type VSCodeHostApi,
+  getServerBaseUrl,
+} from "@ragdoll/vscode-webui-bridge";
 import {
   type CancellationToken,
   type EventEmitter,
@@ -10,7 +13,6 @@ import {
   type WebviewViewResolveContext,
 } from "vscode";
 import { Extension } from "./helpers/extension";
-import { getBaseUrl } from "./lib/auth-client";
 import type { TokenStorage } from "./lib/token-storage";
 import { getNonce } from "./utils/get-nonce";
 import { getUri } from "./utils/get-uri";
@@ -155,7 +157,7 @@ class Ragdoll implements WebviewViewProvider {
       `connect-src https://* ${
         isProd
           ? ""
-          : `ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort} ${getBaseUrl()}`
+          : `ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort} ${getServerBaseUrl()}`
       }`,
     ];
 

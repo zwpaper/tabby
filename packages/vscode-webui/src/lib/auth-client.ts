@@ -1,20 +1,13 @@
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import {
   type ResponseContext,
   createAuthClient as createAuthClientImpl,
 } from "better-auth/react";
 import type { VSCodeHost } from "./vscode-host";
 
-const DevBaseUrl = "http://localhost:4113";
-const ProdBaseUrl = "https://app.getpochi.com";
-
-function isDev() {
-  return false;
-}
-
 export function createAuthClient(vscodeHost: VSCodeHost) {
   const authClient = createAuthClientImpl({
-    baseURL: isDev() ? DevBaseUrl : ProdBaseUrl,
-
+    baseURL: getServerBaseUrl(),
     fetchOptions: {
       auth: {
         type: "Bearer",

@@ -1,21 +1,11 @@
 import { deviceLinkClient } from "@ragdoll/server";
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 import type { TokenStorage } from "./token-storage";
 
-const DevBaseUrl = "http://localhost:4113";
-const ProdBaseUrl = "https://app.getpochi.com";
-
-function isDev() {
-  return false;
-}
-
-export function getBaseUrl() {
-  return isDev() ? DevBaseUrl : ProdBaseUrl;
-}
-
 export function createAuthClient(tokenStorage: TokenStorage) {
   const authClient = createAuthClientImpl({
-    baseURL: getBaseUrl(),
+    baseURL: getServerBaseUrl(),
     plugins: [deviceLinkClient()],
 
     fetchOptions: {
