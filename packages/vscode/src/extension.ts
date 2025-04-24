@@ -6,7 +6,7 @@ import RagdollUriHandler from "./helpers/uri-handler";
 import { createAuthClient, getBaseUrl } from "./lib/auth-client";
 import { TokenStorage } from "./lib/token-storage";
 import Ragdoll from "./ragdoll";
-import createStatusBarItem from "./statusbar";
+import createStatusBarItem from "./status-bar";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
