@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { etag } from "hono/etag";
 import { logger } from "hono/logger";
 import type { UserEvent } from ".";
 import billing from "./api/billing";
@@ -26,7 +27,21 @@ if (process.env.NODE_ENV !== "test") {
     const { readFile } = await import("node:fs/promises");
     const html = await readFile("../website/dist/index.html", "utf-8");
 
-    app.use("/*", serveStatic({ root: "../website/dist" }));
+    app.use(
+      "/*",
+      etag(),
+      serveStatic({
+        root: "../website/dist",
+        precompressed: true,
+        onFound: (path, c) => {
+          if (path.endsWith(".html") || path.endsWith("manifest.json")) {
+            c.header("Cache-Control", "public, max-age=0, must-revalidate");
+          } else {
+            c.header("Cache-Control", "public, immutable, max-age=31536000");
+          }
+        },
+      }),
+    );
     app.get("*", (c) => c.html(html));
   })();
 }
