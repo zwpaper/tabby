@@ -56,7 +56,7 @@ const tasks = new Hono()
           "title",
         ),
       ])
-      .orderBy("id", "desc") // Order by newest first
+      .orderBy("taskId", "desc") // Order by newest first
       .limit(limit)
       .offset(offset) // Apply offset
       .execute();
@@ -151,10 +151,9 @@ const tasks = new Hono()
         .selectFrom("task")
         .where("taskId", "=", Number.parseInt(id))
         .where("userId", "=", user.id)
-        .select("id")
         .executeTakeFirst();
 
-      if (!task) {
+      if (task === undefined) {
         throw new HTTPException(404, { message: "Task not found" });
       }
 

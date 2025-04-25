@@ -23,7 +23,10 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
   > &
     ExternalIntegrationSlack;
 
-  task: Omit<DbImpl["task"], "event" | "conversation" | "environment"> & {
+  task: Omit<
+    DbImpl["task"],
+    "event" | "conversation" | "environment" | "id"
+  > & {
     event: UserEvent | null;
     conversation: { messages: DBMessage[] } | null;
     environment: Environment | null;
