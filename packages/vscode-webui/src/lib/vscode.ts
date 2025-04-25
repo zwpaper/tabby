@@ -1,5 +1,8 @@
 import { Thread } from "@quilted/threads";
-import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import type {
+  VSCodeHostApi,
+  WebviewHostApi,
+} from "@ragdoll/vscode-webui-bridge";
 import type { WebviewApi } from "vscode-webview";
 
 let vscodeApi: WebviewApi<unknown> | undefined = undefined;
@@ -14,7 +17,7 @@ function getVSCodeApi() {
 
 function createVSCodeHost(): VSCodeHostApi {
   const vscode = getVSCodeApi();
-  const thread = new Thread<VSCodeHostApi, unknown>(
+  const thread = new Thread<VSCodeHostApi, WebviewHostApi>(
     {
       send(message) {
         return vscode.postMessage(message);
@@ -31,6 +34,17 @@ function createVSCodeHost(): VSCodeHostApi {
     },
     {
       imports: ["getToken", "setToken"],
+      exports: {
+        openTask(taskId) {
+          window.router.navigate({
+            to: "/tasks/$id",
+            params: {
+              id: taskId.toString(),
+            },
+            replace: true,
+          });
+        },
+      },
     },
   );
 

@@ -1,6 +1,7 @@
 import { Thread } from "@quilted/threads";
 import {
   type VSCodeHostApi,
+  type WebviewHostApi,
   getServerBaseUrl,
 } from "@ragdoll/vscode-webui-bridge";
 import {
@@ -19,8 +20,10 @@ import { getUri } from "./utils/get-uri";
 
 class Ragdoll implements WebviewViewProvider {
   public static readonly viewType = "ragdollWebui";
-  private static instance: Ragdoll;
+  private static instance?: Ragdoll;
+
   private view?: WebviewView;
+  private webviewHost?: WebviewHostApi;
 
   constructor(
     private readonly extensionUri: Uri,
@@ -46,6 +49,10 @@ class Ragdoll implements WebviewViewProvider {
     return Ragdoll.instance;
   }
 
+  public static getWebviewHost() {
+    return Ragdoll.instance?.webviewHost;
+  }
+
   public resolveWebviewView(
     webviewView: WebviewView,
     _context: WebviewViewResolveContext,
@@ -69,12 +76,12 @@ class Ragdoll implements WebviewViewProvider {
       webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
     });
 
-    this.createWebviewThread(webviewView.webview);
+    this.webviewHost = this.createWebviewThread(webviewView.webview).imports;
   }
 
   private createWebviewThread(webview: Webview) {
     const tokenStorage = this.tokenStorage;
-    const thread = new Thread<unknown, VSCodeHostApi>(
+    return new Thread<WebviewHostApi, VSCodeHostApi>(
       {
         send(message) {
           return webview.postMessage(message);
@@ -101,9 +108,9 @@ class Ragdoll implements WebviewViewProvider {
             return tokenStorage.setToken(token);
           },
         },
+        imports: ["openTask"],
       },
     );
-    return thread;
   }
 
   private getHtmlForWebview(webview: Webview) {

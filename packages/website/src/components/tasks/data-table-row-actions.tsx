@@ -50,6 +50,10 @@ export function DataTableRowActions<TData>({
     );
   };
 
+  function openVSCode() {
+    window.open(`vscode://com.getpochi.vscode/?task=${task.id}`);
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -61,7 +65,12 @@ export function DataTableRowActions<TData>({
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end" className="w-[160px]">
+        <DropdownMenuItem onClick={openVSCode}>
+          Open
+          <DropdownMenuShortcut>⌘L</DropdownMenuShortcut>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={onDelete} disabled={isDeleting}>
           Delete
           <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
