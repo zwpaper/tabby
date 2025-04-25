@@ -62,9 +62,9 @@ function RouteComponent() {
     }
   };
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 text-black p-4">
-      <h1 className="text-5xl font-bold mb-12 tracking-tight flex gap-4">
-        <Terminal className="size-12 animate-[spin_6s_linear_infinite]" />
+    <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 text-black p-4">
+      <h1 className="mt-[25vh] text-3xl md:text-5xl font-bold mb-12 tracking-tight flex gap-4">
+        <Terminal className="size-12 animate-[spin_6s_linear_infinite] hidden md:block" />
         What can I help you ship?
       </h1>
       <form
