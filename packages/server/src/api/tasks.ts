@@ -21,6 +21,9 @@ const CreateTaskSchema = z.object({
   prompt: z.string().min(8),
 });
 
+const titleSelect =
+  sql<string>`conversation #> '{messages, 0, parts, 0, text}'`.as("title");
+
 // Create a tasks router with authentication
 const tasks = new Hono()
   // List tasks with pagination
@@ -50,9 +53,7 @@ const tasks = new Hono()
         "updatedAt",
         "status",
         sql<UserEvent["type"] | null>`event -> 'type'`.as("eventType"),
-        sql<string>`conversation #> '{messages, 0, parts, 0, text}'`.as(
-          "title",
-        ),
+        titleSelect,
       ])
       .orderBy("taskId", "desc") // Order by newest first
       .limit(limit)
@@ -102,7 +103,13 @@ const tasks = new Hono()
         .selectFrom("task")
         .where("taskId", "=", taskId)
         .where("userId", "=", user.id)
-        .select(["createdAt", "updatedAt", "status", "conversation"])
+        .select([
+          "createdAt",
+          "updatedAt",
+          "status",
+          "conversation",
+          titleSelect,
+        ])
         .executeTakeFirst();
 
       if (!task) {
