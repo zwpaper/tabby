@@ -14,9 +14,11 @@ export function toUIMessages(messages: DBMessage[]): Message[] {
 }
 
 export function fromUIMessage(message: Message): DBMessage {
+  const parts = (message.parts || []).filter((x) => x.type !== "source");
   return {
     ...message,
     createdAt: message.createdAt?.toISOString(),
+    parts,
   };
 }
 

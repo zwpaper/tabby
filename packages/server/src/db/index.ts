@@ -13,7 +13,9 @@ export type DBMessage = {
   id: string;
   createdAt?: string;
   role: Message["role"];
-  parts?: Message["parts"];
+  parts: Array<
+    Exclude<NonNullable<Message["parts"]>[number], { type: "source" }>
+  >;
 };
 
 export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {

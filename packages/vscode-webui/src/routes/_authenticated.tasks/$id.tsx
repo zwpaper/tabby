@@ -18,7 +18,6 @@ export const Route = createFileRoute("/_authenticated/tasks/$id")({
 function RouteComponent() {
   const data = Route.useLoaderData();
   const router = useRouter();
-  // @ts-expect-error
   const messages = toUIMessages(data.conversation?.messages || []);
   return (
     <div className="flex flex-col p-4 space-y-4">

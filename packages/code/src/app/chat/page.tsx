@@ -72,7 +72,6 @@ export default function ChatPage({ taskId }: { taskId: number }) {
     );
   }
 
-  // @ts-expect-error
   const initialMessages = toUIMessages(data.conversation?.messages || []);
   return (
     <ChatUI key={taskId} taskId={taskId} initialMessages={initialMessages} />
