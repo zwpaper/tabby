@@ -13,9 +13,11 @@ import { useRouter } from "@/lib/router";
 import { useLocalSettings } from "@/lib/storage";
 import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
-import type {
-  Environment,
-  ChatRequest as RagdollChatRequest,
+import {
+  type Environment,
+  type ChatRequest as RagdollChatRequest,
+  fromUIMessage,
+  toUIMessages,
 } from "@ragdoll/server";
 import { isAutoInjectTool } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
@@ -71,9 +73,8 @@ export default function ChatPage({ taskId }: { taskId: number }) {
     );
   }
 
-  const initialMessages: Message[] =
-    // @ts-expect-error - deeply nested types
-    data.conversation?.messages?.map(toAiMessage) || [];
+  // @ts-expect-error
+  const initialMessages = toUIMessages(data.conversation?.messages || []);
   return (
     <ChatUI key={taskId} taskId={taskId} initialMessages={initialMessages} />
   );
@@ -377,7 +378,7 @@ function prepareRequestBody(
 
   return {
     id: request.id,
-    message: fromAiMessage(request.messages[request.messages.length - 1]),
+    message: fromUIMessage(request.messages[request.messages.length - 1]),
     tools,
     model,
     environment, // Use the loaded environment
@@ -433,20 +434,4 @@ async function reloadWithAssistantMessage({
   }
 
   return await reload();
-}
-
-function toAiMessage(
-  message: Omit<Message, "createdAt"> & { createdAt?: Date | string },
-): Message {
-  return {
-    ...message,
-    createdAt: message.createdAt ? new Date(message.createdAt) : undefined,
-  };
-}
-
-export function fromAiMessage(message: Message) {
-  return {
-    ...message,
-    createdAt: message.createdAt?.toISOString(),
-  };
 }

@@ -22,13 +22,18 @@ import { stream } from "hono/streaming";
 import { sql } from "kysely";
 import moment from "moment";
 import { requireAuth } from "../auth";
-import { type DB, db, fromAiMessages, toAiMessage, toAiMessages } from "../db";
+import { type DB, db } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
 import {
   AvailableModels,
   WHITELIST_USERS,
   getModelById,
 } from "../lib/constants";
+import {
+  fromUIMessages,
+  toUIMessage,
+  toUIMessages,
+} from "../lib/message-utils";
 import { MakeServerTools } from "../lib/tools";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
@@ -89,8 +94,8 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     const { id, conversation, event } = await getTask(user, req.id);
     const messages = appendClientMessage({
-      messages: toAiMessages(conversation?.messages || []),
-      message: toAiMessage(message),
+      messages: toUIMessages(conversation?.messages || []),
+      message: toUIMessage(message),
     });
 
     await db
@@ -132,7 +137,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
             environment,
             status: getTaskStatus(messagesToSave, finishReason),
             conversation: {
-              messages: fromAiMessages(messagesToSave),
+              messages: fromUIMessages(messagesToSave),
             },
             updatedAt: sql`CURRENT_TIMESTAMP`,
           })

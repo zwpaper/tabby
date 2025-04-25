@@ -127,11 +127,7 @@ const tasks = new Hono()
         throw new HTTPException(404, { message: "Task not found" });
       }
 
-      // Transform the response to include the encoded ID
-      return c.json({
-        ...task,
-        id,
-      });
+      return c.json(task);
     },
   )
 

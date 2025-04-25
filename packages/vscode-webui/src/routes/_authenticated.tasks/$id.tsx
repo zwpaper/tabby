@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
+import { toUIMessages } from "@ragdoll/server";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import type { Message } from "ai";
 
 export const Route = createFileRoute("/_authenticated/tasks/$id")({
   loader: async ({ params }) => {
@@ -19,7 +19,7 @@ function RouteComponent() {
   const data = Route.useLoaderData();
   const router = useRouter();
   // @ts-expect-error
-  const messages = toAiMessages(data.conversation?.messages || []);
+  const messages = toUIMessages(data.conversation?.messages || []);
   return (
     <div className="flex flex-col p-4 space-y-4">
       <Button onClick={() => router.history.back()} className="self-start">
@@ -41,19 +41,4 @@ function RouteComponent() {
       </div>
     </div>
   );
-}
-
-function toAiMessage(
-  message: Omit<Message, "createdAt"> & { createdAt?: Date | string },
-): Message {
-  return {
-    ...message,
-    createdAt: message.createdAt ? new Date(message.createdAt) : undefined,
-  };
-}
-
-function toAiMessages(
-  messages: (Omit<Message, "createdAt"> & { createdAt?: Date | string })[],
-): Message[] {
-  return messages.map(toAiMessage);
 }
