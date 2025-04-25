@@ -33,7 +33,15 @@ function RouteComponent() {
               </div>
             </div>
             <div className="p-4 pt-0">
-              <p className="text-sm text-wrap">{message.content}</p>
+              {message.parts && message.parts.length > 0 && (
+                <div className="flex flex-row items-center space-x-2">
+                  {message.parts.map((part, index) => (
+                    <div key={index} className="text-sm text-wrap">
+                      {part.type === "text" && part.text}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}

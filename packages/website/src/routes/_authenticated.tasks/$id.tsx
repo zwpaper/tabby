@@ -49,7 +49,9 @@ function RouteComponent() {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="items-center text-center">
           <CardTitle className="flex justify-center items-center gap-1">
-            <Loader2 className="size-4 animate-spin text-primary" />
+            {!showManualButton && (
+              <Loader2 className="size-4 animate-spin text-primary" />
+            )}
             <span>Starting Task</span>
           </CardTitle>
         </CardHeader>
