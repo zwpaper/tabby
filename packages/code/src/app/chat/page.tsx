@@ -13,12 +13,11 @@ import { useRouter } from "@/lib/router";
 import { useLocalSettings } from "@/lib/storage";
 import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { Spinner } from "@inkjs/ui";
-import {
-  type Environment,
-  type ChatRequest as RagdollChatRequest,
-  fromUIMessage,
-  toUIMessages,
+import type {
+  Environment,
+  ChatRequest as RagdollChatRequest,
 } from "@ragdoll/server";
+import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { isAutoInjectTool } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Text } from "ink";

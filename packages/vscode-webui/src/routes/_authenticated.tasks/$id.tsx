@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
-import { toUIMessages } from "@ragdoll/server";
+import { toUIMessages } from "@ragdoll/server/message-utils";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/tasks/$id")({

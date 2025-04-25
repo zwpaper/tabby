@@ -6,7 +6,6 @@ export { deviceLinkClient } from "./lib/device-link/client";
 
 export type { UserEvent };
 export type { DBMessage } from "./db";
-export * from "./lib/message-utils";
 
 export class UserEventSource {
   private ws: WebSocket;
