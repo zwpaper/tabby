@@ -52,7 +52,9 @@ const tasks = new Hono()
         "updatedAt",
         "status",
         sql<UserEvent["type"] | null>`event -> 'type'`.as("eventType"),
-        sql<string>`conversation #> '{messages, 0, content}'`.as("title"),
+        sql<string>`conversation #> '{messages, 0, parts, 0, text}'`.as(
+          "title",
+        ),
       ])
       .orderBy("id", "desc") // Order by newest first
       .limit(limit)
@@ -115,19 +117,23 @@ const tasks = new Hono()
     async (c) => {
       const { id } = c.req.valid("param") || {};
       const user = c.get("user");
+      const taskId = Number.parseInt(id);
 
       const task = await db
         .selectFrom("task")
-        .where("taskId", "=", Number.parseInt(id))
+        .where("taskId", "=", taskId)
         .where("userId", "=", user.id)
-        .select(["id", "createdAt", "updatedAt", "status", "conversation"])
+        .select(["createdAt", "updatedAt", "status", "conversation"])
         .executeTakeFirst();
 
       if (!task) {
         throw new HTTPException(404, { message: "Task not found" });
       }
 
-      return c.json(task);
+      return c.json({
+        ...task,
+        id: taskId,
+      });
     },
   )
 

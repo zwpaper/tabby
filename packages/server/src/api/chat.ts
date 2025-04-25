@@ -101,7 +101,8 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     await db
       .updateTable("task")
       .set({ status: "streaming" })
-      .where("id", "=", id)
+      .where("taskId", "=", id)
+      .where("userId", "=", user.id)
       .execute();
 
     // Prepare the tools to be used in the streamText call
@@ -131,6 +132,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
             responseMessages: response.messages,
           }),
         );
+
         await db
           .updateTable("task")
           .set({
@@ -141,7 +143,8 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
             },
             updatedAt: sql`CURRENT_TIMESTAMP`,
           })
-          .where("id", "=", id as number)
+          .where("taskId", "=", id)
+          .where("userId", "=", user.id)
           .executeTakeFirstOrThrow()
           .catch(console.error);
 
