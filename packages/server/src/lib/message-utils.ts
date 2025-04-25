@@ -17,7 +17,7 @@ export function fromUIMessage(message: Message): DBMessage {
   const parts = (message.parts || []).filter((x) => x.type !== "source");
   return {
     ...message,
-    createdAt: message.createdAt?.toISOString(),
+    createdAt: message.createdAt?.toISOString() || new Date().toISOString(),
     parts,
   };
 }

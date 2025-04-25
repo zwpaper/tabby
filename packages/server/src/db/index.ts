@@ -11,7 +11,7 @@ export type { UserEvent };
 
 export type DBMessage = {
   id: string;
-  createdAt?: string;
+  createdAt: string;
   role: Message["role"];
   parts: Array<
     Exclude<NonNullable<Message["parts"]>[number], { type: "source" }>
