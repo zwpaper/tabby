@@ -26,7 +26,7 @@ const dirsToIgnore = [
 export async function traverseBFS(
   directory: string,
   recursive: boolean,
-  maxItems = 0,
+  maxItems: number,
 ): Promise<{ files: string[]; isTruncated: boolean }> {
   const files: string[] = [];
   const queue: string[] = [directory];

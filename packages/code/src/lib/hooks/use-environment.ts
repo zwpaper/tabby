@@ -8,7 +8,7 @@ export function useEnvironment(customRuleFiles: string[]) {
   const environment = useRef<Environment | null>(null);
 
   const reload = useCallback(async () => {
-    const listFilesOutput = await traverseBFS(".", true);
+    const listFilesOutput = await traverseBFS(".", true, 500);
     const cwd = process.cwd();
     const workspace =
       "files" in listFilesOutput
