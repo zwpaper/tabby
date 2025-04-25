@@ -10,7 +10,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LifeBuoy, Loader2, Puzzle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-export const Route = createFileRoute("/_authenticated/tasks/$id")({
+export const Route = createFileRoute("/_authenticated/tasks/$id/redirect")({
   loader: async ({ params }) => {
     const resp = await apiClient.api.tasks[":id"].$get({
       param: {

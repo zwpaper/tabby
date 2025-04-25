@@ -47,7 +47,7 @@ function RouteComponent() {
 
         const { id } = await res.json();
         navigate({
-          to: "/tasks/$id",
+          to: "/tasks/$id/redirect",
           params: { id: id.toString() },
         });
         setInputValue("");

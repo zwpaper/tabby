@@ -18,7 +18,6 @@ import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authent
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated._settings/route'
 import { Route as AuthenticatedTasksIndexImport } from './routes/_authenticated.tasks/index'
-import { Route as AuthenticatedTasksIdImport } from './routes/_authenticated.tasks/$id'
 import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authenticated.auth/vscode-link'
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
@@ -27,6 +26,7 @@ import { Route as AuthenticatedSettingsModelImport } from './routes/_authenticat
 import { Route as AuthenticatedSettingsIntegrationsImport } from './routes/_authenticated._settings/integrations'
 import { Route as AuthenticatedSettingsBillingImport } from './routes/_authenticated._settings/billing'
 import { Route as AuthenticatedSettingsAccountImport } from './routes/_authenticated._settings/account'
+import { Route as AuthenticatedTasksIdRedirectImport } from './routes/_authenticated.tasks/$id.redirect'
 
 // Create/Update Routes
 
@@ -70,12 +70,6 @@ const AuthenticatedSettingsRouteRoute = AuthenticatedSettingsRouteImport.update(
 const AuthenticatedTasksIndexRoute = AuthenticatedTasksIndexImport.update({
   id: '/tasks/',
   path: '/tasks/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-
-const AuthenticatedTasksIdRoute = AuthenticatedTasksIdImport.update({
-  id: '/tasks/$id',
-  path: '/tasks/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
@@ -134,6 +128,13 @@ const AuthenticatedSettingsAccountRoute =
     id: '/account',
     path: '/account',
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
+  } as any)
+
+const AuthenticatedTasksIdRedirectRoute =
+  AuthenticatedTasksIdRedirectImport.update({
+    id: '/tasks/$id/redirect',
+    path: '/tasks/$id/redirect',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -238,18 +239,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuthVscodeLinkImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/tasks/$id': {
-      id: '/_authenticated/tasks/$id'
-      path: '/tasks/$id'
-      fullPath: '/tasks/$id'
-      preLoaderRoute: typeof AuthenticatedTasksIdImport
-      parentRoute: typeof AuthenticatedImport
-    }
     '/_authenticated/tasks/': {
       id: '/_authenticated/tasks/'
       path: '/tasks'
       fullPath: '/tasks'
       preLoaderRoute: typeof AuthenticatedTasksIndexImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/tasks/$id/redirect': {
+      id: '/_authenticated/tasks/$id/redirect'
+      path: '/tasks/$id/redirect'
+      fullPath: '/tasks/$id/redirect'
+      preLoaderRoute: typeof AuthenticatedTasksIdRedirectImport
       parentRoute: typeof AuthenticatedImport
     }
   }
@@ -300,8 +301,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
   AuthenticatedAuthVscodeLinkRoute: typeof AuthenticatedAuthVscodeLinkRoute
-  AuthenticatedTasksIdRoute: typeof AuthenticatedTasksIdRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
+  AuthenticatedTasksIdRedirectRoute: typeof AuthenticatedTasksIdRedirectRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -310,8 +311,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
   AuthenticatedAuthVscodeLinkRoute: AuthenticatedAuthVscodeLinkRoute,
-  AuthenticatedTasksIdRoute: AuthenticatedTasksIdRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
+  AuthenticatedTasksIdRedirectRoute: AuthenticatedTasksIdRedirectRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -332,8 +333,8 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/tasks/$id': typeof AuthenticatedTasksIdRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
+  '/tasks/$id/redirect': typeof AuthenticatedTasksIdRedirectRoute
 }
 
 export interface FileRoutesByTo {
@@ -350,8 +351,8 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/tasks/$id': typeof AuthenticatedTasksIdRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
+  '/tasks/$id/redirect': typeof AuthenticatedTasksIdRedirectRoute
 }
 
 export interface FileRoutesById {
@@ -370,8 +371,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/_authenticated/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/_authenticated/tasks/$id': typeof AuthenticatedTasksIdRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
+  '/_authenticated/tasks/$id/redirect': typeof AuthenticatedTasksIdRedirectRoute
 }
 
 export interface FileRouteTypes {
@@ -390,8 +391,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
-    | '/tasks/$id'
     | '/tasks'
+    | '/tasks/$id/redirect'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -407,8 +408,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
-    | '/tasks/$id'
     | '/tasks'
+    | '/tasks/$id/redirect'
   id:
     | '__root__'
     | '/'
@@ -425,8 +426,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
     | '/_authenticated/auth/vscode-link'
-    | '/_authenticated/tasks/$id'
     | '/_authenticated/tasks/'
+    | '/_authenticated/tasks/$id/redirect'
   fileRoutesById: FileRoutesById
 }
 
@@ -468,8 +469,8 @@ export const routeTree = rootRoute
         "/_authenticated/stop-impersonating",
         "/_authenticated/auth/device-link",
         "/_authenticated/auth/vscode-link",
-        "/_authenticated/tasks/$id",
-        "/_authenticated/tasks/"
+        "/_authenticated/tasks/",
+        "/_authenticated/tasks/$id/redirect"
       ]
     },
     "/_authenticated/_settings": {
@@ -529,12 +530,12 @@ export const routeTree = rootRoute
       "filePath": "_authenticated.auth/vscode-link.tsx",
       "parent": "/_authenticated"
     },
-    "/_authenticated/tasks/$id": {
-      "filePath": "_authenticated.tasks/$id.tsx",
-      "parent": "/_authenticated"
-    },
     "/_authenticated/tasks/": {
       "filePath": "_authenticated.tasks/index.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/tasks/$id/redirect": {
+      "filePath": "_authenticated.tasks/$id.redirect.tsx",
       "parent": "/_authenticated"
     }
   }
