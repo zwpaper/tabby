@@ -51,29 +51,11 @@ export default function TasksPage() {
   const appConfig = useAppConfig();
   const { navigate, initialPromptSent } = useRouter();
 
-  const [isCreating, setIsCreating] = useState(false);
   const createTask = useCallback(async () => {
-    if (isCreating) return;
-    setIsCreating(true);
-    try {
-      const res = await apiClient.api.tasks.$post();
-      if (res.ok) {
-        const { id } = await res.json();
-        navigate({
-          route: "/chat",
-          params: {
-            id,
-          },
-        });
-      } else {
-        throw new Error(
-          `Failed to create task ${res.status}: ${res.statusText}`,
-        );
-      }
-    } finally {
-      setIsCreating(false);
-    }
-  }, [navigate, isCreating]);
+    navigate({
+      route: "/chat",
+    });
+  }, [navigate]);
 
   useEffect(() => {
     if (!initialPromptSent.current && appConfig.prompt) {
@@ -100,11 +82,6 @@ export default function TasksPage() {
           >
             <Box gap={1}>
               <Text bold>Tasks</Text>
-              {isCreating && (
-                <Box marginLeft={2}>
-                  <Spinner label="Creating task..." />
-                </Box>
-              )}
             </Box>
 
             <TaskList />

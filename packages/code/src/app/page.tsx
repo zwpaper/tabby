@@ -48,7 +48,9 @@ const Router = () => {
     }
 
     if (path.route === "/chat") {
-      return <ChatPage key={path.params.id} taskId={path.params.id} />;
+      return (
+        <ChatPage initialTaskId={path.params?.id} event={path.params?.event} />
+      );
     }
   }
 

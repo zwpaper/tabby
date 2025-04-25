@@ -1,3 +1,4 @@
+import type { UserEvent } from "@ragdoll/server";
 import type React from "react";
 import {
   type MutableRefObject,
@@ -11,8 +12,9 @@ import { useAppConfig } from "./app-config";
 type Path =
   | {
       route: "/chat";
-      params: {
-        id: number;
+      params?: {
+        id?: number;
+        event?: UserEvent;
       };
     }
   | {
@@ -33,10 +35,9 @@ type RouterContextType = {
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
 
-// const defaultRoute = "/chat";
-
 export function RouterProvider({ children }: { children: React.ReactNode }) {
   let defaultRoute: Path = "/tasks";
+  // let defaultRoute: Path = { route: "/chat" };
   const appConfig = useAppConfig();
   if (appConfig.listen) {
     defaultRoute = {

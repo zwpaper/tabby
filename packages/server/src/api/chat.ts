@@ -22,7 +22,7 @@ import { stream } from "hono/streaming";
 import { sql } from "kysely";
 import moment from "moment";
 import { requireAuth } from "../auth";
-import { type DB, db } from "../db";
+import { type DB, type UserEvent, db } from "../db";
 import { readCurrentMonthQuota } from "../lib/billing";
 import {
   AvailableModels,
@@ -38,6 +38,7 @@ import { MakeServerTools } from "../lib/tools";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
+import { createTask } from "./tasks";
 
 export type ContextVariables = {
   model?: LanguageModel;
@@ -92,7 +93,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       });
     }
 
-    const { id, conversation, event } = await getTask(user, req.id);
+    const { id, conversation, event } = await getTask(user, req.id, req.event);
     const messages = appendClientMessage({
       messages: toUIMessages(conversation?.messages || []),
       message: toUIMessage(message),
@@ -158,6 +159,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     const dataStream = createDataStream({
       execute: (stream) => {
+        if (req.id === undefined) {
+          stream.writeData({ id });
+        }
         result.mergeIntoDataStream(stream);
       },
       onError(error) {
@@ -337,17 +341,25 @@ async function trackUsage(
     .execute();
 }
 
-async function getTask(user: User, chatId: string) {
-  const id = Number.parseInt(chatId);
+async function getTask(
+  user: User,
+  chatId: string | undefined,
+  event: UserEvent | undefined,
+) {
+  let taskId = chatId ? Number.parseInt(chatId) : undefined;
+  if (taskId === undefined) {
+    taskId = await createTask(user.id, undefined, event);
+  }
+
   const data = await db
     .selectFrom("task")
     .select(["conversation", "event"])
-    .where("taskId", "=", id)
+    .where("taskId", "=", taskId)
     .where("userId", "=", user.id)
     .executeTakeFirstOrThrow();
   return {
     ...data,
-    id,
+    id: taskId,
   };
 }
 

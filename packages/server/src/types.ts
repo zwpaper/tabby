@@ -1,11 +1,13 @@
 import { z } from "zod";
-import type { DBMessage } from "./db";
+import type { DBMessage, UserEvent } from "./db";
 
 const ZodMessageType: z.ZodType<DBMessage> = z.any();
+const ZodEventType: z.ZodType<UserEvent> = z.any();
 
 export const ZodChatRequestType = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   model: z.string().optional(), // Added model field
+  event: ZodEventType.optional(),
   message: ZodMessageType,
   tools: z
     .array(z.string())

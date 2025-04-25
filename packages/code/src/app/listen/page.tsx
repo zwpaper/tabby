@@ -1,4 +1,3 @@
-import { apiClient } from "@/lib/api";
 import { useRouter } from "@/lib/router";
 import { useUserEvent } from "@/lib/user-event";
 import { Spinner } from "@inkjs/ui";
@@ -16,20 +15,10 @@ export default function ListenPage() {
 
   const createTask = useCallback(
     async (event: UserEvent) => {
-      const res = await apiClient.api.tasks.$post({
-        json: { event },
+      navigate({
+        route: "/chat",
+        params: { event },
       });
-
-      if (res.ok) {
-        const { id } = await res.json();
-        navigate({
-          route: "/chat",
-          params: { id },
-        });
-      } else {
-        // TODO: Handle error state more gracefully
-        throw new Error("Failed to create task");
-      }
     },
     [navigate],
   );

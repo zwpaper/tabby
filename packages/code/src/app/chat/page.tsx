@@ -16,32 +16,48 @@ import { Spinner } from "@inkjs/ui";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
+  UserEvent,
 } from "@ragdoll/server";
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { isAutoInjectTool } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Text } from "ink";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ErrorWithRetry from "./components/error";
 import ChatHeader from "./components/header";
 import UserTextInput from "./components/user-text-input";
 
-export default function ChatPage({ taskId }: { taskId: number }) {
+export default function ChatPage({
+  initialTaskId,
+  event,
+}: { initialTaskId?: number; event?: UserEvent }) {
+  const taskId = useRef(initialTaskId);
   const { back } = useRouter();
   const appConfig = useAppConfig();
 
-  const { data } = useQuery({
-    refetchInterval: 5000,
-    queryKey: ["task", taskId],
+  const { data, isLoading, refetch } = useQuery({
+    refetchInterval: appConfig.listen ? 5000 : false,
+    queryKey: ["task", taskId.current],
     queryFn: async () => {
+      if (!taskId.current) {
+        throw new Error("Task ID is undefined");
+      }
+
       const res = await apiClient.api.tasks[":id"].$get({
-        param: { id: taskId.toString() },
+        param: { id: taskId.current.toString() },
       });
       if (!res.ok) {
         throw new Error(`Failed to fetch task: ${res.statusText}`);
       }
       return res.json();
     },
+    enabled: taskId.current !== undefined,
   });
 
   const messageLength = data?.conversation?.messages.length || 0;
@@ -58,7 +74,7 @@ export default function ChatPage({ taskId }: { taskId: number }) {
   }, [data, data?.status, messageLength, back, appConfig.listen]);
 
   // Display loading spinner while task is loading
-  if (!data) {
+  if (initialTaskId !== undefined && isLoading) {
     return (
       <Box
         flexDirection="column"
@@ -72,18 +88,30 @@ export default function ChatPage({ taskId }: { taskId: number }) {
     );
   }
 
-  const initialMessages = toUIMessages(data.conversation?.messages || []);
+  const initialMessages = toUIMessages(data?.conversation?.messages || []);
+  const onTaskCreated = useCallback(() => {
+    refetch();
+  }, [refetch]);
   return (
-    <ChatUI key={taskId} taskId={taskId} initialMessages={initialMessages} />
+    <ChatUI
+      onTaskCreated={onTaskCreated}
+      taskId={taskId}
+      event={event}
+      initialMessages={initialMessages}
+    />
   );
 }
 
 function ChatUI({
+  event,
   taskId,
   initialMessages,
+  onTaskCreated,
 }: {
-  taskId: number;
+  event?: UserEvent;
+  taskId: MutableRefObject<number | undefined>;
   initialMessages?: Message[];
+  onTaskCreated: () => void;
 }) {
   const { data: authData, logout } = useAuth();
   if (!authData) {
@@ -107,17 +135,24 @@ function ChatUI({
     addToolResult,
     stop,
     error,
+    data,
     reload,
     append,
   } = useChat({
-    id: taskId.toString(),
     initialInput: appConfig.prompt,
     api: apiClient.api.chat.stream.$url().toString(),
     maxSteps: 100,
     initialMessages,
     // Pass a function that calls prepareRequestBody with the current environment
     experimental_prepareRequestBody: (request) =>
-      prepareRequestBody(model, appConfig.tools, request, environment.current),
+      prepareRequestBody(
+        taskId.current,
+        event,
+        model,
+        appConfig.tools,
+        request,
+        environment.current,
+      ),
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
@@ -135,6 +170,19 @@ function ChatUI({
       trackTokenUsage(usage);
     },
   });
+
+  useEffect(() => {
+    if (
+      taskId.current === undefined &&
+      typeof data?.[0] === "object" &&
+      data[0] &&
+      "id" in data[0] &&
+      typeof data[0].id === "number"
+    ) {
+      taskId.current = data[0].id;
+      onTaskCreated();
+    }
+  }, [taskId, data, onTaskCreated]);
 
   const onChange = (value: string) => {
     setInput(value);
@@ -358,9 +406,11 @@ function getRoleColor(role: string) {
 
 // This function now directly prepares the body when called by useChat
 function prepareRequestBody(
+  taskId: number | undefined,
+  event: UserEvent | undefined,
   model: string,
   tools: string[],
-  request: { id: string; messages: Message[] },
+  request: { messages: Message[] },
   environment: Environment | null,
 ): RagdollChatRequest | null {
   if (!environment) {
@@ -375,7 +425,8 @@ function prepareRequestBody(
   }
 
   return {
-    id: request.id,
+    id: taskId ? taskId.toString() : undefined,
+    event,
     message: fromUIMessage(request.messages[request.messages.length - 1]),
     tools,
     model,

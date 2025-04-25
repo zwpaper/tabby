@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import { generateId } from "ai";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
@@ -16,12 +17,9 @@ const TaskParamsSchema = z.object({
   id: z.string(),
 });
 
-const ZodEventType: z.ZodType<UserEvent> = z.any();
-const CreateTaskSchema = z
-  .object({
-    event: ZodEventType,
-  })
-  .optional();
+const CreateTaskSchema = z.object({
+  prompt: z.string().min(8),
+});
 
 // Create a tasks router with authentication
 const tasks = new Hono()
@@ -63,6 +61,7 @@ const tasks = new Hono()
 
     const data = items.map((task) => ({
       ...task,
+      taskId: undefined,
       title: task.title || "(empty)",
       id: task.taskId,
       status: task.status,
@@ -81,30 +80,10 @@ const tasks = new Hono()
 
   // Create a task
   .post("/", zValidator("json", CreateTaskSchema), requireAuth, async (c) => {
-    const { event } = (await c.req.valid("json")) || {};
+    const { prompt } = await c.req.valid("json");
     const user = c.get("user");
-    const { taskId } = await db.transaction().execute(async (trx) => {
-      const { nextTaskId } = await trx
-        .insertInto("taskSequence")
-        .values({ userId: user.id })
-        .onConflict((oc) =>
-          oc
-            .column("userId")
-            .doUpdateSet({ nextTaskId: sql`"taskSequence"."nextTaskId" + 1` }),
-        )
-        .returning("nextTaskId")
-        .executeTakeFirstOrThrow();
 
-      return await trx
-        .insertInto("task")
-        .values({
-          userId: user.id,
-          taskId: nextTaskId,
-          event,
-        })
-        .returning("taskId")
-        .executeTakeFirstOrThrow();
-    });
+    const taskId = await createTask(user.id, prompt);
 
     return c.json({ id: taskId });
   })
@@ -169,3 +148,50 @@ const tasks = new Hono()
   );
 
 export default tasks;
+
+export async function createTask(
+  userId: string,
+  prompt?: string,
+  event: UserEvent | null = null,
+) {
+  const { taskId } = await db.transaction().execute(async (trx) => {
+    const { nextTaskId } = await trx
+      .insertInto("taskSequence")
+      .values({ userId })
+      .onConflict((oc) =>
+        oc
+          .column("userId")
+          .doUpdateSet({ nextTaskId: sql`"taskSequence"."nextTaskId" + 1` }),
+      )
+      .returning("nextTaskId")
+      .executeTakeFirstOrThrow();
+
+    return await trx
+      .insertInto("task")
+      .values({
+        userId,
+        taskId: nextTaskId,
+        conversation: prompt
+          ? {
+              messages: [
+                {
+                  id: generateId(),
+                  createdAt: new Date().toISOString(),
+                  role: "user",
+                  parts: [
+                    {
+                      type: "text",
+                      text: prompt,
+                    },
+                  ],
+                },
+              ],
+            }
+          : undefined,
+        event,
+      })
+      .returning("taskId")
+      .executeTakeFirstOrThrow();
+  });
+  return taskId;
+}

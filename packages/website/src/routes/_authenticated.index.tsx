@@ -43,8 +43,8 @@ function Loading() {
         <div className="w-full">
           {/* Skeleton for Table Header */}
           <div className="flex border-b">
-            {columns.map((column) => (
-              <div key={column.id} className="p-4 flex-1">
+            {columns.map((_, i) => (
+              <div key={i} className="p-4 flex-1">
                 <Skeleton className="h-4 w-full" />
               </div>
             ))}
@@ -53,8 +53,8 @@ function Loading() {
           <div>
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex border-b">
-                {columns.map((column) => (
-                  <div key={column.id} className="p-4 flex-1">
+                {columns.map((_, i) => (
+                  <div key={i} className="p-4 flex-1">
                     <Skeleton className="h-4 w-full" />
                   </div>
                 ))}
