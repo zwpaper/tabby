@@ -12,9 +12,8 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as SignInImport } from './routes/sign-in'
-import { Route as AuthenticatedImport } from './routes/_authenticated'
-import { Route as AuthenticatedIndexImport } from './routes/_authenticated.index'
-import { Route as AuthenticatedTasksIdImport } from './routes/_authenticated.tasks/$id'
+import { Route as IndexImport } from './routes/index'
+import { Route as TasksIdImport } from './routes/tasks/$id'
 
 // Create/Update Routes
 
@@ -24,32 +23,27 @@ const SignInRoute = SignInImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthenticatedRoute = AuthenticatedImport.update({
-  id: '/_authenticated',
+const IndexRoute = IndexImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-
-const AuthenticatedTasksIdRoute = AuthenticatedTasksIdImport.update({
+const TasksIdRoute = TasksIdImport.update({
   id: '/tasks/$id',
   path: '/tasks/$id',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => rootRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthenticatedImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
     '/sign-in': {
@@ -59,82 +53,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInImport
       parentRoute: typeof rootRoute
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/tasks/$id': {
-      id: '/_authenticated/tasks/$id'
+    '/tasks/$id': {
+      id: '/tasks/$id'
       path: '/tasks/$id'
       fullPath: '/tasks/$id'
-      preLoaderRoute: typeof AuthenticatedTasksIdImport
-      parentRoute: typeof AuthenticatedImport
+      preLoaderRoute: typeof TasksIdImport
+      parentRoute: typeof rootRoute
     }
   }
 }
 
 // Create and export the route tree
 
-interface AuthenticatedRouteChildren {
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedTasksIdRoute: typeof AuthenticatedTasksIdRoute
-}
-
-const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedTasksIdRoute: AuthenticatedTasksIdRoute,
-}
-
-const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
-  AuthenticatedRouteChildren,
-)
-
 export interface FileRoutesByFullPath {
-  '': typeof AuthenticatedRouteWithChildren
+  '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
-  '/': typeof AuthenticatedIndexRoute
-  '/tasks/$id': typeof AuthenticatedTasksIdRoute
+  '/tasks/$id': typeof TasksIdRoute
 }
 
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
-  '/': typeof AuthenticatedIndexRoute
-  '/tasks/$id': typeof AuthenticatedTasksIdRoute
+  '/tasks/$id': typeof TasksIdRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/tasks/$id': typeof AuthenticatedTasksIdRoute
+  '/tasks/$id': typeof TasksIdRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '' | '/sign-in' | '/' | '/tasks/$id'
+  fullPaths: '/' | '/sign-in' | '/tasks/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/sign-in' | '/' | '/tasks/$id'
-  id:
-    | '__root__'
-    | '/_authenticated'
-    | '/sign-in'
-    | '/_authenticated/'
-    | '/_authenticated/tasks/$id'
+  to: '/' | '/sign-in' | '/tasks/$id'
+  id: '__root__' | '/' | '/sign-in' | '/tasks/$id'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  IndexRoute: typeof IndexRoute
   SignInRoute: typeof SignInRoute
+  TasksIdRoute: typeof TasksIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  IndexRoute: IndexRoute,
   SignInRoute: SignInRoute,
+  TasksIdRoute: TasksIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -147,27 +115,19 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/_authenticated",
-        "/sign-in"
+        "/",
+        "/sign-in",
+        "/tasks/$id"
       ]
     },
-    "/_authenticated": {
-      "filePath": "_authenticated.tsx",
-      "children": [
-        "/_authenticated/",
-        "/_authenticated/tasks/$id"
-      ]
+    "/": {
+      "filePath": "index.tsx"
     },
     "/sign-in": {
       "filePath": "sign-in.tsx"
     },
-    "/_authenticated/": {
-      "filePath": "_authenticated.index.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/tasks/$id": {
-      "filePath": "_authenticated.tasks/$id.tsx",
-      "parent": "/_authenticated"
+    "/tasks/$id": {
+      "filePath": "tasks/$id.tsx"
     }
   }
 }

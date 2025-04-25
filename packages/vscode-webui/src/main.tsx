@@ -3,7 +3,7 @@ import {
   createHashHistory,
   createRouter,
 } from "@tanstack/react-router";
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 
 // Import the generated route tree
@@ -48,6 +48,12 @@ declare module "@tanstack/react-router" {
 
 function InnerApp() {
   const { data: auth, isPending } = authClient.useSession();
+  useEffect(() => {
+    if (!isPending && !auth) {
+      router.navigate({ to: "/sign-in", replace: true });
+    }
+  }, [isPending, auth]);
+
   if (isPending) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
@@ -55,6 +61,7 @@ function InnerApp() {
       </div>
     );
   }
+
   return (
     <StrictMode>
       {/* @ts-expect-error */}
