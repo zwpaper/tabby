@@ -1,6 +1,7 @@
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/tasks/$id/redirect")({
 });
 
 function RouteComponent() {
+  const task = Route.useLoaderData();
   const { id } = Route.useLoaderData();
   const [showManualButton, setShowManualButton] = useState(false);
 
@@ -32,15 +34,13 @@ function RouteComponent() {
   }, [vscodeLink]);
 
   useEffect(() => {
-    const redirectTimeoutHandle = setTimeout(openVSCode, 1000);
-    const showButtonTimeoutHandle = setTimeout(
-      () => setShowManualButton(true),
-      1000,
-    );
+    const redirectTimeoutHandle = setTimeout(() => {
+      openVSCode();
+      setShowManualButton(true);
+    }, 1000);
 
     return () => {
       clearTimeout(redirectTimeoutHandle);
-      clearTimeout(showButtonTimeoutHandle);
     };
   }, [openVSCode]);
 
@@ -54,6 +54,9 @@ function RouteComponent() {
             )}
             <span>Starting Task</span>
           </CardTitle>
+          <CardDescription className="mt-1 text-xs italic">
+            {task.title}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
           <div className="flex items-start gap-3 rounded-md border p-3">
