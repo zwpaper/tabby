@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { UserButton } from "@/components/user-button";
 import { apiClient } from "@/lib/auth-client";
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
@@ -62,7 +63,23 @@ function RouteComponent() {
     }
   };
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 text-black p-4">
+    <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 text-black p-4 relative">
+      <div className="absolute top-10 right-10">
+        <UserButton
+          size="icon"
+          classNames={{
+            content: {
+              base: "mr-10",
+            },
+            base: "border-2",
+            trigger: {
+              avatar: {
+                base: "transition-transform duration-300 hover:scale-110 hover:rotate-3",
+              },
+            },
+          }}
+        />
+      </div>
       <h1 className="mt-[25vh] text-3xl md:text-5xl font-bold mb-12 tracking-tight flex gap-4">
         <Terminal className="size-12 animate-[spin_6s_linear_infinite] hidden md:block" />
         What can I help you ship?
