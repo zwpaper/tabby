@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { UserButton } from "@/components/user-button";
 import { apiClient } from "@/lib/auth-client";
 import { AuthCard } from "@daveyplate/better-auth-ui";
@@ -13,6 +13,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -46,8 +47,8 @@ function RouteComponent() {
   const { navigate } = useRouter();
 
   const submitIsDisabled = isSubmitting || inputValue.length < 8;
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: FormEvent) => {
+    e?.preventDefault();
     if (submitIsDisabled) return;
 
     setSubmitError(null);
@@ -70,7 +71,6 @@ function RouteComponent() {
           to: "/tasks/$id/redirect",
           params: { id: id.toString() },
         });
-        setInputValue("");
       } catch (error) {
         setSubmitError(
           error instanceof Error ? error.message : "An unknown error occurred",
@@ -80,6 +80,14 @@ function RouteComponent() {
       }
     }
   };
+
+  const submitOnEnter = (e: KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 text-black p-4 relative">
       <div className="absolute top-10 right-10">
@@ -106,9 +114,11 @@ function RouteComponent() {
         className="w-full max-w-3xl bg-white/80 backdrop-blur-sm rounded-lg p-6 border border-gray-300/50 shadow-lg"
         onSubmit={handleSubmit}
       >
-        <Input
+        <Textarea
+          disabled={isSubmitting}
+          onKeyDown={submitOnEnter}
           placeholder="Ask pochi to build..."
-          className="w-full bg-transparent border-none text-black placeholder-gray-400 focus-visible:ring-0 text-lg mb-4 shadow-none"
+          className="w-full bg-transparent border-none text-black placeholder-gray-400 focus-visible:ring-0 text-lg mb-4 shadow-none resize-none min-h-10"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
