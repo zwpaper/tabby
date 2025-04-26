@@ -28,15 +28,12 @@ export default defineConfig({
     proxy: {
       "/slack": {
         target: "http://localhost:4113",
-        changeOrigin: true,
       },
       "/api": {
         target: "http://localhost:4113",
-        changeOrigin: true,
       },
       "/api/events": {
         target: "ws://localhost:4113",
-        changeOrigin: true,
         ws: true,
       },
     },

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { UserButton } from "@/components/user-button";
 import { apiClient } from "@/lib/auth-client";
 import { AuthCard } from "@daveyplate/better-auth-ui";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, useSearch } from "@tanstack/react-router";
 import {
   ArrowUpIcon,
   Loader2Icon,
@@ -13,14 +13,32 @@ import {
   Terminal,
 } from "lucide-react";
 import { type FormEvent, useState } from "react";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  input: z.string().optional(),
+});
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
+  validateSearch: (search) => searchSchema.parse(search),
 });
 
 function RouteComponent() {
   const { auth } = Route.useRouteContext();
-  const [inputValue, setInputValue] = useState("");
+  const search = useSearch({ from: Route.fullPath });
+
+  const [inputValue, setInputValue] = useState(() => {
+    if (search.input) {
+      try {
+        return decodeURIComponent(search.input);
+      } catch (e) {
+        return search.input;
+      }
+    }
+    return "";
+  });
+
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -133,7 +151,14 @@ function RouteComponent() {
       )}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="sm:max-w-[425px]">
-          <AuthCard className="border-none shadow-none ring-none" />
+          <AuthCard
+            className="border-none shadow-none ring-none"
+            callbackURL={
+              inputValue
+                ? `/?input=${encodeURIComponent(inputValue)}`
+                : undefined
+            }
+          />
         </DialogContent>
       </Dialog>
     </div>
