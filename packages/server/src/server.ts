@@ -5,6 +5,7 @@ import { logger } from "hono/logger";
 import type { UserEvent } from ".";
 import billing from "./api/billing";
 import chat from "./api/chat";
+import enhance from "./api/enhance";
 import events, { websocket } from "./api/events";
 import integrations from "./api/integrations";
 import models from "./api/models";
@@ -78,7 +79,8 @@ const route = api
   .route("/usages", usages)
   .route("/billing", billing)
   .route("/tasks", tasks)
-  .route("/integrations", integrations);
+  .route("/integrations", integrations)
+  .route("/enhancePrompt", enhance);
 
 export type AppType = typeof route;
 

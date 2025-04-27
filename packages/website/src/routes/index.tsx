@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { UserButton } from "@/components/user-button";
 import { apiClient } from "@/lib/auth-client";
+import { useEnhancingPrompt } from "@/lib/useEnhancingPrompt";
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { createFileRoute, useRouter, useSearch } from "@tanstack/react-router";
 import {
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/")({
 function RouteComponent() {
   const { auth } = Route.useRouteContext();
   const search = useSearch({ from: Route.fullPath });
+  const { enhancePrompt, isPending: isEnhancing } = useEnhancingPrompt();
 
   const [inputValue, setInputValue] = useState(() => {
     if (search.input) {
@@ -46,7 +48,20 @@ function RouteComponent() {
 
   const { navigate } = useRouter();
 
-  const submitIsDisabled = isSubmitting || inputValue.length < 8;
+  const submitIsDisabled = isEnhancing || isSubmitting || inputValue.length < 8;
+
+  const handleEnhance = async () => {
+    if (!inputValue.trim()) return;
+    if (auth === null) {
+      setShowAuthDialog(true);
+      return;
+    }
+
+    const enhanced = await enhancePrompt(inputValue);
+
+    setInputValue(enhanced);
+  };
+
   const handleSubmit = async (e?: FormEvent) => {
     e?.preventDefault();
     if (submitIsDisabled) return;
@@ -128,8 +143,14 @@ function RouteComponent() {
               variant="ghost"
               size="icon"
               className="text-gray-500 hover:text-black hover:bg-gray-200/50 transition-colors rounded-full"
+              onClick={handleEnhance}
+              disabled={isEnhancing || !inputValue.trim()}
             >
-              <SparklesIcon className="h-5 w-5" />
+              {isEnhancing ? (
+                <Loader2Icon className="h-5 w-5 animate-spin" />
+              ) : (
+                <SparklesIcon className="h-5 w-5" />
+              )}
             </Button>
             <Button
               variant="ghost"

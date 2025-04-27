@@ -17,18 +17,16 @@ import {
 } from "ai";
 import type { User } from "better-auth";
 import { Hono } from "hono";
-import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
 import { sql } from "kysely";
 import moment from "moment";
 import { requireAuth } from "../auth";
 import { type DB, type UserEvent, db } from "../db";
-import { readCurrentMonthQuota } from "../lib/billing";
 import {
-  AvailableModels,
-  WHITELIST_USERS,
-  getModelById,
-} from "../lib/constants";
+  checkModel,
+  checkUserQuota,
+  checkWhitelist,
+} from "../lib/check-request";
 import {
   fromUIMessages,
   toUIMessage,
@@ -60,38 +58,10 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     const user = c.get("user");
 
-    const quotaCheck = async () => {
-      const quota = await readCurrentMonthQuota(user, c.req);
-      const modelCostType = AvailableModels.find(
-        (model) => model.id === requestedModelId,
-      )?.costType;
-      if (!modelCostType) {
-        throw new HTTPException(400, { message: "Invalid model" });
-      }
-      if (!user.email.endsWith("@tabbyml.com")) {
-        if (quota.limits[modelCostType] - quota.usages[modelCostType] <= 0) {
-          throw new HTTPException(400, {
-            message: `You have reached the quota limit for ${modelCostType}. Please upgrade your plan or try again later.`,
-          });
-        }
-      }
-    };
-    if (process.env.NODE_ENV !== "test") {
-      await quotaCheck();
-    }
-    if (
-      !user.email.endsWith("@tabbyml.com") &&
-      !WHITELIST_USERS.includes(user.email)
-    ) {
-      throw new HTTPException(400, { message: "Internal user only" });
-    }
+    await checkUserQuota(user, c, requestedModelId);
+    const selectedModel = checkModel(requestedModelId);
 
-    const selectedModel = getModelById(requestedModelId);
-    if (!selectedModel) {
-      throw new HTTPException(400, {
-        message: `Invalid model '${requestedModelId}'`,
-      });
-    }
+    checkWhitelist(user);
 
     const { id, conversation, event } = await getTask(user, req.id, req.event);
     const messages = appendClientMessage({
