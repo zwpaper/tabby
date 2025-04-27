@@ -23,8 +23,9 @@ function App() {
   return (
     <div className="p-2">
       <div className="mb-2">Welcome, {auth.user.name}!</div>
+      <Link to="/chat">New Task</Link>
 
-      <div>
+      <div className="mt-2">
         <div className="space-y-4">
           {isLoading ? (
             <>
@@ -42,8 +43,8 @@ function App() {
             tasks.map((task) => (
               <div key={task.id} className="bg-zinc-800 p-2 rounded-xs">
                 <Link
-                  to={"/tasks/$id"}
-                  params={{ id: task.id.toString() }}
+                  to={"/chat"}
+                  search={{ taskId: task.id }}
                   className="font-bold mb-1"
                 >
                   {formatTaskId(task.id)}

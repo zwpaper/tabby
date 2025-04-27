@@ -37,10 +37,8 @@ function createVSCodeHost(): VSCodeHostApi {
       exports: {
         openTask(taskId) {
           window.router.navigate({
-            to: "/tasks/$id",
-            params: {
-              id: taskId.toString(),
-            },
+            to: "/chat",
+            search: { taskId },
             replace: true,
           });
         },
