@@ -208,7 +208,7 @@ function GithubIntegrationSection({
   });
 
   const handleConnectGithub = () => {
-    window.location.href = "/github/oauth/login";
+    window.location.href = "https://github.com/apps/getpochi";
   };
 
   const handleDisconnectGithub = (integrationId: number) => {
