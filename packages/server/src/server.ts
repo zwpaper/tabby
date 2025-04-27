@@ -12,6 +12,7 @@ import models from "./api/models";
 import tasks from "./api/tasks";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
+import github from "./github";
 import slack from "./slack";
 
 export const app = new Hono().use(authRequest);
@@ -50,6 +51,9 @@ if (process.env.NODE_ENV !== "test") {
 app.get("/health", (c) => c.text("OK"));
 
 app.on(["GET", "POST"], "/slack/*", (c) => slack.handler(c.req.raw));
+app.on(["GET", "POST", "PATCH", "DELETE"], "/github/*", (c) =>
+  github(c.req.raw),
+);
 
 app.use(
   "/api/*",

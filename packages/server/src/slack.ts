@@ -1,9 +1,9 @@
 import type { Server } from "node:http";
-import { App } from "@slack/bolt";
-import type { Installation } from "@slack/oauth";
+import { App, type Installation } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
+import { sql } from "kysely";
 import { auth } from "./auth";
-import { db } from "./db";
+import { type DB, db } from "./db";
 import { connectToWeb } from "./lib/connect";
 import { publishUserEvent } from "./server";
 
@@ -51,20 +51,26 @@ class SlackService {
               installation.enterprise?.id || installation.team?.id;
             if (!vendorIntegrationId) return false;
 
-            const payload = JSON.stringify(installation);
+            const vendorData = JSON.stringify({
+              provider: "slack",
+              integrationId: vendorIntegrationId,
+              payload: installation as Installation<"v2", boolean>,
+            } satisfies DB["externalIntegration"]["vendorData"]["__select__"]);
             await db
               .insertInto("externalIntegration")
               .values({
-                provider: "slack",
                 userId: data.user.id,
-                vendorIntegrationId,
-                payload,
+                vendorData,
               })
               .onConflict((oc) =>
-                oc.columns(["provider", "vendorIntegrationId"]).doUpdateSet({
-                  userId: data.user.id,
-                  payload,
-                }),
+                oc
+                  .expression(
+                    sql`("vendorData"->>'provider'), ("vendorData"->>'integrationId')`,
+                  )
+                  .doUpdateSet({
+                    userId: data.user.id,
+                    vendorData,
+                  }),
               )
               .execute();
             return true;
@@ -91,14 +97,22 @@ class SlackService {
           if (!vendorIntegrationId)
             throw new Error("Integration query is not valid");
 
-          const { payload } = await db
+          const { vendorData } = await db
             .selectFrom("externalIntegration")
-            .select("payload")
-            .where("provider", "=", "slack")
-            .where("vendorIntegrationId", "=", vendorIntegrationId)
+            .select("vendorData")
+            .where(sql`"vendorData"->>'provider'`, "=", "slack")
+            .where(
+              sql`"vendorData"->>'integrationId'`,
+              "=",
+              vendorIntegrationId,
+            )
             .executeTakeFirstOrThrow();
 
-          return payload;
+          if (vendorData.provider === "slack") {
+            return vendorData.payload;
+          }
+
+          throw new Error("Integration is not valid");
         },
         deleteInstallation: async (installQuery) => {
           const vendorIntegrationId =
@@ -107,8 +121,12 @@ class SlackService {
             throw new Error("Integration query is not valid");
           await db
             .deleteFrom("externalIntegration")
-            .where("provider", "=", "slack")
-            .where("vendorIntegrationId", "=", vendorIntegrationId)
+            .where(sql`"vendorData"->>'provider'`, "=", "slack")
+            .where(
+              sql`"vendorData"->>'integrationId'`,
+              "=",
+              vendorIntegrationId,
+            )
             .execute();
         },
       },
@@ -125,8 +143,8 @@ class SlackService {
       const integration = await db
         .selectFrom("externalIntegration")
         .select("userId")
-        .where("provider", "=", "slack")
-        .where("vendorIntegrationId", "=", vendorIntegrationId)
+        .where(sql`"vendorData"->>'provider'`, "=", "slack")
+        .where(sql`"vendorData"->>'integrationId'`, "=", vendorIntegrationId)
         .executeTakeFirst();
       if (!integration) return;
 
@@ -151,18 +169,21 @@ class SlackService {
   }
 
   async getWebClient(userId: string, vendorIntegrationId: string) {
-    const { payload } = await db
+    const { vendorData } = await db
       .selectFrom("externalIntegration")
-      .select("payload")
-      .where("provider", "=", "slack")
-      .where("vendorIntegrationId", "=", vendorIntegrationId)
+      .select("vendorData")
+      .where(sql`"vendorData"->>'provider'`, "=", "slack")
+      .where(sql`"vendorData"->>'integrationId'`, "=", vendorIntegrationId)
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
-    const installation = payload as unknown as Installation;
-    if (installation.bot?.token) {
-      return new WebClient(installation.bot.token, this.app.webClientOptions);
+    if (vendorData.provider === "slack") {
+      if (vendorData.payload.bot?.token) {
+        return new WebClient(
+          vendorData.payload.bot.token,
+          this.app.webClientOptions,
+        );
+      }
     }
-
     throw new Error("No bot token found");
   }
 }

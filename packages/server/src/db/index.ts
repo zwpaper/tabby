@@ -1,10 +1,10 @@
 import type { Message } from "ai";
-import { Kysely, PostgresDialect } from "kysely";
+import { type JSONColumnType, Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 import { parse } from "pg-connection-string";
 import type { Environment } from "../types";
 import type { UserEvent } from "./event";
-import type { ExternalIntegrationSlack } from "./external-integration";
+import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";
 
 export type { UserEvent };
@@ -19,11 +19,9 @@ export type DBMessage = {
 };
 
 export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
-  externalIntegration: Omit<
-    DbImpl["externalIntegration"],
-    "provider" | "payload"
-  > &
-    ExternalIntegrationSlack;
+  externalIntegration: Omit<DbImpl["externalIntegration"], "vendorData"> & {
+    vendorData: JSONColumnType<ExternalIntegrationVendorData>;
+  };
 
   task: Omit<
     DbImpl["task"],

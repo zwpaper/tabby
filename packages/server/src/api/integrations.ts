@@ -10,21 +10,15 @@ const integrations = new Hono()
     try {
       const data = await db
         .selectFrom("externalIntegration")
-        .select([
-          "id",
-          "provider",
-          "vendorIntegrationId",
-          "createdAt",
-          "updatedAt",
-          "userId",
-          "payload",
-        ])
+        .select(["id", "createdAt", "updatedAt", "userId", "vendorData"])
         .where("userId", "=", user.id)
         .execute();
       const userIntegrations = data.map((x) => {
+        const vendorData = processVendorData(x.vendorData);
         return {
           ...x,
-          payload: processPayload(x.provider, x.payload),
+          vendorData: undefined,
+          ...vendorData,
         };
       });
       return c.json(userIntegrations);
@@ -75,20 +69,31 @@ const integrations = new Hono()
     }
   });
 
-function processPayload(
-  provider: DB["externalIntegration"]["provider"],
-  payload: DB["externalIntegration"]["payload"]["__select__"],
-): Partial<DB["externalIntegration"]["payload"]["__select__"]> {
-  if (provider === "slack") {
+function processVendorData(
+  x: DB["externalIntegration"]["vendorData"]["__select__"],
+) {
+  if (x.provider === "slack") {
     return {
-      appId: payload.appId,
-      team: payload.team,
-      enterprise: payload.enterprise,
-      enterpriseUrl: payload.enterpriseUrl,
+      provider: "slack" as const,
+      vendorIntegrationId: x.integrationId,
+      payload: {
+        appId: x.payload.appId,
+        team: x.payload.team,
+        enterprise: x.payload.enterprise,
+        enterpriseUrl: x.payload.enterpriseUrl,
+      },
     };
   }
 
-  return payload;
+  if (x.provider === "github") {
+    return {
+      provider: "github" as const,
+      vendorIntegrationId: x.integrationId,
+      payload: x.payload,
+    };
+  }
+
+  throw new Error("Unknown provider");
 }
 
 export default integrations;

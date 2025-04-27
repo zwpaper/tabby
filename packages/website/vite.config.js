@@ -29,6 +29,9 @@ export default defineConfig({
       "/slack": {
         target: "http://localhost:4113",
       },
+      "/github": {
+        target: "http://localhost:4113",
+      },
       "/api": {
         target: "http://localhost:4113",
       },

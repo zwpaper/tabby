@@ -5,8 +5,6 @@
 
 import type { ColumnType } from "kysely";
 
-export type ExternalIntegrationProvider = "slack";
-
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
@@ -60,11 +58,9 @@ export interface ChatCompletion {
 export interface ExternalIntegration {
   createdAt: Generated<Timestamp>;
   id: Generated<number>;
-  payload: Json;
-  provider: ExternalIntegrationProvider;
   updatedAt: Generated<Timestamp>;
   userId: string;
-  vendorIntegrationId: string;
+  vendorData: Json;
 }
 
 export interface MonthlyUsage {
