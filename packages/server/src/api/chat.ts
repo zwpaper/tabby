@@ -198,7 +198,7 @@ function preprocessMessages(
   model: LanguageModelV1,
   environment: Environment | undefined,
   event: DB["task"]["event"],
-) {
+): Message[] {
   // Auto reject User input tools.
   const messages = inputMessages.map((message) => {
     if (message.role === "assistant" && message.parts) {
@@ -225,7 +225,7 @@ function preprocessMessages(
 
   const isGemini = model.provider.includes("gemini");
 
-  if (environment === undefined) return;
+  if (environment === undefined) return messages;
   // There's only user message.
   if (messages.length === 1 && messages[0].role === "user") {
     // Prepend an empty assistant message.
@@ -241,7 +241,7 @@ function preprocessMessages(
     });
   }
   const messageToInject = getMessageToInject(messages);
-  if (!messageToInject) return;
+  if (!messageToInject) return messages;
 
   const parts = [...(messageToInject.parts || [])];
 

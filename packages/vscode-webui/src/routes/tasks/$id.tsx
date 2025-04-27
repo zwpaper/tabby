@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/auth-client";
-import { toUIMessages } from "@ragdoll/server/message-utils";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { type Message, useChat } from "@ai-sdk/react";
+import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
+import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/tasks/$id")({
   loader: async ({ params }) => {
@@ -17,35 +21,77 @@ export const Route = createFileRoute("/tasks/$id")({
 
 function RouteComponent() {
   const data = Route.useLoaderData();
-  const router = useRouter();
-  const messages = toUIMessages(data.conversation?.messages || []);
+  const { auth: authData } = Route.useRouteContext();
+  const initialMessages = toUIMessages(data.conversation?.messages || []);
+  const {
+    reload,
+    error,
+    messages,
+    handleSubmit,
+    input,
+    handleInputChange,
+    status,
+  } = useChat({
+    id: data.id.toString(),
+    initialMessages,
+    api: apiClient.api.chat.stream.$url().toString(),
+    experimental_prepareRequestBody: prepareRequestBody,
+    headers: {
+      Authorization: `Bearer ${authData.session.token}`,
+    },
+  });
+
+  useEffect(() => {
+    if (
+      messages.length === 1 &&
+      messages[0].role === "user" &&
+      status === "ready"
+    ) {
+      reload();
+    }
+  }, [messages, status, reload]);
+
   return (
-    <div className="flex flex-col p-4 space-y-4">
-      <Button onClick={() => router.history.back()} className="self-start">
-        Back
-      </Button>
-      <div className="space-y-4">
-        {messages.map((message, index) => (
-          <div key={index}>
-            <div className="flex flex-row items-center space-x-2 p-4">
-              <div className="text-sm font-semibold">
-                {message.role === "user" ? "You" : "Assistant"}
-              </div>
-            </div>
-            <div className="p-4 pt-0">
-              {message.parts && message.parts.length > 0 && (
-                <div className="flex flex-row items-center space-x-2">
-                  {message.parts.map((part, index) => (
-                    <div key={index} className="text-sm text-wrap">
-                      {part.type === "text" && part.text}
-                    </div>
-                  ))}
-                </div>
-              )}
+    <div className="flex flex-col h-screen p-4">
+      <div>{status}</div>
+      <div className="text-destructive">{error?.message}</div>
+      <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div className="p-2 rounded-lg">
+              <strong>{m.role === "user" ? "You" : "Assistant"}: </strong>
+              {m.parts.map((part, index) => {
+                if (part.type === "text") {
+                  return <span key={index}>{part.text}</span>;
+                }
+                return null;
+              })}
             </div>
           </div>
         ))}
       </div>
+      <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+        <Input
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Type your message..."
+          className="flex-1"
+        />
+        <Button type="submit">Send</Button>
+      </form>
     </div>
   );
+}
+
+function prepareRequestBody(request: {
+  id: string;
+  messages: Message[];
+}): RagdollChatRequest | null {
+  return {
+    id: request.id,
+    message: fromUIMessage(request.messages[request.messages.length - 1]),
+  };
 }
