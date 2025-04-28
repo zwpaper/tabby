@@ -1,6 +1,9 @@
+import type { Environment } from "@ragdoll/server";
+
 export interface VSCodeHostApi {
   getToken(): Promise<string | undefined>;
   setToken(token: string | undefined): Promise<void>;
+  readEnvironment(): Promise<Environment>;
 }
 
 export interface WebviewHostApi {

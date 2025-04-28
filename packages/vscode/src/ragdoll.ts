@@ -1,4 +1,5 @@
 import { Thread } from "@quilted/threads";
+import type { Environment } from "@ragdoll/server";
 import {
   type VSCodeHostApi,
   type WebviewHostApi,
@@ -14,6 +15,8 @@ import {
   type WebviewViewResolveContext,
 } from "vscode";
 import { Extension } from "./helpers/extension";
+import { collectCustomRules, getSystemInfo } from "./lib/env-utils";
+import { listFiles } from "./lib/file-utils";
 import type { TokenStorage } from "./lib/token-storage";
 import { getNonce } from "./utils/get-nonce";
 import { getUri } from "./utils/get-uri";
@@ -106,6 +109,29 @@ class Ragdoll implements WebviewViewProvider {
           },
           async setToken(token: string | undefined): Promise<void> {
             return tokenStorage.setToken(token);
+          },
+          async readEnvironment(
+            customRuleFiles: string[] = [],
+          ): Promise<Environment> {
+            const { files, isTruncated } = await listFiles(500);
+
+            const customRules = await collectCustomRules(customRuleFiles);
+
+            const systemInfo = await getSystemInfo();
+
+            const environment = {
+              currentTime: new Date().toString(),
+              workspace: {
+                files,
+                isTruncated,
+              },
+              info: {
+                ...systemInfo,
+                customRules,
+              },
+            };
+
+            return environment;
           },
         },
         imports: ["openTask"],

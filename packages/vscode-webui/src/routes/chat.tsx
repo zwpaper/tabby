@@ -3,9 +3,13 @@ import Pending from "@/components/pending";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
+import { useEnvironment } from "@/lib/use-environment";
 import { cn } from "@/lib/utils";
 import { type Message, useChat } from "@ai-sdk/react";
-import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
+import type {
+  Environment,
+  ChatRequest as RagdollChatRequest,
+} from "@ragdoll/server";
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
@@ -48,6 +52,7 @@ function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const taskId = useRef<number | undefined>(loaderData?.id);
   const { auth: authData } = Route.useRouteContext();
+  const { environment } = useEnvironment();
   const initialMessages = toUIMessages(
     loaderData?.conversation?.messages || [],
   );
@@ -67,7 +72,8 @@ function RouteComponent() {
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
-    experimental_prepareRequestBody: (req) => prepareRequestBody(taskId, req),
+    experimental_prepareRequestBody: (req) =>
+      prepareRequestBody(taskId, req, environment),
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
@@ -272,9 +278,11 @@ function prepareRequestBody(
   request: {
     messages: Message[];
   },
-): RagdollChatRequest | null {
+  environment: MutableRefObject<Environment | null>,
+): RagdollChatRequest {
   return {
     id: taskId.current?.toString(),
     message: fromUIMessage(request.messages[request.messages.length - 1]),
+    environment: environment.current || undefined,
   };
 }

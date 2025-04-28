@@ -5,13 +5,13 @@ import * as vscode from "vscode";
 import { Extension } from "./helpers/extension";
 import RagdollUriHandler from "./helpers/uri-handler";
 import { createAuthClient } from "./lib/auth-client";
+import { init as InitListFile } from "./lib/file-utils";
 import { TokenStorage } from "./lib/token-storage";
 import Ragdoll from "./ragdoll";
 import createStatusBarItem from "./status-bar";
-
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   console.log("activating Ragdoll...");
   Extension.getInstance(context);
 
@@ -28,6 +28,9 @@ export function activate(context: vscode.ExtensionContext) {
     loginEvent: ragdollUriHandler.loginEvent,
     logoutEvent,
   };
+
+  // init list file watcher
+  await InitListFile(context);
 
   const statusBarItem = createStatusBarItem(authClient, authEvents);
   context.subscriptions.push(...statusBarItem);
