@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.vscode-dark *));
+
+html {
+  font-size: var(--vscode-font-size);
+}
 
 body {
   @apply m-0;
@@ -54,7 +59,8 @@ code {
   --sidebar-ring: oklch(0.871 0.006 286.286);
 }
 
-.dark {
+.dark,
+.vscode-dark {
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.141 0.005 285.823);
@@ -139,4 +145,33 @@ code {
   [role="button"]:not([disabled]) {
     cursor: pointer;
   }
+}
+
+/* css variable overwrite */
+.vscode-dark,
+.vscode-light {
+  --background: var(--vscode-workbench-background);
+  --foreground: var(--vscode-foreground);
+
+  --muted-foreground: var(--vscode-descriptionForeground);
+
+  --card: var(--vscode-toolbar-hoverBackground);
+  --card-foreground: var(--vscode-editor-foreground);
+
+  --border: var(--vscode-widget-border);
+  --input: var(--vscode-input-background);
+  --input-border: var(--vscode-input-border);
+
+  --primary: var(--vscode-minimap-infoHighlight);
+  --primary-foreground: var(--vscode-button-foreground);
+
+  --popover: var(--vscode-editorSuggestWidget-background);
+  --popover-foreground: var(--vscode-editorSuggestWidget-foreground);
+
+  --accent: var(--vscode-editorSuggestWidget-selectedBackground);
+  --accent-foreground: var(--vscode-editorSuggestWidget-selectedForeground);
+
+  --ring: var(--vscode-focusBorder);
+
+  --sidebar-background: var(--vscode-sideBar-background);
 }
