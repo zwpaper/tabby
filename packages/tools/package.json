@@ -1,10 +1,6 @@
 {
   "name": "@ragdoll/tools",
   "main": "src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./node": "./src/node.ts"
-  },
   "dependencies": {
     "ai": "^4.2.0",
     "file-type": "^20.4.1",

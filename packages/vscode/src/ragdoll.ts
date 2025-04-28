@@ -1,6 +1,5 @@
 import { Thread, ThreadAbortSignal } from "@quilted/threads";
 import type { Environment } from "@ragdoll/server";
-import { executeClientTool } from "@ragdoll/tools/node";
 import {
   type VSCodeHostApi,
   type WebviewHostApi,
@@ -142,11 +141,10 @@ class Ragdoll implements WebviewViewProvider {
             const abortSignal = options.abortSignal
               ? new ThreadAbortSignal(options.abortSignal)
               : undefined;
-            return executeClientTool(toolName, args, {
-              toolCallId: options.toolCallId,
-              abortSignal,
-              messages: [],
-            });
+            abortSignal;
+            return {
+              result: `${toolName} is not implemented yet`,
+            };
           },
         },
         imports: ["openTask"],

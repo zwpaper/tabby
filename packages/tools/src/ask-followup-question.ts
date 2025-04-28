@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { type ToolFunctionType, defineClientTool } from "./types";
+import { defineClientTool } from "./types";
 
-export const { tool: askFollowupQuestion } = defineClientTool({
+export const askFollowupQuestion = defineClientTool({
   description:
     "Ask the user a question to gather additional information needed to complete the task. This tool should be used when you encounter ambiguities, need clarification, or require more details to proceed effectively.",
   inputSchema: z.object({
@@ -17,11 +17,4 @@ export const { tool: askFollowupQuestion } = defineClientTool({
       .boolean()
       .describe("Indicates whether the question was successfully asked."),
   }),
-  execute: async () => {
-    throw new Error("Not implemented");
-  },
 });
-
-export type AskFollowupQuestionFunctionType = ToolFunctionType<
-  typeof askFollowupQuestion
->;

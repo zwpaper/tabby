@@ -8,23 +8,15 @@ export function defineClientTool<
 >({
   description,
   inputSchema,
-  execute,
 }: {
   description: string;
   inputSchema: PARAMETERS;
   outputSchema: RESULT;
-  execute: ToolFunctionType<Tool<PARAMETERS, RESULT>>;
-}): {
-  tool: Tool<PARAMETERS, RESULT>;
-  execute: ToolFunctionType<Tool<PARAMETERS, RESULT>>;
-} {
-  return {
-    tool: tool({
-      description,
-      parameters: inputSchema,
-    }),
-    execute,
-  };
+}): Tool<PARAMETERS, RESULT> {
+  return tool({
+    description,
+    parameters: inputSchema,
+  });
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: template matching.

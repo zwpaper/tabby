@@ -1,74 +1,7 @@
-import { readdir } from "node:fs/promises";
-import { join } from "node:path";
 import { z } from "zod";
 import { defineClientTool } from "./types";
 
-// Constants previously in packages/code/src/lib/tools/constants.ts
-const dirsToIgnore = [
-  "node_modules",
-  "__pycache__",
-  "env",
-  "venv",
-  "target/dependency",
-  "build/dependencies",
-  "dist",
-  "out",
-  "bundle",
-  "vendor",
-  "tmp",
-  "temp",
-  "deps",
-  "pkg",
-  "Pods",
-  "coverage",
-  ".git",
-  ".*",
-  ".next",
-];
-
-// Helper function previously in packages/code/src/lib/tools/file-utils.ts
-async function traverseBFS(
-  directory: string,
-  recursive: boolean,
-  maxItems = 0,
-): Promise<{ files: string[]; isTruncated: boolean }> {
-  const files: string[] = [];
-  const queue: string[] = [directory];
-  let isTruncated = false;
-
-  while (queue.length > 0) {
-    // biome-ignore lint/style/noNonNullAssertion: checked in while loop
-    const currentDir = queue.shift()!;
-    try {
-      const entries = await readdir(currentDir, { withFileTypes: true });
-
-      for (const entry of entries) {
-        const fullPath = join(currentDir, entry.name);
-
-        if (dirsToIgnore.some((dir) => entry.name === dir)) {
-          continue;
-        }
-
-        if (entry.isDirectory() && recursive) {
-          queue.push(fullPath);
-        }
-        files.push(fullPath);
-
-        if (maxItems > 0 && files.length >= maxItems) {
-          isTruncated = true;
-          return { files, isTruncated };
-        }
-      }
-    } catch (error) {
-      // Ignore errors like permission denied
-      console.warn(`Error reading directory ${currentDir}:`, error);
-    }
-  }
-
-  return { files, isTruncated };
-}
-
-export const { tool: listFiles, execute: executeListFiles } = defineClientTool({
+export const listFiles = defineClientTool({
   description:
     "Request to list files and directories within the specified directory. If recursive is true, it will list all files and directories recursively. If recursive is false or not provided, it will only list the top-level contents. Do not use this tool to confirm the existence of files you may have created, as the user will let you know if the files were created successfully or not.",
   inputSchema: z.object({
@@ -86,8 +19,4 @@ export const { tool: listFiles, execute: executeListFiles } = defineClientTool({
     files: z.array(z.string()).describe("List of file and directory names"),
     isTruncated: z.boolean().describe("Whether the list of files is truncated"),
   }),
-  execute: async ({ path, recursive }) => {
-    // Implementation moved from packages/code/src/lib/tools/list-files.ts
-    return await traverseBFS(path, recursive || false, 300);
-  },
 });
