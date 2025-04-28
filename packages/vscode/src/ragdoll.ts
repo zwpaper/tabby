@@ -1,5 +1,4 @@
-import { Thread, ThreadAbortSignal } from "@quilted/threads";
-import type { Environment } from "@ragdoll/server";
+import { Thread } from "@quilted/threads";
 import {
   type VSCodeHostApi,
   type WebviewHostApi,
@@ -15,9 +14,8 @@ import {
   type WebviewViewResolveContext,
 } from "vscode";
 import { Extension } from "./helpers/extension";
-import { collectCustomRules, getSystemInfo } from "./lib/env-utils";
-import { listFiles } from "./lib/file-utils";
 import type { TokenStorage } from "./lib/token-storage";
+import VSCodeHostImpl from "./lib/vscode-host-impl";
 import { getNonce } from "./utils/get-nonce";
 import { getUri } from "./utils/get-uri";
 
@@ -103,50 +101,7 @@ class Ragdoll implements WebviewViewProvider {
         },
       },
       {
-        exports: {
-          async getToken(): Promise<string | undefined> {
-            return tokenStorage.getToken();
-          },
-
-          async setToken(token: string | undefined): Promise<void> {
-            return tokenStorage.setToken(token);
-          },
-
-          async readEnvironment(
-            customRuleFiles: string[] = [],
-          ): Promise<Environment> {
-            const { files, isTruncated } = await listFiles(500);
-
-            const customRules = await collectCustomRules(customRuleFiles);
-
-            const systemInfo = await getSystemInfo();
-
-            const environment = {
-              currentTime: new Date().toString(),
-              workspace: {
-                files,
-                isTruncated,
-              },
-              info: {
-                ...systemInfo,
-                customRules,
-              },
-            };
-
-            return environment;
-          },
-
-          async executeToolCall(toolName, args, options) {
-            console.log("executeToolCall", toolName, args, options);
-            const abortSignal = options.abortSignal
-              ? new ThreadAbortSignal(options.abortSignal)
-              : undefined;
-            abortSignal;
-            return {
-              result: `${toolName} is not implemented yet`,
-            };
-          },
-        },
+        exports: new VSCodeHostImpl(tokenStorage),
         imports: ["openTask"],
       },
     );
