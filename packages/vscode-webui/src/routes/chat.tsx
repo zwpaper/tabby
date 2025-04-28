@@ -1,5 +1,6 @@
 import { MessageMarkdown } from "@/components/message-markdown";
 import Pending from "@/components/pending";
+import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
@@ -13,6 +14,7 @@ import type {
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import type { TextPart } from "ai";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -69,6 +71,7 @@ function RouteComponent() {
     handleInputChange,
     status,
     stop,
+    addToolResult,
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
@@ -206,19 +209,16 @@ function RouteComponent() {
                     <Loader2 className="size-4 animate-spin ml-2" />
                   )}
               </div>
-              {m.parts.map((part, index) => {
-                if (part.type === "text") {
-                  return (
-                    <MessageMarkdown
-                      key={index}
-                      className={m.role === "user" ? "max-w-[80vw]" : undefined}
-                    >
-                      {part.text}
-                    </MessageMarkdown>
-                  );
-                }
-                return null;
-              })}
+              <div className="mt-2 ml-2 flex flex-col gap-1">
+                {m.parts.map((part, index) => (
+                  <Part
+                    key={index}
+                    message={m}
+                    part={part}
+                    addToolResult={addToolResult}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         ))}
@@ -273,6 +273,51 @@ function RouteComponent() {
   );
 }
 
+function Part({
+  message,
+  part,
+  addToolResult,
+}: {
+  message: Message;
+  part: NonNullable<Message["parts"]>[number];
+  addToolResult: ({
+    toolCallId,
+    result,
+  }: {
+    toolCallId: string;
+    result: unknown;
+  }) => void;
+}) {
+  if (part.type === "text") {
+    return <TextPartUI message={message} part={part} />;
+  }
+
+  if (part.type === "step-start") {
+    return null;
+  }
+
+  if (part.type === "tool-invocation") {
+    return (
+      <ToolInvocationPart
+        tool={part.toolInvocation}
+        addToolResult={addToolResult}
+      />
+    );
+  }
+
+  return <div>{JSON.stringify(part)}</div>;
+}
+
+function TextPartUI({ message, part }: { message: Message; part: TextPart }) {
+  return (
+    <MessageMarkdown
+      className={message.role === "user" ? "max-w-[80vw]" : undefined}
+    >
+      {part.text}
+    </MessageMarkdown>
+  );
+}
+
 function prepareRequestBody(
   taskId: MutableRefObject<number | undefined>,
   request: {
@@ -282,6 +327,7 @@ function prepareRequestBody(
 ): RagdollChatRequest {
   return {
     id: taskId.current?.toString(),
+    model: "google/gemini-2.5-pro",
     message: fromUIMessage(request.messages[request.messages.length - 1]),
     environment: environment.current || undefined,
   };

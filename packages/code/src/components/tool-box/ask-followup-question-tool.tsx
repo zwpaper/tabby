@@ -1,9 +1,9 @@
-import type { ClientTools } from "@ragdoll/tools";
+import type { ClientToolsType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import type { ToolProps } from "./types";
 
 export const AskFollowupQuestionTool: React.FC<
-  ToolProps<(typeof ClientTools)["askFollowupQuestion"]>
+  ToolProps<ClientToolsType["askFollowupQuestion"]>
 > = ({ toolCall }) => {
   const followUp = (toolCall.args?.followUp || []).join(", ");
   const followUpPrompt = followUp ? `\nPossible follow-ups: ${followUp}` : "";

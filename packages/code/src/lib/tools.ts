@@ -1,4 +1,4 @@
-import { executeClientTool } from "@ragdoll/tools";
+import { executeClientTool } from "@ragdoll/tools/node";
 import type { ToolCall, ToolInvocation } from "ai";
 
 export async function invokeTool(args: {

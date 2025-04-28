@@ -1,5 +1,6 @@
-import { Thread } from "@quilted/threads";
+import { Thread, ThreadAbortSignal } from "@quilted/threads";
 import type { Environment } from "@ragdoll/server";
+import { executeClientTool } from "@ragdoll/tools/node";
 import {
   type VSCodeHostApi,
   type WebviewHostApi,
@@ -107,9 +108,11 @@ class Ragdoll implements WebviewViewProvider {
           async getToken(): Promise<string | undefined> {
             return tokenStorage.getToken();
           },
+
           async setToken(token: string | undefined): Promise<void> {
             return tokenStorage.setToken(token);
           },
+
           async readEnvironment(
             customRuleFiles: string[] = [],
           ): Promise<Environment> {
@@ -132,6 +135,18 @@ class Ragdoll implements WebviewViewProvider {
             };
 
             return environment;
+          },
+
+          async executeToolCall(toolName, args, options) {
+            console.log("executeToolCall", toolName, args, options);
+            const abortSignal = options.abortSignal
+              ? new ThreadAbortSignal(options.abortSignal)
+              : undefined;
+            return executeClientTool(toolName, args, {
+              toolCallId: options.toolCallId,
+              abortSignal,
+              messages: [],
+            });
           },
         },
         imports: ["openTask"],

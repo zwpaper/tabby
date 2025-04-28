@@ -33,7 +33,7 @@ function createVSCodeHost(): VSCodeHostApi {
       },
     },
     {
-      imports: ["getToken", "setToken", "readEnvironment"],
+      imports: ["getToken", "setToken", "readEnvironment", "executeToolCall"],
       exports: {
         openTask(taskId) {
           window.router.navigate({

@@ -1,10 +1,10 @@
-import type { ClientTools } from "@ragdoll/tools";
+import type { ClientToolsType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import Markdown from "../markdown";
 import type { ToolProps } from "./types";
 
 export const TaskCompleteTool: React.FC<
-  ToolProps<(typeof ClientTools)["attemptCompletion"]>
+  ToolProps<ClientToolsType["attemptCompletion"]>
 > = ({ toolCall }) => {
   const { result = "", command = undefined } = toolCall.args || {};
   return (

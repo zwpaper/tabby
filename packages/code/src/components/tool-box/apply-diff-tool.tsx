@@ -1,10 +1,10 @@
-import type { ClientTools } from "@ragdoll/tools";
+import type { ClientToolsType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import TruncatedText from "../truncated-text";
 import type { ToolProps } from "./types";
 
 export const ApplyDiffTool: React.FC<
-  ToolProps<(typeof ClientTools)["applyDiff"]>
+  ToolProps<ClientToolsType["applyDiff"]>
 > = ({ toolCall }) => {
   const {
     path = "",

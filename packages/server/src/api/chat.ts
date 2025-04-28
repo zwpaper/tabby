@@ -1,5 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
-import { ClientTools, isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
+import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
+import { ClientTools } from "@ragdoll/tools/node";
 import {
   APICallError,
   type FinishReason,

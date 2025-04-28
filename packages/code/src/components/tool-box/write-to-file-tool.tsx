@@ -1,10 +1,10 @@
-import type { ClientTools } from "@ragdoll/tools";
+import type { ClientToolsType } from "@ragdoll/tools";
 import { Box, Text } from "ink";
 import TruncatedText from "../truncated-text";
 import type { ToolProps } from "./types";
 
 export const WriteToFileTool: React.FC<
-  ToolProps<(typeof ClientTools)["writeToFile"]>
+  ToolProps<ClientToolsType["writeToFile"]>
 > = ({ toolCall }) => {
   const { path = "", content = "" } = toolCall.args || {};
 
