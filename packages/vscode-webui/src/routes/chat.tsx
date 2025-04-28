@@ -4,7 +4,7 @@ import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
-import { useEnvironment } from "@/lib/use-environment";
+import { useEnvironment } from "@/lib/hooks/use-environment";
 import { cn } from "@/lib/utils";
 import { type Message, useChat } from "@ai-sdk/react";
 import type {

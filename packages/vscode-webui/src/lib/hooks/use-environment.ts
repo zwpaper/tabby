@@ -1,6 +1,6 @@
+import { vscodeHost } from "@/lib/vscode";
 import type { Environment } from "@ragdoll/server";
 import { useCallback, useEffect, useRef } from "react";
-import { vscodeHost } from "./vscode";
 
 /**
  * A hook that provides environment information for the VSCode webview UI.
