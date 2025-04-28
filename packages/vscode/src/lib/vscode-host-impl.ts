@@ -6,10 +6,25 @@ import {
   type ThreadAbortSignalSerialization,
 } from "@quilted/threads";
 import type { Environment } from "@ragdoll/server";
+import type { ToolFunctionType } from "@ragdoll/tools";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import { readFile } from "./tools/read-file";
+
+const ToolMap: Record<
+  string,
+  // biome-ignore lint/suspicious/noExplicitAny: external call without type information
+  ToolFunctionType<any>
+> = {
+  readFile,
+};
 
 export default class VSCodeHostImpl implements VSCodeHostApi {
-  constructor(private readonly tokenStorage: TokenStorage) {}
+  constructor(private readonly tokenStorage: TokenStorage) {
+    this.getToken = this.getToken.bind(this);
+    this.setToken = this.setToken.bind(this);
+    this.readEnvironment = this.readEnvironment.bind(this);
+    this.executeToolCall = this.executeToolCall.bind(this);
+  }
 
   async getToken(): Promise<string | undefined> {
     return this.tokenStorage.getToken();
@@ -48,13 +63,21 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       abortSignal?: ThreadAbortSignalSerialization;
     },
   ) {
-    console.log("executeToolCall", toolName, args, options);
+    const tool = ToolMap[toolName];
+    if (!tool) {
+      return {
+        error: `Tool ${toolName} is not implemented`,
+      };
+    }
+
     const abortSignal = options.abortSignal
       ? new ThreadAbortSignal(options.abortSignal)
       : undefined;
-    abortSignal;
-    return {
-      result: `${toolName} is not implemented yet`,
-    };
+
+    return tool(args, {
+      abortSignal,
+      messages: [],
+      toolCallId: options.toolCallId,
+    });
   }
 }

@@ -81,7 +81,7 @@ class Ragdoll implements WebviewViewProvider {
   }
 
   private createWebviewThread(webview: Webview) {
-    const tokenStorage = this.tokenStorage;
+    const vscodeHost = new VSCodeHostImpl(this.tokenStorage);
     return new Thread<WebviewHostApi, VSCodeHostApi>(
       {
         send(message) {
@@ -101,7 +101,7 @@ class Ragdoll implements WebviewViewProvider {
         },
       },
       {
-        exports: new VSCodeHostImpl(tokenStorage),
+        exports: vscodeHost,
         imports: ["openTask"],
       },
     );
