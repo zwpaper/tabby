@@ -1,12 +1,10 @@
 import { cn } from "@/lib/utils";
-import { vscodeHost } from "@/lib/vscode";
-import { File } from "lucide-react";
 import React from "react";
 import type { ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { formatPathForDisplay } from "../prompt-form/utils";
+import { FileBadge } from "../tool-invocation/file-badge";
 
 interface MessageMarkdownProps {
   children: string;
@@ -14,20 +12,7 @@ interface MessageMarkdownProps {
 }
 
 function InlineFileTag({ path }: { path: string }): JSX.Element {
-  const handleClick = () => {
-    vscodeHost.openFile(path);
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="text-zinc-400 text-xs border border-zinc-600 rounded-sm px-1 inline-flex items-center gap-1"
-    >
-      <File className="size-3" />
-      {formatPathForDisplay(path).basename}
-    </button>
-  );
+  return <FileBadge path={path} />;
 }
 
 /**
