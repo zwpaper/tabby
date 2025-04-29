@@ -2,7 +2,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, type ReactNode, createFileRoute } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -63,7 +63,7 @@ function App() {
                     {formatTaskId(task.id)}
                   </span>
                   <div className="text-foreground">
-                    <p>{task.title}</p>
+                    <p>{processTitle(task.title)}</p>
                   </div>
                 </div>
               </Link>
@@ -77,4 +77,32 @@ function App() {
 
 function formatTaskId(id: number) {
   return `TASK-${Number(id).toString().padStart(3, "0")}`;
+}
+
+function processTitle(title: string): ReactNode | string {
+  // Regex to match [file:path] pattern
+  const FILE_REGEX = /\[file:([^\]]+)\]/g;
+  const elements: ReactNode[] = [];
+  let lastIndex = 0;
+  let matchResult: RegExpExecArray | null;
+
+  // Using a while loop to process all matches
+  while (true) {
+    matchResult = FILE_REGEX.exec(title);
+    if (matchResult === null) break;
+
+    if (matchResult.index > lastIndex) {
+      elements.push(title.slice(lastIndex, matchResult.index));
+    }
+
+    const filepath = matchResult[1];
+    elements.push(<span key={matchResult.index}>@{filepath}</span>);
+    lastIndex = matchResult.index + matchResult[0].length;
+  }
+
+  if (lastIndex < title.length) {
+    elements.push(title.slice(lastIndex));
+  }
+
+  return elements.length > 1 ? <>{elements}</> : title;
 }

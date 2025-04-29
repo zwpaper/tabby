@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as vscode from "vscode";
+import type { TabInputText } from "vscode";
 
 const gitIgnorePatternsMap = new Map<string, Set<string>>();
 
@@ -49,7 +50,6 @@ async function updateGitIgnorePatterns(
 ): Promise<void> {
   const patterns = new Set<string>();
 
-  // Read parent gitignore files
   let current = workspaceFolder.uri;
   let parent = vscode.Uri.file(path.dirname(current.fsPath));
   while (parent.fsPath !== current.fsPath) {
@@ -69,9 +69,7 @@ async function updateGitIgnorePatterns(
           }
         }
       }
-    } catch (error) {
-      // ignore
-    }
+    } catch (error) {}
 
     current = parent;
     parent = vscode.Uri.file(path.dirname(current.fsPath));
@@ -81,7 +79,6 @@ async function updateGitIgnorePatterns(
     return;
   }
 
-  // Read subdirectories gitignore files
   let ignoreFiles: vscode.Uri[] = [];
   try {
     ignoreFiles = await vscode.workspace.findFiles(
@@ -90,9 +87,7 @@ async function updateGitIgnorePatterns(
       undefined,
       token,
     );
-  } catch (error) {
-    // ignore
-  }
+  } catch (error) {}
 
   await Promise.all(
     ignoreFiles.map(async (ignoreFile) => {
@@ -114,9 +109,7 @@ async function updateGitIgnorePatterns(
             }
           }
         }
-      } catch (error) {
-        // ignore
-      }
+      } catch (error) {}
     }),
   );
 
@@ -173,15 +166,189 @@ function createExcludePattern(dirs: string[]): string {
   return `{${patterns.join(",")}}`;
 }
 
+function sortFiles(files: vscode.Uri[], query: string): vscode.Uri[] {
+  const matchString = query.toLowerCase().split("*").filter(Boolean)[0];
+  if (!matchString) {
+    return files.toSorted((uriA, uriB) => {
+      const basenameA = path.basename(uriA.fsPath).toLowerCase();
+      const basenameB = path.basename(uriB.fsPath).toLowerCase();
+      return basenameA.localeCompare(basenameB);
+    });
+  }
+
+  const getScore = (basename: string) => {
+    if (basename === matchString) {
+      return 4;
+    }
+    if (basename.split(".").includes(matchString)) {
+      return 3;
+    }
+    if (basename.startsWith(matchString)) {
+      return 2;
+    }
+    if (basename.includes(matchString)) {
+      return 1;
+    }
+    return 0;
+  };
+  return files.toSorted((uriA, uriB) => {
+    const basenameA = path.basename(uriA.fsPath).toLowerCase();
+    const basenameB = path.basename(uriB.fsPath).toLowerCase();
+    const scoreA = getScore(basenameA);
+    const scoreB = getScore(basenameB);
+    if (scoreA > scoreB) {
+      return -1;
+    }
+    if (scoreA < scoreB) {
+      return 1;
+    }
+    if (basenameA === basenameB) {
+      const dirnameA = path.dirname(uriA.fsPath).toLowerCase();
+      const dirnameB = path.dirname(uriB.fsPath).toLowerCase();
+      return dirnameA.localeCompare(dirnameB);
+    }
+    return basenameA.localeCompare(basenameB);
+  });
+}
+
+function buildGlobPattern(query: string): vscode.GlobPattern {
+  const caseInsensitivePattern = query
+    .split("")
+    .map((char) => {
+      if (char.toLowerCase() !== char.toUpperCase()) {
+        return `{${char.toLowerCase()},${char.toUpperCase()}}`;
+      }
+      return char.replace(/[?\[\]{}()!@]/g, "\\$&");
+    })
+    .join("");
+
+  return `**/*${caseInsensitivePattern}{*,*/*}`;
+}
+
 /**
- * Lists files in the workspace using VSCode API with improved filtering
- *
+ * Lists files in the workspace matching the query, prioritizing opened editors, deduplicating, and respecting .gitignore and VSCode exclude settings.
+ * @param query The search query string
+ * @param limit Maximum number of files to return
+ * @param token Optional cancellation token
+ * @returns Array of { uri, isOpenedInEditor }
+ */
+export async function listFilesWithQuery(
+  query: string,
+  limit?: number,
+  token?: vscode.CancellationToken,
+): Promise<
+  {
+    uri: vscode.Uri;
+    isOpenedInEditor: boolean;
+  }[]
+> {
+  const maxResults = limit ?? 30;
+  const queryString = query.trim().toLowerCase();
+
+  const allEditorUris = vscode.window.tabGroups.all
+    .flatMap((group) => group.tabs)
+    .filter((tab: vscode.Tab) => tab.input && (tab.input as TabInputText).uri)
+    .map((tab: vscode.Tab) => (tab.input as TabInputText).uri as vscode.Uri);
+
+  const editorUris = sortFiles(
+    allEditorUris
+      .filter(
+        (uri: vscode.Uri, idx: number, arr: vscode.Uri[]) =>
+          arr.findIndex((item) => item.fsPath === uri.fsPath) === idx,
+      )
+      .filter((uri: vscode.Uri) =>
+        uri.fsPath.toLowerCase().includes(queryString),
+      ),
+    queryString,
+  ).sort((uriA: vscode.Uri, uriB: vscode.Uri) => {
+    const activeEditorUri = vscode.window.activeTextEditor?.document.uri;
+    if (activeEditorUri) {
+      if (uriA.fsPath === activeEditorUri.fsPath) return -1;
+      if (uriB.fsPath === activeEditorUri.fsPath) return 1;
+    }
+    return 0;
+  });
+
+  const result = editorUris.map((uri: vscode.Uri) => {
+    return {
+      uri,
+      isOpenedInEditor: true,
+    };
+  });
+  if (result.length >= maxResults) {
+    return result.slice(0, maxResults);
+  }
+
+  const globPattern = buildGlobPattern(queryString);
+
+  try {
+    const allExcludes = new Set<string>();
+
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders) {
+      for (const folder of workspaceFolders) {
+        const patterns = gitIgnorePatternsMap.get(folder.uri.toString());
+        if (patterns) {
+          for (const pattern of patterns) {
+            allExcludes.add(pattern);
+          }
+        }
+      }
+    }
+
+    const editorExcludes = editorUris.map((uri: vscode.Uri) => {
+      const relativePath = vscode.workspace.asRelativePath(uri);
+      return `**/${relativePath}`;
+    });
+
+    const excludePatterns = [...allExcludes, ...editorExcludes];
+    const sortedExcludes = excludePatterns
+      .sort((a, b) => a.length - b.length)
+      .slice(0, 1000);
+    const excludePattern = `{${sortedExcludes.join(",")}}`;
+
+    const foundFiles = await vscode.workspace.findFiles(
+      globPattern,
+      excludePattern,
+      maxResults - editorUris.length,
+      token,
+    );
+
+    const filteredFiles = foundFiles.filter(
+      (file) => !file.fsPath.includes("node_modules"),
+    );
+
+    const searchResult = sortFiles(
+      filteredFiles.filter(
+        (uri: vscode.Uri, idx: number, arr: vscode.Uri[]) =>
+          arr.findIndex((item) => item.fsPath === uri.fsPath) === idx &&
+          !editorUris.some(
+            (exisingUri: vscode.Uri) => exisingUri.fsPath === uri.fsPath,
+          ),
+      ),
+      queryString,
+    );
+
+    result.push(
+      ...searchResult.map((uri: vscode.Uri) => {
+        return {
+          uri,
+          isOpenedInEditor: false,
+        };
+      }),
+    );
+  } catch (error) {}
+
+  return result;
+}
+
+/**
+ * Lists all files in the workspace using VSCode API with improved filtering.
  * @param maxItems Maximum number of files to return (default: 500)
- * @param ignoreDirs Optional directories to ignore (default: empty array)
  * @param useGitIgnore Whether to use .gitignore files for exclusion (default: true)
  * @returns Object containing files array and isTruncated flag
  */
-export async function listFiles(
+export async function listAllFiles(
   maxItems = 500,
   useGitIgnore = true,
 ): Promise<{ files: string[]; isTruncated: boolean }> {
@@ -231,7 +398,6 @@ export async function listFiles(
       }
     }
   } catch (error) {
-    // TODO: log later
     return { files: [], isTruncated: false };
   }
 

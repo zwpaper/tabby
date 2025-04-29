@@ -21,6 +21,7 @@ export function ToolInvocationPart({
     result: unknown;
   }) => void;
 }) {
+  const { state } = tool;
   const userInputTool = isUserInputTool(tool.toolName);
   const { pendingToolApproval, updatePendingToolApproval } = useChatStore();
   const [approvalStatus, setApprovalStatus] =
@@ -28,6 +29,7 @@ export function ToolInvocationPart({
 
   useEffect(() => {
     if (
+      state === "call" &&
       !userInputTool &&
       pendingToolApproval === undefined &&
       approvalStatus === "pending"
@@ -39,6 +41,7 @@ export function ToolInvocationPart({
       });
     }
   }, [
+    state,
     userInputTool,
     pendingToolApproval,
     approvalStatus,

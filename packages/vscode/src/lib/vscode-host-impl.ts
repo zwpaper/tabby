@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { collectCustomRules, getSystemInfo } from "@/lib/env-utils";
-import { listFiles } from "@/lib/file-utils";
+import { listAllFiles, listFilesWithQuery } from "@/lib/file-utils";
 import type { TokenStorage } from "@/lib/token-storage";
 import {
   ThreadAbortSignal,
@@ -10,6 +10,7 @@ import {
 import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import { workspace } from "vscode";
 import { readFile } from "./tools/read-file";
 import type { PreviewToolFunctionType } from "./tools/types";
 import { previewWriteToFile } from "./tools/write-to-file";
@@ -32,7 +33,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
   }
 
   async readEnvironment(customRuleFiles: string[] = []): Promise<Environment> {
-    const { files, isTruncated } = await listFiles(500);
+    const { files, isTruncated } = await listAllFiles(500);
 
     const customRules = await collectCustomRules(customRuleFiles);
 
@@ -51,6 +52,14 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     };
 
     return environment;
+  }
+
+  async listFilesInWorkspace(param: { query: string; limit?: number }): Promise<
+    string[]
+  > {
+    const { query, limit } = param;
+    const results = await listFilesWithQuery(query, limit);
+    return results.map((item) => workspace.asRelativePath(item.uri));
   }
 
   async executeToolCall(

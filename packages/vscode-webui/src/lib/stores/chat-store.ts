@@ -16,6 +16,7 @@ export interface ChatState {
 
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
 
+  clearPendingToolApproval: () => void;
   updatePendingToolApproval: (
     pendingToolApproval: ChatState["pendingToolApproval"],
   ) => void;
@@ -30,6 +31,7 @@ export const useChatStore = create<ChatState>()(
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
 
+      clearPendingToolApproval: () => set({ pendingToolApproval: undefined }),
       updatePendingToolApproval: (
         pendingToolApproval: ChatState["pendingToolApproval"],
       ) => set({ pendingToolApproval }),

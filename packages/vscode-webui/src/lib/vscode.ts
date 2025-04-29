@@ -37,8 +37,9 @@ function createVSCodeHost(): VSCodeHostApi {
         "getToken",
         "setToken",
         "readEnvironment",
-        "previewToolCall",
         "executeToolCall",
+        "listFilesInWorkspace",
+        "previewToolCall",
         "openFile",
       ],
       exports: {

@@ -1,14 +1,70 @@
 import { cn } from "@/lib/utils";
+import { vscodeHost } from "@/lib/vscode";
+import { File } from "lucide-react";
+import React from "react";
+import type { ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import { formatPathForDisplay } from "../prompt-form/utils";
 
 interface MessageMarkdownProps {
   children: string;
   className?: string;
 }
 
-export function MessageMarkdown({ children, className }: MessageMarkdownProps) {
+function InlineFileTag({ path }: { path: string }): JSX.Element {
+  const handleClick = () => {
+    vscodeHost.openFile(path);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="text-zinc-400 text-xs border border-zinc-600 rounded-sm px-1 inline-flex items-center gap-1"
+    >
+      <File className="size-3" />
+      {formatPathForDisplay(path).basename}
+    </button>
+  );
+}
+
+/**
+ * Process file placeholders in text and render them as badges
+ */
+function processPlaceholders(text: string): ReactNode | string {
+  // Regex to match [file:name] pattern
+  const FILE_REGEX = /\[file:([^\]]+)\]/g;
+  const elements: ReactNode[] = [];
+  let lastIndex = 0;
+  let matchResult: RegExpExecArray | null;
+
+  // Using a separate statement to avoid linter error
+  while (true) {
+    matchResult = FILE_REGEX.exec(text);
+    if (matchResult === null) break;
+
+    if (matchResult.index > lastIndex) {
+      elements.push(text.slice(lastIndex, matchResult.index));
+    }
+
+    const filename = matchResult[1];
+    elements.push(<InlineFileTag key={matchResult.index} path={filename} />);
+    lastIndex = matchResult.index + matchResult[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    elements.push(text.slice(lastIndex));
+  }
+
+  return elements.length > 0 ? <>{elements}</> : text;
+}
+
+export function MessageMarkdown({
+  children,
+  className,
+}: MessageMarkdownProps): JSX.Element {
   return (
     <div
       className={cn(
@@ -16,7 +72,26 @@ export function MessageMarkdown({ children, className }: MessageMarkdownProps) {
         className,
       )}
     >
-      <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]}>
+      <ReactMarkdown
+        remarkPlugins={[remarkMath, remarkGfm]}
+        components={{
+          p: ({ children }) => {
+            if (!children) return <p />;
+
+            return (
+              <p>
+                {React.Children.map(children, (child, index) =>
+                  typeof child === "string" ? (
+                    processPlaceholders(child)
+                  ) : (
+                    <React.Fragment key={index}>{child}</React.Fragment>
+                  ),
+                )}
+              </p>
+            );
+          },
+        }}
+      >
         {children}
       </ReactMarkdown>
     </div>

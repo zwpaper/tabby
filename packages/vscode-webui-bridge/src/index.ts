@@ -25,6 +25,11 @@ export interface VSCodeHostApi {
     },
   ): Promise<unknown>;
 
+  listFilesInWorkspace(param: {
+    query: string;
+    limit?: number;
+  }): Promise<string[]>;
+
   openFile(filePath: string): void;
 }
 
