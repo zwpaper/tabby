@@ -2,12 +2,10 @@ import { vscodeHost } from "@/lib/vscode";
 import { ThreadAbortSignal } from "@quilted/threads";
 import { type ClientToolsType, isUserInputTool } from "@ragdoll/tools";
 import type { ToolInvocation } from "ai";
-import { useEffect, useRef, useState } from "react";
-import { MessageMarkdown } from "../message-markdown";
+import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import type { ToolProps } from "./types";
-
-type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export function ToolInvocationPart({
   tool,
@@ -22,49 +20,26 @@ export function ToolInvocationPart({
     result: unknown;
   }) => void;
 }) {
-  const toolExecuted = useRef<boolean>(
-    tool.state === "result" || isUserInputTool(tool.toolName),
+  const [approvalStatus, setApprovalStatus] =
+    useState<ApprovalStatus>("pending");
+  const onResult = useCallback(
+    (result: unknown) => {
+      addToolResult({ toolCallId: tool.toolCallId, result });
+    },
+    [addToolResult, tool.toolCallId],
   );
-  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>(
-    toolExecuted.current ? "approved" : "pending",
-  );
-  const abort = useRef(new AbortController());
-  useEffect(() => {
-    if (toolExecuted.current) return;
-    if (approvalStatus === "pending") return;
+  const { isExecuting } = useVSCodeTool(approvalStatus, tool, onResult);
 
-    toolExecuted.current = true;
+  const userInputTool = isUserInputTool(tool.toolName);
+  const showApproval =
+    !userInputTool && approvalStatus === "pending" && !isExecuting;
 
-    if (approvalStatus === "rejected") {
-      addToolResult({
-        toolCallId: tool.toolCallId,
-        result: "Tool execution rejected by user",
-      });
-    } else if (approvalStatus === "approved") {
-      vscodeHost
-        .executeToolCall(tool.toolName, tool.args, {
-          toolCallId: tool.toolCallId,
-          abortSignal: ThreadAbortSignal.serialize(abort.current.signal),
-        })
-        .then((result) => {
-          addToolResult({
-            toolCallId: tool.toolCallId,
-            result,
-          });
-        })
-        .catch(console.error);
-    }
-  }, [tool, addToolResult, approvalStatus]);
-
-  const markdown = `\`\`\`\n${JSON.stringify(tool, null, 2)}\n\`\`\``;
   const C = Tools[tool.toolName];
   return (
     <div className="flex flex-col gap-1">
-      <span>Tool Executed: {toolExecuted.current ? "✅" : "❌"}</span>
-      {C ? <C tool={tool} /> : <MessageMarkdown>{markdown}</MessageMarkdown>}
-      {approvalStatus === "pending" && (
-        <ToolApproval onSubmit={setApprovalStatus} />
-      )}
+      {C ? <C tool={tool} /> : JSON.stringify(tool, null, 2)}
+      {isExecuting && <Loader2 className="animate-spin" />}
+      {showApproval && <ToolApproval onSubmit={setApprovalStatus} />}
     </div>
   );
 }
@@ -103,3 +78,61 @@ export const AttemptCompletionTool: React.FC<
 const Tools: Record<string, React.FC<ToolProps>> = {
   attemptCompletion: AttemptCompletionTool,
 };
+
+type ApprovalStatus = "pending" | "approved" | "rejected";
+
+function useVSCodeTool(
+  approvalStatus: ApprovalStatus,
+  tool: ToolInvocation,
+  onResult: (result: unknown) => void,
+) {
+  const { toolName, args, toolCallId } = tool;
+  const abort = useRef(new AbortController());
+  const abortSignal = useRef(ThreadAbortSignal.serialize(abort.current.signal));
+  const executed = useRef(false);
+  const [isExecuting, setIsExecuting] = useState(false);
+
+  // Always update preview view
+  useEffect(() => {
+    vscodeHost.previewToolCall(toolName, args, {
+      toolCallId,
+      abortSignal: abortSignal.current,
+    });
+  }, [args, toolName, toolCallId]);
+
+  const wrappedOnResult = useCallback(
+    (result: unknown) => {
+      try {
+        onResult(result);
+      } finally {
+        abort.current.abort();
+        setIsExecuting(false);
+      }
+    },
+    [onResult],
+  );
+
+  useEffect(() => {
+    if (approvalStatus === "pending") return;
+    if (executed.current) return;
+
+    executed.current = true;
+    if (approvalStatus === "rejected") {
+      wrappedOnResult({ error: "User rejected the tool call" });
+    } else if (approvalStatus === "approved") {
+      setIsExecuting(true);
+      new Promise((resolve) => setTimeout(resolve, 1000))
+        .then(() =>
+          vscodeHost.executeToolCall(toolName, args, {
+            toolCallId,
+            abortSignal: abortSignal.current,
+          }),
+        )
+        .then(wrappedOnResult);
+    }
+  }, [approvalStatus, args, toolName, toolCallId, wrappedOnResult]);
+
+  return {
+    isExecuting,
+  };
+}

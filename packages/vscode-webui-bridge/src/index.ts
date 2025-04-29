@@ -7,12 +7,21 @@ export interface VSCodeHostApi {
 
   readEnvironment(): Promise<Environment>;
 
+  previewToolCall(
+    toolName: string,
+    args: unknown,
+    options: {
+      toolCallId: string;
+      abortSignal: ThreadAbortSignalSerialization;
+    },
+  ): Promise<void>;
+
   executeToolCall(
     toolName: string,
     args: unknown,
     options: {
       toolCallId: string;
-      abortSignal?: ThreadAbortSignalSerialization;
+      abortSignal: ThreadAbortSignalSerialization;
     },
   ): Promise<unknown>;
 }

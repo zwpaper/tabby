@@ -9,14 +9,8 @@ import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
 import { readFile } from "./tools/read-file";
-
-const ToolMap: Record<
-  string,
-  // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-  ToolFunctionType<any>
-> = {
-  readFile,
-};
+import type { PreviewToolFunctionType } from "./tools/types";
+import { previewWriteToFile } from "./tools/write-to-file";
 
 export default class VSCodeHostImpl implements VSCodeHostApi {
   constructor(private readonly tokenStorage: TokenStorage) {
@@ -24,6 +18,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     this.setToken = this.setToken.bind(this);
     this.readEnvironment = this.readEnvironment.bind(this);
     this.executeToolCall = this.executeToolCall.bind(this);
+    this.previewToolCall = this.previewToolCall.bind(this);
   }
 
   async getToken(): Promise<string | undefined> {
@@ -55,12 +50,13 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
     return environment;
   }
+
   async executeToolCall(
     toolName: string,
     args: unknown,
     options: {
       toolCallId: string;
-      abortSignal?: ThreadAbortSignalSerialization;
+      abortSignal: ThreadAbortSignalSerialization;
     },
   ) {
     const tool = ToolMap[toolName];
@@ -70,9 +66,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       };
     }
 
-    const abortSignal = options.abortSignal
-      ? new ThreadAbortSignal(options.abortSignal)
-      : undefined;
+    const abortSignal = new ThreadAbortSignal(options.abortSignal);
 
     return tool(args, {
       abortSignal,
@@ -80,4 +74,41 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       toolCallId: options.toolCallId,
     });
   }
+
+  async previewToolCall(
+    toolName: string,
+    args: unknown,
+    options: {
+      toolCallId: string;
+      abortSignal: ThreadAbortSignalSerialization;
+    },
+  ) {
+    const tool = ToolPreviewMap[toolName];
+    if (!tool) {
+      return;
+    }
+
+    const abortSignal = new ThreadAbortSignal(options.abortSignal);
+    return tool(args, {
+      abortSignal,
+      toolCallId: options.toolCallId,
+      messages: [],
+    });
+  }
 }
+
+const ToolMap: Record<
+  string,
+  // biome-ignore lint/suspicious/noExplicitAny: external call without type information
+  ToolFunctionType<any>
+> = {
+  readFile,
+};
+
+const ToolPreviewMap: Record<
+  string,
+  // biome-ignore lint/suspicious/noExplicitAny: external call without type information
+  PreviewToolFunctionType<any>
+> = {
+  writeToFile: previewWriteToFile,
+};
