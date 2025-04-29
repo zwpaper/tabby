@@ -24,6 +24,8 @@ export interface VSCodeHostApi {
       abortSignal: ThreadAbortSignalSerialization;
     },
   ): Promise<unknown>;
+
+  openFile(filePath: string): void;
 }
 
 export interface WebviewHostApi {

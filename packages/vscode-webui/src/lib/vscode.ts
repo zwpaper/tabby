@@ -39,6 +39,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "readEnvironment",
         "previewToolCall",
         "executeToolCall",
+        "openFile",
       ],
       exports: {
         openTask(taskId) {

@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 import { collectCustomRules, getSystemInfo } from "@/lib/env-utils";
 import { listFiles } from "@/lib/file-utils";
 import type { TokenStorage } from "@/lib/token-storage";
@@ -94,6 +96,14 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       toolCallId: options.toolCallId,
       messages: [],
     });
+  }
+
+  async openFile(filePath: string) {
+    const current = vscode.workspace.workspaceFolders?.[0].uri;
+    if (!current) {
+      throw new Error("No workspace folder found.");
+    }
+    vscode.window.showTextDocument(vscode.Uri.joinPath(current, filePath));
   }
 }
 

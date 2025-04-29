@@ -22,9 +22,12 @@ export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
     InputType<ToolFunctionType<T>>,
     Awaited<ReturnType<ToolFunctionType<T>>> | { error: string }
   >;
+  isExecuting: boolean;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: external function def.
 type InputType<T extends (...args: any[]) => any> = Parameters<T>[0];
 
 type Optional<T> = { [K in keyof T]: T[K] | undefined };
+
+export type ApprovalStatus = "pending" | "approved" | "rejected";
