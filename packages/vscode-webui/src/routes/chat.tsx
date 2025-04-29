@@ -426,7 +426,7 @@ function RouteComponent() {
         className="flex-1 overflow-y-auto mb-4 space-y-4"
         ref={messagesContainerRef}
       >
-        {renderMessages.map((m) => (
+        {renderMessages.map((m, index) => (
           <div key={m.id} className="flex flex-col">
             <div className="py-2 rounded-lg">
               <div className="flex items-center gap-2">
@@ -463,7 +463,7 @@ function RouteComponent() {
                 ))}
               </div>
             </div>
-            <Separator />
+            {index < renderMessages.length - 1 && <Separator />}
           </div>
         ))}
       </div>
