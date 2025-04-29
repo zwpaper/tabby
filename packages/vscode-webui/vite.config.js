@@ -12,7 +12,6 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
-  assetsInclude: ["**/*.png"],
   test: {
     globals: true,
     environment: "jsdom",

@@ -1,10 +1,13 @@
 import { MessageMarkdown } from "@/components/message-markdown";
+import { ModelSelect } from "@/components/model-select";
 import Pending from "@/components/pending";
 import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { useEnvironment } from "@/lib/hooks/use-environment";
+import { useSelectedModels } from "@/lib/hooks/use-models";
+import { updateSelectedModelId } from "@/lib/stores/chat-store";
 import { cn } from "@/lib/utils";
 import { type Message, useChat } from "@ai-sdk/react";
 import type {
@@ -22,8 +25,14 @@ import {
   PaperclipIcon,
   StopCircleIcon,
 } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import type { KeyboardEventHandler, MutableRefObject } from "react";
+import {
+  type KeyboardEventHandler,
+  type MutableRefObject,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { z } from "zod";
 
@@ -55,6 +64,11 @@ function RouteComponent() {
   const taskId = useRef<number | undefined>(loaderData?.id);
   const { auth: authData } = Route.useRouteContext();
   const { environment } = useEnvironment();
+  const {
+    models,
+    selectedModel,
+    isLoading: isModelsLoading,
+  } = useSelectedModels();
   const initialMessages = toUIMessages(
     loaderData?.conversation?.messages || [],
   );
@@ -76,7 +90,7 @@ function RouteComponent() {
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
     experimental_prepareRequestBody: (req) =>
-      prepareRequestBody(taskId, req, environment),
+      prepareRequestBody(taskId, req, environment, selectedModel?.id),
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
@@ -122,6 +136,17 @@ function RouteComponent() {
       formRef.current?.requestSubmit();
       e.preventDefault();
     }
+  };
+
+  const focusInputBox = () => {
+    inputRef.current?.focus();
+  };
+
+  const handleSelectModel = (v: string) => {
+    updateSelectedModelId(v);
+    setTimeout(() => {
+      focusInputBox();
+    }, 50);
   };
 
   useLayoutEffect(() => {
@@ -244,29 +269,38 @@ function RouteComponent() {
           placeholder="Type your message..."
           className="w-full !border-none !outline-none focus-visible:ring-0 resize-none text-[var(--vscode-input-foreground)]"
         />
-        <div className="flex justify-end items-center pt-2 gap-3">
+        <div className="flex justify-between items-center pt-2 gap-3">
           <Button variant="ghost" size="icon" className="h-6 w-6">
             <PaperclipIcon className="h-3 w-3" />
           </Button>
-          <Button
-            type="button"
-            size="icon"
-            disabled={!isLoading && !input}
-            className="p-0 h-6 w-6 rounded-md transition-opacity"
-            onClick={() => {
-              if (isLoading) {
-                stop();
-              } else {
-                formRef.current?.requestSubmit();
-              }
-            }}
-          >
-            {isLoading ? (
-              <StopCircleIcon className="h-3 w-3" />
-            ) : (
-              <ArrowRightIcon className="h-3 w-3" />
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <ModelSelect
+              value={selectedModel?.id}
+              models={models}
+              isLoading={isModelsLoading}
+              onChange={handleSelectModel}
+              triggerClassName="py-0 h-6"
+            />
+            <Button
+              type="button"
+              size="icon"
+              disabled={isModelsLoading || (!isLoading && !input)}
+              className="p-0 h-6 w-6 rounded-md transition-opacity"
+              onClick={() => {
+                if (isLoading) {
+                  stop();
+                } else {
+                  formRef.current?.requestSubmit();
+                }
+              }}
+            >
+              {isLoading ? (
+                <StopCircleIcon className="h-3 w-3" />
+              ) : (
+                <ArrowRightIcon className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
@@ -324,10 +358,12 @@ function prepareRequestBody(
     messages: Message[];
   },
   environment: MutableRefObject<Environment | null>,
+  model: string | undefined,
 ): RagdollChatRequest {
   return {
     id: taskId.current?.toString(),
-    model: "google/gemini-2.5-pro",
+    // model: "google/gemini-2.5-pro",
+    model,
     message: fromUIMessage(request.messages[request.messages.length - 1]),
     environment: environment.current || undefined,
   };

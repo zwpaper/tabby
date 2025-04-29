@@ -1,5 +1,6 @@
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
@@ -25,15 +26,21 @@ function App() {
   return (
     <div className="p-2">
       <div className="mb-2">Welcome, {auth.user.name}!</div>
-      <Link to="/chat">
-        <Button className="w-full mt-2 mb-4 text-base">
-          <PlusIcon />
-          New Task
-        </Button>
+      <Link
+        to="/chat"
+        className={cn(
+          buttonVariants({
+            variant: "default",
+            className: "w-full mt-2 mb-4 !text-primary-foreground !text-base",
+          }),
+        )}
+      >
+        <PlusIcon />
+        New Task
       </Link>
 
       <div className="mt-2">
-        <div className="space-y-4">
+        <div className="flex flex-col space-y-4">
           {isLoading ? (
             <>
               {[...Array(5)].map((_, i) => (
@@ -45,21 +52,21 @@ function App() {
             </>
           ) : (
             tasks.map((task) => (
-              <div
+              <Link
+                to={"/chat"}
+                search={{ taskId: task.id }}
+                className="cursor-pointer"
                 key={task.id}
-                className="bg-card p-2 rounded-xs hover:bg-card/70"
               >
-                <Link
-                  to={"/chat"}
-                  search={{ taskId: task.id }}
-                  className="font-bold mb-1"
-                >
-                  {formatTaskId(task.id)}
-                </Link>
-                <div>
-                  <p>{task.title}</p>
+                <div className="bg-card p-2 rounded-xs hover:bg-card/70">
+                  <span className="font-bold mb-1">
+                    {formatTaskId(task.id)}
+                  </span>
+                  <div className="text-foreground">
+                    <p>{task.title}</p>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>
