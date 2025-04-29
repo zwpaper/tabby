@@ -8,7 +8,6 @@ import { apiClient } from "@/lib/auth-client";
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { useChatStore } from "@/lib/stores/chat-store";
-import { cn } from "@/lib/utils";
 import { vscodeHost } from "@/lib/vscode";
 import { type Message, useChat } from "@ai-sdk/react";
 import type {
@@ -53,6 +52,7 @@ import {
 } from "@tiptap/react";
 import tippy from "tippy.js";
 import "@/components/prompt-form/prompt-form.css";
+import { Separator } from "@/components/ui/separator";
 
 const searchSchema = z.object({
   taskId: z.number().optional(),
@@ -389,7 +389,7 @@ function RouteComponent() {
   }, [status, editor]);
 
   return (
-    <div className="flex flex-col h-screen p-4">
+    <div className="flex flex-col h-screen px-4">
       <div className="flex items-center border-b border-[var(--border)] mb-4 py-2">
         <div className="flex-shrink-0">
           <Button
@@ -427,37 +427,32 @@ function RouteComponent() {
         ref={messagesContainerRef}
       >
         {renderMessages.map((m) => (
-          <div
-            key={m.id}
-            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div className="p-2 rounded-lg">
-              <div
-                className={cn("flex items-center gap-2", {
-                  "justify-end": m.role === "user",
-                })}
-              >
+          <div key={m.id} className="flex flex-col">
+            <div className="py-2 rounded-lg">
+              <div className="flex items-center gap-2">
                 {m.role === "user" ? (
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="size-7">
                     <AvatarImage src={authData.user.image ?? undefined} />
                     <AvatarFallback>{authData.user.name}</AvatarFallback>
                   </Avatar>
                 ) : (
-                  <Avatar className="h-8 w-8 border p-1 bg-[var(--vscode-chat-avatarBackground)]">
+                  <Avatar className="size-7 border p-1 bg-[var(--vscode-chat-avatarBackground)]">
                     <AvatarImage
                       // FIXME(jueliang): use local static resources
                       src={"https://app.getpochi.com/logo192.png"}
                     />
-                    <AvatarFallback>Assistant</AvatarFallback>
+                    <AvatarFallback>Pochi</AvatarFallback>
                   </Avatar>
                 )}
-                {m.role !== "user" && <strong>Assistant</strong>}
+                <strong>
+                  {m.role === "user" ? authData.user.name : "Pochi"}
+                </strong>
                 {isLoading &&
                   m.id === renderMessages[renderMessages.length - 1].id && (
                     <Loader2 className="size-4 animate-spin ml-2" />
                   )}
               </div>
-              <div className="mt-2 ml-2 flex flex-col gap-2">
+              <div className="mt-3 flex flex-col gap-2">
                 {m.parts.map((part, index) => (
                   <Part
                     key={index}
@@ -468,6 +463,7 @@ function RouteComponent() {
                 ))}
               </div>
             </div>
+            <Separator />
           </div>
         ))}
       </div>
