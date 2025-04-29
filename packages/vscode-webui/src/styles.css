@@ -165,6 +165,9 @@ code {
   --primary: var(--vscode-minimap-infoHighlight);
   --primary-foreground: var(--vscode-button-foreground);
 
+  --secondary: var(--vscode-button-secondaryBackground);
+  --secondary-foreground: var(--vscode-button-secondaryForeground);
+
   --popover: var(--vscode-editorSuggestWidget-background);
   --popover-foreground: var(--vscode-editorSuggestWidget-foreground);
 

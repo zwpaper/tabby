@@ -14,7 +14,7 @@ export const readFileTool: React.FC<ToolProps<ClientToolsType["readFile"]>> = ({
 
   const { path, startLine, endLine } = tool.args || {};
   return (
-    <div className="ml-1 text-sm flex gap-2 items-center" title={error}>
+    <div className="text-sm flex gap-2 items-center" title={error}>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       Reading
       {path && (

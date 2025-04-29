@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/auth-client";
-import { updateSelectedModelId, useChatStore } from "@/lib/stores/chat-store";
+import { useChatStore } from "@/lib/stores/chat-store";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useStore } from "zustand/react";
@@ -23,6 +23,7 @@ export function useSelectedModels() {
     (state) => state.selectedModelId,
   );
   const { data, isLoading, ...rest } = useModels();
+  const updateSelectedModelId = useChatStore((x) => x.updateSelectedModelId);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: watching isLoading is sufficient
   useEffect(() => {

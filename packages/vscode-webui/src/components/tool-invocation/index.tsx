@@ -1,7 +1,7 @@
+import { useChatStore } from "@/lib/stores/chat-store";
 import { isUserInputTool } from "@ragdoll/tools";
 import type { ToolInvocation } from "ai";
-import { useCallback, useState } from "react";
-import { Button } from "../ui/button";
+import { useCallback, useEffect, useState } from "react";
 import { useVSCodeTool } from "./hooks/use-vscode-tool";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
 import { readFileTool } from "./tools/read-file";
@@ -21,8 +21,31 @@ export function ToolInvocationPart({
     result: unknown;
   }) => void;
 }) {
+  const userInputTool = isUserInputTool(tool.toolName);
+  const { pendingToolApproval, updatePendingToolApproval } = useChatStore();
   const [approvalStatus, setApprovalStatus] =
     useState<ApprovalStatus>("pending");
+
+  useEffect(() => {
+    if (
+      !userInputTool &&
+      pendingToolApproval === undefined &&
+      approvalStatus === "pending"
+    ) {
+      updatePendingToolApproval({
+        tool,
+        resolve: (approved) =>
+          setApprovalStatus(approved ? "approved" : "rejected"),
+      });
+    }
+  }, [
+    userInputTool,
+    pendingToolApproval,
+    approvalStatus,
+    tool,
+    updatePendingToolApproval,
+  ]);
+
   const onResult = useCallback(
     (result: unknown) => {
       addToolResult({ toolCallId: tool.toolCallId, result });
@@ -30,13 +53,6 @@ export function ToolInvocationPart({
     [addToolResult, tool.toolCallId],
   );
   const { isExecuting } = useVSCodeTool(approvalStatus, tool, onResult);
-
-  const userInputTool = isUserInputTool(tool.toolName);
-  const showApproval =
-    tool.state === "call" &&
-    !userInputTool &&
-    approvalStatus === "pending" &&
-    !isExecuting;
 
   const C = Tools[tool.toolName];
   return (
@@ -46,26 +62,6 @@ export function ToolInvocationPart({
       ) : (
         JSON.stringify(tool, null, 2)
       )}
-      {showApproval && <ToolApproval onSubmit={setApprovalStatus} />}
-    </div>
-  );
-}
-
-function ToolApproval({
-  onSubmit,
-}: {
-  onSubmit: (status: ApprovalStatus) => void;
-}) {
-  const onApprove = () => {
-    onSubmit("approved");
-  };
-  const onReject = () => {
-    onSubmit("rejected");
-  };
-  return (
-    <div className="flex gap-2">
-      <Button onClick={onApprove}>Approve</Button>
-      <Button onClick={onReject}>Reject</Button>
     </div>
   );
 }

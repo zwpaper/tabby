@@ -24,7 +24,7 @@ export function StatusIcon({ tool, isExecuting }: StatusIconProps) {
       </span>
     );
   } else if (tool.state === "result") {
-    statusIcon = <Check className="size-4 text-green-400" />;
+    statusIcon = <Check className="size-4 text-emerald-300" />;
   } else if (isExecuting) {
     statusIcon = <Loader2 className="size-4 animate-spin text-zinc-400" />;
   }

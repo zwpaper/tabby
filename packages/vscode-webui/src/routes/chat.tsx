@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useSelectedModels } from "@/lib/hooks/use-models";
-import { updateSelectedModelId } from "@/lib/stores/chat-store";
+import { useChatStore } from "@/lib/stores/chat-store";
 import { cn } from "@/lib/utils";
 import { type Message, useChat } from "@ai-sdk/react";
 import type {
@@ -142,6 +142,7 @@ function RouteComponent() {
     inputRef.current?.focus();
   };
 
+  const updateSelectedModelId = useChatStore((x) => x.updateSelectedModelId);
   const handleSelectModel = (v: string) => {
     updateSelectedModelId(v);
     setTimeout(() => {
@@ -234,7 +235,7 @@ function RouteComponent() {
                     <Loader2 className="size-4 animate-spin ml-2" />
                   )}
               </div>
-              <div className="mt-2 ml-2 flex flex-col gap-1">
+              <div className="mt-2 ml-2 flex flex-col gap-2">
                 {m.parts.map((part, index) => (
                   <Part
                     key={index}
@@ -248,6 +249,7 @@ function RouteComponent() {
           </div>
         ))}
       </div>
+      <ApprovalButton show={!isLoading} />
       <form
         ref={formRef}
         onSubmit={handleSubmit}
@@ -367,4 +369,29 @@ function prepareRequestBody(
     message: fromUIMessage(request.messages[request.messages.length - 1]),
     environment: environment.current || undefined,
   };
+}
+
+function ApprovalButton({ show }: { show: boolean }) {
+  const { pendingToolApproval, resolvePendingToolApproval } = useChatStore();
+  if (!show || !pendingToolApproval) return;
+
+  const ToolAcceptText: Record<string, string> = {
+    writeToFile: "Save",
+  };
+
+  const acceptText =
+    ToolAcceptText[pendingToolApproval.tool.toolName] || "Accept";
+  return (
+    <div className="flex [&>button]:flex-1 [&>button]:rounded-sm gap-3 mb-2">
+      <Button onClick={() => resolvePendingToolApproval(true)}>
+        {acceptText}
+      </Button>
+      <Button
+        onClick={() => resolvePendingToolApproval(false)}
+        variant="secondary"
+      >
+        Reject
+      </Button>
+    </div>
+  );
 }

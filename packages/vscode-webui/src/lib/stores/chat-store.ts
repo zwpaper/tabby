@@ -1,35 +1,55 @@
+import type { ToolInvocation } from "ai";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-const excludeFromState: string[] = [];
+export type ApprovalStatus = "pending" | "approved" | "rejected";
+
+const excludeFromState: (keyof ChatState)[] = ["pendingToolApproval"];
 
 export interface ChatState {
   selectedModelId: string | undefined;
-}
 
-const initialState: ChatState = {
-  selectedModelId: undefined,
-};
+  pendingToolApproval?: {
+    tool: ToolInvocation;
+    resolve: (approved: boolean) => void;
+  };
+
+  updateSelectedModelId: (selectedModelId: string | undefined) => void;
+
+  updatePendingToolApproval: (
+    pendingToolApproval: ChatState["pendingToolApproval"],
+  ) => void;
+  resolvePendingToolApproval: (approved: boolean) => void;
+}
 
 export const useChatStore = create<ChatState>()(
   persist(
-    () => ({
-      ...initialState,
+    (set) => ({
+      selectedModelId: undefined,
+      pendingToolApproval: undefined,
+      updateSelectedModelId: (selectedModelId: string | undefined) =>
+        set({ selectedModelId }),
+
+      updatePendingToolApproval: (
+        pendingToolApproval: ChatState["pendingToolApproval"],
+      ) => set({ pendingToolApproval }),
+      resolvePendingToolApproval: (approved: boolean) => {
+        set((state) => {
+          if (state.pendingToolApproval) {
+            state.pendingToolApproval.resolve(approved);
+          }
+          return { pendingToolApproval: undefined };
+        });
+      },
     }),
     {
       name: "ragdoll-chat-storage",
       partialize: (state) =>
         Object.fromEntries(
           Object.entries(state).filter(
-            ([key]) => !excludeFromState.includes(key),
+            ([key]) => !excludeFromState.includes(key as keyof ChatState),
           ),
         ),
     },
   ),
 );
-
-const set = useChatStore.setState;
-
-export const updateSelectedModelId = (id: string | undefined) => {
-  set(() => ({ selectedModelId: id }));
-};
