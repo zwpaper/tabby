@@ -19,7 +19,7 @@ export const AttemptCompletionTool: React.FC<
         <Check className="size-4" />
         Task Completed
       </span>
-      <MessageMarkdown>{result}</MessageMarkdown>
+      <MessageMarkdown className="mt-2">{result}</MessageMarkdown>
     </div>
   );
 };

@@ -452,7 +452,7 @@ function RouteComponent() {
                     <Loader2 className="size-4 animate-spin ml-2" />
                   )}
               </div>
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="ml-1 mt-3 flex flex-col gap-2">
                 {m.parts.map((part, index) => (
                   <Part
                     key={index}
