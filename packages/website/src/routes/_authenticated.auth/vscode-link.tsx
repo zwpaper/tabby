@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/auth/vscode-link")({
       return { error };
     }
 
-    const vscodeUri = new URL("vscode://com.getpochi.vscode");
+    const vscodeUri = new URL("vscode://TabbyML.pochi");
     vscodeUri.searchParams.set("token", data.token);
 
     const uri = new URL(data.approveLink);

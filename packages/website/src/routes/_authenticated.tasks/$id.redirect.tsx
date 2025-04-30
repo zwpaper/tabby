@@ -28,7 +28,7 @@ function RouteComponent() {
   const { id } = Route.useLoaderData();
   const [showManualButton, setShowManualButton] = useState(false);
 
-  const vscodeLink = `vscode://com.getpochi.vscode/?task=${id}`;
+  const vscodeLink = `vscode://TabbyML.pochi/?task=${id}`;
   const openVSCode = useCallback(() => {
     window.open(vscodeLink);
   }, [vscodeLink]);

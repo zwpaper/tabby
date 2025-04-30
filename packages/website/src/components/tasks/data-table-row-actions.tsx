@@ -51,7 +51,7 @@ export function DataTableRowActions<TData>({
   };
 
   function openVSCode() {
-    window.open(`vscode://com.getpochi.vscode/?task=${task.id}`);
+    window.open(`vscode://TabbyML.pochi/?task=${task.id}`);
   }
 
   return (
