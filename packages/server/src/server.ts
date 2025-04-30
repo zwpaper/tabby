@@ -10,6 +10,7 @@ import events, { websocket } from "./api/events";
 import integrations from "./api/integrations";
 import models from "./api/models";
 import tasks from "./api/tasks";
+import upload from "./api/upload";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
 import github from "./github";
@@ -84,6 +85,7 @@ const route = api
   .route("/billing", billing)
   .route("/tasks", tasks)
   .route("/integrations", integrations)
+  .route("/upload", upload)
   .route("/enhancePrompt", enhance);
 
 export type AppType = typeof route;

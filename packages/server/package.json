@@ -9,6 +9,8 @@
     "@ai-sdk/google": "^1.2.3",
     "@ai-sdk/openai": "^1.3.2",
     "@better-auth/stripe": "^1.2.7",
+    "@hono-storage/core": "^0.0.14",
+    "@hono-storage/s3": "^0.0.13",
     "@hono/zod-validator": "^0.4.3",
     "@octokit/app": "^15.1.6",
     "@openrouter/ai-sdk-provider": "^0.4.4",
