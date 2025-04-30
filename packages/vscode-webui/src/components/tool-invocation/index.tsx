@@ -3,6 +3,7 @@ import { isUserInputTool } from "@ragdoll/tools";
 import type { ToolInvocation } from "ai";
 import { useCallback, useEffect, useState } from "react";
 import { useVSCodeTool } from "./hooks/use-vscode-tool";
+import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
 import { readFileTool } from "./tools/read-file";
 import { writeToFileTool } from "./tools/write-to-file";
@@ -11,8 +12,10 @@ import type { ApprovalStatus, ToolProps } from "./types";
 export function ToolInvocationPart({
   tool,
   addToolResult,
+  setInput,
 }: {
   tool: ToolInvocation;
+  setInput: (prompt: string) => void;
   addToolResult: ({
     toolCallId,
     result,
@@ -49,7 +52,7 @@ export function ToolInvocationPart({
   return (
     <div className="flex flex-col gap-1">
       {C ? (
-        <C tool={tool} isExecuting={isExecuting} />
+        <C tool={tool} isExecuting={isExecuting} setInput={setInput} />
       ) : (
         JSON.stringify(tool, null, 2)
       )}
@@ -61,4 +64,5 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   attemptCompletion: AttemptCompletionTool,
   readFile: readFileTool,
   writeToFile: writeToFileTool,
+  askFollowupQuestion: AskFollowupQuestionTool,
 };

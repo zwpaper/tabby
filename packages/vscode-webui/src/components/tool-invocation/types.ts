@@ -23,6 +23,7 @@ export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
     Awaited<ReturnType<ToolFunctionType<T>>> | { error: string }
   >;
   isExecuting: boolean;
+  setInput: (prompt: string) => void;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: external function def.

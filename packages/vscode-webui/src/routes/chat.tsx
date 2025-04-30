@@ -364,6 +364,20 @@ function RouteComponent() {
     }
   }, [status, editor]);
 
+  // Auto focus the editor when the component is mounted
+  useEffect(() => {
+    if (editor) {
+      editor.commands.focus();
+    }
+  }, [editor]);
+
+  const setInputAndFocus = (input: string) => {
+    setInput(input);
+    if (editor) {
+      editor.commands.focus();
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen px-4">
       <div className="flex items-center border-b border-[var(--border)] mb-4 py-2">
@@ -435,6 +449,7 @@ function RouteComponent() {
                     message={m}
                     part={part}
                     addToolResult={addToolResult}
+                    setInput={setInputAndFocus}
                   />
                 ))}
               </div>
@@ -496,6 +511,7 @@ function Part({
   message,
   part,
   addToolResult,
+  setInput,
 }: {
   message: Message;
   part: NonNullable<Message["parts"]>[number];
@@ -506,6 +522,7 @@ function Part({
     toolCallId: string;
     result: unknown;
   }) => void;
+  setInput: (prompt: string) => void;
 }) {
   if (part.type === "text") {
     return <TextPartUI message={message} part={part} />;
@@ -520,6 +537,7 @@ function Part({
       <ToolInvocationPart
         tool={part.toolInvocation}
         addToolResult={addToolResult}
+        setInput={setInput}
       />
     );
   }
