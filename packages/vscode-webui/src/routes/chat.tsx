@@ -20,8 +20,8 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import type { TextPart } from "ai";
 import {
   ArrowLeftIcon,
-  ArrowRightIcon,
   Loader2,
+  SendHorizonal,
   StopCircleIcon,
 } from "lucide-react";
 import {
@@ -39,7 +39,6 @@ import {
   type MentionListActions,
   type MentionListProps,
 } from "@/components/prompt-form/mention-list";
-import type { CommandProps } from "@/components/prompt-form/types";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -294,29 +293,6 @@ function RouteComponent() {
     }
   }, [editor, input]);
 
-  const onInsertMention = () => {
-    if (!editor) return;
-
-    editor
-      .chain()
-      .focus()
-      .command(({ tr, state }: CommandProps) => {
-        const { $from } = state.selection;
-        const isAtLineStart = $from.parentOffset === 0;
-        const isPrecededBySpace =
-          $from.nodeBefore?.text?.endsWith(" ") ?? false;
-
-        if (isAtLineStart || isPrecededBySpace) {
-          tr.insertText("@");
-        } else {
-          tr.insertText(" @");
-        }
-
-        return true;
-      })
-      .run();
-  };
-
   const focusEditor = () => {
     if (editor && !editor.isFocused) {
       editor.commands.focus();
@@ -423,7 +399,7 @@ function RouteComponent() {
       </div>
       <div className="text-destructive">{error?.message}</div>
       <div
-        className="flex-1 overflow-y-auto mb-4 space-y-4"
+        className="flex-1 overflow-y-auto mb-2 space-y-4"
         ref={messagesContainerRef}
       >
         {renderMessages.map((m, index) => (
@@ -471,7 +447,7 @@ function RouteComponent() {
       <form
         ref={formRef}
         onSubmit={handleSubmit}
-        className="bg-input p-2 rounded-sm border border-[var(--input-border)] focus-within:border-ring transition-color duration-300"
+        className="bg-input p-1 rounded-sm border border-[var(--input-border)] focus-within:border-ring transition-color duration-300"
         onClick={(e) => {
           e.stopPropagation();
           focusEditor();
@@ -480,48 +456,38 @@ function RouteComponent() {
       >
         <EditorContent
           editor={editor}
-          className="max-h-32 w-full overflow-y-auto prose overflow-hidden break-words text-[var(--vscode-input-foreground)] focus:outline-none !border-none"
+          className="min-h-20 max-h-32 w-full overflow-y-auto prose overflow-hidden break-words text-[var(--vscode-input-foreground)] focus:outline-none !border-none"
         />
-        <div className="flex justify-between items-center pt-2 gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            className="h-6 w-6"
-            onClick={onInsertMention}
-          >
-            @
-          </Button>
-          <div className="flex items-center gap-2">
-            <ModelSelect
-              value={selectedModel?.id}
-              models={models}
-              isLoading={isModelsLoading}
-              onChange={handleSelectModel}
-              triggerClassName="py-0 h-6"
-            />
-            <Button
-              type="button"
-              size="icon"
-              disabled={isModelsLoading || (!isLoading && !input)}
-              className="p-0 h-6 w-6 rounded-md transition-opacity"
-              onClick={() => {
-                if (isLoading) {
-                  stop();
-                } else {
-                  formRef.current?.requestSubmit();
-                }
-              }}
-            >
-              {isLoading ? (
-                <StopCircleIcon className="h-3 w-3" />
-              ) : (
-                <ArrowRightIcon className="h-3 w-3" />
-              )}
-            </Button>
-          </div>
-        </div>
       </form>
+      <div className="flex mb-2 justify-between items-center pt-2 gap-3">
+        <ModelSelect
+          value={selectedModel?.id}
+          models={models}
+          isLoading={isModelsLoading}
+          onChange={handleSelectModel}
+          triggerClassName="py-0 h-6"
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={isModelsLoading || (!isLoading && !input)}
+          className="p-0 h-6 w-6 rounded-md transition-opacity"
+          onClick={() => {
+            if (isLoading) {
+              stop();
+            } else {
+              formRef.current?.requestSubmit();
+            }
+          }}
+        >
+          {isLoading ? (
+            <StopCircleIcon className="size-4" />
+          ) : (
+            <SendHorizonal className="size-4" />
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
