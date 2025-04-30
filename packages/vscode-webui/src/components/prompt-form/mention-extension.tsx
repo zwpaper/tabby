@@ -35,9 +35,9 @@ export const PromptFormMentionExtension = Mention.extend({
     return ReactNodeViewRenderer(MentionComponent);
   },
 
-  // When exported as plain text, use a placeholder format
+  // When exported as plain text, use XML tag format
   renderText({ node }) {
-    return `[file:${node.attrs.filepath}]`;
+    return `<file>${node.attrs.filepath}</file>`;
   },
 
   // Defines custom attributes for the mention node

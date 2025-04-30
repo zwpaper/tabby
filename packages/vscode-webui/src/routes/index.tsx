@@ -1,9 +1,13 @@
 import { buttonVariants } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
+import { CustomHtmlTags } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Link, type ReactNode, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
+import type { Parent, Root, Text } from "mdast";
+import { remark } from "remark";
+import remarkStringify from "remark-stringify";
 
 export const Route = createFileRoute("/")({
   component: App,
@@ -63,7 +67,7 @@ function App() {
                     {formatTaskId(task.id)}
                   </span>
                   <div className="text-foreground">
-                    <p>{processTitle(task.title)}</p>
+                    <p>{processTitle(task.title, CustomHtmlTags)}</p>
                   </div>
                 </div>
               </Link>
@@ -79,30 +83,62 @@ function formatTaskId(id: number) {
   return `TASK-${Number(id).toString().padStart(3, "0")}`;
 }
 
-function processTitle(title: string): ReactNode | string {
-  // Regex to match [file:path] pattern
-  const FILE_REGEX = /\[file:([^\]]+)\]/g;
-  const elements: ReactNode[] = [];
-  let lastIndex = 0;
-  let matchResult: RegExpExecArray | null;
+function processTitle(title: string, tagNames: string[]) {
+  const ast = remark().parse(title);
+  removePairedHtmlTags(ast, tagNames);
 
-  // Using a while loop to process all matches
-  while (true) {
-    matchResult = FILE_REGEX.exec(title);
-    if (matchResult === null) break;
+  return remark()
+    .use(remarkStringify, {
+      emphasis: "*",
+      handlers: {
+        text: (node: Text) => node.value,
+      },
+    })
+    .stringify(ast)
+    .trim();
+}
 
-    if (matchResult.index > lastIndex) {
-      elements.push(title.slice(lastIndex, matchResult.index));
+function removePairedHtmlTags(ast: Root, tagnames: string[] = []) {
+  function processNode(node: Parent) {
+    if (node.children) {
+      const stack: { tag: string; index: number }[] = [];
+      const toRemove = new Set();
+
+      node.children.forEach((child, index) => {
+        if (child.type === "html") {
+          const match = child.value.match(/^<\/?([a-zA-Z]+)[^>]*>$/);
+          if (match) {
+            const isClosing = match[0].startsWith("</");
+            const tagName = match[1];
+
+            if (tagnames.includes(tagName)) {
+              if (isClosing) {
+                // match closing tag
+                if (
+                  stack.length > 0 &&
+                  stack[stack.length - 1].tag === tagName
+                ) {
+                  const start = stack.pop();
+                  if (start) {
+                    toRemove.add(start.index);
+                    toRemove.add(index);
+                  }
+                }
+              } else {
+                stack.push({ tag: tagName, index });
+              }
+            }
+          }
+        }
+      });
+
+      node.children = node.children.filter((_, i) => !toRemove.has(i));
+
+      for (const child of node.children) {
+        processNode(child as Parent);
+      }
     }
-
-    const filepath = matchResult[1];
-    elements.push(<span key={matchResult.index}>{filepath}</span>);
-    lastIndex = matchResult.index + matchResult[0].length;
   }
 
-  if (lastIndex < title.length) {
-    elements.push(title.slice(lastIndex));
-  }
-
-  return elements.length > 1 ? <>{elements}</> : title;
+  processNode(ast);
 }

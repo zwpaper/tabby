@@ -24,11 +24,13 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
     <button
       type="button"
       onClick={onClick}
-      className="text-zinc-400 text-xs border border-zinc-600 rounded-sm px-1 inline-flex items-center gap-1 active:bg-zinc-700"
+      className="text-zinc-400 active:bg-zinc-700 text-xs border border-zinc-600 rounded-sm px-1 inline-flex items-center align-middle gap-1 leading-normal"
     >
       <File className="size-3" />
-      {path}
-      {lineRange}
+      <span className="flex-shrink-0 align-middle">
+        {path}
+        {lineRange}
+      </span>
     </button>
   );
 };
