@@ -1,8 +1,8 @@
 {
   "name": "pochi",
   "version": "0.0.1",
-  "description": "Ragdoll",
-  "displayName": "Ragdoll",
+  "description": "Pochi",
+  "displayName": "Pochi",
   "publisher": "TabbyML",
   "icon": "assets/icons/logo128.png",
   "main": "./dist/extension.js",
@@ -14,7 +14,7 @@
         {
           "id": "ragdollWebui",
           "type": "webview",
-          "name": "Ragdoll"
+          "name": "Pochi"
         }
       ]
     },
@@ -22,7 +22,7 @@
       "activitybar": [
         {
           "id": "ragdoll",
-          "title": "Ragdoll",
+          "title": "Pochi",
           "icon": "assets/icons/terminal.svg"
         }
       ]
@@ -31,12 +31,12 @@
       {
         "command": "ragdoll.accountSettings",
         "title": "Account Settings",
-        "category": "Ragdoll"
+        "category": "Pochi"
       },
       {
         "command": "ragdoll.openLoginPage",
         "title": "Open Login Page",
-        "category": "Ragdoll"
+        "category": "Pochi"
       }
     ],
     "menus": {

@@ -183,7 +183,7 @@ class Ragdoll implements WebviewViewProvider {
         <!-- ${new Date()} -->
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Ragdoll</title>
+        <title>Pochi</title>
         <style>body { padding: 0; margin: 0; }</style>
         ${headElements.join("\n")}
       </head>
