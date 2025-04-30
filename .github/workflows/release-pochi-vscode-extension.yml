@@ -1,0 +1,31 @@
+name: Release Pochi VSCode Extension
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'vscode@*'
+
+concurrency:
+  group: ${{ github.workflow_ref }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  publish-vscode:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Bun Install
+        run: bun install
+
+      - name: Publish
+        run: cd packages/vscode && bun run $(bun scripts/publish.cjs)
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

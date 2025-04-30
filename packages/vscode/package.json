@@ -1,6 +1,6 @@
 {
   "name": "pochi",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Pochi",
   "displayName": "Pochi",
   "publisher": "TabbyML",
@@ -76,6 +76,7 @@
     "@ragdoll/vscode-webui-bridge": "workspace:*",
     "@types/vscode": "^1.82.0",
     "@vscode/vsce": "^3.3.2",
-    "cpy-cli": "^5.0.0"
+    "cpy-cli": "^5.0.0",
+    "semver": "^7.7.1"
   }
 }
