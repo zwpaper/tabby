@@ -23,31 +23,19 @@ export function ToolInvocationPart({
 }) {
   const { state } = tool;
   const userInputTool = isUserInputTool(tool.toolName);
-  const { pendingToolApproval, updatePendingToolApproval } = useChatStore();
+  const { updatePendingToolApproval } = useChatStore();
   const [approvalStatus, setApprovalStatus] =
     useState<ApprovalStatus>("pending");
 
   useEffect(() => {
-    if (
-      state === "call" &&
-      !userInputTool &&
-      pendingToolApproval === undefined &&
-      approvalStatus === "pending"
-    ) {
+    if (state === "call" && !userInputTool && approvalStatus === "pending") {
       updatePendingToolApproval({
         tool,
         resolve: (approved) =>
           setApprovalStatus(approved ? "approved" : "rejected"),
       });
     }
-  }, [
-    state,
-    userInputTool,
-    pendingToolApproval,
-    approvalStatus,
-    tool,
-    updatePendingToolApproval,
-  ]);
+  }, [state, userInputTool, approvalStatus, tool, updatePendingToolApproval]);
 
   const onResult = useCallback(
     (result: unknown) => {
