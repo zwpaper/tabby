@@ -2,6 +2,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { HonoS3Storage } from "@hono-storage/s3";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
+import { requireAuth } from "../auth";
 
 const app = new Hono();
 export default app;
@@ -23,8 +24,10 @@ const storage = new HonoS3Storage({
   client,
 });
 
+// FIXME: add rate limiter https://github.com/rhinobase/hono-rate-limiter
 app.post(
   "/",
+  requireAuth,
   bodyLimit({
     maxSize: 1024 * 1024 * 10, // 10Mb
     onError: (c) => c.text("overflow :(", 413),
