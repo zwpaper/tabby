@@ -1,7 +1,7 @@
 import type { AuthClient } from "@/lib/auth-client";
 import * as vscode from "vscode";
 
-const label = "Ragdoll";
+const label = "Pochi";
 const iconCheck = "$(check)";
 const iconCross = "$(x)";
 const fgColorNormal = new vscode.ThemeColor("statusBar.foreground");
