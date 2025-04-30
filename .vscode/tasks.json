@@ -6,7 +6,7 @@
     {
       "type": "shell",
       "label": "watch-vscode",
-      "command": "bun --filter 'vscode' watch",
+      "command": "bun --filter 'pochi' watch",
       "group": {
         "kind": "none",
         "isDefault": true

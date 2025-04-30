@@ -12,6 +12,16 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: false,
+        inlineDynamicImports: true,
+        entryFileNames: "[name].js",
+        assetFileNames: "[name].[ext]",
+      },
+    },
+  },
   test: {
     globals: true,
     environment: "jsdom",

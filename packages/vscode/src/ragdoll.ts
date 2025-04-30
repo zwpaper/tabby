@@ -108,30 +108,52 @@ class Ragdoll implements WebviewViewProvider {
   }
 
   private getHtmlForWebview(webview: Webview) {
-    const file = "src/main.tsx";
-    const localPort = "4112";
-    const localServerUrl = `localhost:${localPort}`;
-
-    // The CSS file from the React build output
-    let scriptUri: Uri;
     const isProd = Extension.getInstance().isProductionMode;
+
     if (isProd) {
-      // FIXME: this need to be fixed
-      scriptUri = getUri(webview, this.extensionUri, [
-        "webview-ui",
-        "build",
+      const nonce = getNonce();
+
+      const scriptUri = getUri(webview, this.extensionUri, [
         "assets",
+        "webview-ui",
+        "dist",
         "index.js",
       ]);
-    } else {
-      scriptUri = Uri.parse(`http://${localServerUrl}/${file}`);
+      const script = `<script nonce="${nonce}" type="module" src="${scriptUri}"></script>`;
+
+      const styleUri = getUri(webview, this.extensionUri, [
+        "assets",
+        "webview-ui",
+        "dist",
+        "index.css",
+      ]);
+      const style = `<link rel="stylesheet" href="${styleUri}">`;
+
+      const csp = [
+        `default-src 'none';`,
+        `img-src ${webview.cspSource} https://*`,
+        `script-src 'nonce-${nonce}'`,
+        `style-src ${webview.cspSource}`,
+        `font-src ${webview.cspSource}`,
+        `connect-src ${getServerBaseUrl()}`,
+      ];
+      const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
+
+      return this.buildHtml([cspHeader, style], [script]);
     }
 
-    const nonce = getNonce();
+    const devWebUIPort = "4112";
+    const devWebUIHttpBaseUrl = `http://localhost:${devWebUIPort}`;
+    const devWebUIHttpBaseUrlIp = `http://0.0.0.0:${devWebUIPort}`;
+    const devWebUIWsBaseUrl = `ws://localhost:${devWebUIPort}`;
+    const devWebUIWsBaseUrlIp = `ws://0.0.0.0:${devWebUIPort}`;
+
+    const scriptUri = Uri.parse(`${devWebUIHttpBaseUrl}/src/main.tsx`);
+    const script = `<script type="module" src="${scriptUri}"></script>`;
 
     const reactRefresh = /*html*/ `
       <script type="module">
-        import RefreshRuntime from "http://localhost:${localPort}/@react-refresh"
+        import RefreshRuntime from "${devWebUIHttpBaseUrl}/@react-refresh"
         RefreshRuntime.injectIntoGlobalHook(window)
         window.$RefreshReg$ = () => {}
         window.$RefreshSig$ = () => (type) => type
@@ -143,39 +165,31 @@ class Ragdoll implements WebviewViewProvider {
 
     const csp = [
       `default-src 'none';`,
-      `img-src https://* ${
-        isProd
-          ? `'nonce-${nonce}'`
-          : `http://${localServerUrl} http://0.0.0.0:${localPort}`
-      }`,
-      `script-src 'unsafe-eval' https://* ${
-        isProd
-          ? `'nonce-${nonce}'`
-          : `http://${localServerUrl} http://0.0.0.0:${localPort} '${reactRefreshHash}'`
-      }`,
-      `style-src ${webview.cspSource} 'self' 'unsafe-inline' https://*`,
+      `img-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} https://*`,
+      `script-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} '${reactRefreshHash}' 'unsafe-eval'`,
+      `style-src ${webview.cspSource} 'self' 'unsafe-inline'`,
       `font-src ${webview.cspSource}`,
-      `connect-src https://* ${
-        isProd
-          ? ""
-          : `ws://${localServerUrl} ws://0.0.0.0:${localPort} http://${localServerUrl} http://0.0.0.0:${localPort} ${getServerBaseUrl()}`
-      }`,
+      `connect-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} ${devWebUIWsBaseUrl} ${devWebUIWsBaseUrlIp} ${getServerBaseUrl()}`,
     ];
+    const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
+    return this.buildHtml([cspHeader], [reactRefresh, script]);
+  }
+
+  private buildHtml(headElements: string[], bodyElements: string[]): string {
     return /*html*/ `<!DOCTYPE html>
     <html lang="en">
       <head>
         <!-- ${new Date()} -->
         <meta charset="UTF-8" />
-        <meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Ragdoll</title>
         <style>body { padding: 0; margin: 0; }</style>
+        ${headElements.join("\n")}
       </head>
       <body>
         <div id="app"></div>
-        ${isProd ? "" : reactRefresh}
-        <script type="module" src="${scriptUri}"></script>
+        ${bodyElements.join("\n")}
       </body>
     </html>`;
   }
