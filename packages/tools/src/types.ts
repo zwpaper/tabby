@@ -19,19 +19,21 @@ export function defineClientTool<
   });
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: template matching.
-type ToolInputType<T extends Tool<any, any>> = z.infer<T["parameters"]>;
+type ToolInputType<T extends Tool> = z.infer<T["parameters"]>;
 
-// biome-ignore lint/suspicious/noExplicitAny: template matching.
-type ToolOutputType<T extends Tool<any, any>> = z.infer<
+type ToolOutputType<T extends Tool> = z.infer<
   Awaited<ReturnType<NonNullable<T["execute"]>>>
 >;
 
-// biome-ignore lint/suspicious/noExplicitAny: template matching.
-export type ToolFunctionType<T extends Tool<any, any>> = (
+export type ToolFunctionType<T extends Tool> = (
   args: ToolInputType<T>,
   options: ToolExecutionOptions,
 ) => Promise<ToolOutputType<T>>;
+
+export type PreviewToolFunctionType<T extends Tool> = (
+  args: Partial<ToolInputType<T>>,
+  options: ToolExecutionOptions,
+) => void;
 
 export function defineServerTool<
   PARAMETERS extends z.ZodTypeAny,

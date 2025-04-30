@@ -9,12 +9,12 @@ import {
 } from "@quilted/threads";
 import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
+import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
 import { workspace } from "vscode";
 import { executeCommand } from "./tools/execute-command";
 import { readFile } from "./tools/read-file";
 import { searchFiles } from "./tools/search-files";
-import type { PreviewToolFunctionType } from "./tools/types";
 import { previewWriteToFile } from "./tools/write-to-file";
 
 export default class VSCodeHostImpl implements VSCodeHostApi {
@@ -102,7 +102,8 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     }
 
     const abortSignal = new ThreadAbortSignal(options.abortSignal);
-    return tool(args, {
+    // biome-ignore lint/suspicious/noExplicitAny: external call without type information
+    return tool(args as any, {
       abortSignal,
       toolCallId: options.toolCallId,
       messages: [],
