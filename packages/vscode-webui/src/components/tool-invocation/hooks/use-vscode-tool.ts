@@ -54,7 +54,12 @@ export function useVSCodeTool(
             abortSignal: abortSignal.current,
           }),
         )
-        .then(wrappedOnResult);
+        .then(wrappedOnResult)
+        .catch((error) => {
+          wrappedOnResult({
+            error: `Error executing tool call: ${error?.message}`,
+          });
+        });
     }
   }, [approvalStatus, args, toolName, toolCallId, wrappedOnResult]);
 

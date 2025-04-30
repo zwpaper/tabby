@@ -6,6 +6,7 @@ import { useVSCodeTool } from "./hooks/use-vscode-tool";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
 import { readFileTool } from "./tools/read-file";
+import { searchFilesTool } from "./tools/search-files";
 import { writeToFileTool } from "./tools/write-to-file";
 import type { ApprovalStatus, ToolProps } from "./types";
 
@@ -65,4 +66,5 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   readFile: readFileTool,
   writeToFile: writeToFileTool,
   askFollowupQuestion: AskFollowupQuestionTool,
+  searchFiles: searchFilesTool,
 };

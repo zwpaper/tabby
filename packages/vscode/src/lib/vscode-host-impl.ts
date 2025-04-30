@@ -12,6 +12,7 @@ import type { ToolFunctionType } from "@ragdoll/tools";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
 import { workspace } from "vscode";
 import { readFile } from "./tools/read-file";
+import { searchFiles } from "./tools/search-files";
 import type { PreviewToolFunctionType } from "./tools/types";
 import { previewWriteToFile } from "./tools/write-to-file";
 
@@ -122,6 +123,7 @@ const ToolMap: Record<
   ToolFunctionType<any>
 > = {
   readFile,
+  searchFiles,
 };
 
 const ToolPreviewMap: Record<
