@@ -96,7 +96,7 @@ function processTitle(title: string): ReactNode | string {
     }
 
     const filepath = matchResult[1];
-    elements.push(<span key={matchResult.index}>@{filepath}</span>);
+    elements.push(<span key={matchResult.index}>{filepath}</span>);
     lastIndex = matchResult.index + matchResult[0].length;
   }
 
