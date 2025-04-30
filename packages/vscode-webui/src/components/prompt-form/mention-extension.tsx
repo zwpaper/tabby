@@ -13,14 +13,10 @@ export const MentionComponent = (props: NodeViewProps) => {
   const { node } = props;
   const { filepath } = node.attrs;
 
-  // Extract basename for display
-  const separator = filepath.includes("\\") ? "\\" : "/";
-  const basename = filepath.split(separator).pop() || filepath;
-
   return (
     <NodeViewWrapper as="span" className="rounded-sm px-1">
       <span className="space-x-0.5 whitespace-nowrap rounded bg-muted px-1.5 py-0.5 align-middle text-sm font-medium text-foreground">
-        @{basename}
+        {filepath}
       </span>
     </NodeViewWrapper>
   );

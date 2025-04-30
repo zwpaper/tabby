@@ -64,7 +64,6 @@ export function MessageMarkdown({
         components={{
           file: (props: FileComponentProps) => {
             const { children } = props;
-            console.log(props);
             const filepath = String(children);
             return <FileBadge path={filepath} />;
           },
