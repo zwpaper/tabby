@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useVSCodeTool } from "./hooks/use-vscode-tool";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
+import { executeCommandTool } from "./tools/execute-command";
 import { readFileTool } from "./tools/read-file";
 import { searchFilesTool } from "./tools/search-files";
 import { writeToFileTool } from "./tools/write-to-file";
@@ -20,10 +21,7 @@ export function ToolInvocationPart({
   addToolResult: ({
     toolCallId,
     result,
-  }: {
-    toolCallId: string;
-    result: unknown;
-  }) => void;
+  }: { toolCallId: string; result: unknown }) => void;
 }) {
   const { state } = tool;
   const userInputTool = isUserInputTool(tool.toolName);
@@ -66,5 +64,6 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   readFile: readFileTool,
   writeToFile: writeToFileTool,
   askFollowupQuestion: AskFollowupQuestionTool,
+  executeCommand: executeCommandTool,
   searchFiles: searchFilesTool,
 };

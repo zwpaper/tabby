@@ -577,6 +577,7 @@ function ApprovalButton({ show }: { show: boolean }) {
 
   const ToolAcceptText: Record<string, string> = {
     writeToFile: "Save",
+    executeCommand: "Run",
   };
 
   const acceptText =

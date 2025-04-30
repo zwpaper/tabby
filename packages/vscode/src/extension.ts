@@ -1,14 +1,14 @@
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { Extension } from "./helpers/extension";
 import RagdollUriHandler from "./helpers/uri-handler";
 import { createAuthClient } from "./lib/auth-client";
 import { init as InitListFile } from "./lib/file-utils";
 import { TokenStorage } from "./lib/token-storage";
+import { initExecuteCommandTool } from "./lib/tools/execute-command";
 import Ragdoll from "./ragdoll";
 import createStatusBarItem from "./status-bar";
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
@@ -22,6 +22,9 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.registerUriHandler(ragdollUriHandler),
   );
+
+  // init execute command tool
+  context.subscriptions.push(initExecuteCommandTool());
 
   const logoutEvent = new vscode.EventEmitter<void>();
   const authEvents = {
