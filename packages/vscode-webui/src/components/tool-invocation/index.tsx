@@ -8,6 +8,7 @@ import { useVSCodeTool } from "./hooks/use-vscode-tool";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
 import { executeCommandTool } from "./tools/execute-command";
+import { listFilesTool } from "./tools/list-files";
 import { readFileTool } from "./tools/read-file";
 import { searchFilesTool } from "./tools/search-files";
 import { writeToFileTool } from "./tools/write-to-file";
@@ -74,6 +75,7 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   askFollowupQuestion: AskFollowupQuestionTool,
   executeCommand: executeCommandTool,
   searchFiles: searchFilesTool,
+  listFiles: listFilesTool,
 };
 
 export function AutoRejectTool({

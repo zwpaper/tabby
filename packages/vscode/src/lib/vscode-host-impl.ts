@@ -11,8 +11,9 @@ import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
 import { workspace } from "vscode";
-import { listFiles } from "./list-files";
+import { DEFAULT_MAX_FILES, listFiles } from "./list-files";
 import { executeCommand } from "./tools/execute-command";
+import { listFiles as listFilesTool } from "./tools/list-files";
 import { readFile } from "./tools/read-file";
 import { searchFiles } from "./tools/search-files";
 import { previewWriteToFile } from "./tools/write-to-file";
@@ -34,11 +35,19 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     return this.tokenStorage.setToken(token);
   }
 
-  private readonly DEFAULT_MAX_FILES: number = 500;
   async readEnvironment(customRuleFiles: string[] = []): Promise<Environment> {
-    const files = (await listFiles(undefined, this.DEFAULT_MAX_FILES)).map(
-      (res) => res.uri.fsPath,
-    );
+    const workspaceFolders = workspace.workspaceFolders;
+    let files: string[] = [];
+    if (!workspaceFolders?.length) {
+      files = [];
+    } else {
+      files = (
+        await listFiles({
+          startPath: workspaceFolders[0].uri,
+          resultLimit: DEFAULT_MAX_FILES,
+        })
+      ).map((res) => res.uri.fsPath);
+    }
 
     const customRules = await collectCustomRules(customRuleFiles);
 
@@ -48,7 +57,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       currentTime: new Date().toString(),
       workspace: {
         files,
-        isTruncated: files.length >= this.DEFAULT_MAX_FILES,
+        isTruncated: files.length >= DEFAULT_MAX_FILES,
       },
       info: {
         ...systemInfo,
@@ -62,8 +71,18 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
   async listFilesInWorkspace(param: { query: string; limit?: number }): Promise<
     string[]
   > {
+    const workspaceFolders = workspace.workspaceFolders;
+    if (!workspaceFolders?.length || !workspaceFolders[0]) {
+      return [];
+    }
+
     const { query, limit } = param;
-    const results = await listFiles(query, limit);
+    const results = await listFiles({
+      startPath: workspaceFolders[0].uri,
+      query,
+      resultLimit: limit,
+      withSearch: true,
+    });
     return results.map((item) => workspace.asRelativePath(item.uri));
   }
 
@@ -140,6 +159,7 @@ const ToolMap: Record<
   readFile,
   executeCommand,
   searchFiles,
+  listFiles: listFilesTool,
 };
 
 const ToolPreviewMap: Record<

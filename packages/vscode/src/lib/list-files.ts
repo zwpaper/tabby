@@ -5,13 +5,12 @@ import * as vscode from "vscode";
 import { getLogger } from "./logger";
 
 import Fuse, { type FuseResult, type IFuseOptions } from "fuse.js";
-const logger = getLogger("listFiles");
+const logger = getLogger("listFilesLib");
+
+export const DEFAULT_MAX_FILES: number = 500;
 
 export interface FileResult {
   uri: vscode.Uri;
-}
-
-interface FileObject {
   relativePath: string;
   fullPath: string;
   basename: string;
@@ -54,23 +53,27 @@ interface IgnoreInfo {
  * @param startUri Starting directory URI
  * @param baseIg Base ignore instance
  * @param searchLimit Maximum number of files to search
+ * @param recursive Whether to traverse directories recursively
  * @param token Optional cancellation token
  * @returns Array of file objects with relative paths and metadata
  */
-async function traverseBFSwithGitIgnore(
+export async function traverseBFSwithGitIgnore(
   startUri: vscode.Uri,
-  baseIg: Ignore,
-  searchLimit: number,
+  baseIg: Ignore = ignore().add(".git"),
+  searchLimit = 10000,
+  recursive = true,
   token?: vscode.CancellationToken,
-): Promise<FileObject[]> {
-  const scannedFileObjects: FileObject[] = [];
+): Promise<FileResult[]> {
+  const scannedFileResults: FileResult[] = [];
   let fileScannedCount = 0;
   const processedDirs = new Set<string>();
   const queue: Array<IgnoreInfo> = [{ uri: startUri, ignoreInstance: baseIg }];
 
   const rootDir = startUri.fsPath;
 
-  logger.debug(`Starting traversal from ${rootDir} with limit ${searchLimit}`);
+  logger.debug(
+    `Starting traversal from ${rootDir} with limit ${searchLimit}, recursive: ${recursive}`,
+  );
 
   if (token?.isCancellationRequested) {
     return [];
@@ -101,7 +104,7 @@ async function traverseBFSwithGitIgnore(
 
       for (const [name, type] of entries) {
         if (token?.isCancellationRequested) {
-          return scannedFileObjects;
+          return scannedFileResults;
         }
 
         const entryUri = vscode.Uri.joinPath(currentUri, name);
@@ -114,16 +117,31 @@ async function traverseBFSwithGitIgnore(
         }
 
         if (type === vscode.FileType.Directory) {
-          if (!processedDirs.has(fullPath)) {
+          if (recursive && !processedDirs.has(fullPath)) {
             queue.push({ uri: entryUri, ignoreInstance: directoryIg });
+          }
+
+          if (!recursive) {
+            fileScannedCount++;
+            scannedFileResults.push({
+              uri: entryUri,
+              relativePath,
+              fullPath,
+              basename: name.toLowerCase(),
+            });
+
+            if (fileScannedCount >= searchLimit) {
+              return scannedFileResults;
+            }
           }
         } else if (type === vscode.FileType.File) {
           if (fileScannedCount >= searchLimit) {
-            return scannedFileObjects;
+            return scannedFileResults;
           }
 
           fileScannedCount++;
-          scannedFileObjects.push({
+          scannedFileResults.push({
+            uri: entryUri,
             relativePath,
             fullPath,
             basename: name.toLowerCase(),
@@ -137,9 +155,9 @@ async function traverseBFSwithGitIgnore(
   }
 
   logger.debug(
-    `Completed traversal, found ${scannedFileObjects.length} files out of ${fileScannedCount} scanned`,
+    `Completed traversal, found ${scannedFileResults.length} files out of ${fileScannedCount} scanned`,
   );
-  return scannedFileObjects;
+  return scannedFileResults;
 }
 
 /**
@@ -151,14 +169,14 @@ async function traverseBFSwithGitIgnore(
  */
 function fuzzySearch(
   query: string,
-  files: ReadonlyArray<FileObject>,
-  fuseOptions?: IFuseOptions<FileObject>,
-): FuseResult<FileObject>[] {
+  files: ReadonlyArray<FileResult>,
+  fuseOptions?: IFuseOptions<FileResult>,
+): FuseResult<FileResult>[] {
   if (!query || !query.trim()) {
     return files.map((item) => ({ item, score: 0, refIndex: 0 }));
   }
 
-  const defaultOptions: IFuseOptions<FileObject> = {
+  const defaultOptions: IFuseOptions<FileResult> = {
     keys: [
       { name: "basename", weight: 0.7 },
       { name: "relativePath", weight: 0.3 },
@@ -180,37 +198,73 @@ function fuzzySearch(
   return fuse.search(trimmedQuery);
 }
 
+export interface ListFilesOptions {
+  startPath: string | vscode.Uri;
+
+  /**
+   * Optional search query
+   */
+  query?: string;
+
+  /**
+   * Maximum number of results to return
+   */
+  resultLimit?: number;
+
+  /**
+   * Maximum number of files to scan
+   */
+  scanLimit?: number;
+
+  /**
+   * Whether to traverse directories recursively
+   */
+  recursive?: boolean;
+
+  /**
+   * Optional cancellation token
+   */
+  token?: vscode.CancellationToken;
+
+  /**
+   * Whether to apply fuzzy search to the file results
+   * @default false
+   */
+  withSearch?: boolean;
+}
+
 /**
  * Lists files in the workspace with optional fuzzy search filtering
- * @param query Optional search string for fuzzy matching
- * @param resultLimit Maximum number of results to return
- * @param token Optional cancellation token
- * @param scanLimit Maximum number of files to scan
+ * @param options ListFilesOptions object containing startPath, query, resultLimit, scanLimit, recursive, and token
  * @returns Array of file results with URIs
  */
 export async function listFiles(
-  query?: string,
-  resultLimit = 30,
-  token?: vscode.CancellationToken,
-  scanLimit = 10000,
+  options: ListFilesOptions,
 ): Promise<FileResult[]> {
-  const workspaceFolders = vscode.workspace.workspaceFolders;
-  if (!workspaceFolders?.length) {
-    logger.debug("No workspace folders found");
-    return [];
-  }
+  const {
+    startPath,
+    query,
+    resultLimit = 30,
+    scanLimit = 10000,
+    recursive = true,
+    token,
+    withSearch = false,
+  } = options;
 
   const queryString = query?.trim().toLowerCase();
-  const rootFolder = workspaceFolders[0];
+
+  const startUri =
+    typeof startPath === "string" ? vscode.Uri.file(startPath) : startPath;
 
   const ig = ignore().add(".git");
 
   const startTime = Date.now();
 
   const allFiles = await traverseBFSwithGitIgnore(
-    rootFolder.uri,
+    startUri,
     ig,
     scanLimit,
+    recursive,
     token,
   );
 
@@ -224,18 +278,22 @@ export async function listFiles(
     return [];
   }
 
-  const processedFiles = queryString
-    ? fuzzySearch(queryString, allFiles).map((result) => result.item)
-    : allFiles.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
-  const limitedResults = processedFiles.slice(0, resultLimit);
-  const results = limitedResults.map((file) => ({
-    uri: vscode.Uri.file(file.fullPath),
-  }));
+  let processedFiles = allFiles;
+
+  // Only apply fuzzy search if withSearch is true and we have a query
+  if (queryString && withSearch) {
+    processedFiles = fuzzySearch(queryString, allFiles).map(
+      (result) => result.item,
+    );
+  }
+  // When no query and withSearch is false, keep original BFS order (no sorting)
+
+  const res = processedFiles.slice(0, resultLimit);
 
   const totalTime = Date.now() - startTime;
   logger.debug(
-    `File listing completed in ${totalTime}ms, returning ${results.length} results`,
+    `File listing completed in ${totalTime}ms, returning ${res.length} results`,
   );
 
-  return results;
+  return res;
 }
