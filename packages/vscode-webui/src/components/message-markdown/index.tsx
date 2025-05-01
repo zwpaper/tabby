@@ -39,7 +39,7 @@ export function MessageMarkdown({
   return (
     <div
       className={cn(
-        "prose max-w-none break-words dark:prose-invert prose-p:leading-relaxed prose-p:my-0 prose-ol:my-0 prose-ul:my-0 prose-pre:mt-1 prose-pre:p-0",
+        "prose max-w-none break-words dark:prose-invert prose-p:leading-relaxed prose-p:my-0 prose-ol:my-0 prose-li:my-0 prose-ul:my-0 prose-pre:mt-1 prose-pre:p-0",
         className,
       )}
     >
