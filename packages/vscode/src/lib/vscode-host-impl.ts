@@ -13,6 +13,7 @@ import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
 import { workspace } from "vscode";
 import { DEFAULT_MAX_FILES, listFiles } from "./list-files";
 import { executeCommand } from "./tools/execute-command";
+import { globFiles } from "./tools/glob-files";
 import { listFiles as listFilesTool } from "./tools/list-files";
 import { readFile } from "./tools/read-file";
 import { searchFiles } from "./tools/search-files";
@@ -160,6 +161,7 @@ const ToolMap: Record<
   executeCommand,
   searchFiles,
   listFiles: listFilesTool,
+  globFiles,
 };
 
 const ToolPreviewMap: Record<

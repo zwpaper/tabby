@@ -8,6 +8,7 @@ import { useVSCodeTool } from "./hooks/use-vscode-tool";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
 import { executeCommandTool } from "./tools/execute-command";
+import { globFilesTool } from "./tools/glob-files";
 import { listFilesTool } from "./tools/list-files";
 import { readFileTool } from "./tools/read-file";
 import { searchFilesTool } from "./tools/search-files";
@@ -76,6 +77,7 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   executeCommand: executeCommandTool,
   searchFiles: searchFilesTool,
   listFiles: listFilesTool,
+  globFiles: globFilesTool,
 };
 
 export function AutoRejectTool({

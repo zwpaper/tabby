@@ -3,11 +3,8 @@ import { DEFAULT_MAX_FILES, listFiles as libListFiles } from "@/lib/list-files";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { CancellationTokenSource, window, workspace } from "vscode";
+import { isAbsolutePath } from "../file-utils";
 const logger = getLogger("listFilesTool");
-
-function isAbsolutePath(p: string): boolean {
-  return p.startsWith("/") || p.startsWith("\\") || /^[A-Za-z]:/.test(p);
-}
 
 /**
  * Lists files and directories within the specified path

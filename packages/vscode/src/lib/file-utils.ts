@@ -13,3 +13,7 @@ export function tempfile(options: { extension?: string } = {}): string {
   const tempDirectory = fs.realpathSync(os.tmpdir());
   return path.join(tempDirectory, randomUUID() + (extension ?? ""));
 }
+
+export function isAbsolutePath(p: string): boolean {
+  return p.startsWith("/") || p.startsWith("\\") || /^[A-Za-z]:/.test(p);
+}
