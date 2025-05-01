@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 
 import { collectCustomRules, getSystemInfo } from "@/lib/env-utils";
-import { listAllFiles, listFilesWithQuery } from "@/lib/file-utils";
 import type { TokenStorage } from "@/lib/token-storage";
 import {
   ThreadAbortSignal,
@@ -12,6 +11,7 @@ import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
 import { workspace } from "vscode";
+import { listFiles } from "./list-files";
 import { executeCommand } from "./tools/execute-command";
 import { readFile } from "./tools/read-file";
 import { searchFiles } from "./tools/search-files";
@@ -34,8 +34,11 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     return this.tokenStorage.setToken(token);
   }
 
+  private readonly DEFAULT_MAX_FILES: number = 500;
   async readEnvironment(customRuleFiles: string[] = []): Promise<Environment> {
-    const { files, isTruncated } = await listAllFiles(500);
+    const files = (await listFiles(undefined, this.DEFAULT_MAX_FILES)).map(
+      (res) => res.uri.fsPath,
+    );
 
     const customRules = await collectCustomRules(customRuleFiles);
 
@@ -45,7 +48,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       currentTime: new Date().toString(),
       workspace: {
         files,
-        isTruncated,
+        isTruncated: files.length >= this.DEFAULT_MAX_FILES,
       },
       info: {
         ...systemInfo,
@@ -60,7 +63,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     string[]
   > {
     const { query, limit } = param;
-    const results = await listFilesWithQuery(query, limit);
+    const results = await listFiles(query, limit);
     return results.map((item) => workspace.asRelativePath(item.uri));
   }
 

@@ -3,7 +3,6 @@ import * as vscode from "vscode";
 import { Extension } from "./helpers/extension";
 import RagdollUriHandler from "./helpers/uri-handler";
 import { createAuthClient } from "./lib/auth-client";
-import { init as InitListFile } from "./lib/file-utils";
 import { TokenStorage } from "./lib/token-storage";
 import { initExecuteCommandTool } from "./lib/tools/execute-command";
 import Ragdoll from "./ragdoll";
@@ -31,9 +30,6 @@ export async function activate(context: vscode.ExtensionContext) {
     loginEvent: ragdollUriHandler.loginEvent,
     logoutEvent,
   };
-
-  // init list file watcher
-  await InitListFile(context);
 
   const statusBarItem = createStatusBarItem(authClient, authEvents);
   context.subscriptions.push(...statusBarItem);
