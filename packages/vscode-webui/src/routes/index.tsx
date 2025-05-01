@@ -3,7 +3,7 @@ import { apiClient } from "@/lib/auth-client";
 import { CustomHtmlTags } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { PlusIcon } from "lucide-react";
 import type { Parent, Root, Text } from "mdast";
 import { remark } from "remark";
@@ -11,6 +11,9 @@ import remarkStringify from "remark-stringify";
 
 export const Route = createFileRoute("/")({
   component: App,
+  loader: () => {
+    throw redirect({ to: "/chat" });
+  },
 });
 
 function App() {
