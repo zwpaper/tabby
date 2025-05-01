@@ -40,4 +40,10 @@ export const ClientTools = {
 
 type ToolName = keyof typeof ClientTools;
 
+export const ToolsByPermission = {
+  read: ["readFile", "listFiles", "globFiles", "searchFiles"] as ToolName[],
+  write: ["writeToFile"] as ToolName[],
+  execute: ["executeCommand"] as ToolName[],
+};
+
 export type ClientToolsType = typeof ClientTools;

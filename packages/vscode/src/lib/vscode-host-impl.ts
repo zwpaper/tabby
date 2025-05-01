@@ -81,11 +81,13 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
     const abortSignal = new ThreadAbortSignal(options.abortSignal);
 
-    return tool(args, {
-      abortSignal,
-      messages: [],
-      toolCallId: options.toolCallId,
-    });
+    return safeCall(
+      tool(args, {
+        abortSignal,
+        messages: [],
+        toolCallId: options.toolCallId,
+      }),
+    );
   }
 
   async previewToolCall(
@@ -117,6 +119,14 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     }
     vscode.window.showTextDocument(vscode.Uri.joinPath(current, filePath));
   }
+}
+
+function safeCall<T>(x: Promise<T>) {
+  return x.catch((e) => {
+    return {
+      error: e.message,
+    };
+  });
 }
 
 const ToolMap: Record<

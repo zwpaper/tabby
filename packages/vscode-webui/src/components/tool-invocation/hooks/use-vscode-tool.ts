@@ -1,10 +1,12 @@
 import { vscodeHost } from "@/lib/vscode";
+import type { UseChatHelpers } from "@ai-sdk/react";
 import { ThreadAbortSignal } from "@quilted/threads";
 import type { ToolInvocation } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ApprovalStatus } from "../types";
 
 export function useVSCodeTool(
+  status: UseChatHelpers["status"],
   approvalStatus: ApprovalStatus,
   tool: ToolInvocation,
   onResult: (result: unknown) => void,
@@ -39,6 +41,8 @@ export function useVSCodeTool(
   );
 
   useEffect(() => {
+    if (status !== "ready") return;
+    if (state !== "call") return;
     if (approvalStatus === "pending") return;
     if (executed.current) return;
 
@@ -61,7 +65,15 @@ export function useVSCodeTool(
           });
         });
     }
-  }, [approvalStatus, args, toolName, toolCallId, wrappedOnResult]);
+  }, [
+    status,
+    state,
+    approvalStatus,
+    args,
+    toolName,
+    toolCallId,
+    wrappedOnResult,
+  ]);
 
   return {
     isExecuting,

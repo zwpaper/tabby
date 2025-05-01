@@ -9,7 +9,7 @@ import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { useChatStore } from "@/lib/stores/chat-store";
 import { vscodeHost } from "@/lib/vscode";
-import { type Message, useChat } from "@ai-sdk/react";
+import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
@@ -51,6 +51,7 @@ import {
 } from "@tiptap/react";
 import tippy from "tippy.js";
 import "@/components/prompt-form/prompt-form.css";
+import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { Separator } from "@/components/ui/separator";
 
 const searchSchema = z.object({
@@ -450,6 +451,7 @@ function RouteComponent() {
                     part={part}
                     addToolResult={addToolResult}
                     setInput={setInputAndFocus}
+                    status={status}
                   />
                 ))}
               </div>
@@ -458,6 +460,7 @@ function RouteComponent() {
           </div>
         ))}
       </div>
+      <AutoApproveMenu />
       <ApprovalButton show={!isLoading} />
       <form
         ref={formRef}
@@ -512,6 +515,7 @@ function Part({
   part,
   addToolResult,
   setInput,
+  status,
 }: {
   message: Message;
   part: NonNullable<Message["parts"]>[number];
@@ -523,6 +527,7 @@ function Part({
     result: unknown;
   }) => void;
   setInput: (prompt: string) => void;
+  status: UseChatHelpers["status"];
 }) {
   if (part.type === "text") {
     return <TextPartUI message={message} part={part} />;
@@ -538,6 +543,7 @@ function Part({
         tool={part.toolInvocation}
         addToolResult={addToolResult}
         setInput={setInput}
+        status={status}
       />
     );
   }
