@@ -4,11 +4,7 @@ import { persist } from "zustand/middleware";
 
 const excludeFromState: string[] = ["updateAutoApproveSettings"];
 
-type AutoApprove = {
-  read: boolean;
-  write: boolean;
-  execute: boolean;
-};
+type AutoApprove = Record<keyof typeof ToolsByPermission, boolean>;
 
 export interface SettingsState {
   autoApproveSettings: AutoApprove;

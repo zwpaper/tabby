@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
+import { ToolsByPermission } from "@ragdoll/tools";
 import { ChevronDown, Eye, FileEdit, Play } from "lucide-react";
 import { useState } from "react";
 
@@ -19,7 +20,7 @@ export function AutoApproveMenu() {
   };
 
   const toggleAll = (enable: boolean) => {
-    const newSettings = Object.keys(autoApproveSettings).reduce(
+    const newSettings = Object.keys(ToolsByPermission).reduce(
       (acc, key) => {
         acc[key as keyof typeof autoApproveSettings] = enable;
         return acc;
