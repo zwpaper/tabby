@@ -1,7 +1,10 @@
 import { MessageMarkdown } from "@/components/message-markdown";
 import { ModelSelect } from "@/components/model-select";
 import Pending from "@/components/pending";
-import { ToolInvocationPart } from "@/components/tool-invocation";
+import {
+  AutoRejectTool,
+  ToolInvocationPart,
+} from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
@@ -26,6 +29,7 @@ import {
 } from "lucide-react";
 import {
   type MutableRefObject,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -53,6 +57,7 @@ import tippy from "tippy.js";
 import "@/components/prompt-form/prompt-form.css";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { Separator } from "@/components/ui/separator";
+import { isAutoInjectTool } from "@ragdoll/tools";
 
 const searchSchema = z.object({
   taskId: z.number().optional(),
@@ -116,7 +121,7 @@ function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const taskId = useRef<number | undefined>(loaderData?.id);
   const { auth: authData } = Route.useRouteContext();
-  const { environment } = useEnvironment();
+  const { environment, reload: reloadEnvironment } = useEnvironment();
   const {
     models,
     selectedModel,
@@ -147,6 +152,14 @@ function RouteComponent() {
       Authorization: `Bearer ${authData.session.token}`,
     },
   });
+
+  const wrappedHandleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      reloadEnvironment();
+      handleSubmit(e);
+    },
+    [handleSubmit, reloadEnvironment],
+  );
 
   const doSubmit = () => {
     if (isLoading || !editor || editor.isEmpty) return;
@@ -464,7 +477,7 @@ function RouteComponent() {
       <ApprovalButton show={!isLoading} />
       <form
         ref={formRef}
-        onSubmit={handleSubmit}
+        onSubmit={wrappedHandleSubmit}
         className="bg-input p-1 rounded-sm border border-[var(--input-border)] focus-within:border-ring transition-color duration-300"
         onClick={(e) => {
           e.stopPropagation();
@@ -538,6 +551,12 @@ function Part({
   }
 
   if (part.type === "tool-invocation") {
+    if (isAutoInjectTool(part.toolInvocation.toolName)) {
+      <AutoRejectTool
+        tool={part.toolInvocation}
+        addToolResult={addToolResult}
+      />;
+    }
     return (
       <ToolInvocationPart
         tool={part.toolInvocation}

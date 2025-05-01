@@ -3,7 +3,7 @@ import { useToolAutoApproval } from "@/lib/stores/settings-store";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { type ClientToolsType, isUserInputTool } from "@ragdoll/tools";
 import type { ToolInvocation } from "ai";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useVSCodeTool } from "./hooks/use-vscode-tool";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
@@ -75,3 +75,31 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   executeCommand: executeCommandTool,
   searchFiles: searchFilesTool,
 };
+
+export function AutoRejectTool({
+  tool,
+  addToolResult,
+}: {
+  tool: ToolInvocation;
+  addToolResult: ({
+    toolCallId,
+    result,
+  }: {
+    toolCallId: string;
+    result: unknown;
+  }) => void;
+}) {
+  const rejected = useRef(false);
+  useEffect(() => {
+    if (!rejected.current) {
+      rejected.current = true;
+      addToolResult({
+        toolCallId: tool.toolCallId,
+        result: {
+          error: "Tool invocation rejected by user",
+        },
+      });
+    }
+  }, [tool, addToolResult]);
+  return null;
+}
