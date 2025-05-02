@@ -213,13 +213,6 @@ export function FormEditor({
     }
   }, [editor, input]);
 
-  // Clear editor content when status changes to ready
-  useEffect(() => {
-    if (!isLoading && editor && !editor.isEmpty) {
-      editor.commands.clearContent();
-    }
-  }, [isLoading, editor]);
-
   // Auto focus the editor when the component is mounted
   useEffect(() => {
     if (autoFocus && editor) {
@@ -233,10 +226,17 @@ export function FormEditor({
     }
   };
 
+  const wrappedOnSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    onSubmit(e);
+    if (editor && !editor.isEmpty) {
+      setTimeout(() => editor.commands.clearContent(), 0);
+    }
+  };
+
   return (
     <form
       ref={formRef}
-      onSubmit={onSubmit}
+      onSubmit={wrappedOnSubmit}
       className="bg-input p-1 rounded-sm border border-[var(--input-border)] focus-within:border-ring transition-color duration-300"
       onClick={(e) => {
         e.stopPropagation();
