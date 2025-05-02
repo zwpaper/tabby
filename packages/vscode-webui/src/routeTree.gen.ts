@@ -11,21 +11,21 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as TasksImport } from './routes/tasks'
 import { Route as SignInImport } from './routes/sign-in'
-import { Route as ChatImport } from './routes/chat'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
 
-const SignInRoute = SignInImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
+const TasksRoute = TasksImport.update({
+  id: '/tasks',
+  path: '/tasks',
   getParentRoute: () => rootRoute,
 } as any)
 
-const ChatRoute = ChatImport.update({
-  id: '/chat',
-  path: '/chat',
+const SignInRoute = SignInImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -46,18 +46,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/chat': {
-      id: '/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof ChatImport
-      parentRoute: typeof rootRoute
-    }
     '/sign-in': {
       id: '/sign-in'
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInImport
+      parentRoute: typeof rootRoute
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksImport
       parentRoute: typeof rootRoute
     }
   }
@@ -67,42 +67,42 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/chat': typeof ChatRoute
   '/sign-in': typeof SignInRoute
+  '/tasks': typeof TasksRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/chat': typeof ChatRoute
   '/sign-in': typeof SignInRoute
+  '/tasks': typeof TasksRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/chat': typeof ChatRoute
   '/sign-in': typeof SignInRoute
+  '/tasks': typeof TasksRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chat' | '/sign-in'
+  fullPaths: '/' | '/sign-in' | '/tasks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chat' | '/sign-in'
-  id: '__root__' | '/' | '/chat' | '/sign-in'
+  to: '/' | '/sign-in' | '/tasks'
+  id: '__root__' | '/' | '/sign-in' | '/tasks'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ChatRoute: typeof ChatRoute
   SignInRoute: typeof SignInRoute
+  TasksRoute: typeof TasksRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ChatRoute: ChatRoute,
   SignInRoute: SignInRoute,
+  TasksRoute: TasksRoute,
 }
 
 export const routeTree = rootRoute
@@ -116,18 +116,18 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/chat",
-        "/sign-in"
+        "/sign-in",
+        "/tasks"
       ]
     },
     "/": {
       "filePath": "index.tsx"
     },
-    "/chat": {
-      "filePath": "chat.tsx"
-    },
     "/sign-in": {
       "filePath": "sign-in.tsx"
+    },
+    "/tasks": {
+      "filePath": "tasks.tsx"
     }
   }
 }

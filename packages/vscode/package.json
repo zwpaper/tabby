@@ -37,6 +37,18 @@
         "command": "ragdoll.openLoginPage",
         "title": "Open Login Page",
         "category": "Pochi"
+      },
+      {
+        "command": "ragdoll.webui.navigate.newTask",
+        "title": "New Task",
+        "icon": "$(add)",
+        "category": "Pochi"
+      },
+      {
+        "command": "ragdoll.webui.navigate.taskList",
+        "title": "Show All Tasks",
+        "icon": "$(history)",
+        "category": "Pochi"
       }
     ],
     "menus": {
@@ -44,6 +56,26 @@
         {
           "command": "ragdoll.openLoginPage",
           "when": "false"
+        },
+        {
+          "command": "ragdoll.webui.navigate.newTask",
+          "when": "false"
+        },
+        {
+          "command": "ragdoll.webui.navigate.taskList",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "ragdoll.webui.navigate.newTask",
+          "when": "view == ragdollWebui",
+          "group": "navigation@0"
+        },
+        {
+          "command": "ragdoll.webui.navigate.taskList",
+          "when": "view == ragdollWebui",
+          "group": "navigation@1"
         }
       ]
     }

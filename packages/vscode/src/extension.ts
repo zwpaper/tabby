@@ -86,6 +86,18 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.Uri.parse(`${getServerBaseUrl()}/auth/vscode-link`),
       );
     }),
+    vscode.commands.registerCommand(
+      "ragdoll.webui.navigate.newTask",
+      async () => {
+        Ragdoll.getWebviewHost()?.openTask("new");
+      },
+    ),
+    vscode.commands.registerCommand(
+      "ragdoll.webui.navigate.taskList",
+      async () => {
+        Ragdoll.getWebviewHost()?.openTaskList();
+      },
+    ),
   ];
 
   context.subscriptions.push(...commandRegisterations);

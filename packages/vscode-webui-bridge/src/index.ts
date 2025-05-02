@@ -34,7 +34,12 @@ export interface VSCodeHostApi {
 }
 
 export interface WebviewHostApi {
-  openTask(taskId: number): void;
+  /**
+   * @param taskId Task id to open or "new" to create a new task.
+   */
+  openTask(taskId: number | "new"): void;
+
+  openTaskList(): void;
 }
 
 const DevBaseUrl = "http://localhost:4113";

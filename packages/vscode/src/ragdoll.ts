@@ -102,7 +102,7 @@ class Ragdoll implements WebviewViewProvider {
       },
       {
         exports: vscodeHost,
-        imports: ["openTask"],
+        imports: ["openTask", "openTaskList"],
       },
     );
   }
