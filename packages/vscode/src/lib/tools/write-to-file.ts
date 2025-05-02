@@ -31,8 +31,10 @@ async function upsertPreviewData(
 
 export const previewWriteToFile: PreviewToolFunctionType<
   ClientToolsType["writeToFile"]
-> = async ({ path, content }, { toolCallId }) => {
+> = async (args, { toolCallId }) => {
+  const { path, content } = args || {};
   if (path === undefined || content === undefined) return;
+
   // Get the workspace folder to construct the full path
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {

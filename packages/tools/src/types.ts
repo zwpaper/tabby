@@ -31,9 +31,9 @@ export type ToolFunctionType<T extends Tool> = (
 ) => Promise<ToolOutputType<T>>;
 
 export type PreviewToolFunctionType<T extends Tool> = (
-  args: Partial<ToolInputType<T>>,
+  args: Partial<ToolInputType<T>> | null,
   options: ToolExecutionOptions,
-) => void;
+) => Promise<void>;
 
 export function defineServerTool<
   PARAMETERS extends z.ZodTypeAny,

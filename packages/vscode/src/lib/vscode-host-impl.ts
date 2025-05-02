@@ -20,6 +20,8 @@ import { searchFiles } from "./tools/search-files";
 import { previewWriteToFile } from "./tools/write-to-file";
 
 export default class VSCodeHostImpl implements VSCodeHostApi {
+  private toolCallQueue: Promise<unknown> = Promise.resolve();
+
   constructor(private readonly tokenStorage: TokenStorage) {
     this.getToken = this.getToken.bind(this);
     this.setToken = this.setToken.bind(this);
@@ -87,7 +89,39 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     return results.map((item) => workspace.asRelativePath(item.uri));
   }
 
-  async executeToolCall(
+  private async queueToolCall<T>(fn: () => Promise<T>) {
+    const toolCallPromise = this.toolCallQueue.catch(console.error).then(fn);
+    this.toolCallQueue = toolCallPromise;
+    return toolCallPromise;
+  }
+
+  executeToolCall(
+    toolName: string,
+    args: unknown,
+    options: {
+      toolCallId: string;
+      abortSignal: ThreadAbortSignalSerialization;
+    },
+  ) {
+    return this.queueToolCall(() =>
+      this.executeToolCallImpl(toolName, args, options),
+    );
+  }
+
+  previewToolCall(
+    toolName: string,
+    args: unknown,
+    options: {
+      toolCallId: string;
+      abortSignal: ThreadAbortSignalSerialization;
+    },
+  ) {
+    return this.queueToolCall(() =>
+      this.previewToolCallImpl(toolName, args, options),
+    );
+  }
+
+  private async executeToolCallImpl(
     toolName: string,
     args: unknown,
     options: {
@@ -113,7 +147,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     );
   }
 
-  async previewToolCall(
+  private async previewToolCallImpl(
     toolName: string,
     args: unknown,
     options: {
