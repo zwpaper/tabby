@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { type WorkspaceFolder, workspace } from "vscode";
 
 export function tempfile(options: { extension?: string } = {}): string {
   let { extension } = options;
@@ -16,4 +17,12 @@ export function tempfile(options: { extension?: string } = {}): string {
 
 export function isAbsolutePath(p: string): boolean {
   return p.startsWith("/") || p.startsWith("\\") || /^[A-Za-z]:/.test(p);
+}
+
+export function getWorkspaceFolder(): WorkspaceFolder {
+  const workspaceFolders = workspace.workspaceFolders;
+  if (!workspaceFolders || workspaceFolders.length === 0) {
+    throw new Error("No workspace folder found. Please open a workspace.");
+  }
+  return workspaceFolders[0];
 }

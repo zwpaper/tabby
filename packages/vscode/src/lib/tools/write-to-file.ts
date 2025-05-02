@@ -2,27 +2,47 @@ import { extname } from "node:path";
 import * as vscode from "vscode";
 
 import type { ClientToolsType } from "@ragdoll/tools";
-import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
-import { tempfile } from "../file-utils";
+import type {
+  PreviewToolFunctionType,
+  ToolFunctionType,
+} from "@ragdoll/tools/src/types";
+import { getWorkspaceFolder, tempfile } from "../file-utils";
+import { getLogger } from "../logger";
+
+const logger = getLogger("writeToFileTool");
 
 async function upsertPreviewData(
   toolCallId: string,
   path: string,
   content: string,
 ) {
+  logger.debug(
+    `Upserting preview data for path: ${path}, toolCallId: ${toolCallId}`,
+  );
   const extension = `${toolCallId}${extname(path)}`;
+  logger.trace("use extension", extension);
+
   let previewTextDocument = vscode.workspace.textDocuments.find((doc) =>
     doc.uri.fsPath.endsWith(extension),
   );
+
   const writeFile = (uri: vscode.Uri) =>
     vscode.workspace.fs.writeFile(uri, Buffer.from(content, "utf-8"));
 
   if (!previewTextDocument) {
+    logger.debug("No existing preview document found, creating new one");
     const tmpfile = tempfile({ extension });
+    logger.trace(`Created temp file: ${tmpfile}`);
     const fileUri = vscode.Uri.file(tmpfile);
     await writeFile(fileUri);
     previewTextDocument = await vscode.workspace.openTextDocument(fileUri);
+    logger.debug(
+      `Created new preview document: ${previewTextDocument.uri.fsPath}`,
+    );
   } else {
+    logger.debug(
+      `Updating existing preview document: ${previewTextDocument.uri.fsPath}`,
+    );
     await writeFile(previewTextDocument.uri);
   }
 
@@ -35,32 +55,113 @@ export const previewWriteToFile: PreviewToolFunctionType<
   const { path, content } = args || {};
   if (path === undefined || content === undefined) return;
 
-  // Get the workspace folder to construct the full path
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {
+    logger.error("No workspace folder found");
     throw new Error("No workspace folder found. Please open a workspace.");
   }
 
   const textDocument = await upsertPreviewData(toolCallId, path, content);
+
   const pathUri = vscode.Uri.joinPath(workspaceFolders[0].uri, path);
   const fileExist = await vscode.workspace.fs.stat(pathUri).then(
     () => true,
     () => false,
   );
+  logger.debug(`File exists: ${fileExist}`);
 
-  // Check if the document is already the active editor
   const isActive = vscode.window.activeTextEditor?.document === textDocument;
+  logger.debug(
+    `Preview document is active editor: ${isActive} fileExist: ${fileExist}, doc: ${textDocument.uri.fsPath}`,
+  );
 
   if (!isActive) {
-    if (fileExist) {
-      await vscode.commands.executeCommand(
-        "vscode.diff",
-        pathUri,
-        textDocument.uri,
-        `${path} (Preview)`,
-      );
-    } else {
-      await vscode.window.showTextDocument(textDocument);
-    }
+    await vscode.commands.executeCommand(
+      "vscode.diff",
+      fileExist
+        ? pathUri
+        : (
+            await vscode.workspace.openTextDocument({
+              language: textDocument.languageId,
+            })
+          ).uri,
+      textDocument.uri,
+      `${path} (Preview)`,
+    );
   }
 };
+
+/**
+ * Implements the writeToFile tool for VSCode extension.
+ * Writes content to a specified file, creating directories if needed.
+ */
+export const writeToFile: ToolFunctionType<
+  ClientToolsType["writeToFile"]
+> = async (
+  { path, content }: { path: string; content: string },
+  { toolCallId },
+) => {
+  const workspaceFolder = getWorkspaceFolder();
+
+  try {
+    const pathUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
+    logger.debug(`Target file URI: ${pathUri.fsPath}`);
+
+    const dirUri = vscode.Uri.joinPath(pathUri, "..");
+    await vscode.workspace.fs.createDirectory(dirUri);
+    await vscode.workspace.fs.writeFile(pathUri, Buffer.from(content, "utf-8"));
+    logger.trace("Writing file success:", pathUri.fsPath);
+
+    await clearPreviewTab(toolCallId);
+
+    const document = await vscode.workspace.openTextDocument(pathUri);
+    await vscode.window.showTextDocument(document);
+    logger.info(`Document opened in editor: ${path}`);
+
+    return { success: true };
+  } catch (error) {
+    logger.error(`Failed to write to file: ${error}`);
+    throw new Error(`Failed to write to file: ${error}`);
+  }
+};
+
+async function clearPreviewTab(toolCallId: string) {
+  logger.info(`Clearing preview for toolCallId: ${toolCallId}`);
+  const allTabs = vscode.window.tabGroups.all.flatMap((group) => group.tabs);
+  const previewTabs = allTabs.filter((tab) => {
+    if (tab.label.includes("(Preview)") && tab.input) {
+      logger.trace(`Found potential diff preview tab: ${tab.label}`);
+      if (tab.input instanceof vscode.TabInputTextDiff) {
+        const originalPath = tab.input.original.fsPath;
+        const modifiedPath = tab.input.modified.fsPath;
+        if (
+          originalPath.includes(toolCallId) ||
+          modifiedPath.includes(toolCallId)
+        ) {
+          logger.debug(`Found matching diff preview tab: ${tab.label}`);
+          return true;
+        }
+      }
+    }
+    if (tab.input && typeof tab.input === "object" && "uri" in tab.input) {
+      const uri = (tab.input as { uri: vscode.Uri }).uri;
+      if (uri.fsPath.includes(toolCallId)) {
+        logger.debug(`Found direct preview tab: ${uri.fsPath}`);
+        return true;
+      }
+    }
+
+    return false;
+  });
+  logger.debug(`Found ${previewTabs.length} preview tabs to close`);
+  for (const tab of previewTabs) {
+    logger.debug(`Closing preview tab: ${tab.label}`);
+    try {
+      await vscode.window.tabGroups.close(tab);
+    } catch (closeError) {
+      logger.warn(`Failed to close preview tab: ${closeError}`);
+    }
+  }
+
+  logger.info(`Preview clearing completed for toolCallId: ${toolCallId}`);
+}

@@ -17,7 +17,7 @@ import { globFiles } from "./tools/glob-files";
 import { listFiles as listFilesTool } from "./tools/list-files";
 import { readFile } from "./tools/read-file";
 import { searchFiles } from "./tools/search-files";
-import { previewWriteToFile } from "./tools/write-to-file";
+import { previewWriteToFile, writeToFile } from "./tools/write-to-file";
 
 export default class VSCodeHostImpl implements VSCodeHostApi {
   private toolCallQueue: Promise<unknown> = Promise.resolve();
@@ -196,6 +196,7 @@ const ToolMap: Record<
   searchFiles,
   listFiles: listFilesTool,
   globFiles,
+  writeToFile,
 };
 
 const ToolPreviewMap: Record<

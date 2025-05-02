@@ -2,8 +2,8 @@ import * as path from "node:path";
 import { DEFAULT_MAX_FILES, listFiles as libListFiles } from "@/lib/list-files";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import { CancellationTokenSource, window, workspace } from "vscode";
-import { isAbsolutePath } from "../file-utils";
+import { CancellationTokenSource } from "vscode";
+import { getWorkspaceFolder, isAbsolutePath } from "../file-utils";
 const logger = getLogger("listFilesTool");
 
 /**
@@ -29,13 +29,7 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
   let isTruncated = false;
 
   try {
-    const workspaceFolders = workspace.workspaceFolders;
-    if (!workspaceFolders?.length) {
-      logger.error("No workspace folder found.");
-      window.showErrorMessage("No workspace folder found.");
-      return { files: [], isTruncated: false };
-    }
-
+    const workspaceFolder = getWorkspaceFolder();
     const cancellationTokenSource = new CancellationTokenSource();
     if (abortSignal) {
       abortSignal.addEventListener("abort", () => {
@@ -43,7 +37,7 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
       });
     }
 
-    const startPath = path.join(workspaceFolders[0].uri.fsPath, dirPath);
+    const startPath = path.join(workspaceFolder.uri.fsPath, dirPath);
     const fileResults = await libListFiles({
       startPath,
       recursive: !!recursive,

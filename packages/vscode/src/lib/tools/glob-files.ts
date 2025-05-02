@@ -2,9 +2,9 @@ import { traverseBFSwithGitIgnore } from "@/lib/list-files";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { minimatch } from "minimatch";
-import { CancellationTokenSource, window, workspace } from "vscode";
+import { CancellationTokenSource } from "vscode";
 import * as vscode from "vscode";
-import { isAbsolutePath } from "../file-utils";
+import { getWorkspaceFolder, isAbsolutePath } from "../file-utils";
 
 const logger = getLogger("globFilesTool");
 const MAX_FILES = 300;
@@ -37,12 +37,7 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
   let isTruncated = false;
 
   try {
-    const workspaceFolders = workspace.workspaceFolders;
-    if (!workspaceFolders?.length) {
-      logger.error("No workspace folder found.");
-      window.showErrorMessage("No workspace folder found.");
-      return { files: [], isTruncated: false };
-    }
+    const workspaceFolder = getWorkspaceFolder();
 
     const cancellationTokenSource = new CancellationTokenSource();
     if (abortSignal) {
@@ -51,7 +46,7 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
       });
     }
 
-    const startUri = vscode.Uri.joinPath(workspaceFolders[0].uri, searchPath);
+    const startUri = vscode.Uri.joinPath(workspaceFolder.uri, searchPath);
 
     const allFiles = await traverseBFSwithGitIgnore(
       startUri,
