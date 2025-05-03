@@ -1,3 +1,9 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 import type { ToolInvocation } from "ai";
 import { Check, Loader2, Pause, X } from "lucide-react";
 
@@ -19,9 +25,16 @@ export function StatusIcon({ tool, isExecuting }: StatusIconProps) {
   let statusIcon = <Pause className="size-4 text-zinc-400" />;
   if (error) {
     statusIcon = (
-      <span title={error}>
-        <X className="size-4 text-red-400" />
-      </span>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <X className="size-4 text-red-400 cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent className="px-1 py-0.5 rounded bg-secondary">
+            <p>{error}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   } else if (tool.state === "result") {
     statusIcon = <Check className="size-4 text-emerald-300" />;

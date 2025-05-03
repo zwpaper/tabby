@@ -13,6 +13,10 @@ import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { useChatStore } from "@/lib/stores/chat-store";
 import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
+import {
+  type UIMessage,
+  isAssistantMessageWithCompletedToolCalls,
+} from "@ai-sdk/ui-utils";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
@@ -66,12 +70,10 @@ export const Route = createFileRoute("/")({
 });
 
 function RouteComponent() {
-  const clearPendingToolApproval = useChatStore(
-    (x) => x.clearPendingToolApproval,
-  );
+  const clearPendingApproval = useChatStore((x) => x.clearPendingApproval);
   useLayoutEffect(() => {
-    clearPendingToolApproval();
-  }, [clearPendingToolApproval]);
+    clearPendingApproval();
+  }, [clearPendingApproval]);
 
   const loaderData = Route.useLoaderData();
   const taskId = useRef<number | undefined>(loaderData?.id);
@@ -96,7 +98,10 @@ function RouteComponent() {
     data,
     error,
     messages,
+    setMessages,
+    reload,
     setInput,
+    append,
     input,
     status,
     stop,
@@ -178,27 +183,28 @@ function RouteComponent() {
     setInput(input);
   };
 
+  const updatePendingApproval = useChatStore((x) => x.updatePendingApproval);
+  const retry = useRetry({ messages, append, setMessages, reload });
+  useEffect(() => {
+    if (error) {
+      updatePendingApproval({
+        name: "retry",
+        resolve: (approved) => {
+          if (approved) {
+            retry();
+          }
+        },
+      });
+    }
+  }, [error, updatePendingApproval, retry]);
+
   return (
     <div className="flex flex-col h-screen px-4">
-      <div className="flex items-center border-b border-[var(--border)] mb-4 py-2">
-        <div className="flex-1 flex justify-center items-center gap-2 text-sm">
-          {taskId.current ? (
-            <span className="font-medium">
-              TASK-{String(taskId.current).padStart(3, "0")}
-            </span>
-          ) : (
-            <span className="font-medium">New Task</span>
-          )}
-          <span className="text-muted-foreground">{status}</span>
-          {isLoading && <Loader2 className="size-4 animate-spin" />}
-        </div>
-      </div>
-      <div className="text-destructive">{error?.message}</div>
       <div
         className="flex-1 overflow-y-auto mb-2 space-y-4"
         ref={messagesContainerRef}
       >
-        {renderMessages.map((m, index) => (
+        {renderMessages.map((m, messageIndex) => (
           <div key={m.id} className="flex flex-col">
             <div className="py-2 rounded-lg">
               <div className="flex items-center gap-2">
@@ -229,6 +235,7 @@ function RouteComponent() {
                   <Part
                     key={index}
                     message={m}
+                    isLastMessage={messageIndex === renderMessages.length - 1}
                     part={part}
                     addToolResult={addToolResult}
                     setInput={setInputAndFocus}
@@ -237,19 +244,26 @@ function RouteComponent() {
                 ))}
               </div>
             </div>
-            {index < renderMessages.length - 1 && <Separator />}
+            {messageIndex < renderMessages.length - 1 && <Separator />}
           </div>
         ))}
       </div>
-      <AutoApproveMenu />
+      <div className="text-red-400 text-center mb-2">{error?.message}</div>
       <ApprovalButton show={!isLoading} />
+      <AutoApproveMenu />
       <FormEditor
         input={input}
         setInput={setInput}
         onSubmit={wrappedHandleSubmit}
         isLoading={isLoading}
         formRef={formRef}
-      />
+      >
+        {taskId.current && (
+          <span className="text-xs absolute top-1 right-1 text-foreground/80">
+            TASK-{String(taskId.current).padStart(3, "0")}
+          </span>
+        )}
+      </FormEditor>
       <div className="flex mb-2 justify-between items-center pt-2 gap-3">
         <ModelSelect
           value={selectedModel?.id}
@@ -285,12 +299,14 @@ function RouteComponent() {
 
 function Part({
   message,
+  isLastMessage,
   part,
   addToolResult,
   setInput,
   status,
 }: {
   message: Message;
+  isLastMessage: boolean;
   part: NonNullable<Message["parts"]>[number];
   addToolResult: ({
     toolCallId,
@@ -320,7 +336,7 @@ function Part({
     return (
       <ToolInvocationPart
         tool={part.toolInvocation}
-        addToolResult={addToolResult}
+        addToolResult={isLastMessage ? addToolResult : undefined}
         setInput={setInput}
         status={status}
       />
@@ -348,36 +364,68 @@ function prepareRequestBody(
   environment: MutableRefObject<Environment | null>,
   model: string | undefined,
 ): RagdollChatRequest {
+  const message = fromUIMessage(request.messages[request.messages.length - 1]);
+  const triggerError =
+    message.parts[0].type === "text" &&
+    message.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
   return {
     id: taskId.current?.toString(),
-    model,
+    model: triggerError ? "fake-model" : model,
     message: fromUIMessage(request.messages[request.messages.length - 1]),
     environment: environment.current || undefined,
   };
 }
 
 function ApprovalButton({ show }: { show: boolean }) {
-  const { pendingToolApproval, resolvePendingToolApproval } = useChatStore();
-  if (!show || !pendingToolApproval) return;
+  const { pendingApproval, resolvePendingApproval } = useChatStore();
+  if (!show || !pendingApproval) return;
 
   const ToolAcceptText: Record<string, string> = {
+    retry: "Retry",
     writeToFile: "Save",
     executeCommand: "Run",
   };
 
-  const acceptText =
-    ToolAcceptText[pendingToolApproval.tool.toolName] || "Accept";
+  const ToolRejectText: Record<string, string> = {
+    retry: "Cancel",
+  };
+
+  const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
+  const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
   return (
     <div className="flex [&>button]:flex-1 [&>button]:rounded-sm gap-3 mb-2">
-      <Button onClick={() => resolvePendingToolApproval(true)}>
-        {acceptText}
-      </Button>
-      <Button
-        onClick={() => resolvePendingToolApproval(false)}
-        variant="secondary"
-      >
-        Reject
+      <Button onClick={() => resolvePendingApproval(true)}>{acceptText}</Button>
+      <Button onClick={() => resolvePendingApproval(false)} variant="secondary">
+        {rejectText}
       </Button>
     </div>
   );
+}
+
+function useRetry({
+  messages,
+  setMessages,
+  append,
+  reload,
+}: {
+  messages: Message[];
+  append: UseChatHelpers["append"];
+  setMessages: UseChatHelpers["setMessages"];
+  reload: UseChatHelpers["reload"];
+}) {
+  const retryRequest = useCallback(async () => {
+    if (messages.length === 0) {
+      return;
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (isAssistantMessageWithCompletedToolCalls(lastMessage as UIMessage)) {
+      setMessages(messages.slice(0, -1));
+      append(lastMessage);
+    }
+
+    return await reload();
+  }, [messages, setMessages, append, reload]);
+
+  return retryRequest;
 }

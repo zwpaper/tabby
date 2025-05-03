@@ -24,35 +24,45 @@ export function ToolInvocationPart({
 }: {
   tool: ToolInvocation;
   setInput: (prompt: string) => void;
-  addToolResult: ({
+  addToolResult?: ({
     toolCallId,
     result,
   }: { toolCallId: string; result: unknown }) => void;
   status: UseChatHelpers["status"];
 }) {
-  const { state } = tool;
-  const userInputTool = isUserInputTool(tool.toolName);
-  const { updatePendingToolApproval } = useChatStore();
-  const isAutoApproved = useToolAutoApproval(
-    tool.toolName as keyof ClientToolsType,
-  );
+  const { state, toolName } = tool;
+  const userInputTool = isUserInputTool(toolName);
+  const { pendingApproval, updatePendingApproval } = useChatStore();
+  const isAutoApproved = useToolAutoApproval(toolName as keyof ClientToolsType);
   const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>(
     isAutoApproved ? "approved" : "pending",
   );
 
   useEffect(() => {
+    if (pendingApproval !== undefined) return;
     if (state === "call" && !userInputTool && approvalStatus === "pending") {
-      updatePendingToolApproval({
-        tool,
-        resolve: (approved) =>
-          setApprovalStatus(approved ? "approved" : "rejected"),
-      });
+      const pendingApproval = addToolResult
+        ? {
+            name: toolName,
+            resolve: (approved: boolean) =>
+              setApprovalStatus(approved ? "approved" : "rejected"),
+          }
+        : undefined;
+      updatePendingApproval(pendingApproval);
     }
-  }, [state, userInputTool, approvalStatus, tool, updatePendingToolApproval]);
+  }, [
+    state,
+    userInputTool,
+    approvalStatus,
+    addToolResult,
+    toolName,
+    updatePendingApproval,
+    pendingApproval,
+  ]);
 
   const onResult = useCallback(
     (result: unknown) => {
-      addToolResult({ toolCallId: tool.toolCallId, result });
+      addToolResult?.({ toolCallId: tool.toolCallId, result });
     },
     [addToolResult, tool.toolCallId],
   );

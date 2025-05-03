@@ -55,6 +55,7 @@ interface FormEditorProps {
   isLoading: boolean;
   formRef?: React.RefObject<HTMLFormElement>;
   autoFocus?: boolean;
+  children?: React.ReactNode;
 }
 
 export function FormEditor({
@@ -62,6 +63,7 @@ export function FormEditor({
   setInput,
   onSubmit,
   isLoading,
+  children,
   formRef: externalFormRef,
   autoFocus = true,
 }: FormEditorProps) {
@@ -237,7 +239,7 @@ export function FormEditor({
     <form
       ref={formRef}
       onSubmit={wrappedOnSubmit}
-      className="bg-input p-1 rounded-sm border border-[var(--input-border)] focus-within:border-ring transition-color duration-300"
+      className="relative bg-input p-1 rounded-sm border border-[var(--input-border)] focus-within:border-ring transition-color duration-300"
       onClick={(e) => {
         e.stopPropagation();
         focusEditor();
@@ -248,6 +250,7 @@ export function FormEditor({
         editor={editor}
         className="min-h-20 max-h-32 w-full overflow-y-auto prose overflow-hidden break-words text-[var(--vscode-input-foreground)] focus:outline-none !border-none"
       />
+      {children}
     </form>
   );
 }

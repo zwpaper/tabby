@@ -1,46 +1,44 @@
-import type { ToolInvocation } from "ai";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 
-const excludeFromState: (keyof ChatState)[] = ["pendingToolApproval"];
+const excludeFromState: (keyof ChatState)[] = ["pendingApproval"];
 
 export interface ChatState {
   selectedModelId: string | undefined;
 
-  pendingToolApproval?: {
-    tool: ToolInvocation;
+  pendingApproval?: {
+    name: string;
     resolve: (approved: boolean) => void;
   };
 
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
 
-  clearPendingToolApproval: () => void;
-  updatePendingToolApproval: (
-    pendingToolApproval: ChatState["pendingToolApproval"],
+  clearPendingApproval: () => void;
+  updatePendingApproval: (
+    pendingApproval: ChatState["pendingApproval"],
   ) => void;
-  resolvePendingToolApproval: (approved: boolean) => void;
+  resolvePendingApproval: (approved: boolean) => void;
 }
 
 export const useChatStore = create<ChatState>()(
   persist(
     (set) => ({
       selectedModelId: undefined,
-      pendingToolApproval: undefined,
+      pendingApproval: undefined,
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
 
-      clearPendingToolApproval: () => set({ pendingToolApproval: undefined }),
-      updatePendingToolApproval: (
-        pendingToolApproval: ChatState["pendingToolApproval"],
-      ) => set({ pendingToolApproval }),
-      resolvePendingToolApproval: (approved: boolean) => {
+      clearPendingApproval: () => set({ pendingApproval: undefined }),
+      updatePendingApproval: (pendingApproval: ChatState["pendingApproval"]) =>
+        set({ pendingApproval }),
+      resolvePendingApproval: (approved: boolean) => {
         set((state) => {
-          if (state.pendingToolApproval) {
-            state.pendingToolApproval.resolve(approved);
+          if (state.pendingApproval) {
+            state.pendingApproval.resolve(approved);
           }
-          return { pendingToolApproval: undefined };
+          return { pendingApproval: undefined };
         });
       },
     }),
