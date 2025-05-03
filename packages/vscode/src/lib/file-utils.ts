@@ -50,9 +50,6 @@ export async function writeFile(
   uri: vscode.Uri,
   content: string,
 ): Promise<void> {
-  logger.debug(
-    `Writing content to file: ${uri.fsPath} (${Buffer.byteLength(content, "utf-8")} bytes)`,
-  );
   await vscode.workspace.fs.writeFile(uri, Buffer.from(content, "utf-8"));
   logger.debug(`Successfully wrote content to file: ${uri.fsPath}`);
 }
@@ -112,8 +109,6 @@ export function findPreviewTabs(
  * Close tabs related to a preview
  */
 export async function closePreviewTabs(tabs: vscode.Tab[]): Promise<void> {
-  logger.debug(`Closing ${tabs.length} preview tabs`);
-
   for (const tab of tabs) {
     logger.debug(`Closing preview tab: ${tab.label}`);
     try {

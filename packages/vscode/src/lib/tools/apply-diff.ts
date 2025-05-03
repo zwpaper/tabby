@@ -26,15 +26,8 @@ async function upsertDiffPreviewData(
   path: string,
   content: string,
 ): Promise<vscode.TextDocument> {
-  logger.debug(
-    `Upserting diff preview data for path: ${path}, toolCallId: ${toolCallId}`,
-  );
   const extension = `${toolCallId}${nodePath.extname(path)}`;
   logger.trace(`Looking for document with extension: ${extension}`);
-  logger.trace(
-    "all text documents",
-    vscode.workspace.textDocuments.map((doc) => doc.uri.fsPath),
-  );
 
   let previewTextDocument = vscode.workspace.textDocuments.find((doc) =>
     doc.uri.fsPath.endsWith(extension),
@@ -168,7 +161,6 @@ export const previewApplyDiff: PreviewToolFunctionType<
 > = async (args, { toolCallId }) => {
   const { path, diff, startLine, endLine } = args || {};
   if (!args || !path || !diff || !startLine || !endLine) {
-    logger.trace("Missing required parameters, skipping preview");
     return;
   }
 
@@ -192,12 +184,7 @@ export const previewApplyDiff: PreviewToolFunctionType<
       updatedContent,
     );
 
-    logger.debug(
-      `Created/updated preview document: ${textDocument.uri.fsPath}`,
-    );
-
     const isActive = vscode.window.activeTextEditor?.document === textDocument;
-    logger.debug(`Preview document is active editor: ${isActive}`);
 
     const diffEditorExists = vscode.window.visibleTextEditors.some((editor) => {
       if (editor.document.uri.scheme === "diff") {
@@ -209,10 +196,9 @@ export const previewApplyDiff: PreviewToolFunctionType<
       return false;
     });
 
-    logger.debug(`Diff editor already exists: ${diffEditorExists}`);
     if (!isActive) {
       if (diffEditorExists) {
-        vscode.window.showTextDocument(textDocument);
+        await vscode.window.showTextDocument(textDocument);
       } else {
         logger.debug("Showing diff view");
         await vscode.commands.executeCommand(
@@ -223,7 +209,9 @@ export const previewApplyDiff: PreviewToolFunctionType<
         );
       }
     }
-    logger.info(`Successfully previewed diff for ${path}`);
+    logger.info(
+      `Successfully previewed diff for ${path} with ID ${toolCallId}`,
+    );
   } catch (error) {
     logger.error(`Failed to preview diff: ${error}`);
     throw new Error(
@@ -242,17 +230,13 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   try {
     const workspaceFolder = getWorkspaceFolder();
     const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
-    logger.debug(`Target file URI: ${fileUri.fsPath}`);
 
-    // Ensure the directory exists
     const dirUri = vscode.Uri.joinPath(fileUri, "..");
     await ensureDirectoryExists(dirUri);
 
-    // Read the file content
     const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
     const fileContent = fileBuffer.toString();
 
-    // Parse and apply the diff
     const updatedContent = await parseDiffAndApply(
       diff,
       startLine,
@@ -265,7 +249,6 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
     const previewTabs = findPreviewTabs(toolCallId, "(Diff Preview)");
     await closePreviewTabs(previewTabs);
 
-    logger.debug(`Opening updated file: ${fileUri.fsPath}`);
     const document = await vscode.workspace.openTextDocument(fileUri);
     await vscode.window.showTextDocument(document);
 

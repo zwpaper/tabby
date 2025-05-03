@@ -20,7 +20,10 @@ import {
 import "./prompt-form.css";
 
 // Custom keyboard shortcuts extension that handles Enter key behavior
-function CustomEnterKeyHandler(doSubmit: () => void) {
+function CustomEnterKeyHandler(
+  formRef: React.RefObject<HTMLFormElement>,
+  isLoadingRef: React.RefObject<boolean>,
+) {
   return Extension.create({
     addKeyboardShortcuts() {
       return {
@@ -38,7 +41,11 @@ function CustomEnterKeyHandler(doSubmit: () => void) {
             document.querySelector(".tippy-box") !== null;
 
           if (!isMentionSuggestionActive) {
-            doSubmit();
+            setTimeout(() => {
+              if (isLoadingRef.current) return;
+              if (!formRef.current) return;
+              formRef.current.requestSubmit();
+            }, 0);
             return true;
           }
           return false;
@@ -69,13 +76,19 @@ export function FormEditor({
 }: FormEditorProps) {
   const internalFormRef = useRef<HTMLFormElement>(null);
   const formRef = externalFormRef || internalFormRef;
+  const isLoadingRef = useRef<boolean>(isLoading);
 
-  const doSubmit = () => {
-    if (isLoading || !editor || editor.isEmpty) return;
-    formRef.current?.requestSubmit();
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  const wrappedOnSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    onSubmit(e);
+    if (editor && !editor.isEmpty) {
+      editor.commands.clearContent();
+    }
   };
 
-  // Set up the TipTap editor with mention extension
   const editor = useEditor(
     {
       extensions: [
@@ -85,7 +98,7 @@ export function FormEditor({
         Placeholder.configure({
           placeholder: "Ask anything, @ to mention",
         }),
-        CustomEnterKeyHandler(doSubmit),
+        CustomEnterKeyHandler(formRef, isLoadingRef),
         PromptFormMentionExtension.configure({
           suggestion: {
             char: "@",
@@ -140,10 +153,6 @@ export function FormEditor({
                       (extension) =>
                         extension.name === "custom-enter-key-handler",
                     );
-                  if (customExtension) {
-                    // @ts-ignore - method exists but TypeScript doesn't know
-                    customExtension.setMentionListActive(true);
-                  }
 
                   popup = tippy("body", {
                     getReferenceClientRect: tiptapProps.clientRect,
@@ -154,12 +163,6 @@ export function FormEditor({
                     trigger: "manual",
                     placement: "top-start",
                     maxWidth: "none",
-                    onHide: () => {
-                      if (customExtension) {
-                        // @ts-ignore - method exists but TypeScript doesn't know
-                        customExtension.setMentionListActive(false);
-                      }
-                    },
                   });
                 },
                 onUpdate: (props) => {
@@ -179,6 +182,16 @@ export function FormEditor({
                   if (keyProps.event.key === "Enter") {
                     keyProps.event.stopPropagation();
                     keyProps.event.preventDefault();
+
+                    // Call the onKeyDown method of the MentionList component
+                    const result =
+                      (
+                        component.ref as {
+                          onKeyDown: (props: unknown) => boolean;
+                        }
+                      )?.onKeyDown(props) ?? false;
+
+                    return result;
                   }
 
                   return (
@@ -228,13 +241,6 @@ export function FormEditor({
     }
   };
 
-  const wrappedOnSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    onSubmit(e);
-    if (editor && !editor.isEmpty) {
-      setTimeout(() => editor.commands.clearContent(), 0);
-    }
-  };
-
   return (
     <form
       ref={formRef}
@@ -244,7 +250,9 @@ export function FormEditor({
         e.stopPropagation();
         focusEditor();
       }}
-      onKeyDown={() => {}}
+      onKeyDown={() => {
+        // do nothing
+      }}
     >
       <EditorContent
         editor={editor}

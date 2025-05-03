@@ -23,14 +23,10 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
     globPattern,
   );
 
-  if (!searchPath || isAbsolutePath(searchPath)) {
-    logger.warn(`Absolute paths are not supported: ${searchPath}`);
-    return { files: [], isTruncated: false };
-  }
-
-  if (!globPattern) {
-    logger.warn("No glob pattern provided");
-    return { files: [], isTruncated: false };
+  if (isAbsolutePath(searchPath)) {
+    throw new Error(
+      `Absolute paths are not supported: ${searchPath}. Please use a relative path.`,
+    );
   }
 
   const files: string[] = [];
@@ -72,11 +68,10 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error("Error globbing files:", errorMessage);
-    return { files: [], isTruncated: false };
+    throw new Error(`Failed to glob files: ${errorMessage}`);
   }
 
-  logger.debug(`Found ${files.length} files matching pattern ${globPattern}`);
+  logger.info(`Found ${files.length} files matching pattern ${globPattern}`);
   logger.trace("Files found in globFiles:", files);
   return { files, isTruncated };
 };

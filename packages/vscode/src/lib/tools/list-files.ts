@@ -20,9 +20,11 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
     recursive,
   );
 
-  if (!dirPath || isAbsolutePath(dirPath)) {
-    logger.warn(`Absolute paths are not supported: ${dirPath}`);
-    return { files: [], isTruncated: false };
+  if (isAbsolutePath(dirPath)) {
+    logger.error(`Absolute paths are not supported: ${dirPath}`);
+    throw new Error(
+      `Absolute paths are not supported: ${dirPath}. Please use a relative path.`,
+    );
   }
 
   const files: string[] = [];
@@ -59,8 +61,9 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
       return { files: [], isTruncated: false };
     }
   } catch (error) {
-    logger.error("Error listing files:", error);
-    return { files: [], isTruncated: false };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("Error listing files:", errorMessage);
+    throw new Error(`Failed to list files: ${errorMessage}`);
   }
 
   return { files, isTruncated };
