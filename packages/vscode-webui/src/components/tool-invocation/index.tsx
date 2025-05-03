@@ -5,6 +5,7 @@ import { type ClientToolsType, isUserInputTool } from "@ragdoll/tools";
 import type { ToolInvocation } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useVSCodeTool } from "./hooks/use-vscode-tool";
+import { applyDiffTool } from "./tools/apply-diff";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
 import { executeCommandTool } from "./tools/execute-command";
@@ -73,6 +74,7 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   attemptCompletion: AttemptCompletionTool,
   readFile: readFileTool,
   writeToFile: writeToFileTool,
+  applyDiff: applyDiffTool,
   askFollowupQuestion: AskFollowupQuestionTool,
   executeCommand: executeCommandTool,
   searchFiles: searchFilesTool,

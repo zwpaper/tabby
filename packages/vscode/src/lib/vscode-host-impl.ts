@@ -12,6 +12,7 @@ import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
 import { workspace } from "vscode";
 import { DEFAULT_MAX_FILES, listFiles } from "./list-files";
+import { applyDiff, previewApplyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
 import { globFiles } from "./tools/glob-files";
 import { listFiles as listFilesTool } from "./tools/list-files";
@@ -197,6 +198,7 @@ const ToolMap: Record<
   listFiles: listFilesTool,
   globFiles,
   writeToFile,
+  applyDiff,
 };
 
 const ToolPreviewMap: Record<
@@ -205,4 +207,5 @@ const ToolPreviewMap: Record<
   PreviewToolFunctionType<any>
 > = {
   writeToFile: previewWriteToFile,
+  applyDiff: previewApplyDiff,
 };
