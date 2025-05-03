@@ -131,7 +131,7 @@ class Ragdoll implements WebviewViewProvider {
 
       const csp = [
         `default-src 'none';`,
-        `img-src ${webview.cspSource} https://*`,
+        `img-src ${webview.cspSource} https://* blob: data:`,
         `script-src 'nonce-${nonce}'`,
         `style-src ${webview.cspSource}`,
         `font-src ${webview.cspSource}`,
@@ -165,7 +165,7 @@ class Ragdoll implements WebviewViewProvider {
 
     const csp = [
       `default-src 'none';`,
-      `img-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} https://*`,
+      `img-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} https://* blob: data:`,
       `script-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} '${reactRefreshHash}' 'unsafe-eval'`,
       `style-src ${webview.cspSource} 'self' 'unsafe-inline'`,
       `font-src ${webview.cspSource}`,

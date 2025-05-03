@@ -33,10 +33,14 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { z } from "zod";
 
 import "@/components/prompt-form/prompt-form.css";
+import { ImagePreviewList } from "@/components/image-preview-list";
+import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
+import { MessageAttachments } from "@/components/message-attachments";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { Separator } from "@/components/ui/separator";
 import { isAutoInjectTool } from "@ragdoll/tools";
@@ -93,6 +97,15 @@ function RouteComponent() {
   );
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [files, setFiles] = useState<File[]>([]);
+
+  const handleRemoveImage = (index: number) => {
+    setFiles((prev) => {
+      const newFiles = [...prev];
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
+  };
 
   const {
     data,
@@ -117,13 +130,39 @@ function RouteComponent() {
     },
   });
 
-  const wrappedHandleSubmit = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
+  const {
+    uploadImages,
+    uploadingFilesMap,
+    isUploadingImages,
+    stop: stopUpload,
+    uploadResults,
+  } = useUploadImage({ token: authData.session.token });
+
+  const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    if (files.length > 0) {
+      try {
+        e.preventDefault();
+        const uploadedImages = await uploadImages(files);
+        reloadEnvironment();
+        handleSubmit(e, {
+          experimental_attachments: uploadedImages,
+        });
+        // Clear files after successful upload
+        setFiles([]);
+      } catch (e) {}
+    } else {
       reloadEnvironment();
       handleSubmit(e);
-    },
-    [handleSubmit, reloadEnvironment],
-  );
+    }
+  };
+
+  const handleStop = () => {
+    if (isUploadingImages) {
+      stopUpload();
+    } else if (isLoading) {
+      stop();
+    }
+  };
 
   const updateSelectedModelId = useChatStore((x) => x.updateSelectedModelId);
   const handleSelectModel = (v: string) => {
@@ -243,6 +282,14 @@ function RouteComponent() {
                   />
                 ))}
               </div>
+              {/* Display attachments at the bottom of the message */}
+              {m.role === "user" && !!m.experimental_attachments?.length && (
+                <div className="mt-3">
+                  <MessageAttachments
+                    attachments={m.experimental_attachments}
+                  />
+                </div>
+              )}
             </div>
             {messageIndex < renderMessages.length - 1 && <Separator />}
           </div>
@@ -251,19 +298,25 @@ function RouteComponent() {
       <div className="text-red-400 text-center mb-2">{error?.message}</div>
       <ApprovalButton show={!isLoading} />
       <AutoApproveMenu />
+      {/* Display image previews when files are present */}
+      {files.length > 0 && (
+        <ImagePreviewList
+          files={files}
+          onRemove={handleRemoveImage}
+          uploadingFiles={uploadingFilesMap}
+          uploadResults={uploadResults}
+        />
+      )}
+
       <FormEditor
         input={input}
         setInput={setInput}
         onSubmit={wrappedHandleSubmit}
         isLoading={isLoading}
         formRef={formRef}
-      >
-        {taskId.current && (
-          <span className="text-xs absolute top-1 right-1 text-foreground/80">
-            TASK-{String(taskId.current).padStart(3, "0")}
-          </span>
-        )}
-      </FormEditor>
+        files={files}
+        setFiles={setFiles}
+      />
       <div className="flex mb-2 justify-between items-center pt-2 gap-3">
         <ModelSelect
           value={selectedModel?.id}
@@ -279,14 +332,14 @@ function RouteComponent() {
           disabled={isModelsLoading || (!isLoading && !input)}
           className="p-0 h-6 w-6 rounded-md transition-opacity"
           onClick={() => {
-            if (isLoading) {
-              stop();
+            if (isLoading || isUploadingImages) {
+              handleStop();
             } else {
               formRef.current?.requestSubmit();
             }
           }}
         >
-          {isLoading ? (
+          {isLoading || isUploadingImages ? (
             <StopCircleIcon className="size-4" />
           ) : (
             <SendHorizonal className="size-4" />
