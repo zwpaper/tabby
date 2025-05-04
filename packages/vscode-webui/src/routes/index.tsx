@@ -31,7 +31,6 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -187,7 +186,7 @@ function RouteComponent() {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  const renderMessages = useRenderMessages(messages, isLoading);
+  const renderMessages = createRenderMessages(messages, isLoading);
 
   useLayoutEffect(() => {
     const scrollToBottom = () => {
@@ -468,46 +467,44 @@ function useRetry({
   return retryRequest;
 }
 
-function useRenderMessages(messages: Message[], isLoading: boolean) {
-  return useMemo(() => {
-    const x = messages.map((message, index) => {
-      if (
-        index < messages.length - 1 &&
-        message.role === "assistant" &&
-        message.parts
-      ) {
-        for (let i = 0; i < message.parts.length; i++) {
-          const part = message.parts[i];
-          if (
-            part.type === "tool-invocation" &&
-            part.toolInvocation.state !== "result" &&
-            !isUserInputTool(part.toolInvocation.toolName)
-          ) {
-            // Tools have already been rejected on the server side.
-            // Here, we only need to ensure they are rendered to the user in a consistent manner.
-            part.toolInvocation = {
-              ...part.toolInvocation,
-              state: "result",
-              result: {
-                error: "User cancelled the tool call.",
-              },
-            };
-          }
+function createRenderMessages(messages: Message[], isLoading: boolean) {
+  const x = messages.map((message, index) => {
+    if (
+      index < messages.length - 1 &&
+      message.role === "assistant" &&
+      message.parts
+    ) {
+      for (let i = 0; i < message.parts.length; i++) {
+        const part = message.parts[i];
+        if (
+          part.type === "tool-invocation" &&
+          part.toolInvocation.state !== "result" &&
+          !isUserInputTool(part.toolInvocation.toolName)
+        ) {
+          // Tools have already been rejected on the server side.
+          // Here, we only need to ensure they are rendered to the user in a consistent manner.
+          part.toolInvocation = {
+            ...part.toolInvocation,
+            state: "result",
+            result: {
+              error: "User cancelled the tool call.",
+            },
+          };
         }
       }
-      return message;
-    });
-
-    if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
-      // Add a placeholder message to show the spinner
-      x.push({
-        id: "",
-        role: "assistant",
-        content: "",
-        parts: [],
-      });
     }
+    return message;
+  });
 
-    return x;
-  }, [messages, isLoading]);
+  if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
+    // Add a placeholder message to show the spinner
+    x.push({
+      id: "",
+      role: "assistant",
+      content: "",
+      parts: [],
+    });
+  }
+
+  return x;
 }

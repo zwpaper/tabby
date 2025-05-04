@@ -69,7 +69,7 @@ export function ToolInvocationPart({
 
   const onResult = useCallback(
     (result: unknown) => {
-      addToolResult?.({ toolCallId: tool.toolCallId, result });
+      addToolResult({ toolCallId: tool.toolCallId, result });
     },
     [addToolResult, tool.toolCallId],
   );
