@@ -10,7 +10,6 @@ import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
-import { workspace } from "vscode";
 import { DEFAULT_MAX_FILES, listFiles } from "./list-files";
 import { applyDiff, previewApplyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
@@ -40,7 +39,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
   }
 
   async readEnvironment(customRuleFiles: string[] = []): Promise<Environment> {
-    const workspaceFolders = workspace.workspaceFolders;
+    const workspaceFolders = vscode.workspace.workspaceFolders;
     let files: string[] = [];
     if (!workspaceFolders?.length) {
       files = [];
@@ -75,7 +74,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
   async listFilesInWorkspace(param: { query: string; limit?: number }): Promise<
     string[]
   > {
-    const workspaceFolders = workspace.workspaceFolders;
+    const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders?.length || !workspaceFolders[0]) {
       return [];
     }
@@ -87,7 +86,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       resultLimit: limit,
       withSearch: true,
     });
-    return results.map((item) => workspace.asRelativePath(item.uri));
+    return results.map((item) => vscode.workspace.asRelativePath(item.uri));
   }
 
   private async queueToolCall<T>(fn: () => Promise<T>) {

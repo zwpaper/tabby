@@ -6,14 +6,13 @@ import type {
 } from "@ragdoll/tools/src/types";
 import * as vscode from "vscode";
 import {
-  closePreviewTabs,
   ensureDirectoryExists,
-  findPreviewTabs,
   getWorkspaceFolder,
   tempfile,
   writeFile,
 } from "../file-utils";
 import { getLogger } from "../logger";
+import { closePreviewTabs, findPreviewTabs } from "../tab-utils";
 
 const WindowToExpandForSearch = 15;
 const logger = getLogger("applyDiffTool");

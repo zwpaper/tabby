@@ -7,14 +7,13 @@ import type {
   ToolFunctionType,
 } from "@ragdoll/tools/src/types";
 import {
-  closePreviewTabs,
   ensureDirectoryExists,
-  findPreviewTabs,
   getWorkspaceFolder,
   tempfile,
   writeFile,
 } from "../file-utils";
 import { getLogger } from "../logger";
+import { closePreviewTabs, findPreviewTabs } from "../tab-utils";
 
 const logger = getLogger("writeToFileTool");
 
