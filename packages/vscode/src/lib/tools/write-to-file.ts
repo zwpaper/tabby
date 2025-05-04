@@ -74,7 +74,7 @@ export const previewWriteToFile: PreviewToolFunctionType<
   );
   logger.debug(`File exists: ${fileExist}`);
 
-  const isActive = vscode.window.activeTextEditor?.document === textDocument;
+  const isActive = findPreviewTabs(toolCallId, "(Preview)").length > 0;
   logger.debug(
     `Preview document is active editor: ${isActive} fileExist: ${fileExist}, doc: ${textDocument.uri.fsPath}`,
   );
@@ -91,6 +91,9 @@ export const previewWriteToFile: PreviewToolFunctionType<
           ).uri,
       textDocument.uri,
       `${path} (Preview)`,
+      {
+        preview: false,
+      },
     );
   }
 };

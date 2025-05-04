@@ -184,7 +184,7 @@ export const previewApplyDiff: PreviewToolFunctionType<
       updatedContent,
     );
 
-    const isActive = vscode.window.activeTextEditor?.document === textDocument;
+    const isActive = findPreviewTabs(toolCallId, "(Diff Preview)").length > 0;
 
     const diffEditorExists = vscode.window.visibleTextEditors.some((editor) => {
       if (editor.document.uri.scheme === "diff") {
@@ -206,12 +206,15 @@ export const previewApplyDiff: PreviewToolFunctionType<
           fileUri,
           textDocument.uri,
           `${path} (Diff Preview)`,
+          {
+            preview: false,
+          },
         );
       }
+      logger.info(
+        `Successfully previewed diff for ${path} with ID ${toolCallId}`,
+      );
     }
-    logger.info(
-      `Successfully previewed diff for ${path} with ID ${toolCallId}`,
-    );
   } catch (error) {
     logger.error(`Failed to preview diff: ${error}`);
     throw new Error(
