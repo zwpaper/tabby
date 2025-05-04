@@ -28,5 +28,10 @@ export const searchFiles = defineClientTool({
         }),
       )
       .describe("List of matches found in the search."),
+    isTruncated: z
+      .boolean()
+      .describe(
+        "Whether the content is truncated due to exceeding the maximum buffer length",
+      ),
   }),
 });

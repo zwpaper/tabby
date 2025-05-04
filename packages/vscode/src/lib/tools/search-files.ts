@@ -1,10 +1,9 @@
 import { exec } from "node:child_process";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import { rgPath } from "@vscode/ripgrep";
-import { workspace } from "vscode";
+import { env, workspace } from "vscode";
 
 const execAsync = promisify(exec);
 
@@ -67,8 +66,18 @@ const logger = getLogger("searchFiles");
 export const searchFiles: ToolFunctionType<
   ClientToolsType["searchFiles"]
 > = async ({ path, regex, filePattern }, { abortSignal }) => {
+  const rgPath = join(
+    env.appRoot,
+    "node_modules",
+    "@vscode",
+    "ripgrep",
+    "bin",
+    "rg",
+  );
+  logger.info("rgPath", rgPath);
   logger.info("searchFiles", path, regex, filePattern);
   const matches: { file: string; line: number; context: string }[] = [];
+  let isTruncated = false;
 
   // Construct the rg command
   // Use single quotes to wrap regex and path to handle potential spaces or special characters
@@ -77,21 +86,20 @@ export const searchFiles: ToolFunctionType<
   // Using --fixed-strings might be safer if the input 'regex' isn't meant to be a regex, but the param name suggests it is.
   // Added --case-sensitive based on original implementation's RegExp usage (default is case-sensitive)
   // Added --binary to skip binary files, similar to the original file-type check
-  let command = `${rgPath} --json --case-sensitive --binary `;
-  logger.info("command", command);
+  // Need to quote rgPath in case env.appRoot contains spaces
+  let command = `"${rgPath.replace(/"/g, '\\"')}" --json --case-sensitive --binary `; // Quote rgPath
 
   if (filePattern) {
     // Add glob pattern. Ensure it's properly quoted.
     command += `--glob '${filePattern.replace(/'/g, "'''")}' `; // Escape single quotes in pattern
   }
 
-  const absPath = join(
+  const absPath = resolve(
     workspace.workspaceFolders?.[0].uri.fsPath ?? "",
     path.replace(/'/g, "'''"),
   );
   // Add regex and path. Ensure they are properly quoted.
   command += `'${regex.replace(/'/g, "'''")}' '${absPath}'`;
-
   logger.info("command", command);
 
   try {
@@ -103,16 +111,18 @@ export const searchFiles: ToolFunctionType<
     });
 
     if (stderr) {
-      console.warn(`rg command stderr: ${stderr}`);
-      logger.warn("rg command stderr", stderr);
+      logger.warn("rg command stderr: ", stderr);
       // Decide if stderr should be treated as an error or just a warning
       // For now, we'll proceed but log it. Some rg warnings might not be fatal.
+      if (stderr.includes("maxBuffer length exceeded")) {
+        isTruncated = true;
+      }
     }
 
     // rg --json outputs newline-separated JSON objects
     const outputLines = stdout.trim().split("\n");
 
-    logger.info("rg output", outputLines);
+    logger.trace("rg output: ", outputLines);
 
     for (const line of outputLines) {
       try {
@@ -128,7 +138,7 @@ export const searchFiles: ToolFunctionType<
           });
         }
       } catch (parseError) {
-        console.error(
+        logger.error(
           `Failed to parse rg JSON output line: ${line}`,
           parseError,
         );
@@ -137,7 +147,7 @@ export const searchFiles: ToolFunctionType<
     }
     // biome-ignore lint/suspicious/noExplicitAny: exception catch has to be any
   } catch (error: any) {
-    logger.error("rg command error", error);
+    logger.error("rg command error: ", error);
     if (!(error satisfies ExecError)) {
       throw error;
     }
@@ -156,7 +166,7 @@ export const searchFiles: ToolFunctionType<
     }
     if (!error.code && error.stderr) {
       // Log stderr even if code is 0 (e.g., warnings)
-      console.warn(`rg command stderr (exit code 0): ${error.stderr}`);
+      logger.warn(`rg command stderr (exit code 0): ${error.stderr}`);
     } else if (error.code === 1 && !error.stdout && !error.stderr) {
       // Exit code 1 and no output means no matches found, which is not an error for this function.
       // console.log("rg command finished with exit code 1 (no matches found).");
@@ -164,18 +174,20 @@ export const searchFiles: ToolFunctionType<
       // Exit code 1 but there was output (matches were found, but maybe some errors occurred)
       // We already processed stdout, so just log stderr if present
       if (error.stderr) {
-        console.warn(`rg command stderr (exit code 1): ${error.stderr}`);
+        logger.warn(`rg command stderr (exit code 1): ${error.stderr}`);
       }
     } else if (!error.code && !error.stdout && !error.stderr) {
       // Exit code 0, no output - could happen if search path is empty or matches no files
-      // console.log("rg command finished with exit code 0 (no matches found or no files searched).");
+      logger.log(
+        "rg command finished with exit code 0 (no matches found or no files searched).",
+      );
     } else {
       // Other unexpected errors
-      console.error("Error executing rg command:", error);
+      logger.error("Error executing rg command: ", error);
       throw error; // Rethrow unexpected errors
     }
     // If error.code is 1 (no matches), we fall through and return the empty matches array, which is correct.
   }
 
-  return { matches };
+  return { matches, isTruncated };
 };

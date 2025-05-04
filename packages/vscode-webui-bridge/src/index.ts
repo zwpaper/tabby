@@ -30,7 +30,7 @@ export interface VSCodeHostApi {
     limit?: number;
   }): Promise<string[]>;
 
-  openFile(filePath: string): void;
+  openFile(filePath: string, options?: { line?: number }): void;
 }
 
 export interface WebviewHostApi {

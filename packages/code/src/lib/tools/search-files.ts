@@ -159,5 +159,5 @@ export const searchFiles: ToolFunctionType<
     // If error.code is 1 (no matches), we fall through and return the empty matches array, which is correct.
   }
 
-  return { matches };
+  return { matches, isTruncated: false }; // Assuming no truncation for now
 };
