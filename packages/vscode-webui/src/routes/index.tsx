@@ -1,4 +1,3 @@
-import { MessageMarkdown } from "@/components/message-markdown";
 import { ModelSelect } from "@/components/model-select";
 import Pending from "@/components/pending";
 import { FormEditor } from "@/components/prompt-form/form-editor";
@@ -39,7 +38,7 @@ import { z } from "zod";
 import "@/components/prompt-form/prompt-form.css";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
-import { MessageAttachments } from "@/components/message-attachments";
+import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { Separator } from "@/components/ui/separator";
 import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";

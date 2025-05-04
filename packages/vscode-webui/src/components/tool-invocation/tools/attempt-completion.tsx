@@ -1,4 +1,4 @@
-import { MessageMarkdown } from "@/components/message-markdown";
+import { MessageMarkdown } from "@/components/message";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { Check } from "lucide-react";
 import type { ToolProps } from "../types";
