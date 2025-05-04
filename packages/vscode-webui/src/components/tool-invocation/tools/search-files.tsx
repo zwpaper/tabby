@@ -14,7 +14,7 @@ const getFileName = (filePath: string) => {
 
 const HighlightedText: React.FC<{ children?: string }> = ({ children }) => {
   return (
-    <span className="font-mono text-yellow-300 bg-muted p-1 mx-1 rounded">
+    <span className="font-mono font-bold text-foreground bg-muted p-1 mx-1 rounded">
       {children}
     </span>
   );
@@ -61,15 +61,7 @@ export const searchFilesTool: React.FC<
   const { path, regex, filePattern } = tool.args || {};
 
   let resultEl: React.ReactNode;
-  let error: string | undefined;
   let matches: { file: string; line: number; context: string }[] = [];
-  if (
-    tool.state === "result" &&
-    "error" in tool.result &&
-    typeof tool.result.error === "string"
-  ) {
-    error = tool.result.error;
-  }
   if (
     tool.state === "result" &&
     typeof tool.result === "object" &&
@@ -103,52 +95,31 @@ export const searchFilesTool: React.FC<
         className="flex gap-2 items-center hover:bg-muted rounded p-1 cursor-pointer"
         onClick={() => setShowDetails(!showDetails)}
       >
-        {(matches.length > 0 || error) && (
-          // Use self-start to align this item to the top within the flex container
-          <span className="bg-muted rounded p-1 my-1 self-start">
-            {showDetails ? (
-              <ChevronRight className="rotate-90 size-3" />
-            ) : (
-              <ChevronRight className="size-3" />
-            )}
-          </span>
-        )}
         {/* Use self-start to align this item to the top. Assumes StatusIcon accepts and applies className */}
         <span className="py-1.5 self-start">
           <StatusIcon isExecuting={isExecuting} tool={tool} />
         </span>
         {(isExecuting || tool.state !== "result") && (
-          <span className="text-gray-400 leading-7">
-            Searching for {searchCondition}
-          </span>
-        )}
-        {error && (
-          <span className="text-gray-400 leading-7" title={error}>
-            Searching for {searchCondition} encountered an error.
-          </span>
+          <span className="leading-7">Searching for {searchCondition}</span>
         )}
         {matches.length > 0 && (
-          <span className="text-gray-400 leading-7">
+          <span className="leading-7">
             Searched for {searchCondition}, found {matches.length} match
             {matches.length > 1 ? "es" : ""}
           </span>
         )}
-        {tool.state === "result" && matches.length === 0 && !error && (
-          <span className="text-gray-400 leading-7">
-            Searched for {searchCondition}, no matches found
+        {matches.length > 0 && (
+          // Use self-start to align this item to the top within the flex container
+          <span className="bg-muted rounded p-1 my-1 self-start">
+            {showDetails ? (
+              <ChevronRight className="rotate-90 size-3" />
+            ) : (
+              <ChevronRight className="rotate-180 size-3" />
+            )}
           </span>
         )}
       </div>
-      {showDetails && (
-        <>
-          {matches.length > 0 && resultEl}
-          {error && (
-            <span className="text-gray-400 bg-muted rounded text-red-400">
-              {error}
-            </span>
-          )}
-        </>
-      )}
+      {showDetails && matches.length > 0 && resultEl}
     </div>
   );
 };
