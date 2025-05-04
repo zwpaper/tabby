@@ -302,7 +302,13 @@ function RouteComponent() {
         formRef={formRef}
         files={files}
         setFiles={setFiles}
-      />
+      >
+        {taskId.current && (
+          <span className="text-xs absolute top-1 right-1 text-foreground/80">
+            TASK-{String(taskId.current).padStart(3, "0")}
+          </span>
+        )}
+      </FormEditor>
       <div className="flex mb-2 justify-between items-center pt-2 gap-3">
         <ModelSelect
           value={selectedModel?.id}
