@@ -32,8 +32,8 @@ app.post(
     maxSize: 1024 * 1024 * 10, // 10Mb
     onError: (c) => c.text("overflow :(", 413),
   }),
-  // Expires in 1 year
-  storage.single("image", { sign: { expiresIn: 60 * 60 * 24 * 365 } }),
+  // Expires in 6.5 days
+  storage.single("image", { sign: { expiresIn: 60 * 60 * 24 * 6.5 } }),
   (c) => {
     return c.json({
       image: c.var.signedURLs.image,
