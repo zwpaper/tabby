@@ -43,7 +43,7 @@ import { useUploadImage } from "@/components/image-preview-list/use-upload-image
 import { MessageAttachments } from "@/components/message-attachments";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { Separator } from "@/components/ui/separator";
-import { isAutoInjectTool } from "@ragdoll/tools";
+import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 
 const searchSchema = z.object({
   taskId: z
@@ -149,7 +149,8 @@ function RouteComponent() {
         });
         // Clear files after successful upload
         setFiles([]);
-      } catch (e) {}
+      } finally {
+      }
     } else {
       reloadEnvironment();
       handleSubmit(e);
@@ -186,21 +187,7 @@ function RouteComponent() {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  const renderMessages = useMemo(() => {
-    const x = [...messages];
-
-    if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
-      // Add a placeholder message to show the spinner
-      x.push({
-        id: "",
-        role: "assistant",
-        content: "",
-        parts: [],
-      });
-    }
-
-    return x;
-  }, [messages, isLoading]);
+  const renderMessages = useRenderMessages(messages, isLoading);
 
   useLayoutEffect(() => {
     const scrollToBottom = () => {
@@ -270,7 +257,7 @@ function RouteComponent() {
                   )}
               </div>
               <div className="ml-1 mt-3 flex flex-col gap-2">
-                {m.parts.map((part, index) => (
+                {m.parts?.map((part, index) => (
                   <Part
                     key={index}
                     message={m}
@@ -481,4 +468,48 @@ function useRetry({
   }, [messages, setMessages, append, reload]);
 
   return retryRequest;
+}
+
+function useRenderMessages(messages: Message[], isLoading: boolean) {
+  return useMemo(() => {
+    const x = messages.map((message, index) => {
+      if (
+        index < messages.length - 1 &&
+        message.role === "assistant" &&
+        message.parts
+      ) {
+        for (let i = 0; i < message.parts.length; i++) {
+          const part = message.parts[i];
+          if (
+            part.type === "tool-invocation" &&
+            part.toolInvocation.state !== "result" &&
+            !isUserInputTool(part.toolInvocation.toolName)
+          ) {
+            // Tools have already been rejected on the server side.
+            // Here, we only need to ensure they are rendered to the user in a consistent manner.
+            part.toolInvocation = {
+              ...part.toolInvocation,
+              state: "result",
+              result: {
+                error: "User cancelled the tool call.",
+              },
+            };
+          }
+        }
+      }
+      return message;
+    });
+
+    if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
+      // Add a placeholder message to show the spinner
+      x.push({
+        id: "",
+        role: "assistant",
+        content: "",
+        parts: [],
+      });
+    }
+
+    return x;
+  }, [messages, isLoading]);
 }
