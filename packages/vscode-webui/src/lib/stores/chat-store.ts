@@ -9,6 +9,7 @@ export interface ChatState {
   selectedModelId: string | undefined;
 
   pendingApproval?: {
+    id: string;
     name: string;
     resolve: (approved: boolean) => void;
   };

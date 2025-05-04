@@ -214,6 +214,7 @@ function RouteComponent() {
   useEffect(() => {
     if (error) {
       updatePendingApproval({
+        id: "retry",
         name: "retry",
         resolve: (approved) => {
           if (approved) {
@@ -261,7 +262,6 @@ function RouteComponent() {
                   <Part
                     key={index}
                     message={m}
-                    isLastMessage={messageIndex === renderMessages.length - 1}
                     part={part}
                     addToolResult={addToolResult}
                     setInput={setInputAndFocus}
@@ -339,14 +339,12 @@ function RouteComponent() {
 
 function Part({
   message,
-  isLastMessage,
   part,
   addToolResult,
   setInput,
   status,
 }: {
   message: Message;
-  isLastMessage: boolean;
   part: NonNullable<Message["parts"]>[number];
   addToolResult: ({
     toolCallId,
@@ -376,7 +374,7 @@ function Part({
     return (
       <ToolInvocationPart
         tool={part.toolInvocation}
-        addToolResult={isLastMessage ? addToolResult : undefined}
+        addToolResult={addToolResult}
         setInput={setInput}
         status={status}
       />
