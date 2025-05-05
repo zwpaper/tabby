@@ -7,18 +7,25 @@ const excludeFromState: string[] = ["updateAutoApproveSettings"];
 type AutoApprove = Record<keyof typeof ToolsByPermission, boolean>;
 
 export interface SettingsState {
+  selectedModelId: string | undefined;
   autoApproveSettings: AutoApprove;
+
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
+  updateSelectedModelId: (selectedModelId: string | undefined) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
+      selectedModelId: undefined,
       autoApproveSettings: {
         read: false,
         write: false,
         execute: false,
       },
+      updateSelectedModelId: (selectedModelId: string | undefined) =>
+        set({ selectedModelId }),
+
       updateAutoApproveSettings: (data) =>
         set((state) => ({
           autoApproveSettings: { ...state.autoApproveSettings, ...data },

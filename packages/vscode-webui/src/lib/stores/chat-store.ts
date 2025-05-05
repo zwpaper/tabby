@@ -6,15 +6,11 @@ export type ApprovalStatus = "pending" | "approved" | "rejected";
 const excludeFromState: (keyof ChatState)[] = ["pendingApproval"];
 
 export interface ChatState {
-  selectedModelId: string | undefined;
-
   pendingApproval?: {
     id: string;
     name: string;
     resolve: (approved: boolean) => void;
   };
-
-  updateSelectedModelId: (selectedModelId: string | undefined) => void;
 
   clearPendingApproval: () => void;
   updatePendingApproval: (
@@ -26,11 +22,7 @@ export interface ChatState {
 export const useChatStore = create<ChatState>()(
   persist(
     (set) => ({
-      selectedModelId: undefined,
       pendingApproval: undefined,
-      updateSelectedModelId: (selectedModelId: string | undefined) =>
-        set({ selectedModelId }),
-
       clearPendingApproval: () => set({ pendingApproval: undefined }),
       updatePendingApproval: (pendingApproval: ChatState["pendingApproval"]) =>
         set({ pendingApproval }),

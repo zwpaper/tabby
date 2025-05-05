@@ -1,8 +1,7 @@
 import { apiClient } from "@/lib/auth-client";
-import { useChatStore } from "@/lib/stores/chat-store";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useStore } from "zustand/react";
+import { useSettingsStore } from "../stores/settings-store";
 
 export type Models = ReturnType<typeof useModels>["data"];
 
@@ -18,12 +17,8 @@ export function useModels() {
 }
 
 export function useSelectedModels() {
-  const selectedModelId = useStore(
-    useChatStore,
-    (state) => state.selectedModelId,
-  );
+  const { selectedModelId, updateSelectedModelId } = useSettingsStore();
   const { data, isLoading, ...rest } = useModels();
-  const updateSelectedModelId = useChatStore((x) => x.updateSelectedModelId);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: watching isLoading is sufficient
   useEffect(() => {

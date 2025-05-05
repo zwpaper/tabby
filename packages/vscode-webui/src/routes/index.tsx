@@ -41,6 +41,7 @@ import { useUploadImage } from "@/components/image-preview-list/use-upload-image
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { Separator } from "@/components/ui/separator";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 
 const searchSchema = z.object({
@@ -163,7 +164,9 @@ function RouteComponent() {
     }
   };
 
-  const updateSelectedModelId = useChatStore((x) => x.updateSelectedModelId);
+  const updateSelectedModelId = useSettingsStore(
+    (x) => x.updateSelectedModelId,
+  );
   const handleSelectModel = (v: string) => {
     updateSelectedModelId(v);
   };
