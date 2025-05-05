@@ -471,25 +471,33 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
+  const shouldSkipExecute = useShouldSkipExecute();
 
   const onAccept = useCallback(async () => {
     if (pendingApproval.name === "retry") {
       retry();
     } else {
-      setIsExecuting(true);
+      if (shouldSkipExecute()) {
+        return;
+      }
+
       try {
+        setIsExecuting(true);
         await executeTool(pendingApproval.tool);
       } finally {
         setIsExecuting(false);
       }
     }
-  }, [pendingApproval, retry, executeTool, setIsExecuting]);
+  }, [shouldSkipExecute, pendingApproval, retry, executeTool, setIsExecuting]);
 
   const onReject = useCallback(() => {
     if (pendingApproval.name !== "retry") {
+      if (shouldSkipExecute()) {
+        return;
+      }
       rejectTool(pendingApproval.tool);
     }
-  }, [pendingApproval, rejectTool]);
+  }, [shouldSkipExecute, pendingApproval, rejectTool]);
 
   const isAutoApproved = useToolAutoApproval(pendingApproval.name);
   const isAutoRejected = isAutoInjectTool(pendingApproval.name);
@@ -676,4 +684,16 @@ function PreviewToolCall({ tool }: { tool: ToolInvocation }) {
     });
   }, [state, args, toolCallId, toolName]);
   return <></>;
+}
+
+function useShouldSkipExecute() {
+  const executed = useRef(false);
+  const canExecute = useCallback(() => {
+    if (executed.current) {
+      return true;
+    }
+    executed.current = true;
+    return false;
+  }, []);
+  return canExecute;
 }

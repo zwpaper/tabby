@@ -7,7 +7,6 @@ import { vscodeHost } from "../vscode";
 export function useVSCodeTool({
   addToolResult,
 }: { addToolResult: ReturnType<typeof useChat>["addToolResult"] }) {
-  const executed = useRef(false);
   const abort = useRef(new AbortController());
 
   const abortTool = useCallback(() => {
@@ -16,11 +15,6 @@ export function useVSCodeTool({
 
   const executeTool = useCallback(
     async (tool: ToolInvocation) => {
-      if (executed.current) {
-        return;
-      }
-
-      executed.current = true;
       const result = await vscodeHost
         .executeToolCall(tool.toolName, tool.args, {
           toolCallId: tool.toolCallId,
@@ -41,10 +35,6 @@ export function useVSCodeTool({
   );
   const rejectTool = useCallback(
     async (tool: ToolInvocation) => {
-      if (executed.current) {
-        return;
-      }
-      executed.current = true;
       addToolResult({
         toolCallId: tool.toolCallId,
         result: {
