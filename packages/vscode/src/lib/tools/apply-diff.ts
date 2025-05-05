@@ -252,7 +252,7 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
     await closePreviewTabs(previewTabs);
 
     const document = await vscode.workspace.openTextDocument(fileUri);
-    await vscode.window.showTextDocument(document);
+    await vscode.window.showTextDocument(document, { preview: false });
 
     logger.info(`Successfully applied diff to ${path}`);
     return { success: true };

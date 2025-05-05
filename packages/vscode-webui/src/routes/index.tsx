@@ -230,6 +230,7 @@ function RouteComponent() {
 
   return (
     <div className="flex flex-col h-screen px-4">
+      <PreviewToolCalls message={renderMessages.at(-1)} />
       <div
         className="flex-1 overflow-y-auto mb-2 space-y-4"
         ref={messagesContainerRef}
@@ -567,24 +568,6 @@ function createRenderMessages(
     });
   }
 
-  const lastMessage = messages[messages.length - 1];
-  if (lastMessage?.role === "assistant") {
-    for (const part of lastMessage.parts) {
-      if (
-        part.type === "tool-invocation" &&
-        part.toolInvocation.state !== "result"
-      ) {
-        vscodeHost.previewToolCall(
-          part.toolInvocation.toolName,
-          part.toolInvocation.args,
-          {
-            toolCallId: part.toolInvocation.toolCallId,
-          },
-        );
-      }
-    }
-  }
-
   return x;
 }
 
@@ -657,4 +640,24 @@ function usePendingApproval({
   }, [pendingApproval]);
 
   return { pendingApproval, setIsExecuting, executingToolCallId };
+}
+
+function PreviewToolCalls({ message }: { message?: UIMessage }) {
+  return message?.parts.map((part, index) => {
+    if (part.type === "tool-invocation") {
+      return <PreviewToolCall key={index} tool={part.toolInvocation} />;
+    }
+    return null;
+  });
+}
+
+function PreviewToolCall({ tool }: { tool: ToolInvocation }) {
+  const { state, args, toolCallId, toolName } = tool;
+  useEffect(() => {
+    if (state === "result") return;
+    vscodeHost.previewToolCall(toolName, args, {
+      toolCallId,
+    });
+  }, [state, args, toolCallId, toolName]);
+  return <></>;
 }

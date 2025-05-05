@@ -122,7 +122,7 @@ export const writeToFile: ToolFunctionType<
     await closePreviewTabs(previewTabs);
 
     const document = await vscode.workspace.openTextDocument(pathUri);
-    await vscode.window.showTextDocument(document);
+    await vscode.window.showTextDocument(document, { preview: false });
     logger.info(`Document opened in editor: ${path}`);
 
     return { success: true };
