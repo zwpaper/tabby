@@ -1,4 +1,4 @@
-import { type ClientToolsType, ToolsByPermission } from "@ragdoll/tools";
+import { ToolsByPermission } from "@ragdoll/tools";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -43,11 +43,10 @@ export const useSettingsStore = create<SettingsState>()(
   ),
 );
 
-export function useToolAutoApproval(toolName?: keyof ClientToolsType): boolean {
+export function useToolAutoApproval(toolName: string): boolean {
   const autoApproveSettings = useSettingsStore(
     (state) => state.autoApproveSettings,
   );
-  if (!toolName) return false;
   if (autoApproveSettings.read && ToolsByPermission.read.includes(toolName)) {
     return true;
   }

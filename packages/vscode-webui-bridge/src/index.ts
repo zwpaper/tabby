@@ -12,7 +12,6 @@ export interface VSCodeHostApi {
     args: unknown,
     options: {
       toolCallId: string;
-      abortSignal: ThreadAbortSignalSerialization;
     },
   ): Promise<void>;
 

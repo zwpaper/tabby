@@ -30,5 +30,3 @@ export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
 type InputType<T extends (...args: any[]) => any> = Parameters<T>[0];
 
 type Optional<T> = { [K in keyof T]: T[K] | undefined };
-
-export type ApprovalStatus = "pending" | "approved" | "rejected";

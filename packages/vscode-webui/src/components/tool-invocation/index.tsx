@@ -1,10 +1,4 @@
-import { useChatStore } from "@/lib/stores/chat-store";
-import { useToolAutoApproval } from "@/lib/stores/settings-store";
-import type { UseChatHelpers } from "@ai-sdk/react";
-import { type ClientToolsType, isUserInputTool } from "@ragdoll/tools";
 import type { ToolInvocation } from "ai";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useVSCodeTool } from "./hooks/use-vscode-tool";
 import { applyDiffTool } from "./tools/apply-diff";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
@@ -14,72 +8,26 @@ import { listFilesTool } from "./tools/list-files";
 import { readFileTool } from "./tools/read-file";
 import { searchFilesTool } from "./tools/search-files";
 import { writeToFileTool } from "./tools/write-to-file";
-import type { ApprovalStatus, ToolProps } from "./types";
+import type { ToolProps } from "./types";
 
 export function ToolInvocationPart({
   tool,
-  addToolResult,
   setInput,
-  status,
+  executingToolCallId,
 }: {
   tool: ToolInvocation;
   setInput: (prompt: string) => void;
-  addToolResult: ({
-    toolCallId,
-    result,
-  }: { toolCallId: string; result: unknown }) => void;
-  status: UseChatHelpers["status"];
+  executingToolCallId: string | undefined;
 }) {
-  const { state, toolName, toolCallId } = tool;
-  const userInputTool = isUserInputTool(toolName);
-  const { pendingApproval, updatePendingApproval, clearPendingApproval } =
-    useChatStore();
-  const isAutoApproved = useToolAutoApproval(toolName as keyof ClientToolsType);
-  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus>(
-    isAutoApproved ? "approved" : "pending",
-  );
-
-  useEffect(() => {
-    if (pendingApproval?.id === toolCallId) {
-      if (state === "result") {
-        clearPendingApproval();
-      }
-    }
-
-    if (pendingApproval !== undefined) return;
-
-    if (state === "call" && !userInputTool && approvalStatus === "pending") {
-      updatePendingApproval({
-        id: toolCallId,
-        name: toolName,
-        resolve: (approved: boolean) =>
-          setApprovalStatus(approved ? "approved" : "rejected"),
-      });
-    }
-  }, [
-    state,
-    userInputTool,
-    approvalStatus,
-    toolName,
-    updatePendingApproval,
-    clearPendingApproval,
-    pendingApproval,
-    toolCallId,
-  ]);
-
-  const onResult = useCallback(
-    (result: unknown) => {
-      addToolResult({ toolCallId: tool.toolCallId, result });
-    },
-    [addToolResult, tool.toolCallId],
-  );
-  const { isExecuting } = useVSCodeTool(status, approvalStatus, tool, onResult);
-
   const C = Tools[tool.toolName];
   return (
     <div className="flex flex-col gap-1">
       {C ? (
-        <C tool={tool} isExecuting={isExecuting} setInput={setInput} />
+        <C
+          tool={tool}
+          isExecuting={tool.toolCallId === executingToolCallId}
+          setInput={setInput}
+        />
       ) : (
         JSON.stringify(tool, null, 2)
       )}
@@ -98,31 +46,3 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   listFiles: listFilesTool,
   globFiles: globFilesTool,
 };
-
-export function AutoRejectTool({
-  tool,
-  addToolResult,
-}: {
-  tool: ToolInvocation;
-  addToolResult: ({
-    toolCallId,
-    result,
-  }: {
-    toolCallId: string;
-    result: unknown;
-  }) => void;
-}) {
-  const rejected = useRef(false);
-  useEffect(() => {
-    if (!rejected.current) {
-      rejected.current = true;
-      addToolResult({
-        toolCallId: tool.toolCallId,
-        result: {
-          error: "Tool invocation rejected by user",
-        },
-      });
-    }
-  }, [tool, addToolResult]);
-  return null;
-}

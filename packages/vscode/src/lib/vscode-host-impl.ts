@@ -113,7 +113,6 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     args: unknown,
     options: {
       toolCallId: string;
-      abortSignal: ThreadAbortSignalSerialization;
     },
   ) {
     return this.queueToolCall(() =>
@@ -152,7 +151,6 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     args: unknown,
     options: {
       toolCallId: string;
-      abortSignal: ThreadAbortSignalSerialization;
     },
   ) {
     const tool = ToolPreviewMap[toolName];
@@ -160,10 +158,9 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       return;
     }
 
-    const abortSignal = new ThreadAbortSignal(options.abortSignal);
     // biome-ignore lint/suspicious/noExplicitAny: external call without type information
     return tool(args as any, {
-      abortSignal,
+      abortSignal: undefined,
       toolCallId: options.toolCallId,
       messages: [],
     });

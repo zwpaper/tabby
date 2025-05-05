@@ -1,16 +1,12 @@
 import { ModelSelect } from "@/components/model-select";
 import Pending from "@/components/pending";
 import { FormEditor } from "@/components/prompt-form/form-editor";
-import {
-  AutoRejectTool,
-  ToolInvocationPart,
-} from "@/components/tool-invocation";
+import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useSelectedModels } from "@/lib/hooks/use-models";
-import { useChatStore } from "@/lib/stores/chat-store";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import {
   type UIMessage,
@@ -23,13 +19,15 @@ import type {
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import type { TextPart } from "ai";
+import type { TextPart, ToolInvocation } from "ai";
 import { Loader2, SendHorizonal, StopCircleIcon } from "lucide-react";
 import {
   type MutableRefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -41,8 +39,17 @@ import { useUploadImage } from "@/components/image-preview-list/use-upload-image
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { Separator } from "@/components/ui/separator";
-import { useSettingsStore } from "@/lib/stores/settings-store";
-import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
+import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
+import {
+  useSettingsStore,
+  useToolAutoApproval,
+} from "@/lib/stores/settings-store";
+import { vscodeHost } from "@/lib/vscode";
+import {
+  type ClientToolsType,
+  isAutoInjectTool,
+  isUserInputTool,
+} from "@ragdoll/tools";
 
 const searchSchema = z.object({
   taskId: z
@@ -73,11 +80,6 @@ export const Route = createFileRoute("/")({
 });
 
 function RouteComponent() {
-  const clearPendingApproval = useChatStore((x) => x.clearPendingApproval);
-  useLayoutEffect(() => {
-    clearPendingApproval();
-  }, [clearPendingApproval]);
-
   const loaderData = Route.useLoaderData();
   const taskId = useRef<number | undefined>(loaderData?.id);
   useEffect(() => {
@@ -188,8 +190,6 @@ function RouteComponent() {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  const renderMessages = createRenderMessages(messages, isLoading);
-
   useLayoutEffect(() => {
     const scrollToBottom = () => {
       const container = messagesContainerRef.current;
@@ -210,21 +210,23 @@ function RouteComponent() {
     setInput(input);
   };
 
-  const updatePendingApproval = useChatStore((x) => x.updatePendingApproval);
+  const renderMessages = createRenderMessages(messages, isLoading);
   const retry = useRetry({ messages, append, setMessages, reload });
-  useEffect(() => {
-    if (error) {
-      updatePendingApproval({
-        id: "retry",
-        name: "retry",
-        resolve: (approved) => {
-          if (approved) {
-            retry();
-          }
-        },
-      });
-    }
-  }, [error, updatePendingApproval, retry]);
+  const { pendingApproval, setIsExecuting, executingToolCallId } =
+    usePendingApproval({
+      error,
+      messages: renderMessages,
+    });
+
+  // Workaround for https://github.com/vercel/ai/issues/4491#issuecomment-2848999826
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
+  const addToolResultWithForceUpdate: typeof addToolResult = useCallback(
+    (arg) => {
+      addToolResult(arg);
+      forceUpdate();
+    },
+    [addToolResult],
+  );
 
   return (
     <div className="flex flex-col h-screen px-4">
@@ -264,9 +266,8 @@ function RouteComponent() {
                     key={index}
                     message={m}
                     part={part}
-                    addToolResult={addToolResult}
                     setInput={setInputAndFocus}
-                    status={status}
+                    executingToolCallId={executingToolCallId}
                   />
                 ))}
               </div>
@@ -284,7 +285,14 @@ function RouteComponent() {
         ))}
       </div>
       <div className="text-red-400 text-center mb-2">{error?.message}</div>
-      <ApprovalButton show={!isLoading} />
+      <ApprovalButton
+        key={pendingApprovalKey(pendingApproval)}
+        isLoading={isLoading}
+        retry={retry}
+        pendingApproval={pendingApproval}
+        addToolResult={addToolResultWithForceUpdate}
+        setIsExecuting={setIsExecuting}
+      />
       <AutoApproveMenu />
       {/* Display image previews when files are present */}
       {files.length > 0 && (
@@ -347,21 +355,13 @@ function RouteComponent() {
 function Part({
   message,
   part,
-  addToolResult,
   setInput,
-  status,
+  executingToolCallId,
 }: {
   message: UIMessage;
   part: NonNullable<UIMessage["parts"]>[number];
-  addToolResult: ({
-    toolCallId,
-    result,
-  }: {
-    toolCallId: string;
-    result: unknown;
-  }) => void;
   setInput: (prompt: string) => void;
-  status: UseChatHelpers["status"];
+  executingToolCallId: string | undefined;
 }) {
   if (part.type === "text") {
     return <TextPartUI message={message} part={part} />;
@@ -372,20 +372,15 @@ function Part({
   }
 
   if (part.type === "tool-invocation") {
-    if (isAutoInjectTool(part.toolInvocation.toolName)) {
-      <AutoRejectTool
-        tool={part.toolInvocation}
-        addToolResult={addToolResult}
-      />;
+    if (!isAutoInjectTool(part.toolInvocation.toolName)) {
+      return (
+        <ToolInvocationPart
+          tool={part.toolInvocation}
+          setInput={setInput}
+          executingToolCallId={executingToolCallId}
+        />
+      );
     }
-    return (
-      <ToolInvocationPart
-        tool={part.toolInvocation}
-        addToolResult={addToolResult}
-        setInput={setInput}
-        status={status}
-      />
-    );
   }
 
   return <div>{JSON.stringify(part)}</div>;
@@ -421,9 +416,35 @@ function prepareRequestBody(
   };
 }
 
-function ApprovalButton({ show }: { show: boolean }) {
-  const { pendingApproval, resolvePendingApproval } = useChatStore();
-  if (!show || !pendingApproval) return;
+interface ApprovalButtonProps {
+  isLoading: boolean;
+  pendingApproval?: PendingApproval;
+  retry: () => void;
+  addToolResult: ({
+    toolCallId,
+    result,
+  }: {
+    toolCallId: string;
+    result: unknown;
+  }) => void;
+
+  setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const ApprovalButton: React.FC<ApprovalButtonProps> = ({
+  isLoading,
+  pendingApproval,
+  retry,
+  addToolResult,
+  setIsExecuting,
+}) => {
+  if (isLoading || !pendingApproval) return;
+  const { executeTool, rejectTool, abortTool } = useVSCodeTool({
+    addToolResult,
+  });
+
+  // Abort tool is not used yet, it can be used to implement tool cancellation
+  abortTool;
 
   const ToolAcceptText: Record<string, string> = {
     retry: "Retry",
@@ -437,15 +458,48 @@ function ApprovalButton({ show }: { show: boolean }) {
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
+
+  const onAccept = useCallback(async () => {
+    if (pendingApproval.name === "retry") {
+      retry();
+    } else {
+      setIsExecuting(true);
+      try {
+        await executeTool(pendingApproval.tool);
+      } finally {
+        setIsExecuting(false);
+      }
+    }
+  }, [pendingApproval, retry, executeTool, setIsExecuting]);
+
+  const onReject = useCallback(() => {
+    if (pendingApproval.name !== "retry") {
+      rejectTool(pendingApproval.tool);
+    }
+  }, [pendingApproval, rejectTool]);
+
+  const isAutoApproved = useToolAutoApproval(pendingApproval.name);
+  const isAutoRejected = isAutoInjectTool(pendingApproval.name);
+
+  useEffect(() => {
+    if (isAutoApproved) {
+      onAccept();
+    } else if (isAutoRejected) {
+      onReject();
+    }
+  }, [isAutoApproved, isAutoRejected, onAccept, onReject]);
+
   return (
     <div className="flex [&>button]:flex-1 [&>button]:rounded-sm gap-3 mb-2">
-      <Button onClick={() => resolvePendingApproval(true)}>{acceptText}</Button>
-      <Button onClick={() => resolvePendingApproval(false)} variant="secondary">
-        {rejectText}
-      </Button>
+      <Button onClick={onAccept}>{acceptText}</Button>
+      {pendingApproval.name !== "retry" && (
+        <Button onClick={onReject} variant="secondary">
+          {rejectText}
+        </Button>
+      )}
     </div>
   );
-}
+};
 
 function useRetry({
   messages,
@@ -513,5 +567,94 @@ function createRenderMessages(
     });
   }
 
+  const lastMessage = messages[messages.length - 1];
+  if (lastMessage?.role === "assistant") {
+    for (const part of lastMessage.parts) {
+      if (
+        part.type === "tool-invocation" &&
+        part.toolInvocation.state !== "result"
+      ) {
+        vscodeHost.previewToolCall(
+          part.toolInvocation.toolName,
+          part.toolInvocation.args,
+          {
+            toolCallId: part.toolInvocation.toolCallId,
+          },
+        );
+      }
+    }
+  }
+
   return x;
+}
+
+type PendingApproval =
+  | {
+      name: "retry";
+    }
+  | {
+      name: keyof ClientToolsType;
+      tool: ToolInvocation;
+    };
+
+function pendingApprovalKey(
+  pendingApproval: PendingApproval | undefined,
+): string | undefined {
+  if (!pendingApproval) {
+    return;
+  }
+  if (pendingApproval.name === "retry") {
+    return "retry";
+  }
+  return pendingApproval.tool.toolCallId;
+}
+
+function usePendingApproval({
+  error,
+  messages,
+}: { error?: Error; messages: UIMessage[] }) {
+  const [isExecuting, setIsExecuting] = useState(false);
+
+  const pendingApproval = useMemo((): PendingApproval | undefined => {
+    if (error) {
+      return {
+        name: "retry",
+      };
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role !== "assistant") {
+      return undefined;
+    }
+
+    for (const part of lastMessage.parts) {
+      if (
+        part.type === "tool-invocation" &&
+        part.toolInvocation.state === "call" &&
+        !isUserInputTool(part.toolInvocation.toolName)
+      ) {
+        return {
+          name: part.toolInvocation.toolName as keyof ClientToolsType,
+          tool: part.toolInvocation,
+        };
+      }
+    }
+    return undefined;
+  }, [error, messages]);
+
+  const executingToolCallId = useMemo(() => {
+    if (pendingApproval && pendingApproval.name !== "retry" && isExecuting) {
+      return pendingApproval.tool.toolCallId;
+    }
+    return undefined;
+  }, [pendingApproval, isExecuting]);
+
+  // Reset isExecuting when pendingApproval changes or disappears
+  useEffect(() => {
+    if (!pendingApproval || pendingApproval.name === "retry") {
+      setIsExecuting(false);
+    }
+  }, [pendingApproval]);
+
+  return { pendingApproval, setIsExecuting, executingToolCallId };
 }
