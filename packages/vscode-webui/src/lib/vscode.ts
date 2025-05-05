@@ -46,7 +46,7 @@ function createVSCodeHost(): VSCodeHostApi {
         openTask(taskId) {
           window.router.navigate({
             to: "/",
-            search: { taskId },
+            search: { taskId, ts: Date.now() },
             replace: true,
           });
         },

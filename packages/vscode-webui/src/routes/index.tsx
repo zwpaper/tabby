@@ -56,6 +56,7 @@ const searchSchema = z.object({
     .number()
     .or(z.enum(["new"]))
     .optional(),
+  ts: z.number().optional(),
 });
 
 export const Route = createFileRoute("/")({
@@ -80,6 +81,12 @@ export const Route = createFileRoute("/")({
 });
 
 function RouteComponent() {
+  const { taskId, ts = Date.now() } = Route.useSearch();
+  const key = typeof taskId === "number" ? `task-${taskId}` : `new-${ts}`;
+  return <Chat key={key} />;
+}
+
+function Chat() {
   const loaderData = Route.useLoaderData();
   const taskId = useRef<number | undefined>(loaderData?.id);
   useEffect(() => {
