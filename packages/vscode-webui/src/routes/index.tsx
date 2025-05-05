@@ -11,7 +11,7 @@ import { apiClient } from "@/lib/auth-client";
 import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { useChatStore } from "@/lib/stores/chat-store";
-import { type Message, type UseChatHelpers, useChat } from "@ai-sdk/react";
+import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import {
   type UIMessage,
   isAssistantMessageWithCompletedToolCalls,
@@ -259,7 +259,7 @@ function RouteComponent() {
                   )}
               </div>
               <div className="ml-1 mt-3 flex flex-col gap-2">
-                {m.parts?.map((part, index) => (
+                {m.parts.map((part, index) => (
                   <Part
                     key={index}
                     message={m}
@@ -351,8 +351,8 @@ function Part({
   setInput,
   status,
 }: {
-  message: Message;
-  part: NonNullable<Message["parts"]>[number];
+  message: UIMessage;
+  part: NonNullable<UIMessage["parts"]>[number];
   addToolResult: ({
     toolCallId,
     result,
@@ -391,7 +391,7 @@ function Part({
   return <div>{JSON.stringify(part)}</div>;
 }
 
-function TextPartUI({ message, part }: { message: Message; part: TextPart }) {
+function TextPartUI({ message, part }: { message: UIMessage; part: TextPart }) {
   return (
     <MessageMarkdown
       className={message.role === "user" ? "max-w-[80vw]" : undefined}
@@ -404,7 +404,7 @@ function TextPartUI({ message, part }: { message: Message; part: TextPart }) {
 function prepareRequestBody(
   taskId: MutableRefObject<number | undefined>,
   request: {
-    messages: Message[];
+    messages: UIMessage[];
   },
   environment: MutableRefObject<Environment | null>,
   model: string | undefined,
@@ -453,7 +453,7 @@ function useRetry({
   append,
   reload,
 }: {
-  messages: Message[];
+  messages: UIMessage[];
   append: UseChatHelpers["append"];
   setMessages: UseChatHelpers["setMessages"];
   reload: UseChatHelpers["reload"];
@@ -475,13 +475,12 @@ function useRetry({
   return retryRequest;
 }
 
-function createRenderMessages(messages: Message[], isLoading: boolean) {
+function createRenderMessages(
+  messages: UIMessage[],
+  isLoading: boolean,
+): UIMessage[] {
   const x = messages.map((message, index) => {
-    if (
-      index < messages.length - 1 &&
-      message.role === "assistant" &&
-      message.parts
-    ) {
+    if (index < messages.length - 1 && message.role === "assistant") {
       for (let i = 0; i < message.parts.length; i++) {
         const part = message.parts[i];
         if (
