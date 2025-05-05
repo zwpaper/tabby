@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import * as vscode from "vscode";
 
 /**
@@ -52,6 +55,19 @@ export async function collectCustomRules(
     }
   } catch (error) {
     console.error("Error reading README.pochi.md:", error);
+  }
+
+  // Try to read README.pochi.md from `~/.pochi`
+  try {
+    const homeDir = os.homedir();
+    const homeReadmePath = path.join(homeDir, ".pochi", "README.pochi.md");
+    const homeReadmeContent = await fs.promises.readFile(
+      homeReadmePath,
+      "utf8",
+    );
+    rules += `# Rules from ${homeReadmePath}\n${homeReadmeContent}\n`;
+  } catch (error) {
+    // File doesn't exist or can't be read, ignore
   }
 
   // Read custom rule files
