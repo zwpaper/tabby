@@ -47,7 +47,7 @@ export const ToolsByPermission = {
     "globFiles",
     "searchFiles",
   ] satisfies ToolName[] as string[],
-  write: ["writeToFile"] satisfies ToolName[] as string[],
+  write: ["writeToFile", "applyDiff"] satisfies ToolName[] as string[],
   execute: ["executeCommand"] satisfies ToolName[] as string[],
 };
 

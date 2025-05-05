@@ -38,7 +38,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     return this.tokenStorage.setToken(token);
   }
 
-  async readEnvironment(customRuleFiles: string[] = []): Promise<Environment> {
+  async readEnvironment(): Promise<Environment> {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     let files: string[] = [];
     if (!workspaceFolders?.length) {
@@ -52,7 +52,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       ).map((res) => res.uri.fsPath);
     }
 
-    const customRules = await collectCustomRules(customRuleFiles);
+    const customRules = await collectCustomRules();
 
     const systemInfo = await getSystemInfo();
 

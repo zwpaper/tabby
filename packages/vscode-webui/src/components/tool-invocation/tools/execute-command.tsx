@@ -17,7 +17,7 @@ export const executeCommandTool: React.FC<
         <StatusIcon isExecuting={isExecuting} tool={tool} />
         <span>I will execute the following command:</span>
       </div>
-      <pre className="mt-1 p-2 rounded border border-zinc-700">
+      <pre className="mt-1 p-2 rounded border border-zinc-700 text-wrap">
         <code>{command}</code>
       </pre>
     </div>

@@ -299,6 +299,7 @@ function Chat() {
         retry={retry}
         pendingApproval={pendingApproval}
         addToolResult={addToolResultWithForceUpdate}
+        executingToolCallId={executingToolCallId}
         setIsExecuting={setIsExecuting}
       />
       <AutoApproveMenu />
@@ -380,15 +381,17 @@ function Part({
   }
 
   if (part.type === "tool-invocation") {
-    if (!isAutoInjectTool(part.toolInvocation.toolName)) {
-      return (
-        <ToolInvocationPart
-          tool={part.toolInvocation}
-          setInput={setInput}
-          executingToolCallId={executingToolCallId}
-        />
-      );
+    if (isAutoInjectTool(part.toolInvocation.toolName)) {
+      return null;
     }
+
+    return (
+      <ToolInvocationPart
+        tool={part.toolInvocation}
+        setInput={setInput}
+        executingToolCallId={executingToolCallId}
+      />
+    );
   }
 
   return <div>{JSON.stringify(part)}</div>;
@@ -437,6 +440,7 @@ interface ApprovalButtonProps {
   }) => void;
 
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
+  executingToolCallId?: string;
 }
 
 const ApprovalButton: React.FC<ApprovalButtonProps> = ({
@@ -445,6 +449,7 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   retry,
   addToolResult,
   setIsExecuting,
+  executingToolCallId,
 }) => {
   if (isLoading || !pendingApproval) return;
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
@@ -496,6 +501,10 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
       onReject();
     }
   }, [isAutoApproved, isAutoRejected, onAccept, onReject]);
+
+  if (executingToolCallId) {
+    return null;
+  }
 
   return (
     <div className="flex [&>button]:flex-1 [&>button]:rounded-sm gap-3 mb-2">
