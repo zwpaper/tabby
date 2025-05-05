@@ -10,14 +10,13 @@ export const listFilesTool: React.FC<
 
   return (
     <div className="text-sm">
-      <div className="flex gap-2 items-center">
-        <StatusIcon isExecuting={isExecuting} tool={tool} />
-        {path && (
-          <span>
-            Read <FileBadge path={path} />
-          </span>
-        )}
-      </div>
+      <StatusIcon isExecuting={isExecuting} tool={tool} />
+      <span className="ml-2" />
+      {path && (
+        <span>
+          Read <FileBadge path={path} />
+        </span>
+      )}
     </div>
   );
 };

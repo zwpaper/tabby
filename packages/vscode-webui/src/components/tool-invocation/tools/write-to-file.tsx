@@ -13,10 +13,11 @@ export const writeToFileTool: React.FC<
 
   const { path } = tool.args || {};
   return (
-    <div className="text-sm flex gap-2 items-center" title={error}>
+    <div className="text-sm" title={error}>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
+      <span className="ml-2" />
       Writing
-      {path && <FileBadge path={path} />}
+      {path && <FileBadge className="ml-2" path={path} />}
     </div>
   );
 };

@@ -13,9 +13,9 @@ export const executeCommandTool: React.FC<
   const { command } = tool.args || {};
   return (
     <div className="text-sm" title={error}>
-      <div className="flex gap-2 items-center">
+      <div>
         <StatusIcon isExecuting={isExecuting} tool={tool} />
-        <span>I will execute the following command:</span>
+        <span className="ml-2">I will execute the following command:</span>
       </div>
       <pre className="mt-1 p-2 rounded border border-zinc-700 text-wrap">
         <code>{command}</code>

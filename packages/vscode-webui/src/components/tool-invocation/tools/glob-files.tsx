@@ -27,14 +27,11 @@ export const globFilesTool: React.FC<
 
   return (
     <div className="text-sm">
-      <div className="flex gap-2 items-center">
-        <StatusIcon isExecuting={isExecuting} tool={tool} />
-        <span>
-          Searching in <span className="font-mono">{path}</span> for pattern{" "}
-          <span className="font-mono font-bold">{globPattern}</span>
-          {resultEl && <span>, {resultEl}</span>}
-        </span>
-      </div>
+      <StatusIcon isExecuting={isExecuting} tool={tool} />
+      <span className="ml-2" />
+      Searching in <span className="font-mono">{path}</span> for pattern{" "}
+      <span className="font-mono font-bold">{globPattern}</span>
+      {resultEl && <span>, {resultEl}</span>}
     </div>
   );
 };

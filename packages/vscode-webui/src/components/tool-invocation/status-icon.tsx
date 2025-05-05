@@ -5,7 +5,7 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import type { ToolInvocation } from "ai";
-import { Check, Loader2, Pause, X } from "lucide-react";
+import { Check, CircleSmall, Loader2, Pause, X } from "lucide-react";
 
 interface StatusIconProps {
   tool: ToolInvocation;
@@ -38,8 +38,12 @@ export function StatusIcon({ tool, isExecuting }: StatusIconProps) {
     );
   } else if (tool.state === "result") {
     statusIcon = <Check className="size-4 text-emerald-300" />;
-  } else if (isExecuting || tool.state === "partial-call") {
+  } else if (tool.state === "partial-call") {
+    statusIcon = (
+      <CircleSmall className="size-4 animate-bounce text-zinc-400" />
+    );
+  } else if (isExecuting) {
     statusIcon = <Loader2 className="size-4 animate-spin text-zinc-400" />;
   }
-  return statusIcon;
+  return <div className="inline-block align-sub">{statusIcon}</div>;
 }
