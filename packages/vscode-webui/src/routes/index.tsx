@@ -5,17 +5,13 @@ import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
-import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import {
   type UIMessage,
   isAssistantMessageWithCompletedToolCalls,
 } from "@ai-sdk/ui-utils";
-import type {
-  Environment,
-  ChatRequest as RagdollChatRequest,
-} from "@ragdoll/server";
+import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
@@ -94,7 +90,6 @@ function Chat() {
   }, [loaderData]);
 
   const { auth: authData } = Route.useRouteContext();
-  const { environment, reload: reloadEnvironment } = useEnvironment();
   const {
     models,
     selectedModel,
@@ -132,7 +127,16 @@ function Chat() {
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
     experimental_prepareRequestBody: (req) =>
-      prepareRequestBody(taskId, req, environment, selectedModel?.id),
+      prepareRequestBody(taskId, req, selectedModel?.id),
+    fetch: async (url, options) =>
+      fetch(url, {
+        ...options,
+        body: JSON.stringify({
+          ...JSON.parse(options?.body as string),
+          // Inject the environment variables into the request body
+          environment: await vscodeHost.readEnvironment(),
+        }),
+      }),
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
@@ -151,7 +155,6 @@ function Chat() {
       try {
         e.preventDefault();
         const uploadedImages = await uploadImages(files);
-        reloadEnvironment();
         handleSubmit(e, {
           experimental_attachments: uploadedImages,
         });
@@ -160,7 +163,6 @@ function Chat() {
       } finally {
       }
     } else {
-      reloadEnvironment();
       handleSubmit(e);
     }
   };
@@ -412,9 +414,8 @@ function prepareRequestBody(
   request: {
     messages: UIMessage[];
   },
-  environment: MutableRefObject<Environment | null>,
   model: string | undefined,
-): RagdollChatRequest {
+): Omit<RagdollChatRequest, "environment"> {
   const message = fromUIMessage(request.messages[request.messages.length - 1]);
   const triggerError =
     message.parts[0].type === "text" &&
@@ -423,7 +424,6 @@ function prepareRequestBody(
     id: taskId.current?.toString(),
     model: triggerError ? "fake-model" : model,
     message: fromUIMessage(request.messages[request.messages.length - 1]),
-    environment: environment.current || undefined,
   };
 }
 

@@ -38,7 +38,7 @@ export function StatusIcon({ tool, isExecuting }: StatusIconProps) {
     );
   } else if (tool.state === "result") {
     statusIcon = <Check className="size-4 text-emerald-300" />;
-  } else if (isExecuting) {
+  } else if (isExecuting || tool.state === "partial-call") {
     statusIcon = <Loader2 className="size-4 animate-spin text-zinc-400" />;
   }
   return statusIcon;
