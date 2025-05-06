@@ -4,7 +4,6 @@ import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
-// import { useEnvironment } from "@/lib/hooks/use-environment";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
@@ -36,6 +35,7 @@ import {
 import { z } from "zod";
 
 import "@/components/prompt-form/prompt-form.css";
+import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
@@ -378,6 +378,8 @@ function Chat() {
 
   return (
     <div className="flex flex-col h-screen px-4">
+      {renderMessages.length === 0 && <EmptyChatPlaceholder />}
+      {renderMessages.length > 0 && <div className="h-4" />}
       <PreviewToolCalls message={renderMessages.at(-1)} />
       <div
         className="flex-1 overflow-y-auto mb-2 space-y-4 -mx-4 px-4"
