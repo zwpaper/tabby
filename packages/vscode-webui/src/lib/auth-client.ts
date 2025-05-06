@@ -1,3 +1,4 @@
+import { createAuthHooks } from "@daveyplate/better-auth-tanstack";
 import type { AppType } from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import {
@@ -28,6 +29,8 @@ function createAuthClient() {
 }
 
 export const authClient = createAuthClient();
+
+export const authHooks = createAuthHooks(authClient);
 
 function createApiClient() {
   const app = hc<AppType>(getServerBaseUrl(), {

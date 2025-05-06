@@ -1,5 +1,4 @@
 import { ModelSelect } from "@/components/model-select";
-import Pending from "@/components/pending";
 import { FormEditor } from "@/components/prompt-form/form-editor";
 import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -73,7 +72,6 @@ export const Route = createFileRoute("/")({
     return null;
   },
   component: RouteComponent,
-  pendingComponent: Pending,
 });
 
 function RouteComponent() {

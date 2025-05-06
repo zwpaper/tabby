@@ -11,7 +11,7 @@ import { routeTree } from "./routeTree.gen";
 
 import "./styles.css";
 import { Loader2 } from "lucide-react";
-import { authClient } from "./lib/auth-client.ts";
+import { authHooks } from "./lib/auth-client.ts";
 import { Providers } from "./providers.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
 
@@ -47,7 +47,7 @@ declare module "@tanstack/react-router" {
 }
 
 function InnerApp() {
-  const { data: auth, isPending } = authClient.useSession();
+  const { data: auth, isPending } = authHooks.useSession();
   useEffect(() => {
     if (!isPending && !auth) {
       router.navigate({ to: "/sign-in", replace: true });
@@ -64,7 +64,6 @@ function InnerApp() {
 
   return (
     <StrictMode>
-      {/* @ts-expect-error */}
       <RouterProvider router={router} context={{ auth }} />
     </StrictMode>
   );
