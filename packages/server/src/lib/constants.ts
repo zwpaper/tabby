@@ -65,7 +65,7 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
     case "openai/gpt-4o":
       return openai("gpt-4o");
     case "google/gemini-2.5-pro":
-      return google("gemini-2.5-pro-preview-03-25");
+      return google("gemini-2.5-pro-preview-05-06");
     case "google/gemini-2.0-flash":
       return google("gemini-2.0-flash");
     default:
