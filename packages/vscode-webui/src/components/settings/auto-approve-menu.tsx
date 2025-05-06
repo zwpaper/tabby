@@ -33,31 +33,35 @@ export function AutoApproveMenu() {
     <div className="-mx-4">
       <div
         className={cn(
-          "flex items-center justify-between cursor-pointer py-2.5 px-4",
+          "flex items-center justify-between cursor-pointer pt-2.5 px-4",
           {
+            "py-2.5": !isOpen,
+            "pt-2.5": isOpen,
             "border-t": isOpen,
           },
         )}
-        onClick={() => setIsOpen(!isOpen)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            setIsOpen(!isOpen);
-          }
-        }}
       >
-        <div className="flex items-center gap-2.5">
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+        <div className="flex w-full">
+          <label htmlFor="auto-approve" className="pr-4 cursor-pointer">
             <Checkbox
+              id="auto-approve"
               checked={autoApproveActive}
               onCheckedChange={(checked) => {
                 toggleActive(!!checked);
               }}
             />
-          </div>
-          <span className="font-medium">
+          </label>
+          <span
+            className={cn("font-medium select-none flex-1 flex items-center", {
+              "pb-6": isOpen,
+            })}
+            onClick={() => setIsOpen(!isOpen)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setIsOpen(!isOpen);
+              }
+            }}
+          >
             Auto-approve:
             {autoApproveActive && enabledOptions.length > 0 ? (
               <span className="ml-1 text-[var(--vscode-foreground)]">
@@ -68,14 +72,14 @@ export function AutoApproveMenu() {
                 {hasEnabledOptions ? "Disabled" : "None"}
               </span>
             )}
+            <ChevronDown
+              className={cn(
+                "ml-auto mr-2 size-4 transition-transform duration-100 ease-in-out text-[var(--vscode-descriptionForeground)]",
+                isOpen ? "transform rotate-180" : "",
+              )}
+            />
           </span>
         </div>
-        <ChevronDown
-          className={cn(
-            "size-4 transition-transform duration-100 ease-in-out text-[var(--vscode-descriptionForeground)]",
-            isOpen ? "transform rotate-180" : "",
-          )}
-        />
       </div>
 
       <div
