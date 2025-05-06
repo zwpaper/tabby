@@ -2,12 +2,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
-import { ToolsByPermission } from "@ragdoll/tools";
 import { ChevronDown, Eye, FileEdit, Play } from "lucide-react";
 import { useState } from "react";
 
 export function AutoApproveMenu() {
-  const { autoApproveSettings, updateAutoApproveSettings } = useSettingsStore();
+  const {
+    autoApproveActive,
+    updateAutoApproveActive,
+    autoApproveSettings,
+    updateAutoApproveSettings,
+  } = useSettingsStore();
   const [isOpen, setIsOpen] = useState(false);
 
   // Create a list of enabled options for the title
@@ -19,17 +23,11 @@ export function AutoApproveMenu() {
     updateAutoApproveSettings({ [key]: !autoApproveSettings[key] });
   };
 
-  const toggleAll = (enable: boolean) => {
-    const newSettings = Object.keys(ToolsByPermission).reduce(
-      (acc, key) => {
-        acc[key as keyof typeof autoApproveSettings] = enable;
-        return acc;
-      },
-      {} as typeof autoApproveSettings,
-    );
-
-    updateAutoApproveSettings(newSettings);
+  const toggleActive = (enable: boolean) => {
+    updateAutoApproveActive(enable);
   };
+
+  const hasEnabledOptions = Object.values(autoApproveSettings).some(Boolean);
 
   return (
     <div className="-mx-4">
@@ -53,21 +51,21 @@ export function AutoApproveMenu() {
             onKeyDown={(e) => e.stopPropagation()}
           >
             <Checkbox
-              checked={Object.values(autoApproveSettings).some(Boolean)}
+              checked={autoApproveActive}
               onCheckedChange={(checked) => {
-                toggleAll(!!checked);
+                toggleActive(!!checked);
               }}
             />
           </div>
           <span className="font-medium">
             Auto-approve:
-            {enabledOptions.length > 0 ? (
+            {autoApproveActive && enabledOptions.length > 0 ? (
               <span className="ml-1 text-[var(--vscode-foreground)]">
                 {enabledOptions.join(", ")}
               </span>
             ) : (
               <span className="ml-1 text-[var(--vscode-descriptionForeground)]">
-                None
+                {hasEnabledOptions ? "Disabled" : "None"}
               </span>
             )}
           </span>

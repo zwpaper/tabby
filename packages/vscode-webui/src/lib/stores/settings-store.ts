@@ -2,22 +2,23 @@ import { ToolsByPermission } from "@ragdoll/tools";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-const excludeFromState: string[] = ["updateAutoApproveSettings"];
-
 type AutoApprove = Record<keyof typeof ToolsByPermission, boolean>;
 
 export interface SettingsState {
   selectedModelId: string | undefined;
+  autoApproveActive: boolean;
   autoApproveSettings: AutoApprove;
 
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
+  updateAutoApproveActive: (value: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       selectedModelId: undefined,
+      autoApproveActive: false,
       autoApproveSettings: {
         read: false,
         write: false,
@@ -30,23 +31,26 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           autoApproveSettings: { ...state.autoApproveSettings, ...data },
         })),
+
+      updateAutoApproveActive: (value: boolean) =>
+        set(() => ({ autoApproveActive: value })),
     }),
     {
       name: "ragdoll-settings-storage",
       partialize: (state) =>
         Object.fromEntries(
-          Object.entries(state).filter(
-            ([key]) => !excludeFromState.includes(key as keyof SettingsState),
-          ),
+          Object.entries(state).filter(([_, v]) => typeof v !== "function"),
         ),
     },
   ),
 );
 
 export function useToolAutoApproval(toolName: string): boolean {
-  const autoApproveSettings = useSettingsStore(
-    (state) => state.autoApproveSettings,
-  );
+  const { autoApproveActive, autoApproveSettings } = useSettingsStore();
+  if (!autoApproveActive) {
+    return false;
+  }
+
   if (autoApproveSettings.read && ToolsByPermission.read.includes(toolName)) {
     return true;
   }
