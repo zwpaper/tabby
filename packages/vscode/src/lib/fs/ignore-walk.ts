@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import type { FileResult } from "./types";
 
 const logger = getLogger("ignoreWalk");
+const MaxScanItems = 10_000;
 
 /**
  * Attempts to load and parse .gitignore rules from the specified directory
@@ -35,35 +36,35 @@ async function attemptLoadIgnoreFromPath(
 }
 
 interface IgnoreInfo {
-  ignoreInstance: Ignore;
+  ignore: Ignore;
   uri: vscode.Uri;
 }
 
 /**
  * Traverses the file system in breadth-first manner, respecting .gitignore rules
- * @param startUri Starting directory URI
- * @param baseIg Base ignore instance
- * @param scanLimit Maximum number of files to search
- * @param recursive Whether to traverse directories recursively
- * @param token Optional cancellation token
+ * @param options Options for the ignore walk
  * @returns Array of file objects with relative paths and metadata
  */
-export async function ignoreWalk(
-  startUri: vscode.Uri,
-  baseIg: Ignore = ignore().add(".git"),
-  scanLimit = 10000,
+export interface IgnoreWalkOptions {
+  dir: vscode.Uri;
+  recursive?: boolean;
+  abortSignal?: AbortSignal;
+}
+
+export async function ignoreWalk({
+  dir,
   recursive = true,
-  abortSignal?: AbortSignal,
-): Promise<FileResult[]> {
+  abortSignal,
+}: IgnoreWalkOptions): Promise<FileResult[]> {
   const scannedFileResults: FileResult[] = [];
   let fileScannedCount = 0;
   const processedDirs = new Set<string>();
-  const queue: Array<IgnoreInfo> = [{ uri: startUri, ignoreInstance: baseIg }];
+  const queue: Array<IgnoreInfo> = [{ uri: dir, ignore: ignore().add(".git") }];
 
-  const rootDir = startUri.fsPath;
+  const rootDir = dir.fsPath;
 
   logger.debug(
-    `Starting traversal from ${rootDir} with limit ${scanLimit}, recursive: ${recursive}`,
+    `Starting traversal from ${rootDir} with limit ${MaxScanItems}, recursive: ${recursive}`,
   );
 
   if (abortSignal?.aborted) {
@@ -72,13 +73,13 @@ export async function ignoreWalk(
 
   while (
     queue.length > 0 &&
-    fileScannedCount < scanLimit &&
+    fileScannedCount < MaxScanItems &&
     !abortSignal?.aborted
   ) {
     const current = queue.shift();
     if (!current) continue;
 
-    const { uri: currentUri, ignoreInstance: currentIg } = current;
+    const { uri: currentUri, ignore: currentIg } = current;
     const currentFsPath = currentUri.fsPath;
 
     if (processedDirs.has(currentFsPath)) {
@@ -109,7 +110,7 @@ export async function ignoreWalk(
 
         if (type === vscode.FileType.Directory) {
           if (recursive && !processedDirs.has(fullPath)) {
-            queue.push({ uri: entryUri, ignoreInstance: directoryIg });
+            queue.push({ uri: entryUri, ignore: directoryIg });
           }
 
           if (!recursive) {
@@ -121,12 +122,12 @@ export async function ignoreWalk(
               basename: name.toLowerCase(),
             });
 
-            if (fileScannedCount >= scanLimit) {
+            if (fileScannedCount >= MaxScanItems) {
               return scannedFileResults;
             }
           }
         } else if (type === vscode.FileType.File) {
-          if (fileScannedCount >= scanLimit) {
+          if (fileScannedCount >= MaxScanItems) {
             return scannedFileResults;
           }
 

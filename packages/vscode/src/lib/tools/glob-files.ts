@@ -33,15 +33,12 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
   try {
     const workspaceFolder = getWorkspaceFolder();
 
-    const startUri = vscode.Uri.joinPath(workspaceFolder.uri, searchPath);
+    const dir = vscode.Uri.joinPath(workspaceFolder.uri, searchPath);
 
-    const allFiles = await ignoreWalk(
-      startUri,
-      undefined,
-      undefined,
-      undefined,
+    const allFiles = await ignoreWalk({
+      dir,
       abortSignal,
-    );
+    });
 
     for (const fileResult of allFiles) {
       if (minimatch(fileResult.relativePath, globPattern, { nocase: true })) {

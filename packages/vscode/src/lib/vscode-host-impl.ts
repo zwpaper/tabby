@@ -46,7 +46,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
     const MaxFileItems = 500;
     let files = workspaceFolders?.length
-      ? (await matchFiles({ startPath: workspaceFolders[0].uri })).map(
+      ? (await matchFiles({ dir: workspaceFolders[0].uri })).map(
           (res) => res.uri.fsPath,
         )
       : [];
@@ -82,7 +82,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
     const { query, limit } = param;
     const results = await matchFiles({
-      startPath: workspaceFolders[0].uri,
+      dir: workspaceFolders[0].uri,
       query,
     });
     return results

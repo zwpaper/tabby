@@ -1,5 +1,4 @@
 import { getLogger } from "@/lib/logger";
-import ignore from "ignore";
 import * as vscode from "vscode";
 
 import Fuse, { type FuseResult, type IFuseOptions } from "fuse.js";
@@ -47,17 +46,12 @@ function fuzzySearch(
 }
 
 export interface MatchFilesOptions {
-  startPath: string | vscode.Uri;
+  dir: string | vscode.Uri;
 
   /**
    * Optional search query
    */
   query?: string;
-
-  /**
-   * Maximum number of files to scan
-   */
-  scanLimit?: number;
 
   /**
    * Whether to traverse directories recursively
@@ -73,30 +67,19 @@ export interface MatchFilesOptions {
 export async function matchFiles(
   options: MatchFilesOptions,
 ): Promise<FileResult[]> {
-  const {
-    startPath,
-    query,
-    scanLimit = 10000,
-    recursive = true,
-    abortSignal,
-  } = options;
+  const { dir, query, recursive = true, abortSignal } = options;
 
   const queryString = query?.trim().toLowerCase();
 
-  const startUri =
-    typeof startPath === "string" ? vscode.Uri.file(startPath) : startPath;
-
-  const ig = ignore().add(".git");
+  const uri = typeof dir === "string" ? vscode.Uri.file(dir) : dir;
 
   const startTime = Date.now();
 
-  const allFiles = await ignoreWalk(
-    startUri,
-    ig,
-    scanLimit,
+  const allFiles = await ignoreWalk({
+    dir: uri,
     recursive,
     abortSignal,
-  );
+  });
 
   let processedFiles = allFiles;
 

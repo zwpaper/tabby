@@ -31,9 +31,9 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
   try {
     const workspaceFolder = getWorkspaceFolder();
 
-    const startPath = path.join(workspaceFolder.uri.fsPath, dirPath);
+    const dir = path.join(workspaceFolder.uri.fsPath, dirPath);
     const fileResults = await matchFiles({
-      startPath,
+      dir,
       recursive: !!recursive,
       abortSignal,
     });
