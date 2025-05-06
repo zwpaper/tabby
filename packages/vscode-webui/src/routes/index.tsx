@@ -4,6 +4,8 @@ import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
+// import { useEnvironment } from "@/lib/hooks/use-environment";
+import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import {
@@ -318,22 +320,6 @@ function Chat() {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  useLayoutEffect(() => {
-    const scrollToBottom = () => {
-      const container = messagesContainerRef.current;
-      if (!container) return;
-
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
-      });
-    };
-    // scroll to bottom when a user message is sent
-    if (isLoading) {
-      scrollToBottom();
-    }
-  }, [isLoading]);
-
   const setInputAndFocus = (input: string) => {
     setInput(input);
   };
@@ -355,6 +341,32 @@ function Chat() {
     },
     [addToolResult],
   );
+
+  const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
+
+  // scroll to bottom immediately when a user message is sent
+  useLayoutEffect(() => {
+    if (isLoading) {
+      scrollToBottom();
+    }
+  }, [isLoading, scrollToBottom]);
+
+  // Initial scroll to bottom once when component mounts (without smooth behavior)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: for initial scroll
+  useLayoutEffect(() => {
+    if (messagesContainerRef.current && renderMessages.length > 0) {
+      scrollToBottom(false); // false = not smooth
+    }
+  }, []);
+
+  // Handle scrolling during streaming if at bottom
+  // biome-ignore lint/correctness/useExhaustiveDependencies: should watch messages
+  useLayoutEffect(() => {
+    if (!isLoading || !isAtBottom) return;
+
+    const frameId = requestAnimationFrame(() => scrollToBottom(false)); // Using false to disable smooth scrolling during streaming
+    return () => cancelAnimationFrame(frameId);
+  }, [isLoading, isAtBottom, messages, scrollToBottom]);
 
   return (
     <div className="flex flex-col h-screen px-4">
