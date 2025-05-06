@@ -79,9 +79,6 @@ export function ImagePreviewList({
                   {isUploading && (
                     <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center">
                       <Loader2 className="size-4 text-white animate-spin" />
-                      <span className="text-white text-[8px] mt-1">
-                        Uploading
-                      </span>
                     </div>
                   )}
                 </div>
@@ -108,7 +105,6 @@ export function ImagePreviewList({
                   {isUploading && (
                     <div className="flex items-center gap-1 text-xs">
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      <span>Uploading...</span>
                     </div>
                   )}
                 </div>
