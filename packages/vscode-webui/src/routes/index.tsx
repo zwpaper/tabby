@@ -352,27 +352,32 @@ function Chat() {
   }, [isLoading, scrollToBottom]);
 
   // Initial scroll to bottom once when component mounts (without smooth behavior)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: for initial scroll
   useLayoutEffect(() => {
-    if (messagesContainerRef.current && renderMessages.length > 0) {
+    if (messagesContainerRef.current) {
       scrollToBottom(false); // false = not smooth
     }
-  }, []);
+  }, [scrollToBottom]);
 
   // Handle scrolling during streaming if at bottom
-  // biome-ignore lint/correctness/useExhaustiveDependencies: should watch messages
   useLayoutEffect(() => {
-    if (!isLoading || !isAtBottom) return;
+    if (!messages.length || !isLoading || !isAtBottom) return;
 
     const frameId = requestAnimationFrame(() => scrollToBottom(false)); // Using false to disable smooth scrolling during streaming
     return () => cancelAnimationFrame(frameId);
   }, [isLoading, isAtBottom, messages, scrollToBottom]);
 
+  // Ensure users can always see the executing approval or the pause approval that require their input
+  useLayoutEffect(() => {
+    if (!isLoading && !!pendingApproval?.name) {
+      scrollToBottom(false);
+    }
+  }, [pendingApproval?.name, isLoading, scrollToBottom]);
+
   return (
     <div className="flex flex-col h-screen px-4">
       <PreviewToolCalls message={renderMessages.at(-1)} />
       <div
-        className="flex-1 overflow-y-auto mb-2 space-y-4"
+        className="flex-1 overflow-y-auto mb-2 space-y-4 -mx-4 px-4"
         ref={messagesContainerRef}
       >
         {renderMessages.map((m, messageIndex) => (
