@@ -21,7 +21,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
       : ` : ${startLine}`
     : "";
   const onClick = () => {
-    vscodeHost.openFile(path);
+    vscodeHost.openFile(path, startLine ? { line: startLine } : undefined);
   };
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: only handle onClick

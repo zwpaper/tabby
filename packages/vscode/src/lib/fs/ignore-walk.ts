@@ -7,6 +7,42 @@ import type { FileResult } from "./types";
 
 const logger = getLogger("ignoreWalk");
 const MaxScanItems = 10_000;
+const CacheTtl = 60 * 1000; // 1 minute
+const MaxCacheSize = 50;
+const cache = new Map<string, { data: FileResult[]; expires: number }>();
+
+function getCache(cacheKey: string): FileResult[] | null {
+  const cachedItem = cache.get(cacheKey);
+  if (cachedItem && cachedItem.expires > Date.now()) {
+    logger.debug(`Cache hit for ${cacheKey}`);
+    return cachedItem.data;
+  }
+  logger.debug(`Cache miss for ${cacheKey}`);
+  return null;
+}
+
+function setCache(cacheKey: string, data: FileResult[]) {
+  cache.set(cacheKey, {
+    data,
+    expires: Date.now() + CacheTtl,
+  });
+}
+
+function collectCacheGarbage() {
+  if (cache.size >= MaxCacheSize) {
+    const now = Date.now();
+    // Sort by earliest expiration first
+    const sortedCache = [...cache.entries()].sort(
+      (a, b) => a[1].expires - b[1].expires,
+    );
+    for (const [key, value] of sortedCache) {
+      if (value.expires <= now || cache.size >= MaxCacheSize) {
+        cache.delete(key);
+        logger.debug(`Cache GC: ${key}`);
+      }
+    }
+  }
+}
 
 /**
  * Attempts to load and parse .gitignore rules from the specified directory
@@ -40,18 +76,13 @@ interface IgnoreInfo {
   uri: vscode.Uri;
 }
 
-/**
- * Traverses the file system in breadth-first manner, respecting .gitignore rules
- * @param options Options for the ignore walk
- * @returns Array of file objects with relative paths and metadata
- */
 export interface IgnoreWalkOptions {
   dir: vscode.Uri;
   recursive?: boolean;
   abortSignal?: AbortSignal;
 }
 
-export async function ignoreWalk({
+async function ignoreWalkImpl({
   dir,
   recursive = true,
   abortSignal,
@@ -60,7 +91,6 @@ export async function ignoreWalk({
   let fileScannedCount = 0;
   const processedDirs = new Set<string>();
   const queue: Array<IgnoreInfo> = [{ uri: dir, ignore: ignore().add(".git") }];
-
   const rootDir = dir.fsPath;
 
   logger.debug(
@@ -145,9 +175,27 @@ export async function ignoreWalk({
       logger.warn(`Error reading directory ${currentUri.fsPath}: ${message}`);
     }
   }
-
   logger.debug(
     `Completed traversal, found ${scannedFileResults.length} files out of ${fileScannedCount} scanned`,
   );
   return scannedFileResults;
+}
+
+export async function ignoreWalk(
+  options: IgnoreWalkOptions,
+): Promise<FileResult[]> {
+  const { dir, recursive = true } = options;
+  const cacheKey = `ignoreWalk:${dir.fsPath}:${recursive}`;
+
+  const cachedData = getCache(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
+  collectCacheGarbage();
+
+  const results = await ignoreWalkImpl(options);
+
+  setCache(cacheKey, results);
+  return results;
 }
