@@ -3,9 +3,9 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as vscode from "vscode";
-import { getLogger } from "./logger";
 
-const logger = getLogger("fileUtils");
+export { ignoreWalk } from "./ignore-walk";
+export { matchFiles } from "./match-files";
 
 /**
  * Create a temporary file with a unique name
@@ -34,11 +34,7 @@ export function isAbsolutePath(p: string): boolean {
 export function getWorkspaceFolder(): vscode.WorkspaceFolder {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {
-    const error = new Error(
-      "No workspace folder found. Please open a workspace.",
-    );
-    logger.error("No workspace folder found");
-    throw error;
+    throw new Error("No workspace folder found. Please open a workspace.");
   }
   return workspaceFolders[0];
 }
@@ -51,13 +47,11 @@ export async function writeFile(
   content: string,
 ): Promise<void> {
   await vscode.workspace.fs.writeFile(uri, Buffer.from(content, "utf-8"));
-  logger.debug(`Successfully wrote content to file: ${uri.fsPath}`);
 }
 
 /**
  * Ensure a directory exists by creating it if needed
  */
 export async function ensureDirectoryExists(dirUri: vscode.Uri): Promise<void> {
-  logger.debug(`Creating directory if needed: ${dirUri.fsPath}`);
   await vscode.workspace.fs.createDirectory(dirUri);
 }

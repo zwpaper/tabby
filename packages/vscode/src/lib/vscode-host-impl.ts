@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 import { collectCustomRules, getSystemInfo } from "@/lib/env-utils";
+import { matchFiles } from "@/lib/fs";
 import type { TokenStorage } from "@/lib/token-storage";
 import {
   ThreadAbortSignal,
@@ -10,7 +11,6 @@ import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
-import { DEFAULT_MAX_FILES, listFiles } from "./list-files";
 import { applyDiff, previewApplyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
 import { globFiles } from "./tools/glob-files";
@@ -43,17 +43,15 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
   async readEnvironment(): Promise<Environment> {
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    let files: string[] = [];
-    if (!workspaceFolders?.length) {
-      files = [];
-    } else {
-      files = (
-        await listFiles({
-          startPath: workspaceFolders[0].uri,
-          resultLimit: DEFAULT_MAX_FILES,
-        })
-      ).map((res) => res.uri.fsPath);
-    }
+
+    const MaxFileItems = 500;
+    let files = workspaceFolders?.length
+      ? (await matchFiles({ startPath: workspaceFolders[0].uri })).map(
+          (res) => res.uri.fsPath,
+        )
+      : [];
+    const isTruncated = files.length > MaxFileItems;
+    files = files.slice(0, MaxFileItems);
 
     const customRules = await collectCustomRules();
 
@@ -63,7 +61,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       currentTime: new Date().toString(),
       workspace: {
         files,
-        isTruncated: files.length >= DEFAULT_MAX_FILES,
+        isTruncated,
       },
       info: {
         ...systemInfo,
@@ -83,13 +81,13 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     }
 
     const { query, limit } = param;
-    const results = await listFiles({
+    const results = await matchFiles({
       startPath: workspaceFolders[0].uri,
       query,
-      resultLimit: limit,
-      withSearch: true,
     });
-    return results.map((item) => vscode.workspace.asRelativePath(item.uri));
+    return results
+      .slice(0, limit)
+      .map((item) => vscode.workspace.asRelativePath(item.uri));
   }
 
   private async queueToolCall<T>(fn: () => Promise<T>) {

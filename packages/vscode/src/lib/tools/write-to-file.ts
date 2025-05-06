@@ -1,17 +1,17 @@
 import { extname } from "node:path";
 import * as vscode from "vscode";
 
-import type { ClientToolsType } from "@ragdoll/tools";
-import type {
-  PreviewToolFunctionType,
-  ToolFunctionType,
-} from "@ragdoll/tools/src/types";
 import {
   ensureDirectoryExists,
   getWorkspaceFolder,
   tempfile,
   writeFile,
-} from "../file-utils";
+} from "@/lib/fs";
+import type { ClientToolsType } from "@ragdoll/tools";
+import type {
+  PreviewToolFunctionType,
+  ToolFunctionType,
+} from "@ragdoll/tools/src/types";
 import { getLogger } from "../logger";
 import { closePreviewTabs, findPreviewTabs } from "../tab-utils";
 

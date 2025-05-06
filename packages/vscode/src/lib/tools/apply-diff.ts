@@ -1,16 +1,16 @@
 import * as nodePath from "node:path";
+import {
+  ensureDirectoryExists,
+  getWorkspaceFolder,
+  tempfile,
+  writeFile,
+} from "@/lib/fs";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type {
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@ragdoll/tools/src/types";
 import * as vscode from "vscode";
-import {
-  ensureDirectoryExists,
-  getWorkspaceFolder,
-  tempfile,
-  writeFile,
-} from "../file-utils";
 import { getLogger } from "../logger";
 import { closePreviewTabs, findPreviewTabs } from "../tab-utils";
 

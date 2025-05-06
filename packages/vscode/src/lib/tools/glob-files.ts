@@ -1,13 +1,11 @@
-import { traverseBFSwithGitIgnore } from "@/lib/list-files";
+import { getWorkspaceFolder, ignoreWalk, isAbsolutePath } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { minimatch } from "minimatch";
-import { CancellationTokenSource } from "vscode";
 import * as vscode from "vscode";
-import { getWorkspaceFolder, isAbsolutePath } from "../file-utils";
 
 const logger = getLogger("globFilesTool");
-const MAX_FILES = 300;
+const MaxGlobFileItems = 500;
 
 /**
  * Finds files matching a glob pattern within the specified directory
@@ -35,32 +33,20 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
   try {
     const workspaceFolder = getWorkspaceFolder();
 
-    const cancellationTokenSource = new CancellationTokenSource();
-    if (abortSignal) {
-      abortSignal.addEventListener("abort", () => {
-        cancellationTokenSource.cancel();
-      });
-    }
-
     const startUri = vscode.Uri.joinPath(workspaceFolder.uri, searchPath);
 
-    const allFiles = await traverseBFSwithGitIgnore(
+    const allFiles = await ignoreWalk(
       startUri,
       undefined,
       undefined,
       undefined,
-      cancellationTokenSource.token,
+      abortSignal,
     );
-
-    if (cancellationTokenSource.token.isCancellationRequested) {
-      logger.debug("Glob files operation aborted");
-      return { files: [], isTruncated: false };
-    }
 
     for (const fileResult of allFiles) {
       if (minimatch(fileResult.relativePath, globPattern, { nocase: true })) {
         files.push(fileResult.relativePath.replace(/\\/g, "/"));
-        if (files.length >= MAX_FILES) {
+        if (files.length >= MaxGlobFileItems) {
           isTruncated = true;
           break;
         }
