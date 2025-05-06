@@ -1,5 +1,6 @@
 import { Thread } from "@quilted/threads";
 import {
+  type ResourceURI,
   type VSCodeHostApi,
   type WebviewHostApi,
   getServerBaseUrl,
@@ -80,8 +81,26 @@ class Ragdoll implements WebviewViewProvider {
     this.webviewHost = this.createWebviewThread(webviewView.webview).imports;
   }
 
+  readResourceURI: VSCodeHostApi["readResourceURI"] =
+    async (): Promise<ResourceURI> => {
+      if (!this.view) {
+        throw new Error("Webview not initialized");
+      }
+
+      return {
+        logo128: getUri(this.view.webview, this.extensionUri, [
+          "assets",
+          "icons",
+          "logo128.png",
+        ]).toString(),
+      };
+    };
+
   private createWebviewThread(webview: Webview) {
-    const vscodeHost = new VSCodeHostImpl(this.tokenStorage);
+    const vscodeHost = new VSCodeHostImpl(
+      this.tokenStorage,
+      this.readResourceURI.bind(this),
+    );
     return new Thread<WebviewHostApi, VSCodeHostApi>(
       {
         send(message) {

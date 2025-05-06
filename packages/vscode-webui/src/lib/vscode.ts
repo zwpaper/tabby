@@ -41,6 +41,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "listFilesInWorkspace",
         "previewToolCall",
         "openFile",
+        "readResourceURI",
       ],
       exports: {
         openTask(taskId) {

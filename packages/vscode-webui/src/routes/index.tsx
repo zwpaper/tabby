@@ -59,6 +59,7 @@ import {
   isAutoInjectTool,
   isUserInputTool,
 } from "@ragdoll/tools";
+import type { ResourceURI } from "@ragdoll/vscode-webui-bridge";
 
 const searchSchema = z.object({
   taskId: z
@@ -373,6 +374,8 @@ function Chat() {
     }
   }, [pendingApproval?.name, isLoading, scrollToBottom]);
 
+  const resourceUri = useResourceURI();
+
   return (
     <div className="flex flex-col h-screen px-4">
       <PreviewToolCalls message={renderMessages.at(-1)} />
@@ -391,10 +394,7 @@ function Chat() {
                   </Avatar>
                 ) : (
                   <Avatar className="size-7 border p-1 bg-[var(--vscode-chat-avatarBackground)]">
-                    <AvatarImage
-                      // FIXME(jueliang): use local static resources
-                      src={"https://app.getpochi.com/logo192.png"}
-                    />
+                    <AvatarImage src={resourceUri?.logo128} />
                     <AvatarFallback>Pochi</AvatarFallback>
                   </Avatar>
                 )}
@@ -856,3 +856,11 @@ function useShouldSkipExecute() {
   }, []);
   return canExecute;
 }
+
+const useResourceURI = () => {
+  const [resourceURI, setResourceURI] = useState<ResourceURI>();
+  useEffect(() => {
+    vscodeHost.readResourceURI().then(setResourceURI);
+  }, []);
+  return resourceURI;
+};

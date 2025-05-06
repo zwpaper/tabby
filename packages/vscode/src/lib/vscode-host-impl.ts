@@ -22,7 +22,10 @@ import { previewWriteToFile, writeToFile } from "./tools/write-to-file";
 export default class VSCodeHostImpl implements VSCodeHostApi {
   private toolCallQueue: Promise<unknown> = Promise.resolve();
 
-  constructor(private readonly tokenStorage: TokenStorage) {
+  constructor(
+    private readonly tokenStorage: TokenStorage,
+    readonly readResourceURI: VSCodeHostApi["readResourceURI"],
+  ) {
     this.getToken = this.getToken.bind(this);
     this.setToken = this.setToken.bind(this);
     this.readEnvironment = this.readEnvironment.bind(this);

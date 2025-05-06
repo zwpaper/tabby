@@ -2,6 +2,8 @@ import type { ThreadAbortSignalSerialization } from "@quilted/threads";
 import type { Environment } from "@ragdoll/server";
 
 export interface VSCodeHostApi {
+  readResourceURI(): Promise<ResourceURI>;
+
   getToken(): Promise<string | undefined>;
   setToken(token: string | undefined): Promise<void>;
 
@@ -48,4 +50,8 @@ const isDev = false;
 
 export function getServerBaseUrl() {
   return isDev ? DevBaseUrl : ProdBaseUrl;
+}
+
+export interface ResourceURI {
+  logo128: string;
 }
