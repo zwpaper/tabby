@@ -377,17 +377,17 @@ function Chat() {
   const resourceUri = useResourceURI();
 
   return (
-    <div className="flex flex-col h-screen px-4">
+    <div className="flex h-screen flex-col px-4">
       {renderMessages.length === 0 && <EmptyChatPlaceholder />}
       {renderMessages.length > 0 && <div className="h-4" />}
       <PreviewToolCalls message={renderMessages.at(-1)} />
       <div
-        className="flex-1 overflow-y-auto mb-2 space-y-4 -mx-4 px-4"
+        className="-mx-4 mb-2 flex-1 space-y-4 overflow-y-auto px-4"
         ref={messagesContainerRef}
       >
         {renderMessages.map((m, messageIndex) => (
           <div key={m.id} className="flex flex-col">
-            <div className="py-2 rounded-lg">
+            <div className="rounded-lg py-2">
               <div className="flex items-center gap-2">
                 {m.role === "user" ? (
                   <Avatar className="size-7">
@@ -395,7 +395,7 @@ function Chat() {
                     <AvatarFallback>{authData.user.name}</AvatarFallback>
                   </Avatar>
                 ) : (
-                  <Avatar className="size-7 border p-1 bg-[var(--vscode-chat-avatarBackground)]">
+                  <Avatar className="size-7 border bg-[var(--vscode-chat-avatarBackground)] p-1">
                     <AvatarImage src={resourceUri?.logo128} />
                     <AvatarFallback>Pochi</AvatarFallback>
                   </Avatar>
@@ -405,10 +405,10 @@ function Chat() {
                 </strong>
                 {isLoading &&
                   m.id === renderMessages[renderMessages.length - 1].id && (
-                    <Loader2 className="size-4 animate-spin ml-2" />
+                    <Loader2 className="ml-2 size-4 animate-spin" />
                   )}
               </div>
-              <div className="ml-1 mt-3 flex flex-col gap-2">
+              <div className="mt-3 ml-1 flex flex-col gap-2">
                 {m.parts.map((part, index) => (
                   <Part
                     key={index}
@@ -432,7 +432,7 @@ function Chat() {
           </div>
         ))}
       </div>
-      <div className="text-red-400 text-center mb-2">
+      <div className="mb-2 text-center text-red-400">
         {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error */}
         {imageSelectionError?.message ||
           uploadImageError?.message ||
@@ -464,7 +464,7 @@ function Chat() {
         onPaste={handlePasteImage}
       >
         {taskId.current && (
-          <span className="text-xs absolute top-1 right-1 text-foreground/80">
+          <span className="absolute top-1 right-1 text-foreground/80 text-xs">
             TASK-{String(taskId.current).padStart(3, "0")}
           </span>
         )}
@@ -480,7 +480,7 @@ function Chat() {
         className="hidden"
       />
 
-      <div className="flex mb-2 justify-between pt-2 gap-3">
+      <div className="mb-2 flex justify-between gap-3 pt-2">
         <ModelSelect
           value={selectedModel?.id}
           models={models}
@@ -494,7 +494,7 @@ function Chat() {
             variant="ghost"
             size="icon"
             onClick={() => fileInputRef.current?.click()}
-            className="p-0 h-6 w-6 rounded-md"
+            className="h-6 w-6 rounded-md p-0"
           >
             <ImageIcon className="size-4" />
           </Button>
@@ -503,7 +503,7 @@ function Chat() {
             variant="ghost"
             size="icon"
             disabled={isModelsLoading || (!isLoading && !input)}
-            className="p-0 h-6 w-6 rounded-md transition-opacity"
+            className="h-6 w-6 rounded-md p-0 transition-opacity"
             onClick={() => {
               if (isLoading || isUploadingImages) {
                 handleStop();
@@ -676,7 +676,7 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   }
 
   return (
-    <div className="flex [&>button]:flex-1 [&>button]:rounded-sm gap-3 mb-2">
+    <div className="mb-2 flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
       <Button onClick={onAccept}>{acceptText}</Button>
       {pendingApproval.name !== "retry" && (
         <Button onClick={onReject} variant="secondary">

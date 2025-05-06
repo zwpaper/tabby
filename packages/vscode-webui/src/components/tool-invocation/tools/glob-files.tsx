@@ -30,7 +30,7 @@ export const globFilesTool: React.FC<
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       Searching in <span className="font-mono">{path}</span> for pattern{" "}
-      <span className="font-mono font-bold">{globPattern}</span>
+      <span className="font-bold font-mono">{globPattern}</span>
       {resultEl && <span>, {resultEl}</span>}
     </div>
   );

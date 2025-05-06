@@ -25,17 +25,17 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
               <HoverCardTrigger asChild>
                 <div
                   className={cn(
-                    "flex items-center gap-1.5 p-1.5 text-xs rounded border bg-[var(--vscode-editorWidget-background)] hover:bg-[var(--vscode-list-hoverBackground)]",
-                    "border hover:border-[var(--vscode-focusBorder)] cursor-pointer",
+                    "flex items-center gap-1.5 rounded border bg-[var(--vscode-editorWidget-background)] p-1.5 text-xs hover:bg-[var(--vscode-list-hoverBackground)]",
+                    "cursor-pointer border hover:border-[var(--vscode-focusBorder)]",
                   )}
                 >
                   {isImage ? (
                     <>
-                      <div className="w-5 h-5 overflow-hidden rounded-sm border border-[var(--vscode-input-border)]">
+                      <div className="h-5 w-5 overflow-hidden rounded-sm border border-[var(--vscode-input-border)]">
                         <img
                           src={attachment.url}
                           alt={attachment.name}
-                          className="object-cover w-full h-full"
+                          className="h-full w-full object-cover"
                         />
                       </div>
                       <span className="max-w-[100px] truncate">
@@ -44,7 +44,7 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
                     </>
                   ) : (
                     <>
-                      <FileIcon className="w-4 h-4 shrink-0 text-[var(--vscode-symbolIcon-fileForeground)]" />
+                      <FileIcon className="h-4 w-4 shrink-0 text-[var(--vscode-symbolIcon-fileForeground)]" />
                       <span className="max-w-[100px] truncate">
                         {attachment.name}
                       </span>
@@ -55,11 +55,11 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
             </div>
 
             <HoverCardContent
-              className="p-2 w-auto max-w-[95vw] max-h-[80vh]"
+              className="max-h-[80vh] w-auto max-w-[95vw] p-2"
               align="start"
             >
               <div className="flex flex-col gap-2">
-                <div className="text-xs font-medium truncate max-w-[300px]">
+                <div className="max-w-[300px] truncate font-medium text-xs">
                   {attachment.name}
                 </div>
                 {isImage ? (
@@ -67,7 +67,7 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
                     <img
                       src={attachment.url}
                       alt={attachment.name}
-                      className="object-contain max-w-[90vw] h-auto"
+                      className="h-auto max-w-[90vw] object-contain"
                       style={{
                         maxHeight: "calc(60vh - 1rem)",
                         minWidth: "200px",
@@ -76,7 +76,7 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-sm">
-                    <FileIcon className="w-5 h-5 text-[var(--vscode-symbolIcon-fileForeground)]" />
+                    <FileIcon className="h-5 w-5 text-[var(--vscode-symbolIcon-fileForeground)]" />
                     <span>{attachment.contentType}</span>
                   </div>
                 )}

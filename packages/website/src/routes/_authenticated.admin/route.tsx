@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 function AdminLayout() {
   return (
     <SidebarProvider>
-      <AdminSidebar className="hidden md:flex h-screen" />
+      <AdminSidebar className="hidden h-screen md:flex" />
       <SidebarInset>
         <div className="flex-1 p-6">
           <Outlet />

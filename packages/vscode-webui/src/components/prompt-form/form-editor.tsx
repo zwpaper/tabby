@@ -248,7 +248,7 @@ export function FormEditor({
     <form
       ref={formRef}
       onSubmit={wrappedOnSubmit}
-      className="relative bg-input p-1 rounded-sm border border-[var(--input-border)] focus-within:border-ring transition-color duration-300"
+      className="relative rounded-sm border border-[var(--input-border)] bg-input p-1 transition-color duration-300 focus-within:border-ring"
       onClick={(e) => {
         e.stopPropagation();
         focusEditor();
@@ -259,7 +259,7 @@ export function FormEditor({
     >
       <EditorContent
         editor={editor}
-        className="min-h-20 max-h-32 w-full overflow-y-auto prose overflow-hidden break-words text-[var(--vscode-input-foreground)] focus:outline-none !border-none"
+        className="prose !border-none max-h-32 min-h-20 w-full overflow-hidden overflow-y-auto break-words text-[var(--vscode-input-foreground)] focus:outline-none"
       />
       {children}
     </form>

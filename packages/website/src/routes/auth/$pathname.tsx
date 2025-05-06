@@ -8,7 +8,7 @@ export const Route = createFileRoute("/auth/$pathname")({
 function Auth() {
   const { pathname } = Route.useParams();
   return (
-    <div className="flex flex-col grow size-full min-h-screen items-center justify-center gap-3">
+    <div className="flex size-full min-h-screen grow flex-col items-center justify-center gap-3">
       <AuthCard socialLayout="vertical" pathname={pathname} />
     </div>
   );

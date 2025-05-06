@@ -37,7 +37,7 @@ export function AdminSidebar({
             >
               <Link to="/admin">
                 <ShieldAlert className="!size-5" />
-                <span className="text-base font-semibold">Admin</span>
+                <span className="font-semibold text-base">Admin</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

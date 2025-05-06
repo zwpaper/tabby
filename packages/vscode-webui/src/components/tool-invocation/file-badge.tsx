@@ -28,11 +28,11 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
     <span
       onClick={onClick}
       className={cn(
-        "text-zinc-400 active:bg-zinc-700 text-xs border border-zinc-600 rounded-sm px-1 cursor-pointer inline-block",
+        "inline-block cursor-pointer rounded-sm border border-zinc-600 px-1 text-xs text-zinc-400 active:bg-zinc-700",
         className,
       )}
     >
-      <File className="size-3 inline-block" />
+      <File className="inline-block size-3" />
       <span className="ml-1">
         {path}
         {lineRange}

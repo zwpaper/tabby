@@ -49,18 +49,18 @@ export function ImagePreviewList({
   if (files.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 mt-2 mb-3">
+    <div className="mt-2 mb-3 flex flex-wrap gap-2">
       {files.map((file, index) => {
         const fileId = generateFileId(file);
         const isUploading = uploadingFiles[fileId];
 
         return (
           <HoverCard key={index} openDelay={300} closeDelay={200}>
-            <div className="relative group">
+            <div className="group relative">
               <HoverCardTrigger asChild>
                 <div
                   className={cn(
-                    "relative w-16 h-16 rounded-md border overflow-hidden cursor-pointer",
+                    "relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border",
                     "border-[var(--vscode-input-border)] hover:border-[var(--vscode-focusBorder)]",
                   )}
                 >
@@ -69,7 +69,7 @@ export function ImagePreviewList({
                       src={previews[index]}
                       alt={file.name}
                       className={cn(
-                        "object-cover w-full h-full",
+                        "h-full w-full object-cover",
                         isUploading && "opacity-50",
                       )}
                     />
@@ -77,8 +77,8 @@ export function ImagePreviewList({
 
                   {/* Overlay for uploading status */}
                   {isUploading && (
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center">
-                      <Loader2 className="size-4 text-white animate-spin" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-30">
+                      <Loader2 className="size-4 animate-spin text-white" />
                     </div>
                   )}
                 </div>
@@ -87,19 +87,19 @@ export function ImagePreviewList({
                 type="button"
                 onClick={() => onRemove(index)}
                 className={cn(
-                  "absolute -top-1 -right-1 bg-secondary text-secondary-foreground",
-                  "rounded-full p-0.5 opacity-70 hover:opacity-100 transition-opacity",
-                  "flex items-center justify-center w-5 h-5 text-xs",
+                  "-top-1 -right-1 absolute bg-secondary text-secondary-foreground",
+                  "rounded-full p-0.5 opacity-70 transition-opacity hover:opacity-100",
+                  "flex h-5 w-5 items-center justify-center text-xs",
                 )}
                 aria-label="Remove image"
               >
                 <X className="size-3.5" />
               </button>
             </div>
-            <HoverCardContent className="p-2 w-auto max-w-[95vw] max-h-[80vh]">
+            <HoverCardContent className="max-h-[80vh] w-auto max-w-[95vw] p-2">
               <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                  <div className="text-xs font-medium truncate max-w-[300px]">
+                <div className="flex items-center justify-between">
+                  <div className="max-w-[300px] truncate font-medium text-xs">
                     {file.name}
                   </div>
                   {isUploading && (
@@ -115,7 +115,7 @@ export function ImagePreviewList({
                       <img
                         src={previews[index]}
                         alt={file.name}
-                        className="object-contain max-w-[90vw] h-auto"
+                        className="h-auto max-w-[90vw] object-contain"
                         style={{
                           maxHeight: "calc(60vh - 1rem)",
                           minWidth: "200px",
@@ -125,7 +125,7 @@ export function ImagePreviewList({
                   </div>
                 </div>
 
-                <div className="text-xs text-[var(--vscode-descriptionForeground)]">
+                <div className="text-[var(--vscode-descriptionForeground)] text-xs">
                   {(file.size / 1024).toFixed(1)} KB
                 </div>
               </div>

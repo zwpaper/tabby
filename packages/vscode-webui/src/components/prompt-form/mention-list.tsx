@@ -82,7 +82,7 @@ export const MentionList = forwardRef<MentionListActions, MentionListProps>(
       <div className="relative flex max-h-[300px] w-[80vw] flex-col overflow-hidden rounded-md border bg-popover p-1 sm:w-[600px]">
         <div className="flex-1 overflow-y-auto">
           {items.length === 0 ? (
-            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+            <div className="px-2 py-1.5 text-muted-foreground text-xs">
               {query ? "No results found" : "Type to search..."}
             </div>
           ) : (
@@ -140,7 +140,7 @@ function MentionItemView({ isSelected, data, ...rest }: MentionItemViewProps) {
       <span className="mr-2 truncate whitespace-nowrap font-medium ">
         {basename}
       </span>
-      <span className="flex-1 truncate text-xs text-muted-foreground">
+      <span className="flex-1 truncate text-muted-foreground text-xs">
         {displayPath}
       </span>
     </div>

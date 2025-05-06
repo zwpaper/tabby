@@ -11,11 +11,11 @@ export const AskFollowupQuestionTool: React.FC<
       <p className="items-center font-medium italic">{question}</p>
       {followUp &&
         followUp.length > 0 && ( // Check if followUp exists and has items
-          <ol className="flex flex-col gap-1 pl-4 list-decimal list-inside">
+          <ol className="flex list-inside list-decimal flex-col gap-1 pl-4">
             {followUp.map((followUpText, index) => (
               <li
                 key={index}
-                className="text-muted-foreground hover:text-foreground cursor-pointer"
+                className="cursor-pointer text-muted-foreground hover:text-foreground"
               >
                 <button type="button" onClick={() => setInput(followUpText)}>
                   {followUpText}

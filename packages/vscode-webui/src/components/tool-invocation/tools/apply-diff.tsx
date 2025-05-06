@@ -59,8 +59,8 @@ export const applyDiffTool: React.FC<
   const diffContent = diff ? parseDiffContent(diff) : null;
 
   return (
-    <div className="text-sm flex flex-col gap-1" title={error}>
-      <div className="flex gap-2 items-center">
+    <div className="flex flex-col gap-1 text-sm" title={error}>
+      <div className="flex items-center gap-2">
         <StatusIcon isExecuting={isExecuting} tool={tool} />
         {isExecuting ? "Applying" : isSuccess ? "Applied" : "Apply"} diff to
         {path && (
@@ -71,7 +71,7 @@ export const applyDiffTool: React.FC<
       {diff && startLine && endLine && (
         <button
           type="button"
-          className="text-xs text-gray-500 mt-1 cursor-pointer hover:text-gray-400 text-left bg-transparent border-none p-0 w-full"
+          className="mt-1 w-full cursor-pointer border-none bg-transparent p-0 text-left text-gray-500 text-xs hover:text-gray-400"
           onClick={() => setShowDiff(!showDiff)}
         >
           Modifying lines {startLine} to {endLine} {showDiff ? "▼" : "▶"}
@@ -79,14 +79,14 @@ export const applyDiffTool: React.FC<
       )}
 
       {showDiff && diffContent && (
-        <div className="text-xs mt-1 border border-gray-700 rounded p-2 bg-gray-900 overflow-auto max-h-[300px]">
+        <div className="mt-1 max-h-[300px] overflow-auto rounded border border-gray-700 bg-gray-900 p-2 text-xs">
           <div className="font-bold text-red-400">SEARCH:</div>
-          <pre className="whitespace-pre-wrap text-gray-300 pl-2 border-l-2 border-red-400 mb-2">
+          <pre className="mb-2 whitespace-pre-wrap border-red-400 border-l-2 pl-2 text-gray-300">
             {diffContent.searchContent}
           </pre>
 
           <div className="font-bold text-green-400">REPLACE:</div>
-          <pre className="whitespace-pre-wrap text-gray-300 pl-2 border-l-2 border-green-400">
+          <pre className="whitespace-pre-wrap border-green-400 border-l-2 pl-2 text-gray-300">
             {diffContent.replaceContent}
           </pre>
         </div>

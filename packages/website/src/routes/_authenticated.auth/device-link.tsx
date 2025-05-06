@@ -87,15 +87,15 @@ function DeviceLinkConfirmationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-gray-500 text-sm dark:text-gray-400">
             Device:{" "}
             <span className="font-medium text-gray-900 dark:text-gray-100">
               {deviceName}
             </span>{" "}
           </p>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
           {isApproved && (
-            <p className="text-sm text-green-600">
+            <p className="text-green-600 text-sm">
               Sign-in approved successfully. You can close this window.
             </p>
           )}

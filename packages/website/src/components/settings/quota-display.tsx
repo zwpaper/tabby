@@ -42,36 +42,36 @@ export function QuotaDisplay() {
 
   return (
     <div className="mb-4 px-2 pb-1">
-      <div className="text-xs text-muted-foreground mb-3 font-bold">
+      <div className="mb-3 font-bold text-muted-foreground text-xs">
         {data.plan}
       </div>
       <div className="space-y-2">
         {data.plan === "Community" && (
           <div className="flex flex-col gap-1">
-            <div className="flex justify-between text-xs mb-0.5">
+            <div className="mb-0.5 flex justify-between text-xs">
               <span className="text-muted-foreground">Basic</span>
               <span className="font-mono">
                 {usages.basic} / {limits.basic}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700">
+            <div className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700">
               <div
-                className="bg-blue-500 h-1 rounded-full"
+                className="h-1 rounded-full bg-blue-500"
                 style={{ width: `${basicUsagePercent}%` }}
               />
             </div>
           </div>
         )}
         <div className="flex flex-col gap-1">
-          <div className="flex justify-between text-xs mb-0.5">
+          <div className="mb-0.5 flex justify-between text-xs">
             <span className="text-muted-foreground">Premium</span>
             <span className="font-mono">
               {usages.premium} / {limits.premium}
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-1 dark:bg-gray-700">
+          <div className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700">
             <div
-              className="bg-amber-500 h-1 rounded-full"
+              className="h-1 rounded-full bg-amber-500"
               style={{ width: `${premiumUsagePercent}%` }}
             />
           </div>

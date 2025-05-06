@@ -83,7 +83,7 @@ function SubscriptionPlan({
     price !== "Free" ? (billingCycle === "yearly" ? "/year" : "/month") : "";
 
   return (
-    <Card className="flex flex-col min-w-xs max-w-sm grow">
+    <Card className="flex min-w-xs max-w-sm grow flex-col">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{name}</CardTitle>
@@ -91,9 +91,9 @@ function SubscriptionPlan({
           {isActive && <Badge>Current Plan</Badge>}
         </div>
         <div className="flex items-baseline">
-          <span className="text-3xl font-bold">{displayPrice}</span>
+          <span className="font-bold text-3xl">{displayPrice}</span>
           {frequencyText && (
-            <span className="text-muted-foreground ml-1">{frequencyText}</span>
+            <span className="ml-1 text-muted-foreground">{frequencyText}</span>
           )}
         </div>
         <CardDescription>{description}</CardDescription>
@@ -266,7 +266,7 @@ function BillingHistory() {
           </Table>
         )}
         {hasMore && !loading && !error && (
-          <div className="w-full flex justify-center mt-1">
+          <div className="mt-1 flex w-full justify-center">
             <Button onClick={loadMore} disabled={loadingMore} variant="outline">
               {loadingMore ? "Loading..." : "Load More"}
             </Button>
@@ -337,7 +337,7 @@ function Billing() {
   return (
     <div className="container max-w-4xl">
       <Tabs defaultValue="plans">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="mb-6 grid w-full grid-cols-2">
           <TabsTrigger value="plans">
             <IconCreditCard className="mr-2 h-4 w-4" />
             Subscription
@@ -350,10 +350,10 @@ function Billing() {
 
         <TabsContent value="plans">
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Plans</h2>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-semibold text-xl">Plans</h2>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   Billing Cycle:
                 </span>
                 <Select
@@ -373,7 +373,7 @@ function Billing() {
               </div>
             </div>
 
-            <div className="flex gap-4 mb-8 justify-around flex-wrap">
+            <div className="mb-8 flex flex-wrap justify-around gap-4">
               {plans.map((plan) => (
                 <SubscriptionPlan
                   key={plan.id}
@@ -391,10 +391,10 @@ function Billing() {
               ))}
             </div>
 
-            <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+            <div className="flex items-center justify-between rounded-lg bg-muted p-4">
               <div>
                 <h3 className="font-medium">Need a custom plan?</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Contact us for a tailored solution for your specific needs
                 </p>
               </div>

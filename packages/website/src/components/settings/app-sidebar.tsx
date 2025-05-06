@@ -150,7 +150,7 @@ export function AppSidebar({
             >
               <Link to="/">
                 <Terminal className="!size-5 animate-[spin_6s_linear_infinite]" />
-                <span className="text-base font-semibold">Pochi</span>
+                <span className="font-semibold text-base">Pochi</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

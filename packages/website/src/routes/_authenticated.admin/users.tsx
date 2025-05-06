@@ -304,12 +304,12 @@ function UsersPage() {
                       >
                         {user.role === "admin" ? (
                           <>
-                            <ShieldX className="h-4 w-4 mr-2" />
+                            <ShieldX className="mr-2 h-4 w-4" />
                             Remove Admin
                           </>
                         ) : (
                           <>
-                            <ShieldCheck className="h-4 w-4 mr-2" />
+                            <ShieldCheck className="mr-2 h-4 w-4" />
                             Make Admin
                           </>
                         )}
@@ -323,12 +323,12 @@ function UsersPage() {
                           >
                             {user.banned ? (
                               <>
-                                <Undo className="h-4 w-4 mr-2" />
+                                <Undo className="mr-2 h-4 w-4" />
                                 Unban
                               </>
                             ) : (
                               <>
-                                <Ban className="h-4 w-4 mr-2" />
+                                <Ban className="mr-2 h-4 w-4" />
                                 Ban
                               </>
                             )}
@@ -351,8 +351,8 @@ function UsersPage() {
         </Table>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-muted-foreground">
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-muted-foreground text-sm">
               Showing {(currentPage - 1) * pageSize + 1} to{" "}
               {Math.min(currentPage * pageSize, totalUsers)} of {totalUsers}{" "}
               users

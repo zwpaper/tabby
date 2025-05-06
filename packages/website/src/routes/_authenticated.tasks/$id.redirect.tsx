@@ -48,7 +48,7 @@ function RouteComponent() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="items-center text-center">
-          <CardTitle className="flex justify-center items-center gap-1">
+          <CardTitle className="flex items-center justify-center gap-1">
             {!showManualButton && (
               <Loader2 className="size-4 animate-spin text-primary" />
             )}
@@ -72,8 +72,8 @@ function RouteComponent() {
           </div>
         </CardContent>
         {showManualButton && (
-          <CardFooter className="flex justify-center items-center">
-            <p className="text-xs text-muted-foreground mb-2">
+          <CardFooter className="flex items-center justify-center">
+            <p className="mb-2 text-muted-foreground text-xs">
               If VS Code doesn't open automatically, click{" "}
               <a
                 href={vscodeLink}

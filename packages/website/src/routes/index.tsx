@@ -104,7 +104,7 @@ function RouteComponent() {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 text-black p-4 relative">
+    <div className="relative flex min-h-screen flex-col items-center bg-gradient-to-br from-white via-gray-100 to-gray-200 p-4 text-black">
       <div className="absolute top-10 right-10">
         <UserButton
           size="icon"
@@ -121,19 +121,19 @@ function RouteComponent() {
           }}
         />
       </div>
-      <h1 className="mt-[25vh] text-3xl md:text-5xl font-bold mb-12 tracking-tight flex gap-4">
-        <Terminal className="size-12 animate-[spin_6s_linear_infinite] hidden md:block" />
+      <h1 className="mt-[25vh] mb-12 flex gap-4 font-bold text-3xl tracking-tight md:text-5xl">
+        <Terminal className="hidden size-12 animate-[spin_6s_linear_infinite] md:block" />
         What can I help you ship?
       </h1>
       <form
-        className="w-full max-w-3xl bg-white/80 backdrop-blur-sm rounded-lg p-6 border border-gray-300/50 shadow-lg"
+        className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm"
         onSubmit={handleSubmit}
       >
         <Textarea
           disabled={isSubmitting}
           onKeyDown={submitOnEnter}
           placeholder="Ask pochi to build..."
-          className="w-full bg-transparent border-none text-black placeholder-gray-400 focus-visible:ring-0 text-lg mb-4 shadow-none resize-none min-h-10"
+          className="mb-4 min-h-10 w-full resize-none border-none bg-transparent text-black text-lg placeholder-gray-400 shadow-none focus-visible:ring-0"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
@@ -142,7 +142,7 @@ function RouteComponent() {
             <Button
               variant="ghost"
               size="icon"
-              className="text-gray-500 hover:text-black hover:bg-gray-200/50 transition-colors rounded-full"
+              className="rounded-full text-gray-500 transition-colors hover:bg-gray-200/50 hover:text-black"
               onClick={handleEnhance}
               disabled={isEnhancing || !inputValue.trim()}
             >
@@ -155,7 +155,7 @@ function RouteComponent() {
             <Button
               variant="ghost"
               size="icon"
-              className="text-gray-500 hover:text-black hover:bg-gray-200/50 transition-colors rounded-full"
+              className="rounded-full text-gray-500 transition-colors hover:bg-gray-200/50 hover:text-black"
             >
               <PaperclipIcon className="h-5 w-5" />
             </Button>
@@ -164,7 +164,7 @@ function RouteComponent() {
               disabled={submitIsDisabled}
               variant="default"
               size="icon"
-              className="transition-colors rounded-full"
+              className="rounded-full transition-colors"
             >
               {isSubmitting ? (
                 <Loader2Icon className="animate-spin" />
@@ -176,7 +176,7 @@ function RouteComponent() {
         </div>
       </form>
       {submitError && (
-        <p className="text-destructive mt-4 text-sm text-right">
+        <p className="mt-4 text-right text-destructive text-sm">
           {submitError}
         </p>
       )}

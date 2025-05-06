@@ -33,7 +33,7 @@ export function AutoApproveMenu() {
     <div className="-mx-4 select-none">
       <div
         className={cn(
-          "flex items-center justify-between cursor-pointer pt-2.5 px-4",
+          "flex cursor-pointer items-center justify-between px-4 pt-2.5",
           {
             "py-2.5": !isOpen,
             "pt-2.5": isOpen,
@@ -42,7 +42,7 @@ export function AutoApproveMenu() {
         )}
       >
         <div className="flex w-full">
-          <label htmlFor="auto-approve" className="pr-4 cursor-pointer">
+          <label htmlFor="auto-approve" className="cursor-pointer pr-4">
             <Checkbox
               id="auto-approve"
               checked={autoApproveActive}
@@ -52,7 +52,7 @@ export function AutoApproveMenu() {
             />
           </label>
           <span
-            className={cn("font-medium flex-1 flex items-center", {
+            className={cn("flex flex-1 items-center font-medium", {
               "pb-6": isOpen,
             })}
             onClick={() => setIsOpen(!isOpen)}
@@ -74,8 +74,8 @@ export function AutoApproveMenu() {
             )}
             <ChevronDown
               className={cn(
-                "ml-auto mr-2 size-4 transition-transform duration-100 ease-in-out text-[var(--vscode-descriptionForeground)]",
-                isOpen ? "transform rotate-180" : "",
+                "mr-2 ml-auto size-4 text-[var(--vscode-descriptionForeground)] transition-transform duration-100 ease-in-out",
+                isOpen ? "rotate-180 transform" : "",
               )}
             />
           </span>
@@ -84,18 +84,18 @@ export function AutoApproveMenu() {
 
       <div
         className={cn(
-          "overflow-hidden transition-all duration-100 ease-in-out origin-top px-4",
-          isOpen ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0 scale-y-90",
+          "origin-top overflow-hidden px-4 transition-all duration-100 ease-in-out",
+          isOpen ? "max-h-[700px] opacity-100" : "max-h-0 scale-y-90 opacity-0",
         )}
       >
-        <div className="rounded-md bg-[var(--vscode-editorWidget-background)] shadow-md pt-2 pb-4 px-4">
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="rounded-md bg-[var(--vscode-editorWidget-background)] px-4 pt-2 pb-4 shadow-md">
+          <p className="mb-4 text-muted-foreground text-sm">
             Auto-approve allows Pochi to perform actions without asking for
             permission. Only enable for actions you fully trust.
           </p>
 
           <div className="flex flex-wrap justify-center">
-            <div className="flex flex-wrap justify-center w-full max-w-full sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] mx-auto gap-3 sm:gap-4">
+            <div className="mx-auto flex w-full max-w-full flex-wrap justify-center gap-3 sm:max-w-[600px] sm:gap-4 md:max-w-[800px] lg:max-w-[1000px]">
               <ToggleButton
                 icon={<Eye />}
                 label="Read"
@@ -135,7 +135,7 @@ function ToggleButton({ icon, label, isActive, onClick }: ToggleButtonProps) {
   return (
     <Button
       className={cn(
-        "bg-transparent flex flex-col items-center justify-center gap-3 sm:gap-4 p-2 sm:p-3 transition-all duration-100 border",
+        "flex flex-col items-center justify-center gap-3 border bg-transparent p-2 transition-all duration-100 sm:gap-4 sm:p-3",
         "size-[80px]",
         isActive
           ? "bg-primary text-primary-foreground hover:bg-primary/70"
@@ -144,7 +144,7 @@ function ToggleButton({ icon, label, isActive, onClick }: ToggleButtonProps) {
       onClick={onClick}
     >
       {icon}
-      <div className="text-sm sm:text-base font-medium whitespace-nowrap">
+      <div className="whitespace-nowrap font-medium text-sm sm:text-base">
         {label}
       </div>
     </Button>

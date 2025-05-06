@@ -81,18 +81,18 @@ function SlackIntegrationSection({
   };
 
   return (
-    <Card className="w-full border border-border bg-card/50 overflow-hidden">
+    <Card className="w-full overflow-hidden border border-border bg-card/50">
       <CardHeader className="px-6">
         <div className="flex items-center gap-2">
           <IconBrandSlack size={20} className="text-[#4A154B]" />
-          <CardTitle className="text-base font-medium">
+          <CardTitle className="font-medium text-base">
             Slack Integration
           </CardTitle>
           <Button
             variant="outline"
             size="sm"
             onClick={handleConnectSlack}
-            className="flex items-center gap-1 ml-auto"
+            className="ml-auto flex items-center gap-1"
           >
             <Plus size={16} />
           </Button>
@@ -112,7 +112,7 @@ function SlackIntegrationSection({
         </CardContent>
       ) : slackIntegrations.length === 0 ? (
         <CardContent className="flex flex-col items-center justify-center text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No Slack workspaces connected yet.
           </p>
         </CardContent>
@@ -138,7 +138,7 @@ function SlackIntegrationSection({
                       {integration.payload.team?.name || "Slack Workspace"}
                     </a>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-xs">
                     {new Date(integration.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
@@ -216,18 +216,18 @@ function GithubIntegrationSection({
   };
 
   return (
-    <Card className="w-full border border-border bg-card/50 overflow-hidden">
+    <Card className="w-full overflow-hidden border border-border bg-card/50">
       <CardHeader className="px-6">
         <div className="flex items-center gap-2">
           <IconBrandGithub size={20} className="text-[#333]" />
-          <CardTitle className="text-base font-medium">
+          <CardTitle className="font-medium text-base">
             GitHub Integration
           </CardTitle>
           <Button
             variant="outline"
             size="sm"
             onClick={handleConnectGithub}
-            className="flex items-center gap-1 ml-auto"
+            className="ml-auto flex items-center gap-1"
           >
             <Plus size={16} />
           </Button>
@@ -247,7 +247,7 @@ function GithubIntegrationSection({
         </CardContent>
       ) : githubIntegrations.length === 0 ? (
         <CardContent className="flex flex-col items-center justify-center text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No GitHub repositories connected yet.
           </p>
         </CardContent>
@@ -273,7 +273,7 @@ function GithubIntegrationSection({
                       {integration.payload.account?.html_url}
                     </a>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-xs">
                     {new Date(integration.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
@@ -351,7 +351,7 @@ function IntegrationsPage() {
   }, [queryClient, userId]);
 
   return (
-    <div className="space-y-4 w-full md:w-[700px]">
+    <div className="w-full space-y-4 md:w-[700px]">
       {/* Slack Integration Section */}
       <div className="flex flex-col gap-3">
         <SlackIntegrationSection

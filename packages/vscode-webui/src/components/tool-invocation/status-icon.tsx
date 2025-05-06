@@ -28,9 +28,9 @@ export function StatusIcon({ tool, isExecuting }: StatusIconProps) {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <X className="size-4 text-red-400 cursor-help" />
+            <X className="size-4 cursor-help text-red-400" />
           </TooltipTrigger>
-          <TooltipContent className="px-1 py-0.5 rounded bg-secondary">
+          <TooltipContent className="rounded bg-secondary px-1 py-0.5">
             <p>{error}</p>
           </TooltipContent>
         </Tooltip>

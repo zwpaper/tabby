@@ -224,36 +224,36 @@ function Usage() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="font-medium text-sm">
                 Total Tokens
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="font-bold text-2xl">
                 {formatTokens(summary.totalTokens)}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="font-medium text-sm">
                 Prompt Tokens
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="font-bold text-2xl">
                 {formatTokens(summary.promptTokens)}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="font-medium text-sm">
                 Completion Tokens
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="font-bold text-2xl">
                 {formatTokens(summary.completionTokens)}
               </div>
             </CardContent>
@@ -292,7 +292,7 @@ function Usage() {
                 if (value) setTimeRange(value);
               }}
               variant="outline"
-              className="hidden @[767px]/card:flex [&>button]:px-4"
+              className="@[767px]/card:flex hidden [&>button]:px-4"
               size="sm"
             >
               <ToggleGroupItem value="7d">Last 7 days</ToggleGroupItem>
@@ -307,7 +307,7 @@ function Usage() {
               }}
             >
               <SelectTrigger
-                className="flex w-auto @[767px]/card:hidden"
+                className="flex @[767px]/card:hidden w-auto"
                 size="sm"
                 aria-label="Select time range"
               >
@@ -397,7 +397,7 @@ function Usage() {
                           if (finalChartConfig[sanitized]) {
                             return (
                               <div className="flex items-center gap-2">
-                                <div className="flex flex-1 justify-between leading-none gap-1">
+                                <div className="flex flex-1 justify-between gap-1 leading-none">
                                   <span className="text-muted-foreground">
                                     {finalChartConfig[sanitized].label}
                                   </span>

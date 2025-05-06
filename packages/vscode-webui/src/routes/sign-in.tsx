@@ -7,7 +7,7 @@ export const Route = createFileRoute("/sign-in")({
 function SignInPage() {
   return (
     <div className="text-center">
-      <header className="min-h-screen flex flex-col items-center justify-center bg-transparent text-[calc(10px+2vmin)]">
+      <header className="flex min-h-screen flex-col items-center justify-center bg-transparent text-[calc(10px+2vmin)]">
         <a
           className="text-primary hover:underline"
           href="command:ragdoll.openLoginPage"

@@ -35,9 +35,9 @@ function App() {
           {isLoading ? (
             <>
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="bg-card p-2 rounded-xs animate-pulse">
-                  <div className="h-4 bg-card/70 rounded w-1/4 mb-2" />
-                  <div className="h-4 bg-card/70 rounded w-3/4" />
+                <div key={i} className="animate-pulse rounded-xs bg-card p-2">
+                  <div className="mb-2 h-4 w-1/4 rounded bg-card/70" />
+                  <div className="h-4 w-3/4 rounded bg-card/70" />
                 </div>
               ))}
             </>
@@ -49,8 +49,8 @@ function App() {
                 className="cursor-pointer"
                 key={task.id}
               >
-                <div className="bg-card p-2 rounded-xs hover:bg-card/70">
-                  <span className="font-bold mb-1">
+                <div className="rounded-xs bg-card p-2 hover:bg-card/70">
+                  <span className="mb-1 font-bold">
                     {formatTaskId(task.id)}
                   </span>
                   <div className="text-foreground">

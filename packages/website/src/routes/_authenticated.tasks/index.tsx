@@ -23,7 +23,7 @@ function TaskPage() {
   const tasks = data?.data || [];
 
   return (
-    <div className="hidden h-full flex-1 flex-col space-y-8 p-8 md:flex max-w-6xl mx-auto">
+    <div className="mx-auto hidden h-full max-w-6xl flex-1 flex-col space-y-8 p-8 md:flex">
       <h3 className="text-lg">Tasks</h3>
       {isLoading ? <Loading /> : <DataTable data={tasks} columns={columns} />}
     </div>
@@ -44,7 +44,7 @@ function Loading() {
           {/* Skeleton for Table Header */}
           <div className="flex border-b">
             {columns.map((_, i) => (
-              <div key={i} className="p-4 flex-1">
+              <div key={i} className="flex-1 p-4">
                 <Skeleton className="h-4 w-full" />
               </div>
             ))}
@@ -54,7 +54,7 @@ function Loading() {
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex border-b">
                 {columns.map((_, i) => (
-                  <div key={i} className="p-4 flex-1">
+                  <div key={i} className="flex-1 p-4">
                     <Skeleton className="h-4 w-full" />
                   </div>
                 ))}

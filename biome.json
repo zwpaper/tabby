@@ -32,6 +32,15 @@
       "suspicious": {
         "noArrayIndexKey": "off"
       },
+      "nursery": {
+        "useSortedClasses": {
+          "level": "warn",
+          "fix": "safe",
+          "options": {
+            "functions": ["clsx", "cva", "tw"]
+          }
+        }
+      },
       "correctness": {
         "noUnusedImports": "error"
       }
