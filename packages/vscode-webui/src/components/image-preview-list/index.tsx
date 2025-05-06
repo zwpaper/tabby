@@ -4,28 +4,26 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Loader2, X, XCircle } from "lucide-react";
+import { generateFileId } from "@/lib/utils/image";
+import { Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface ImagePreviewListProps {
   files: File[];
   onRemove: (index: number) => void;
   uploadingFiles?: Record<string, boolean>;
-  uploadResults?: Record<string, "success" | "error">;
 }
 
 export function ImagePreviewList({
   files,
   onRemove,
   uploadingFiles = {},
-  uploadResults = {},
 }: ImagePreviewListProps) {
   const [previews, setPreviews] = useState<string[]>([]);
 
   // Generate previews for images when files change
   // biome-ignore lint/correctness/useExhaustiveDependencies: ignore
   useEffect(() => {
-    // Clean up previous previews to avoid memory leaks
     if (previews.length > 0) {
       for (const preview of previews) {
         if (preview.startsWith("blob:")) {
@@ -53,10 +51,8 @@ export function ImagePreviewList({
   return (
     <div className="flex flex-wrap gap-2 mt-2 mb-3">
       {files.map((file, index) => {
-        // todo util to generate file id
-        const fileId = `${file.name}-${file.size}`;
+        const fileId = generateFileId(file);
         const isUploading = uploadingFiles[fileId];
-        const result = uploadResults[fileId];
 
         return (
           <HoverCard key={index} openDelay={300} closeDelay={200}>
@@ -82,22 +78,10 @@ export function ImagePreviewList({
                   {/* Overlay for uploading status */}
                   {isUploading && (
                     <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center">
-                      <Loader2 className="size-6 text-white animate-spin" />
-                      <span className="text-white text-[10px] mt-1">
+                      <Loader2 className="size-4 text-white animate-spin" />
+                      <span className="text-white text-[8px] mt-1">
                         Uploading
                       </span>
-                    </div>
-                  )}
-
-                  {/* Success/Error indicator */}
-                  {result === "success" && (
-                    <div className="absolute bottom-1 right-1">
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    </div>
-                  )}
-                  {result === "error" && (
-                    <div className="absolute bottom-1 right-1">
-                      <XCircle className="w-4 h-4 text-red-500" />
                     </div>
                   )}
                 </div>
@@ -115,7 +99,7 @@ export function ImagePreviewList({
                 <X className="size-3.5" />
               </button>
             </div>
-            <HoverCardContent className="p-2 w-auto max-w-[80vw] max-h-[80vh]">
+            <HoverCardContent className="p-2 w-auto max-w-[95vw] max-h-[80vh]">
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center">
                   <div className="text-xs font-medium truncate max-w-[300px]">
@@ -129,14 +113,20 @@ export function ImagePreviewList({
                   )}
                 </div>
 
-                <div className="overflow-hidden rounded-md border border-[var(--vscode-input-border)]">
-                  {previews[index] && (
-                    <img
-                      src={previews[index]}
-                      alt={file.name}
-                      className="object-contain max-h-[60vh] max-w-[60vw]"
-                    />
-                  )}
+                <div className="overflow-hidden rounded-md border border-[var(--input-border)]">
+                  <div className="relative flex items-center justify-center">
+                    {previews[index] && (
+                      <img
+                        src={previews[index]}
+                        alt={file.name}
+                        className="object-contain max-w-[90vw] h-auto"
+                        style={{
+                          maxHeight: "calc(60vh - 1rem)",
+                          minWidth: "200px",
+                        }}
+                      />
+                    )}
+                  </div>
                 </div>
 
                 <div className="text-xs text-[var(--vscode-descriptionForeground)]">

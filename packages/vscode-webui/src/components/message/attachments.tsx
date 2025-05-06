@@ -55,10 +55,10 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
             </div>
 
             <HoverCardContent
-              className="p-2 w-auto max-w-[80vw] max-h-[80vh]"
+              className="p-2 w-auto max-w-[95vw] max-h-[80vh]"
               align="start"
             >
-              <div className="flex flex-col gap-2 max-h-[60vh] max-w-[60vw] md:max-h-[30vh] md:max-w-[30vw]">
+              <div className="flex flex-col gap-2">
                 <div className="text-xs font-medium truncate max-w-[300px]">
                   {attachment.name}
                 </div>
@@ -67,7 +67,11 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
                     <img
                       src={attachment.url}
                       alt={attachment.name}
-                      className="object-contain"
+                      className="object-contain max-w-[90vw] h-auto"
+                      style={{
+                        maxHeight: "calc(60vh - 1rem)",
+                        minWidth: "200px",
+                      }}
                     />
                   </div>
                 ) : (

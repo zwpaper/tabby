@@ -18,8 +18,6 @@ import {
   type MentionListProps,
 } from "./mention-list";
 import "./prompt-form.css";
-import { MAX_FILE_SIZE, MAX_IMAGES } from "@/lib/constants";
-import { toast } from "sonner";
 
 // Custom keyboard shortcuts extension that handles Enter key behavior
 function CustomEnterKeyHandler(
@@ -65,9 +63,8 @@ interface FormEditorProps {
   formRef?: React.RefObject<HTMLFormElement>;
   autoFocus?: boolean;
   children?: React.ReactNode;
-  files: File[];
-  setFiles: (value: React.SetStateAction<File[]>) => void;
   onError?: (e: Error) => void;
+  onPaste?: (e: ClipboardEvent) => void;
 }
 
 export function FormEditor({
@@ -78,8 +75,7 @@ export function FormEditor({
   children,
   formRef: externalFormRef,
   autoFocus = true,
-  files,
-  setFiles,
+  onPaste,
 }: FormEditorProps) {
   const internalFormRef = useRef<HTMLFormElement>(null);
   const formRef = externalFormRef || internalFormRef;
@@ -91,9 +87,6 @@ export function FormEditor({
 
   const wrappedOnSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     onSubmit(e);
-    if (editor && !editor.isEmpty) {
-      editor.commands.clearContent();
-    }
   };
 
   const editor = useEditor(
@@ -224,51 +217,8 @@ export function FormEditor({
         const text = props.editor.getText();
         setInput(text);
       },
-      onPaste(event) {
-        // Handle image paste
-        const images = Array.from(event.clipboardData?.items || [])
-          .filter((item) => item.type.startsWith("image/"))
-          .map((item) => {
-            const file = item.getAsFile();
-            return file;
-          })
-          .filter(Boolean) as File[];
-
-        if (images.length > 0) {
-          // Check if adding these images would exceed the maximum
-          if (files.length + images.length > MAX_IMAGES) {
-            toast.error(`Cannot attach more than ${MAX_IMAGES} images.`);
-            event.preventDefault();
-            return true;
-          }
-
-          // Validate each image
-          const validatedImages: File[] = [];
-          let validationError = false;
-
-          for (const image of images) {
-            const validation = validateImage(image);
-            if (validation.valid) {
-              validatedImages.push(image);
-            } else {
-              toast.error(validation.error);
-              validationError = true;
-              break;
-            }
-          }
-
-          if (validationError) {
-            event.preventDefault();
-            return true;
-          }
-
-          setFiles((prevFiles) => [...prevFiles, ...validatedImages]);
-
-          event.preventDefault();
-          return true;
-        }
-
-        return false;
+      onPaste: (e) => {
+        onPaste?.(e);
       },
     },
     [],
@@ -335,22 +285,4 @@ export function useEditorHelpers(editor: ReturnType<typeof useEditor>) {
   };
 
   return { focusEditor, setInputAndFocus };
-}
-
-function validateImage(file: File): { valid: boolean; error?: string } {
-  if (!file.type.startsWith("image/")) {
-    return {
-      valid: false,
-      error: `Invalid file type: ${file.type}. Only images are allowed.`,
-    };
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    return {
-      valid: false,
-      error: `File "${file.name}" is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 10MB.`,
-    };
-  }
-
-  return { valid: true };
 }

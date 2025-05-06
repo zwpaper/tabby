@@ -15,7 +15,12 @@ import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import type { TextPart, ToolInvocation } from "ai";
-import { Loader2, SendHorizonal, StopCircleIcon } from "lucide-react";
+import {
+  ImageIcon,
+  Loader2,
+  SendHorizonal,
+  StopCircleIcon,
+} from "lucide-react";
 import {
   type MutableRefObject,
   useCallback,
@@ -34,11 +39,18 @@ import { useUploadImage } from "@/components/image-preview-list/use-upload-image
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { Separator } from "@/components/ui/separator";
+import { MAX_IMAGES } from "@/lib/constants";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import {
   useSettingsStore,
   useToolAutoApproval,
 } from "@/lib/stores/settings-store";
+import {
+  createImageFileName,
+  isDuplicateFile,
+  processImageFiles,
+  validateImages,
+} from "@/lib/utils/image";
 import { vscodeHost } from "@/lib/vscode";
 import {
   type ClientToolsType,
@@ -98,7 +110,22 @@ function Chat() {
   );
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
+  // Error specific to image selection that will auto-dismiss after a few seconds
+  const [imageSelectionError, setImageSelectionError] = useState<
+    Error | undefined
+  >(undefined);
+
+  // Auto-dismiss error after 5 seconds
+  useEffect(() => {
+    if (imageSelectionError) {
+      const timer = setTimeout(() => {
+        setImageSelectionError(undefined);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [imageSelectionError]);
 
   const handleRemoveImage = (index: number) => {
     setFiles((prev) => {
@@ -106,6 +133,66 @@ function Chat() {
       newFiles.splice(index, 1);
       return newFiles;
     });
+  };
+
+  const showImageError = (message: string) => {
+    setImageSelectionError(new Error(message));
+  };
+
+  const validateAndAddImages = (
+    newImages: File[],
+    fromClipboard = false,
+  ): { success: boolean; error?: string } => {
+    const result = validateImages(
+      files,
+      processImageFiles(newImages, fromClipboard),
+      MAX_IMAGES,
+    );
+
+    if (result.success) {
+      setFiles((prevFiles) => [...prevFiles, ...result.validatedImages]);
+      setImageSelectionError(undefined);
+    }
+
+    return {
+      success: result.success,
+      error: result.error,
+    };
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const selectedFiles = Array.from(event.target.files);
+
+      // Deduplication check for device uploads
+      const nonDuplicateFiles = selectedFiles.filter(
+        (file) => !isDuplicateFile(file, files),
+      );
+
+      // Show message if any duplicates were found
+      if (nonDuplicateFiles.length < selectedFiles.length) {
+        showImageError(
+          `${selectedFiles.length - nonDuplicateFiles.length} duplicate image(s) were skipped.`,
+        );
+        // If all files were duplicates, stop here
+        if (nonDuplicateFiles.length === 0) {
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          return;
+        }
+      }
+
+      const result = validateAndAddImages(nonDuplicateFiles);
+
+      if (!result.success) {
+        showImageError(result.error || "Error adding images");
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const {
@@ -145,22 +232,24 @@ function Chat() {
     uploadingFilesMap,
     isUploadingImages,
     stop: stopUpload,
-    uploadResults,
-  } = useUploadImage({ token: authData.session.token });
+    error: uploadImageError,
+    clearError: clearUploadImageError,
+  } = useUploadImage({
+    token: authData.session.token,
+    files,
+  });
 
   const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     if (files.length > 0) {
-      try {
-        e.preventDefault();
-        const uploadedImages = await uploadImages(files);
-        handleSubmit(e, {
-          experimental_attachments: uploadedImages,
-        });
-        // Clear files after successful upload
-        setFiles([]);
-      } finally {
-      }
+      e.preventDefault();
+      const uploadedImages = await uploadImages();
+      handleSubmit(e, {
+        experimental_attachments: uploadedImages,
+      });
+      // Clear files after successful upload
+      setFiles([]);
     } else {
+      clearUploadImageError();
       handleSubmit(e);
     }
   };
@@ -176,8 +265,40 @@ function Chat() {
   const updateSelectedModelId = useSettingsStore(
     (x) => x.updateSelectedModelId,
   );
+
   const handleSelectModel = (v: string) => {
     updateSelectedModelId(v);
+  };
+
+  const handlePasteImage = (event: ClipboardEvent) => {
+    const images = Array.from(event.clipboardData?.items || [])
+      .filter((item) => item.type.startsWith("image/"))
+      .map((item) => {
+        const file = item.getAsFile();
+        if (file) {
+          return new File([file], createImageFileName(file.type), {
+            type: file.type,
+          });
+        }
+        return null;
+      })
+      .filter(Boolean) as File[];
+
+    if (images.length > 0) {
+      // Use fromClipboard=true to indicate these are clipboard images
+      const result = validateAndAddImages(images, true);
+
+      if (!result.success) {
+        showImageError(result.error || "Error adding images");
+        event.preventDefault();
+        return true;
+      }
+
+      event.preventDefault();
+      return true;
+    }
+
+    return false;
   };
 
   const queryClient = useQueryClient();
@@ -292,7 +413,12 @@ function Chat() {
           </div>
         ))}
       </div>
-      <div className="text-red-400 text-center mb-2">{error?.message}</div>
+      <div className="text-red-400 text-center mb-2">
+        {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error */}
+        {imageSelectionError?.message ||
+          uploadImageError?.message ||
+          error?.message}
+      </div>
       <ApprovalButton
         key={pendingApprovalKey(pendingApproval)}
         isLoading={isLoading}
@@ -303,24 +429,20 @@ function Chat() {
         setIsExecuting={setIsExecuting}
       />
       <AutoApproveMenu />
-      {/* Display image previews when files are present */}
       {files.length > 0 && (
         <ImagePreviewList
           files={files}
           onRemove={handleRemoveImage}
           uploadingFiles={uploadingFilesMap}
-          uploadResults={uploadResults}
         />
       )}
-
       <FormEditor
         input={input}
         setInput={setInput}
         onSubmit={wrappedHandleSubmit}
         isLoading={isLoading}
         formRef={formRef}
-        files={files}
-        setFiles={setFiles}
+        onPaste={handlePasteImage}
       >
         {taskId.current && (
           <span className="text-xs absolute top-1 right-1 text-foreground/80">
@@ -328,34 +450,55 @@ function Chat() {
           </span>
         )}
       </FormEditor>
+
+      {/* Hidden file input for image uploads */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileSelect}
+        accept="image/*"
+        multiple
+        className="hidden"
+      />
+
       <div className="flex mb-2 justify-between items-center pt-2 gap-3">
-        <ModelSelect
-          value={selectedModel?.id}
-          models={models}
-          isLoading={isModelsLoading}
-          onChange={handleSelectModel}
-          triggerClassName="py-0 h-6"
-        />
         <Button
-          type="button"
           variant="ghost"
           size="icon"
-          disabled={isModelsLoading || (!isLoading && !input)}
-          className="p-0 h-6 w-6 rounded-md transition-opacity"
-          onClick={() => {
-            if (isLoading || isUploadingImages) {
-              handleStop();
-            } else {
-              formRef.current?.requestSubmit();
-            }
-          }}
+          onClick={() => fileInputRef.current?.click()}
+          className="p-0 h-6 w-6 rounded-md"
         >
-          {isLoading || isUploadingImages ? (
-            <StopCircleIcon className="size-4" />
-          ) : (
-            <SendHorizonal className="size-4" />
-          )}
+          <ImageIcon className="size-4" />
         </Button>
+        <div className="flex items-center gap-3">
+          <ModelSelect
+            value={selectedModel?.id}
+            models={models}
+            isLoading={isModelsLoading}
+            onChange={handleSelectModel}
+            triggerClassName="py-0 h-6"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={isModelsLoading || (!isLoading && !input)}
+            className="p-0 h-6 w-6 rounded-md transition-opacity"
+            onClick={() => {
+              if (isLoading || isUploadingImages) {
+                handleStop();
+              } else {
+                formRef.current?.requestSubmit();
+              }
+            }}
+          >
+            {isLoading || isUploadingImages ? (
+              <StopCircleIcon className="size-4" />
+            ) : (
+              <SendHorizonal className="size-4" />
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,12 @@
 import { apiClient } from "@/lib/auth-client";
-import { useRef, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
 
-export function useUploadImage({ token }: { token: string }) {
+interface UseUploadImageOptions {
+  token: string;
+  files: File[] | undefined;
+}
+
+export function useUploadImage({ token, files }: UseUploadImageOptions) {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [uploadingFilesMap, setUploadingFilesMap] = useState<
     Record<string, boolean>
@@ -10,12 +14,16 @@ export function useUploadImage({ token }: { token: string }) {
   const [uploadResults, setUploadResults] = useState<
     Record<string, "success" | "error">
   >({});
+  const [error, setError] = useState<Error | undefined>(undefined);
   const uploadAbortController = useRef(new AbortController());
 
-  const uploadImages = async (
-    imagesToUpload: File[],
-  ): Promise<Array<{ name: string; contentType: string; url: string }>> => {
-    if (imagesToUpload.length === 0) {
+  const uploadImages = async (): Promise<
+    Array<{ name: string; contentType: string; url: string }>
+  > => {
+    // Clear error
+    setError(undefined);
+
+    if (!files?.length) {
       return [];
     }
 
@@ -23,7 +31,7 @@ export function useUploadImage({ token }: { token: string }) {
     setIsUploadingImages(true);
 
     // Create tracking state for each file
-    const newUploadingFiles = imagesToUpload.reduce(
+    const newUploadingFiles = files.reduce(
       (acc, file) => {
         const fileId = `${file.name}-${file.size}`;
         acc[fileId] = true;
@@ -40,7 +48,7 @@ export function useUploadImage({ token }: { token: string }) {
 
     try {
       const uploadedImages = await Promise.all(
-        imagesToUpload.map(async (file) => {
+        files.map(async (file) => {
           const fileId = `${file.name}-${file.size}`;
           try {
             const formData = new FormData();
@@ -86,12 +94,10 @@ export function useUploadImage({ token }: { token: string }) {
 
       return uploadedImages;
     } catch (error) {
-      console.error(error);
-
-      if (signal.aborted) {
-        console.log("Upload aborted by user");
+      if (error instanceof DOMException) {
+        setError(new Error("Upload aborted by user."));
       } else {
-        toast.error("Failed to upload images. Please try again.");
+        setError(new Error("Failed to upload images. Please try again."));
       }
       throw error;
     } finally {
@@ -106,11 +112,22 @@ export function useUploadImage({ token }: { token: string }) {
     setUploadingFilesMap({});
   };
 
+  const clearError = () => {
+    setError(undefined);
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: need to watch files
+  useEffect(() => {
+    clearError();
+  }, [files]);
+
   return {
     uploadImages,
     isUploadingImages,
     uploadingFilesMap,
     uploadResults,
     stop,
+    error,
+    clearError,
   };
 }
