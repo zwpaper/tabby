@@ -461,23 +461,24 @@ function Chat() {
         className="hidden"
       />
 
-      <div className="flex mb-2 justify-between items-center pt-2 gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => fileInputRef.current?.click()}
-          className="p-0 h-6 w-6 rounded-md"
-        >
-          <ImageIcon className="size-4" />
-        </Button>
-        <div className="flex items-center gap-3">
-          <ModelSelect
-            value={selectedModel?.id}
-            models={models}
-            isLoading={isModelsLoading}
-            onChange={handleSelectModel}
-            triggerClassName="py-0 h-6"
-          />
+      <div className="flex mb-2 justify-between pt-2 gap-3">
+        <ModelSelect
+          value={selectedModel?.id}
+          models={models}
+          isLoading={isModelsLoading}
+          onChange={handleSelectModel}
+          triggerClassName="py-0 h-6"
+        />
+
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            className="p-0 h-6 w-6 rounded-md"
+          >
+            <ImageIcon className="size-4" />
+          </Button>
           <Button
             type="button"
             variant="ghost"
