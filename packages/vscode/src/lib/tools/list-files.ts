@@ -1,7 +1,7 @@
-import * as path from "node:path";
-import { getWorkspaceFolder, isAbsolutePath, matchFiles } from "@/lib/fs";
+import { getWorkspaceFolder, ignoreWalk, isAbsolutePath } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
+import * as vscode from "vscode";
 
 const logger = getLogger("listFilesTool");
 
@@ -31,8 +31,8 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
   try {
     const workspaceFolder = getWorkspaceFolder();
 
-    const dir = path.join(workspaceFolder.uri.fsPath, dirPath);
-    const fileResults = await matchFiles({
+    const dir = vscode.Uri.joinPath(workspaceFolder.uri, dirPath);
+    const fileResults = await ignoreWalk({
       dir,
       recursive: !!recursive,
       abortSignal,

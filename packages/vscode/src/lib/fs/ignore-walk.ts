@@ -7,42 +7,6 @@ import type { FileResult } from "./types";
 
 const logger = getLogger("ignoreWalk");
 const MaxScanItems = 10_000;
-const CacheTtl = 60 * 1000; // 1 minute
-const MaxCacheSize = 50;
-const cache = new Map<string, { data: FileResult[]; expires: number }>();
-
-function getCache(cacheKey: string): FileResult[] | null {
-  const cachedItem = cache.get(cacheKey);
-  if (cachedItem && cachedItem.expires > Date.now()) {
-    logger.debug(`Cache hit for ${cacheKey}`);
-    return cachedItem.data;
-  }
-  logger.debug(`Cache miss for ${cacheKey}`);
-  return null;
-}
-
-function setCache(cacheKey: string, data: FileResult[]) {
-  cache.set(cacheKey, {
-    data,
-    expires: Date.now() + CacheTtl,
-  });
-}
-
-function collectCacheGarbage() {
-  if (cache.size >= MaxCacheSize) {
-    const now = Date.now();
-    // Sort by earliest expiration first
-    const sortedCache = [...cache.entries()].sort(
-      (a, b) => a[1].expires - b[1].expires,
-    );
-    for (const [key, value] of sortedCache) {
-      if (value.expires <= now || cache.size >= MaxCacheSize) {
-        cache.delete(key);
-        logger.debug(`Cache GC: ${key}`);
-      }
-    }
-  }
-}
 
 /**
  * Attempts to load and parse .gitignore rules from the specified directory
@@ -82,13 +46,55 @@ export interface IgnoreWalkOptions {
   abortSignal?: AbortSignal;
 }
 
-async function ignoreWalkImpl({
+async function processDirectoryEntry(
+  entry: [string, vscode.FileType],
+  currentUri: vscode.Uri,
+  rootDir: string,
+  directoryIg: Ignore,
+  recursive: boolean,
+  processedDirs: Set<string>,
+  queue: Array<IgnoreInfo>,
+  scannedFileResults: FileResult[],
+): Promise<boolean> {
+  // Returns true if MaxScanItems is reached
+  const [name, type] = entry;
+  const entryUri = vscode.Uri.joinPath(currentUri, name);
+  const fullPath = entryUri.fsPath;
+  const relativePath = path.relative(rootDir, fullPath);
+  // Normalize path separators to forward slashes for consistent ignore matching
+  const normalizedPath = relativePath.replace(/\\/g, "/");
+
+  if (directoryIg.ignores(normalizedPath)) {
+    return false;
+  }
+
+  if (type === vscode.FileType.Directory) {
+    if (recursive && !processedDirs.has(fullPath)) {
+      queue.push({ uri: entryUri, ignore: directoryIg });
+    }
+    // Directories are also added to results, similar to files
+    scannedFileResults.push({
+      uri: entryUri,
+      relativePath,
+      isDir: true,
+    });
+  } else if (type === vscode.FileType.File) {
+    scannedFileResults.push({
+      uri: entryUri,
+      relativePath,
+      isDir: false,
+    });
+  }
+  // For both files and directories that are not ignored
+  return scannedFileResults.length >= MaxScanItems;
+}
+
+export async function ignoreWalk({
   dir,
   recursive = true,
   abortSignal,
 }: IgnoreWalkOptions): Promise<FileResult[]> {
   const scannedFileResults: FileResult[] = [];
-  let fileScannedCount = 0;
   const processedDirs = new Set<string>();
   const queue: Array<IgnoreInfo> = [{ uri: dir, ignore: ignore().add(".git") }];
   const rootDir = dir.fsPath;
@@ -98,8 +104,11 @@ async function ignoreWalkImpl({
   );
 
   if (abortSignal?.aborted) {
+    logger.debug("Traversal aborted before starting.");
     return [];
   }
+
+  let fileScannedCount = 0; // Tracks items processed against MaxScanItems
 
   while (
     queue.length > 0 &&
@@ -107,7 +116,7 @@ async function ignoreWalkImpl({
     !abortSignal?.aborted
   ) {
     const current = queue.shift();
-    if (!current) continue;
+    if (!current) continue; // Should not happen if queue.length > 0
 
     const { uri: currentUri, ignore: currentIg } = current;
     const currentFsPath = currentUri.fsPath;
@@ -124,78 +133,45 @@ async function ignoreWalkImpl({
 
       const entries = await vscode.workspace.fs.readDirectory(currentUri);
 
-      for (const [name, type] of entries) {
+      for (const entry of entries) {
         if (abortSignal?.aborted) {
-          return scannedFileResults;
+          logger.debug("Traversal aborted during directory processing.");
+          break; // Break from processing entries in the current directory
         }
 
-        const entryUri = vscode.Uri.joinPath(currentUri, name);
-        const fullPath = entryUri.fsPath;
-        const relativePath = path.relative(rootDir, fullPath);
-        const normalizedPath = relativePath.replace(/\\/g, "/");
+        const maxItemsReached = await processDirectoryEntry(
+          entry,
+          currentUri,
+          rootDir,
+          directoryIg,
+          recursive,
+          processedDirs,
+          queue,
+          scannedFileResults,
+        );
 
-        if (directoryIg.ignores(normalizedPath)) {
-          continue;
-        }
+        // Increment count for each item considered (file or directory), not just added to results
+        // This count is to prevent excessive scanning, not just limiting result size.
+        fileScannedCount++;
 
-        if (type === vscode.FileType.Directory) {
-          if (recursive && !processedDirs.has(fullPath)) {
-            queue.push({ uri: entryUri, ignore: directoryIg });
-          }
-
-          if (!recursive) {
-            fileScannedCount++;
-            scannedFileResults.push({
-              uri: entryUri,
-              relativePath,
-              fullPath,
-              basename: name.toLowerCase(),
-            });
-
-            if (fileScannedCount >= MaxScanItems) {
-              return scannedFileResults;
-            }
-          }
-        } else if (type === vscode.FileType.File) {
-          if (fileScannedCount >= MaxScanItems) {
-            return scannedFileResults;
-          }
-
-          fileScannedCount++;
-          scannedFileResults.push({
-            uri: entryUri,
-            relativePath,
-            fullPath,
-            basename: name.toLowerCase(),
-          });
+        if (maxItemsReached || fileScannedCount >= MaxScanItems) {
+          logger.debug(
+            `MaxScanItems (${MaxScanItems}) reached or exceeded. Halting traversal.`,
+          );
+          // Ensure the outer while loop also terminates
+          // Setting queue.length = 0 is a more direct way to stop if abortSignal is not set
+          queue.length = 0;
+          break; // Break from processing entries in the current directory
         }
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const message = error instanceof Error ? error.message : String(error);
       logger.warn(`Error reading directory ${currentUri.fsPath}: ${message}`);
     }
   }
+
   logger.debug(
-    `Completed traversal, found ${scannedFileResults.length} files out of ${fileScannedCount} scanned`,
+    `Completed traversal. Found ${scannedFileResults.length} items. Processed approximately ${fileScannedCount} entries.`,
   );
   return scannedFileResults;
-}
-
-export async function ignoreWalk(
-  options: IgnoreWalkOptions,
-): Promise<FileResult[]> {
-  const { dir, recursive = true } = options;
-  const cacheKey = `ignoreWalk:${dir.fsPath}:${recursive}`;
-
-  const cachedData = getCache(cacheKey);
-  if (cachedData) {
-    return cachedData;
-  }
-
-  collectCacheGarbage();
-
-  const results = await ignoreWalkImpl(options);
-
-  setCache(cacheKey, results);
-  return results;
 }

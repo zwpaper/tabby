@@ -9,6 +9,7 @@ import {
   ReactRenderer,
   useEditor,
 } from "@tiptap/react";
+import type { IFuseOptions } from "fuse.js";
 import { useEffect, useRef } from "react";
 import tippy from "tippy.js";
 import { PromptFormMentionExtension } from "./mention-extension";
@@ -18,6 +19,8 @@ import {
   type MentionListProps,
 } from "./mention-list";
 import "./prompt-form.css";
+import { debounceWithCachedValue } from "@/lib/debounce";
+import Fuse from "fuse.js";
 
 // Custom keyboard shortcuts extension that handles Enter key behavior
 function CustomEnterKeyHandler(
@@ -104,13 +107,8 @@ export function FormEditor({
             char: "@",
             items: async ({ query }: { query: string }) => {
               // Fetch files and return { id, filepath }
-              const files = await vscodeHost.listFilesInWorkspace({
-                query,
-              });
-              return files.map((file) => ({
-                id: file,
-                filepath: file,
-              }));
+              const fuse = await debouncedFuseIndex();
+              return fuzzySearch(query, fuse);
             },
             render: () => {
               let component: ReactRenderer<
@@ -121,10 +119,8 @@ export function FormEditor({
 
               // Fetch items function for MentionList
               const fetchItems = async (query?: string) => {
-                const files = await vscodeHost.listFilesInWorkspace({
-                  query: query || "",
-                });
-                return files.map((file) => ({ id: file, filepath: file }));
+                const fuse = await debouncedFuseIndex();
+                return fuzzySearch(query, fuse);
               };
 
               return {
@@ -286,3 +282,34 @@ export function useEditorHelpers(editor: ReturnType<typeof useEditor>) {
 
   return { focusEditor, setInputAndFocus };
 }
+
+function fuzzySearch<T extends { filepath: string }>(
+  query: string | undefined,
+  fuse?: Fuse<T>,
+): T[] {
+  if (!fuse || !query) return [];
+  const trimmedQuery = query.trim().toLowerCase();
+  return fuse.search(trimmedQuery).map((x) => x.item);
+}
+
+const debouncedFuseIndex = debounceWithCachedValue(
+  async () => {
+    const files = await vscodeHost.listFilesInWorkspace();
+    const fuseOptions: IFuseOptions<{ filepath: string }> = {
+      keys: [{ name: "filepath", weight: 1.0 }],
+      includeScore: true,
+      threshold: 0.5,
+      shouldSort: true,
+      findAllMatches: false,
+      ignoreLocation: false,
+      distance: 100,
+      minMatchCharLength: 1,
+    };
+    const fuse = new Fuse(files, fuseOptions);
+    return fuse;
+  },
+  1000 * 60,
+  {
+    leading: true,
+  },
+);

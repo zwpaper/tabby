@@ -1,4 +1,5 @@
 import type { SuggestionKeyDownProps } from "@tiptap/suggestion";
+import { FileIcon, FolderIcon } from "lucide-react";
 import {
   forwardRef,
   useImperativeHandle,
@@ -9,7 +10,7 @@ import {
 
 // Types for mention items (only id and filepath)
 export interface MentionItem {
-  id: string;
+  isDir: boolean;
   filepath: string;
 }
 
@@ -49,7 +50,7 @@ export const MentionList = forwardRef<MentionListActions, MentionListProps>(
     }, [fetchItems, query, initialItems]);
 
     const handleSelect = (item: MentionItem) => {
-      command({ id: item.id, filepath: item.filepath });
+      command({ id: item.filepath, filepath: item.filepath });
     };
 
     useImperativeHandle(ref, () => ({
@@ -89,7 +90,7 @@ export const MentionList = forwardRef<MentionListActions, MentionListProps>(
             <div className="grid gap-0.5">
               {items.map((item, index) => (
                 <MentionItemView
-                  key={`${item.id}-${index}`}
+                  key={item.filepath}
                   onClick={() => handleSelect(item)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   isSelected={index === selectedIndex}
@@ -137,7 +138,12 @@ function MentionItemView({ isSelected, data, ...rest }: MentionItemViewProps) {
       {...rest}
       ref={ref}
     >
-      <span className="mr-2 truncate whitespace-nowrap font-medium ">
+      {data.isDir ? (
+        <FolderIcon className="size-4 shrink-0" />
+      ) : (
+        <FileIcon className="size-4 shrink-0" />
+      )}
+      <span className="mr-2 ml-1 truncate whitespace-nowrap font-medium ">
         {basename}
       </span>
       <span className="flex-1 truncate text-muted-foreground text-xs">

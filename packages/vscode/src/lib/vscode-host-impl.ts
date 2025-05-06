@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { collectCustomRules, getSystemInfo } from "@/lib/env-utils";
-import { matchFiles } from "@/lib/fs";
+import { ignoreWalk } from "@/lib/fs";
 import type { TokenStorage } from "@/lib/token-storage";
 import {
   ThreadAbortSignal,
@@ -46,9 +46,9 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
     const MaxFileItems = 500;
     let files = workspaceFolders?.length
-      ? (await matchFiles({ dir: workspaceFolders[0].uri })).map(
-          (res) => res.uri.fsPath,
-        )
+      ? (
+          await ignoreWalk({ dir: workspaceFolders[0].uri, recursive: true })
+        ).map((res) => res.uri.fsPath)
       : [];
     const isTruncated = files.length > MaxFileItems;
     files = files.slice(0, MaxFileItems);
@@ -72,22 +72,25 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     return environment;
   }
 
-  async listFilesInWorkspace(param: { query: string; limit?: number }): Promise<
-    string[]
+  async listFilesInWorkspace(): Promise<
+    {
+      filepath: string;
+      isDir: boolean;
+    }[]
   > {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders?.length || !workspaceFolders[0]) {
       return [];
     }
 
-    const { query, limit } = param;
-    const results = await matchFiles({
+    const results = await ignoreWalk({
       dir: workspaceFolders[0].uri,
-      query,
+      recursive: true,
     });
-    return results
-      .slice(0, limit)
-      .map((item) => vscode.workspace.asRelativePath(item.uri));
+    return results.map((item) => ({
+      filepath: vscode.workspace.asRelativePath(item.uri),
+      isDir: item.isDir,
+    }));
   }
 
   private async queueToolCall<T>(fn: () => Promise<T>) {

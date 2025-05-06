@@ -5,7 +5,6 @@ import * as path from "node:path";
 import * as vscode from "vscode";
 
 export { ignoreWalk } from "./ignore-walk";
-export { matchFiles } from "./match-files";
 
 /**
  * Create a temporary file with a unique name

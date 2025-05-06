@@ -37,6 +37,7 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
 
     const allFiles = await ignoreWalk({
       dir,
+      recursive: true,
       abortSignal,
     });
 
