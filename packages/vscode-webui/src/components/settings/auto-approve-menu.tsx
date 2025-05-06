@@ -30,7 +30,7 @@ export function AutoApproveMenu() {
   const hasEnabledOptions = Object.values(autoApproveSettings).some(Boolean);
 
   return (
-    <div className="-mx-4">
+    <div className="-mx-4 select-none">
       <div
         className={cn(
           "flex items-center justify-between cursor-pointer pt-2.5 px-4",
@@ -52,7 +52,7 @@ export function AutoApproveMenu() {
             />
           </label>
           <span
-            className={cn("font-medium select-none flex-1 flex items-center", {
+            className={cn("font-medium flex-1 flex items-center", {
               "pb-6": isOpen,
             })}
             onClick={() => setIsOpen(!isOpen)}
