@@ -40,10 +40,11 @@ declare global {
 
 window.router = router;
 
-const sessionState = await vscodeHost.getSessionState(["lastVisitedRoute"]);
-if (sessionState.lastVisitedRoute) {
-  router.navigate({ to: sessionState.lastVisitedRoute, replace: true });
-}
+vscodeHost.getSessionState(["lastVisitedRoute"]).then((sessionState) => {
+  if (sessionState.lastVisitedRoute) {
+    router.navigate({ to: sessionState.lastVisitedRoute, replace: true });
+  }
+});
 
 router.subscribe("onRendered", ({ toLocation }) => {
   if (toLocation.pathname === "/sign-in") {
