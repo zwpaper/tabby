@@ -1,0 +1,9 @@
+.inline-code::before,
+.inline-code::after {
+  content: none;
+}
+
+.inline-code {
+  color: var(--vscode-textPreformat-foreground);
+  background-color: var(--vscode-textPreformat-background);
+}
