@@ -51,12 +51,9 @@ export const executeCommand: ToolFunctionType<
   }
 
   if (!current.shell) {
-    // cannot get shell integration, send command directly without reading output
-    current.terminal.sendText(`cd ${cwd}`);
-    current.terminal.sendText(command);
-    return { output: "" };
-
-    // FIXME: using node process as a fallback
+    throw new Error(
+      "Failed to start teriminal, please restart VSCode and try again.",
+    );
   }
 
   if (cwd && current.shell.cwd?.path !== cwd) {
