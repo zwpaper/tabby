@@ -13,9 +13,10 @@ import {
 } from "@ai-sdk/ui-utils";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { TextPart, ToolInvocation } from "ai";
+import type { InferResponseType } from "hono/client";
 import {
   ImageIcon,
   Loader2,
@@ -71,29 +72,49 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/")({
   validateSearch: (search) => searchSchema.parse(search),
-  loaderDeps: ({ search }) => search,
-  loader: async ({ deps }) => {
-    if (typeof deps.taskId === "number") {
-      const resp = await apiClient.api.tasks[":id"].$get({
-        param: {
-          id: deps.taskId.toString(),
-        },
-      });
-      return resp.json();
-    }
-    return null;
-  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { taskId, ts = Date.now() } = Route.useSearch();
-  const key = typeof taskId === "number" ? `task-${taskId}` : `new-${ts}`;
-  return <Chat key={key} />;
+  const { taskId: taskIdFromRoute, ts = Date.now() } = Route.useSearch();
+  const key =
+    typeof taskIdFromRoute === "number"
+      ? `task-${taskIdFromRoute}`
+      : `new-${ts}`;
+
+  const { data: loaderData, isLoading: isTaskLoading } = useQuery({
+    queryKey: ["task", taskIdFromRoute],
+    queryFn: async () => {
+      if (typeof taskIdFromRoute === "number") {
+        const resp = await apiClient.api.tasks[":id"].$get({
+          param: {
+            id: taskIdFromRoute.toString(),
+          },
+        });
+        return resp.json();
+      }
+      return null;
+    },
+    enabled: typeof taskIdFromRoute === "number",
+  });
+
+  return (
+    <Chat
+      key={key}
+      loaderData={loaderData || null}
+      isTaskLoading={isTaskLoading}
+    />
+  );
 }
 
-function Chat() {
-  const loaderData = Route.useLoaderData();
+interface ChatProps {
+  loaderData: InferResponseType<
+    (typeof apiClient.api.tasks)[":id"]["$get"]
+  > | null;
+  isTaskLoading: boolean;
+}
+
+function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const taskId = useRef<number | undefined>(loaderData?.id);
   useEffect(() => {
     taskId.current = loaderData?.id;
@@ -108,6 +129,7 @@ function Chat() {
   const initialMessages = toUIMessages(
     loaderData?.conversation?.messages || [],
   );
+
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -401,7 +423,14 @@ function Chat() {
 
   return (
     <div className="flex h-screen flex-col px-4">
-      {renderMessages.length === 0 && <EmptyChatPlaceholder />}
+      {renderMessages.length === 0 &&
+        (isTaskLoading ? (
+          <div className="flex h-full w-full items-center justify-center">
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : (
+          <EmptyChatPlaceholder />
+        ))}
       {renderMessages.length > 0 && <div className="h-4" />}
       <PreviewToolCalls message={renderMessages.at(-1)} />
       <div
@@ -483,7 +512,7 @@ function Chat() {
         input={input}
         setInput={setInput}
         onSubmit={wrappedHandleSubmit}
-        isLoading={isLoading}
+        isLoading={isModelsLoading || isLoading || isTaskLoading}
         formRef={formRef}
         onPaste={handlePasteImage}
       >
@@ -526,7 +555,9 @@ function Chat() {
             type="button"
             variant="ghost"
             size="icon"
-            disabled={isModelsLoading || (!isLoading && !input)}
+            disabled={
+              isTaskLoading || isModelsLoading || (!isLoading && !input)
+            }
             className="h-6 w-6 rounded-md p-0 transition-opacity"
             onClick={() => {
               if (isLoading || isUploadingImages) {
