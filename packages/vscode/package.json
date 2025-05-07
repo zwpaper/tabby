@@ -97,7 +97,8 @@
     "watch": "npm-run-all --parallel watch:vscode watch:webui",
     "start": "code --extensionDevelopmentPath=$PWD",
     "dev": "npm-run-all --parallel watch start",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "release-patch": "bunx bumpp --tag=vscode@%s"
   },
   "dependencies": {
     "@quilted/threads": "^3.1.3",
