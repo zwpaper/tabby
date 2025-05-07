@@ -15,7 +15,7 @@ export const MentionComponent = (props: NodeViewProps) => {
 
   return (
     <NodeViewWrapper as="span" className="rounded-sm px-1">
-      <span className="space-x-0.5 whitespace-nowrap rounded bg-muted px-1.5 py-0.5 align-middle font-medium text-foreground text-sm">
+      <span className="space-x-0.5 rounded bg-muted box-decoration-clone px-1.5 py-0.5 align-middle font-medium text-foreground text-sm">
         {filepath}
       </span>
     </NodeViewWrapper>
