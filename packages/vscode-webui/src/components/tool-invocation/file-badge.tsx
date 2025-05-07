@@ -17,8 +17,8 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
 }) => {
   const lineRange = startLine
     ? endLine
-      ? ` : ${startLine}-${endLine}`
-      : ` : ${startLine}`
+      ? `: ${startLine}-${endLine}`
+      : `: ${startLine}`
     : "";
   const onClick = () => {
     vscodeHost.openFile(path, startLine ? { line: startLine } : undefined);
