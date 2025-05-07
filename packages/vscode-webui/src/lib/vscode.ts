@@ -4,6 +4,7 @@ import type {
   WebviewHostApi,
 } from "@ragdoll/vscode-webui-bridge";
 import type { WebviewApi } from "vscode-webview";
+import { queryClient } from "./query-client";
 
 let vscodeApi: WebviewApi<unknown> | undefined = undefined;
 
@@ -57,6 +58,10 @@ function createVSCodeHost(): VSCodeHostApi {
             to: "/tasks",
             replace: true,
           });
+        },
+
+        onAuthChanged() {
+          queryClient.resetQueries();
         },
       },
     },

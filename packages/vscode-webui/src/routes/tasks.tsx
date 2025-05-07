@@ -1,18 +1,13 @@
 import { apiClient } from "@/lib/auth-client";
 import { CustomHtmlTags } from "@/lib/constants";
 import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import type { Parent, Root, Text } from "mdast";
 import { remark } from "remark";
 import remarkStringify from "remark-stringify";
 
 export const Route = createFileRoute("/tasks")({
   component: App,
-  loader: async ({ context }) => {
-    if (!context.auth) {
-      throw redirect({ to: "/sign-in" });
-    }
-  },
 });
 
 function App() {

@@ -72,10 +72,11 @@ class Ragdoll implements WebviewViewProvider {
 
     // Force reload on login/logout
     this.events.loginEvent.event(() => {
-      webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
+      this.webviewHost?.onAuthChanged();
     });
+
     this.events.logoutEvent.event(() => {
-      webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
+      this.webviewHost?.onAuthChanged();
     });
 
     this.webviewHost = this.createWebviewThread(webviewView.webview).imports;
@@ -121,7 +122,7 @@ class Ragdoll implements WebviewViewProvider {
       },
       {
         exports: vscodeHost,
-        imports: ["openTask", "openTaskList"],
+        imports: ["openTask", "openTaskList", "onAuthChanged"],
       },
     );
   }

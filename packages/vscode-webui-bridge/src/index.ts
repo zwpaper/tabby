@@ -43,6 +43,8 @@ export interface WebviewHostApi {
   openTask(taskId: number | "new"): void;
 
   openTaskList(): void;
+
+  onAuthChanged(): void;
 }
 
 const DevBaseUrl = "http://localhost:4113";

@@ -14,7 +14,7 @@ import {
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import type { TextPart, ToolInvocation } from "ai";
 import {
   ImageIcon,
@@ -72,10 +72,7 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/")({
   validateSearch: (search) => searchSchema.parse(search),
   loaderDeps: ({ search }) => search,
-  loader: async ({ deps, context }) => {
-    if (!context.auth) {
-      throw redirect({ to: "/sign-in" });
-    }
+  loader: async ({ deps }) => {
     if (typeof deps.taskId === "number") {
       const resp = await apiClient.api.tasks[":id"].$get({
         param: {
