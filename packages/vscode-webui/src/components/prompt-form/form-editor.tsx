@@ -9,7 +9,6 @@ import {
   ReactRenderer,
   useEditor,
 } from "@tiptap/react";
-import type { IFuseOptions } from "fuse.js";
 import { useEffect, useRef } from "react";
 import tippy from "tippy.js";
 import { PromptFormMentionExtension } from "./mention-extension";
@@ -20,7 +19,7 @@ import {
 } from "./mention-list";
 import "./prompt-form.css";
 import { debounceWithCachedValue } from "@/lib/debounce";
-import Fuse from "fuse.js";
+import uFuzzy from "@leeoniya/ufuzzy";
 
 // Custom keyboard shortcuts extension that handles Enter key behavior
 function CustomEnterKeyHandler(
@@ -106,9 +105,9 @@ export function FormEditor({
           suggestion: {
             char: "@",
             items: async ({ query }: { query: string }) => {
-              // Fetch files and return { id, filepath }
-              const fuse = await debouncedFuseIndex();
-              return fuzzySearch(query, fuse);
+              const data = await debouncedListWorkspaceFiles();
+              if (!data) return [];
+              return fuzzySearch(query, data);
             },
             render: () => {
               let component: ReactRenderer<
@@ -119,8 +118,9 @@ export function FormEditor({
 
               // Fetch items function for MentionList
               const fetchItems = async (query?: string) => {
-                const fuse = await debouncedFuseIndex();
-                return fuzzySearch(query, fuse);
+                const data = await debouncedListWorkspaceFiles();
+                if (!data) return [];
+                return fuzzySearch(query, data);
               };
 
               return {
@@ -283,32 +283,31 @@ export function useEditorHelpers(editor: ReturnType<typeof useEditor>) {
   return { focusEditor, setInputAndFocus };
 }
 
-function fuzzySearch<T extends { filepath: string }>(
-  query: string | undefined,
-  fuse?: Fuse<T>,
-): T[] {
-  if (!fuse || !query) return [];
-  const trimmedQuery = query.trim().toLowerCase();
-  return fuse.search(trimmedQuery).map((x) => x.item);
+function fuzzySearch(
+  needle: string | undefined,
+  data: {
+    haystack: string[];
+    files: { filepath: string }[];
+  },
+): { filepath: string }[] {
+  if (!needle) return [];
+  const uf = new uFuzzy({});
+
+  const [_, info, order] = uf.search(data.haystack, needle);
+
+  if (!order) return [];
+  return order.map((i) => data.files[info.idx[i]]);
 }
 
-const debouncedFuseIndex = debounceWithCachedValue(
+const debouncedListWorkspaceFiles = debounceWithCachedValue(
   async () => {
     const files = await vscodeHost.listFilesInWorkspace();
-    const fuseOptions: IFuseOptions<{ filepath: string }> = {
-      keys: [{ name: "filepath", weight: 1.0 }],
-      includeScore: true,
-      threshold: 0.5,
-      shouldSort: true,
-      findAllMatches: false,
-      ignoreLocation: false,
-      distance: 100,
-      minMatchCharLength: 1,
+    return {
+      files,
+      haystack: files.map((f) => f.filepath),
     };
-    const fuse = new Fuse(files, fuseOptions);
-    return fuse;
   },
-  1000 * 60,
+  1000 * 60, // 1 minute
   {
     leading: true,
   },
