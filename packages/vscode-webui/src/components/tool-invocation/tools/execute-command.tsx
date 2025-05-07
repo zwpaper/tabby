@@ -1,4 +1,4 @@
-import { CodeBlock } from "@/components/message/code-block";
+import { CodeBlock } from "@/components/message";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { StatusIcon } from "../status-icon";
 import type { ToolProps } from "../types";
