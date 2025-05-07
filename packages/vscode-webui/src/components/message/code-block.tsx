@@ -36,7 +36,7 @@ export const generateRandomString = (length: number, lowercase = false) => {
 
 const CodeBlock: FC<CodeBlockProps> = memo(
   ({ language, value, canWrapLongLines, classNames }) => {
-    const [wrapLongLines, setWrapLongLines] = useState(false);
+    const [wrapLongLines, setWrapLongLines] = useState(canWrapLongLines);
     const { isCopied, copyToClipboard } = useCopyToClipboard({
       timeout: 2000,
     });
