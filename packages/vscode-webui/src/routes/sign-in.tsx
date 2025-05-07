@@ -1,13 +1,22 @@
 import { buttonVariants } from "@/components/ui/button";
+import { authHooks } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { LogInIcon, TerminalIcon } from "lucide-react";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/sign-in")({
   component: SignInPage,
 });
 
 function SignInPage() {
+  const { navigate } = useRouter();
+  const { session } = authHooks.useSession();
+  useEffect(() => {
+    if (session) {
+      navigate({ to: "/", replace: true });
+    }
+  }, [session, navigate]);
   return (
     <div className="flex h-screen select-none flex-col items-center justify-center p-5 text-center text-gray-300">
       <h2 className="mb-2 flex items-center gap-3 font-semibold text-2xl text-gray-100">
