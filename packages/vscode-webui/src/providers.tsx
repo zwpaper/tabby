@@ -8,7 +8,17 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister }}
+      persistOptions={{
+        persister,
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) => {
+            const isSuccess = query.state.status === "success";
+
+            // Do not persist tasks query, as it's using offset based pagination
+            return isSuccess && query.queryKey[0] !== "tasks";
+          },
+        },
+      }}
     >
       <AuthQueryProvider>{children}</AuthQueryProvider>
     </PersistQueryClientProvider>
