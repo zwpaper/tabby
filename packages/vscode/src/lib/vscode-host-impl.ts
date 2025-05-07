@@ -10,7 +10,7 @@ import {
 import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
-import type { VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import type { SessionState, VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
 import { applyDiff, previewApplyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
 import { globFiles } from "./tools/glob-files";
@@ -24,10 +24,13 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
   constructor(
     private readonly tokenStorage: TokenStorage,
+    private readonly sessionState: SessionState,
     readonly readResourceURI: VSCodeHostApi["readResourceURI"],
   ) {
     this.getToken = this.getToken.bind(this);
     this.setToken = this.setToken.bind(this);
+    this.getSessionState = this.getSessionState.bind(this);
+    this.setSessionState = this.setSessionState.bind(this);
     this.readEnvironment = this.readEnvironment.bind(this);
     this.executeToolCall = this.executeToolCall.bind(this);
     this.previewToolCall = this.previewToolCall.bind(this);
@@ -39,6 +42,28 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
   async setToken(token: string | undefined): Promise<void> {
     return this.tokenStorage.setToken(token);
+  }
+
+  async getSessionState<K extends keyof SessionState>(
+    keys?: K[] | undefined,
+  ): Promise<Pick<SessionState, K>> {
+    if (!keys || keys.length === 0) {
+      return { ...this.sessionState };
+    }
+
+    return keys.reduce<Pick<SessionState, K>>(
+      (filtered, key) => {
+        if (Object.prototype.hasOwnProperty.call(this.sessionState, key)) {
+          filtered[key] = this.sessionState[key];
+        }
+        return filtered;
+      },
+      {} as Pick<SessionState, K>,
+    );
+  }
+
+  async setSessionState(state: Partial<SessionState>): Promise<void> {
+    Object.assign(this.sessionState, state);
   }
 
   async readEnvironment(): Promise<Environment> {

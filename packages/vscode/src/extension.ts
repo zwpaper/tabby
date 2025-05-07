@@ -37,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const ragdoll = vscode.window.registerWebviewViewProvider(
     Ragdoll.viewType,
     Ragdoll.getInstance(context.extensionUri, tokenStorage, authEvents),
+    { webviewOptions: { retainContextWhenHidden: true } },
   );
   context.subscriptions.push(ragdoll);
 

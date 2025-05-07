@@ -7,6 +7,11 @@ export interface VSCodeHostApi {
   getToken(): Promise<string | undefined>;
   setToken(token: string | undefined): Promise<void>;
 
+  getSessionState<K extends keyof SessionState>(
+    keys?: K[],
+  ): Promise<Pick<SessionState, K>>;
+  setSessionState(state: Partial<SessionState>): Promise<void>;
+
   readEnvironment(): Promise<Environment>;
 
   previewToolCall(
@@ -58,4 +63,9 @@ export function getServerBaseUrl() {
 
 export interface ResourceURI {
   logo128: string;
+}
+
+export interface SessionState {
+  lastVisitedRoute?: string | undefined;
+  input?: string | undefined;
 }

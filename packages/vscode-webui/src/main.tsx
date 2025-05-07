@@ -12,6 +12,7 @@ import { routeTree } from "./routeTree.gen";
 import "./styles.css";
 import { Loader2 } from "lucide-react";
 import { authHooks } from "./lib/auth-client.ts";
+import { vscodeHost } from "./lib/vscode";
 import { Providers } from "./providers.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
 
@@ -38,6 +39,21 @@ declare global {
 }
 
 window.router = router;
+
+const sessionState = await vscodeHost.getSessionState(["lastVisitedRoute"]);
+if (sessionState.lastVisitedRoute) {
+  router.navigate({ to: sessionState.lastVisitedRoute, replace: true });
+}
+
+router.subscribe("onRendered", ({ toLocation }) => {
+  if (toLocation.pathname === "/sign-in") {
+    return;
+  }
+
+  vscodeHost.setSessionState({
+    lastVisitedRoute: toLocation.pathname + toLocation.searchStr,
+  });
+});
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {

@@ -227,6 +227,28 @@ function Chat() {
     },
   });
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      vscodeHost.setSessionState({
+        input: input,
+      });
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [input]);
+
+  useEffect(() => {
+    const fetchSessionState = async () => {
+      const sessionState = await vscodeHost.getSessionState(["input"]);
+      if (sessionState.input) {
+        setInput(sessionState.input);
+      }
+    };
+    fetchSessionState();
+  }, [setInput]);
+
   const {
     uploadImages,
     uploadingFilesMap,
@@ -313,6 +335,10 @@ function Chat() {
     ) {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       taskId.current = data[0].id;
+
+      vscodeHost.setSessionState({
+        lastVisitedRoute: `/?taskId=${taskId.current}`,
+      });
     }
   }, [data, queryClient]);
 

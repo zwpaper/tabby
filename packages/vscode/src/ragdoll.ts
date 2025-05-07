@@ -1,6 +1,7 @@
 import { Thread } from "@quilted/threads";
 import {
   type ResourceURI,
+  type SessionState,
   type VSCodeHostApi,
   type WebviewHostApi,
   getServerBaseUrl,
@@ -26,6 +27,7 @@ class Ragdoll implements WebviewViewProvider {
 
   private view?: WebviewView;
   private webviewHost?: WebviewHostApi;
+  private sessionState: SessionState = {};
 
   constructor(
     private readonly extensionUri: Uri,
@@ -100,6 +102,7 @@ class Ragdoll implements WebviewViewProvider {
   private createWebviewThread(webview: Webview) {
     const vscodeHost = new VSCodeHostImpl(
       this.tokenStorage,
+      this.sessionState,
       this.readResourceURI.bind(this),
     );
     return new Thread<WebviewHostApi, VSCodeHostApi>(
