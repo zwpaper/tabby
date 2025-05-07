@@ -30,15 +30,7 @@ function CustomEnterKeyHandler(
   return Extension.create({
     addKeyboardShortcuts() {
       return {
-        "Shift-Enter": () => {
-          return this.editor.commands.first(() => [
-            () => this.editor.commands.newlineInCode(),
-            () => this.editor.commands.createParagraphNear(),
-            () => this.editor.commands.liftEmptyBlock(),
-            () => this.editor.commands.splitBlock(),
-          ]);
-        },
-        Enter: ({ editor }) => {
+        "Mod-Enter": ({ editor }) => {
           const isMentionSuggestionActive =
             editor.isActive("mention") ||
             document.querySelector(".tippy-box") !== null;
@@ -94,6 +86,7 @@ export function FormEditor({
     onSubmit(e);
   };
 
+  const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
   const editor = useEditor(
     {
       extensions: [
@@ -101,7 +94,7 @@ export function FormEditor({
         Paragraph,
         Text,
         Placeholder.configure({
-          placeholder: "Ask anything, @ to mention",
+          placeholder: `Ask anything, ${isMac ? "⌘" : "Ctrl"} + Enter to submit`,
         }),
         CustomEnterKeyHandler(formRef, isLoadingRef),
         PromptFormMentionExtension.configure({

@@ -14,8 +14,10 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
           shouldDehydrateQuery: (query) => {
             const isSuccess = query.state.status === "success";
 
-            // Do not persist tasks query, as it's using offset based pagination
-            return isSuccess && query.queryKey[0] !== "tasks";
+            // Only persist tasks query page 1.
+            const cacheTasks =
+              query.queryKey[0] === "tasks" && query.queryKey[1] === 1;
+            return isSuccess && (query.queryKey[0] !== "tasks" || cacheTasks);
           },
         },
       }}
