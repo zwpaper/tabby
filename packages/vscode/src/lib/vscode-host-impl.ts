@@ -11,6 +11,7 @@ import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { SessionState, VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import { getLogger } from "./logger";
 import { applyDiff, previewApplyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
 import { globFiles } from "./tools/glob-files";
@@ -18,6 +19,8 @@ import { listFiles as listFilesTool } from "./tools/list-files";
 import { readFile } from "./tools/read-file";
 import { searchFiles } from "./tools/search-files";
 import { previewWriteToFile, writeToFile } from "./tools/write-to-file";
+
+const logger = getLogger("VSCodeHostImpl");
 
 export default class VSCodeHostImpl implements VSCodeHostApi {
   private toolCallQueue: Promise<unknown> = Promise.resolve();
@@ -200,9 +203,22 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     if (!current) {
       throw new Error("No workspace folder found.");
     }
+    const fileUri = vscode.Uri.joinPath(current, filePath);
+    try {
+      const stat = await vscode.workspace.fs.stat(fileUri);
+      if (stat.type === vscode.FileType.Directory) {
+        // reveal and expand it
+        await vscode.commands.executeCommand("revealInExplorer", fileUri);
+        await vscode.commands.executeCommand("list.expand");
+        return;
+      }
+    } catch (error) {
+      logger.error(`Failed to reveal folder in explorer: ${error}`);
+    }
+
     const start = options?.start ?? 1;
     const end = options?.end ?? start;
-    vscode.window.showTextDocument(vscode.Uri.joinPath(current, filePath), {
+    vscode.window.showTextDocument(fileUri, {
       selection: new vscode.Range(start - 1, 0, end - 1, 0),
     });
   }
