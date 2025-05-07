@@ -1,3 +1,4 @@
+import { CodeBlock } from "@/components/message/code-block";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { StatusIcon } from "../status-icon";
 import type { ToolProps } from "../types";
@@ -17,9 +18,12 @@ export const executeCommandTool: React.FC<
         <StatusIcon isExecuting={isExecuting} tool={tool} />
         <span className="ml-2">I will execute the following command:</span>
       </div>
-      <pre className="mt-1 text-wrap rounded border border-zinc-700 p-2">
-        <code>{command}</code>
-      </pre>
+      <CodeBlock
+        classNames="mt-1.5"
+        language={"bash"}
+        value={command || ""}
+        canWrapLongLines={true}
+      />
     </div>
   );
 };

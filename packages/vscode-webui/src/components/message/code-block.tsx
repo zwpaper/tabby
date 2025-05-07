@@ -15,12 +15,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export interface CodeBlockProps {
   language: string;
   value: string;
   onCopyContent?: (value: string) => void;
   canWrapLongLines?: boolean;
+  classNames?: string;
 }
 
 export const generateRandomString = (length: number, lowercase = false) => {
@@ -33,7 +35,7 @@ export const generateRandomString = (length: number, lowercase = false) => {
 };
 
 const CodeBlock: FC<CodeBlockProps> = memo(
-  ({ language, value, canWrapLongLines }) => {
+  ({ language, value, canWrapLongLines, classNames }) => {
     const [wrapLongLines, setWrapLongLines] = useState(false);
     const { isCopied, copyToClipboard } = useCopyToClipboard({
       timeout: 2000,
@@ -49,8 +51,13 @@ const CodeBlock: FC<CodeBlockProps> = memo(
     const languageForSyntax = language === "toml" ? "bash" : language;
 
     return (
-      <div className="relative w-full rounded-sm border bg-[var(--vscode-editor-background)] font-sans">
-        <div className="flex w-full items-center justify-between rounded-t-sm border-b bg-[var(--vscode-editor-background)] px-6 py-2 pr-4 text-[var(--vscode-editor-foreground)]">
+      <div
+        className={cn(
+          "relative w-full rounded-sm border bg-[var(--vscode-editor-background)] font-sans",
+          classNames,
+        )}
+      >
+        <div className="flex w-full items-center justify-between rounded-t-sm border-b bg-[var(--vscode-editor-background)] py-1.5 pr-3 pl-4 text-[var(--vscode-editor-foreground)]">
           <span className="text-xs lowercase">{language}</span>
           <div className="flex items-center space-x-3">
             {canWrapLongLines && (

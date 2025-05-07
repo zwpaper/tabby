@@ -102,6 +102,7 @@ export function MessageMarkdown({
               <CodeBlock
                 language={match?.[1] || ""}
                 value={String(children).replace(/\n$/, "")}
+                canWrapLongLines={true}
               />
             );
           },
