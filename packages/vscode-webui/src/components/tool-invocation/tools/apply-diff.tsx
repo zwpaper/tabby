@@ -23,13 +23,15 @@ export const applyDiffTool: React.FC<
 
   return (
     <div className="flex flex-col gap-1 text-sm" title={error}>
-      <div className="flex items-center gap-2">
+      <span className="space-x-2">
         <StatusIcon isExecuting={isExecuting} tool={tool} />
-        {isExecuting ? "Applying" : isSuccess ? "Applied" : "Apply"} diff to
+        <span>
+          {isExecuting ? "Applying" : isSuccess ? "Applied" : "Apply"} diff to
+        </span>
         {path && (
           <FileBadge path={path} startLine={startLine} endLine={endLine} />
         )}
-      </div>
+      </span>
     </div>
   );
 };

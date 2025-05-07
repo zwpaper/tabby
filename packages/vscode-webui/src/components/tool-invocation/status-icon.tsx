@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -10,9 +11,10 @@ import { Check, CircleSmall, Loader2, Pause, X } from "lucide-react";
 interface StatusIconProps {
   tool: ToolInvocation;
   isExecuting: boolean;
+  className?: string;
 }
 
-export function StatusIcon({ tool, isExecuting }: StatusIconProps) {
+export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
   let error: string | undefined;
   if (
     tool.state === "result" &&
@@ -45,5 +47,7 @@ export function StatusIcon({ tool, isExecuting }: StatusIconProps) {
   } else if (isExecuting) {
     statusIcon = <Loader2 className="size-4 animate-spin text-zinc-400" />;
   }
-  return <div className="inline-block align-sub">{statusIcon}</div>;
+  return (
+    <div className={cn("inline-block align-sub", className)}>{statusIcon}</div>
+  );
 }

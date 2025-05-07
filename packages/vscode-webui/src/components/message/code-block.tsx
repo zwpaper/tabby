@@ -22,7 +22,7 @@ export interface CodeBlockProps {
   value: string;
   onCopyContent?: (value: string) => void;
   canWrapLongLines?: boolean;
-  classNames?: string;
+  className?: string;
 }
 
 export const generateRandomString = (length: number, lowercase = false) => {
@@ -35,7 +35,7 @@ export const generateRandomString = (length: number, lowercase = false) => {
 };
 
 const CodeBlock: FC<CodeBlockProps> = memo(
-  ({ language, value, canWrapLongLines, classNames }) => {
+  ({ language, value, canWrapLongLines, className }) => {
     const [wrapLongLines, setWrapLongLines] = useState(canWrapLongLines);
     const { isCopied, copyToClipboard } = useCopyToClipboard({
       timeout: 2000,
@@ -54,7 +54,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
       <div
         className={cn(
           "relative w-full rounded-sm border bg-[var(--vscode-editor-background)] font-sans",
-          classNames,
+          className,
         )}
       >
         <div className="flex w-full items-center justify-between rounded-t-sm border-b bg-[var(--vscode-editor-background)] py-1.5 pr-3 pl-4 text-[var(--vscode-editor-foreground)]">

@@ -19,7 +19,7 @@ export const executeCommandTool: React.FC<
         <span className="ml-2">I will execute the following command:</span>
       </div>
       <CodeBlock
-        classNames="mt-1.5"
+        className="mt-1.5"
         language={"bash"}
         value={command || ""}
         canWrapLongLines={true}
