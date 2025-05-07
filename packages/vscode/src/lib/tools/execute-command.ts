@@ -1,3 +1,5 @@
+import * as path from "node:path";
+import { getWorkspaceFolder } from "@/lib/fs";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import * as vscode from "vscode";
 
@@ -21,6 +23,15 @@ export const executeCommand: ToolFunctionType<
 > = async ({ command, cwd }) => {
   if (!command) {
     throw new Error("Command is required to execute.");
+  }
+
+  if (cwd !== undefined) {
+    if (path.isAbsolute(cwd)) {
+      cwd = path.normalize(cwd);
+    } else {
+      const workspaceRootUri = getWorkspaceFolder().uri;
+      cwd = path.normalize(path.join(workspaceRootUri.fsPath, cwd));
+    }
   }
 
   if (!current) {
