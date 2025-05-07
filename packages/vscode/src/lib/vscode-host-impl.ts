@@ -195,14 +195,15 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     });
   }
 
-  async openFile(filePath: string, options?: { line?: number }) {
-    const line = options?.line;
+  async openFile(filePath: string, options?: { start?: number; end?: number }) {
     const current = vscode.workspace.workspaceFolders?.[0].uri;
     if (!current) {
       throw new Error("No workspace folder found.");
     }
+    const start = options?.start ?? 1;
+    const end = options?.end ?? start;
     vscode.window.showTextDocument(vscode.Uri.joinPath(current, filePath), {
-      selection: new vscode.Range(line ?? 0, 0, line ?? 0, 0),
+      selection: new vscode.Range(start - 1, 0, end - 1, 0),
     });
   }
 }

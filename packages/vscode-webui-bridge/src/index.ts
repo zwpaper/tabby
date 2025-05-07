@@ -38,7 +38,15 @@ export interface VSCodeHostApi {
     }[]
   >;
 
-  openFile(filePath: string, options?: { line?: number }): void;
+  /**
+   * Opens a file at the specified file path.
+   *
+   * @param filePath - The path to the file to be opened.
+   * @param options - Optional parameters for opening the file.
+   * @param options.start - The starting line number (1-based) to open the file at.
+   * @param options.end - The ending line number (1-based) to open the file at.
+   */
+  openFile(filePath: string, options?: { start?: number; end?: number }): void;
 }
 
 export interface WebviewHostApi {

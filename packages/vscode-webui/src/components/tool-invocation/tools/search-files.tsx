@@ -34,7 +34,7 @@ export const FileList: React.FC<{
           title={match.context}
           onClick={() => {
             setActiveIndex(index);
-            vscodeHost.openFile(match.file, { line: match.line - 1 });
+            vscodeHost.openFile(match.file, { start: match.line });
           }}
         >
           <File className="size-3 shrink-0" />
