@@ -325,7 +325,7 @@ function Chat() {
     setInput(input);
   };
 
-  const renderMessages = createRenderMessages(messages, isLoading);
+  const renderMessages = createRenderMessages(messages);
   const retry = useRetry({ messages, append, setMessages, reload });
   const { pendingApproval, setIsExecuting, executingToolCallId } =
     usePendingApproval({
@@ -403,10 +403,6 @@ function Chat() {
                 <strong>
                   {m.role === "user" ? authData.user.name : "Pochi"}
                 </strong>
-                {isLoading &&
-                  m.id === renderMessages[renderMessages.length - 1].id && (
-                    <Loader2 className="ml-2 size-4 animate-spin" />
-                  )}
               </div>
               <div className="mt-3 ml-1 flex flex-col gap-2">
                 {m.parts.map((part, index) => (
@@ -431,6 +427,11 @@ function Chat() {
             {messageIndex < renderMessages.length - 1 && <Separator />}
           </div>
         ))}
+        {isLoading && (
+          <div className="pb-4">
+            <Loader2 className="mx-auto size-6 animate-spin" />
+          </div>
+        )}
       </div>
       <div className="mb-2 text-center text-red-400">
         {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error */}
@@ -715,10 +716,7 @@ function useRetry({
   return retryRequest;
 }
 
-function createRenderMessages(
-  messages: UIMessage[],
-  isLoading: boolean,
-): UIMessage[] {
+function createRenderMessages(messages: UIMessage[]): UIMessage[] {
   const x = messages.map((message, index) => {
     if (index < messages.length - 1 && message.role === "assistant") {
       for (let i = 0; i < message.parts.length; i++) {
@@ -742,16 +740,6 @@ function createRenderMessages(
     }
     return message;
   });
-
-  if (isLoading && messages[messages.length - 1]?.role !== "assistant") {
-    // Add a placeholder message to show the spinner
-    x.push({
-      id: "",
-      role: "assistant",
-      content: "",
-      parts: [],
-    });
-  }
 
   return x;
 }
