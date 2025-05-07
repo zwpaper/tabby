@@ -42,7 +42,6 @@ import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { MAX_IMAGES } from "@/lib/constants";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
@@ -440,8 +439,8 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
         ))}
       {renderMessages.length > 0 && <div className="h-4" />}
       <PreviewToolCalls message={renderMessages.at(-1)} />
-      <ScrollArea
-        className="-mx-4 mb-2 flex-1 overflow-y-auto px-4"
+      <div
+        className="-mx-4 mb-2 flex-1 space-y-4 overflow-y-auto px-4"
         ref={messagesContainerRef}
       >
         {renderMessages.map((m, messageIndex) => (
@@ -494,7 +493,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
             <Loader2 className="mx-auto size-6 animate-spin" />
           </div>
         )}
-      </ScrollArea>
+      </div>
       <div className="mb-2 text-center text-red-400">
         {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error */}
         {imageSelectionError?.message ||
