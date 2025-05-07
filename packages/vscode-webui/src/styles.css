@@ -141,6 +141,10 @@ code {
   body {
     @apply bg-background text-foreground;
   }
+  a {
+    color: unset !important;
+  }
+  a,
   button:not([disabled]),
   [role="button"]:not([disabled]) {
     cursor: pointer;

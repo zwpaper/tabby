@@ -30,10 +30,7 @@ function SignInPage() {
         personalized assistance.
       </p>
       <a
-        className={cn(
-          buttonVariants({ variant: "ghost" }),
-          "!text-foreground mb-4",
-        )}
+        className={cn(buttonVariants({ variant: "ghost" }), "mb-4")}
         href="command:ragdoll.openLoginPage"
         target="_blank"
         rel="noopener noreferrer"
