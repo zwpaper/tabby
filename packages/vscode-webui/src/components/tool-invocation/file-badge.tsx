@@ -30,7 +30,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
     <span
       onClick={onClick}
       className={cn(
-        "cursor-pointer rounded-sm border border-zinc-600 box-decoration-clone px-1 text-xs active:bg-zinc-700",
+        "cursor-pointer rounded-sm border border-zinc-600 box-decoration-clone px-1 py-0.5 text-xs active:bg-zinc-700",
         className,
       )}
     >
