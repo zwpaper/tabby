@@ -454,8 +454,11 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                     <AvatarFallback>{authData.user.name}</AvatarFallback>
                   </Avatar>
                 ) : (
-                  <Avatar className="size-7 border bg-[var(--vscode-chat-avatarBackground)] p-1">
-                    <AvatarImage src={resourceUri?.logo128} />
+                  <Avatar className="size-7">
+                    <AvatarImage
+                      src={resourceUri?.logo128}
+                      className="scale-110"
+                    />
                     <AvatarFallback>Pochi</AvatarFallback>
                   </Avatar>
                 )}
