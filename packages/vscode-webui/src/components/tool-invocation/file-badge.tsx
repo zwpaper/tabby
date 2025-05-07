@@ -27,11 +27,10 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
     );
   };
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: only handle onClick
     <span
       onClick={onClick}
       className={cn(
-        "inline-block cursor-pointer rounded-sm border border-zinc-600 px-1 text-xs active:bg-zinc-700",
+        "cursor-pointer rounded-sm border border-zinc-600 box-decoration-clone px-1 text-xs active:bg-zinc-700",
         className,
       )}
     >

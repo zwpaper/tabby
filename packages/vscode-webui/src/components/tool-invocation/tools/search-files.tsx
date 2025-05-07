@@ -27,7 +27,6 @@ export const FileList: React.FC<{
   return (
     <div className="flex max-h-[100px] flex-col gap-1 overflow-scroll rounded border p-1">
       {matches.map((match, index) => (
-        // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
         <div
           key={match.file + match.line + index}
           className={`flex cursor-pointer items-center gap-2 rounded p-1 ${activeIndex === index ? "bg-border" : "hover:bg-muted"}`}
@@ -90,7 +89,6 @@ export const searchFilesTool: React.FC<
 
   return (
     <div className="flex flex-col gap-1 text-sm">
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
       <div
         className="flex cursor-pointer items-center gap-2 rounded p-1 hover:bg-muted"
         onClick={() => setShowDetails(!showDetails)}
