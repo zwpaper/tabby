@@ -4,6 +4,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Placeholder from "@tiptap/extension-placeholder";
 import Text from "@tiptap/extension-text";
 import {
+  type Editor,
   EditorContent,
   Extension,
   ReactRenderer,
@@ -63,6 +64,7 @@ interface FormEditorProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
   formRef?: React.RefObject<HTMLFormElement>;
+  editorRef?: React.MutableRefObject<Editor | null>;
   autoFocus?: boolean;
   children?: React.ReactNode;
   onError?: (e: Error) => void;
@@ -76,6 +78,7 @@ export function FormEditor({
   isLoading,
   children,
   formRef: externalFormRef,
+  editorRef,
   autoFocus = true,
   onPaste,
 }: FormEditorProps) {
@@ -220,6 +223,12 @@ export function FormEditor({
     [],
   );
 
+  useEffect(() => {
+    if (editorRef) {
+      editorRef.current = editor;
+    }
+  }, [editor, editorRef]);
+
   // Update editor content when input changes
   useEffect(() => {
     if (editor && input !== editor.getText()) {
@@ -260,27 +269,6 @@ export function FormEditor({
       {children}
     </form>
   );
-}
-
-// Helper function to focus and set input
-export function useEditorHelpers(editor: ReturnType<typeof useEditor>) {
-  const focusEditor = () => {
-    if (editor && !editor.isFocused) {
-      editor.commands.focus();
-    }
-  };
-
-  const setInputAndFocus = (
-    input: string,
-    setInput: (text: string) => void,
-  ) => {
-    setInput(input);
-    if (editor) {
-      editor.commands.focus();
-    }
-  };
-
-  return { focusEditor, setInputAndFocus };
 }
 
 function fuzzySearch(

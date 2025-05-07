@@ -15,6 +15,7 @@ import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import type { Editor } from "@tiptap/react";
 import type { TextPart, ToolInvocation } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
@@ -367,8 +368,13 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   const isLoading = status === "streaming" || status === "submitted";
 
+  const editorRef = useRef<Editor | null>(null);
+
   const setInputAndFocus = (input: string) => {
     setInput(input);
+    if (editorRef.current) {
+      editorRef.current.commands.focus();
+    }
   };
 
   const renderMessages = createRenderMessages(messages);
@@ -515,6 +521,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
         onSubmit={wrappedHandleSubmit}
         isLoading={isModelsLoading || isLoading || isTaskLoading}
         formRef={formRef}
+        editorRef={editorRef}
         onPaste={handlePasteImage}
       >
         {taskId.current && (
