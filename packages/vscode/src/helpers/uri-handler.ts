@@ -8,6 +8,12 @@ class RagdollUriHandler implements vscode.UriHandler {
   constructor(private authClient: AuthClient) {}
 
   handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
+    this.handleUriImpl(uri);
+  }
+
+  async handleUriImpl(uri: vscode.Uri) {
+    await vscode.commands.executeCommand("ragdollWebui.focus");
+
     const searchParams = new URLSearchParams(uri.query);
     const token = searchParams.get("token");
     if (token) {

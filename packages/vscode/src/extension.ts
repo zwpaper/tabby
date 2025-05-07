@@ -43,6 +43,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const commandRegisterations = [
     vscode.commands.registerCommand("ragdoll.accountSettings", async () => {
+      await vscode.commands.executeCommand("ragdollWebui.focus");
+
       vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
