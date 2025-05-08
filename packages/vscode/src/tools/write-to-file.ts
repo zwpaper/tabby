@@ -2,7 +2,7 @@ import { extname } from "node:path";
 import * as vscode from "vscode";
 
 import {
-  ensureDirectoryExists,
+  ensureFileDirectoryExists,
   getWorkspaceFolder,
   tempfile,
   writeFile,
@@ -112,9 +112,7 @@ export const writeToFile: ToolFunctionType<
   try {
     const pathUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
     logger.debug(`Target file URI: ${pathUri.fsPath}`);
-
-    const dirUri = vscode.Uri.joinPath(pathUri, "..");
-    await ensureDirectoryExists(dirUri);
+    await ensureFileDirectoryExists(pathUri);
     await writeFile(pathUri, content);
     logger.trace("Writing file success:", pathUri.fsPath);
 

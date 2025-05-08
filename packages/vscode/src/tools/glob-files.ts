@@ -1,4 +1,5 @@
-import { getWorkspaceFolder, ignoreWalk, isAbsolutePath } from "@/lib/fs";
+import * as path from "node:path";
+import { getWorkspaceFolder, ignoreWalk } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { minimatch } from "minimatch";
@@ -21,7 +22,7 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
     globPattern,
   );
 
-  if (isAbsolutePath(searchPath)) {
+  if (path.isAbsolute(searchPath)) {
     throw new Error(
       `Absolute paths are not supported: ${searchPath}. Please use a relative path.`,
     );

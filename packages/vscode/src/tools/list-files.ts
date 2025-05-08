@@ -1,4 +1,5 @@
-import { getWorkspaceFolder, ignoreWalk, isAbsolutePath } from "@/lib/fs";
+import * as path from "node:path";
+import { getWorkspaceFolder, ignoreWalk } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import * as vscode from "vscode";
@@ -21,7 +22,7 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
     recursive,
   );
 
-  if (isAbsolutePath(dirPath)) {
+  if (path.isAbsolute(dirPath)) {
     logger.error(`Absolute paths are not supported: ${dirPath}`);
     throw new Error(
       `Absolute paths are not supported: ${dirPath}. Please use a relative path.`,

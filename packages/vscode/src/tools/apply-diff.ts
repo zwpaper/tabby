@@ -1,6 +1,6 @@
 import * as nodePath from "node:path";
 import {
-  ensureDirectoryExists,
+  ensureFileDirectoryExists,
   getWorkspaceFolder,
   tempfile,
   writeFile,
@@ -232,9 +232,7 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   try {
     const workspaceFolder = getWorkspaceFolder();
     const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
-
-    const dirUri = vscode.Uri.joinPath(fileUri, "..");
-    await ensureDirectoryExists(dirUri);
+    await ensureFileDirectoryExists(fileUri);
 
     const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
     const fileContent = fileBuffer.toString();

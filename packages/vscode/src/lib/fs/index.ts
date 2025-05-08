@@ -21,13 +21,6 @@ export function tempfile(options: { extension?: string } = {}): string {
 }
 
 /**
- * Check if a path is absolute
- */
-export function isAbsolutePath(p: string): boolean {
-  return p.startsWith("/") || p.startsWith("\\") || /^[A-Za-z]:/.test(p);
-}
-
-/**
  * Get the workspace folder or throw an error if none exists
  */
 export function getWorkspaceFolder(): vscode.WorkspaceFolder {
@@ -51,6 +44,9 @@ export async function writeFile(
 /**
  * Ensure a directory exists by creating it if needed
  */
-export async function ensureDirectoryExists(dirUri: vscode.Uri): Promise<void> {
+export async function ensureFileDirectoryExists(
+  fileUri: vscode.Uri,
+): Promise<void> {
+  const dirUri = vscode.Uri.joinPath(fileUri, "..");
   await vscode.workspace.fs.createDirectory(dirUri);
 }
