@@ -33,15 +33,12 @@ export async function createNewProject(
       const projectName = generate().dashed;
       const projectUri = vscode.Uri.joinPath(baseUri, projectName);
 
-      if (githubTemplateUrl) {
-        await prepareProject(projectUri, githubTemplateUrl, progress);
-      }
-
       await createDirectoryIfNotExists(baseUri);
       await createDirectoryIfNotExists(projectUri);
       logger.info(`Created directory: ${projectUri}`);
 
       if (githubTemplateUrl) {
+        await prepareProject(projectUri, githubTemplateUrl, progress);
       }
 
       return projectUri;
