@@ -18,6 +18,7 @@ import {
 } from "ai";
 import type { User } from "better-auth";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
 import { sql } from "kysely";
 import moment from "moment";
@@ -64,7 +65,12 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     checkWhitelist(user);
 
-    const { id, conversation, event } = await getTask(user, req.id, req.event);
+    const { id, conversation, event } = await getTask(
+      user,
+      req.id,
+      req.event,
+      environment,
+    );
     const messages = appendClientMessage({
       messages: toUIMessages(conversation?.messages || []),
       message: toUIMessage(message),
@@ -316,6 +322,7 @@ async function getTask(
   user: User,
   chatId: string | undefined,
   event: UserEvent | undefined,
+  environment: Environment | undefined,
 ) {
   let taskId = chatId ? Number.parseInt(chatId) : undefined;
   if (taskId === undefined) {
@@ -324,14 +331,39 @@ async function getTask(
 
   const data = await db
     .selectFrom("task")
-    .select(["conversation", "event"])
+    .select(["conversation", "event", "environment"])
     .where("taskId", "=", taskId)
     .where("userId", "=", user.id)
     .executeTakeFirstOrThrow();
+  await verifyEnvironment(environment, data.environment);
   return {
     ...data,
     id: taskId,
   };
+}
+
+function verifyEnvironment(
+  environment: Environment | undefined,
+  expectedEnvironment: Environment | null,
+) {
+  if (expectedEnvironment === null) return;
+  if (environment === undefined) {
+    throw new HTTPException(400, {
+      message: "Environment is required",
+    });
+  }
+
+  if (environment.info.os !== expectedEnvironment.info.os) {
+    throw new HTTPException(400, {
+      message: "Environment OS mismatch",
+    });
+  }
+
+  if (environment.info.cwd !== expectedEnvironment.info.cwd) {
+    throw new HTTPException(400, {
+      message: "Environment CWD mismatch",
+    });
+  }
 }
 
 export default chat;
