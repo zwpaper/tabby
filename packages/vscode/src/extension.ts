@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
 import createCommands from "./commands";
-import { authEvents } from "./helpers/auth-events";
-import { Extension } from "./helpers/extension";
-import { GlobalJobsRunner } from "./helpers/global-jobs";
-import RagdollUriHandler from "./helpers/uri-handler";
 import { createAuthClient } from "./lib/auth-client";
+import { authEvents } from "./lib/auth-events";
+import { Extension } from "./lib/extension";
 import { TokenStorage } from "./lib/token-storage";
+import RagdollUriHandler from "./lib/uri-handler";
+import { WorkspaceJobQueue } from "./lib/workspace-job";
 import Ragdoll from "./ragdoll";
 import createStatusBarItem from "./status-bar";
 
@@ -15,7 +15,7 @@ export async function activate(context: vscode.ExtensionContext) {
   console.log("activating Ragdoll...");
   Extension.getInstance(context);
 
-  const globalJobRunner = new GlobalJobsRunner(context);
+  const globalJobRunner = new WorkspaceJobQueue(context);
   const tokenStorage = new TokenStorage(context);
   const authClient = createAuthClient(tokenStorage);
 

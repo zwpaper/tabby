@@ -1,7 +1,7 @@
 import { getLogger } from "@/lib/logger";
 import * as vscode from "vscode";
 
-export interface GlobalJob {
+export interface WorkspaceJob {
   // should get from vscode.Uri.toString()
   workspaceUri: string;
 
@@ -17,8 +17,8 @@ export interface GlobalJob {
 
 const logger = getLogger("GlobalJobsRunner");
 
-export class GlobalJobsRunner implements vscode.Disposable {
-  static GlobalJobsCommandKey = "global_jobs";
+export class WorkspaceJobQueue implements vscode.Disposable {
+  private static readonly GlobalStateKey = "global_jobs";
 
   private readonly runner = setInterval(async () => {
     await this.run();
@@ -26,22 +26,22 @@ export class GlobalJobsRunner implements vscode.Disposable {
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
-  async push(job: GlobalJob): Promise<void> {
-    const commands = this.context.globalState.get<GlobalJob[]>(
-      GlobalJobsRunner.GlobalJobsCommandKey,
+  async push(job: WorkspaceJob): Promise<void> {
+    const commands = this.context.globalState.get<WorkspaceJob[]>(
+      WorkspaceJobQueue.GlobalStateKey,
       [],
     );
     commands.push(job);
     logger.debug(`Pushing job ${JSON.stringify(job)}`);
     await this.context.globalState.update(
-      GlobalJobsRunner.GlobalJobsCommandKey,
+      WorkspaceJobQueue.GlobalStateKey,
       commands,
     );
   }
 
   private async run() {
-    const jobs = this.context.globalState.get<GlobalJob[]>(
-      GlobalJobsRunner.GlobalJobsCommandKey,
+    const jobs = this.context.globalState.get<WorkspaceJob[]>(
+      WorkspaceJobQueue.GlobalStateKey,
       [],
     );
 
@@ -54,7 +54,7 @@ export class GlobalJobsRunner implements vscode.Disposable {
 
     // update registry with the rest of the jobs
     await this.context.globalState.update(
-      GlobalJobsRunner.GlobalJobsCommandKey,
+      WorkspaceJobQueue.GlobalStateKey,
       jobs.filter((job) => currentWorkspaceJob.indexOf(job) === -1),
     );
 

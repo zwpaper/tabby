@@ -1,6 +1,6 @@
-import type { GlobalJobsRunner } from "@/helpers/global-jobs";
-import { createNewProject } from "@/helpers/new-project-utils";
 import type { AuthClient } from "@/lib/auth-client";
+import { createNewProject } from "@/lib/new-project-utils";
+import type { WorkspaceJobQueue } from "@/lib/workspace-job";
 import * as vscode from "vscode";
 
 export interface NewProjectParams {
@@ -19,7 +19,7 @@ export interface NewProjectParams {
 class RagdollUriHandler implements vscode.UriHandler {
   constructor(
     private readonly authClient: AuthClient,
-    private readonly globalJobsRunner: GlobalJobsRunner,
+    private readonly globalJobsRunner: WorkspaceJobQueue,
     private readonly loginEvent: vscode.EventEmitter<void>,
   ) {}
 

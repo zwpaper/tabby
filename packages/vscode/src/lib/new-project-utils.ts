@@ -3,7 +3,7 @@ import * as jszip from "jszip";
 import generate from "project-name-generator";
 import * as vscode from "vscode";
 
-const logger = getLogger("NewProjectUtils");
+const logger = getLogger("newProjectUtils");
 
 const homeUri = vscode.Uri.file(process.env.HOME || "~");
 const baseUri = vscode.Uri.joinPath(homeUri, "PochiProjects");

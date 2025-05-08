@@ -1,7 +1,7 @@
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import * as vscode from "vscode";
-import type { AuthEvents } from "./helpers/auth-events";
 import type { AuthClient } from "./lib/auth-client";
+import type { AuthEvents } from "./lib/auth-events";
 import type { TokenStorage } from "./lib/token-storage";
 import type Ragdoll from "./ragdoll";
 

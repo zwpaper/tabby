@@ -15,12 +15,12 @@ import {
   type WebviewViewProvider,
   type WebviewViewResolveContext,
 } from "vscode";
-import type { AuthEvents } from "./helpers/auth-events";
-import { Extension } from "./helpers/extension";
+import type { AuthEvents } from "./lib/auth-events";
+import { Extension } from "./lib/extension";
+import { getNonce } from "./lib/get-nonce";
+import { getUri } from "./lib/get-uri";
 import type { TokenStorage } from "./lib/token-storage";
 import VSCodeHostImpl from "./lib/vscode-host-impl";
-import { getNonce } from "./utils/get-nonce";
-import { getUri } from "./utils/get-uri";
 
 class Ragdoll implements WebviewViewProvider {
   public static readonly viewType = "ragdollWebui";
