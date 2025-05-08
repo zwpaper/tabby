@@ -11,9 +11,9 @@ export interface NewProjectParams {
 
   /**
    * A zip url to download the project template from.
-   * example: https://github.com/wsxiaoys/reimagined-octo-funicular/archive/refs/heads/main.zip
+   * example: https://github.com/wsxiaoys/reimagined-octo-funicular
    */
-  template?: string;
+  githubTemplateUrl?: string;
 }
 
 class RagdollUriHandler implements vscode.UriHandler {
@@ -64,9 +64,9 @@ class RagdollUriHandler implements vscode.UriHandler {
   }
 
   async handleNewProjectRequest(params: NewProjectParams) {
-    const { prompt, template } = params;
+    const { prompt, githubTemplateUrl } = params;
 
-    const newProjectUri = await createNewProject(template);
+    const newProjectUri = await createNewProject(githubTemplateUrl);
 
     // push a global job to create task after the new workspace is opened
     await this.globalJobsRunner.push({
