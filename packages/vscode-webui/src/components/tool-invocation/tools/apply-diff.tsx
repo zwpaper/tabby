@@ -1,4 +1,6 @@
+import { vscodeHost } from "@/lib/vscode";
 import type { ClientToolsType } from "@ragdoll/tools";
+import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
 import { StatusIcon } from "../status-icon";
 import type { ToolProps } from "../types";
@@ -20,11 +22,20 @@ export const applyDiffTool: React.FC<
     tool.result !== null &&
     "success" in tool.result &&
     tool.result.success === true;
+  const handleClick = useCallback(() => {
+    vscodeHost.previewToolCall(tool.toolName, tool.args, {
+      toolCallId: tool.toolCallId,
+    });
+  }, [tool.args, tool.toolCallId, tool.toolName]);
 
   return (
     <div className="flex flex-col gap-1 text-sm" title={error}>
       <span className="space-x-2">
-        <StatusIcon isExecuting={isExecuting} tool={tool} />
+        <StatusIcon
+          isExecuting={isExecuting}
+          tool={tool}
+          onClick={tool.state !== "result" ? handleClick : undefined}
+        />
         <span>
           {isExecuting ? "Applying" : isSuccess ? "Applied" : "Apply"} diff to
         </span>

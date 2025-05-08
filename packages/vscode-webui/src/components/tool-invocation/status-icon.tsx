@@ -12,9 +12,15 @@ interface StatusIconProps {
   tool: ToolInvocation;
   isExecuting: boolean;
   className?: string;
+  onClick?: () => void;
 }
 
-export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
+export function StatusIcon({
+  tool,
+  isExecuting,
+  className,
+  onClick,
+}: StatusIconProps) {
   let error: string | undefined;
   if (
     tool.state === "result" &&
@@ -48,6 +54,15 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
     statusIcon = <Loader2 className="size-4 animate-spin text-zinc-400" />;
   }
   return (
-    <div className={cn("inline-block align-sub", className)}>{statusIcon}</div>
+    <div
+      className={cn(
+        "inline-block align-sub",
+        className,
+        onClick ? "cursor-pointer" : "",
+      )}
+      onClick={onClick}
+    >
+      {statusIcon}
+    </div>
   );
 }
