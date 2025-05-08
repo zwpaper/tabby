@@ -11,19 +11,23 @@ export const executeCommandTool: React.FC<
     error = tool.result.error;
   }
 
-  const { cwd, command } = tool.args || {};
+  const { cwd, command, isDevServer } = tool.args || {};
   const cwdNode = cwd ? (
     <span>
       {" "}
       in <b>{cwd}</b>
     </span>
   ) : null;
+  const text = isDevServer
+    ? "I will start a dev server"
+    : "I will execute the following command";
   return (
     <div className="text-sm" title={error}>
       <div>
         <StatusIcon isExecuting={isExecuting} tool={tool} />
         <span className="ml-2">
-          I will execute the following command{cwdNode}
+          {text}
+          {cwdNode}
         </span>
       </div>
       <CodeBlock

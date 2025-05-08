@@ -2,25 +2,13 @@ import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import * as vscode from "vscode";
+import { getLogger } from "../logger";
 
-let current:
-  | {
-      terminal: vscode.Terminal;
-      shell: vscode.TerminalShellIntegration | undefined;
-    }
-  | undefined = undefined;
-
-export const initExecuteCommandTool = () => {
-  return vscode.window.onDidCloseTerminal((terminal) => {
-    if (terminal === current?.terminal) {
-      current = undefined;
-    }
-  });
-};
+const logger = getLogger("executeCommand");
 
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
-> = async ({ command, cwd }) => {
+> = async ({ command, cwd, isDevServer }) => {
   if (!command) {
     throw new Error("Command is required to execute.");
   }
@@ -34,41 +22,77 @@ export const executeCommand: ToolFunctionType<
     }
   }
 
-  if (!current) {
-    const terminal = vscode.window.createTerminal({
-      name: "Pochi",
-      cwd,
-      iconPath: new vscode.ThemeIcon("terminal"),
-      location: vscode.TerminalLocation.Panel,
-    });
-    terminal.show();
+  const shell = await getPochiShell(cwd, isDevServer);
 
-    const shell = await retrieveShellIntegration(terminal);
-    current = {
-      terminal,
-      shell,
-    };
-  }
-
-  if (!current.shell) {
+  if (!shell) {
     throw new Error(
       "Failed to start teriminal, please restart VSCode and try again.",
     );
   }
 
-  if (cwd && current.shell.cwd?.path !== cwd) {
-    current.shell.executeCommand(`cd ${cwd}`);
+  if (cwd && shell.cwd?.path !== cwd) {
+    shell.executeCommand(`cd ${cwd}`);
   }
 
-  const execution = current.shell.executeCommand(command);
+  const execution = shell.executeCommand(command);
+  const output = await collectOutput(execution, isDevServer);
+
+  return { output };
+};
+
+async function collectDevServerOutputWithTimeout(
+  outputStream: AsyncIterable<string>,
+): Promise<string> {
+  let output = "";
+  let timeoutId: Timer | undefined;
+
+  return new Promise<string>((resolve) => {
+    const resetTimeout = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        resolve(output);
+      }, 5000);
+    };
+
+    resetTimeout(); // Initial timeout
+
+    (async () => {
+      for await (const data of outputStream) {
+        output += data;
+        resetTimeout(); // Reset timeout on new data
+      }
+      // Command finished before timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      resolve(output);
+    })();
+  });
+}
+
+async function collectOutput(
+  execution: vscode.TerminalShellExecution,
+  isDevServer?: boolean,
+): Promise<string> {
+  logger.info(
+    "Collecting output from terminal shell execution",
+    execution.commandLine.value,
+    isDevServer,
+  );
+
   const outputStream = execution.read();
+  if (isDevServer) {
+    return collectDevServerOutputWithTimeout(outputStream);
+  }
+
   let output = "";
   for await (const data of outputStream) {
     output += data;
   }
-
-  return { output };
-};
+  return output;
+}
 
 async function retrieveShellIntegration(
   targetTerminal: vscode.Terminal,
@@ -82,8 +106,8 @@ async function retrieveShellIntegration(
     const disposable = vscode.window.onDidChangeTerminalShellIntegration(
       async ({ terminal, shellIntegration }) => {
         if (terminal === targetTerminal) {
-          for (const disposable of disposables) {
-            disposable.dispose();
+          for (const d of disposables) {
+            d.dispose();
           }
           resolve(shellIntegration);
         }
@@ -91,8 +115,8 @@ async function retrieveShellIntegration(
     );
     disposables.push(disposable);
     const timeout = setTimeout(() => {
-      for (const disposable of disposables) {
-        disposable.dispose();
+      for (const d of disposables) {
+        d.dispose();
       }
       resolve(undefined);
     }, 3000);
@@ -103,4 +127,32 @@ async function retrieveShellIntegration(
       },
     });
   });
+}
+
+const PochiTerminalName = "Pochi";
+const PochiDevServerTerminalName = "Pochi (Dev Server)";
+
+function findPochiTerminal(name: string) {
+  for (const terminal of vscode.window.terminals) {
+    if (terminal.name === name) {
+      return terminal;
+    }
+  }
+}
+
+function createPochiTerminal(name: string, cwd?: string) {
+  return vscode.window.createTerminal({
+    name,
+    cwd,
+    iconPath: new vscode.ThemeIcon("terminal"),
+    location: vscode.TerminalLocation.Panel,
+  });
+}
+
+function getPochiShell(cwd?: string, isDevServer?: boolean) {
+  const name = isDevServer ? PochiDevServerTerminalName : PochiTerminalName;
+  const terminal = findPochiTerminal(name) || createPochiTerminal(name, cwd);
+  terminal.show();
+
+  return retrieveShellIntegration(terminal);
 }

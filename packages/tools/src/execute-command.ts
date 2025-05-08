@@ -14,6 +14,12 @@ export const executeCommand = defineClientTool({
       .string()
       .optional()
       .describe("The working directory to execute the command in."),
+    isDevServer: z
+      .boolean()
+      .optional()
+      .describe(
+        "Whether the command is being run as a development server, e.g. `npm run dev`.",
+      ),
   }),
   outputSchema: z.object({
     output: z

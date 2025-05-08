@@ -4,7 +4,6 @@ import { Extension } from "./helpers/extension";
 import RagdollUriHandler from "./helpers/uri-handler";
 import { createAuthClient } from "./lib/auth-client";
 import { TokenStorage } from "./lib/token-storage";
-import { initExecuteCommandTool } from "./lib/tools/execute-command";
 import Ragdoll from "./ragdoll";
 import createStatusBarItem from "./status-bar";
 
@@ -21,9 +20,6 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.registerUriHandler(ragdollUriHandler),
   );
-
-  // init execute command tool
-  context.subscriptions.push(initExecuteCommandTool());
 
   const logoutEvent = new vscode.EventEmitter<void>();
   const authEvents = {
