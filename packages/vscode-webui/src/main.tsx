@@ -47,10 +47,6 @@ vscodeHost.getSessionState(["lastVisitedRoute"]).then((sessionState) => {
 });
 
 router.subscribe("onRendered", ({ toLocation }) => {
-  if (toLocation.pathname === "/sign-in") {
-    return;
-  }
-
   vscodeHost.setSessionState({
     lastVisitedRoute: toLocation.pathname + toLocation.searchStr,
   });
@@ -65,10 +61,36 @@ declare module "@tanstack/react-router" {
 
 function InnerApp() {
   const { data: auth, isPending } = authHooks.useSession();
+
   useEffect(() => {
-    if (!isPending && !auth) {
-      router.navigate({ to: "/sign-in", replace: true });
+    if (!auth && !isPending) {
+      const currentRoute = router.state.location.pathname;
+      if (currentRoute !== "/sign-in") {
+        router.navigate({
+          to: "/sign-in",
+          search: { redirect: currentRoute + router.state.location.searchStr },
+          replace: true,
+        });
+      }
     }
+
+    const unsubscribe = router.subscribe(
+      "onBeforeNavigate",
+      ({ toLocation }) => {
+        const targetPath = toLocation.pathname;
+        const requiresAuth = targetPath !== "/sign-in";
+
+        if (requiresAuth && !auth && !isPending) {
+          router.navigate({
+            to: "/sign-in",
+            search: { redirect: targetPath + toLocation.searchStr },
+            replace: true,
+          });
+        }
+      },
+    );
+
+    return () => unsubscribe();
   }, [isPending, auth]);
 
   if (isPending) {

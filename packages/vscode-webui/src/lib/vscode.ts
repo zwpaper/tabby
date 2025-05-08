@@ -47,10 +47,14 @@ function createVSCodeHost(): VSCodeHostApi {
         "readResourceURI",
       ],
       exports: {
-        openTask(taskId) {
+        openTask(params) {
           window.router.navigate({
             to: "/",
-            search: { taskId, ts: Date.now() },
+            search: {
+              taskId: params.taskId,
+              prompt: params.taskId === "new" ? params.prompt : undefined,
+              ts: Date.now(),
+            },
             replace: true,
           });
         },

@@ -4,19 +4,29 @@ import { cn } from "@/lib/utils";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { LogInIcon, TerminalIcon } from "lucide-react";
 import { useEffect } from "react";
+import { z } from "zod";
+
+const searchSchema = z.object({
+  redirect: z.string().optional(),
+});
 
 export const Route = createFileRoute("/sign-in")({
+  validateSearch: (search) => searchSchema.parse(search),
   component: SignInPage,
 });
 
 function SignInPage() {
   const { navigate } = useRouter();
+  const { redirect } = Route.useSearch();
   const { session } = authHooks.useSession();
+
   useEffect(() => {
     if (session) {
-      navigate({ to: "/", replace: true });
+      const redirectPath = redirect || "/";
+      navigate({ to: redirectPath, replace: true });
     }
-  }, [session, navigate]);
+  }, [session, navigate, redirect]);
+
   return (
     <div className="flex h-screen select-none flex-col items-center justify-center p-5 text-center text-gray-300">
       <h2 className="mb-2 flex items-center gap-3 font-semibold text-2xl text-gray-100">

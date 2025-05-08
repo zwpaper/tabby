@@ -8,13 +8,14 @@ import {
 } from "@ragdoll/vscode-webui-bridge";
 import {
   type CancellationToken,
-  type EventEmitter,
+  EventEmitter,
   Uri,
   type Webview,
   type WebviewView,
   type WebviewViewProvider,
   type WebviewViewResolveContext,
 } from "vscode";
+import type { AuthEvents } from "./helpers/auth-events";
 import { Extension } from "./helpers/extension";
 import type { TokenStorage } from "./lib/token-storage";
 import VSCodeHostImpl from "./lib/vscode-host-impl";
@@ -27,15 +28,13 @@ class Ragdoll implements WebviewViewProvider {
 
   private view?: WebviewView;
   private webviewHost?: WebviewHostApi;
+  private webviewHostReady = new EventEmitter<WebviewHostApi>();
   private sessionState: SessionState = {};
 
   constructor(
     private readonly extensionUri: Uri,
     private readonly tokenStorage: TokenStorage,
-    private readonly events: {
-      loginEvent: EventEmitter<void>;
-      logoutEvent: EventEmitter<void>;
-    },
+    private readonly events: AuthEvents,
   ) {}
 
   public static getInstance(
@@ -53,8 +52,14 @@ class Ragdoll implements WebviewViewProvider {
     return Ragdoll.instance;
   }
 
-  public static getWebviewHost() {
-    return Ragdoll.instance?.webviewHost;
+  public async retrieveWebviewHost(): Promise<WebviewHostApi> {
+    if (this.webviewHost) {
+      return this.webviewHost;
+    }
+
+    return new Promise((resolve) => {
+      this.webviewHostReady.event((host) => resolve(host));
+    });
   }
 
   public resolveWebviewView(
@@ -72,7 +77,6 @@ class Ragdoll implements WebviewViewProvider {
 
     this.view.webview.html = this.getHtmlForWebview(this.view.webview);
 
-    // Force reload on login/logout
     this.events.loginEvent.event(() => {
       this.webviewHost?.onAuthChanged();
     });
@@ -82,6 +86,7 @@ class Ragdoll implements WebviewViewProvider {
     });
 
     this.webviewHost = this.createWebviewThread(webviewView.webview).imports;
+    this.webviewHostReady.fire(this.webviewHost);
   }
 
   readResourceURI: VSCodeHostApi["readResourceURI"] =

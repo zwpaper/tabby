@@ -68,6 +68,7 @@ const searchSchema = z.object({
     .number()
     .or(z.enum(["new"]))
     .optional(),
+  prompt: z.string().optional(),
   ts: z.number().optional(),
 });
 
@@ -77,7 +78,11 @@ export const Route = createFileRoute("/")({
 });
 
 function RouteComponent() {
-  const { taskId: taskIdFromRoute, ts = Date.now() } = Route.useSearch();
+  const {
+    taskId: taskIdFromRoute,
+    prompt: promptFromRoute,
+    ts = Date.now(),
+  } = Route.useSearch();
   const key =
     typeof taskIdFromRoute === "number"
       ? `task-${taskIdFromRoute}`
@@ -104,6 +109,7 @@ function RouteComponent() {
       key={key}
       loaderData={loaderData || null}
       isTaskLoading={isTaskLoading}
+      prompt={promptFromRoute}
     />
   );
 }
@@ -113,9 +119,10 @@ interface ChatProps {
     (typeof apiClient.api.tasks)[":id"]["$get"]
   > | null;
   isTaskLoading: boolean;
+  prompt: string | undefined;
 }
 
-function Chat({ loaderData, isTaskLoading }: ChatProps) {
+function Chat({ loaderData, isTaskLoading, prompt }: ChatProps) {
   const taskId = useRef<number | undefined>(loaderData?.id);
   useEffect(() => {
     taskId.current = loaderData?.id;
@@ -249,6 +256,18 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
       Authorization: `Bearer ${authData.session.token}`,
     },
   });
+
+  const promptSent = useRef<boolean>(false);
+  useEffect(() => {
+    if (taskId.current === undefined && prompt && !promptSent.current) {
+      promptSent.current = true;
+
+      append({
+        role: "user",
+        content: prompt,
+      });
+    }
+  }, [prompt, append]);
 
   useEffect(() => {
     const handler = setTimeout(() => {

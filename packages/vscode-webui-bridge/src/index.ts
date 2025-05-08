@@ -51,9 +51,9 @@ export interface VSCodeHostApi {
 
 export interface WebviewHostApi {
   /**
-   * @param taskId Task id to open or "new" to create a new task.
+   * @param params - Existing task id or new task params.
    */
-  openTask(taskId: number | "new"): void;
+  openTask(params: TaskIdParams | NewTaskParams): void;
 
   openTaskList(): void;
 
@@ -76,4 +76,13 @@ export interface ResourceURI {
 export interface SessionState {
   lastVisitedRoute?: string | undefined;
   input?: string | undefined;
+}
+
+export interface TaskIdParams {
+  taskId: number;
+}
+
+export interface NewTaskParams {
+  taskId: "new";
+  prompt?: string;
 }
