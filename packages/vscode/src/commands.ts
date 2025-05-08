@@ -1,12 +1,12 @@
+import type RagdollWebviewProvider from "@/integrations/webview/provider";
+import type { AuthClient } from "@/lib/auth-client";
+import type { AuthEvents } from "@/lib/auth-events";
+import type { TokenStorage } from "@/lib/token-storage";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import * as vscode from "vscode";
-import type { AuthClient } from "./lib/auth-client";
-import type { AuthEvents } from "./lib/auth-events";
-import type { TokenStorage } from "./lib/token-storage";
-import type Ragdoll from "./ragdoll";
 
 export default function createCommands(
-  ragdoll: Ragdoll,
+  ragdoll: RagdollWebviewProvider,
   tokenStorage: TokenStorage,
   authClient: AuthClient,
   authEvents: AuthEvents,

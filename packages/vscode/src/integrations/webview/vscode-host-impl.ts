@@ -2,7 +2,15 @@ import * as vscode from "vscode";
 
 import { collectCustomRules, getSystemInfo } from "@/lib/env-utils";
 import { ignoreWalk } from "@/lib/fs";
+import { getLogger } from "@/lib/logger";
 import type { TokenStorage } from "@/lib/token-storage";
+import { applyDiff, previewApplyDiff } from "@/tools/apply-diff";
+import { executeCommand } from "@/tools/execute-command";
+import { globFiles } from "@/tools/glob-files";
+import { listFiles as listFilesTool } from "@/tools/list-files";
+import { readFile } from "@/tools/read-file";
+import { searchFiles } from "@/tools/search-files";
+import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
 import {
   ThreadAbortSignal,
   type ThreadAbortSignalSerialization,
@@ -11,14 +19,6 @@ import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { SessionState, VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
-import { getLogger } from "./logger";
-import { applyDiff, previewApplyDiff } from "./tools/apply-diff";
-import { executeCommand } from "./tools/execute-command";
-import { globFiles } from "./tools/glob-files";
-import { listFiles as listFilesTool } from "./tools/list-files";
-import { readFile } from "./tools/read-file";
-import { searchFiles } from "./tools/search-files";
-import { previewWriteToFile, writeToFile } from "./tools/write-to-file";
 
 const logger = getLogger("VSCodeHostImpl");
 

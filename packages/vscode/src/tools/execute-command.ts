@@ -1,8 +1,8 @@
 import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
+import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import * as vscode from "vscode";
-import { getLogger } from "../logger";
 
 const logger = getLogger("executeCommand");
 

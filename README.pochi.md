@@ -12,3 +12,4 @@ coverage test command: `bun run vitest --coverage --run`
 1. use `bun check` to format / linting the code.
 2. use `bun tsc` to check the types.
 3. For packages/code it uses `ink` for react terminal ui.
+4. Prefer `@/lib` over `../lib` for imports.

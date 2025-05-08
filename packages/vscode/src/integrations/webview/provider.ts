@@ -1,3 +1,9 @@
+import VSCodeHostImpl from "@/integrations/webview/vscode-host-impl";
+import type { AuthEvents } from "@/lib/auth-events";
+import { Extension } from "@/lib/extension";
+import { getNonce } from "@/lib/get-nonce";
+import { getUri } from "@/lib/get-uri";
+import type { TokenStorage } from "@/lib/token-storage";
 import { Thread } from "@quilted/threads";
 import {
   type ResourceURI,
@@ -15,16 +21,10 @@ import {
   type WebviewViewProvider,
   type WebviewViewResolveContext,
 } from "vscode";
-import type { AuthEvents } from "./lib/auth-events";
-import { Extension } from "./lib/extension";
-import { getNonce } from "./lib/get-nonce";
-import { getUri } from "./lib/get-uri";
-import type { TokenStorage } from "./lib/token-storage";
-import VSCodeHostImpl from "./lib/vscode-host-impl";
 
-class Ragdoll implements WebviewViewProvider {
+class RagdollWebviewProvider implements WebviewViewProvider {
   public static readonly viewType = "ragdollWebui";
-  private static instance?: Ragdoll;
+  private static instance?: RagdollWebviewProvider;
 
   private view?: WebviewView;
   private webviewHost?: WebviewHostApi;
@@ -44,12 +44,16 @@ class Ragdoll implements WebviewViewProvider {
       loginEvent: EventEmitter<void>;
       logoutEvent: EventEmitter<void>;
     },
-  ): Ragdoll {
-    if (!Ragdoll.instance) {
-      Ragdoll.instance = new Ragdoll(extensionUri, tokenStorage, events);
+  ): RagdollWebviewProvider {
+    if (!RagdollWebviewProvider.instance) {
+      RagdollWebviewProvider.instance = new RagdollWebviewProvider(
+        extensionUri,
+        tokenStorage,
+        events,
+      );
     }
 
-    return Ragdoll.instance;
+    return RagdollWebviewProvider.instance;
   }
 
   public async retrieveWebviewHost(): Promise<WebviewHostApi> {
@@ -223,4 +227,4 @@ class Ragdoll implements WebviewViewProvider {
   }
 }
 
-export default Ragdoll;
+export default RagdollWebviewProvider;

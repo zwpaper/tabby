@@ -5,14 +5,14 @@ import {
   tempfile,
   writeFile,
 } from "@/lib/fs";
+import { getLogger } from "@/lib/logger";
+import { closePreviewTabs, findPreviewTabs } from "@/lib/tab-utils";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type {
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@ragdoll/tools/src/types";
 import * as vscode from "vscode";
-import { getLogger } from "../logger";
-import { closePreviewTabs, findPreviewTabs } from "../tab-utils";
 
 const WindowToExpandForSearch = 15;
 const logger = getLogger("applyDiffTool");
