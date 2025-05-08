@@ -1,4 +1,4 @@
-import type RagdollWebviewProvider from "@/integrations/webview/provider";
+import type RagdollWebviewProvider from "@/integrations/webview/ragdoll-webview-provider";
 import type { AuthClient } from "@/lib/auth-client";
 import type { AuthEvents } from "@/lib/auth-events";
 import type { TokenStorage } from "@/lib/token-storage";

@@ -1,7 +1,8 @@
 import RagdollUriHandler from "@/integrations/uri-handler";
-import RagdollWebviewProvider from "@/integrations/webview/provider";
+import RagdollWebviewProvider from "@/integrations/webview/ragdoll-webview-provider";
 import * as vscode from "vscode";
 import createCommands from "./commands";
+import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
 import { createAuthClient } from "./lib/auth-client";
 import { authEvents } from "./lib/auth-events";
 import { Extension } from "./lib/extension";
@@ -54,6 +55,13 @@ export async function activate(context: vscode.ExtensionContext) {
     authEvents,
   );
   context.subscriptions.push(...commands);
+
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider(
+      DiffOriginContentProvider.scheme,
+      new DiffOriginContentProvider(),
+    ),
+  );
 }
 
 // This method is called when your extension is deactivated
