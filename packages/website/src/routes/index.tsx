@@ -71,6 +71,16 @@ function RouteComponent() {
     if (auth === null) {
       setShowAuthDialog(true);
     } else {
+      if (RedirectVSCodeDirectly) {
+        await navigate({
+          to: "/redirect-vscode",
+          search: {
+            prompt: inputValue,
+          },
+        });
+        return;
+      }
+
       setIsSubmitting(true);
       try {
         const res = await apiClient.api.tasks.$post({
@@ -195,3 +205,5 @@ function RouteComponent() {
     </div>
   );
 }
+
+const RedirectVSCodeDirectly = true;
