@@ -45,18 +45,18 @@ export function ModelSelect({
       }
     >
       {!!models?.length && (
-        <div className="select-none">
+        <div className="select-none overflow-x-hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 className={cn(
-                  "gap-2 px-1.5 py-1 text-foreground/90 focus-visible:ring-1",
+                  "h-6 max-w-full gap-2 px-1 py-0 text-foreground/90 focus-visible:ring-1",
                   triggerClassName,
                 )}
               >
-                {value}
-                <ChevronDownIcon />
+                <span className="truncate whitespace-nowrap">{value}</span>
+                <ChevronDownIcon className="size-4 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuPortal>

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Eye, FileEdit, Play } from "lucide-react";
+import { ChevronRight, Eye, FileEdit, Play } from "lucide-react";
 import { useState } from "react";
 
 export function AutoApproveMenu() {
@@ -41,8 +41,11 @@ export function AutoApproveMenu() {
           },
         )}
       >
-        <div className="flex w-full">
-          <label htmlFor="auto-approve" className="cursor-pointer pr-4">
+        <div className="flex w-full overflow-x-hidden">
+          <label
+            htmlFor="auto-approve"
+            className="flex shrink-0 cursor-pointer pt-1 pr-4"
+          >
             <Checkbox
               id="auto-approve"
               checked={autoApproveActive}
@@ -51,10 +54,13 @@ export function AutoApproveMenu() {
               }}
             />
           </label>
-          <span
-            className={cn("flex flex-1 items-center font-medium", {
-              "pb-6": isOpen,
-            })}
+          <div
+            className={cn(
+              "flex flex-1 flex-nowrap items-center gap-1 overflow-hidden font-medium hover:text-foreground/80",
+              {
+                "pb-6": isOpen,
+              },
+            )}
             onClick={() => setIsOpen(!isOpen)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -62,23 +68,23 @@ export function AutoApproveMenu() {
               }
             }}
           >
-            Auto-approve:
-            {autoApproveActive && enabledOptions.length > 0 ? (
-              <span className="ml-1 text-[var(--vscode-foreground)]">
-                {enabledOptions.join(", ")}
-              </span>
-            ) : (
-              <span className="ml-1 text-[var(--vscode-descriptionForeground)]">
-                {hasEnabledOptions ? "Disabled" : "None"}
-              </span>
-            )}
-            <ChevronDown
+            <div className="flex-1 truncate">
+              <span className="whitespace-nowrap">Auto-approve:</span>
+              {autoApproveActive && enabledOptions.length > 0 ? (
+                <span className="ml-1">{enabledOptions.join(", ")}</span>
+              ) : (
+                <span className="ml-1 text-[var(--vscode-descriptionForeground)]">
+                  {hasEnabledOptions ? "Disabled" : "None"}
+                </span>
+              )}
+            </div>
+            <ChevronRight
               className={cn(
-                "mr-2 ml-auto size-4 text-[var(--vscode-descriptionForeground)] transition-transform duration-100 ease-in-out",
-                isOpen ? "rotate-180 transform" : "",
+                "size-4 shrink-0 text-[var(--vscode-descriptionForeground)] transition-transform duration-100 ease-in-out",
+                isOpen ? "rotate-90 transform" : "",
               )}
             />
-          </span>
+          </div>
         </div>
       </div>
 
@@ -135,7 +141,7 @@ function ToggleButton({ icon, label, isActive, onClick }: ToggleButtonProps) {
   return (
     <Button
       className={cn(
-        "flex flex-col items-center justify-center gap-3 border bg-transparent p-2 transition-all duration-100 sm:gap-4 sm:p-3",
+        "flex flex-col items-center justify-center gap-3 border bg-transparent p-2 text-foreground transition-all duration-100 sm:gap-4 sm:p-3",
         "size-[80px]",
         isActive
           ? "bg-primary text-primary-foreground hover:bg-primary/70"

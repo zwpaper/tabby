@@ -562,16 +562,15 @@ function Chat({ loaderData, isTaskLoading, prompt }: ChatProps) {
         className="hidden"
       />
 
-      <div className="mb-2 flex justify-between gap-3 pt-2">
+      <div className="my-2 flex shrink-0 justify-between gap-3 overflow-x-hidden">
         <ModelSelect
           value={selectedModel?.id}
           models={models}
           isLoading={isModelsLoading}
           onChange={handleSelectModel}
-          triggerClassName="py-0 h-6"
         />
 
-        <div className="flex gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
