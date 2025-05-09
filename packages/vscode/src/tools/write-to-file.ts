@@ -12,7 +12,7 @@ export const previewWriteToFile: PreviewToolFunctionType<
   if (path === undefined || content === undefined) return;
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
-  diffView.update(content, state !== "partial-call");
+  await diffView.update(content, state !== "partial-call");
 };
 
 /**
