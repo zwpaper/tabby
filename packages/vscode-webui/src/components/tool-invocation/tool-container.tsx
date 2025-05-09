@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { ExpandIcon } from "./expand-icon";
 
-export const ToolContainer: React.FC<{ children: React.ReactNode }> = ({
+const ToolContainer: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   return <div className="flex flex-col gap-1 text-sm">{children}</div>;
 };
 
-export const ToolTitle: React.FC<{
+const ToolTitle: React.FC<{
   children: React.ReactNode;
   onClick?: () => void;
 }> = ({ onClick, children }) => {
