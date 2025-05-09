@@ -41,7 +41,7 @@ export const writeToFileTool: React.FC<
 };
 
 function UserEdits({ userEdits }: { userEdits: string }) {
-  const [showDetails, setShowDetails] = useState(true);
+  const [showDetails, setShowDetails] = useState(false);
   return (
     <>
       <span
