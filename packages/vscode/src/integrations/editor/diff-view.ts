@@ -3,7 +3,6 @@ import {
   ensureFileDirectoryExists,
   getWorkspaceFolder,
   isFileExists,
-  writeFile,
 } from "@/lib/fs";
 import { createPrettyPatch } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
@@ -197,7 +196,7 @@ export class DiffView {
     const fileExists = await isFileExists(fileUri);
     if (!fileExists) {
       await ensureFileDirectoryExists(fileUri);
-      writeFile(fileUri, "");
+      await vscode.workspace.fs.writeFile(fileUri, Buffer.from("", "utf-8"));
     }
     const originalContent = (
       await vscode.workspace.fs.readFile(fileUri)
