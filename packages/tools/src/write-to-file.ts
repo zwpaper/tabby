@@ -16,5 +16,19 @@ export const writeToFile = defineClientTool({
     success: z
       .boolean()
       .describe("Indicates whether the file was successfully written."),
+
+    userEdits: z
+      .string()
+      .describe(
+        "The user's edits to the file, only present if the file was edited by the user.",
+      )
+      .optional(),
+
+    autoFormattingEdits: z
+      .string()
+      .describe(
+        "The auto-formatting edits to the file, only present if the auto formatter made changes.",
+      )
+      .optional(),
   }),
 });

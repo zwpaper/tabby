@@ -26,6 +26,6 @@ export const writeToFile: ToolFunctionType<
   if (!diffView) {
     throw new Error("User has closed the diff view, cannot save changes.");
   }
-  diffView.saveChanges(path, content);
-  return { success: true };
+  const edits = await diffView.saveChanges(path, content);
+  return { success: true, ...edits };
 };
