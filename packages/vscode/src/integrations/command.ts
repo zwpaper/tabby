@@ -4,8 +4,7 @@ import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { NewProjectRegistry } from "@/lib/new-project-registry";
-import { prepareProject } from "@/lib/new-project-utils";
+import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";

@@ -2,8 +2,7 @@ import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { NewProjectRegistry } from "@/lib/new-project-registry";
-import { createNewWorkspace } from "@/lib/new-project-utils";
+import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorkspaceJobQueue } from "@/lib/workspace-job";
 import type { NewTaskAttachment } from "@ragdoll/vscode-webui-bridge";

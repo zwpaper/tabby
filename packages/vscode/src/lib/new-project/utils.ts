@@ -2,7 +2,7 @@ import { getLogger } from "@/lib/logger";
 import * as jszip from "jszip";
 import generate from "project-name-generator";
 import * as vscode from "vscode";
-import { isFileExists } from "./fs";
+import { isFileExists } from "../fs";
 
 const logger = getLogger("newProjectUtils");
 
