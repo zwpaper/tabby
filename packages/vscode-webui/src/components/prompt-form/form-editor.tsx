@@ -278,7 +278,13 @@ function fuzzySearch(
     files: { filepath: string }[];
   },
 ): { filepath: string }[] {
-  if (!needle) return [];
+  if (!needle) {
+    const MAX_RESULTS = 500;
+    return data.files.length > MAX_RESULTS
+      ? data.files.slice(0, MAX_RESULTS)
+      : data.files;
+  }
+
   const uf = new uFuzzy({});
 
   const [_, info, order] = uf.search(data.haystack, needle);
