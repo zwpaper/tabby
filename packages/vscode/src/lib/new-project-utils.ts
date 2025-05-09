@@ -16,35 +16,51 @@ async function createDirectoryIfNotExists(uri: vscode.Uri) {
   }
 }
 
-export async function createNewProject(
-  githubTemplateUrl?: string | undefined,
-): Promise<vscode.Uri> {
-  return vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      cancellable: false,
-    },
-    async (progress) => {
-      logger.info("Preparing new project...");
-      progress.report({ message: "Pochi: Preparing new project..." });
+export async function createNewWorkspace(
+  namePlaceholder?: string | undefined,
+): Promise<vscode.Uri | undefined> {
+  await createDirectoryIfNotExists(baseUri);
 
-      const projectName = generate().dashed;
-      const projectUri = vscode.Uri.joinPath(baseUri, projectName);
+  const parentUri = await vscode.window.showOpenDialog({
+    title: "Select a directory to create the project in",
+    openLabel: "Select",
+    defaultUri: baseUri,
+    canSelectFolders: true,
+    canSelectFiles: false,
+    canSelectMany: false,
+  });
+  if (!parentUri || !parentUri[0]) {
+    return undefined;
+  }
 
-      await createDirectoryIfNotExists(baseUri);
-      await createDirectoryIfNotExists(projectUri);
-      logger.info(`Created directory: ${projectUri}`);
-
-      if (githubTemplateUrl) {
-        await prepareProject(projectUri, githubTemplateUrl, progress);
+  const placeholder = namePlaceholder ?? generate().dashed;
+  const projectName = await vscode.window.showInputBox({
+    title: "Enter a name for the project",
+    value: placeholder,
+    valueSelection: [0, placeholder.length],
+    ignoreFocusOut: true,
+    validateInput: (value) => {
+      if (value.trim() === "") {
+        return "Project name cannot be empty";
       }
-
-      return projectUri;
+      if (/[^a-zA-Z0-9-_]/.test(value)) {
+        return "Project name can only contain letters, numbers, dashes and underscores";
+      }
+      return undefined;
     },
-  );
+  });
+  if (!projectName) {
+    return undefined;
+  }
+  const projectUri = vscode.Uri.joinPath(parentUri[0], projectName);
+
+  await createDirectoryIfNotExists(projectUri);
+  logger.info(`Created directory: ${projectUri}`);
+
+  return projectUri;
 }
 
-async function prepareProject(
+export async function prepareProject(
   projectUri: vscode.Uri,
   githubTemplateUrl: string,
   progress: vscode.Progress<{ message?: string; increment?: number }>,

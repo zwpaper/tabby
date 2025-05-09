@@ -1,10 +1,18 @@
 import type { AuthClient } from "@/lib/auth-client";
-import { createNewProject } from "@/lib/new-project-utils";
+import type { NewProjectRegistry } from "@/lib/new-project-registry";
+import { createNewWorkspace } from "@/lib/new-project-utils";
 import type { WorkspaceJobQueue } from "@/lib/workspace-job";
 import type { NewTaskAttachment } from "@ragdoll/vscode-webui-bridge";
 import * as vscode from "vscode";
 
 export interface NewProjectParams {
+  requestId?: string;
+
+  /**
+   * project name
+   */
+  name?: string;
+
   /**
    * user input prompt message
    */
@@ -25,7 +33,8 @@ export interface NewProjectParams {
 class RagdollUriHandler implements vscode.UriHandler {
   constructor(
     private readonly authClient: AuthClient,
-    private readonly globalJobsRunner: WorkspaceJobQueue,
+    private readonly workspaceJobQueue: WorkspaceJobQueue,
+    private readonly newProjectRegistry: NewProjectRegistry,
     private readonly loginEvent: vscode.EventEmitter<void>,
   ) {}
 
@@ -71,20 +80,47 @@ class RagdollUriHandler implements vscode.UriHandler {
   }
 
   async handleNewProjectRequest(params: NewProjectParams) {
-    const { prompt, attachments, githubTemplateUrl } = params;
+    const { requestId, name } = params;
 
-    const newProjectUri = await createNewProject(githubTemplateUrl);
+    if (requestId) {
+      const createdProject = this.newProjectRegistry.get(requestId);
+      if (createdProject) {
+        await this.workspaceJobQueue.push({
+          workspaceUri: createdProject.toString(),
+          command: "ragdollWebui.focus",
+          args: [],
+          expiresAt: Date.now() + 1000 * 60,
+        });
+
+        // open the new workspace
+        await vscode.commands.executeCommand(
+          "vscode.openFolder",
+          createdProject,
+          {
+            forceNewWindow: true,
+          },
+        );
+        return;
+      }
+    }
+
+    const newWorkspaceUri = await createNewWorkspace(name);
+
+    if (!newWorkspaceUri) {
+      vscode.window.showWarningMessage("Cancelled creating new workspace.");
+      return;
+    }
 
     // push a global job to create task after the new workspace is opened
-    await this.globalJobsRunner.push({
-      workspaceUri: newProjectUri.toString(),
-      command: "ragdoll.createTask",
-      args: [{ prompt, attachments }],
+    await this.workspaceJobQueue.push({
+      workspaceUri: newWorkspaceUri.toString(),
+      command: "ragdoll.createProject",
+      args: [params],
       expiresAt: Date.now() + 1000 * 60,
     });
 
     // open the new workspace
-    await vscode.commands.executeCommand("vscode.openFolder", newProjectUri, {
+    await vscode.commands.executeCommand("vscode.openFolder", newWorkspaceUri, {
       forceNewWindow: true,
     });
   }

@@ -15,7 +15,7 @@ export interface WorkspaceJob {
   expiresAt: number;
 }
 
-const logger = getLogger("GlobalJobsRunner");
+const logger = getLogger("WorkspaceJobQueue");
 
 export class WorkspaceJobQueue implements vscode.Disposable {
   private static readonly GlobalStateKey = "global_jobs";

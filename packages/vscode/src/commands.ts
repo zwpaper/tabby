@@ -2,15 +2,16 @@ import type RagdollWebviewProvider from "@/integrations/webview/ragdoll-webview-
 import type { AuthClient } from "@/lib/auth-client";
 import type { AuthEvents } from "@/lib/auth-events";
 import type { TokenStorage } from "@/lib/token-storage";
-import {
-  type NewTaskAttachment,
-  getServerBaseUrl,
-} from "@ragdoll/vscode-webui-bridge";
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import * as vscode from "vscode";
+import type { NewProjectParams } from "./integrations/uri-handler";
+import type { NewProjectRegistry } from "./lib/new-project-registry";
+import { prepareProject } from "./lib/new-project-utils";
 
 export default function createCommands(
   ragdoll: RagdollWebviewProvider,
   tokenStorage: TokenStorage,
+  newProjectRegistry: NewProjectRegistry,
   authClient: AuthClient,
   authEvents: AuthEvents,
 ) {
@@ -66,21 +67,40 @@ export default function createCommands(
     }),
 
     vscode.commands.registerCommand(
-      "ragdoll.createTask",
-      async (params: {
-        prompt: string;
-        attachments?: NewTaskAttachment[];
-      }) => {
+      "ragdoll.createProject",
+      async (params: NewProjectParams) => {
         vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
             cancellable: false,
           },
           async (progress) => {
-            progress.report({ message: "Pochi: Creating task..." });
+            progress.report({ message: "Pochi: Creating project..." });
+
             await vscode.commands.executeCommand("ragdollWebui.focus");
+
+            const currentWorkspace = vscode.workspace.workspaceFolders?.[0].uri;
+            if (!currentWorkspace) {
+              return;
+            }
+            if (params.githubTemplateUrl) {
+              await prepareProject(
+                currentWorkspace,
+                params.githubTemplateUrl,
+                progress,
+              );
+            }
+
             const webviewHost = await ragdoll.retrieveWebviewHost();
-            webviewHost.openTask({ taskId: "new", ...params });
+            webviewHost.openTask({
+              taskId: "new",
+              prompt: params.prompt,
+              attachments: params.attachments,
+            });
+
+            if (params.requestId) {
+              await newProjectRegistry.set(params.requestId, currentWorkspace);
+            }
           },
         );
       },

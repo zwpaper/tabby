@@ -6,6 +6,7 @@ import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-con
 import { createAuthClient } from "./lib/auth-client";
 import { authEvents } from "./lib/auth-events";
 import { Extension } from "./lib/extension";
+import { NewProjectRegistry } from "./lib/new-project-registry";
 import { TokenStorage } from "./lib/token-storage";
 import { WorkspaceJobQueue } from "./lib/workspace-job";
 import createStatusBarItem from "./status-bar";
@@ -16,7 +17,8 @@ export async function activate(context: vscode.ExtensionContext) {
   console.log("activating Ragdoll...");
   Extension.getInstance(context);
 
-  const globalJobRunner = new WorkspaceJobQueue(context);
+  const workspaceJobQueue = new WorkspaceJobQueue(context);
+  const newProjectRegistry = new NewProjectRegistry(context);
   const tokenStorage = new TokenStorage(context);
   const authClient = createAuthClient(tokenStorage);
 
@@ -40,7 +42,8 @@ export async function activate(context: vscode.ExtensionContext) {
   // Uri handler
   const ragdollUriHandler = new RagdollUriHandler(
     authClient,
-    globalJobRunner,
+    workspaceJobQueue,
+    newProjectRegistry,
     authEvents.loginEvent,
   );
   context.subscriptions.push(
@@ -51,6 +54,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const commands = createCommands(
     ragdoll,
     tokenStorage,
+    newProjectRegistry,
     authClient,
     authEvents,
   );
