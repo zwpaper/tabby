@@ -19,9 +19,12 @@ import type { Editor } from "@tiptap/react";
 import type { Attachment, CreateMessage, TextPart, ToolInvocation } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
+  CheckIcon,
+  CopyIcon,
   ImageIcon,
   Loader2,
   SendHorizonal,
+  SettingsIcon,
   StopCircleIcon,
 } from "lucide-react";
 import {
@@ -42,8 +45,17 @@ import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { MAX_IMAGES } from "@/lib/constants";
+import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import {
   useSettingsStore,
@@ -148,6 +160,7 @@ interface ChatProps {
 }
 
 function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
+  const isDevMode = useIsDevMode();
   const taskId = useRef<number | undefined>(loaderData?.id);
   useEffect(() => {
     taskId.current = loaderData?.id;
@@ -605,6 +618,31 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         />
 
         <div className="flex shrink-0 items-center gap-1">
+          {isDevMode && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 rounded-md p-0"
+                  title="Dev mode"
+                >
+                  <SettingsIcon className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuContent
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                  side="bottom"
+                  className="dropdown-menu max-h-[30vh] min-w-[12rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-2 text-popover-foreground shadow"
+                >
+                  <DropdownMenuItem>
+                    <CopyMessages messages={messages} />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenuPortal>
+            </DropdownMenu>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -972,4 +1010,25 @@ const useResourceURI = () => {
     vscodeHost.readResourceURI().then(setResourceURI);
   }, []);
   return resourceURI;
+};
+
+const CopyMessages = ({ messages }: { messages: UIMessage[] }) => {
+  const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
+
+  const onCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isCopied) return;
+    copyToClipboard(JSON.stringify(messages, null, 2));
+  };
+
+  return (
+    <span onClick={onCopy}>
+      {isCopied ? (
+        <CheckIcon className="inline text-green-600" />
+      ) : (
+        <CopyIcon className="inline" />
+      )}
+      <span className="ml-2">Copy Messages</span>
+    </span>
+  );
 };

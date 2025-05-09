@@ -220,6 +220,13 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       selection: new vscode.Range(start - 1, 0, end - 1, 0),
     });
   }
+
+  async readIsDevMode(): Promise<boolean> {
+    const advancedSettings = vscode.workspace
+      .getConfiguration("pochi")
+      .get("settings.advanced", {}) as { isDevMode?: boolean };
+    return advancedSettings.isDevMode === true;
+  }
 }
 
 function safeCall<T>(x: Promise<T>) {

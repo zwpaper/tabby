@@ -141,5 +141,12 @@ export default function createCommands(
         webviewHost.openTaskList();
       },
     ),
+
+    vscode.commands.registerCommand("ragdoll.openSettings", async () => {
+      vscode.commands.executeCommand(
+        "workbench.action.openSettings",
+        "@ext:tabbyml.pochi",
+      );
+    }),
   ];
 }

@@ -49,6 +49,11 @@
         "title": "Show All Tasks",
         "icon": "$(history)",
         "category": "Pochi"
+      },
+      {
+        "command": "ragdoll.openSettings",
+        "title": "Open Settings",
+        "category": "Pochi"
       }
     ],
     "menus": {
@@ -78,7 +83,24 @@
           "group": "navigation@1"
         }
       ]
-    }
+    },
+    "configuration": [
+      {
+        "title": "Pochi",
+        "properties": {
+          "pochi.settings.advanced": {
+            "default": {},
+            "properties": {
+              "isDevMode": {
+                "type": "boolean",
+                "default": false,
+                "description": "Pochi dev mode"
+              }
+            }
+          }
+        }
+      }
+    ]
   },
   "engines": {
     "vscode": "^1.82.0"

@@ -10,11 +10,12 @@ const ToolContainer: React.FC<{ children: React.ReactNode }> = ({
 const ToolTitle: React.FC<{
   children: React.ReactNode;
   onClick?: () => void;
-}> = ({ onClick, children }) => {
+  className?: string;
+}> = ({ onClick, children, className }) => {
   return (
     <div
       onClick={onClick}
-      className="flex cursor-pointer items-center gap-2 rounded"
+      className={`flex items-center gap-2 rounded ${className}`}
     >
       {children}
     </div>
@@ -37,7 +38,10 @@ export const ExpandableToolContainer: React.FC<{
 
   return (
     <ToolContainer>
-      <ToolTitle onClick={handleToggle}>
+      <ToolTitle
+        onClick={handleToggle}
+        className={detail ? "cursor-pointer" : undefined}
+      >
         {title} {detail && <ExpandIcon isExpanded={showDetails} />}
       </ToolTitle>
       {showDetails && detail}

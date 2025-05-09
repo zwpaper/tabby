@@ -48,6 +48,8 @@ export interface VSCodeHostApi {
    * @param options.end - The ending line number (1-based) to open the file at.
    */
   openFile(filePath: string, options?: { start?: number; end?: number }): void;
+
+  readIsDevMode(): Promise<boolean>;
 }
 
 export interface WebviewHostApi {
