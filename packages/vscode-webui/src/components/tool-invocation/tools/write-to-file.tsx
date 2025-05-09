@@ -22,14 +22,16 @@ export const writeToFileTool: React.FC<
   const { path } = tool.args || {};
   return (
     <div className="text-sm" title={error}>
-      <StatusIcon
-        isExecuting={isExecuting}
-        tool={tool}
-        onClick={tool.state !== "result" ? handleClick : undefined}
-      />
+      <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       Writing
-      {path && <FileBadge className="ml-2" path={path} />}
+      {path && (
+        <FileBadge
+          className="ml-2"
+          path={path}
+          onClick={tool.state !== "result" ? handleClick : undefined}
+        />
+      )}
     </div>
   );
 };

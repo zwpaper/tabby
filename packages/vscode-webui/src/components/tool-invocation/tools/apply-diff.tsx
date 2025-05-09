@@ -32,16 +32,17 @@ export const applyDiffTool: React.FC<
   return (
     <div className="flex flex-col gap-1 text-sm" title={error}>
       <span className="space-x-2">
-        <StatusIcon
-          isExecuting={isExecuting}
-          tool={tool}
-          onClick={tool.state !== "result" ? handleClick : undefined}
-        />
+        <StatusIcon isExecuting={isExecuting} tool={tool} />
         <span>
           {isExecuting ? "Applying" : isSuccess ? "Applied" : "Apply"} diff to
         </span>
         {path && (
-          <FileBadge path={path} startLine={startLine} endLine={endLine} />
+          <FileBadge
+            path={path}
+            startLine={startLine}
+            endLine={endLine}
+            onClick={tool.state !== "result" ? handleClick : undefined}
+          />
         )}
       </span>
     </div>

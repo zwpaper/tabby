@@ -11,6 +11,7 @@ interface FileBadgeProps {
   path: string;
   startLine?: number;
   endLine?: number;
+  onClick?: () => void;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
   path,
   startLine,
   endLine,
+  onClick,
   className,
 }) => {
   const lineRange = startLine
@@ -27,7 +29,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
       ? `:${startLine}-${endLine}`
       : `:${startLine}`
     : "";
-  const onClick = () => {
+  const defaultOnClick = () => {
     vscodeHost.openFile(
       path,
       startLine ? { start: startLine, end: endLine } : undefined,
@@ -37,7 +39,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
     <Tooltip delayDuration={700}>
       <TooltipTrigger asChild>
         <span
-          onClick={onClick}
+          onClick={onClick || defaultOnClick}
           className={cn(
             "cursor-pointer rounded-sm border border-zinc-600 box-decoration-clone px-1 py-0.5 text-xs active:bg-zinc-700",
             className,
