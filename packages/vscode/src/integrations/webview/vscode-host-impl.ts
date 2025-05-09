@@ -15,10 +15,15 @@ import {
   ThreadAbortSignal,
   type ThreadAbortSignalSerialization,
 } from "@quilted/threads";
+import {
+  ThreadSignal,
+  type ThreadSignalSerialization,
+} from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { SessionState, VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import type { PochiConfiguration } from "../configuration";
 
 const logger = getLogger("VSCodeHostImpl");
 
@@ -28,28 +33,21 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
   constructor(
     private readonly tokenStorage: TokenStorage,
     private readonly sessionState: SessionState,
+    private readonly pochiConfiguration: PochiConfiguration,
     readonly readResourceURI: VSCodeHostApi["readResourceURI"],
-  ) {
-    this.getToken = this.getToken.bind(this);
-    this.setToken = this.setToken.bind(this);
-    this.getSessionState = this.getSessionState.bind(this);
-    this.setSessionState = this.setSessionState.bind(this);
-    this.readEnvironment = this.readEnvironment.bind(this);
-    this.executeToolCall = this.executeToolCall.bind(this);
-    this.previewToolCall = this.previewToolCall.bind(this);
-  }
+  ) {}
 
-  async getToken(): Promise<string | undefined> {
+  getToken = async (): Promise<string | undefined> => {
     return this.tokenStorage.getToken();
-  }
+  };
 
-  async setToken(token: string | undefined): Promise<void> {
+  setToken = async (token: string | undefined): Promise<void> => {
     return this.tokenStorage.setToken(token);
-  }
+  };
 
-  async getSessionState<K extends keyof SessionState>(
+  getSessionState = async <K extends keyof SessionState>(
     keys?: K[] | undefined,
-  ): Promise<Pick<SessionState, K>> {
+  ): Promise<Pick<SessionState, K>> => {
     if (!keys || keys.length === 0) {
       return { ...this.sessionState };
     }
@@ -63,13 +61,13 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       },
       {} as Pick<SessionState, K>,
     );
-  }
+  };
 
-  async setSessionState(state: Partial<SessionState>): Promise<void> {
+  setSessionState = async (state: Partial<SessionState>): Promise<void> => {
     Object.assign(this.sessionState, state);
-  }
+  };
 
-  async readEnvironment(): Promise<Environment> {
+  readEnvironment = async (): Promise<Environment> => {
     const workspaceFolders = vscode.workspace.workspaceFolders;
 
     const MaxFileItems = 500;
@@ -98,14 +96,14 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     };
 
     return environment;
-  }
+  };
 
-  async listFilesInWorkspace(): Promise<
+  listFilesInWorkspace = async (): Promise<
     {
       filepath: string;
       isDir: boolean;
     }[]
-  > {
+  > => {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders?.length || !workspaceFolders[0]) {
       return [];
@@ -119,48 +117,48 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       filepath: vscode.workspace.asRelativePath(item.uri),
       isDir: item.isDir,
     }));
-  }
+  };
 
-  private async queueToolCall<T>(fn: () => Promise<T>) {
+  private queueToolCall = async <T>(fn: () => Promise<T>) => {
     const toolCallPromise = this.toolCallQueue.catch(console.error).then(fn);
     this.toolCallQueue = toolCallPromise;
     return toolCallPromise;
-  }
+  };
 
-  executeToolCall(
+  executeToolCall = async (
     toolName: string,
     args: unknown,
     options: {
       toolCallId: string;
       abortSignal: ThreadAbortSignalSerialization;
     },
-  ) {
+  ) => {
     return this.queueToolCall(() =>
       this.executeToolCallImpl(toolName, args, options),
     );
-  }
+  };
 
-  previewToolCall(
+  previewToolCall = async (
     toolName: string,
     args: unknown,
     options: {
       toolCallId: string;
       state: "partial-call" | "call" | "result";
     },
-  ) {
+  ) => {
     return this.queueToolCall(() =>
       this.previewToolCallImpl(toolName, args, options),
     );
-  }
+  };
 
-  private async executeToolCallImpl(
+  private executeToolCallImpl = async (
     toolName: string,
     args: unknown,
     options: {
       toolCallId: string;
       abortSignal: ThreadAbortSignalSerialization;
     },
-  ) {
+  ) => {
     const tool = ToolMap[toolName];
     if (!tool) {
       return {
@@ -177,16 +175,16 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
         toolCallId: options.toolCallId,
       }),
     );
-  }
+  };
 
-  private async previewToolCallImpl(
+  private previewToolCallImpl = async (
     toolName: string,
     args: unknown,
     options: {
       toolCallId: string;
       state: "partial-call" | "call" | "result";
     },
-  ) {
+  ) => {
     const tool = ToolPreviewMap[toolName];
     if (!tool) {
       return;
@@ -194,9 +192,12 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 
     // biome-ignore lint/suspicious/noExplicitAny: external call without type information
     return tool(args as any, options);
-  }
+  };
 
-  async openFile(filePath: string, options?: { start?: number; end?: number }) {
+  openFile = async (
+    filePath: string,
+    options?: { start?: number; end?: number },
+  ) => {
     const current = vscode.workspace.workspaceFolders?.[0].uri;
     if (!current) {
       throw new Error("No workspace folder found.");
@@ -219,14 +220,11 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     vscode.window.showTextDocument(fileUri, {
       selection: new vscode.Range(start - 1, 0, end - 1, 0),
     });
-  }
+  };
 
-  async readIsDevMode(): Promise<boolean> {
-    const advancedSettings = vscode.workspace
-      .getConfiguration("pochi")
-      .get("settings.advanced", {}) as { isDevMode?: boolean };
-    return advancedSettings.isDevMode === true;
-  }
+  readIsDevMode = async (): Promise<ThreadSignalSerialization<boolean>> => {
+    return ThreadSignal.serialize(this.pochiConfiguration.isDevMode);
+  };
 }
 
 function safeCall<T>(x: Promise<T>) {

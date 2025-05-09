@@ -21,6 +21,7 @@ import {
   type WebviewViewProvider,
   type WebviewViewResolveContext,
 } from "vscode";
+import type { PochiConfiguration } from "../configuration";
 
 class RagdollWebviewProvider implements WebviewViewProvider {
   public static readonly viewType = "ragdollWebui";
@@ -34,12 +35,14 @@ class RagdollWebviewProvider implements WebviewViewProvider {
   constructor(
     private readonly extensionUri: Uri,
     private readonly tokenStorage: TokenStorage,
+    private readonly pochiConfiguration: PochiConfiguration,
     private readonly events: AuthEvents,
   ) {}
 
   public static getInstance(
     extensionUri: Uri,
     tokenStorage: TokenStorage,
+    pochiConfiguration: PochiConfiguration,
     events: {
       loginEvent: EventEmitter<void>;
       logoutEvent: EventEmitter<void>;
@@ -49,6 +52,7 @@ class RagdollWebviewProvider implements WebviewViewProvider {
       RagdollWebviewProvider.instance = new RagdollWebviewProvider(
         extensionUri,
         tokenStorage,
+        pochiConfiguration,
         events,
       );
     }
@@ -112,6 +116,7 @@ class RagdollWebviewProvider implements WebviewViewProvider {
     const vscodeHost = new VSCodeHostImpl(
       this.tokenStorage,
       this.sessionState,
+      this.pochiConfiguration,
       this.readResourceURI.bind(this),
     );
     return new Thread<WebviewHostApi, VSCodeHostApi>(

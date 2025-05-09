@@ -9,10 +9,15 @@ export default defineConfig({
   plugins: [
     tsconfigPaths(),
     TanStackRouterVite({ autoCodeSplitting: true }),
-    viteReact(),
+    viteReact({
+      babel: {
+        plugins: [["module:@preact/signals-react-transform"]],
+      },
+    }),
     tailwindcss(),
   ],
   build: {
+    target: "ES2022",
     rollupOptions: {
       output: {
         manualChunks: false,

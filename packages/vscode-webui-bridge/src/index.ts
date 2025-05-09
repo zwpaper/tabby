@@ -1,4 +1,5 @@
 import type { ThreadAbortSignalSerialization } from "@quilted/threads";
+import type { ThreadSignalSerialization } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/server";
 
 export interface VSCodeHostApi {
@@ -49,7 +50,7 @@ export interface VSCodeHostApi {
    */
   openFile(filePath: string, options?: { start?: number; end?: number }): void;
 
-  readIsDevMode(): Promise<boolean>;
+  readIsDevMode(): Promise<ThreadSignalSerialization<boolean>>;
 }
 
 export interface WebviewHostApi {

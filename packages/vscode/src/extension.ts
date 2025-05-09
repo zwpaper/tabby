@@ -2,6 +2,7 @@ import RagdollUriHandler from "@/integrations/uri-handler";
 import RagdollWebviewProvider from "@/integrations/webview/ragdoll-webview-provider";
 import * as vscode from "vscode";
 import createCommands from "./commands";
+import { PochiConfiguration } from "./integrations/configuration";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
 import { createAuthClient } from "./lib/auth-client";
 import { authEvents } from "./lib/auth-events";
@@ -22,6 +23,10 @@ export async function activate(context: vscode.ExtensionContext) {
   const tokenStorage = new TokenStorage(context);
   const authClient = createAuthClient(tokenStorage);
 
+  // Configuration
+  const pochiConfiguration = new PochiConfiguration();
+  context.subscriptions.push(pochiConfiguration.listen());
+
   // Status bar
   const statusBarItem = createStatusBarItem(authClient, authEvents);
   context.subscriptions.push(...statusBarItem);
@@ -30,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const ragdoll = RagdollWebviewProvider.getInstance(
     context.extensionUri,
     tokenStorage,
+    pochiConfiguration,
     authEvents,
   );
   const ragdollWebviewProvider = vscode.window.registerWebviewViewProvider(

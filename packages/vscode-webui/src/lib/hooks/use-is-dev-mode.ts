@@ -1,23 +1,8 @@
-import { useEffect, useState } from "react";
+import { threadSignal } from "@quilted/threads/signals";
 import { vscodeHost } from "../vscode";
 
+const isDevMode = threadSignal(await vscodeHost.readIsDevMode());
+
 export const useIsDevMode = () => {
-  const [isDevMode, setIsDevMode] = useState(false);
-
-  useEffect(() => {
-    const fetchIsDevMode = async () => {
-      try {
-        const val = await vscodeHost.readIsDevMode();
-        setIsDevMode(val);
-      } catch (error) {
-        console.error("Failed to fetch isDevMode:", error);
-        setIsDevMode(false);
-      }
-    };
-    fetchIsDevMode();
-    const interval = setInterval(fetchIsDevMode, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return isDevMode;
+  return isDevMode.value;
 };

@@ -54,8 +54,9 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
+        "@preact/signals-core": "^1.8.0",
         "@quilted/threads": "^3.1.3",
         "diff": "^7.0.0",
         "file-type": "^20.4.1",
@@ -83,6 +84,7 @@
         "@daveyplate/better-auth-tanstack": "^1.3.2",
         "@hono/client": "^0.0.3",
         "@leeoniya/ufuzzy": "^1.0.18",
+        "@preact/signals-core": "^1.8.0",
         "@quilted/threads": "^3.1.3",
         "@radix-ui/react-avatar": "^1.1.7",
         "@radix-ui/react-checkbox": "^1.2.3",
@@ -135,6 +137,7 @@
         "zustand": "^5.0.3",
       },
       "devDependencies": {
+        "@preact/signals-react-transform": "^0.5.1",
         "@ragdoll/tools": "workspace:*",
         "@ragdoll/vscode-webui-bridge": "workspace:*",
         "@tailwindcss/typography": "^0.5.16",
@@ -592,6 +595,10 @@
     "@popperjs/core": ["@popperjs/core@2.11.8", "", {}, "sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A=="],
 
     "@preact/signals-core": ["@preact/signals-core@1.8.0", "", {}, "sha512-OBvUsRZqNmjzCZXWLxkZfhcgT+Fk8DDcT/8vD6a1xhDemodyy87UJRJfASMuSD8FaAIeGgGm85ydXhm7lr4fyA=="],
+
+    "@preact/signals-react": ["@preact/signals-react@3.0.1", "", { "dependencies": { "@preact/signals-core": "^1.7.0", "use-sync-external-store": "^1.2.0" }, "peerDependencies": { "react": "^16.14.0 || 17.x || 18.x || 19.x" } }, "sha512-HkM5Q2IsETO1M0bUzy4JB0EPQCf99SMbWP9K6GYlYVHfOX1HLKJ6Dl9L1/1rQnmrQpUsTw0R+IJQDh6tYWar2g=="],
+
+    "@preact/signals-react-transform": ["@preact/signals-react-transform@0.5.1", "", { "dependencies": { "@babel/helper-module-imports": "^7.22.5", "@babel/helper-plugin-utils": "^7.22.5", "@preact/signals-react": "^3.0.0", "debug": "^4.3.4", "use-sync-external-store": "^1.2.0" }, "peerDependencies": { "@babel/core": "^7.0.0", "react": "^16.14.0 || 17.x || 18.x || 19.x" } }, "sha512-/w1rgu7i/qDk8dhDj+6AVVVJ+b1W11YkP3vfPPPyrn1tDCPb8orYwETa3JCvYxMtJBHbvIYEjhXvZ8Ab2cWC8g=="],
 
     "@quilted/events": ["@quilted/events@2.1.3", "", { "dependencies": { "@preact/signals-core": "^1.8.0" } }, "sha512-4fHaSLND8rmZ+tce9/4FNmG5UWTRpFtM54kOekf3tLON4ZLLnYzjjldELD35efd7+lT5+E3cdkacqc56d+kCrQ=="],
 

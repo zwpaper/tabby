@@ -1,4 +1,3 @@
-export type { ToolFunctionType };
 export { defineServerTool } from "./types";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
@@ -10,6 +9,7 @@ import { readEnvironment } from "./read-environment";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import type { ToolFunctionType } from "./types";
+export type { ToolFunctionType };
 import { writeToFile } from "./write-to-file";
 
 export function isUserInputTool(toolName: string): boolean {
