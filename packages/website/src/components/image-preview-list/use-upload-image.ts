@@ -1,6 +1,6 @@
-import { apiClient } from "@/lib/auth-client";
+import { generateFileId } from "@/lib/utils/image";
+import type { Attachment } from "ai";
 import { useEffect, useRef, useState } from "react";
-
 interface UseUploadImageOptions {
   token: string;
   files: File[] | undefined;
@@ -17,9 +17,7 @@ export function useUploadImage({ token, files }: UseUploadImageOptions) {
   const [error, setError] = useState<Error | undefined>(undefined);
   const uploadAbortController = useRef(new AbortController());
 
-  const uploadImages = async (): Promise<
-    Array<{ name: string; contentType: string; url: string }>
-  > => {
+  const uploadImages = async (): Promise<Attachment[] | undefined> => {
     // Clear error
     setError(undefined);
 
@@ -33,7 +31,7 @@ export function useUploadImage({ token, files }: UseUploadImageOptions) {
     // Create tracking state for each file
     const newUploadingFiles = files.reduce(
       (acc, file) => {
-        const fileId = `${file.name}-${file.size}`;
+        const fileId = generateFileId(file);
         acc[fileId] = true;
         return acc;
       },
@@ -47,24 +45,20 @@ export function useUploadImage({ token, files }: UseUploadImageOptions) {
     const { signal } = uploadAbortController.current;
 
     try {
-      const uploadedImages = await Promise.all(
+      const uploadedImages: Attachment[] = await Promise.all(
         files.map(async (file) => {
-          const fileId = `${file.name}-${file.size}`;
+          const fileId = generateFileId(file);
           try {
             const formData = new FormData();
             formData.append("image", file);
-
-            const response = await fetch(
-              apiClient.api.upload.$url().toString(),
-              {
-                method: "POST",
-                body: formData,
-                signal,
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
+            const response = await fetch("/api/upload", {
+              method: "POST",
+              body: formData,
+              signal,
+              headers: {
+                Authorization: `Bearer ${token}`,
               },
-            );
+            });
 
             if (!response.ok) {
               setUploadResults((prev) => ({ ...prev, [fileId]: "error" }));
@@ -73,12 +67,12 @@ export function useUploadImage({ token, files }: UseUploadImageOptions) {
 
             setUploadResults((prev) => ({ ...prev, [fileId]: "success" }));
             const data = await response.json();
-
-            return {
+            const result: Attachment = {
               name: file.name || "unnamed-image",
               contentType: file.type,
               url: data.image,
             };
+            return result;
           } catch (error) {
             if (signal.aborted) {
               throw new DOMException("Aborted", "AbortError");
@@ -108,14 +102,11 @@ export function useUploadImage({ token, files }: UseUploadImageOptions) {
     setUploadingFilesMap({});
   };
 
-  const clearError = () => {
-    setError(undefined);
-  };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: need to watch files
   useEffect(() => {
-    clearError();
-  }, [files]);
+    if (!files?.length) {
+      setError(undefined);
+    }
+  }, [files?.length]);
 
   return {
     uploadImages,
@@ -123,7 +114,7 @@ export function useUploadImage({ token, files }: UseUploadImageOptions) {
     uploadingFilesMap,
     uploadResults,
     stop,
-    error,
-    clearError,
+    error: error,
+    setError,
   };
 }

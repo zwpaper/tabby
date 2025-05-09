@@ -12,7 +12,16 @@ import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  prompt: z.string(),
+  prompt: z.string().optional(),
+  attachments: z
+    .array(
+      z.object({
+        name: z.string().optional(),
+        contentType: z.string().optional(),
+        url: z.string(),
+      }),
+    )
+    .optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/redirect-vscode")({
@@ -21,17 +30,29 @@ export const Route = createFileRoute("/_authenticated/redirect-vscode")({
 });
 
 function RouteComponent() {
-  const { prompt } = Route.useSearch();
+  const { prompt, attachments } = Route.useSearch();
   const [showManualButton, setShowManualButton] = useState(false);
 
+  const newProject = {
+    prompt,
+    attachments,
+    githubTemplateUrl: "https://github.com/wsxiaoys/reimagined-octo-funicular",
+  };
+  const jsonString = JSON.stringify(newProject);
+
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(jsonString);
+  const base64Encoded = btoa(
+    Array.from(bytes)
+      .map((byte) => String.fromCharCode(byte))
+      .join(""),
+  );
+
   const vscodeLink = `vscode://TabbyML.pochi/?newProject=${encodeURIComponent(
-    JSON.stringify({
-      prompt,
-      githubTemplateUrl:
-        "https://github.com/wsxiaoys/reimagined-octo-funicular",
-    }),
+    base64Encoded,
   )}`;
 
+  console.log(vscodeLink);
   const openVSCode = useCallback(() => {
     window.open(vscodeLink);
   }, [vscodeLink]);
@@ -58,7 +79,7 @@ function RouteComponent() {
             <span>Starting Task</span>
           </CardTitle>
           <CardDescription className="mt-1 text-xs italic">
-            {prompt.split("\n")[0]}
+            {prompt ? prompt.split("\n")[0] : "[attachments]"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">

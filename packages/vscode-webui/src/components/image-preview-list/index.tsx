@@ -22,16 +22,7 @@ export function ImagePreviewList({
   const [previews, setPreviews] = useState<string[]>([]);
 
   // Generate previews for images when files change
-  // biome-ignore lint/correctness/useExhaustiveDependencies: ignore
   useEffect(() => {
-    if (previews.length > 0) {
-      for (const preview of previews) {
-        if (preview.startsWith("blob:")) {
-          URL.revokeObjectURL(preview);
-        }
-      }
-    }
-
     // Generate new previews
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setPreviews(newPreviews);

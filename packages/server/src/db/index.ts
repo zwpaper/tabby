@@ -16,6 +16,7 @@ export type DBMessage = {
   parts: Array<
     Exclude<NonNullable<Message["parts"]>[number], { type: "source" }>
   >;
+  experimental_attachments?: Message["experimental_attachments"];
 };
 
 export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {

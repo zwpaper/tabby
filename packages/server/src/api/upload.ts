@@ -4,9 +4,6 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { requireAuth } from "../auth";
 
-const app = new Hono();
-export default app;
-
 const client = new S3Client({
   region: "auto",
   endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -25,7 +22,7 @@ const storage = new HonoS3Storage({
 });
 
 // FIXME: add rate limiter https://github.com/rhinobase/hono-rate-limiter
-app.post(
+const upload = new Hono().post(
   "/",
   requireAuth,
   bodyLimit({
@@ -40,3 +37,5 @@ app.post(
     });
   },
 );
+
+export default upload;

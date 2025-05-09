@@ -1,3 +1,5 @@
+import { ImagePreviewList } from "@/components/image-preview-list";
+import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { PromptSuggestions } from "@/components/suggestions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -5,18 +7,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserButton } from "@/components/user-button";
 import { apiClient } from "@/lib/auth-client";
 import { useEnhancingPrompt } from "@/lib/useEnhancingPrompt";
+import {
+  createImageFileName,
+  isDuplicateFile,
+  processImageFiles,
+  validateImages,
+} from "@/lib/utils/image";
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { createFileRoute, useRouter, useSearch } from "@tanstack/react-router";
+import type { Attachment } from "ai";
 import {
   ArrowUpIcon,
+  ImageIcon,
   Loader2Icon,
-  PaperclipIcon,
   SparklesIcon,
   Terminal,
 } from "lucide-react";
-import { type FormEvent, useState } from "react";
-import type { KeyboardEvent } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
+import type { ClipboardEvent, KeyboardEvent } from "react";
 import { z } from "zod";
+
+export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at once
 
 const searchSchema = z.object({
   input: z.string().optional(),
@@ -46,10 +57,108 @@ function RouteComponent() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [imageSelectionError, setImageSelectionError] = useState<
+    Error | undefined
+  >(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { navigate } = useRouter();
 
-  const submitIsDisabled = isEnhancing || isSubmitting || inputValue.length < 8;
+  // Auto-dismiss error after 5 seconds
+  useEffect(() => {
+    if (imageSelectionError) {
+      const timer = setTimeout(() => {
+        setImageSelectionError(undefined);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [imageSelectionError]);
+
+  const handleRemoveImage = (index: number) => {
+    setFiles((prev) => {
+      const newFiles = [...prev];
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
+  };
+
+  const showImageError = (message: string) => {
+    setImageSelectionError(new Error(message));
+  };
+
+  const validateAndAddImages = (
+    newImages: File[],
+    fromClipboard = false,
+  ): { success: boolean; error?: string } => {
+    const result = validateImages(
+      files,
+      processImageFiles(newImages, fromClipboard),
+      MAX_IMAGES,
+    );
+
+    if (result.success) {
+      setFiles((prevFiles) => [...prevFiles, ...result.validatedImages]);
+      setImageSelectionError(undefined);
+    }
+
+    return {
+      success: result.success,
+      error: result.error,
+    };
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const selectedFiles = Array.from(event.target.files);
+
+      // Deduplication check for device uploads
+      const nonDuplicateFiles = selectedFiles.filter(
+        (file) => !isDuplicateFile(file, files),
+      );
+
+      // Show message if any duplicates were found
+      if (nonDuplicateFiles.length < selectedFiles.length) {
+        showImageError(
+          `${selectedFiles.length - nonDuplicateFiles.length} duplicate image(s) were skipped.`,
+        );
+        // If all files were duplicates, stop here
+        if (nonDuplicateFiles.length === 0) {
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          return;
+        }
+      }
+
+      const result = validateAndAddImages(nonDuplicateFiles);
+
+      if (!result.success) {
+        showImageError(result.error || "Error adding images");
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const {
+    uploadImages,
+    uploadingFilesMap,
+    isUploadingImages,
+    stop: stopUpload,
+    error: uploadImageError,
+  } = useUploadImage({
+    token: auth?.session?.token || "",
+    files,
+  });
+
+  const submitIsDisabled =
+    isEnhancing ||
+    isSubmitting ||
+    isUploadingImages ||
+    (inputValue.length < 8 && files.length === 0);
 
   const handleEnhance = async () => {
     if (!inputValue.trim()) return;
@@ -68,20 +177,34 @@ function RouteComponent() {
     if (auth === null) {
       setShowAuthDialog(true);
     } else {
-      if (RedirectVSCodeDirectly) {
-        await navigate({
-          to: "/redirect-vscode",
-          search: {
+      try {
+        let attachments: Attachment[] | undefined = undefined;
+
+        if (files.length > 0) {
+          try {
+            attachments = await uploadImages();
+          } catch (error) {
+            throw new Error("Failed to upload images. Please try again.");
+          }
+        }
+
+        if (RedirectVSCodeDirectly) {
+          await navigate({
+            to: "/redirect-vscode",
+            search: {
+              prompt: input,
+              attachments,
+            },
+          });
+          return;
+        }
+
+        setIsSubmitting(true);
+
+        const res = await apiClient.api.tasks.$post({
+          json: {
             prompt: input,
           },
-        });
-        return;
-      }
-
-      setIsSubmitting(true);
-      try {
-        const res = await apiClient.api.tasks.$post({
-          json: { prompt: input },
         });
 
         if (!res.ok) {
@@ -89,6 +212,7 @@ function RouteComponent() {
         }
 
         const { id } = await res.json();
+
         navigate({
           to: "/tasks/$id/redirect",
           params: { id: id.toString() },
@@ -112,6 +236,45 @@ function RouteComponent() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
+    }
+  };
+
+  const handlePasteImage = (event: ClipboardEvent) => {
+    const images = Array.from(event.clipboardData?.items || [])
+      .filter((item) => item.type.startsWith("image/"))
+      .map((item) => {
+        const file = item.getAsFile();
+        if (file) {
+          return new File([file], createImageFileName(file.type), {
+            type: file.type,
+          });
+        }
+        return null;
+      })
+      .filter(Boolean) as File[];
+
+    if (images.length > 0) {
+      // Use fromClipboard=true to indicate these are clipboard images
+      const result = validateAndAddImages(images, true);
+
+      if (!result.success) {
+        showImageError(result.error || "Error adding images");
+        event.preventDefault();
+        return true;
+      }
+
+      event.preventDefault();
+      return true;
+    }
+
+    return false;
+  };
+
+  const handleStop = () => {
+    if (isUploadingImages) {
+      stopUpload();
+    } else if (isSubmitting) {
+      stop();
     }
   };
 
@@ -141,9 +304,19 @@ function RouteComponent() {
         className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm"
         onSubmit={handleSubmit}
       >
+        {files.length > 0 && (
+          <ImagePreviewList
+            files={files}
+            onRemove={handleRemoveImage}
+            uploadingFiles={uploadingFilesMap}
+          />
+        )}
         <Textarea
           disabled={isSubmitting}
           onKeyDown={submitOnEnter}
+          onPaste={(e) => {
+            handlePasteImage(e);
+          }}
           placeholder="Ask pochi to build..."
           className="mb-4 min-h-10 w-full resize-none border-none bg-transparent text-black text-lg placeholder-gray-400 shadow-none focus-visible:ring-0"
           value={inputValue}
@@ -168,8 +341,9 @@ function RouteComponent() {
               variant="ghost"
               size="icon"
               className="rounded-full text-gray-500 transition-colors hover:bg-gray-200/50 hover:text-black"
+              onClick={() => fileInputRef.current?.click()}
             >
-              <PaperclipIcon className="h-5 w-5" />
+              <ImageIcon className="h-5 w-5" />
             </Button>
             <Button
               type="submit"
@@ -177,8 +351,15 @@ function RouteComponent() {
               variant="default"
               size="icon"
               className="rounded-full transition-colors"
+              onClick={(e) => {
+                if (isSubmitting || isUploadingImages) {
+                  e.preventDefault();
+                  handleStop();
+                  return;
+                }
+              }}
             >
-              {isSubmitting ? (
+              {isSubmitting || isUploadingImages ? (
                 <Loader2Icon className="animate-spin" />
               ) : (
                 <ArrowUpIcon />
@@ -186,13 +367,23 @@ function RouteComponent() {
             </Button>
           </div>
         </div>
+        {/* Hidden file input for image uploads */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          accept="image/*"
+          multiple
+          className="hidden"
+        />
       </form>
       <PromptSuggestions handleSubmit={doSubmit} />
-      {submitError && (
-        <p className="mt-4 text-right text-destructive text-sm">
-          {submitError}
-        </p>
-      )}
+      <div className="mt-4 text-right text-destructive text-sm">
+        {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. submitError */}
+        {imageSelectionError?.message ||
+          uploadImageError?.message ||
+          submitError}
+      </div>
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <AuthCard
