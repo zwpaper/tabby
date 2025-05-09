@@ -16,7 +16,7 @@ import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Editor } from "@tiptap/react";
-import type { TextPart, ToolInvocation } from "ai";
+import type { Attachment, TextPart, ToolInvocation } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
   ImageIcon,
@@ -237,7 +237,6 @@ function Chat({ loaderData, isTaskLoading, prompt }: ChatProps) {
     status,
     stop,
     addToolResult,
-    handleSubmit,
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
@@ -304,17 +303,27 @@ function Chat({ loaderData, isTaskLoading, prompt }: ChatProps) {
   });
 
   const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     if (files.length > 0) {
-      e.preventDefault();
-      const uploadedImages = await uploadImages();
-      handleSubmit(e, {
+      const uploadedImages: Attachment[] = await uploadImages();
+
+      append({
+        role: "user",
+        content: !input.trim() ? " " : input, // use space to keep parts not empty
         experimental_attachments: uploadedImages,
       });
-      // Clear files after successful upload
+
+      setInput("");
       setFiles([]);
-    } else {
+    } else if (input.trim()) {
+      // Text-only submissions
       clearUploadImageError();
-      handleSubmit(e);
+      append({
+        role: "user",
+        content: input,
+      });
+      setInput("");
     }
   };
 
@@ -584,7 +593,9 @@ function Chat({ loaderData, isTaskLoading, prompt }: ChatProps) {
             variant="ghost"
             size="icon"
             disabled={
-              isTaskLoading || isModelsLoading || (!isLoading && !input)
+              isTaskLoading ||
+              isModelsLoading ||
+              (!isLoading && !input && files.length === 0)
             }
             className="h-6 w-6 rounded-md p-0 transition-opacity"
             onClick={() => {
