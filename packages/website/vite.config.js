@@ -11,6 +11,14 @@ export default defineConfig({
     TanStackRouterVite({ autoCodeSplitting: true }),
     viteReact(),
     tailwindcss(),
+    {
+      name: "vite-plugin-md",
+      transform(code, id) {
+        if (id.endsWith(".md")) {
+          return `export default ${JSON.stringify(code)};`;
+        }
+      },
+    },
   ],
   build: {
     chunkSizeWarningLimit: 1000,

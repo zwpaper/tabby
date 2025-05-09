@@ -1,3 +1,4 @@
+import { PromptSuggestions } from "@/components/suggestions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -62,12 +63,8 @@ function RouteComponent() {
     setInputValue(enhanced);
   };
 
-  const handleSubmit = async (e?: FormEvent) => {
-    e?.preventDefault();
-    if (submitIsDisabled) return;
-
+  const doSubmit = async (input: string) => {
     setSubmitError(null);
-
     if (auth === null) {
       setShowAuthDialog(true);
     } else {
@@ -75,7 +72,7 @@ function RouteComponent() {
         await navigate({
           to: "/redirect-vscode",
           search: {
-            prompt: inputValue,
+            prompt: input,
           },
         });
         return;
@@ -84,7 +81,7 @@ function RouteComponent() {
       setIsSubmitting(true);
       try {
         const res = await apiClient.api.tasks.$post({
-          json: { prompt: inputValue },
+          json: { prompt: input },
         });
 
         if (!res.ok) {
@@ -104,6 +101,11 @@ function RouteComponent() {
         setIsSubmitting(false);
       }
     }
+  };
+  const handleSubmit = async (e?: FormEvent) => {
+    e?.preventDefault();
+    if (submitIsDisabled) return;
+    doSubmit(inputValue);
   };
 
   const submitOnEnter = (e: KeyboardEvent) => {
@@ -185,6 +187,7 @@ function RouteComponent() {
           </div>
         </div>
       </form>
+      <PromptSuggestions handleSubmit={doSubmit} />
       {submitError && (
         <p className="mt-4 text-right text-destructive text-sm">
           {submitError}

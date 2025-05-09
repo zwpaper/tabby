@@ -58,7 +58,7 @@ function RouteComponent() {
             <span>Starting Task</span>
           </CardTitle>
           <CardDescription className="mt-1 text-xs italic">
-            {prompt}
+            {prompt.split("\n")[0]}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
