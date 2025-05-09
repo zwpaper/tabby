@@ -45,7 +45,7 @@ function UserEdits({ userEdits }: { userEdits: string }) {
   return (
     <>
       <span
-        className="float-right cursor-pointer pl-4"
+        className="cursor-pointer pl-2 [&_svg]:inline"
         onClick={() => setShowDetails(!showDetails)}
       >
         {showDetails ? (
