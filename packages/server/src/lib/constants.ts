@@ -77,4 +77,5 @@ export const WHITELIST_USERS = [
   "yetoneful@gmail.com",
   "hyhhehe@gmail.com",
   "jonathanjasonwan@gmail.com",
+  "jiaqi.pan1019@gmail.com",
 ];
