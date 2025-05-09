@@ -42,7 +42,7 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
     const isTruncated = fileResults.length > MaxListFileItems;
     const files = fileResults
       .slice(0, MaxListFileItems)
-      .map((x) => x.relativePath);
+      .map((x) => vscode.workspace.asRelativePath(x.uri));
 
     return { files, isTruncated };
   } catch (error) {

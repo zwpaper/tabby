@@ -5,8 +5,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { isFolder } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
-import { File } from "lucide-react";
+import { File, Folder } from "lucide-react";
 
 interface FileBadgeProps {
   path: string;
@@ -15,6 +16,17 @@ interface FileBadgeProps {
   onClick?: () => void;
   className?: string;
 }
+
+export const FileIcon: React.FC<{ path: string; className?: string }> = ({
+  path,
+  className,
+}) => {
+  return isFolder(path) ? (
+    <Folder className={className} />
+  ) : (
+    <File className={className} />
+  );
+};
 
 const getBasename = (path: string): string => path.split(/[\\/]/).pop() || "";
 
@@ -47,7 +59,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
               className,
             )}
           >
-            <File className="inline-block size-3" />
+            <FileIcon path={path} className="inline-block size-3" />
             <span className="ml-1">
               {getBasename(path)}
               <span className="text-zinc-400">{lineRange}</span>
