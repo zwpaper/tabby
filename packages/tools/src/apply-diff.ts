@@ -69,5 +69,19 @@ def calculate_total(items):
     success: z
       .boolean()
       .describe("Indicates whether the operation was successful."),
+
+    userEdits: z
+      .string()
+      .describe(
+        "The user's edits to the file, only present if the file was edited by the user.",
+      )
+      .optional(),
+
+    autoFormattingEdits: z
+      .string()
+      .describe(
+        "The auto-formatting edits to the file, only present if the auto formatter made changes.",
+      )
+      .optional(),
   }),
 });

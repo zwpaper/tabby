@@ -1,12 +1,6 @@
-import * as nodePath from "node:path";
-import {
-  ensureFileDirectoryExists,
-  getWorkspaceFolder,
-  tempfile,
-  writeFile,
-} from "@/lib/fs";
+import { DiffView } from "@/integrations/editor/diff-view";
+import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { closePreviewTabs, findPreviewTabs } from "@/lib/tab-utils";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type {
   PreviewToolFunctionType,
@@ -16,40 +10,6 @@ import * as vscode from "vscode";
 
 const WindowToExpandForSearch = 15;
 const logger = getLogger("applyDiffTool");
-
-/**
- * Manages the preview document for diff views
- */
-async function upsertDiffPreviewData(
-  toolCallId: string,
-  path: string,
-  content: string,
-): Promise<vscode.TextDocument> {
-  const extension = `${toolCallId}${nodePath.extname(path)}`;
-  logger.trace(`Looking for document with extension: ${extension}`);
-
-  let previewTextDocument = vscode.workspace.textDocuments.find((doc) =>
-    doc.uri.fsPath.endsWith(extension),
-  );
-
-  if (!previewTextDocument) {
-    logger.debug("No existing document found, creating new one");
-    const tmpfile = tempfile({ extension });
-    const fileUri = vscode.Uri.file(tmpfile);
-    await writeFile(fileUri, content);
-    previewTextDocument = await vscode.workspace.openTextDocument(fileUri);
-    logger.debug(
-      `Created new preview document: ${previewTextDocument.uri.fsPath}`,
-    );
-  } else {
-    await writeFile(previewTextDocument.uri, content);
-    logger.debug(
-      `Updated content for document: ${previewTextDocument.uri.fsPath}`,
-    );
-  }
-
-  return previewTextDocument;
-}
 
 /**
  * Parse a diff and apply it to file content
@@ -153,7 +113,7 @@ function removeReplaceSuffix(content: string): string {
 }
 
 /**
- * Preview the diff without applying it
+ * Preview the diff using DiffView
  */
 export const previewApplyDiff: PreviewToolFunctionType<
   ClientToolsType["applyDiff"]
@@ -177,43 +137,12 @@ export const previewApplyDiff: PreviewToolFunctionType<
       fileContent,
     );
 
-    const textDocument = await upsertDiffPreviewData(
-      toolCallId,
-      path,
-      updatedContent,
+    const diffView = await DiffView.getOrCreate(toolCallId, path);
+    await diffView.update(updatedContent, true);
+
+    logger.info(
+      `Successfully previewed diff for ${path} with ID ${toolCallId}`,
     );
-
-    const isActive = findPreviewTabs(toolCallId, "(Diff Preview)").length > 0;
-
-    const diffEditorExists = vscode.window.visibleTextEditors.some((editor) => {
-      if (editor.document.uri.scheme === "diff") {
-        const diffUri = editor.document.uri.toString();
-        return (
-          diffUri.includes(path) && diffUri.includes(textDocument.uri.fsPath)
-        );
-      }
-      return false;
-    });
-
-    if (!isActive) {
-      if (diffEditorExists) {
-        await vscode.window.showTextDocument(textDocument);
-      } else {
-        logger.debug("Showing diff view");
-        await vscode.commands.executeCommand(
-          "vscode.diff",
-          fileUri,
-          textDocument.uri,
-          `${path} (Diff Preview)`,
-          {
-            preview: false,
-          },
-        );
-      }
-      logger.info(
-        `Successfully previewed diff for ${path} with ID ${toolCallId}`,
-      );
-    }
   } catch (error) {
     logger.error(`Failed to preview diff: ${error}`);
     throw new Error(
@@ -223,10 +152,10 @@ export const previewApplyDiff: PreviewToolFunctionType<
 };
 
 /**
- * Apply a diff to a file without showing a diff view
+ * Apply a diff to a file using DiffView
  */
 export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
-  { path, diff, startLine, endLine },
+  { path },
   { toolCallId },
 ) => {
   try {
@@ -237,23 +166,15 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
     const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
     const fileContent = fileBuffer.toString();
 
-    const updatedContent = await parseDiffAndApply(
-      diff,
-      startLine,
-      endLine,
-      fileContent,
-    );
+    const diffView = DiffView.get(toolCallId);
+    if (!diffView) {
+      throw new Error("User has closed the diff view, cannot save changes.");
+    }
 
-    await writeFile(fileUri, updatedContent);
-
-    const previewTabs = findPreviewTabs(toolCallId, "(Diff Preview)");
-    await closePreviewTabs(previewTabs);
-
-    const document = await vscode.workspace.openTextDocument(fileUri);
-    await vscode.window.showTextDocument(document, { preview: false });
+    const edits = await diffView.saveChanges(path, fileContent);
 
     logger.info(`Successfully applied diff to ${path}`);
-    return { success: true };
+    return { success: true, ...edits };
   } catch (error) {
     logger.error(`Failed to apply diff: ${error}`);
     throw new Error(
