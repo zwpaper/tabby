@@ -1,3 +1,4 @@
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { getFileName } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
 import { useState } from "react";
@@ -11,7 +12,7 @@ export const FileList: React.FC<{
     return null;
   }
   return (
-    <div className="flex max-h-[100px] flex-col gap-1 overflow-scroll rounded border p-1">
+    <ScrollArea className="flex max-h-[100px] flex-col gap-1 rounded border p-1">
       {matches.map((match, index) => (
         <div
           key={match.file + (match.line ?? "") + index}
@@ -35,6 +36,6 @@ export const FileList: React.FC<{
           </span>
         </div>
       ))}
-    </div>
+    </ScrollArea>
   );
 };
