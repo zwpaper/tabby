@@ -14,6 +14,7 @@ import { DiffOriginContentProvider } from "./diff-origin-content-provider";
 
 const logger = getLogger("diffView");
 const ShouldAutoScroll = true;
+const ReuseDiffView = true;
 
 export class DiffView {
   private isFinalized = false;
@@ -145,7 +146,7 @@ export class DiffView {
       preview: false,
       preserveFocus: false,
     });
-    await this.closeAllNonDirtyDiffViews();
+    await closeAllNonDirtyDiffViews();
 
     const newContentEOL = newContent.includes("\r\n") ? "\r\n" : "\n";
     const normalizedPreSaveContent =
@@ -191,22 +192,6 @@ export class DiffView {
     );
   }
 
-  private async closeAllNonDirtyDiffViews() {
-    const tabs = vscode.window.tabGroups.all
-      .flatMap((tg) => tg.tabs)
-      .filter(
-        (tab) =>
-          tab.input instanceof vscode.TabInputTextDiff &&
-          tab.input?.original?.scheme === DiffOriginContentProvider.scheme,
-      );
-    for (const tab of tabs) {
-      // trying to close dirty views results in save popup
-      if (!tab.isDirty) {
-        await vscode.window.tabGroups.close(tab);
-      }
-    }
-  }
-
   private static async createDiffView(id: string, relpath: string) {
     const fileUri = vscode.Uri.joinPath(getWorkspaceFolder().uri, relpath);
     const fileExists = await isFileExists(fileUri);
@@ -230,19 +215,32 @@ export class DiffView {
   static readonly getOrCreate = runExclusive.build(
     DiffView.diffViewGetGroup,
     async (id: string, relpath: string) => {
+      // Install hook for first diff view
       if (DiffViewMap.size === 0) {
-        logger.debug("First diff view opened");
-        // Install hook for first diff view
+        logger.info("Installing diff view hook");
         const disposable = vscode.workspace.onDidCloseTextDocument((e) => {
+          logger.debug(`Closed document ${e.uri.scheme}:${e.uri.fsPath}`);
           if (e.uri.scheme === DiffOriginContentProvider.scheme) {
-            const success = DiffViewMap.delete(e.uri.path);
+            const id = e.uri.path; // id is stored in path.
+            const success = DiffViewMap.delete(id);
             if (success) {
-              logger.debug(`Closed diff view for ${e.uri.path}`);
+              logger.debug(`Closed diff view for ${id}`);
             }
 
+            if (ReuseDiffView) {
+              // As we reuse the diff view in openDiffEditor, we need to close all diff views for the same file.
+              for (const [id, value] of DiffViewMap) {
+                if (value.fileUri.fsPath === e.uri.fragment) {
+                  DiffViewMap.delete(id);
+                  logger.debug(`Closed diff view for ${id}`);
+                }
+              }
+            }
+
+            logger.debug(`Remaining diff views: ${DiffViewMap.size}`);
+
             if (DiffViewMap.size === 0) {
-              logger.debug("Last diff view closed");
-              // Uninstall hook for last diff view
+              logger.debug("Disposing diff view hook");
               disposable.dispose();
             }
           }
@@ -254,6 +252,7 @@ export class DiffView {
         diffView = await this.createDiffView(id, relpath);
         DiffViewMap.set(id, diffView);
         logger.debug(`Opened diff view for ${id}: ${relpath}`);
+        logger.debug(`Total diff views: ${DiffViewMap.size}`);
       }
 
       return diffView;
@@ -273,7 +272,26 @@ async function openDiffEditor(
   fileExists: boolean,
   originalContent: string | undefined,
 ): Promise<vscode.TextEditor> {
+  if (ReuseDiffView) {
+    for (const group of vscode.window.tabGroups.all) {
+      for (const tab of group.tabs) {
+        if (
+          tab.input instanceof vscode.TabInputTextDiff &&
+          tab.input?.original?.scheme === DiffOriginContentProvider.scheme &&
+          tab.input.modified.fsPath === fileUri.fsPath
+        ) {
+          for (const textEditor of vscode.window.visibleTextEditors) {
+            if (textEditor.document.uri.fsPath === fileUri.fsPath) {
+              return textEditor;
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Open new diff editor
+  logger.debug("Opening new diff editor", fileUri.fsPath);
   return new Promise<vscode.TextEditor>((resolve, reject) => {
     const fileName = path.basename(fileUri.fsPath);
     const disposable = vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -286,6 +304,7 @@ async function openDiffEditor(
       "vscode.diff",
       vscode.Uri.parse(`${DiffOriginContentProvider.scheme}:${id}`).with({
         query: Buffer.from(originalContent ?? "").toString("base64"),
+        fragment: fileUri.fsPath,
       }),
       fileUri,
       `${fileName}: ${fileExists ? "Original ↔ Pochi's Changes" : "New File"} (Editable)`,
@@ -300,4 +319,20 @@ async function openDiffEditor(
       reject(new Error("Failed to open diff editor, please try again..."));
     }, 10_000);
   });
+}
+
+async function closeAllNonDirtyDiffViews() {
+  const tabs = vscode.window.tabGroups.all
+    .flatMap((tg) => tg.tabs)
+    .filter(
+      (tab) =>
+        tab.input instanceof vscode.TabInputTextDiff &&
+        tab.input?.original?.scheme === DiffOriginContentProvider.scheme,
+    );
+  for (const tab of tabs) {
+    // trying to close dirty views results in save popup
+    if (!tab.isDirty) {
+      await vscode.window.tabGroups.close(tab);
+    }
+  }
 }
