@@ -6,11 +6,6 @@ import type { ToolProps } from "../types";
 export const executeCommandTool: React.FC<
   ToolProps<ClientToolsType["executeCommand"]>
 > = ({ tool, isExecuting }) => {
-  let error: string | undefined;
-  if (tool.state === "result" && "error" in tool.result) {
-    error = tool.result.error;
-  }
-
   const { cwd, command, isDevServer } = tool.args || {};
   const cwdNode = cwd ? (
     <span>
@@ -22,7 +17,7 @@ export const executeCommandTool: React.FC<
     ? "I will start a dev server"
     : "I will execute the following command";
   return (
-    <div className="text-sm" title={error}>
+    <div className="text-sm">
       <div>
         <StatusIcon isExecuting={isExecuting} tool={tool} />
         <span className="ml-2">

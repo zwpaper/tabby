@@ -10,11 +10,6 @@ export const applyDiffTool: React.FC<
 > = ({ tool, isExecuting }) => {
   const { path, startLine, endLine } = tool.args || {};
 
-  let error: string | undefined;
-  if (tool.state === "result" && "error" in tool.result) {
-    error = tool.result.error;
-  }
-
   // Determine if the operation was successful
   const isSuccess =
     tool.state === "result" &&
@@ -30,7 +25,7 @@ export const applyDiffTool: React.FC<
   }, [tool.args, tool.toolCallId, tool.toolName, tool.state]);
 
   return (
-    <div className="flex flex-col gap-1 text-sm" title={error}>
+    <div className="flex flex-col gap-1 text-sm">
       <span className="space-x-2">
         <StatusIcon isExecuting={isExecuting} tool={tool} />
         <span>

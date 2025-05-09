@@ -1,10 +1,10 @@
-import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@radix-ui/react-tooltip";
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import type { ToolInvocation } from "ai";
 import { Check, CircleSmall, Loader2, Pause, X } from "lucide-react";
 
@@ -32,7 +32,7 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
           <TooltipTrigger asChild>
             <X className="size-4 cursor-help text-red-400" />
           </TooltipTrigger>
-          <TooltipContent className="rounded bg-secondary px-1 py-0.5">
+          <TooltipContent>
             <p>{error}</p>
           </TooltipContent>
         </Tooltip>

@@ -7,14 +7,9 @@ export const readFileTool: React.FC<ToolProps<ClientToolsType["readFile"]>> = ({
   tool,
   isExecuting,
 }) => {
-  let error: string | undefined;
-  if (tool.state === "result" && "error" in tool.result) {
-    error = tool.result.error;
-  }
-
   const { path, startLine, endLine } = tool.args || {};
   return (
-    <div className="text-sm" title={error}>
+    <div className="text-sm">
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       Reading

@@ -1,6 +1,7 @@
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -36,28 +37,27 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
     );
   };
   return (
-    <Tooltip delayDuration={700}>
-      <TooltipTrigger asChild>
-        <span
-          onClick={onClick || defaultOnClick}
-          className={cn(
-            "cursor-pointer rounded-sm border border-zinc-600 box-decoration-clone px-1 py-0.5 text-xs active:bg-zinc-700",
-            className,
-          )}
-        >
-          <File className="inline-block size-3" />
-          <span className="ml-1">
-            {getBasename(path)}
-            <span className="text-zinc-400">{lineRange}</span>
+    <TooltipProvider delayDuration={700}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            onClick={onClick || defaultOnClick}
+            className={cn(
+              "cursor-pointer rounded-sm border border-zinc-600 box-decoration-clone px-1 py-0.5 text-xs active:bg-zinc-700",
+              className,
+            )}
+          >
+            <File className="inline-block size-3" />
+            <span className="ml-1">
+              {getBasename(path)}
+              <span className="text-zinc-400">{lineRange}</span>
+            </span>
           </span>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent
-        side="bottom"
-        className="rounded bg-secondary px-1 py-0.5"
-      >
-        <p>{path}</p>
-      </TooltipContent>
-    </Tooltip>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{path}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
