@@ -1,10 +1,10 @@
 import { CodeBlock } from "@/components/message";
 import { vscodeHost } from "@/lib/vscode";
 import type { ClientToolsType } from "@ragdoll/tools";
-import { ChevronRight } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
 import { StatusIcon } from "../status-icon";
+import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
 export const writeToFileTool: React.FC<
@@ -23,8 +23,9 @@ export const writeToFileTool: React.FC<
     tool.state === "result" && !("error" in tool.result)
       ? tool.result
       : undefined;
-  return (
-    <span className="text-sm">
+
+  const title = (
+    <span>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       Writing
@@ -35,33 +36,17 @@ export const writeToFileTool: React.FC<
           onClick={tool.state !== "result" ? handleClick : undefined}
         />
       )}
-      {result?.userEdits && <UserEdits userEdits={result.userEdits} />}
     </span>
   );
-};
 
-function UserEdits({ userEdits }: { userEdits: string }) {
-  const [showDetails, setShowDetails] = useState(false);
-  return (
-    <>
-      <span
-        className="cursor-pointer pl-2 [&_svg]:inline"
-        onClick={() => setShowDetails(!showDetails)}
-      >
-        {showDetails ? (
-          <ChevronRight className="size-3 rotate-90" />
-        ) : (
-          <ChevronRight className="size-3 rotate-180" />
-        )}
-      </span>
-      {showDetails && (
-        <div className="my-2 ml-1 flex flex-col">
-          <CodeBlock className="" language="diff" value={userEdits} />
-          <p className="mt-1 self-center text-xs italic">
-            You have made the above edits
-          </p>
-        </div>
-      )}
-    </>
-  );
-}
+  const detail = result?.userEdits ? (
+    <div className="my-2 ml-1 flex flex-col">
+      <CodeBlock className="" language="diff" value={result?.userEdits} />
+      <p className="mt-1 self-center text-xs italic">
+        You have made the above edits
+      </p>
+    </div>
+  ) : null;
+
+  return <ExpandableToolContainer title={title} detail={detail} />;
+};
