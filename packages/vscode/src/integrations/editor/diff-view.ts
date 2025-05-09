@@ -1,11 +1,11 @@
 import * as path from "node:path";
-import { createPrettyPatch } from "@/lib/diff-utils";
 import {
   ensureFileDirectoryExists,
   getWorkspaceFolder,
   isFileExists,
   writeFile,
 } from "@/lib/fs";
+import { createPrettyPatch } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import * as runExclusive from "run-exclusive";
 import * as vscode from "vscode";

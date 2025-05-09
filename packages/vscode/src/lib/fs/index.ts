@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import * as diff from "diff";
 import * as vscode from "vscode";
 
 export { ignoreWalk } from "./ignore-walk";
@@ -58,4 +59,15 @@ export async function isFileExists(fileUri: vscode.Uri): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export function createPrettyPatch(
+  filename = "file",
+  oldStr?: string,
+  newStr?: string,
+) {
+  const patch = diff.createPatch(filename, oldStr || "", newStr || "");
+  const lines = patch.split("\n");
+  const prettyPatchLines = lines.slice(4);
+  return prettyPatchLines.join("\n");
 }

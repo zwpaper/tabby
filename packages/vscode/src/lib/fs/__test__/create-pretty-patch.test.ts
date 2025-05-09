@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { createPrettyPatch } from '../diff-utils';
+import { createPrettyPatch } from '..';
 
 suite('diff-utils', () => {
   suite('createPrettyPatch', () => {
