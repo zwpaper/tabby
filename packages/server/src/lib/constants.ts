@@ -73,4 +73,8 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
   }
 }
 
-export const WHITELIST_USERS = ["yetoneful@gmail.com", "hyhhehe@gmail.com"];
+export const WHITELIST_USERS = [
+  "yetoneful@gmail.com",
+  "hyhhehe@gmail.com",
+  "jonathanjasonwan@gmail.com",
+];
