@@ -1,9 +1,10 @@
 import VSCodeHostImpl from "@/integrations/webview/vscode-host-impl";
-import type { AuthEvents } from "@/lib/auth-events";
-import { Extension } from "@/lib/extension";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { AuthEvents } from "@/lib/auth-events";
 import { getNonce } from "@/lib/get-nonce";
 import { getUri } from "@/lib/get-uri";
-import type { TokenStorage } from "@/lib/token-storage";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { TokenStorage } from "@/lib/token-storage";
 import { Thread } from "@quilted/threads";
 import {
   type ResourceURI,
@@ -12,52 +13,39 @@ import {
   type WebviewHostApi,
   getServerBaseUrl,
 } from "@ragdoll/vscode-webui-bridge";
-import {
-  type CancellationToken,
-  EventEmitter,
-  Uri,
-  type Webview,
-  type WebviewView,
-  type WebviewViewProvider,
-  type WebviewViewResolveContext,
-} from "vscode";
-import type { PochiConfiguration } from "../configuration";
+import { inject, injectable, singleton } from "tsyringe";
+import * as vscode from "vscode";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { PochiConfiguration } from "../configuration";
 
-class RagdollWebviewProvider implements WebviewViewProvider {
+@injectable()
+@singleton()
+class RagdollWebviewProvider
+  implements vscode.WebviewViewProvider, vscode.Disposable
+{
   public static readonly viewType = "ragdollWebui";
-  private static instance?: RagdollWebviewProvider;
 
-  private view?: WebviewView;
+  private view?: vscode.WebviewView;
   private webviewHost?: WebviewHostApi;
-  private webviewHostReady = new EventEmitter<WebviewHostApi>();
+  private webviewHostReady = new vscode.EventEmitter<WebviewHostApi>();
   private sessionState: SessionState = {};
 
   constructor(
-    private readonly extensionUri: Uri,
+    @inject("vscode.ExtensionContext")
+    private readonly context: vscode.ExtensionContext,
     private readonly tokenStorage: TokenStorage,
     private readonly pochiConfiguration: PochiConfiguration,
     private readonly events: AuthEvents,
   ) {}
 
-  public static getInstance(
-    extensionUri: Uri,
-    tokenStorage: TokenStorage,
-    pochiConfiguration: PochiConfiguration,
-    events: {
-      loginEvent: EventEmitter<void>;
-      logoutEvent: EventEmitter<void>;
-    },
-  ): RagdollWebviewProvider {
-    if (!RagdollWebviewProvider.instance) {
-      RagdollWebviewProvider.instance = new RagdollWebviewProvider(
-        extensionUri,
-        tokenStorage,
-        pochiConfiguration,
-        events,
-      );
-    }
+  private readonly registeration = vscode.window.registerWebviewViewProvider(
+    RagdollWebviewProvider.viewType,
+    this,
+    { webviewOptions: { retainContextWhenHidden: true } },
+  );
 
-    return RagdollWebviewProvider.instance;
+  dispose() {
+    this.registeration.dispose();
   }
 
   public async retrieveWebviewHost(): Promise<WebviewHostApi> {
@@ -71,16 +59,16 @@ class RagdollWebviewProvider implements WebviewViewProvider {
   }
 
   public resolveWebviewView(
-    webviewView: WebviewView,
-    _context: WebviewViewResolveContext,
-    _token: CancellationToken,
+    webviewView: vscode.WebviewView,
+    _context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken,
   ) {
     this.view = webviewView;
 
     this.view.webview.options = {
       enableScripts: true,
       enableCommandUris: true,
-      localResourceRoots: [this.extensionUri],
+      localResourceRoots: [this.context.extensionUri],
     };
 
     this.view.webview.html = this.getHtmlForWebview(this.view.webview);
@@ -104,7 +92,7 @@ class RagdollWebviewProvider implements WebviewViewProvider {
       }
 
       return {
-        logo128: getUri(this.view.webview, this.extensionUri, [
+        logo128: getUri(this.view.webview, this.context.extensionUri, [
           "assets",
           "icons",
           "logo128.png",
@@ -112,7 +100,7 @@ class RagdollWebviewProvider implements WebviewViewProvider {
       };
     };
 
-  private createWebviewThread(webview: Webview) {
+  private createWebviewThread(webview: vscode.Webview) {
     const vscodeHost = new VSCodeHostImpl(
       this.tokenStorage,
       this.sessionState,
@@ -144,13 +132,14 @@ class RagdollWebviewProvider implements WebviewViewProvider {
     );
   }
 
-  private getHtmlForWebview(webview: Webview) {
-    const isProd = Extension.getInstance().isProductionMode;
+  private getHtmlForWebview(webview: vscode.Webview) {
+    const isProd =
+      this.context.extensionMode === vscode.ExtensionMode.Production;
 
     if (isProd) {
       const nonce = getNonce();
 
-      const scriptUri = getUri(webview, this.extensionUri, [
+      const scriptUri = getUri(webview, this.context.extensionUri, [
         "assets",
         "webview-ui",
         "dist",
@@ -158,7 +147,7 @@ class RagdollWebviewProvider implements WebviewViewProvider {
       ]);
       const script = `<script nonce="${nonce}" type="module" src="${scriptUri}"></script>`;
 
-      const styleUri = getUri(webview, this.extensionUri, [
+      const styleUri = getUri(webview, this.context.extensionUri, [
         "assets",
         "webview-ui",
         "dist",
@@ -185,7 +174,7 @@ class RagdollWebviewProvider implements WebviewViewProvider {
     const devWebUIWsBaseUrl = `ws://localhost:${devWebUIPort}`;
     const devWebUIWsBaseUrlIp = `ws://0.0.0.0:${devWebUIPort}`;
 
-    const scriptUri = Uri.parse(`${devWebUIHttpBaseUrl}/src/main.tsx`);
+    const scriptUri = vscode.Uri.parse(`${devWebUIHttpBaseUrl}/src/main.tsx`);
     const script = `<script type="module" src="${scriptUri}"></script>`;
 
     const reactRefresh = /*html*/ `

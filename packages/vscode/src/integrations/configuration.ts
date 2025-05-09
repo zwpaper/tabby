@@ -1,22 +1,26 @@
+import { signal } from "@preact/signals-core";
+import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
-import { signal } from "@preact/signals-core";
-
-export class PochiConfiguration {
+@injectable()
+@singleton()
+export class PochiConfiguration implements vscode.Disposable {
   isDevMode = signal(getPochiAdvanceSettings().isDevMode ?? false);
+
+  private readonly listener = vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration("pochi.settings.advanced")) {
+      const settings = getPochiAdvanceSettings();
+      this.isDevMode.value = settings.isDevMode ?? false;
+    }
+  });
 
   constructor() {
     const settings = getPochiAdvanceSettings();
     this.isDevMode.value = settings.isDevMode ?? false;
   }
 
-  listen(): vscode.Disposable {
-    return vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("pochi.settings.advanced")) {
-        const settings = getPochiAdvanceSettings();
-        this.isDevMode.value = settings.isDevMode ?? false;
-      }
-    });
+  dispose() {
+    this.listener.dispose();
   }
 }
 

@@ -1,4 +1,5 @@
 import { getLogger } from "@/lib/logger";
+import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
 export interface WorkspaceJob {
@@ -17,6 +18,8 @@ export interface WorkspaceJob {
 
 const logger = getLogger("WorkspaceJobQueue");
 
+@injectable()
+@singleton()
 export class WorkspaceJobQueue implements vscode.Disposable {
   private static readonly GlobalStateKey = "global_jobs";
 
@@ -24,7 +27,10 @@ export class WorkspaceJobQueue implements vscode.Disposable {
     await this.run();
   }, 1000);
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(
+    @inject("vscode.ExtensionContext")
+    private readonly context: vscode.ExtensionContext,
+  ) {}
 
   async push(job: WorkspaceJob): Promise<void> {
     const commands = this.context.globalState.get<WorkspaceJob[]>(

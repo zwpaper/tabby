@@ -1,8 +1,9 @@
+import { injectable, singleton } from "tsyringe";
 import { EventEmitter } from "vscode";
 
-export const authEvents = {
-  loginEvent: new EventEmitter<void>(),
-  logoutEvent: new EventEmitter<void>(),
-};
-
-export type AuthEvents = typeof authEvents;
+@injectable()
+@singleton()
+export class AuthEvents {
+  public readonly loginEvent = new EventEmitter<void>();
+  public readonly logoutEvent = new EventEmitter<void>();
+}

@@ -1,4 +1,7 @@
 import type { AuthClient } from "@/lib/auth-client";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { AuthEvents } from "@/lib/auth-events";
+import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
 const label = "Pochi";
@@ -10,41 +13,50 @@ const bgColorNormal = new vscode.ThemeColor("statusBar.background");
 const bgColorWarning = new vscode.ThemeColor("statusBarItem.warningBackground");
 const tooltip = "Click to login/logout";
 
-function createStatusBarItem(
-  authClient: AuthClient,
-  events: {
-    loginEvent: vscode.EventEmitter<void>;
-    logoutEvent: vscode.EventEmitter<void>;
-  },
-) {
-  const statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Right,
-  );
-  statusBarItem.tooltip = tooltip;
-  statusBarItem.command = "ragdoll.accountSettings";
+@injectable()
+@singleton()
+export class StatusBarController implements vscode.Disposable {
+  private statusBarItem: vscode.StatusBarItem;
+  private disposables: vscode.Disposable[] = [];
 
-  const refresh = async () => {
-    const { data: session, error } = await authClient.getSession();
+  constructor(
+    @inject("AuthClient") private readonly authClient: AuthClient,
+    private readonly authEvents: AuthEvents,
+  ) {
+    this.statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right,
+    );
+    this.statusBarItem.tooltip = tooltip;
+    this.statusBarItem.command = "ragdoll.accountSettings";
+
+    this.refresh(); // Initial refresh
+    this.statusBarItem.show();
+
+    // Register event listeners and add them to disposables
+    this.disposables.push(
+      this.authEvents.loginEvent.event(() => this.refresh()),
+      this.authEvents.logoutEvent.event(() => this.refresh()),
+      this.statusBarItem, // Add statusBarItem itself to disposables
+    );
+  }
+
+  private async refresh() {
+    const { data: session, error } = await this.authClient.getSession();
     if (!session || error) {
-      statusBarItem.text = `${iconCross} ${label}`;
-      statusBarItem.color = fgColorWarning;
-      statusBarItem.backgroundColor = bgColorWarning;
+      this.statusBarItem.text = `${iconCross} ${label}`;
+      this.statusBarItem.color = fgColorWarning;
+      this.statusBarItem.backgroundColor = bgColorWarning;
     } else {
-      statusBarItem.text = `${iconCheck} ${label}`;
-      statusBarItem.color = fgColorNormal;
-      statusBarItem.backgroundColor = bgColorNormal;
+      this.statusBarItem.text = `${iconCheck} ${label}`;
+      this.statusBarItem.color = fgColorNormal;
+      this.statusBarItem.backgroundColor = bgColorNormal;
     }
-  };
+  }
 
-  statusBarItem.show();
-  refresh();
-
-  const disposables = [
-    events.loginEvent.event(refresh),
-    events.logoutEvent.event(refresh),
-  ];
-
-  return [statusBarItem, ...disposables];
+  dispose() {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+    this.disposables = []; // Clear the array after disposing
+  }
 }
-
-export default createStatusBarItem;

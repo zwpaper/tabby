@@ -1,9 +1,11 @@
 import { deviceLinkClient } from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
-import type { TokenStorage } from "./token-storage";
+import type { DependencyContainer } from "tsyringe";
+import { TokenStorage } from "./token-storage";
 
-export function createAuthClient(tokenStorage: TokenStorage) {
+export function createAuthClient(container: DependencyContainer) {
+  const tokenStorage = container.resolve(TokenStorage);
   const authClient = createAuthClientImpl({
     baseURL: getServerBaseUrl(),
     plugins: [deviceLinkClient()],

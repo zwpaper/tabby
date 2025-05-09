@@ -1,3 +1,4 @@
+import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
 interface NewProjectRequestEntry {
@@ -5,11 +6,16 @@ interface NewProjectRequestEntry {
   uri: string;
 }
 
+@injectable()
+@singleton()
 export class NewProjectRegistry {
   private static readonly GlobalStateKey = "new_project_registry";
   private static readonly MaxEntries = 1000;
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(
+    @inject("vscode.ExtensionContext")
+    private readonly context: vscode.ExtensionContext,
+  ) {}
 
   get(requestId: string): vscode.Uri | undefined {
     const registry = this.context.globalState.get<NewProjectRequestEntry[]>(

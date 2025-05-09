@@ -1,8 +1,13 @@
 import type { AuthClient } from "@/lib/auth-client";
-import type { NewProjectRegistry } from "@/lib/new-project-registry";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { AuthEvents } from "@/lib/auth-events";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { NewProjectRegistry } from "@/lib/new-project-registry";
 import { createNewWorkspace } from "@/lib/new-project-utils";
-import type { WorkspaceJobQueue } from "@/lib/workspace-job";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { WorkspaceJobQueue } from "@/lib/workspace-job";
 import type { NewTaskAttachment } from "@ragdoll/vscode-webui-bridge";
+import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
 export interface NewProjectParams {
@@ -30,13 +35,21 @@ export interface NewProjectParams {
   githubTemplateUrl?: string;
 }
 
-class RagdollUriHandler implements vscode.UriHandler {
+@injectable()
+@singleton()
+class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
   constructor(
+    @inject("AuthClient")
     private readonly authClient: AuthClient,
     private readonly workspaceJobQueue: WorkspaceJobQueue,
     private readonly newProjectRegistry: NewProjectRegistry,
-    private readonly loginEvent: vscode.EventEmitter<void>,
+    private readonly authEvents: AuthEvents,
   ) {}
+
+  private registeration = vscode.window.registerUriHandler(this);
+  dispose() {
+    this.registeration.dispose();
+  }
 
   handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
     this.handleUriImpl(uri);
@@ -144,7 +157,7 @@ class RagdollUriHandler implements vscode.UriHandler {
         }
 
         vscode.window.showInformationMessage("Successfully logged in!");
-        this.loginEvent.fire();
+        this.authEvents.loginEvent.fire();
       },
     );
   }

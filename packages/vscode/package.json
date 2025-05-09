@@ -131,7 +131,9 @@
     "jszip": "^3.10.1",
     "minimatch": "^10.0.1",
     "project-name-generator": "^2.1.9",
-    "run-exclusive": "^2.2.19"
+    "reflect-metadata": "^0.2.2",
+    "run-exclusive": "^2.2.19",
+    "tsyringe": "^4.10.0"
   },
   "devDependencies": {
     "@ragdoll/tools": "workspace:*",
