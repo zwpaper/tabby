@@ -16,6 +16,7 @@ const logger = getLogger("diffView");
 const ShouldAutoScroll = true;
 
 export class DiffView {
+  private isFinalized = false;
   private streamedLines: string[] = [];
 
   private fadedOverlayController: DecorationController;
@@ -37,8 +38,9 @@ export class DiffView {
   }
 
   async update(content: string, isFinal: boolean) {
-    if (this.originalContent === undefined) {
-      throw new Error("Diff view is not opened yet.");
+    if (this.isFinalized) return;
+    if (isFinal) {
+      this.isFinalized = true;
     }
 
     let accumulatedContent = content;
