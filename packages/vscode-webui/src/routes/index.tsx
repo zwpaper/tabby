@@ -16,7 +16,7 @@ import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Editor } from "@tiptap/react";
-import type { Attachment, TextPart, ToolInvocation } from "ai";
+import type { Attachment, CreateMessage, TextPart, ToolInvocation } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
   ImageIcon,
@@ -69,6 +69,15 @@ const searchSchema = z.object({
     .or(z.enum(["new"]))
     .optional(),
   prompt: z.string().optional(),
+  attachments: z
+    .array(
+      z.object({
+        url: z.string(),
+        name: z.string().optional(),
+        contentType: z.string().optional(),
+      }),
+    )
+    .optional(),
   ts: z.number().optional(),
 });
 
@@ -80,13 +89,29 @@ export const Route = createFileRoute("/")({
 function RouteComponent() {
   const {
     taskId: taskIdFromRoute,
-    prompt: promptFromRoute,
+    prompt,
+    attachments,
     ts = Date.now(),
   } = Route.useSearch();
   const key =
     typeof taskIdFromRoute === "number"
       ? `task-${taskIdFromRoute}`
       : `new-${ts}`;
+
+  const initMessage: CreateMessage | undefined =
+    taskIdFromRoute === "new" && prompt !== undefined
+      ? {
+          role: "user",
+          content: prompt,
+          experimental_attachments: attachments?.map((item) => {
+            return {
+              url: atob(item.url),
+              name: item.name,
+              contentType: item.contentType,
+            };
+          }),
+        }
+      : undefined;
 
   const { data: loaderData, isLoading: isTaskLoading } = useQuery({
     queryKey: ["task", taskIdFromRoute],
@@ -109,7 +134,7 @@ function RouteComponent() {
       key={key}
       loaderData={loaderData || null}
       isTaskLoading={isTaskLoading}
-      prompt={promptFromRoute}
+      initMessage={initMessage}
     />
   );
 }
@@ -119,10 +144,10 @@ interface ChatProps {
     (typeof apiClient.api.tasks)[":id"]["$get"]
   > | null;
   isTaskLoading: boolean;
-  prompt: string | undefined;
+  initMessage: CreateMessage | undefined;
 }
 
-function Chat({ loaderData, isTaskLoading, prompt }: ChatProps) {
+function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const taskId = useRef<number | undefined>(loaderData?.id);
   useEffect(() => {
     taskId.current = loaderData?.id;
@@ -256,17 +281,17 @@ function Chat({ loaderData, isTaskLoading, prompt }: ChatProps) {
     },
   });
 
-  const promptSent = useRef<boolean>(false);
+  const initMessageSent = useRef<boolean>(false);
   useEffect(() => {
-    if (taskId.current === undefined && prompt && !promptSent.current) {
-      promptSent.current = true;
-
-      append({
-        role: "user",
-        content: prompt,
-      });
+    if (
+      taskId.current === undefined &&
+      initMessage &&
+      !initMessageSent.current
+    ) {
+      initMessageSent.current = true;
+      append(initMessage);
     }
-  }, [prompt, append]);
+  }, [initMessage, append]);
 
   useEffect(() => {
     const handler = setTimeout(() => {

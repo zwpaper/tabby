@@ -1,6 +1,7 @@
 import type { AuthClient } from "@/lib/auth-client";
 import { createNewProject } from "@/lib/new-project-utils";
 import type { WorkspaceJobQueue } from "@/lib/workspace-job";
+import type { NewTaskAttachment } from "@ragdoll/vscode-webui-bridge";
 import * as vscode from "vscode";
 
 export interface NewProjectParams {
@@ -8,6 +9,11 @@ export interface NewProjectParams {
    * user input prompt message
    */
   prompt: string;
+
+  /**
+   * user attached files
+   */
+  attachments?: NewTaskAttachment[];
 
   /**
    * A zip url to download the project template from.
@@ -40,7 +46,8 @@ class RagdollUriHandler implements vscode.UriHandler {
     const newProject = searchParams.get("newProject");
     if (newProject) {
       try {
-        const params = JSON.parse(newProject) as NewProjectParams;
+        const decoded = Buffer.from(newProject, "base64").toString("utf-8");
+        const params = JSON.parse(decoded) as NewProjectParams;
         await this.handleNewProjectRequest(params);
       } catch (error) {
         vscode.window.showErrorMessage(
@@ -64,7 +71,7 @@ class RagdollUriHandler implements vscode.UriHandler {
   }
 
   async handleNewProjectRequest(params: NewProjectParams) {
-    const { prompt, githubTemplateUrl } = params;
+    const { prompt, attachments, githubTemplateUrl } = params;
 
     const newProjectUri = await createNewProject(githubTemplateUrl);
 
@@ -72,7 +79,7 @@ class RagdollUriHandler implements vscode.UriHandler {
     await this.globalJobsRunner.push({
       workspaceUri: newProjectUri.toString(),
       command: "ragdoll.createTask",
-      args: [prompt],
+      args: [{ prompt, attachments }],
       expiresAt: Date.now() + 1000 * 60,
     });
 

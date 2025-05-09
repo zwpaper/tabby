@@ -2,7 +2,10 @@ import type RagdollWebviewProvider from "@/integrations/webview/ragdoll-webview-
 import type { AuthClient } from "@/lib/auth-client";
 import type { AuthEvents } from "@/lib/auth-events";
 import type { TokenStorage } from "@/lib/token-storage";
-import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
+import {
+  type NewTaskAttachment,
+  getServerBaseUrl,
+} from "@ragdoll/vscode-webui-bridge";
 import * as vscode from "vscode";
 
 export default function createCommands(
@@ -64,7 +67,10 @@ export default function createCommands(
 
     vscode.commands.registerCommand(
       "ragdoll.createTask",
-      async (prompt: string) => {
+      async (params: {
+        prompt: string;
+        attachments?: NewTaskAttachment[];
+      }) => {
         vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
@@ -74,7 +80,7 @@ export default function createCommands(
             progress.report({ message: "Pochi: Creating task..." });
             await vscode.commands.executeCommand("ragdollWebui.focus");
             const webviewHost = await ragdoll.retrieveWebviewHost();
-            webviewHost.openTask({ taskId: "new", prompt: prompt });
+            webviewHost.openTask({ taskId: "new", ...params });
           },
         );
       },
@@ -92,7 +98,7 @@ export default function createCommands(
             progress.report({ message: "Pochi: Opening task..." });
             await vscode.commands.executeCommand("ragdollWebui.focus");
             const webviewHost = await ragdoll.retrieveWebviewHost();
-            await webviewHost.openTask({ taskId });
+            webviewHost.openTask({ taskId });
           },
         );
       },

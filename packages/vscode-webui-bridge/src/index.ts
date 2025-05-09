@@ -86,4 +86,11 @@ export interface TaskIdParams {
 export interface NewTaskParams {
   taskId: "new";
   prompt?: string;
+  attachments?: NewTaskAttachment[];
+}
+
+export interface NewTaskAttachment {
+  url: string;
+  name?: string;
+  contentType?: string;
 }
