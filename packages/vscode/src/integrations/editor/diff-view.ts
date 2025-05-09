@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import { createPrettyPatch } from "@/lib/diff-utils";
 import {
   ensureFileDirectoryExists,
   getWorkspaceFolder,
@@ -129,11 +130,13 @@ export class DiffView {
     }
   }
 
-  async saveChanges() {
+  async saveChanges(relPath: string, newContent: string) {
     const updatedDocument = this.activeDiffEditor.document;
+    const preSaveContent = updatedDocument.getText();
     if (updatedDocument.isDirty) {
       await updatedDocument.save();
     }
+    const postSaveContent = updatedDocument.getText();
 
     const document = await vscode.workspace.openTextDocument(this.fileUri);
     await vscode.window.showTextDocument(document, {
@@ -141,6 +144,41 @@ export class DiffView {
       preserveFocus: false,
     });
     await this.closeAllNonDirtyDiffViews();
+
+    const newContentEOL = newContent.includes("\r\n") ? "\r\n" : "\n";
+    const normalizedPreSaveContent =
+      preSaveContent.replace(/\r\n|\n/g, newContentEOL).trimEnd() +
+      newContentEOL; // trimEnd to fix issue where editor adds in extra new line automatically
+    const normalizedPostSaveContent =
+      postSaveContent.replace(/\r\n|\n/g, newContentEOL).trimEnd() +
+      newContentEOL; // this is the final content we return to the model to use as the new baseline for future edits
+    const normalizedNewContent =
+      newContent.replace(/\r\n|\n/g, newContentEOL).trimEnd() + newContentEOL;
+
+    let userEdits: string | undefined;
+    if (normalizedPreSaveContent !== normalizedNewContent) {
+      // user made changes before approving edit. let the model know about user made changes (not including post-save auto-formatting changes)
+      userEdits = createPrettyPatch(
+        relPath,
+        normalizedNewContent,
+        normalizedPreSaveContent,
+      );
+    }
+
+    let autoFormattingEdits: string | undefined;
+    if (normalizedPreSaveContent !== normalizedPostSaveContent) {
+      // auto-formatting was done by the editor
+      autoFormattingEdits = createPrettyPatch(
+        relPath,
+        normalizedPreSaveContent,
+        normalizedPostSaveContent,
+      );
+    }
+
+    return {
+      userEdits,
+      autoFormattingEdits,
+    };
   }
 
   private scrollEditorToLine(line: number) {
@@ -187,7 +225,7 @@ export class DiffView {
   }
 
   private static readonly diffViewGetGroup = runExclusive.createGroupRef();
-  static readonly get = runExclusive.build(
+  static readonly getOrCreate = runExclusive.build(
     DiffView.diffViewGetGroup,
     async (id: string, relpath: string) => {
       if (DiffViewMap.size === 0) {
@@ -219,6 +257,10 @@ export class DiffView {
       return diffView;
     },
   );
+
+  static get(id: string): DiffView | undefined {
+    return DiffViewMap.get(id);
+  }
 }
 
 const DiffViewMap = new Map<string, DiffView>();

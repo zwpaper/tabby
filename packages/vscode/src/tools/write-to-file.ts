@@ -11,7 +11,7 @@ export const previewWriteToFile: PreviewToolFunctionType<
   const { path, content } = args || {};
   if (path === undefined || content === undefined) return;
 
-  const diffView = await DiffView.get(toolCallId, path);
+  const diffView = await DiffView.getOrCreate(toolCallId, path);
   diffView.update(content, state !== "partial-call");
 };
 
@@ -21,12 +21,11 @@ export const previewWriteToFile: PreviewToolFunctionType<
  */
 export const writeToFile: ToolFunctionType<
   ClientToolsType["writeToFile"]
-> = async (
-  { path, content }: { path: string; content: string },
-  { toolCallId },
-) => {
-  const diffView = await DiffView.get(toolCallId, path);
-  await diffView.update(content, true);
-  diffView.saveChanges();
+> = async ({ path, content }, { toolCallId }) => {
+  const diffView = await DiffView.get(toolCallId);
+  if (!diffView) {
+    throw new Error("User has closed the diff view, cannot save changes.");
+  }
+  diffView.saveChanges(path, content);
   return { success: true };
 };
