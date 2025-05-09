@@ -106,7 +106,8 @@
     "ignore": "^7.0.4",
     "jszip": "^3.10.1",
     "minimatch": "^10.0.1",
-    "project-name-generator": "^2.1.9"
+    "project-name-generator": "^2.1.9",
+    "run-exclusive": "^2.2.19"
   },
   "devDependencies": {
     "@ragdoll/tools": "workspace:*",

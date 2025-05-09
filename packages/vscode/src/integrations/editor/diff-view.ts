@@ -1,0 +1,237 @@
+import * as path from "node:path";
+import {
+  ensureFileDirectoryExists,
+  getWorkspaceFolder,
+  isFileExists,
+  writeFile,
+} from "@/lib/fs";
+import { getLogger } from "@/lib/logger";
+import * as runExclusive from "run-exclusive";
+import * as vscode from "vscode";
+import { DiffOriginContentProvider } from "./diff-origin-content-provider";
+
+const logger = getLogger("diffView");
+const ShouldAutoScroll = true;
+
+export class DiffView {
+  private streamedLines: string[] = [];
+
+  private constructor(
+    private readonly fileUri: vscode.Uri,
+    private readonly originalContent: string,
+    private readonly activeDiffEditor: vscode.TextEditor,
+  ) {}
+
+  async update(content: string, isFinal: boolean) {
+    if (this.originalContent === undefined) {
+      throw new Error("Diff view is not opened yet.");
+    }
+
+    let accumulatedContent = content;
+    // --- Fix to prevent duplicate BOM ---
+    // Strip potential BOM from incoming content. VS Code's `applyEdit` might implicitly handle the BOM
+    // when replacing from the start (0,0), and we want to avoid duplication.
+    // Final BOM is handled in `saveChanges`.
+    if (accumulatedContent.startsWith("\ufeff")) {
+      accumulatedContent = content.slice(1); // Remove the BOM character
+    }
+
+    const diffEditor = this.activeDiffEditor;
+    const document = diffEditor.document;
+
+    const accumulatedLines = accumulatedContent.split("\n");
+    if (!isFinal) {
+      accumulatedLines.pop(); // remove the last partial line only if it's not the final update
+    }
+    const diffLines = accumulatedLines.slice(this.streamedLines.length);
+
+    // Instead of animating each line, we'll update in larger chunks
+    const currentLine = this.streamedLines.length + diffLines.length - 1;
+    if (currentLine >= 0) {
+      // Only proceed if we have new lines
+
+      // Replace all content up to the current line with accumulated lines
+      // This is necessary (as compared to inserting one line at a time) to handle cases where html tags on previous lines are auto closed for example
+      const edit = new vscode.WorkspaceEdit();
+      const rangeToReplace = new vscode.Range(0, 0, currentLine + 1, 0);
+      const contentToReplace = `${accumulatedLines.slice(0, currentLine + 1).join("\n")}\n`;
+      edit.replace(document.uri, rangeToReplace, contentToReplace);
+      await vscode.workspace.applyEdit(edit);
+
+      if (ShouldAutoScroll) {
+        if (diffLines.length <= 5) {
+          // For small changes, just jump directly to the line
+          this.scrollEditorToLine(currentLine);
+        } else {
+          // For larger changes, create a quick scrolling animation
+          const startLine = this.streamedLines.length;
+          const endLine = currentLine;
+          const totalLines = endLine - startLine;
+          const numSteps = 10; // Adjust this number to control animation speed
+          const stepSize = Math.max(1, Math.floor(totalLines / numSteps));
+
+          // Create and await the smooth scrolling animation
+          for (let line = startLine; line <= endLine; line += stepSize) {
+            diffEditor.revealRange(
+              new vscode.Range(line, 0, line, 0),
+              vscode.TextEditorRevealType.InCenter,
+            );
+            await new Promise((resolve) => setTimeout(resolve, 16)); // ~60fps
+          }
+          // Ensure we end at the final line
+          this.scrollEditorToLine(currentLine);
+        }
+      }
+    }
+
+    // Update the streamedLines with the new accumulated content
+    this.streamedLines = accumulatedLines;
+    if (isFinal) {
+      // Handle any remaining lines if the new content is shorter than the original
+      if (this.streamedLines.length < document.lineCount) {
+        const edit = new vscode.WorkspaceEdit();
+        edit.delete(
+          document.uri,
+          new vscode.Range(this.streamedLines.length, 0, document.lineCount, 0),
+        );
+        await vscode.workspace.applyEdit(edit);
+      }
+      // Add empty last line if original content had one
+      const hasEmptyLastLine = this.originalContent?.endsWith("\n");
+      if (hasEmptyLastLine) {
+        const accumulatedLines = accumulatedContent.split("\n");
+        if (accumulatedLines[accumulatedLines.length - 1] !== "") {
+          accumulatedContent += "\n";
+        }
+      }
+    }
+  }
+
+  async saveChanges() {
+    const updatedDocument = this.activeDiffEditor.document;
+    if (updatedDocument.isDirty) {
+      await updatedDocument.save();
+    }
+
+    const document = await vscode.workspace.openTextDocument(this.fileUri);
+    await vscode.window.showTextDocument(document, {
+      preview: false,
+      preserveFocus: false,
+    });
+    await this.closeAllNonDirtyDiffViews();
+  }
+
+  private scrollEditorToLine(line: number) {
+    const scrollLine = line + 4;
+    this.activeDiffEditor.revealRange(
+      new vscode.Range(scrollLine, 0, scrollLine, 0),
+      vscode.TextEditorRevealType.InCenter,
+    );
+  }
+
+  private async closeAllNonDirtyDiffViews() {
+    const tabs = vscode.window.tabGroups.all
+      .flatMap((tg) => tg.tabs)
+      .filter(
+        (tab) =>
+          tab.input instanceof vscode.TabInputTextDiff &&
+          tab.input?.original?.scheme === DiffOriginContentProvider.scheme,
+      );
+    for (const tab of tabs) {
+      // trying to close dirty views results in save popup
+      if (!tab.isDirty) {
+        await vscode.window.tabGroups.close(tab);
+      }
+    }
+  }
+
+  private static async createDiffView(id: string, relpath: string) {
+    const fileUri = vscode.Uri.joinPath(getWorkspaceFolder().uri, relpath);
+    const fileExists = await isFileExists(fileUri);
+    if (!fileExists) {
+      await ensureFileDirectoryExists(fileUri);
+      writeFile(fileUri, "");
+    }
+    const originalContent = (
+      await vscode.workspace.fs.readFile(fileUri)
+    ).toString();
+    const activeDiffEditor = await openDiffEditor(
+      id,
+      fileUri,
+      fileExists,
+      originalContent,
+    );
+    return new DiffView(fileUri, originalContent, activeDiffEditor);
+  }
+
+  private static readonly diffViewGetGroup = runExclusive.createGroupRef();
+  static readonly get = runExclusive.build(
+    DiffView.diffViewGetGroup,
+    async (id: string, relpath: string) => {
+      if (DiffViewMap.size === 0) {
+        logger.debug("First diff view opened");
+        // Install hook for first diff view
+        const disposable = vscode.workspace.onDidCloseTextDocument((e) => {
+          if (e.uri.scheme === DiffOriginContentProvider.scheme) {
+            const success = DiffViewMap.delete(e.uri.path);
+            if (success) {
+              logger.debug(`Closed diff view for ${e.uri.path}`);
+            }
+
+            if (DiffViewMap.size === 0) {
+              logger.debug("Last diff view closed");
+              // Uninstall hook for last diff view
+              disposable.dispose();
+            }
+          }
+        });
+      }
+
+      let diffView = DiffViewMap.get(id);
+      if (!diffView) {
+        diffView = await this.createDiffView(id, relpath);
+        DiffViewMap.set(id, diffView);
+        logger.debug(`Opened diff view for ${id}: ${relpath}`);
+      }
+
+      return diffView;
+    },
+  );
+}
+
+const DiffViewMap = new Map<string, DiffView>();
+
+async function openDiffEditor(
+  id: string,
+  fileUri: vscode.Uri,
+  fileExists: boolean,
+  originalContent: string | undefined,
+): Promise<vscode.TextEditor> {
+  // Open new diff editor
+  return new Promise<vscode.TextEditor>((resolve, reject) => {
+    const fileName = path.basename(fileUri.fsPath);
+    const disposable = vscode.window.onDidChangeActiveTextEditor((editor) => {
+      if (editor && editor.document.uri.fsPath === fileUri.fsPath) {
+        disposable.dispose();
+        resolve(editor);
+      }
+    });
+    vscode.commands.executeCommand(
+      "vscode.diff",
+      vscode.Uri.parse(`${DiffOriginContentProvider.scheme}:${id}`).with({
+        query: Buffer.from(originalContent ?? "").toString("base64"),
+      }),
+      fileUri,
+      `${fileName}: ${fileExists ? "Original ↔ Pochi's Changes" : "New File"} (Editable)`,
+      {
+        preview: false,
+        preserveFocus: true,
+      },
+    );
+    // This may happen on very slow machines ie project idx
+    setTimeout(() => {
+      disposable.dispose();
+      reject(new Error("Failed to open diff editor, please try again..."));
+    }, 10_000);
+  });
+}

@@ -19,6 +19,7 @@ export interface VSCodeHostApi {
     args: unknown,
     options: {
       toolCallId: string;
+      state: "partial-call" | "call" | "result";
     },
   ): Promise<void>;
 

@@ -912,6 +912,7 @@ function PreviewToolCall({ tool }: { tool: ToolInvocation }) {
     if (state === "result") return;
     vscodeHost.previewToolCall(toolName, args, {
       toolCallId,
+      state,
     });
   }, [state, args, toolCallId, toolName]);
   return <></>;

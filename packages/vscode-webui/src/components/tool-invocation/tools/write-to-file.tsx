@@ -15,8 +15,9 @@ export const writeToFileTool: React.FC<
   const handleClick = useCallback(() => {
     vscodeHost.previewToolCall(tool.toolName, tool.args, {
       toolCallId: tool.toolCallId,
+      state: tool.state,
     });
-  }, [tool.args, tool.toolCallId, tool.toolName]);
+  }, [tool.args, tool.toolCallId, tool.toolName, tool.state]);
 
   const { path } = tool.args || {};
   return (

@@ -50,3 +50,12 @@ export async function ensureFileDirectoryExists(
   const dirUri = vscode.Uri.joinPath(fileUri, "..");
   await vscode.workspace.fs.createDirectory(dirUri);
 }
+
+export async function isFileExists(fileUri: vscode.Uri): Promise<boolean> {
+  try {
+    await vscode.workspace.fs.stat(fileUri);
+    return true;
+  } catch {
+    return false;
+  }
+}

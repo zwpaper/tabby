@@ -25,8 +25,9 @@ export const applyDiffTool: React.FC<
   const handleClick = useCallback(() => {
     vscodeHost.previewToolCall(tool.toolName, tool.args, {
       toolCallId: tool.toolCallId,
+      state: tool.state,
     });
-  }, [tool.args, tool.toolCallId, tool.toolName]);
+  }, [tool.args, tool.toolCallId, tool.toolName, tool.state]);
 
   return (
     <div className="flex flex-col gap-1 text-sm" title={error}>

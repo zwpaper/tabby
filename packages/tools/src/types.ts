@@ -32,7 +32,10 @@ export type ToolFunctionType<T extends Tool> = (
 
 export type PreviewToolFunctionType<T extends Tool> = (
   args: Partial<ToolInputType<T>> | null,
-  options: ToolExecutionOptions,
+  options: {
+    toolCallId: string;
+    state: "partial-call" | "call" | "result";
+  },
 ) => Promise<void>;
 
 export function defineServerTool<

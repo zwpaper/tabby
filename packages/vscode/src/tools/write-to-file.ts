@@ -1,100 +1,18 @@
-import { extname } from "node:path";
-import * as vscode from "vscode";
-
-import {
-  ensureFileDirectoryExists,
-  getWorkspaceFolder,
-  tempfile,
-  writeFile,
-} from "@/lib/fs";
-import { getLogger } from "@/lib/logger";
-import { closePreviewTabs, findPreviewTabs } from "@/lib/tab-utils";
+import { DiffView } from "@/integrations/editor/diff-view";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type {
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@ragdoll/tools/src/types";
 
-const logger = getLogger("writeToFileTool");
-
-async function upsertPreviewData(
-  toolCallId: string,
-  path: string,
-  content: string,
-) {
-  logger.debug(
-    `Upserting preview data for path: ${path}, toolCallId: ${toolCallId}`,
-  );
-  const extension = `${toolCallId}${extname(path)}`;
-  logger.trace("use extension", extension);
-
-  let previewTextDocument = vscode.workspace.textDocuments.find((doc) =>
-    doc.uri.fsPath.endsWith(extension),
-  );
-
-  if (!previewTextDocument) {
-    logger.debug("No existing preview document found, creating new one");
-    const tmpfile = tempfile({ extension });
-    logger.trace(`Created temp file: ${tmpfile}`);
-    const fileUri = vscode.Uri.file(tmpfile);
-    await writeFile(fileUri, content);
-    previewTextDocument = await vscode.workspace.openTextDocument(fileUri);
-    logger.debug(
-      `Created new preview document: ${previewTextDocument.uri.fsPath}`,
-    );
-  } else {
-    logger.debug(
-      `Updating existing preview document: ${previewTextDocument.uri.fsPath}`,
-    );
-    await writeFile(previewTextDocument.uri, content);
-  }
-
-  return previewTextDocument;
-}
-
 export const previewWriteToFile: PreviewToolFunctionType<
   ClientToolsType["writeToFile"]
-> = async (args, { toolCallId }) => {
+> = async (args, { state, toolCallId }) => {
   const { path, content } = args || {};
   if (path === undefined || content === undefined) return;
 
-  const workspaceFolders = vscode.workspace.workspaceFolders;
-  if (!workspaceFolders || workspaceFolders.length === 0) {
-    logger.error("No workspace folder found");
-    throw new Error("No workspace folder found. Please open a workspace.");
-  }
-
-  const textDocument = await upsertPreviewData(toolCallId, path, content);
-
-  const pathUri = vscode.Uri.joinPath(workspaceFolders[0].uri, path);
-  const fileExist = await vscode.workspace.fs.stat(pathUri).then(
-    () => true,
-    () => false,
-  );
-  logger.debug(`File exists: ${fileExist}`);
-
-  const isActive = findPreviewTabs(toolCallId, "(Preview)").length > 0;
-  logger.debug(
-    `Preview document is active editor: ${isActive} fileExist: ${fileExist}, doc: ${textDocument.uri.fsPath}`,
-  );
-
-  if (!isActive) {
-    await vscode.commands.executeCommand(
-      "vscode.diff",
-      fileExist
-        ? pathUri
-        : (
-            await vscode.workspace.openTextDocument({
-              language: textDocument.languageId,
-            })
-          ).uri,
-      textDocument.uri,
-      `${path} (Preview)`,
-      {
-        preview: false,
-      },
-    );
-  }
+  const diffView = await DiffView.get(toolCallId, path);
+  diffView.update(content, state !== "partial-call");
 };
 
 /**
@@ -107,25 +25,8 @@ export const writeToFile: ToolFunctionType<
   { path, content }: { path: string; content: string },
   { toolCallId },
 ) => {
-  const workspaceFolder = getWorkspaceFolder();
-
-  try {
-    const pathUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
-    logger.debug(`Target file URI: ${pathUri.fsPath}`);
-    await ensureFileDirectoryExists(pathUri);
-    await writeFile(pathUri, content);
-    logger.trace("Writing file success:", pathUri.fsPath);
-
-    const previewTabs = findPreviewTabs(toolCallId, "(Preview)");
-    await closePreviewTabs(previewTabs);
-
-    const document = await vscode.workspace.openTextDocument(pathUri);
-    await vscode.window.showTextDocument(document, { preview: false });
-    logger.info(`Document opened in editor: ${path}`);
-
-    return { success: true };
-  } catch (error) {
-    logger.error(`Failed to write to file: ${error}`);
-    throw new Error(`Failed to write to file: ${error}`);
-  }
+  const diffView = await DiffView.get(toolCallId, path);
+  await diffView.update(content, true);
+  diffView.saveChanges();
+  return { success: true };
 };

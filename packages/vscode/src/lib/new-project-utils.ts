@@ -2,6 +2,7 @@ import { getLogger } from "@/lib/logger";
 import * as jszip from "jszip";
 import generate from "project-name-generator";
 import * as vscode from "vscode";
+import { isFileExists } from "./fs";
 
 const logger = getLogger("newProjectUtils");
 
@@ -9,10 +10,7 @@ const homeUri = vscode.Uri.file(process.env.HOME || "~");
 const baseUri = vscode.Uri.joinPath(homeUri, "PochiProjects");
 
 async function createDirectoryIfNotExists(uri: vscode.Uri) {
-  const exists = await vscode.workspace.fs.stat(uri).then(
-    () => true,
-    () => false,
-  );
+  const exists = await isFileExists(uri);
   if (!exists) {
     await vscode.workspace.fs.createDirectory(uri);
   }

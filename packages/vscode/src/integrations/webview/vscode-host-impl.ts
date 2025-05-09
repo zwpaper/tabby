@@ -145,6 +145,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     args: unknown,
     options: {
       toolCallId: string;
+      state: "partial-call" | "call" | "result";
     },
   ) {
     return this.queueToolCall(() =>
@@ -183,6 +184,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     args: unknown,
     options: {
       toolCallId: string;
+      state: "partial-call" | "call" | "result";
     },
   ) {
     const tool = ToolPreviewMap[toolName];
@@ -191,11 +193,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-    return tool(args as any, {
-      abortSignal: undefined,
-      toolCallId: options.toolCallId,
-      messages: [],
-    });
+    return tool(args as any, options);
   }
 
   async openFile(filePath: string, options?: { start?: number; end?: number }) {
