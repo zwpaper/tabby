@@ -8,6 +8,7 @@ import {
 import { getLogger } from "@/lib/logger";
 import * as runExclusive from "run-exclusive";
 import * as vscode from "vscode";
+import { DecorationController } from "./decoration-controller";
 import { DiffOriginContentProvider } from "./diff-origin-content-provider";
 
 const logger = getLogger("diffView");
@@ -16,11 +17,23 @@ const ShouldAutoScroll = true;
 export class DiffView {
   private streamedLines: string[] = [];
 
+  private fadedOverlayController: DecorationController;
+  private activeLineController: DecorationController;
+
   private constructor(
     private readonly fileUri: vscode.Uri,
     private readonly originalContent: string,
     private readonly activeDiffEditor: vscode.TextEditor,
-  ) {}
+  ) {
+    this.fadedOverlayController = new DecorationController(
+      "fadedOverlay",
+      this.activeDiffEditor,
+    );
+    this.activeLineController = new DecorationController(
+      "activeLine",
+      this.activeDiffEditor,
+    );
+  }
 
   async update(content: string, isFinal: boolean) {
     if (this.originalContent === undefined) {
@@ -57,6 +70,13 @@ export class DiffView {
       const contentToReplace = `${accumulatedLines.slice(0, currentLine + 1).join("\n")}\n`;
       edit.replace(document.uri, rangeToReplace, contentToReplace);
       await vscode.workspace.applyEdit(edit);
+
+      // Update decorations for the entire changed section
+      this.activeLineController.setActiveLine(currentLine);
+      this.fadedOverlayController.updateOverlayAfterLine(
+        currentLine,
+        document.lineCount,
+      );
 
       if (ShouldAutoScroll) {
         if (diffLines.length <= 5) {
@@ -104,6 +124,8 @@ export class DiffView {
           accumulatedContent += "\n";
         }
       }
+      this.fadedOverlayController.clear();
+      this.activeLineController.clear();
     }
   }
 
