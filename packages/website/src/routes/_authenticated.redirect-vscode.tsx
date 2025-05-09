@@ -12,7 +12,9 @@ import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
+  requestId: z.string().optional(),
   prompt: z.string().optional(),
+  name: z.string().optional(),
   attachments: z
     .array(
       z.object({
@@ -30,10 +32,12 @@ export const Route = createFileRoute("/_authenticated/redirect-vscode")({
 });
 
 function RouteComponent() {
-  const { prompt, attachments } = Route.useSearch();
+  const { requestId, prompt, name, attachments } = Route.useSearch();
   const [showManualButton, setShowManualButton] = useState(false);
 
   const newProject = {
+    requestId,
+    name,
     prompt,
     attachments,
     githubTemplateUrl: "https://github.com/wsxiaoys/reimagined-octo-funicular",

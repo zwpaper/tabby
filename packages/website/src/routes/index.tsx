@@ -172,7 +172,7 @@ function RouteComponent() {
     setInputValue(enhanced);
   };
 
-  const doSubmit = async (input: string) => {
+  const doSubmit = async (input: string, name?: string) => {
     setSubmitError(null);
     if (auth === null) {
       setShowAuthDialog(true);
@@ -192,7 +192,9 @@ function RouteComponent() {
           await navigate({
             to: "/redirect-vscode",
             search: {
+              requestId: crypto.randomUUID(),
               prompt: input,
+              name,
               attachments,
             },
           });
