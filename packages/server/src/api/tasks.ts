@@ -22,7 +22,9 @@ const CreateTaskSchema = z.object({
 });
 
 const titleSelect =
-  sql<string>`conversation #> '{messages, 0, parts, 0, text}'`.as("title");
+  sql<string>`LEFT(SPLIT_PART((conversation #>> '{messages, 0, parts, 0, text}')::text, '\n', 1), 256)`.as(
+    "title",
+  );
 
 // Create a tasks router with authentication
 const tasks = new Hono()
