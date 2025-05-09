@@ -1,2 +1,5 @@
 assets/webview-ui/
 *.vsix
+
+.vscode-test/
+out/

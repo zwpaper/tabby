@@ -3,6 +3,9 @@
     "./packages/server/src/db/schema.d.ts",
     "./packages/server/src/db/event.ts"
   ],
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "[typescript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },

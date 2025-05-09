@@ -6,7 +6,7 @@
     "fix": "npm-run-all 'check:default -- --write' 'check:test -- --write'",
     "check:default": "biome check .",
     "check:test": "biome check --config-path=./biome.test.json .",
-    "test": "vitest --run",
+    "test": "vitest --run --exclude packages/vscode",
     "tsc": "bun --filter '*' tsc",
     "build": "bun --filter '*' build",
     "dev:server": "bun --filter '*' dev:server",
