@@ -93,7 +93,12 @@ export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
     }
 
     return async (c, next) => {
-      const session = await auth.api.getSession({ headers: c.req.raw.headers });
+      const session = await auth.api.getSession({
+        headers: c.req.raw.headers,
+        query: {
+          disableRefresh: true,
+        },
+      });
       if (session) {
         c.set("user", session.user);
       }

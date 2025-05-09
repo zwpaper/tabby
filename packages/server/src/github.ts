@@ -64,6 +64,9 @@ async function handleCallback(req: IncomingMessage, res: ServerResponse) {
 
   const authData = await auth.api.getSession({
     headers: new Headers(req.headers as Record<string, string>),
+    query: {
+      disableRefresh: true,
+    },
   });
   if (!authData) {
     throw new Error("[github] Not authenticated");

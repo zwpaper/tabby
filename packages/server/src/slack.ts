@@ -44,6 +44,9 @@ class SlackService {
           afterInstallation: async (installation, _installOptions, req) => {
             const data = await auth.api.getSession({
               headers: new Headers(req.headers as Record<string, string>),
+              query: {
+                disableRefresh: true,
+              },
             });
             if (!data) return false;
 
