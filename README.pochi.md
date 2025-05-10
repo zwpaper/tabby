@@ -14,7 +14,9 @@ We use mocha framework, when creating test, do not use mocks for filesystem, jus
 
 (assuming cwd is packages/vscode)
 test command: `bun run test`
-coverage test command: `bun run coverage`
+coverage test command: `bun run test:coverage`
+
+When encountering issues like `TypeError: Descriptor for property readFile is non-configurable and non-writable`, please use `proxyquire` to mock the module.
 
 # Misc
 1. use `bun check` to format / linting the code.
