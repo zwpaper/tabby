@@ -21,7 +21,9 @@ export async function createNewWorkspace(
 ): Promise<vscode.Uri | undefined> {
   await createDirectoryIfNotExists(baseUri);
 
-  const placeholder = namePlaceholder ?? generate().dashed;
+  const { dashed } = generate();
+  const namePrefix = namePlaceholder || "my-project";
+  const placeholder = `${namePrefix}-${dashed}`;
   const projectName = await vscode.window.showInputBox({
     title: "Enter a name for the project",
     value: placeholder,
