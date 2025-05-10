@@ -38,6 +38,7 @@ export const applyDiffTool: React.FC<
       <span>
         {isExecuting ? "Applying" : isSuccess ? "Applied" : "Apply"} diff to
       </span>
+      <span className="ml-2" />
       {path && (
         <FileBadge
           path={path}

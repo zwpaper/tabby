@@ -53,7 +53,10 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            onClick={onClick || defaultOnClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick ? onClick() : defaultOnClick();
+            }}
             className={cn(
               "cursor-pointer rounded-sm border border-zinc-600 box-decoration-clone px-1 py-0.5 text-xs active:bg-zinc-700",
               className,
