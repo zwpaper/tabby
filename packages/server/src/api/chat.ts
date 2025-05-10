@@ -132,8 +132,6 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       },
     });
 
-    result.consumeStream();
-
     const dataStream = createDataStream({
       execute: (stream) => {
         if (req.id === undefined) {
