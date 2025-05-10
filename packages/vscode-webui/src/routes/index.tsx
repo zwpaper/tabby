@@ -16,7 +16,14 @@ import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Editor } from "@tiptap/react";
-import type { Attachment, CreateMessage, TextPart, ToolInvocation } from "ai";
+import {
+  type Attachment,
+  type CoreMessage,
+  type CreateMessage,
+  type TextPart,
+  type ToolInvocation,
+  convertToCoreMessages,
+} from "ai";
 import type { InferResponseType } from "hono/client";
 import {
   CheckIcon,
@@ -1018,11 +1025,12 @@ const CopyMessages = ({ messages }: { messages: UIMessage[] }) => {
   const onCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isCopied) return;
-    copyToClipboard(JSON.stringify(messages, null, 2));
+    const coreMessages = createCoreMessagesForCopy(messages);
+    copyToClipboard(JSON.stringify(coreMessages, null, 2));
   };
 
   return (
-    <span onClick={onCopy}>
+    <span onClick={onCopy} className="cursor-pointer">
       {isCopied ? (
         <CheckIcon className="inline text-green-600" />
       ) : (
@@ -1032,3 +1040,22 @@ const CopyMessages = ({ messages }: { messages: UIMessage[] }) => {
     </span>
   );
 };
+
+function createCoreMessagesForCopy(messages: UIMessage[]): CoreMessage[] {
+  return convertToCoreMessages(
+    messages.map((message) => {
+      const ret = {
+        ...message,
+      };
+
+      if (message.role === "assistant") {
+        ret.parts = message.parts.filter(
+          (part) =>
+            part.type !== "tool-invocation" ||
+            part.toolInvocation.state === "result",
+        );
+      }
+      return ret;
+    }),
+  );
+}
