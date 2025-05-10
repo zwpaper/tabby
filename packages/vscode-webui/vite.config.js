@@ -17,7 +17,6 @@ export default defineConfig({
     tailwindcss(),
   ],
   build: {
-    target: "ES2022",
     rollupOptions: {
       output: {
         manualChunks: false,
