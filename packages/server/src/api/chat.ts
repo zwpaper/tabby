@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 import { ClientTools } from "@ragdoll/tools";
 import {
@@ -94,43 +95,59 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       }
     }
 
-    const result = streamText({
-      toolCallStreaming: true,
-      model: c.get("model") || selectedModel,
-      system: environment?.info && generateSystemPrompt(environment.info),
-      messages: preprocessMessages(messages, selectedModel, environment, event),
-      tools: {
-        ...ClientTools,
-        ...enabledServerTools, // Add the enabled server tools
-      },
-      onFinish: async ({ usage, finishReason, response }) => {
-        const messagesToSave = postProcessMessages(
-          appendResponseMessages({
-            messages,
-            responseMessages: response.messages,
-          }),
-        );
+    const result = Laminar.withSession(`${user.id}-${id}`, () =>
+      streamText({
+        toolCallStreaming: true,
+        model: c.get("model") || selectedModel,
+        system: environment?.info && generateSystemPrompt(environment.info),
+        messages: preprocessMessages(
+          messages,
+          selectedModel,
+          environment,
+          event,
+        ),
+        tools: {
+          ...ClientTools,
+          ...enabledServerTools, // Add the enabled server tools
+        },
+        onFinish: async ({ usage, finishReason, response }) => {
+          const messagesToSave = postProcessMessages(
+            appendResponseMessages({
+              messages,
+              responseMessages: response.messages,
+            }),
+          );
 
-        await db
-          .updateTable("task")
-          .set({
-            environment,
-            status: getTaskStatus(messagesToSave, finishReason),
-            conversation: {
-              messages: fromUIMessages(messagesToSave),
-            },
-            updatedAt: sql`CURRENT_TIMESTAMP`,
-          })
-          .where("taskId", "=", id)
-          .where("userId", "=", user.id)
-          .executeTakeFirstOrThrow()
-          .catch(console.error);
+          await db
+            .updateTable("task")
+            .set({
+              environment,
+              status: getTaskStatus(messagesToSave, finishReason),
+              conversation: {
+                messages: fromUIMessages(messagesToSave),
+              },
+              updatedAt: sql`CURRENT_TIMESTAMP`,
+            })
+            .where("taskId", "=", id)
+            .where("userId", "=", user.id)
+            .executeTakeFirstOrThrow()
+            .catch(console.error);
 
-        if (!Number.isNaN(usage.totalTokens)) {
-          await trackUsage(user, requestedModelId, usage);
-        }
-      },
-    });
+          if (!Number.isNaN(usage.totalTokens)) {
+            await trackUsage(user, requestedModelId, usage);
+          }
+        },
+        experimental_telemetry: {
+          isEnabled: true,
+          tracer: getTracer(),
+          metadata: {
+            "user-id": user.id,
+            "user-email": user.email,
+            "task-id": id,
+          },
+        },
+      }),
+    );
 
     const dataStream = createDataStream({
       execute: (stream) => {

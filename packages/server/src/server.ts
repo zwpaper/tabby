@@ -1,3 +1,5 @@
+import "./lib/laminar";
+
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { etag } from "hono/etag";
