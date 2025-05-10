@@ -122,7 +122,7 @@
     "tsc": "tsc --noEmit",
     "pretest": "rm -rf out && tsc -p tsconfig.test.json",
     "test": "vscode-test",
-    "coverage": "rm -rf dist && vscode-test --coverage --coverage-output ./coverage --coverage-reporter html --coverage-reporter text",
+    "test:coverage": "npm run test -- --coverage --coverage-output ./coverage --coverage-reporter html --coverage-reporter text",
     "release-patch": "bunx bumpp --tag=vscode@%s"
   },
   "dependencies": {
