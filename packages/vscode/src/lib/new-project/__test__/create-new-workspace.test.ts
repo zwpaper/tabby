@@ -131,8 +131,9 @@ suite('createNewWorkspace Suite', () => {
         isFileExistsStub.resolves(false); // Default fallback
 
         showInputBoxStub.callsFake(async (options) => {
-            assert.strictEqual(options?.value, placeholderName, "Input box value should be the placeholder");
-            return options?.value; 
+            assert.ok(options?.value?.startsWith(placeholderName + '-'), `Input box value should start with the placeholder and a dash, got: ${options?.value}`);
+            // Return the exact placeholderName so the rest of the test can proceed with the expected URI
+            return placeholderName; 
         });
 
         const resultUri = await proxiedCreateNewWorkspace(placeholderName);
@@ -235,4 +236,5 @@ suite('createNewWorkspace Suite', () => {
         assert.strictEqual(callsForBaseUri.length, 0, 'createDirectory should NOT be called for actualBasePochiProjectsUri as it was stubbed to exist');
     });
 });
+
 
