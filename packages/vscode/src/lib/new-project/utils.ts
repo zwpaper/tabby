@@ -21,30 +21,22 @@ export async function createNewWorkspace(
 ): Promise<vscode.Uri | undefined> {
   await createDirectoryIfNotExists(baseUri);
 
-  const parentUri = await vscode.window.showOpenDialog({
-    title: "Select a directory to create the project in",
-    openLabel: "Select",
-    defaultUri: baseUri,
-    canSelectFolders: true,
-    canSelectFiles: false,
-    canSelectMany: false,
-  });
-  if (!parentUri || !parentUri[0]) {
-    return undefined;
-  }
-
   const placeholder = namePlaceholder ?? generate().dashed;
   const projectName = await vscode.window.showInputBox({
     title: "Enter a name for the project",
     value: placeholder,
     valueSelection: [0, placeholder.length],
     ignoreFocusOut: true,
-    validateInput: (value) => {
+    validateInput: async (value) => {
       if (value.trim() === "") {
         return "Project name cannot be empty";
       }
       if (/[^a-zA-Z0-9-_]/.test(value)) {
         return "Project name can only contain letters, numbers, dashes and underscores";
+      }
+      const projectUri = vscode.Uri.joinPath(baseUri, value);
+      if (await isFileExists(projectUri)) {
+        return "Project directory already exists, please choose another name";
       }
       return undefined;
     },
@@ -52,7 +44,7 @@ export async function createNewWorkspace(
   if (!projectName) {
     return undefined;
   }
-  const projectUri = vscode.Uri.joinPath(parentUri[0], projectName);
+  const projectUri = vscode.Uri.joinPath(baseUri, projectName);
 
   await createDirectoryIfNotExists(projectUri);
   logger.info(`Created directory: ${projectUri}`);
