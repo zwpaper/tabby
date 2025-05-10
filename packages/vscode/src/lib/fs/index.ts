@@ -1,4 +1,5 @@
 import * as diff from "diff";
+import { fileTypeFromBuffer } from "file-type";
 import * as vscode from "vscode";
 
 export { ignoreWalk } from "./ignore-walk";
@@ -42,4 +43,15 @@ export function createPrettyPatch(
   const lines = patch.split("\n");
   const prettyPatchLines = lines.slice(4);
   return prettyPatchLines.join("\n");
+}
+
+export async function isBinaryFile(fileUri: vscode.Uri): Promise<boolean> {
+  const fileBuffer = await vscode.workspace.fs.readFile(
+    vscode.Uri.file(fileUri.fsPath),
+  );
+  const type = await fileTypeFromBuffer(fileBuffer);
+  if (type && !type.mime.startsWith("text/")) {
+    return true;
+  }
+  return false;
 }

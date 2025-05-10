@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { collectCustomRules, getSystemInfo } from "@/lib/env-utils";
-import { ignoreWalk } from "@/lib/fs";
+import { ignoreWalk, isBinaryFile } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import type { TokenStorage } from "@/lib/token-storage";
 import { applyDiff, previewApplyDiff } from "@/tools/apply-diff";
@@ -215,11 +215,16 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       logger.error(`Failed to reveal folder in explorer: ${error}`);
     }
 
-    const start = options?.start ?? 1;
-    const end = options?.end ?? start;
-    vscode.window.showTextDocument(fileUri, {
-      selection: new vscode.Range(start - 1, 0, end - 1, 0),
-    });
+    const isBinary = await isBinaryFile(fileUri);
+    if (isBinary) {
+      await vscode.commands.executeCommand("vscode.open", fileUri);
+    } else {
+      const start = options?.start ?? 1;
+      const end = options?.end ?? start;
+      vscode.window.showTextDocument(fileUri, {
+        selection: new vscode.Range(start - 1, 0, end - 1, 0),
+      });
+    }
   };
 
   readIsDevMode = async (): Promise<ThreadSignalSerialization<boolean>> => {

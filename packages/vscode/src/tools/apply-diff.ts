@@ -6,6 +6,7 @@ import type {
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@ragdoll/tools/src/types";
+import { fileTypeFromBuffer } from "file-type";
 import * as vscode from "vscode";
 
 const WindowToExpandForSearch = 15;
@@ -165,6 +166,14 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
 
     const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
     const fileContent = fileBuffer.toString();
+
+    const type = await fileTypeFromBuffer(fileBuffer);
+
+    if (type && !type.mime.startsWith("text/")) {
+      throw new Error(
+        `The file is binary or not plain text (detected type: ${type.mime}).`,
+      );
+    }
 
     const diffView = DiffView.get(toolCallId);
     if (!diffView) {
