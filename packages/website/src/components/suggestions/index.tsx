@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
 import {
+  BarChartIcon,
+  BoxesIcon,
   CalculatorIcon,
   FileSignatureIcon,
   LayoutDashboardIcon,
 } from "lucide-react";
+import modelPrompt from "./prompts/3d-model.md";
 import calculatorPrompt from "./prompts/calculator.md";
+import dataDashboardPrompt from "./prompts/data-dashboard.md";
 import landingPagePrompt from "./prompts/landing-page.md";
 import signUpFormPrompt from "./prompts/sign-up-form.md";
 
@@ -35,6 +39,18 @@ export function PromptSuggestions({ handleSubmit }: PromptSuggestionsProps) {
       label: "Calculator",
       icon: <CalculatorIcon className="mr-2 h-4 w-4" />,
       prompt: calculatorPrompt,
+    },
+    {
+      name: "3d-model",
+      label: "3D Model",
+      icon: <BoxesIcon className="mr-2 h-4 w-4" />,
+      prompt: modelPrompt,
+    },
+    {
+      name: "data-dashboard",
+      label: "Data Dashboard",
+      icon: <BarChartIcon className="mr-2 h-4 w-4" />,
+      prompt: dataDashboardPrompt,
     },
   ];
 
