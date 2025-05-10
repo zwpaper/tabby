@@ -156,7 +156,7 @@ export const previewApplyDiff: PreviewToolFunctionType<
  * Apply a diff to a file using DiffView
  */
 export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
-  { path },
+  { path, diff, startLine, endLine },
   { toolCallId },
 ) => {
   try {
@@ -166,6 +166,13 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
 
     const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
     const fileContent = fileBuffer.toString();
+
+    const updatedContent = await parseDiffAndApply(
+      diff,
+      startLine,
+      endLine,
+      fileContent,
+    );
 
     const type = await fileTypeFromBuffer(fileBuffer);
 
@@ -180,7 +187,7 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
       throw new Error("User has closed the diff view, cannot save changes.");
     }
 
-    const edits = await diffView.saveChanges(path, fileContent);
+    const edits = await diffView.saveChanges(path, updatedContent);
 
     logger.info(`Successfully applied diff to ${path}`);
     return { success: true, ...edits };
