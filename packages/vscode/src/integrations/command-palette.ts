@@ -1,13 +1,22 @@
 import * as vscode from "vscode";
 
 interface PochiQuickPickItem extends vscode.QuickPickItem {
-  command: string;
+  command?: string;
   args?: unknown[];
 }
 
 export class CommandPalette {
   async show() {
     const items: PochiQuickPickItem[] = [
+      {
+        label: "Account",
+        command: "ragdoll.accountSettings",
+        iconPath: new vscode.ThemeIcon("account"),
+      },
+      {
+        label: "Separator",
+        kind: vscode.QuickPickItemKind.Separator,
+      },
       {
         label: "Settings",
         command: "ragdoll.openSettings",
@@ -24,7 +33,7 @@ export class CommandPalette {
       title: "Pochi Command Palette",
     });
 
-    if (selectedItem) {
+    if (selectedItem?.command) {
       vscode.commands.executeCommand(
         selectedItem.command,
         ...(selectedItem.args || []),

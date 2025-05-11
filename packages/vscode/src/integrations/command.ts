@@ -11,6 +11,7 @@ import { TokenStorage } from "@/lib/token-storage";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
+// biome-ignore lint/style/useImportType: needed for dependency injection
 import { CommandPalette } from "./command-palette";
 import type { NewProjectParams } from "./uri-handler";
 
@@ -18,7 +19,6 @@ import type { NewProjectParams } from "./uri-handler";
 @singleton()
 export class CommandManager implements vscode.Disposable {
   private disposables: vscode.Disposable[] = [];
-  private readonly commandPalette = new CommandPalette();
 
   constructor(
     private readonly ragdollWebviewProvider: RagdollWebviewProvider,
@@ -26,6 +26,7 @@ export class CommandManager implements vscode.Disposable {
     private readonly newProjectRegistry: NewProjectRegistry,
     @inject("AuthClient") private readonly authClient: AuthClient,
     private readonly authEvents: AuthEvents,
+    private readonly commandPalette: CommandPalette,
   ) {
     this.registerCommands();
   }
