@@ -132,7 +132,9 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     });
 
     // open the new workspace
-    await vscode.commands.executeCommand("vscode.openFolder", newWorkspaceUri);
+    await vscode.commands.executeCommand("vscode.openFolder", newWorkspaceUri, {
+      forceReuseWindow: true,
+    });
   }
 
   async loginWithDeviceLink(token: string) {
