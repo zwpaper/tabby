@@ -11,6 +11,7 @@ import { type UserEvent, db } from "../db";
 const PaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1), // Changed from before/after to page
   limit: z.coerce.number().int().min(1).max(100).default(10),
+  cwd: z.string().optional(),
 });
 
 const TaskParamsSchema = z.object({
@@ -30,7 +31,7 @@ const titleSelect =
 const tasks = new Hono()
   // List tasks with pagination
   .get("/", zValidator("query", PaginationSchema), requireAuth, async (c) => {
-    const { page, limit } = c.req.valid("query"); // Use page and limit
+    const { cwd, page, limit } = c.req.valid("query"); // Use page and limit
     const user = c.get("user");
 
     const offset = (page - 1) * limit; // Calculate offset
@@ -46,7 +47,7 @@ const tasks = new Hono()
     const totalPages = Math.ceil(totalCount / limit);
 
     // Fetch items for the current page
-    const items = await db
+    let query = db
       .selectFrom("task")
       .where("userId", "=", user.id)
       .select([
@@ -59,9 +60,13 @@ const tasks = new Hono()
       ])
       .orderBy("taskId", "desc") // Order by newest first
       .limit(limit)
-      .offset(offset) // Apply offset
-      .execute();
+      .offset(offset);
 
+    if (cwd) {
+      query = query.where(sql<string>`environment #>> '{info, cwd}'`, "=", cwd);
+    }
+
+    const items = await query.execute();
     const data = items.map((task) => ({
       ...task,
       taskId: undefined,
