@@ -27,7 +27,7 @@ export class StatusBarController implements vscode.Disposable {
       vscode.StatusBarAlignment.Right,
     );
     this.statusBarItem.tooltip = tooltip;
-    this.statusBarItem.command = "ragdoll.accountSettings";
+    this.statusBarItem.command = "ragdoll.showCommandPalette";
 
     this.refresh(); // Initial refresh
     this.statusBarItem.show();

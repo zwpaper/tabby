@@ -3,6 +3,7 @@ import RagdollWebviewProvider from "@/integrations/webview/ragdoll-webview-provi
 import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
+import { showOutputPanel } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -10,12 +11,14 @@ import { TokenStorage } from "@/lib/token-storage";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
+import { CommandPalette } from "./command-palette";
 import type { NewProjectParams } from "./uri-handler";
 
 @injectable()
 @singleton()
 export class CommandManager implements vscode.Disposable {
   private disposables: vscode.Disposable[] = [];
+  private readonly commandPalette = new CommandPalette();
 
   constructor(
     private readonly ragdollWebviewProvider: RagdollWebviewProvider,
@@ -169,6 +172,16 @@ export class CommandManager implements vscode.Disposable {
           "@ext:tabbyml.pochi",
         );
       }),
+
+      vscode.commands.registerCommand(
+        "ragdoll.showCommandPalette",
+        this.commandPalette.show.bind(this.commandPalette),
+      ),
+
+      vscode.commands.registerCommand(
+        "ragdoll.outputPanel.focus",
+        showOutputPanel,
+      ),
     );
   }
 
