@@ -14,7 +14,7 @@ export class CommandPalette {
         iconPath: new vscode.ThemeIcon("account"),
       },
       {
-        label: "Separator",
+        label: "Config",
         kind: vscode.QuickPickItemKind.Separator,
       },
       {
