@@ -7,23 +7,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createFileRoute } from "@tanstack/react-router";
+import { Base64 } from "js-base64";
 import { LifeBuoy, Loader2, Puzzle } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  requestId: z.string().optional(),
-  prompt: z.string().optional(),
-  name: z.string().optional(),
-  attachments: z
-    .array(
-      z.object({
-        name: z.string().optional(),
-        contentType: z.string().optional(),
-        url: z.string(),
-      }),
-    )
-    .optional(),
+  project: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/redirect-vscode")({
@@ -32,28 +22,24 @@ export const Route = createFileRoute("/_authenticated/redirect-vscode")({
 });
 
 function RouteComponent() {
-  const { requestId, prompt, name, attachments } = Route.useSearch();
+  const { project } = Route.useSearch();
   const [showManualButton, setShowManualButton] = useState(false);
-
-  const newProject = {
-    requestId,
-    name,
-    prompt,
-    attachments,
-    githubTemplateUrl: "https://github.com/wsxiaoys/reimagined-octo-funicular",
-  };
-  const jsonString = JSON.stringify(newProject);
-
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(jsonString);
-  const base64Encoded = btoa(
-    Array.from(bytes)
-      .map((byte) => String.fromCharCode(byte))
-      .join(""),
-  );
+  const description = useMemo(() => {
+    try {
+      const { prompt, attachments } = JSON.parse(Base64.decode(project ?? ""));
+      if (prompt) {
+        return prompt.split("\n")[0];
+      }
+      if (attachments?.length) {
+        return "[attachment]";
+      }
+    } catch {
+      return null;
+    }
+  }, [project]);
 
   const vscodeLink = `vscode://TabbyML.pochi/?newProject=${encodeURIComponent(
-    base64Encoded,
+    project ?? "",
   )}`;
 
   console.log(vscodeLink);
@@ -83,7 +69,7 @@ function RouteComponent() {
             <span>Starting Task</span>
           </CardTitle>
           <CardDescription className="mt-1 text-xs italic">
-            {prompt ? prompt.split("\n")[0] : "[attachments]"}
+            {description}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">

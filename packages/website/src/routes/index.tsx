@@ -16,6 +16,7 @@ import {
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { createFileRoute, useRouter, useSearch } from "@tanstack/react-router";
 import type { Attachment } from "ai";
+import { Base64 } from "js-base64";
 import {
   ArrowUpIcon,
   ImageIcon,
@@ -189,13 +190,20 @@ function RouteComponent() {
         }
 
         if (RedirectVSCodeDirectly) {
-          await navigate({
-            to: "/redirect-vscode",
-            search: {
+          const base64Encoded = Base64.encode(
+            JSON.stringify({
               requestId: crypto.randomUUID(),
               prompt: input,
               name,
               attachments,
+              githubTemplateUrl:
+                "https://github.com/wsxiaoys/reimagined-octo-funicular",
+            }),
+          );
+          await navigate({
+            to: "/redirect-vscode",
+            search: {
+              project: base64Encoded,
             },
           });
           return;
