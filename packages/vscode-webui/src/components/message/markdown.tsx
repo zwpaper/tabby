@@ -65,9 +65,6 @@ export function MessageMarkdown({
           ],
         ]}
         components={{
-          p({ children }) {
-            return <div className="mb-2 last:mb-0">{children}</div>;
-          },
           file: (props: FileComponentProps) => {
             const { children } = props;
             const filepath = String(children);
