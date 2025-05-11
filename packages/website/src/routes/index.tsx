@@ -379,7 +379,13 @@ function RouteComponent() {
           className="hidden"
         />
       </form>
-      <PromptSuggestions handleSubmit={doSubmit} />
+      <PromptSuggestions
+        hasSelectImage={!!files.length}
+        handleSelectImage={() => {
+          fileInputRef.current?.click();
+        }}
+        handleSubmit={doSubmit}
+      />
       <div className="mt-4 text-right text-destructive text-sm">
         {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. submitError */}
         {imageSelectionError?.message ||
