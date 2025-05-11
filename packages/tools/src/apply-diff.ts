@@ -10,12 +10,6 @@ The SEARCH section must exactly match existing content including whitespace and 
 If you're not confident in the exact content to search for, use the readFile tool first to get the exact content.
 When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
 
-Parameters:
-- path: (required) The path of the file to modify (relative to the current working directory)
-- diff: (required) The search/replace block defining the changes.
-- start_line: (required) The line number where the search block starts.
-- end_line: (required) The line number where the search block ends.
-
 Diff format:
 \`\`\`
 <<<<<<< SEARCH
