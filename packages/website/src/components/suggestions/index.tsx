@@ -41,7 +41,9 @@ export function PromptSuggestions({
   const handleSuggestionClick = async (prompt: string, name: string) => {
     if (name === "clone-a-screenshot") {
       setWaitingForImageSelect(true);
-      handleSelectImage();
+      if (!hasSelectImage) {
+        handleSelectImage();
+      }
       return;
     }
     handleSubmit(prompt, name);
