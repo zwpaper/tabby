@@ -6,8 +6,8 @@ import { container, instanceCachingFactory } from "tsyringe";
 import type * as vscode from "vscode";
 import { CommandManager } from "./integrations/command";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
+import { StatusBarController } from "./integrations/status-bar";
 import { type AuthClient, createAuthClient } from "./lib/auth-client";
-import { StatusBarController } from "./status-bar";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
