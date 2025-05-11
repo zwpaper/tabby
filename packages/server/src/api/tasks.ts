@@ -63,7 +63,7 @@ const tasks = new Hono()
       .offset(offset);
 
     if (cwd) {
-      query = query.where(sql<string>`environment #>> '{info, cwd}'`, "=", cwd);
+      query = query.where(sql`environment->'info'->'cwd'`, "@>", `"${cwd}"`);
     }
 
     const items = await query.execute();
