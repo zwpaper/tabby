@@ -37,11 +37,19 @@ const tasks = new Hono()
     const offset = (page - 1) * limit; // Calculate offset
 
     // Get total count first
-    const totalCountResult = await db
+    let totalCountQuery = db
       .selectFrom("task")
       .where("userId", "=", user.id)
-      .select(db.fn.count("id").as("count"))
-      .executeTakeFirst();
+      .select(db.fn.count("id").as("count"));
+
+    if (cwd) {
+      totalCountQuery = totalCountQuery.where(
+        sql`environment->'info'->'cwd'`,
+        "@>",
+        `"${cwd}"`,
+      );
+    }
+    const totalCountResult = await totalCountQuery.executeTakeFirst();
 
     const totalCount = Number(totalCountResult?.count ?? 0);
     const totalPages = Math.ceil(totalCount / limit);
