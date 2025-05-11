@@ -95,6 +95,18 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       }
     }
 
+    // Update the environment.
+    await db
+      .updateTable("task")
+      .set({
+        environment,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("taskId", "=", id)
+      .where("userId", "=", user.id)
+      .executeTakeFirstOrThrow()
+      .catch(console.error);
+
     const result = Laminar.withSession(`${user.id}-${id}`, () =>
       streamText({
         toolCallStreaming: true,

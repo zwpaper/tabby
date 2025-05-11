@@ -10,6 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/auth-client";
 import { CustomHtmlTags } from "@/lib/constants";
+import { vscodeHost } from "@/lib/vscode";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import {
@@ -144,15 +145,34 @@ const getPaginationItems = (
 };
 
 function App() {
+  const { data: environment } = useQuery({
+    queryKey: ["environment"],
+    queryFn: () => vscodeHost.readEnvironment(),
+  });
+
+  if (!environment) {
+    return;
+  }
+
+  return <Tasks cwd={environment.info.cwd} />;
+}
+
+function Tasks({ cwd }: { cwd: string }) {
   const router = useRouter();
   const { page = 1 } = Route.useSearch();
   const limit = 20;
 
   const { data, isPlaceholderData } = useQuery({
-    queryKey: ["tasks", page, limit],
+    queryKey: ["tasks", page, limit, cwd],
     queryFn: () =>
       apiClient.api.tasks
-        .$get({ query: { page: page.toString(), limit: limit.toString() } })
+        .$get({
+          query: {
+            page: page.toString(),
+            limit: limit.toString(),
+            cwd,
+          },
+        })
         .then((x) => x.json()),
     placeholderData: keepPreviousData,
   });
@@ -202,8 +222,11 @@ function App() {
               ))}
         </div>
       </ScrollArea>
+      <span className="mx-auto mt-4 italic">
+        Only tasks created in this workspace are shown
+      </span>
       {meta?.totalPages && meta.totalPages > 1 && (
-        <Pagination className="mt-6 mb-4">
+        <Pagination className="mt-2 mb-4">
           <PaginationContent>
             {getPaginationItems(page, meta.totalPages, handlePageChange)}
           </PaginationContent>
