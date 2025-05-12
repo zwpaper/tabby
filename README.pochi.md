@@ -19,7 +19,7 @@ coverage test command: `bun run test:coverage`
 When encountering issues like `TypeError: Descriptor for property readFile is non-configurable and non-writable`, please use `proxyquire` to mock the module.
 
 # Misc
-1. use `bun check` to format / linting the code.
+1. use `bun check` to format / linting the code, use `bun fix` to automatically apply the fix.
 2. use `bun tsc` to check the types.
 3. For packages/code it uses `ink` for react terminal ui.
 4. Prefer `@/lib` over `../lib` for imports.

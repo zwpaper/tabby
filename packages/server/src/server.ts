@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 import { etag } from "hono/etag";
 import { logger } from "hono/logger";
 import type { UserEvent } from ".";
+import admin from "./api/admin";
 import billing from "./api/billing";
 import chat from "./api/chat";
 import enhance from "./api/enhance";
@@ -88,7 +89,8 @@ const route = api
   .route("/tasks", tasks)
   .route("/integrations", integrations)
   .route("/upload", upload)
-  .route("/enhancePrompt", enhance);
+  .route("/enhancePrompt", enhance)
+  .route("/admin", admin);
 
 export type AppType = typeof route;
 

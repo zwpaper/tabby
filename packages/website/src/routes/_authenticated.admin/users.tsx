@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { authClient } from "@/lib/auth-client";
+import { type User, apiClient, authClient } from "@/lib/auth-client";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Ban,
@@ -36,6 +36,7 @@ import {
   ShieldCheck,
   ShieldX,
   Undo,
+  UserCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -43,18 +44,12 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/admin/users")({
   async loader() {
     const pageSize = 20;
-
-    const { data: users } = await authClient.admin.listUsers({
-      query: {
-        limit: pageSize,
-        offset: 0, // Always fetch first page initially
-      },
-    });
+    const users = await fetchUsersPage(pageSize, 0);
 
     return {
       users,
       pageSize,
-      error: null,
+      error: null, // Assuming error handling is done elsewhere or not needed here
     };
   },
   component: UsersPage,
@@ -94,22 +89,18 @@ function UsersPage() {
   const [userToImpersonate, setUserToImpersonate] = useState<
     (typeof userList)[0] | null
   >(null);
+  const [userToApprove, setUserToApprove] = useState<
+    (typeof userList)[0] | null
+  >(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const userList = userData?.users || [];
+  const userList = (userData?.users || []) as User[];
   const totalUsers = userData?.total || 0;
   const totalPages = Math.ceil(totalUsers / pageSize);
 
   const handlePageChange = async (newPage: number) => {
     setCurrentPage(newPage);
-
-    const { data: newUsers } = await authClient.admin.listUsers({
-      query: {
-        limit: pageSize,
-        offset: (newPage - 1) * pageSize,
-      },
-    });
-
+    const newUsers = await fetchUsersPage(pageSize, (newPage - 1) * pageSize);
     setUserData(newUsers);
   };
 
@@ -119,7 +110,6 @@ function UsersPage() {
     setIsProcessing(true);
     try {
       if (userToBan.banned) {
-        // Unban the user
         await authClient.admin.unbanUser({
           userId: userToBan.id,
         });
@@ -127,7 +117,6 @@ function UsersPage() {
           description: `${userToBan.email} has been unbanned successfully.`,
         });
       } else {
-        // Ban the user
         await authClient.admin.banUser({
           userId: userToBan.id,
           banReason: "Banned by administrator",
@@ -136,14 +125,10 @@ function UsersPage() {
           description: `${userToBan.email} has been banned successfully.`,
         });
       }
-
-      // Update the user list after ban/unban
-      const { data: refreshedUsers } = await authClient.admin.listUsers({
-        query: {
-          limit: pageSize,
-          offset: (currentPage - 1) * pageSize,
-        },
-      });
+      const refreshedUsers = await fetchUsersPage(
+        pageSize,
+        (currentPage - 1) * pageSize,
+      );
       setUserData(refreshedUsers);
     } catch (error) {
       toast.error("Error", {
@@ -161,7 +146,6 @@ function UsersPage() {
     setIsProcessing(true);
     try {
       if (userToChangeRole.role === "admin") {
-        // Remove admin role
         await authClient.admin.setRole({
           userId: userToChangeRole.id,
           role: "user",
@@ -170,7 +154,6 @@ function UsersPage() {
           description: `${userToChangeRole.email} is no longer an admin.`,
         });
       } else {
-        // Make user an admin
         await authClient.admin.setRole({
           userId: userToChangeRole.id,
           role: "admin",
@@ -179,14 +162,10 @@ function UsersPage() {
           description: `${userToChangeRole.email} is now an admin.`,
         });
       }
-
-      // Update the user list after role change
-      const { data: refreshedUsers } = await authClient.admin.listUsers({
-        query: {
-          limit: pageSize,
-          offset: (currentPage - 1) * pageSize,
-        },
-      });
+      const refreshedUsers = await fetchUsersPage(
+        pageSize,
+        (currentPage - 1) * pageSize,
+      );
       setUserData(refreshedUsers);
     } catch (error) {
       toast.error("Error", {
@@ -203,7 +182,6 @@ function UsersPage() {
 
     setIsProcessing(true);
     try {
-      // Impersonate the user
       await authClient.admin.impersonateUser({
         userId: userToImpersonate.id,
       });
@@ -212,7 +190,6 @@ function UsersPage() {
         description: `You are now impersonating ${userToImpersonate.email}. You will be redirected to the dashboard.`,
       });
 
-      // Redirect to the home page as the impersonated user
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
@@ -226,7 +203,36 @@ function UsersPage() {
     }
   };
 
-  const formatDate = (date: Date) => {
+  const handleApproveUser = async () => {
+    if (!userToApprove) return;
+
+    setIsProcessing(true);
+    try {
+      await apiClient.api.admin.approveWaitlist.$post({
+        query: { userId: userToApprove.id },
+      });
+      toast.success("User Approved", {
+        description: `${userToApprove.email} has been approved successfully.`,
+      });
+
+      const refreshedUsers = await fetchUsersPage(
+        pageSize,
+        (currentPage - 1) * pageSize,
+      );
+      setUserData(refreshedUsers);
+    } catch (error) {
+      toast.error("Error Approving User", {
+        description: `Failed to approve ${userToApprove.email}. Please try again.`,
+      });
+    } finally {
+      setIsProcessing(false);
+      setUserToApprove(null);
+    }
+  };
+
+  const formatDate = (dateString: string | Date) => {
+    const date =
+      typeof dateString === "string" ? new Date(dateString) : dateString;
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -260,6 +266,7 @@ function UsersPage() {
               <TableHead>Name</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Waitlist Approved</TableHead> {/* New Column Header */}
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -281,12 +288,21 @@ function UsersPage() {
                   )}
                 </TableCell>
                 <TableCell>
+                  {/* Status logic simplified: Banned, Active (email verified), Inactive */}
                   {user.banned ? (
                     <Badge variant="destructive">Banned</Badge>
                   ) : user.emailVerified ? (
                     <Badge variant="default">Active</Badge>
                   ) : (
                     <Badge variant="secondary">Inactive</Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {/* New Column Cell for waitlist Status */}
+                  {user.isWaitlistApproved ? (
+                    <Badge variant="default">Yes</Badge>
+                  ) : (
+                    <Badge variant="secondary">No</Badge>
                   )}
                 </TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
@@ -298,6 +314,19 @@ function UsersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {/* Approve User dropdown item - visible if not banned and not approved */}
+                      {!user.banned && !user.isWaitlistApproved && (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => setUserToApprove(user)}
+                            disabled={isProcessing}
+                          >
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            Approve User
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
                       <DropdownMenuItem
                         onClick={() => setUserToChangeRole(user)}
                         disabled={isProcessing}
@@ -314,34 +343,30 @@ function UsersPage() {
                           </>
                         )}
                       </DropdownMenuItem>
-                      {user.role !== "admin" && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setUserToBan(user)}
-                            disabled={isProcessing}
-                          >
-                            {user.banned ? (
-                              <>
-                                <Undo className="mr-2 h-4 w-4" />
-                                Unban
-                              </>
-                            ) : (
-                              <>
-                                <Ban className="mr-2 h-4 w-4" />
-                                Ban
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setUserToImpersonate(user)}
-                            disabled={isProcessing}
-                          >
-                            Impersonate
-                          </DropdownMenuItem>
-                        </>
-                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setUserToBan(user)}
+                        disabled={isProcessing}
+                      >
+                        {user.banned ? (
+                          <>
+                            <Undo className="mr-2 h-4 w-4" />
+                            Unban
+                          </>
+                        ) : (
+                          <>
+                            <Ban className="mr-2 h-4 w-4" />
+                            Ban
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setUserToImpersonate(user)}
+                        disabled={isProcessing}
+                      >
+                        Impersonate
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -522,6 +547,55 @@ function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Approve User Confirmation Dialog */}
+      <Dialog
+        open={!!userToApprove}
+        onOpenChange={(open) => !open && setUserToApprove(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve User Waitlist</DialogTitle>
+            <DialogDescription>
+              {`Are you sure you want to approve waitlist access for ${userToApprove?.email}?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setUserToApprove(null)}
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleApproveUser}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Approve User"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+async function fetchUsersPage(pageSize: number, offset: number) {
+  const { data: users } = await authClient.admin.listUsers({
+    query: {
+      limit: pageSize,
+      offset,
+      sortBy: "createdAt",
+    },
+  });
+  return users;
 }
