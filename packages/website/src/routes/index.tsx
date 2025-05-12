@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { UserButton } from "@/components/user-button";
-import { useEnhancingPrompt } from "@/lib/useEnhancingPrompt";
+import { useEnhancingPrompt } from "@/lib/use-enhancing-prompt";
 import {
   createImageFileName,
   isDuplicateFile,

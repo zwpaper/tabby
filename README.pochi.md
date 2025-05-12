@@ -6,8 +6,8 @@ ragdoll is an project developed using following technologies:
 # Testing for non packages/vscode
 We use vitest framework.
 our test use vitest framework.
-test command: `bun run vitest --run`
-coverage test command: `bun run vitest --coverage --run`
+test command: `bun run test`
+coverage test command: `bun run test -- --coverage`
 
 ## Testing for packages/vscode
 We use mocha framework, when creating test, do not use mocks for filesystem, just use vscode.workspace.fs to create files and folders, and only use mocha primitives for testing. use sinon for mocks.
