@@ -1,5 +1,5 @@
 import { DiffView } from "@/integrations/editor/diff-view";
-import { parseDiffAndApply } from "@/lib/diff-utils"; // Import the extracted function
+import { parseDiffAndApply } from "@/lib/diff"; // Import the extracted function
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType } from "@ragdoll/tools";

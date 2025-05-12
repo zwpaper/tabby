@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { describe, it } from "mocha";
-import { parseDiffAndApply } from "@/lib/diff-utils";
+import { parseDiffAndApply } from "@/lib/diff";
 
 describe("parseDiffAndApply", () => {
   it("should apply a simple diff correctly", async () => {
@@ -287,4 +287,5 @@ new start lines
     assert.strictEqual(result, expectedContent);
   });
 });
+
 

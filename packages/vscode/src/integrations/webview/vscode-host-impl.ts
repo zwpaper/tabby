@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { collectCustomRules, getSystemInfo } from "@/lib/env-utils";
+import { collectCustomRules, getSystemInfo } from "@/lib/env";
 import { ignoreWalk, isBinaryFile } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import type { TokenStorage } from "@/lib/token-storage";
