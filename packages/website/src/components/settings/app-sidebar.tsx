@@ -1,16 +1,10 @@
 import {
-  IconCamera,
-  IconChartBar,
-  IconCreditCard,
   IconDatabase,
-  IconFileAi,
-  IconFileDescription,
   IconFileWord,
   IconHelp,
   IconReport,
   IconSearch,
   IconSettings,
-  IconUserCircle,
 } from "@tabler/icons-react";
 import type * as React from "react";
 
@@ -32,71 +26,6 @@ import { NavSecondary } from "./nav-secondary";
 import { QuotaDisplay } from "./quota-display"; // Import the new component
 
 const data = {
-  navMain: [
-    {
-      title: "Account",
-      url: "/settings/account",
-      icon: IconUserCircle,
-    },
-    {
-      title: "Usage",
-      url: "/settings/usage",
-      icon: IconChartBar,
-    },
-    {
-      title: "Billing",
-      url: "/settings/billing",
-      icon: IconCreditCard,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
   navSecondary: [
     {
       title: "Settings",

@@ -28,6 +28,7 @@ interface Pane {
   title: string;
   url: string;
   icon: React.FC;
+  hide?: boolean;
   active?: boolean;
 }
 
@@ -46,11 +47,13 @@ const MainPanes: Pane[] = [
     title: "Billing",
     url: "/billing",
     icon: IconCreditCard,
+    hide: true,
   },
   {
     title: "Integrations",
     url: "/integrations",
     icon: IconBlocks,
+    hide: true,
   },
   {
     title: "Model",
@@ -63,6 +66,10 @@ function Settings() {
   const {
     location: { pathname },
   } = useRouterState();
+  const {
+    auth: { user },
+  } = Route.useRouteContext();
+
   let activePane: Pane | undefined;
   for (const item of MainPanes) {
     if (item.url === pathname) {
@@ -75,7 +82,10 @@ function Settings() {
 
   return (
     <SidebarProvider>
-      <AppSidebar variant="inset" panes={MainPanes} />
+      <AppSidebar
+        variant="inset"
+        panes={MainPanes.filter((p) => !p.hide || user.role === "admin")}
+      />
       <SidebarInset>
         <SiteHeader title={activePane?.title} />
         <div className="flex flex-1 flex-col">
