@@ -194,9 +194,11 @@ function Tasks({ cwd }: { cwd: string }) {
         <div className="flex flex-1 flex-col gap-4 px-4">
           {isPlaceholderData
             ? [...Array(limit)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-xs bg-card p-5">
-                  <div className="mb-2 h-4 w-1/4 rounded bg-card/70" />
-                  <div className="h-4 w-3/4 rounded bg-card/70" />
+                <div
+                  key={i}
+                  className="animate-pulse rounded-md bg-card px-2 py-3"
+                >
+                  <div className="h-6 w-3/4 rounded bg-card/70" />
                 </div>
               ))
             : tasks.map((task) => (
@@ -206,27 +208,18 @@ function Tasks({ cwd }: { cwd: string }) {
                   className="cursor-pointer"
                   key={task.id}
                 >
-                  <div className="rounded-xs bg-card p-5 hover:bg-card/70">
-                    <div className="mb-1 flex items-center gap-4">
-                      <span className="font-bold">{formatTaskId(task.id)}</span>
-                      <div className="flex items-center">
-                        <TaskStatusIcon status={task.status} />
-                      </div>
-                    </div>
-
-                    <div className="text-foreground">
-                      <p>{processTitle(task.title, CustomHtmlTags)}</p>
-                    </div>
+                  <div className="rounded-md bg-card px-2 py-3 hover:bg-card/70">
+                    <span className="mr-2 ml-2 inline-block align-sub">
+                      <TaskStatusIcon status={task.status} />
+                    </span>
+                    {processTitle(task.title, CustomHtmlTags)}
                   </div>
                 </Link>
               ))}
         </div>
       </ScrollArea>
-      <span className="mx-auto mt-4 italic">
-        Only tasks created in this workspace are shown
-      </span>
       {meta?.totalPages && meta.totalPages > 1 && (
-        <Pagination className="mt-2 mb-4">
+        <Pagination className="mt-6 mb-4">
           <PaginationContent>
             {getPaginationItems(page, meta.totalPages, handlePageChange)}
           </PaginationContent>
@@ -234,10 +227,6 @@ function Tasks({ cwd }: { cwd: string }) {
       )}
     </div>
   );
-}
-
-function formatTaskId(id: number) {
-  return `TASK-${Number(id).toString().padStart(3, "0")}`;
 }
 
 function processTitle(title: string, tagNames: string[]) {
@@ -301,7 +290,7 @@ function removePairedHtmlTags(ast: Root, tagnames: string[] = []) {
 }
 
 const TaskStatusIcon = ({ status }: { status: string }) => {
-  const iconProps = { className: "inline-block mr-1 h-4 w-4 align-middle" };
+  const iconProps = { className: "size-4" };
   switch (status) {
     case "streaming":
       return <Zap {...iconProps} aria-label="Streaming" />;
