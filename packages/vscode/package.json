@@ -123,7 +123,7 @@
     "pretest": "rm -rf out && tsc -p tsconfig.test.json",
     "test": "vscode-test",
     "test:coverage": "npm run test -- --coverage --coverage-output ./coverage --coverage-reporter html --coverage-reporter text",
-    "release-patch": "bunx bumpp --tag=vscode@%s"
+    "release": "bunx bumpp --tag=vscode@%s"
   },
   "dependencies": {
     "@preact/signals-core": "^1.8.0",
