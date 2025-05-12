@@ -34,11 +34,11 @@ export function useVSCodeTool({
     [addToolResult],
   );
   const rejectTool = useCallback(
-    async (tool: ToolInvocation) => {
+    async (tool: ToolInvocation, error: string) => {
       addToolResult({
         toolCallId: tool.toolCallId,
         result: {
-          error: "User rejected tool call",
+          error,
         },
       });
     },

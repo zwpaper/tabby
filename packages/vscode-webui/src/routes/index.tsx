@@ -512,10 +512,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           <EmptyChatPlaceholder />
         ))}
       {renderMessages.length > 0 && <div className="h-4" />}
-      <PreviewToolCalls
-        message={renderMessages.at(-1)}
-        addToolResult={addToolResultWithForceUpdate}
-      />
       <ScrollArea
         className="mb-2 flex-1 overflow-y-auto px-4"
         ref={messagesContainerRef}
@@ -562,7 +558,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
                 </div>
               )}
             </div>
-            {messageIndex < renderMessages.length - 1 && <Separator />}
+            {messageIndex < renderMessages.length - 1 && (
+              <Separator className="mt-1 mb-2" />
+            )}
           </div>
         ))}
         {isLoading && (
@@ -795,7 +793,22 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
-  const shouldSkipExecute = useShouldSkipExecute();
+
+  const executed = useRef(false);
+  const shouldSkipExecute = useCallback(() => {
+    if (executed.current) {
+      return true;
+    }
+    executed.current = true;
+    return false;
+  }, []);
+
+  const { previewToolCall, error: previewToolCallError } = usePreviewToolCall();
+  useEffect(() => {
+    if (pendingApproval.name !== "retry" && !executed.current) {
+      previewToolCall(pendingApproval.tool);
+    }
+  }, [pendingApproval, previewToolCall]);
 
   const onAccept = useCallback(async () => {
     if (pendingApproval.name === "retry") {
@@ -814,14 +827,18 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     }
   }, [shouldSkipExecute, pendingApproval, retry, executeTool, setIsExecuting]);
 
-  const onReject = useCallback(() => {
-    if (pendingApproval.name !== "retry") {
-      if (shouldSkipExecute()) {
-        return;
+  const onReject = useCallback(
+    (error = "User rejected tool call") => {
+      if (pendingApproval.name !== "retry") {
+        if (shouldSkipExecute()) {
+          return;
+        }
+        rejectTool(pendingApproval.tool, error);
       }
-      rejectTool(pendingApproval.tool);
-    }
-  }, [shouldSkipExecute, pendingApproval, rejectTool]);
+    },
+    [shouldSkipExecute, pendingApproval, rejectTool],
+  );
+  const onRejectByUser = useCallback(() => onReject(), [onReject]);
 
   const isAutoApproved = useToolAutoApproval(pendingApproval.name);
   const isAutoRejected = isAutoInjectTool(pendingApproval.name);
@@ -831,8 +848,16 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
       onAccept();
     } else if (isAutoRejected) {
       onReject();
+    } else if (previewToolCallError) {
+      onReject(previewToolCallError);
     }
-  }, [isAutoApproved, isAutoRejected, onAccept, onReject]);
+  }, [
+    isAutoApproved,
+    isAutoRejected,
+    previewToolCallError,
+    onAccept,
+    onReject,
+  ]);
 
   if (executingToolCallId) {
     return null;
@@ -842,7 +867,7 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     <div className="mb-2 flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
       <Button onClick={onAccept}>{acceptText}</Button>
       {pendingApproval.name !== "retry" && (
-        <Button onClick={onReject} variant="secondary">
+        <Button onClick={onRejectByUser} variant="secondary">
           {rejectText}
         </Button>
       )}
@@ -977,60 +1002,23 @@ function usePendingApproval({
   return { pendingApproval, setIsExecuting, executingToolCallId };
 }
 
-function PreviewToolCalls({
-  message,
-  addToolResult,
-}: {
-  message?: UIMessage;
-  addToolResult: AddToolResultFunctionType;
-}) {
-  return message?.parts.map((part, index) => {
-    if (part.type === "tool-invocation") {
-      return (
-        <PreviewToolCall
-          key={index}
-          tool={part.toolInvocation}
-          addToolResult={addToolResult}
-        />
-      );
-    }
-    return null;
-  });
-}
-
-function PreviewToolCall({
-  tool,
-  addToolResult,
-}: { tool: ToolInvocation; addToolResult: AddToolResultFunctionType }) {
-  const { state, args, toolCallId, toolName } = tool;
-  const rejected = useRef(false);
-  useEffect(() => {
+function usePreviewToolCall() {
+  const [error, setError] = useState<string | undefined>(undefined);
+  const previewToolCall = useCallback(async (tool: ToolInvocation) => {
+    const { state, args, toolCallId, toolName } = tool;
     if (state === "result") return;
-    vscodeHost
-      .previewToolCall(toolName, args, {
-        toolCallId,
-        state,
-      })
-      .then((result) => {
-        if (result?.error && state === "call" && !rejected.current) {
-          rejected.current = true;
-          addToolResult({ toolCallId: toolCallId, result: result });
-        }
+    const result = await vscodeHost.previewToolCall(toolName, args, {
+      toolCallId,
+      state,
+    });
+    if (result?.error && state === "call") {
+      setError((prev) => {
+        if (prev) return prev;
+        return result.error;
       });
-  }, [state, args, toolCallId, toolName, addToolResult]);
-  return <></>;
-}
-
-function useShouldSkipExecute() {
-  const executed = useRef(false);
-  const canExecute = useCallback(() => {
-    if (executed.current) {
-      return true;
     }
-    executed.current = true;
-    return false;
   }, []);
-  return canExecute;
+  return { error, previewToolCall };
 }
 
 const useResourceURI = () => {
