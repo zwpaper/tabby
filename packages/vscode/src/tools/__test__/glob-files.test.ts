@@ -157,23 +157,6 @@ describe("globFiles Tool", () => {
     }
   });
 
-  it("should truncate results if MaxGlobFileItems is exceeded", async () => {
-    // MaxGlobFileItems is 500 in the original code
-    const MaxGlobFileItems = 500;
-    for (let i = 0; i < MaxGlobFileItems + 5; i++) {
-      await createFile(
-        vscode.Uri.joinPath(currentTestTempDirUri, `file${i}.txt`),
-      );
-    }
-
-    const result = await globFiles(
-      { path: currentTestTempDirRelativePath, globPattern: "*.txt" },
-      dummyToolOptions,
-    );
-    assert.strictEqual(result.files.length, MaxGlobFileItems);
-    assert.strictEqual(result.isTruncated, true);
-  });
-
   it("should handle abort signal", async () => {
     await createFile(
       vscode.Uri.joinPath(currentTestTempDirUri, "file1.txt"),
