@@ -1,1 +1,1 @@
-Create landing page for a AI SaaS company called StreamLine. StreamLine is a platform that helps businesses streamline their operations using AI.
+Create landing page for a AI SaaS company called Fireflyer

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Eye, FileEdit, Play } from "lucide-react";
+import { ChevronLeft, Eye, FileEdit, Play } from "lucide-react";
 import { useState } from "react";
 
 export function AutoApproveMenu() {
@@ -78,10 +78,10 @@ export function AutoApproveMenu() {
                 </span>
               )}
             </div>
-            <ChevronRight
+            <ChevronLeft
               className={cn(
                 "size-4 shrink-0 text-[var(--vscode-descriptionForeground)] transition-transform duration-100 ease-in-out",
-                isOpen ? "rotate-90 transform" : "",
+                isOpen ? "-rotate-90 transform" : "",
               )}
             />
           </div>
