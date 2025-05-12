@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as WaitlistImport } from './routes/waitlist'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
@@ -29,6 +30,12 @@ import { Route as AuthenticatedSettingsBillingImport } from './routes/_authentic
 import { Route as AuthenticatedSettingsAccountImport } from './routes/_authenticated._settings/account'
 
 // Create/Update Routes
+
+const WaitlistRoute = WaitlistImport.update({
+  id: '/waitlist',
+  path: '/waitlist',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const AuthenticatedRoute = AuthenticatedImport.update({
   id: '/_authenticated',
@@ -153,6 +160,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthenticatedImport
+      parentRoute: typeof rootRoute
+    }
+    '/waitlist': {
+      id: '/waitlist'
+      path: '/waitlist'
+      fullPath: '/waitlist'
+      preLoaderRoute: typeof WaitlistImport
       parentRoute: typeof rootRoute
     }
     '/_authenticated/_settings': {
@@ -322,6 +336,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
@@ -340,6 +355,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
@@ -359,6 +375,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/waitlist': typeof WaitlistRoute
   '/_authenticated/_settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
@@ -380,6 +397,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | ''
+    | '/waitlist'
     | '/admin'
     | '/redirect-vscode'
     | '/stop-impersonating'
@@ -397,6 +415,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | ''
+    | '/waitlist'
     | '/admin'
     | '/redirect-vscode'
     | '/stop-impersonating'
@@ -414,6 +433,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/waitlist'
     | '/_authenticated/_settings'
     | '/_authenticated/admin'
     | '/_authenticated/redirect-vscode'
@@ -434,12 +454,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  WaitlistRoute: typeof WaitlistRoute
   AuthPathnameRoute: typeof AuthPathnameRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  WaitlistRoute: WaitlistRoute,
   AuthPathnameRoute: AuthPathnameRoute,
 }
 
@@ -455,6 +477,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/_authenticated",
+        "/waitlist",
         "/auth/$pathname"
       ]
     },
@@ -472,6 +495,9 @@ export const routeTree = rootRoute
         "/_authenticated/auth/vscode-link",
         "/_authenticated/tasks/"
       ]
+    },
+    "/waitlist": {
+      "filePath": "waitlist.tsx"
     },
     "/_authenticated/_settings": {
       "filePath": "_authenticated._settings/route.tsx",

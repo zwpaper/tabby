@@ -25,8 +25,8 @@ export function Providers({
             router.navigate({ to: location.pathname, replace: true })
           }
           providers={["github", "google"]}
-          signUp={false}
-          settingsUrl="/account"
+          signUp={true}
+          settingsURL="/account"
           avatar
           credentials={false}
           magicLink={true}

@@ -11,6 +11,14 @@ export const Route = createFileRoute("/_authenticated")({
         },
       });
     }
+    if (
+      !context.auth.user.isWaitlistApproved &&
+      !context.auth.user.email.endsWith("@tabbyml.com")
+    ) {
+      throw redirect({
+        to: "/waitlist",
+      });
+    }
   },
   component: Auth,
 });
