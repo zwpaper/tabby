@@ -59,6 +59,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
@@ -501,7 +502,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const resourceUri = useResourceURI();
 
   return (
-    <div className="flex h-screen flex-col px-4">
+    <div className="flex h-screen flex-col">
       {renderMessages.length === 0 &&
         (isTaskLoading ? (
           <div className="flex h-full w-full items-center justify-center">
@@ -512,8 +513,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         ))}
       {renderMessages.length > 0 && <div className="h-4" />}
       <PreviewToolCalls message={renderMessages.at(-1)} />
-      <div
-        className="-mx-4 mb-2 flex-1 space-y-4 overflow-y-auto px-4"
+      <ScrollArea
+        className="mb-2 flex-1 overflow-y-auto px-4"
         ref={messagesContainerRef}
       >
         {renderMessages.map((m, messageIndex) => (
@@ -566,122 +567,124 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             <Loader2 className="mx-auto size-6 animate-spin" />
           </div>
         )}
-      </div>
-      <div className="mb-2 text-center text-red-500 dark:text-red-400">
-        {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error */}
-        {imageSelectionError?.message ||
-          uploadImageError?.message ||
-          error?.message}
-      </div>
-      <ApprovalButton
-        key={pendingApprovalKey(pendingApproval)}
-        isLoading={isLoading}
-        retry={retry}
-        pendingApproval={pendingApproval}
-        addToolResult={addToolResultWithForceUpdate}
-        executingToolCallId={executingToolCallId}
-        setIsExecuting={setIsExecuting}
-      />
-      <AutoApproveMenu />
-      {files.length > 0 && (
-        <ImagePreviewList
-          files={files}
-          onRemove={handleRemoveImage}
-          uploadingFiles={uploadingFilesMap}
+      </ScrollArea>
+      <div className="flex flex-col px-4">
+        <div className="mb-2 text-center text-red-500 dark:text-red-400">
+          {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error */}
+          {imageSelectionError?.message ||
+            uploadImageError?.message ||
+            error?.message}
+        </div>
+        <ApprovalButton
+          key={pendingApprovalKey(pendingApproval)}
+          isLoading={isLoading}
+          retry={retry}
+          pendingApproval={pendingApproval}
+          addToolResult={addToolResultWithForceUpdate}
+          executingToolCallId={executingToolCallId}
+          setIsExecuting={setIsExecuting}
         />
-      )}
-      <FormEditor
-        input={input}
-        setInput={setInput}
-        onSubmit={wrappedHandleSubmit}
-        isLoading={isModelsLoading || isLoading || isTaskLoading}
-        formRef={formRef}
-        editorRef={editorRef}
-        onPaste={handlePasteImage}
-      >
-        {false && taskId.current && (
-          <span className="absolute top-1 right-2 text-foreground/80 text-xs">
-            TASK-{String(taskId.current).padStart(3, "0")}
-          </span>
+        <AutoApproveMenu />
+        {files.length > 0 && (
+          <ImagePreviewList
+            files={files}
+            onRemove={handleRemoveImage}
+            uploadingFiles={uploadingFilesMap}
+          />
         )}
-      </FormEditor>
+        <FormEditor
+          input={input}
+          setInput={setInput}
+          onSubmit={wrappedHandleSubmit}
+          isLoading={isModelsLoading || isLoading || isTaskLoading}
+          formRef={formRef}
+          editorRef={editorRef}
+          onPaste={handlePasteImage}
+        >
+          {false && taskId.current && (
+            <span className="absolute top-1 right-2 text-foreground/80 text-xs">
+              TASK-{String(taskId.current).padStart(3, "0")}
+            </span>
+          )}
+        </FormEditor>
 
-      {/* Hidden file input for image uploads */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileSelect}
-        accept="image/*"
-        multiple
-        className="hidden"
-      />
-
-      <div className="my-2 flex shrink-0 justify-between gap-3 overflow-x-hidden">
-        <ModelSelect
-          value={selectedModel?.id}
-          models={models}
-          isLoading={isModelsLoading}
-          onChange={handleSelectModel}
+        {/* Hidden file input for image uploads */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          accept="image/*"
+          multiple
+          className="hidden"
         />
 
-        <div className="flex shrink-0 items-center gap-1">
-          {isDevMode && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 rounded-md p-0"
-                  title="Dev mode"
-                >
-                  <SettingsIcon className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuContent
-                  onCloseAutoFocus={(e) => e.preventDefault()}
-                  side="bottom"
-                  className="dropdown-menu max-h-[30vh] min-w-[12rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-2 text-popover-foreground shadow"
-                >
-                  <DropdownMenuItem>
-                    <CopyMessages messages={messages} />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenuPortal>
-            </DropdownMenu>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            className="h-6 w-6 rounded-md p-0"
-          >
-            <ImageIcon className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            disabled={
-              isTaskLoading ||
-              isModelsLoading ||
-              (!isLoading && !input && files.length === 0)
-            }
-            className="h-6 w-6 rounded-md p-0 transition-opacity"
-            onClick={() => {
-              if (isLoading || isUploadingImages) {
-                handleStop();
-              } else {
-                formRef.current?.requestSubmit();
-              }
-            }}
-          >
-            {isLoading || isUploadingImages ? (
-              <StopCircleIcon className="size-4" />
-            ) : (
-              <SendHorizonal className="size-4" />
+        <div className="my-2 flex shrink-0 justify-between gap-3 overflow-x-hidden">
+          <ModelSelect
+            value={selectedModel?.id}
+            models={models}
+            isLoading={isModelsLoading}
+            onChange={handleSelectModel}
+          />
+
+          <div className="flex shrink-0 items-center gap-1">
+            {isDevMode && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-md p-0"
+                    title="Dev mode"
+                  >
+                    <SettingsIcon className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    onCloseAutoFocus={(e) => e.preventDefault()}
+                    side="bottom"
+                    className="dropdown-menu max-h-[30vh] min-w-[12rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-2 text-popover-foreground shadow"
+                  >
+                    <DropdownMenuItem>
+                      <CopyMessages messages={messages} />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
             )}
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              className="h-6 w-6 rounded-md p-0"
+            >
+              <ImageIcon className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={
+                isTaskLoading ||
+                isModelsLoading ||
+                (!isLoading && !input && files.length === 0)
+              }
+              className="h-6 w-6 rounded-md p-0 transition-opacity"
+              onClick={() => {
+                if (isLoading || isUploadingImages) {
+                  handleStop();
+                } else {
+                  formRef.current?.requestSubmit();
+                }
+              }}
+            >
+              {isLoading || isUploadingImages ? (
+                <StopCircleIcon className="size-4" />
+              ) : (
+                <SendHorizonal className="size-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
