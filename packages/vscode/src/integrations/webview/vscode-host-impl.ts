@@ -23,12 +23,13 @@ import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type { SessionState, VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import * as runExclusive from "run-exclusive";
 import type { PochiConfiguration } from "../configuration";
 
 const logger = getLogger("VSCodeHostImpl");
 
 export default class VSCodeHostImpl implements VSCodeHostApi {
-  private toolCallQueue: Promise<unknown> = Promise.resolve();
+  private toolCallGroup = runExclusive.createGroupRef();
 
   constructor(
     private readonly tokenStorage: TokenStorage,
@@ -119,80 +120,54 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     }));
   };
 
-  private queueToolCall = async <T>(fn: () => Promise<T>) => {
-    const toolCallPromise = this.toolCallQueue.catch(console.error).then(fn);
-    this.toolCallQueue = toolCallPromise;
-    return toolCallPromise;
-  };
+  executeToolCall = runExclusive.build(
+    this.toolCallGroup,
+    async (
+      toolName: string,
+      args: unknown,
+      options: {
+        toolCallId: string;
+        abortSignal: ThreadAbortSignalSerialization;
+      },
+    ) => {
+      const tool = ToolMap[toolName];
+      if (!tool) {
+        return {
+          error: `Tool ${toolName} is not implemented`,
+        };
+      }
 
-  executeToolCall = async (
-    toolName: string,
-    args: unknown,
-    options: {
-      toolCallId: string;
-      abortSignal: ThreadAbortSignalSerialization;
+      const abortSignal = new ThreadAbortSignal(options.abortSignal);
+
+      return safeCall(
+        tool(args, {
+          abortSignal,
+          messages: [],
+          toolCallId: options.toolCallId,
+        }),
+      );
     },
-  ) => {
-    return this.queueToolCall(() =>
-      this.executeToolCallImpl(toolName, args, options),
-    );
-  };
+  );
 
-  previewToolCall = async (
-    toolName: string,
-    args: unknown,
-    options: {
-      toolCallId: string;
-      state: "partial-call" | "call" | "result";
+  previewToolCall = runExclusive.build(
+    this.toolCallGroup,
+    async (
+      toolName: string,
+      args: unknown,
+      options: {
+        toolCallId: string;
+        state: "partial-call" | "call" | "result";
+      },
+    ) => {
+      const tool = ToolPreviewMap[toolName];
+      if (!tool) {
+        return;
+      }
+
+      // biome-ignore lint/suspicious/noExplicitAny: external call without type information
+      return await safeCall<undefined>(tool(args as any, options));
     },
-  ) => {
-    return this.queueToolCall(() =>
-      this.previewToolCallImpl(toolName, args, options),
-    );
-  };
-
-  private executeToolCallImpl = async (
-    toolName: string,
-    args: unknown,
-    options: {
-      toolCallId: string;
-      abortSignal: ThreadAbortSignalSerialization;
-    },
-  ) => {
-    const tool = ToolMap[toolName];
-    if (!tool) {
-      return {
-        error: `Tool ${toolName} is not implemented`,
-      };
-    }
-
-    const abortSignal = new ThreadAbortSignal(options.abortSignal);
-
-    return safeCall(
-      tool(args, {
-        abortSignal,
-        messages: [],
-        toolCallId: options.toolCallId,
-      }),
-    );
-  };
-
-  private previewToolCallImpl = async (
-    toolName: string,
-    args: unknown,
-    options: {
-      toolCallId: string;
-      state: "partial-call" | "call" | "result";
-    },
-  ) => {
-    const tool = ToolPreviewMap[toolName];
-    if (!tool) {
-      return;
-    }
-
-    // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-    return await safeCall<undefined>(tool(args as any, options));
-  };
+  );
 
   openFile = async (
     filePath: string,
