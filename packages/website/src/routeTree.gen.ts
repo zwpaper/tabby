@@ -27,7 +27,6 @@ import { Route as AuthenticatedSettingsModelImport } from './routes/_authenticat
 import { Route as AuthenticatedSettingsIntegrationsImport } from './routes/_authenticated._settings/integrations'
 import { Route as AuthenticatedSettingsBillingImport } from './routes/_authenticated._settings/billing'
 import { Route as AuthenticatedSettingsAccountImport } from './routes/_authenticated._settings/account'
-import { Route as AuthenticatedTasksIdRedirectImport } from './routes/_authenticated.tasks/$id.redirect'
 
 // Create/Update Routes
 
@@ -136,13 +135,6 @@ const AuthenticatedSettingsAccountRoute =
     id: '/account',
     path: '/account',
     getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any)
-
-const AuthenticatedTasksIdRedirectRoute =
-  AuthenticatedTasksIdRedirectImport.update({
-    id: '/tasks/$id/redirect',
-    path: '/tasks/$id/redirect',
-    getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -261,13 +253,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTasksIndexImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/tasks/$id/redirect': {
-      id: '/_authenticated/tasks/$id/redirect'
-      path: '/tasks/$id/redirect'
-      fullPath: '/tasks/$id/redirect'
-      preLoaderRoute: typeof AuthenticatedTasksIdRedirectImport
-      parentRoute: typeof AuthenticatedImport
-    }
   }
 }
 
@@ -318,7 +303,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
   AuthenticatedAuthVscodeLinkRoute: typeof AuthenticatedAuthVscodeLinkRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
-  AuthenticatedTasksIdRedirectRoute: typeof AuthenticatedTasksIdRedirectRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -329,7 +313,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
   AuthenticatedAuthVscodeLinkRoute: AuthenticatedAuthVscodeLinkRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
-  AuthenticatedTasksIdRedirectRoute: AuthenticatedTasksIdRedirectRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -352,7 +335,6 @@ export interface FileRoutesByFullPath {
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
-  '/tasks/$id/redirect': typeof AuthenticatedTasksIdRedirectRoute
 }
 
 export interface FileRoutesByTo {
@@ -371,7 +353,6 @@ export interface FileRoutesByTo {
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
-  '/tasks/$id/redirect': typeof AuthenticatedTasksIdRedirectRoute
 }
 
 export interface FileRoutesById {
@@ -392,7 +373,6 @@ export interface FileRoutesById {
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/_authenticated/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
-  '/_authenticated/tasks/$id/redirect': typeof AuthenticatedTasksIdRedirectRoute
 }
 
 export interface FileRouteTypes {
@@ -413,7 +393,6 @@ export interface FileRouteTypes {
     | '/auth/device-link'
     | '/auth/vscode-link'
     | '/tasks'
-    | '/tasks/$id/redirect'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -431,7 +410,6 @@ export interface FileRouteTypes {
     | '/auth/device-link'
     | '/auth/vscode-link'
     | '/tasks'
-    | '/tasks/$id/redirect'
   id:
     | '__root__'
     | '/'
@@ -450,7 +428,6 @@ export interface FileRouteTypes {
     | '/_authenticated/auth/device-link'
     | '/_authenticated/auth/vscode-link'
     | '/_authenticated/tasks/'
-    | '/_authenticated/tasks/$id/redirect'
   fileRoutesById: FileRoutesById
 }
 
@@ -493,8 +470,7 @@ export const routeTree = rootRoute
         "/_authenticated/stop-impersonating",
         "/_authenticated/auth/device-link",
         "/_authenticated/auth/vscode-link",
-        "/_authenticated/tasks/",
-        "/_authenticated/tasks/$id/redirect"
+        "/_authenticated/tasks/"
       ]
     },
     "/_authenticated/_settings": {
@@ -560,10 +536,6 @@ export const routeTree = rootRoute
     },
     "/_authenticated/tasks/": {
       "filePath": "_authenticated.tasks/index.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/tasks/$id/redirect": {
-      "filePath": "_authenticated.tasks/$id.redirect.tsx",
       "parent": "/_authenticated"
     }
   }

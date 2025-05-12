@@ -20,7 +20,6 @@
     "ai": "^4.2.0",
     "better-auth": "^1.2.7",
     "eventsource": "^3.0.6",
-    "hashids": "^2.3.0",
     "hono": "^4.7.5",
     "kysely": "^0.27.6",
     "moment": "^2.30.1",

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { UserButton } from "@/components/user-button";
-import { apiClient } from "@/lib/auth-client";
 import { useEnhancingPrompt } from "@/lib/useEnhancingPrompt";
 import {
   createImageFileName,
@@ -189,44 +188,23 @@ function RouteComponent() {
           }
         }
 
-        if (RedirectVSCodeDirectly) {
-          const base64Encoded = Base64.encode(
-            JSON.stringify({
-              requestId: crypto.randomUUID(),
-              prompt: input,
-              name,
-              attachments,
-              githubTemplateUrl:
-                "https://github.com/wsxiaoys/reimagined-octo-funicular",
-            }),
-          );
-          await navigate({
-            to: "/redirect-vscode",
-            search: {
-              project: base64Encoded,
-            },
-          });
-          return;
-        }
-
-        setIsSubmitting(true);
-
-        const res = await apiClient.api.tasks.$post({
-          json: {
+        const base64Encoded = Base64.encode(
+          JSON.stringify({
+            requestId: crypto.randomUUID(),
             prompt: input,
+            name,
+            attachments,
+            githubTemplateUrl:
+              "https://github.com/wsxiaoys/reimagined-octo-funicular",
+          }),
+        );
+        await navigate({
+          to: "/redirect-vscode",
+          search: {
+            project: base64Encoded,
           },
         });
-
-        if (!res.ok) {
-          throw new Error(res.statusText || "Failed to create task");
-        }
-
-        const { id } = await res.json();
-
-        navigate({
-          to: "/tasks/$id/redirect",
-          params: { id: id.toString() },
-        });
+        return;
       } catch (error) {
         setSubmitError(
           error instanceof Error ? error.message : "An unknown error occurred",
@@ -415,5 +393,3 @@ function RouteComponent() {
     </div>
   );
 }
-
-const RedirectVSCodeDirectly = true;

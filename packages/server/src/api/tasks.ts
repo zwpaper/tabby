@@ -18,10 +18,6 @@ const TaskParamsSchema = z.object({
   id: z.string(),
 });
 
-const CreateTaskSchema = z.object({
-  prompt: z.string().min(8),
-});
-
 const titleSelect =
   sql<string>`LEFT(SPLIT_PART((conversation #>> '{messages, 0, parts, 0, text}')::text, '\n', 1), 256)`.as(
     "title",
@@ -92,16 +88,6 @@ const tasks = new Hono()
         totalPages, // Return total pages
       },
     });
-  })
-
-  // Create a task
-  .post("/", zValidator("json", CreateTaskSchema), requireAuth, async (c) => {
-    const { prompt } = await c.req.valid("json");
-    const user = c.get("user");
-
-    const taskId = await createTask(user.id, prompt);
-
-    return c.json({ id: taskId });
   })
 
   // Get a single task by ID
