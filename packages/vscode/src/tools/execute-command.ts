@@ -8,18 +8,16 @@ const logger = getLogger("executeCommand");
 
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
-> = async ({ command, cwd, isDevServer }) => {
+> = async ({ command, cwd = ".", isDevServer }) => {
   if (!command) {
     throw new Error("Command is required to execute.");
   }
 
-  if (cwd !== undefined) {
-    if (path.isAbsolute(cwd)) {
-      cwd = path.normalize(cwd);
-    } else {
-      const workspaceRootUri = getWorkspaceFolder().uri;
-      cwd = path.normalize(path.join(workspaceRootUri.fsPath, cwd));
-    }
+  if (path.isAbsolute(cwd)) {
+    cwd = path.normalize(cwd);
+  } else {
+    const workspaceRootUri = getWorkspaceFolder().uri;
+    cwd = path.normalize(path.join(workspaceRootUri.fsPath, cwd));
   }
 
   const shell = await getPochiShell(cwd, isDevServer);
