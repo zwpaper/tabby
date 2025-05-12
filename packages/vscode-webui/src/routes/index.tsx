@@ -599,7 +599,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         editorRef={editorRef}
         onPaste={handlePasteImage}
       >
-        {taskId.current && (
+        {false && taskId.current && (
           <span className="absolute top-1 right-2 text-foreground/80 text-xs">
             TASK-{String(taskId.current).padStart(3, "0")}
           </span>
