@@ -1,5 +1,9 @@
 import * as path from "node:path";
 import {
+  diagnosticsToProblemsString,
+  getNewDiagnostics,
+} from "@/lib/diagnostic";
+import {
   ensureFileDirectoryExists,
   getWorkspaceFolder,
   isFileExists,
@@ -19,6 +23,8 @@ export class DiffView implements vscode.Disposable {
   private isFinalized = false;
   private streamedLines: string[] = [];
 
+  private preDiagnostics: [vscode.Uri, vscode.Diagnostic[]][] =
+    vscode.languages.getDiagnostics();
   private fadedOverlayController: DecorationController;
   private activeLineController: DecorationController;
 
@@ -162,6 +168,15 @@ export class DiffView implements vscode.Disposable {
     });
     await closeAllNonDirtyDiffViews();
 
+    const postDiagnostics = vscode.languages.getDiagnostics();
+    const newProblems = diagnosticsToProblemsString(
+      getNewDiagnostics(this.preDiagnostics, postDiagnostics),
+      [
+        vscode.DiagnosticSeverity.Error, // only including errors since warnings can be distracting (if user wants to fix warnings they can use the @problems mention)
+      ],
+      getWorkspaceFolder()?.uri.fsPath,
+    ); // will be empty string if no errors
+
     const newContentEOL = newContent.includes("\r\n") ? "\r\n" : "\n";
     const normalizedPreSaveContent =
       preSaveContent.replace(/\r\n|\n/g, newContentEOL).trimEnd() +
@@ -195,6 +210,7 @@ export class DiffView implements vscode.Disposable {
     return {
       userEdits,
       autoFormattingEdits,
+      newProblems,
     };
   }
 

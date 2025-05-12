@@ -30,5 +30,10 @@ export const writeToFile = defineClientTool({
         "The auto-formatting edits to the file, only present if the auto formatter made changes.",
       )
       .optional(),
+
+    newProblems: z
+      .string()
+      .optional()
+      .describe("The new problems found after writing the file, if any."),
   }),
 });
