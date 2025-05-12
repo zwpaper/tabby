@@ -15,7 +15,7 @@ export const AttemptCompletionTool: React.FC<
 
   return (
     <div className="flex flex-col">
-      <span className="flex items-center gap-2 font-bold text-emerald-300 text-sm">
+      <span className="flex items-center gap-2 font-bold text-emerald-700 text-sm dark:text-emerald-300">
         <Check className="size-4" />
         Task Completed
       </span>

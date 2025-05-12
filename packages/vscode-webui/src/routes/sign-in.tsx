@@ -28,8 +28,8 @@ function SignInPage() {
   }, [session, navigate, redirect]);
 
   return (
-    <div className="flex h-screen select-none flex-col items-center justify-center p-5 text-center text-gray-300">
-      <h2 className="mb-2 flex items-center gap-3 font-semibold text-2xl text-gray-100">
+    <div className="flex h-screen select-none flex-col items-center justify-center p-5 text-center text-gray-600 dark:text-gray-300">
+      <h2 className="mb-2 flex items-center gap-3 font-semibold text-2xl text-gray-800 dark:text-gray-100">
         <TerminalIcon className="animate-[spin_6s_linear_infinite]" />
         Welcome to Pochi
       </h2>

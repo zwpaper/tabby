@@ -24,7 +24,7 @@ export const FileList: React.FC<{
           }}
         >
           <FileIcon path={match.file} className="size-3 shrink-0" />
-          <span className="whitespace-nowrap font-semibold text-gray-300">
+          <span className="whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">
             {getFileName(match.file)}
             {match.line && <span className="text-gray-500">:{match.line}</span>}
           </span>

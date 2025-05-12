@@ -24,13 +24,15 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
     error = tool.result.error;
   }
 
-  let statusIcon = <Pause className="size-4 text-zinc-400" />;
+  let statusIcon = (
+    <Pause className="size-4 text-zinc-500 dark:text-zinc-400" />
+  );
   if (error) {
     statusIcon = (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <X className="size-4 cursor-help text-red-400" />
+            <X className="size-4 cursor-help text-red-500 dark:text-red-400" />
           </TooltipTrigger>
           <TooltipContent>
             <p>{error}</p>
@@ -39,13 +41,17 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
       </TooltipProvider>
     );
   } else if (tool.state === "result") {
-    statusIcon = <Check className="size-4 text-emerald-300" />;
+    statusIcon = (
+      <Check className="size-4 text-emerald-700 dark:text-emerald-300" />
+    );
   } else if (tool.state === "partial-call") {
     statusIcon = (
-      <CircleSmall className="size-4 animate-bounce text-zinc-400" />
+      <CircleSmall className="size-4 animate-bounce text-zinc-500 dark:text-zinc-400" />
     );
   } else if (isExecuting) {
-    statusIcon = <Loader2 className="size-4 animate-spin text-zinc-400" />;
+    statusIcon = (
+      <Loader2 className="size-4 animate-spin text-zinc-500 dark:text-zinc-400" />
+    );
   }
   return (
     <div className={cn("inline-block align-sub", className)}>{statusIcon}</div>

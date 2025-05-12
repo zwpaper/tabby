@@ -567,7 +567,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           </div>
         )}
       </div>
-      <div className="mb-2 text-center text-red-400">
+      <div className="mb-2 text-center text-red-500 dark:text-red-400">
         {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error */}
         {imageSelectionError?.message ||
           uploadImageError?.message ||
@@ -1032,7 +1032,7 @@ const CopyMessages = ({ messages }: { messages: UIMessage[] }) => {
   return (
     <span onClick={onCopy} className="cursor-pointer">
       {isCopied ? (
-        <CheckIcon className="inline text-green-600" />
+        <CheckIcon className="inline text-green-700 dark:text-green-500" />
       ) : (
         <CopyIcon className="inline" />
       )}

@@ -58,14 +58,16 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
               onClick ? onClick() : defaultOnClick();
             }}
             className={cn(
-              "cursor-pointer rounded-sm border border-zinc-600 box-decoration-clone px-1 py-0.5 text-xs active:bg-zinc-700",
+              "cursor-pointer rounded-sm border border-zinc-400 box-decoration-clone px-1 py-0.5 text-xs active:bg-zinc-200 dark:border-zinc-600 dark:active:bg-zinc-700",
               className,
             )}
           >
             <FileIcon path={path} className="inline-block size-3" />
             <span className="ml-1">
               {getBasename(path)}
-              <span className="text-zinc-400">{lineRange}</span>
+              <span className="text-zinc-500 dark:text-zinc-400">
+                {lineRange}
+              </span>
             </span>
           </span>
         </TooltipTrigger>

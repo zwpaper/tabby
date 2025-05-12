@@ -8,13 +8,17 @@ import {
 } from "lucide-react";
 import { type FC, memo, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import {
+  coldarkDark,
+  oneLight,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTheme } from "@/lib/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
 export interface CodeBlockProps {
@@ -37,6 +41,7 @@ export const generateRandomString = (length: number, lowercase = false) => {
 const CodeBlock: FC<CodeBlockProps> = memo(
   ({ language, value, canWrapLongLines, className }) => {
     const [wrapLongLines, setWrapLongLines] = useState(canWrapLongLines);
+    const theme = useTheme();
     const { isCopied, copyToClipboard } = useCopyToClipboard({
       timeout: 2000,
     });
@@ -53,7 +58,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
     return (
       <div
         className={cn(
-          "relative w-full rounded-sm border bg-[var(--vscode-editor-background)] font-sans",
+          "code-block relative w-full rounded-sm border bg-[var(--vscode-editor-background)] font-sans",
           className,
         )}
       >
@@ -99,7 +104,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
         {/* @ts-ignore */}
         <SyntaxHighlighter
           language={languageForSyntax}
-          style={coldarkDark}
+          style={theme === "dark" ? coldarkDark : oneLight}
           PreTag="div"
           customStyle={{
             margin: 0,

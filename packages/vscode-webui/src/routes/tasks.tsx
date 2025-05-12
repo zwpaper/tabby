@@ -302,7 +302,7 @@ const TaskStatusIcon = ({ status }: { status: string }) => {
       return (
         <CheckCircle2
           {...iconProps}
-          className={`${iconProps.className} text-green-500`}
+          className={`${iconProps.className} text-green-700 dark:text-green-500`}
           aria-label="Completed"
         />
       );
@@ -310,7 +310,7 @@ const TaskStatusIcon = ({ status }: { status: string }) => {
       return (
         <XCircle
           {...iconProps}
-          className={`${iconProps.className} text-red-500`}
+          className={`${iconProps.className} text-red-600 dark:text-red-500`}
           aria-label="Failed"
         />
       );
