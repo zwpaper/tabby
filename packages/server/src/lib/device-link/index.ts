@@ -207,7 +207,9 @@ export const deviceLink = () => {
             return ctx.error(400, { message: "INVALID_TOKEN" });
           }
 
-          const session = await getSessionFromCtx(ctx);
+          const session = await getSessionFromCtx(ctx, {
+            disableRefresh: true,
+          });
           if (!session) {
             return ctx.error(401, { message: "UNAUTHORIZED" });
           }
@@ -257,7 +259,9 @@ export const deviceLink = () => {
             return ctx.error(400, { message: "INVALID_TOKEN" });
           }
 
-          const session = await getSessionFromCtx(ctx);
+          const session = await getSessionFromCtx(ctx, {
+            disableRefresh: true,
+          });
           if (!session) {
             return ctx.error(401, { message: "UNAUTHORIZED" });
           }
