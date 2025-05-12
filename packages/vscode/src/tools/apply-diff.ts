@@ -23,32 +23,23 @@ export const previewApplyDiff: PreviewToolFunctionType<
     return;
   }
 
-  try {
-    const workspaceFolder = getWorkspaceFolder();
-    const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
+  const workspaceFolder = getWorkspaceFolder();
+  const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
 
-    const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
-    const fileContent = fileBuffer.toString();
+  const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
+  const fileContent = fileBuffer.toString();
 
-    const updatedContent = await parseDiffAndApply(
-      diff,
-      startLine,
-      endLine,
-      fileContent,
-    );
+  const updatedContent = await parseDiffAndApply(
+    diff,
+    startLine,
+    endLine,
+    fileContent,
+  );
 
-    const diffView = await DiffView.getOrCreate(toolCallId, path);
-    await diffView.update(updatedContent, true);
+  const diffView = await DiffView.getOrCreate(toolCallId, path);
+  await diffView.update(updatedContent, true);
 
-    logger.info(
-      `Successfully previewed diff for ${path} with ID ${toolCallId}`,
-    );
-  } catch (error) {
-    logger.error(`Failed to preview diff: ${error}`);
-    throw new Error(
-      `Failed to preview diff: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
+  logger.info(`Successfully previewed diff for ${path} with ID ${toolCallId}`);
 };
 
 /**
@@ -58,42 +49,35 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   { path, diff, startLine, endLine },
   { toolCallId },
 ) => {
-  try {
-    const workspaceFolder = getWorkspaceFolder();
-    const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
-    await ensureFileDirectoryExists(fileUri);
+  const workspaceFolder = getWorkspaceFolder();
+  const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
+  await ensureFileDirectoryExists(fileUri);
 
-    const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
-    const fileContent = fileBuffer.toString();
+  const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
+  const fileContent = fileBuffer.toString();
 
-    const updatedContent = await parseDiffAndApply(
-      diff,
-      startLine,
-      endLine,
-      fileContent,
-    );
+  const updatedContent = await parseDiffAndApply(
+    diff,
+    startLine,
+    endLine,
+    fileContent,
+  );
 
-    const type = await fileTypeFromBuffer(fileBuffer);
+  const type = await fileTypeFromBuffer(fileBuffer);
 
-    if (type && !type.mime.startsWith("text/")) {
-      throw new Error(
-        `The file is binary or not plain text (detected type: ${type.mime}).`,
-      );
-    }
-
-    const diffView = DiffView.get(toolCallId);
-    if (!diffView) {
-      throw new Error("User has closed the diff view, cannot save changes.");
-    }
-
-    const edits = await diffView.saveChanges(path, updatedContent);
-
-    logger.info(`Successfully applied diff to ${path}`);
-    return { success: true, ...edits };
-  } catch (error) {
-    logger.error(`Failed to apply diff: ${error}`);
+  if (type && !type.mime.startsWith("text/")) {
     throw new Error(
-      `Failed to apply diff: ${error instanceof Error ? error.message : String(error)}`,
+      `The file is binary or not plain text (detected type: ${type.mime}).`,
     );
   }
+
+  const diffView = DiffView.get(toolCallId);
+  if (!diffView) {
+    throw new Error("User has closed the diff view, cannot save changes.");
+  }
+
+  const edits = await diffView.saveChanges(path, updatedContent);
+
+  logger.info(`Successfully applied diff to ${path}`);
+  return { success: true, ...edits };
 };

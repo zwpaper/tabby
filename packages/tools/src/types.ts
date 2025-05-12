@@ -36,7 +36,7 @@ export type PreviewToolFunctionType<T extends Tool> = (
     toolCallId: string;
     state: "partial-call" | "call" | "result";
   },
-) => Promise<void>;
+) => Promise<undefined>;
 
 export function defineServerTool<
   PARAMETERS extends z.ZodTypeAny,

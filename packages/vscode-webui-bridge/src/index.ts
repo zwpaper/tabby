@@ -22,7 +22,12 @@ export interface VSCodeHostApi {
       toolCallId: string;
       state: "partial-call" | "call" | "result";
     },
-  ): Promise<void>;
+  ): Promise<
+    | {
+        error: string;
+      }
+    | undefined
+  >;
 
   executeToolCall(
     toolName: string,

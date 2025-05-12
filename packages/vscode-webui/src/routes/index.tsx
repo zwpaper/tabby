@@ -512,7 +512,10 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           <EmptyChatPlaceholder />
         ))}
       {renderMessages.length > 0 && <div className="h-4" />}
-      <PreviewToolCalls message={renderMessages.at(-1)} />
+      <PreviewToolCalls
+        message={renderMessages.at(-1)}
+        addToolResult={addToolResultWithForceUpdate}
+      />
       <ScrollArea
         className="mb-2 flex-1 overflow-y-auto px-4"
         ref={messagesContainerRef}
@@ -759,14 +762,7 @@ interface ApprovalButtonProps {
   isLoading: boolean;
   pendingApproval?: PendingApproval;
   retry: () => void;
-  addToolResult: ({
-    toolCallId,
-    result,
-  }: {
-    toolCallId: string;
-    result: unknown;
-  }) => void;
-
+  addToolResult: AddToolResultFunctionType;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
 }
@@ -981,24 +977,47 @@ function usePendingApproval({
   return { pendingApproval, setIsExecuting, executingToolCallId };
 }
 
-function PreviewToolCalls({ message }: { message?: UIMessage }) {
+function PreviewToolCalls({
+  message,
+  addToolResult,
+}: {
+  message?: UIMessage;
+  addToolResult: AddToolResultFunctionType;
+}) {
   return message?.parts.map((part, index) => {
     if (part.type === "tool-invocation") {
-      return <PreviewToolCall key={index} tool={part.toolInvocation} />;
+      return (
+        <PreviewToolCall
+          key={index}
+          tool={part.toolInvocation}
+          addToolResult={addToolResult}
+        />
+      );
     }
     return null;
   });
 }
 
-function PreviewToolCall({ tool }: { tool: ToolInvocation }) {
+function PreviewToolCall({
+  tool,
+  addToolResult,
+}: { tool: ToolInvocation; addToolResult: AddToolResultFunctionType }) {
   const { state, args, toolCallId, toolName } = tool;
+  const rejected = useRef(false);
   useEffect(() => {
     if (state === "result") return;
-    vscodeHost.previewToolCall(toolName, args, {
-      toolCallId,
-      state,
-    });
-  }, [state, args, toolCallId, toolName]);
+    vscodeHost
+      .previewToolCall(toolName, args, {
+        toolCallId,
+        state,
+      })
+      .then((result) => {
+        if (result?.error && state === "call" && !rejected.current) {
+          rejected.current = true;
+          addToolResult({ toolCallId: toolCallId, result: result });
+        }
+      });
+  }, [state, args, toolCallId, toolName, addToolResult]);
   return <></>;
 }
 
@@ -1062,3 +1081,11 @@ function createCoreMessagesForCopy(messages: UIMessage[]): CoreMessage[] {
     }),
   );
 }
+
+type AddToolResultFunctionType = ({
+  toolCallId,
+  result,
+}: {
+  toolCallId: string;
+  result: unknown;
+}) => void;

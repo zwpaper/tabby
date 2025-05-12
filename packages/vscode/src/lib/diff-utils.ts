@@ -3,6 +3,13 @@ import { getLogger } from "@/lib/logger";
 const WindowToExpandForSearch = 15;
 const logger = getLogger("diffUtils");
 
+export class DiffError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DiffError";
+  }
+}
+
 /**
  * Parse a diff and apply it to file content
  */
@@ -17,7 +24,7 @@ export async function parseDiffAndApply(
 
   const diffBlocks = diff.trim().split("\n=======\n");
   if (diffBlocks.length !== 2) {
-    throw new Error("Invalid diff format");
+    throw new DiffError("Invalid diff format");
   }
   logger.trace("Parsed diff blocks");
 
@@ -54,7 +61,7 @@ export async function parseDiffAndApply(
   );
 
   if (startIndexInExtractedLines < 0) {
-    throw new Error(
+    throw new DiffError(
       "Search content does not match the original file content within the search window. Try to reread the file for the latest content.",
     );
   }
@@ -118,7 +125,7 @@ function removeSearchPrefix(content: string): string {
   if (content.startsWith(prefix)) {
     return content.slice(prefix.length);
   }
-  throw new Error(
+  throw new DiffError(
     `Diff format is incorrect. Expected '${prefix.trim()}' prefix.`,
   );
 }
@@ -137,7 +144,7 @@ function removeReplaceSuffix(content: string): string {
   if (content === suffixWithoutNewline) {
     return "";
   }
-  throw new Error(
+  throw new DiffError(
     `Diff format is incorrect. Expected '${suffixWithoutNewline}' suffix.`,
   );
 }

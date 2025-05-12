@@ -191,7 +191,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-    return tool(args as any, options);
+    return await safeCall<undefined>(tool(args as any, options));
   };
 
   openFile = async (
@@ -235,7 +235,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
 function safeCall<T>(x: Promise<T>) {
   return x.catch((e) => {
     return {
-      error: e.message,
+      error: e.message as string,
     };
   });
 }
