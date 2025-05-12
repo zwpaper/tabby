@@ -31,6 +31,7 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins: [
+    "https://www.getpochi.com",
     "https://app.getpochi.com",
     "https://ragdoll-production.up.railway.app",
     "http://localhost:4111",
