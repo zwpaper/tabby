@@ -33,54 +33,23 @@ export class CommandManager implements vscode.Disposable {
 
   private registerCommands() {
     this.disposables.push(
-      vscode.commands.registerCommand("ragdoll.accountSettings", async () => {
-        vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            cancellable: false,
-          },
-          async (progress) => {
-            progress.report({ message: "Loading..." });
-            await vscode.commands.executeCommand("ragdollWebui.focus");
-
-            const { data: session, error } = await this.authClient.getSession();
-
-            if (!session || error) {
-              const loginSelection = "Login";
-              vscode.window
-                .showInformationMessage("You're not logged-in", loginSelection)
-                .then((selection) => {
-                  if (selection === loginSelection) {
-                    vscode.commands.executeCommand("ragdoll.openLoginPage");
-                  }
-                });
-              return;
-            }
-            if (session) {
-              const okSelection = "Ok";
-              const logoutSelection = "Logout";
-              vscode.window
-                .showInformationMessage(
-                  `You're logged-in as ${session.user.email}`,
-                  okSelection,
-                  logoutSelection,
-                )
-                .then((selection) => {
-                  if (selection === logoutSelection) {
-                    this.authClient.signOut();
-                    this.tokenStorage.setToken(undefined);
-                    this.authEvents.logoutEvent.fire();
-                  }
-                });
-            }
-          },
-        );
-      }),
-
       vscode.commands.registerCommand("ragdoll.openLoginPage", async () => {
         vscode.env.openExternal(
           vscode.Uri.parse(`${getServerBaseUrl()}/auth/vscode-link`),
         );
+      }),
+
+      vscode.commands.registerCommand("ragdoll.logout", async () => {
+        const selection = await vscode.window.showInformationMessage(
+          "Are you sure you want to logout?",
+          { modal: true },
+          "Logout",
+        );
+        if (selection === "Logout") {
+          this.authClient.signOut();
+          this.tokenStorage.setToken(undefined);
+          this.authEvents.logoutEvent.fire();
+        }
       }),
 
       vscode.commands.registerCommand(

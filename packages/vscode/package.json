@@ -29,13 +29,13 @@
     },
     "commands": [
       {
-        "command": "ragdoll.accountSettings",
-        "title": "Account Settings",
+        "command": "ragdoll.openLoginPage",
+        "title": "Open Login Page",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.openLoginPage",
-        "title": "Open Login Page",
+        "command": "ragdoll.logout",
+        "title": "Logout",
         "category": "Pochi"
       },
       {
