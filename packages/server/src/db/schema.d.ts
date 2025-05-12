@@ -123,6 +123,7 @@ export interface User {
   emailVerified: boolean;
   id: string;
   image: string | null;
+  isWaitlistApproved: boolean | null;
   name: string;
   role: string | null;
   stripeCustomerId: string | null;

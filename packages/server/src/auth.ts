@@ -10,6 +10,14 @@ import { stripeClient } from "./lib/stripe";
 
 export const auth = betterAuth({
   user: {
+    additionalFields: {
+      isWaitlistApproved: {
+        type: "boolean",
+        default: false,
+        required: false,
+        input: false,
+      },
+    },
     changeEmail: {
       enabled: true,
       sendChangeEmailVerification: async ({ newEmail, url }) => {
@@ -79,7 +87,6 @@ export const auth = betterAuth({
   ],
 });
 
-export type User = typeof auth.$Infer.Session.user;
 export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
   (() => {
     // Disable auth in test mode
@@ -116,3 +123,6 @@ export const requireAuth = createMiddleware<{ Variables: { user: User } }>(
     await next();
   },
 );
+
+export type Session = typeof auth.$Infer.Session;
+export type User = Session["user"];

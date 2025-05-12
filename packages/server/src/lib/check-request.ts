@@ -1,8 +1,8 @@
-import type { User } from "better-auth";
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
+import type { User } from "../auth";
 import { readCurrentMonthQuota } from "./billing";
-import { AvailableModels, WHITELIST_USERS, getModelById } from "./constants";
+import { AvailableModels, getModelById } from "./constants";
 
 export function checkModel(modelId: string) {
   const selectedModel = getModelById(modelId);
@@ -15,23 +15,15 @@ export function checkModel(modelId: string) {
 }
 
 /**
- * Checks if a user is whitelisted (either tabbyml.com email or in WHITELIST_USERS)
- */
-function isWhitelistedUser(user: User) {
-  return (
-    user.email.endsWith("@tabbyml.com") || WHITELIST_USERS.includes(user.email)
-  );
-}
-
-/**
+ * Checks if a user is whitelisted (either tabbyml.com email or user.isWaitlistApproved is true)
  * Validates a user against the whitelist
  * Throws an HTTP exception if the user is not whitelisted
  */
-export function checkWhitelist(
+export async function checkWhitelist(
   user: User,
   errorMessage = "Internal user only",
-): void {
-  if (!isWhitelistedUser(user)) {
+): Promise<void> {
+  if (!user.email.endsWith("@tabbyml.com") && !user.isWaitlistApproved) {
     throw new HTTPException(400, { message: errorMessage });
   }
 }
@@ -39,11 +31,6 @@ export function checkWhitelist(
 export async function checkUserQuota(user: User, c: Context, modelId: string) {
   // Skip quota check for test environment
   if (process.env.NODE_ENV === "test") {
-    return;
-  }
-
-  // Check whitelist - skip quota check for whitelisted users
-  if (isWhitelistedUser(user)) {
     return;
   }
 
