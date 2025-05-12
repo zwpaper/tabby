@@ -47,7 +47,7 @@ const usages = new Hono().get(
     const dailyResults = await db
       .selectFrom("chatCompletion")
       .select([
-        sql<Date>`DATE("createdAt" AT TIME ZONE ${tz})`.as("date"),
+        sql<Date>`DATE("createdAt")`.as("date"),
         "modelId",
         db.fn.count("id").as("count"),
       ])
@@ -68,7 +68,7 @@ const usages = new Hono().get(
           Number(aggregateResult?.totalCompletionTokens || 0),
       },
       daily: dailyResults.map((day) => ({
-        date: moment(day.date).utcOffset(tz).format("YYYY-MM-DD"),
+        date: moment(day.date).format("YYYY-MM-DD"),
         modelId: day.modelId,
         completionCount: Number(day.count || 0),
       })),

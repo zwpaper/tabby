@@ -27,10 +27,6 @@ export async function checkUserQuota(user: User, c: Context, modelId: string) {
     return;
   }
 
-  if (checkWaitlist(user)) {
-    return;
-  }
-
   // Check quota
   const quota = await readCurrentMonthQuota(user, c.req);
   const modelCostType = AvailableModels.find(

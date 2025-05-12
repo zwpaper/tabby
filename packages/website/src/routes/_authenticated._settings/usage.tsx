@@ -26,6 +26,8 @@ export const Route = createFileRoute("/_authenticated/_settings/usage")({
   component: Usage,
 });
 
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 // Base chart config (can be extended dynamically)
 const baseChartConfig = {
   // Example static entry if needed, otherwise can be empty
@@ -64,7 +66,7 @@ const fetchUsageData = async (timeRange: string) => {
   const params: Record<string, string> = {
     start: startDate,
     end: endDate,
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    tz: timeZone,
   };
 
   const response = await apiClient.api.usages.chat.$get({ query: params });
@@ -367,7 +369,7 @@ function Usage() {
                     tickMargin={8}
                     minTickGap={32}
                     tickFormatter={(value) => {
-                      const date = new Date(value);
+                      const date = moment(value).toDate();
                       if (Number.isNaN(date.getTime())) return "";
                       return date.toLocaleDateString("en-US", {
                         month: "short",
@@ -381,7 +383,7 @@ function Usage() {
                       <ChartTooltipContent
                         indicator="dot"
                         labelFormatter={(value) => {
-                          const date = new Date(value);
+                          const date = moment(value).toDate();
                           if (Number.isNaN(date.getTime())) return "";
                           return date.toLocaleDateString("en-US", {
                             month: "short",
