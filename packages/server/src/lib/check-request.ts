@@ -14,15 +14,7 @@ export function checkModel(modelId: string) {
   return selectedModel;
 }
 
-/**
- * Checks if a user is whitelisted (either tabbyml.com email or user.isWaitlistApproved is true)
- * Validates a user against the whitelist
- * Throws an HTTP exception if the user is not whitelisted
- */
-export function checkWhitelist(
-  user: User,
-  errorMessage = "Internal user only",
-) {
+export function checkWaitlist(user: User, errorMessage = "Internal user only") {
   if (!user.email.endsWith("@tabbyml.com") && !user.isWaitlistApproved) {
     throw new HTTPException(400, { message: errorMessage });
   }
@@ -35,7 +27,7 @@ export async function checkUserQuota(user: User, c: Context, modelId: string) {
     return;
   }
 
-  if (checkWhitelist(user)) {
+  if (checkWaitlist(user)) {
     return;
   }
 

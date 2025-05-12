@@ -28,7 +28,7 @@ import { type DB, type UserEvent, db } from "../db";
 import {
   checkModel,
   checkUserQuota,
-  checkWhitelist,
+  checkWaitlist,
 } from "../lib/check-request";
 import {
   fromUIMessages,
@@ -64,7 +64,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     await checkUserQuota(user, c, requestedModelId);
     const selectedModel = checkModel(requestedModelId);
 
-    checkWhitelist(user);
+    checkWaitlist(user);
 
     const { id, conversation, event } = await getTask(
       user,

@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireAuth } from "../auth";
-import { checkModel, checkWhitelist } from "../lib/check-request";
+import { checkModel, checkWaitlist } from "../lib/check-request";
 
 const EnhancePromptSchema = z.object({
   prompt: z.string().min(8),
@@ -23,7 +23,7 @@ const enhance = new Hono().post(
     const selectedModel = checkModel(modelId);
 
     // TODO: remove whitelist check
-    checkWhitelist(user);
+    checkWaitlist(user);
 
     try {
       const result = await generateText({
