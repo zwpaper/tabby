@@ -61,35 +61,43 @@ export class CommandManager implements vscode.Disposable {
               cancellable: false,
             },
             async (progress) => {
-              progress.report({ message: "Pochi: Creating project..." });
+              try {
+                progress.report({ message: "Pochi: Creating project..." });
 
-              await vscode.commands.executeCommand("ragdollWebui.focus");
+                await vscode.commands.executeCommand("ragdollWebui.focus");
 
-              const currentWorkspace =
-                vscode.workspace.workspaceFolders?.[0].uri;
-              if (!currentWorkspace) {
-                return;
-              }
-              if (params.githubTemplateUrl) {
-                await prepareProject(
-                  currentWorkspace,
-                  params.githubTemplateUrl,
-                  progress,
-                );
-              }
+                const currentWorkspace =
+                  vscode.workspace.workspaceFolders?.[0].uri;
+                if (!currentWorkspace) {
+                  return;
+                }
+                if (params.githubTemplateUrl) {
+                  await prepareProject(
+                    currentWorkspace,
+                    params.githubTemplateUrl,
+                    progress,
+                  );
+                }
 
-              const webviewHost =
-                await this.ragdollWebviewProvider.retrieveWebviewHost();
-              webviewHost.openTask({
-                taskId: "new",
-                prompt: params.prompt,
-                attachments: params.attachments,
-              });
+                const webviewHost =
+                  await this.ragdollWebviewProvider.retrieveWebviewHost();
+                webviewHost.openTask({
+                  taskId: "new",
+                  prompt: params.prompt,
+                  attachments: params.attachments,
+                });
 
-              if (params.requestId) {
-                await this.newProjectRegistry.set(
-                  params.requestId,
-                  currentWorkspace,
+                if (params.requestId) {
+                  await this.newProjectRegistry.set(
+                    params.requestId,
+                    currentWorkspace,
+                  );
+                }
+              } catch (error) {
+                const errorMessage =
+                  error instanceof Error ? error.message : "Unknown error";
+                vscode.window.showErrorMessage(
+                  `Pochi: Failed to create project. ${errorMessage}`,
                 );
               }
             },

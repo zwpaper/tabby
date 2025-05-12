@@ -70,9 +70,18 @@ export async function prepareProject(
   logger.info(`Fetching project template from: ${zipArchiveUrl}`);
 
   // Fetch the zip file
-  const response = await fetch(zipArchiveUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch project template: ${response.statusText}`);
+  let response: Response;
+  try {
+    response = await fetch(zipArchiveUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status} ${response.statusText}.`);
+    }
+  } catch (error) {
+    logger.error(`Failed to fetch project template: ${zipArchiveUrl}`, error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to fetch project template. ${errorMessage}`);
   }
   const zipBuffer = await response.arrayBuffer();
 

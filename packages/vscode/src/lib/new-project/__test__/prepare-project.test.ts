@@ -103,6 +103,7 @@ suite('prepareProject Suite with Proxyquire', () => {
     test('should throw an error if fetching fails (proxied jszip)', async () => {
         fetchStub.resolves({
             ok: false,
+            status: 404,
             statusText: 'Not Found'
         } as unknown as Response);
 
@@ -110,7 +111,7 @@ suite('prepareProject Suite with Proxyquire', () => {
 
         await assert.rejects(
             prepareProject(projectUri, githubTemplateUrl, progress as any),
-            /Failed to fetch project template: Not Found/,
+            /Failed to fetch project template. HTTP error 404 Not Found/,
             'Should throw an error when fetch is not ok'
         );
         assert.ok(fetchStub.calledOnce, 'fetch should be called');
