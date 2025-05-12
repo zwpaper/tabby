@@ -15,7 +15,7 @@ const logger = getLogger("diffView");
 const ShouldAutoScroll = true;
 const ReuseDiffView = true;
 
-export class DiffView {
+export class DiffView implements vscode.Disposable {
   private isFinalized = false;
   private streamedLines: string[] = [];
 
@@ -24,6 +24,7 @@ export class DiffView {
 
   private constructor(
     private readonly fileUri: vscode.Uri,
+    private readonly fileExists: boolean,
     private readonly originalContent: string,
     private readonly activeDiffEditor: vscode.TextEditor,
   ) {
@@ -35,6 +36,20 @@ export class DiffView {
       "activeLine",
       this.activeDiffEditor,
     );
+  }
+
+  dispose() {
+    if (!this.fileExists) {
+      // Delete file if file is empty
+      (async () => {
+        const metadata = await vscode.workspace.fs.stat(this.fileUri);
+        if (metadata.size === 0) {
+          await vscode.workspace.fs.delete(this.fileUri);
+        }
+      })().catch((err) => {
+        logger.debug("Error deleting file", err);
+      });
+    }
   }
 
   async update(content: string, isFinal: boolean) {
@@ -207,7 +222,7 @@ export class DiffView {
       fileExists,
       originalContent,
     );
-    return new DiffView(fileUri, originalContent, activeDiffEditor);
+    return new DiffView(fileUri, fileExists, originalContent, activeDiffEditor);
   }
 
   private static readonly diffViewGetGroup = runExclusive.createGroupRef();
@@ -221,8 +236,10 @@ export class DiffView {
           logger.debug(`Closed document ${e.uri.scheme}:${e.uri.fsPath}`);
           if (e.uri.scheme === DiffOriginContentProvider.scheme) {
             const id = e.uri.path; // id is stored in path.
-            const success = DiffViewMap.delete(id);
-            if (success) {
+            const diffView = DiffViewMap.get(id);
+            if (diffView) {
+              diffView.dispose();
+              DiffViewMap.delete(id);
               logger.debug(`Closed diff view for ${id}`);
             }
 
@@ -230,6 +247,7 @@ export class DiffView {
               // As we reuse the diff view in openDiffEditor, we need to close all diff views for the same file.
               for (const [id, value] of DiffViewMap) {
                 if (value.fileUri.fsPath === e.uri.fragment) {
+                  value.dispose();
                   DiffViewMap.delete(id);
                   logger.debug(`Closed diff view for ${id}`);
                 }
