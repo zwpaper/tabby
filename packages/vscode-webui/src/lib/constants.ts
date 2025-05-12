@@ -1,4 +1,6 @@
 export const CustomHtmlTags = ["file"];
 
-export const MAX_IMAGES = 4;
-export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+export const MaxImages = 4;
+export const MaxFileSize = 10 * 1024 * 1024;
+
+export const DefaultModelId = "google/gemini-2.5-pro";

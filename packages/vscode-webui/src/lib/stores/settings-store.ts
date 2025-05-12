@@ -1,6 +1,7 @@
 import { ToolsByPermission } from "@ragdoll/tools";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { DefaultModelId } from "../constants";
 
 type AutoApprove = Record<keyof typeof ToolsByPermission, boolean>;
 
@@ -17,7 +18,7 @@ export interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      selectedModelId: undefined,
+      selectedModelId: DefaultModelId,
       autoApproveActive: false,
       autoApproveSettings: {
         read: false,

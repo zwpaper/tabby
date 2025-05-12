@@ -60,7 +60,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { MAX_IMAGES } from "@/lib/constants";
+import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
@@ -221,7 +221,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     const result = validateImages(
       files,
       processImageFiles(newImages, fromClipboard),
-      MAX_IMAGES,
+      MaxImages,
     );
 
     if (result.success) {
@@ -747,7 +747,7 @@ function prepareRequestBody(
     message.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
   return {
     id: taskId.current?.toString(),
-    model: triggerError ? "fake-model" : model,
+    model: triggerError ? "fake-model" : (model ?? DefaultModelId),
     message: fromUIMessage(request.messages[request.messages.length - 1]),
   };
 }
