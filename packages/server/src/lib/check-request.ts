@@ -19,18 +19,23 @@ export function checkModel(modelId: string) {
  * Validates a user against the whitelist
  * Throws an HTTP exception if the user is not whitelisted
  */
-export async function checkWhitelist(
+export function checkWhitelist(
   user: User,
   errorMessage = "Internal user only",
-): Promise<void> {
+) {
   if (!user.email.endsWith("@tabbyml.com") && !user.isWaitlistApproved) {
     throw new HTTPException(400, { message: errorMessage });
   }
+  return true;
 }
 
 export async function checkUserQuota(user: User, c: Context, modelId: string) {
   // Skip quota check for test environment
   if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  if (checkWhitelist(user)) {
     return;
   }
 
