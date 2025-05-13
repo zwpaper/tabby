@@ -3,8 +3,8 @@ import * as os from "node:os";
 import * as _path from "node:path"; // Renamed to avoid conflict if 'path' is used as a var name
 import { after, before, beforeEach, describe, it } from "mocha";
 import * as vscode from "vscode";
+import proxyquire from "proxyquire";
 import { readFile } from "../read-file";
-import { getWorkspaceFolder } from "@/lib/fs";
 
 // Helper to create a file
 async function createFile(uri: vscode.Uri, content = ""): Promise<void> {
@@ -26,6 +26,7 @@ describe("readFile Tool", () => {
   let testSuiteRootTempDir: vscode.Uri;
   let currentTestTempDirUri: vscode.Uri;
   let currentTestTempDirRelativePath: string;
+  let readFileWithMock: typeof readFile;
 
   before(async () => {
     const rootPath = _path.join(
@@ -38,11 +39,17 @@ describe("readFile Tool", () => {
     });
 
     // Mock getWorkspaceFolder to return our test root temp dir
-    (getWorkspaceFolder as any) = () => ({
-      uri: testSuiteRootTempDir,
-      name: "test-workspace",
-      index: 0,
-    });
+    const fsMock = {
+      getWorkspaceFolder: () => ({
+        uri: testSuiteRootTempDir,
+        name: "test-workspace",
+        index: 0,
+      }),
+    };
+
+    readFileWithMock = proxyquire("../read-file", {
+      "@/lib/fs": fsMock,
+    }).readFile;
   });
 
   after(async () => {
@@ -77,7 +84,7 @@ describe("readFile Tool", () => {
     const fileUri = vscode.Uri.joinPath(testSuiteRootTempDir, filePath);
     await createFile(fileUri, fileContent);
 
-    const result = await readFile(
+    const result = await readFileWithMock(
       { path: filePath },
       dummyToolOptions,
     );
@@ -95,7 +102,7 @@ describe("readFile Tool", () => {
     const fileUri = vscode.Uri.joinPath(testSuiteRootTempDir, filePath);
     await createFile(fileUri, fileContent);
 
-    const result = await readFile(
+    const result = await readFileWithMock(
       { path: filePath, startLine: 2, endLine: 4 },
       dummyToolOptions,
     );
@@ -113,7 +120,7 @@ describe("readFile Tool", () => {
     const fileUri = vscode.Uri.joinPath(testSuiteRootTempDir, filePath);
     await createFile(fileUri, fileContent);
 
-    const result = await readFile(
+    const result = await readFileWithMock(
       { path: filePath, startLine: 3 },
       dummyToolOptions,
     );
@@ -131,7 +138,7 @@ describe("readFile Tool", () => {
     const fileUri = vscode.Uri.joinPath(testSuiteRootTempDir, filePath);
     await createFile(fileUri, fileContent);
 
-    const result = await readFile(
+    const result = await readFileWithMock(
       { path: filePath, endLine: 3 },
       dummyToolOptions,
     );
@@ -147,7 +154,7 @@ describe("readFile Tool", () => {
     const nonExistentPath = _path.join(currentTestTempDirRelativePath, "non-existent.txt");
     
     try {
-      await readFile(
+      await readFileWithMock(
         { path: nonExistentPath },
         dummyToolOptions,
       );
@@ -168,7 +175,7 @@ describe("readFile Tool", () => {
     await vscode.workspace.fs.writeFile(fileUri, pngHeader);
 
     try {
-      await readFile(
+      await readFileWithMock(
         { path: filePath },
         dummyToolOptions,
       );
@@ -190,7 +197,7 @@ describe("readFile Tool", () => {
     const fileUri = vscode.Uri.joinPath(testSuiteRootTempDir, filePath);
     await createFile(fileUri, largeContent);
 
-    const result = await readFile(
+    const result = await readFileWithMock(
       { path: filePath },
       dummyToolOptions,
     );
@@ -207,7 +214,7 @@ describe("readFile Tool", () => {
     const fileUri = vscode.Uri.joinPath(testSuiteRootTempDir, filePath);
     await createFile(fileUri, "");
 
-    const result = await readFile(
+    const result = await readFileWithMock(
       { path: filePath },
       dummyToolOptions,
     );
@@ -222,7 +229,7 @@ describe("readFile Tool", () => {
     const fileUri = vscode.Uri.joinPath(testSuiteRootTempDir, filePath);
     await createFile(fileUri, fileContent);
 
-    const result = await readFile(
+    const result = await readFileWithMock(
       { path: filePath },
       dummyToolOptions,
     );
@@ -241,7 +248,7 @@ describe("readFile Tool", () => {
     await createFile(fileUri, fileContent);
 
     const abortController = new AbortController();
-    const promise = readFile(
+    const promise = readFileWithMock(
       { path: filePath },
       { ...dummyToolOptions, abortSignal: abortController.signal },
     );

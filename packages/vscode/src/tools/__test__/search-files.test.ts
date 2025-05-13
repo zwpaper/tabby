@@ -3,8 +3,9 @@ import * as os from "node:os";
 import * as _path from "node:path"; // Renamed to avoid conflict if 'path' is used as a var name
 import { after, before, beforeEach, describe, it } from "mocha";
 import * as vscode from "vscode";
+import proxyquire from "proxyquire";
 import { searchFiles } from "../search-files";
-import { getWorkspaceFolder } from "@/lib/fs";
+// import { getWorkspaceFolder } from "@/lib/fs"; // Original import
 
 // Helper to create a file
 async function createFile(uri: vscode.Uri, content = ""): Promise<void> {
@@ -26,6 +27,7 @@ describe("searchFiles Tool", () => {
   let testSuiteRootTempDir: vscode.Uri;
   let currentTestTempDirUri: vscode.Uri;
   let currentTestTempDirRelativePath: string;
+  let searchFilesWithMock: typeof searchFiles;
 
   before(async () => {
     const rootPath = _path.join(
@@ -38,11 +40,16 @@ describe("searchFiles Tool", () => {
     });
 
     // Mock getWorkspaceFolder to return our test root temp dir
-    (getWorkspaceFolder as any) = () => ({
-      uri: testSuiteRootTempDir,
-      name: "test-workspace",
-      index: 0,
-    });
+    const fsMock = {
+      getWorkspaceFolder: () => ({
+        uri: testSuiteRootTempDir,
+        name: "test-workspace",
+        index: 0,
+      }),
+    };
+    searchFilesWithMock = proxyquire("../search-files", {
+      "@/lib/fs": fsMock,
+    }).searchFiles;
   });
 
   after(async () => {
@@ -74,7 +81,7 @@ describe("searchFiles Tool", () => {
   });
 
   it("should return an empty array for an empty directory", async () => {
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "anything" },
       dummyToolOptions,
     );
@@ -86,7 +93,7 @@ describe("searchFiles Tool", () => {
       vscode.Uri.joinPath(currentTestTempDirUri, "file1.txt"),
       "hello world",
     );
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "nonexistent" },
       dummyToolOptions,
     );
@@ -100,7 +107,7 @@ describe("searchFiles Tool", () => {
     const content = "line 1\nline 2 has the keyword\nline 3";
     await createFile(fileUri, content);
 
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "keyword" },
       dummyToolOptions,
     );
@@ -121,7 +128,7 @@ describe("searchFiles Tool", () => {
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, fileName1), content1);
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, fileName2), content2);
 
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "keyword" },
       dummyToolOptions,
     );
@@ -137,7 +144,7 @@ describe("searchFiles Tool", () => {
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, "file2.log"), "keyword");
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, "file3.txt"), "no match");
 
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       {
         path: currentTestTempDirRelativePath,
         regex: "keyword",
@@ -155,7 +162,7 @@ describe("searchFiles Tool", () => {
     const content = "keyword on line 1\nno match\nkeyword on line 3";
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, fileName), content);
 
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "keyword" },
       dummyToolOptions,
     );
@@ -172,7 +179,7 @@ describe("searchFiles Tool", () => {
     const content = "keyword keyword";
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, fileName), content);
 
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "keyword" },
       dummyToolOptions,
     );
@@ -188,7 +195,7 @@ describe("searchFiles Tool", () => {
     const content = "line with (parentheses) and [brackets].";
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, fileName), content);
 
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "\\(parentheses\\)" }, 
       dummyToolOptions,
     );
@@ -198,13 +205,13 @@ describe("searchFiles Tool", () => {
 
   it("should be case sensitive by default", async () => {
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, "file.txt"), "Keyword");
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "keyword" },
       dummyToolOptions,
     );
     assert.strictEqual(result.matches.length, 0);
 
-    const resultCaps = await searchFiles(
+    const resultCaps = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "Keyword" },
       dummyToolOptions,
     );
@@ -213,7 +220,7 @@ describe("searchFiles Tool", () => {
   
   it("should handle case insensitive search with regex flag", async () => {
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, "file.txt"), "Keyword");
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "(?i)keyword" }, 
       dummyToolOptions,
     );
@@ -226,7 +233,7 @@ describe("searchFiles Tool", () => {
     const content = "line A\nline B (target)\nline C\nline D";
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, fileName), content);
 
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "target" },
       dummyToolOptions,
     );
@@ -247,7 +254,7 @@ describe("searchFiles Tool", () => {
 
     // We are searching within `currentTestTempDirRelativePath`
     // The file `abs_file.txt` is inside it.
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { 
         path: currentTestTempDirRelativePath, // Search path is relative to workspace
         regex: "absolute content"
@@ -262,7 +269,7 @@ describe("searchFiles Tool", () => {
   it("should throw an error for invalid regex", async () => {
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, "file1.txt"), "content");
     try {
-      await searchFiles(
+      await searchFilesWithMock(
         { path: currentTestTempDirRelativePath, regex: "[" }, // Invalid regex
         dummyToolOptions,
       );
@@ -281,7 +288,7 @@ describe("searchFiles Tool", () => {
       "content that could be found",
     );
     const abortController = new AbortController();
-    const promise = searchFiles(
+    const promise = searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "content" },
       { ...dummyToolOptions, abortSignal: abortController.signal },
     );
@@ -314,7 +321,7 @@ describe("searchFiles Tool", () => {
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, rootFileName), "keyword in root");
     await createFile(vscode.Uri.joinPath(subDirUri, subFileName), "keyword in subdir");
 
-    const result = await searchFiles(
+    const result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "keyword" },
       dummyToolOptions,
     );
@@ -344,7 +351,7 @@ describe("searchFiles Tool", () => {
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, subDir2, fileC), "findme");
     await createFile(vscode.Uri.joinPath(currentTestTempDirUri, rootFile), "findme");
 
-    let result = await searchFiles(
+    let result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "findme", filePattern: "*.md" },
       dummyToolOptions,
     );
@@ -352,14 +359,14 @@ describe("searchFiles Tool", () => {
     let files = result.matches.map((r: any) => r.file).sort();
     assert.deepStrictEqual(files, [expectedFileAPath, expectedFileCPath, expectedRootFilePath].sort());
     
-    result = await searchFiles(
+    result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "findme", filePattern: `**/${subDir1}/${fileA}` }, 
       dummyToolOptions,
     );
     assert.strictEqual(result.matches.length, 1);
     assert.strictEqual(result.matches[0].file, expectedFileAPath);
 
-    result = await searchFiles(
+    result = await searchFilesWithMock(
       { path: currentTestTempDirRelativePath, regex: "findme", filePattern: `**/*.txt` },
       dummyToolOptions,
     );
@@ -368,3 +375,4 @@ describe("searchFiles Tool", () => {
   });
 
 });
+
