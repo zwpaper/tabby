@@ -28,8 +28,6 @@ export const FileIcon: React.FC<{ path: string; className?: string }> = ({
   );
 };
 
-const getBasename = (path: string): string => path.split(/[\\/]/).pop() || "";
-
 export const FileBadge: React.FC<FileBadgeProps> = ({
   path,
   startLine,
@@ -62,9 +60,12 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
               className,
             )}
           >
-            <FileIcon path={path} className="inline-block size-3" />
+            <File
+              path={path}
+              className="inline-block size-3 text-blue-600 dark:text-blue-400"
+            />
             <span className="ml-1">
-              {getBasename(path)}
+              {path}
               <span className="text-zinc-500 dark:text-zinc-400">
                 {lineRange}
               </span>
