@@ -16,21 +16,32 @@ export const FileList: React.FC<{
       {matches.map((match, index) => (
         <div
           key={match.file + (match.line ?? "") + index}
-          className={`flex cursor-pointer items-center gap-2 rounded p-1 ${activeIndex === index ? "bg-border" : "hover:bg-muted"}`}
+          className={`cursor-pointer truncate rounded p-1 ${activeIndex === index ? "bg-secondary" : "hover:bg-secondary/50"}`}
           title={match.context}
           onClick={() => {
             setActiveIndex(index);
             vscodeHost.openFile(match.file, { start: match.line });
           }}
         >
-          <FileIcon path={match.file} className="size-3 shrink-0" />
-          <span className="whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">
+          <span
+            className={`truncate px-1 font-semibold ${activeIndex === index ? "text-secondary-foreground" : "text-foreground"}`}
+          >
+            <FileIcon
+              path={match.file}
+              className="mr-1.5 mb-0.5 inline size-3"
+            />
             {getFileName(match.file)}
-            {match.line && <span className="text-gray-500">:{match.line}</span>}
+            {match.line && (
+              <span
+                className={`truncate ${activeIndex === index ? "text-secondary-foreground/70" : "text-foreground/70"}`}
+              >
+                :{match.line}
+              </span>
+            )}
           </span>
           <span
             title={match.file}
-            className="overflow-hidden text-ellipsis whitespace-nowrap text-gray-500"
+            className={`${activeIndex === index ? "text-secondary-foreground/70" : "text-foreground/70"}`}
           >
             {match.file}
           </span>
