@@ -11,7 +11,7 @@ export default defineConfig({
     ui: "tdd",
     timeout: 10000,
     /** Set up alias path resolution during tests */
-    require: ["./scripts/tsconfig-paths-bootstrap.js"],
+    require: ["./scripts/vscode-test-bootstrap.js"],
   },
   version: "stable",
   extensionDevelopmentPath: path.resolve(__dirname),
