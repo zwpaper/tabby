@@ -6,9 +6,9 @@ import { defineConfig } from "@vscode/test-cli";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  files: "out/**/*.test.js",
+  files: "src/**/*.test.ts",
   mocha: {
-    ui: "tdd",
+    ui: "bdd",
     timeout: 10000,
     /** Set up alias path resolution during tests */
     require: ["./scripts/vscode-test-bootstrap.js"],

@@ -1,9 +1,16 @@
-import "reflect-metadata"; // Required for tsyringe
-import tsConfigPaths from "tsconfig-paths";
+const tsConfigPaths = require("tsconfig-paths");
+const path = require("node:path");
 
+const baseUrl = path.resolve(__dirname, "../");
+const tsconfig = tsConfigPaths;
 tsConfigPaths.register({
-  baseUrl: "./",
+  baseUrl,
   paths: {
-    "@/*": ["./out/*"],
+    "@/*": ["./src/*"],
   },
 });
+
+require("reflect-metadata");
+
+const { register } = require("esbuild-register/dist/node");
+const { unregister } = register({});

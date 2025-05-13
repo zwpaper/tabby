@@ -120,7 +120,6 @@
     "start": "code --extensionDevelopmentPath=$PWD",
     "dev": "npm-run-all --parallel watch start",
     "tsc": "tsc --noEmit",
-    "pretest": "rm -rf out && tsc -p tsconfig.test.json",
     "test": "vscode-test",
     "test:coverage": "npm run test -- --coverage --coverage-output ./coverage --coverage-reporter html --coverage-reporter text",
     "release": "bunx bumpp --tag=vscode@%s"
@@ -143,7 +142,6 @@
     "@ragdoll/tools": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
     "@types/diff": "^7.0.2",
-    "@types/mocha": "^10.0.10",
     "@types/project-name-generator": "^2.1.3",
     "@types/proxyquire": "^1.3.31",
     "@types/sinon": "^17.0.4",
@@ -152,6 +150,7 @@
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.3.2",
     "cpy-cli": "^5.0.0",
+    "esbuild-register": "^3.6.0",
     "proxyquire": "^2.1.3",
     "semver": "^7.7.1",
     "sinon": "^20.0.0",

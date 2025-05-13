@@ -21,6 +21,16 @@
       ],
       "outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
       "preLaunchTask": "watch-vscode"
+    },
+    {
+      "name": "Run VSCode Extension Tests",
+      "type": "extensionHost",
+      "request": "launch",
+      "testConfiguration": "${workspaceFolder}/packages/vscode/.vscode-test.mjs",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode",
+        "--disable-extensions"
+      ]
     }
   ]
 }

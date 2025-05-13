@@ -3,8 +3,8 @@ import * as os from "node:os";
 import * as _path from "node:path"; // Renamed to avoid conflict if 'path' is used as a var name
 import { after, before, beforeEach, describe, it } from "mocha";
 import * as vscode from "vscode";
-import { globFiles } from "../glob-files";
-import { getWorkspaceFolder } from "@/lib/fs";
+import type { globFiles as globFilesType } from "../glob-files";
+import proxyquire from "proxyquire";
 
 // Helper to create a file
 async function createFile(uri: vscode.Uri, content = ""): Promise<void> {
@@ -27,6 +27,8 @@ describe("globFiles Tool", () => {
   let testSuiteRootTempDir: vscode.Uri;
   let currentTestTempDirUri: vscode.Uri;
   let currentTestTempDirRelativePath: string;
+  let globFiles: typeof globFilesType;
+
 
   before(async () => {
     const rootPath = _path.join(
@@ -38,12 +40,20 @@ describe("globFiles Tool", () => {
       /* Ignore if already exists */
     });
 
-    // Mock getWorkspaceFolder to return our test root temp dir
-    (getWorkspaceFolder as any) = () => ({
-      uri: testSuiteRootTempDir,
-      name: "test-workspace",
-      index: 0,
-    });
+    // Use proxyquire to mock getWorkspaceFolder
+    const fsMock = {
+      getWorkspaceFolder: () => ({
+        uri: testSuiteRootTempDir,
+        name: "test-workspace",
+        index: 0,
+      }),
+      // Ensure other exports from @/lib/fs are also available if needed by globFiles or its dependencies
+      ignoreWalk: proxyquire("@/lib/fs", {})['ignoreWalk'],
+    };
+
+    globFiles = proxyquire("../glob-files", {
+      "@/lib/fs": fsMock,
+    }).globFiles;
   });
 
   after(async () => {

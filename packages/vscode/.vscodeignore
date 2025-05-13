@@ -6,5 +6,4 @@ tsconfig.json
 tsconfig.test.json
 .vscode-test.mjs
 .vscode-test/**
-out/**
 *.vsix
