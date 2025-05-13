@@ -6,6 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { UserButton } from "@/components/user-button";
 import { useEnhancingPrompt } from "@/lib/use-enhancing-prompt";
+import { cn } from "@/lib/utils";
 import {
   createImageFileName,
   isDuplicateFile,
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
+import { HomeBackgroundGradient } from "./constants";
 
 export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at once
 
@@ -265,7 +267,12 @@ export function Home() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center bg-gradient-to-br from-white via-gray-100 to-gray-200 p-4 text-black">
+    <div
+      className={cn(
+        "relative flex min-h-screen flex-col items-center p-4 text-black",
+        HomeBackgroundGradient,
+      )}
+    >
       <div className="absolute top-10 right-10">
         <UserButton
           size="icon"

@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { HomeBackgroundGradient } from "./constants";
 
 export function HomeWaitlist() {
   const { navigate } = useRouter();
@@ -26,7 +28,12 @@ export function HomeWaitlist() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white p-6 text-center">
+    <div
+      className={cn(
+        "relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-6 text-center text-black",
+        HomeBackgroundGradient,
+      )}
+    >
       {/* Grid pattern background */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.05)_1px,transparent_1px)] bg-[size:50px_50px] opacity-20" />
 
