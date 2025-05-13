@@ -1,6 +1,6 @@
 import { CustomHtmlTags } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { type ElementType, type FC, memo } from "react";
+import { type ElementType, type FC, memo, useMemo } from "react";
 import ReactMarkdown, { type Components, type Options } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
@@ -23,7 +23,6 @@ type ExtendedMarkdownOptions = Omit<Options, "components"> & {
 interface MessageMarkdownProps {
   children: string;
   className?: string;
-  canWrapLongLines?: boolean;
 }
 
 interface FileComponentProps {
@@ -56,11 +55,14 @@ export function MessageMarkdown({
   children,
   className,
 }: MessageMarkdownProps): JSX.Element {
-  let processedChildren = children;
-  for (const tag of CustomHtmlTags) {
-    const escapeTagContent = escapeMarkdownTag(tag);
-    processedChildren = escapeTagContent(processedChildren);
-  }
+  const processedChildren = useMemo(() => {
+    let result = children;
+    for (const tag of CustomHtmlTags) {
+      const escapeTagContent = escapeMarkdownTag(tag);
+      result = escapeTagContent(result);
+    }
+    return result;
+  }, [children]);
 
   return (
     <div
