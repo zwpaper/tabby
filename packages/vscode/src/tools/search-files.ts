@@ -1,6 +1,7 @@
 import { exec } from "node:child_process";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { env, workspace } from "vscode";
@@ -95,7 +96,7 @@ export const searchFiles: ToolFunctionType<
   }
 
   const absPath = resolve(
-    workspace.workspaceFolders?.[0].uri.fsPath ?? "",
+    getWorkspaceFolder().uri.fsPath ?? "",
     path.replace(/'/g, "'''"),
   );
   // Add regex and path. Ensure they are properly quoted.
