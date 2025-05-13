@@ -1,4 +1,5 @@
 import * as nodePath from "node:path";
+import { getWorkspaceFolder } from "@/lib/fs";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { fileTypeFromBuffer } from "file-type";
 import * as vscode from "vscode";
@@ -8,12 +9,11 @@ export const readFile: ToolFunctionType<ClientToolsType["readFile"]> = async ({
   startLine,
   endLine,
 }) => {
-  const current = vscode.workspace.workspaceFolders?.[0].uri;
-  if (!current) {
-    throw new Error("No workspace folder found.");
-  }
+  const workspaceFolder = getWorkspaceFolder();
 
-  const fileUri = vscode.Uri.file(nodePath.join(current.fsPath, path));
+  const fileUri = vscode.Uri.file(
+    nodePath.join(workspaceFolder.uri.fsPath, path),
+  );
 
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
   const type = await fileTypeFromBuffer(fileBuffer);
