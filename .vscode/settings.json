@@ -12,6 +12,6 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
-  "tailwindCSS.experimental.classRegex": ["cn`([^`]*)"],
+  "tailwindCSS.classFunctions": ["tw"],
   "editor.formatOnSave": true
 }
