@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Pagination,
   PaginationContent,
@@ -17,6 +18,7 @@ import {
   CheckCircle2,
   Edit3,
   HelpCircle,
+  TerminalIcon,
   Wrench,
   XCircle,
   Zap,
@@ -188,6 +190,14 @@ function Tasks({ cwd }: { cwd: string }) {
     });
   };
 
+  if (tasks.length === 0) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center">
+        <EmptyTaskPlaceholder />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-full flex-col pt-4">
       <ScrollArea className="h-full max-h-screen overflow-y-auto">
@@ -225,6 +235,29 @@ function Tasks({ cwd }: { cwd: string }) {
           </PaginationContent>
         </Pagination>
       )}
+    </div>
+  );
+}
+
+function EmptyTaskPlaceholder() {
+  const { navigate } = useRouter();
+  return (
+    <div className="flex h-full select-none flex-col items-center justify-center p-5 text-center text-gray-500 dark:text-gray-300">
+      <h2 className="mb-2 flex items-center gap-3 font-semibold text-2xl text-gray-700 dark:text-gray-100">
+        <TerminalIcon />
+        No tasks found
+      </h2>
+      <p className="mb-4 leading-relaxed">
+        Create a new task to get started with Pochi
+      </p>
+      <Button
+        onClick={() => navigate({ to: "/" })}
+        variant="ghost"
+        className="mb-20"
+      >
+        <Zap className="size-4" />
+        Create New Task
+      </Button>
     </div>
   );
 }
