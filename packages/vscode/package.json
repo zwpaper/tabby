@@ -1,12 +1,12 @@
 {
   "name": "pochi",
   "version": "0.1.24",
-  "description": "Pochi",
-  "displayName": "Pochi",
+  "description": "Pochi is your AI powered team mate. Now available in research preview.",
+  "displayName": "Pochi (Research Preview)",
   "publisher": "TabbyML",
   "icon": "assets/icons/logo128.png",
   "main": "./dist/extension.js",
-  "license": "Ragdoll User License",
+  "license": "Pochi User License",
   "activationEvents": ["onStartupFinished"],
   "contributes": {
     "views": {
