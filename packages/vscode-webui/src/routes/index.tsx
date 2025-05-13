@@ -895,6 +895,7 @@ function useRetry({
     if (isAssistantMessageWithCompletedToolCalls(lastMessage as UIMessage)) {
       setMessages(messages.slice(0, -1));
       append(lastMessage);
+      return;
     }
 
     return await reload();
