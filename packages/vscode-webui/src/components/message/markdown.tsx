@@ -30,6 +30,23 @@ interface FileComponentProps {
   children: string;
 }
 
+function escapeMarkdown(text: string): string {
+  return text.replace(/[\\`*_{}\[\]()#+\-.!|<]/g, "\\$&");
+}
+
+/**
+ * escape markdown content in certain tag, like <file>content to escape</file>
+ */
+function escapeMarkdownTag(tag: string): (text: string) => string {
+  return (text: string): string => {
+    const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, "gs");
+    return text.replace(regex, (_match, content) => {
+      const escapedContent = escapeMarkdown(content);
+      return `<${tag}>${escapedContent}</${tag}>`;
+    });
+  };
+}
+
 const MemoizedReactMarkdown: FC<ExtendedMarkdownOptions> = memo(
   ReactMarkdown,
   (prevProps, nextProps) => prevProps.children === nextProps.children,
@@ -39,6 +56,12 @@ export function MessageMarkdown({
   children,
   className,
 }: MessageMarkdownProps): JSX.Element {
+  let processedChildren = children;
+  for (const tag of CustomHtmlTags) {
+    const escapeTagContent = escapeMarkdownTag(tag);
+    processedChildren = escapeTagContent(processedChildren);
+  }
+
   return (
     <div
       className={cn(
@@ -108,7 +131,7 @@ export function MessageMarkdown({
           },
         }}
       >
-        {children}
+        {processedChildren}
       </MemoizedReactMarkdown>
     </div>
   );
