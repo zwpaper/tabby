@@ -62,9 +62,9 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
           >
             <File
               path={path}
-              className="inline-block size-3 text-blue-600 dark:text-blue-400"
+              className="inline size-3 text-blue-600 dark:text-blue-400"
             />
-            <span className="ml-1">
+            <span className="ml-1 break-all">
               {path}
               <span className="text-zinc-500 dark:text-zinc-400">
                 {lineRange}
