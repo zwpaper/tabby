@@ -10,8 +10,9 @@ export const ToolsGallery: React.FC<{
         <ToolInvocationPart
           key={tool.toolCallId + index}
           tool={tool}
-          setInput={() => {}}
+          sendMessage={() => Promise.resolve(undefined)}
           executingToolCallId={undefined}
+          isLoading={false}
         />
       ))}
     </div>
