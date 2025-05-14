@@ -7,7 +7,9 @@
     "build": "vite build && tsc",
     "serve": "vite preview",
     "test": "vitest run",
-    "tsc": "tsc --noEmit"
+    "tsc": "tsc --noEmit",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@ai-sdk/react": "1.2.12",
@@ -70,6 +72,14 @@
     "@preact/signals-react-transform": "^0.5.1",
     "@ragdoll/tools": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-interactions": "^8.6.12",
+    "@storybook/addon-onboarding": "^8.6.12",
+    "@storybook/addon-themes": "^8.6.12",
+    "@storybook/blocks": "^8.6.12",
+    "@storybook/react": "^8.6.12",
+    "@storybook/react-vite": "^8.6.12",
+    "@storybook/test": "^8.6.12",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
@@ -78,6 +88,7 @@
     "@types/vscode-webview": "^1.57.5",
     "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^26.0.0",
+    "storybook": "^8.6.12",
     "vite": "^6.2.3",
     "vite-tsconfig-paths": "^5.1.4",
     "web-vitals": "^4.2.4"

@@ -4,3 +4,5 @@ coverage/
 .vite/
 .env*
 *.sqlite*
+
+*storybook.log

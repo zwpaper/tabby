@@ -12,7 +12,14 @@ function getVSCodeApi() {
   if (vscodeApi) {
     return vscodeApi;
   }
-  vscodeApi = acquireVsCodeApi();
+  try {
+    vscodeApi = acquireVsCodeApi();
+  } catch (error) {
+    console.warn(
+      "Failed to acquire VSCode API. This is likely due to running in a non-VSCode environment.",
+      error,
+    );
+  }
   return vscodeApi;
 }
 
@@ -21,7 +28,7 @@ function createVSCodeHost(): VSCodeHostApi {
   const thread = new Thread<VSCodeHostApi, WebviewHostApi>(
     {
       send(message) {
-        return vscode.postMessage(message);
+        return vscode?.postMessage(message);
       },
       listen(listen, { signal }) {
         self.addEventListener(
