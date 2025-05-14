@@ -34,6 +34,7 @@ import {
   SettingsIcon,
   StopCircleIcon,
 } from "lucide-react";
+import type React from "react";
 import {
   type MutableRefObject,
   useCallback,
@@ -778,9 +779,6 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     addToolResult,
   });
 
-  // Abort tool is not used yet, it can be used to implement tool cancellation
-  abortTool;
-
   const ToolAcceptText: Record<string, string> = {
     retry: "Retry",
     writeToFile: "Save",
@@ -791,8 +789,13 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     retry: "Cancel",
   };
 
+  const ToolAbortText: Record<string, string> = {
+    executeCommand: "Complete",
+  };
+
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
+  const abortText = ToolAbortText[pendingApproval.name] || null;
 
   const executed = useRef(false);
   const shouldSkipExecute = useCallback(() => {
@@ -859,18 +862,51 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     onReject,
   ]);
 
-  if (executingToolCallId) {
-    return null;
+  const [showAbort, setShowAbort] = useState(false);
+
+  useEffect(() => {
+    setShowAbort(false);
+
+    if (executingToolCallId) {
+      const timer = setTimeout(() => {
+        setShowAbort(true);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [executingToolCallId]);
+
+  let body: React.ReactNode;
+  if (!executingToolCallId) {
+    body = (
+      <>
+        <Button onClick={onAccept}>{acceptText}</Button>
+        {pendingApproval.name !== "retry" && (
+          <Button onClick={onRejectByUser} variant="secondary">
+            {rejectText}
+          </Button>
+        )}
+      </>
+    );
+  }
+
+  if (showAbort && abortText && executingToolCallId) {
+    /*
+    Only display the abort button if:
+    1. There's executing tool call
+    2. The abort text is provided
+    3. The showAbort flag is true (delayed for a bit to avoid flashing)
+    */
+    body = (
+      <Button onClick={abortTool} variant="secondary">
+        {abortText}
+      </Button>
+    );
   }
 
   return (
     <div className="mb-2 flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
-      <Button onClick={onAccept}>{acceptText}</Button>
-      {pendingApproval.name !== "retry" && (
-        <Button onClick={onRejectByUser} variant="secondary">
-          {rejectText}
-        </Button>
-      )}
+      {body}
     </div>
   );
 };

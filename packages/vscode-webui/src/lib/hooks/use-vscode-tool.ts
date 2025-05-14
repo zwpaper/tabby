@@ -15,7 +15,7 @@ export function useVSCodeTool({
 
   const executeTool = useCallback(
     async (tool: ToolInvocation) => {
-      const result = await vscodeHost
+      let result = await vscodeHost
         .executeToolCall(tool.toolName, tool.args, {
           toolCallId: tool.toolCallId,
           abortSignal: ThreadAbortSignal.serialize(abort.current.signal),
@@ -24,12 +24,17 @@ export function useVSCodeTool({
           error: `Failed to execute tool: ${err.message}`,
         }));
 
-      if (!abort.current.signal.aborted) {
-        addToolResult({
-          toolCallId: tool.toolCallId,
-          result,
-        });
+      if (abort.current.signal.aborted && typeof result === "object") {
+        result = {
+          ...result,
+          aborted: "Tool execution was aborted, the output may be incomplete.",
+        };
       }
+
+      addToolResult({
+        toolCallId: tool.toolCallId,
+        result,
+      });
     },
     [addToolResult],
   );

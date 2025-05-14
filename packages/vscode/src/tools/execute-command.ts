@@ -8,7 +8,7 @@ const logger = getLogger("executeCommand");
 
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
-> = async ({ command, cwd = ".", isDevServer }) => {
+> = async ({ command, cwd = ".", isDevServer }, { abortSignal }) => {
   if (!command) {
     throw new Error("Command is required to execute.");
   }
@@ -33,7 +33,7 @@ export const executeCommand: ToolFunctionType<
   }
 
   const execution = shell.executeCommand(command);
-  const output = await collectOutput(execution, isDevServer);
+  const output = await collectOutput(execution, isDevServer, abortSignal);
 
   return { output };
 };
@@ -73,6 +73,7 @@ async function collectDevServerOutputWithTimeout(
 async function collectOutput(
   execution: vscode.TerminalShellExecution,
   isDevServer?: boolean,
+  abortSignal?: AbortSignal,
 ): Promise<string> {
   logger.info(
     "Collecting output from terminal shell execution",
@@ -85,11 +86,35 @@ async function collectOutput(
     return collectDevServerOutputWithTimeout(outputStream);
   }
 
-  let output = "";
-  for await (const data of outputStream) {
-    output += data;
-  }
-  return output;
+  const pollStreamAndAbortSignal = async (
+    outputStream: AsyncIterable<string>,
+    abortSignal?: AbortSignal,
+  ): Promise<string> => {
+    let output = "";
+
+    const pollStream = async () => {
+      for await (const data of outputStream) {
+        output += data;
+      }
+    };
+
+    const pollAbortSignal = async () => {
+      return new Promise<void>((resolve) => {
+        if (abortSignal) {
+          abortSignal.addEventListener("abort", () => {
+            logger.info("Aborted collecting output");
+            resolve();
+          });
+        }
+      });
+    };
+
+    await Promise.race([pollStream(), pollAbortSignal()]);
+
+    return output;
+  };
+
+  return await pollStreamAndAbortSignal(outputStream, abortSignal);
 }
 
 async function retrieveShellIntegration(
