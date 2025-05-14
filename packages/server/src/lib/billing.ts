@@ -50,7 +50,6 @@ export async function readCurrentMonthQuota(user: User, r: HonoRequest) {
     // Compare the timestamp column directly with the Date object
     .where(sql`"startDayOfMonth"`, "=", startOfMonth)
     .execute(); // Use executeTakeFirstOrThrow() if you expect a result or want an error
-  console.log(results);
 
   const usages = {
     basic: 0,
