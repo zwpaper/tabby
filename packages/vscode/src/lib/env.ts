@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import * as vscode from "vscode";
 
 /**
@@ -35,39 +32,16 @@ export async function collectCustomRules(
   let rules = "";
 
   // Try to read README.pochi.md from workspace root
-  try {
-    if (
-      vscode.workspace.workspaceFolders &&
-      vscode.workspace.workspaceFolders.length > 0
-    ) {
-      const readmePath = vscode.Uri.joinPath(
+  if (
+    vscode.workspace.workspaceFolders &&
+    vscode.workspace.workspaceFolders.length > 0
+  ) {
+    customRuleFiles.push(
+      vscode.Uri.joinPath(
         vscode.workspace.workspaceFolders[0].uri,
         "README.pochi.md",
-      );
-
-      try {
-        const readmeContent = await vscode.workspace.fs.readFile(readmePath);
-        const rule = Buffer.from(readmeContent).toString("utf8");
-        rules += `# Rules from ${readmePath.fsPath}\n${rule}\n`;
-      } catch (error) {
-        // File doesn't exist or can't be read, ignore
-      }
-    }
-  } catch (error) {
-    console.error("Error reading README.pochi.md:", error);
-  }
-
-  // Try to read README.pochi.md from `~/.pochi`
-  try {
-    const homeDir = os.homedir();
-    const homeReadmePath = path.join(homeDir, ".pochi", "README.pochi.md");
-    const homeReadmeContent = await fs.promises.readFile(
-      homeReadmePath,
-      "utf8",
+      ).fsPath,
     );
-    rules += `# Rules from ${homeReadmePath}\n${homeReadmeContent}\n`;
-  } catch (error) {
-    // File doesn't exist or can't be read, ignore
   }
 
   // Read custom rule files
@@ -77,7 +51,7 @@ export async function collectCustomRules(
       const ruleUri = vscode.Uri.file(rulePath);
       const ruleContent = await vscode.workspace.fs.readFile(ruleUri);
       const rule = Buffer.from(ruleContent).toString("utf8");
-      rules += `# Rules from ${rulePath}\n${rule}\n`;
+      rules += `# Rules from ${vscode.workspace.asRelativePath(rulePath)}\n${rule}\n`;
     } catch (error) {
       console.error(`Error reading custom rule file ${rulePath}:`, error);
     }

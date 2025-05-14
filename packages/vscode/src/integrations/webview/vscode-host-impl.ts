@@ -75,7 +75,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     let files = workspaceFolders?.length
       ? (
           await ignoreWalk({ dir: workspaceFolders[0].uri, recursive: true })
-        ).map((res) => res.uri.fsPath)
+        ).map((res) => vscode.workspace.asRelativePath(res.uri))
       : [];
     const isTruncated = files.length > MaxFileItems;
     files = files.slice(0, MaxFileItems);
