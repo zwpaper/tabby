@@ -1,4 +1,9 @@
-import type { ToolInvocation } from "ai";
+import type {
+  ChatRequestOptions,
+  CreateMessage,
+  Message,
+  ToolInvocation,
+} from "ai";
 import { applyDiffTool } from "./tools/apply-diff";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
@@ -12,12 +17,17 @@ import type { ToolProps } from "./types";
 
 export function ToolInvocationPart({
   tool,
-  setInput,
+  sendMessage,
   executingToolCallId,
+  isLoading,
 }: {
   tool: ToolInvocation;
-  setInput: (prompt: string) => void;
+  sendMessage: (
+    message: Message | CreateMessage,
+    chatRequestOptions?: ChatRequestOptions,
+  ) => Promise<string | null | undefined>;
   executingToolCallId: string | undefined;
+  isLoading: boolean;
 }) {
   const C = Tools[tool.toolName];
   return (
@@ -26,7 +36,8 @@ export function ToolInvocationPart({
         <C
           tool={tool}
           isExecuting={tool.toolCallId === executingToolCallId}
-          setInput={setInput}
+          sendMessage={sendMessage}
+          isLoading={isLoading}
         />
       ) : (
         JSON.stringify(tool, null, 2)

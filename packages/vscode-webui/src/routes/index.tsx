@@ -16,7 +16,14 @@ import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Editor } from "@tiptap/react";
-import type { Attachment, CreateMessage, TextPart, ToolInvocation } from "ai";
+import type {
+  Attachment,
+  ChatRequestOptions,
+  CreateMessage,
+  Message,
+  TextPart,
+  ToolInvocation,
+} from "ai";
 import type { InferResponseType } from "hono/client";
 import {
   ImageIcon,
@@ -427,13 +434,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   const editorRef = useRef<Editor | null>(null);
 
-  const setInputAndFocus = (input: string) => {
-    setInput(input);
-    if (editorRef.current) {
-      editorRef.current.commands.focus();
-    }
-  };
-
   const renderMessages = createRenderMessages(messages);
   const retry = useRetry({ messages, append, setMessages, reload });
   const { pendingApproval, setIsExecuting, executingToolCallId } =
@@ -528,7 +528,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
                     key={index}
                     message={m}
                     part={part}
-                    setInput={setInputAndFocus}
+                    isLoading={isLoading}
+                    sendMessage={append}
                     executingToolCallId={executingToolCallId}
                   />
                 ))}
@@ -655,13 +656,18 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 function Part({
   message,
   part,
-  setInput,
   executingToolCallId,
+  sendMessage,
+  isLoading,
 }: {
   message: UIMessage;
   part: NonNullable<UIMessage["parts"]>[number];
-  setInput: (prompt: string) => void;
+  sendMessage: (
+    message: Message | CreateMessage,
+    chatRequestOptions?: ChatRequestOptions,
+  ) => Promise<string | null | undefined>;
   executingToolCallId: string | undefined;
+  isLoading: boolean;
 }) {
   if (part.type === "text") {
     return <TextPartUI message={message} part={part} />;
@@ -679,8 +685,9 @@ function Part({
     return (
       <ToolInvocationPart
         tool={part.toolInvocation}
-        setInput={setInput}
+        sendMessage={sendMessage}
         executingToolCallId={executingToolCallId}
+        isLoading={isLoading}
       />
     );
   }

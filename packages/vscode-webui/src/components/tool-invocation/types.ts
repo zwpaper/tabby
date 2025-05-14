@@ -1,6 +1,6 @@
 import type { ToolCall, ToolResult } from "@ai-sdk/provider-utils";
 import type { ToolFunctionType } from "@ragdoll/tools";
-import type { Tool } from "ai";
+import type { ChatRequestOptions, CreateMessage, Message, Tool } from "ai";
 
 export type ToolInvocation<INPUT, OUTPUT> =
   | ({
@@ -23,7 +23,11 @@ export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
     Awaited<ReturnType<ToolFunctionType<T>>> | { error: string }
   >;
   isExecuting: boolean;
-  setInput: (prompt: string) => void;
+  isLoading: boolean;
+  sendMessage: (
+    message: Message | CreateMessage,
+    chatRequestOptions?: ChatRequestOptions,
+  ) => Promise<string | null | undefined>;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: external function def.
