@@ -1,3 +1,4 @@
+import { MobileWarningDialog } from "@/components/home/mobile-warning-dialog";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { PromptSuggestions } from "@/components/suggestions";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { UserButton } from "@/components/user-button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useEnhancingPrompt } from "@/lib/use-enhancing-prompt";
 import { cn } from "@/lib/utils";
 import {
@@ -37,6 +39,8 @@ interface SearchParams {
 
 export function Home() {
   const { auth } = Route.useRouteContext();
+  const isMobileDevice = useIsMobile();
+  const [showMobileWarning, setShowMobileWarning] = useState(false);
 
   const search = Route.useSearch() as SearchParams;
   const { enhancePrompt, isPending: isEnhancing } = useEnhancingPrompt();
@@ -159,6 +163,10 @@ export function Home() {
     (inputValue.length < 8 && files.length === 0);
 
   const handleEnhance = async () => {
+    if (isMobileDevice) {
+      setShowMobileWarning(true);
+      return;
+    }
     if (!inputValue.trim()) return;
     if (auth === null) {
       setShowAuthDialog(true);
@@ -171,6 +179,10 @@ export function Home() {
   };
 
   const doSubmit = async (input: string, name?: string) => {
+    if (isMobileDevice) {
+      setShowMobileWarning(true);
+      return;
+    }
     setSubmitError(null);
     if (auth === null) {
       setShowAuthDialog(true);
@@ -227,6 +239,11 @@ export function Home() {
   };
 
   const handlePasteImage = (event: ClipboardEvent) => {
+    if (isMobileDevice) {
+      setShowMobileWarning(true);
+      event.preventDefault();
+      return true;
+    }
     const images = Array.from(event.clipboardData?.items || [])
       .filter((item) => item.type.startsWith("image/"))
       .map((item) => {
@@ -263,6 +280,20 @@ export function Home() {
     } else if (isSubmitting) {
       // The stop function wasn't defined
       // stop();
+    }
+  };
+
+  const handleImageUploadClick = () => {
+    if (isMobileDevice) {
+      setShowMobileWarning(true);
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleTextareaFocus = () => {
+    if (isMobileDevice) {
+      setShowMobileWarning(true);
     }
   };
 
@@ -307,6 +338,7 @@ export function Home() {
         <Textarea
           disabled={isSubmitting}
           onKeyDown={submitOnEnter}
+          onFocus={handleTextareaFocus}
           onPaste={(e) => {
             handlePasteImage(e);
           }}
@@ -334,7 +366,7 @@ export function Home() {
               variant="ghost"
               size="icon"
               className="rounded-full text-gray-500 transition-colors hover:bg-gray-200/50 hover:text-black"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleImageUploadClick}
             >
               <ImageIcon className="h-5 w-5" />
             </Button>
@@ -372,9 +404,7 @@ export function Home() {
       </form>
       <PromptSuggestions
         hasSelectImage={!!files.length}
-        handleSelectImage={() => {
-          fileInputRef.current?.click();
-        }}
+        handleSelectImage={handleImageUploadClick}
         handleSubmit={doSubmit}
       />
       <div className="mt-4 text-right text-destructive text-sm">
@@ -395,6 +425,10 @@ export function Home() {
           />
         </DialogContent>
       </Dialog>
+      <MobileWarningDialog
+        open={showMobileWarning}
+        onOpenChange={setShowMobileWarning}
+      />
     </div>
   );
 }
