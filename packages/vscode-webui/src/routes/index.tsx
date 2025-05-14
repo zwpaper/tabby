@@ -16,22 +16,12 @@ import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Editor } from "@tiptap/react";
-import {
-  type Attachment,
-  type CoreMessage,
-  type CreateMessage,
-  type TextPart,
-  type ToolInvocation,
-  convertToCoreMessages,
-} from "ai";
+import type { Attachment, CreateMessage, TextPart, ToolInvocation } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
-  CheckIcon,
-  CopyIcon,
   ImageIcon,
   Loader2,
   SendHorizonal,
-  SettingsIcon,
   StopCircleIcon,
 } from "lucide-react";
 import type React from "react";
@@ -48,22 +38,15 @@ import {
 import { z } from "zod";
 
 import "@/components/prompt-form/prompt-form.css";
+import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
-import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import {
@@ -629,31 +612,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           />
 
           <div className="flex shrink-0 items-center gap-1">
-            {isDevMode && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 rounded-md p-0"
-                    title="Dev mode"
-                  >
-                    <SettingsIcon className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuContent
-                    onCloseAutoFocus={(e) => e.preventDefault()}
-                    side="bottom"
-                    className="dropdown-menu max-h-[30vh] min-w-[12rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-2 text-popover-foreground shadow"
-                  >
-                    <DropdownMenuItem>
-                      <CopyMessages messages={messages} />
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenuPortal>
-              </DropdownMenu>
-            )}
+            {isDevMode && <DevModeButton messages={messages} />}
             <Button
               variant="ghost"
               size="icon"
@@ -1066,47 +1025,6 @@ const useResourceURI = () => {
   }, []);
   return resourceURI;
 };
-
-const CopyMessages = ({ messages }: { messages: UIMessage[] }) => {
-  const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
-
-  const onCopy = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isCopied) return;
-    const coreMessages = createCoreMessagesForCopy(messages);
-    copyToClipboard(JSON.stringify(coreMessages, null, 2));
-  };
-
-  return (
-    <span onClick={onCopy} className="cursor-pointer">
-      {isCopied ? (
-        <CheckIcon className="inline text-green-700 dark:text-green-500" />
-      ) : (
-        <CopyIcon className="inline" />
-      )}
-      <span className="ml-2">Copy Messages</span>
-    </span>
-  );
-};
-
-function createCoreMessagesForCopy(messages: UIMessage[]): CoreMessage[] {
-  return convertToCoreMessages(
-    messages.map((message) => {
-      const ret = {
-        ...message,
-      };
-
-      if (message.role === "assistant") {
-        ret.parts = message.parts.filter(
-          (part) =>
-            part.type !== "tool-invocation" ||
-            part.toolInvocation.state === "result",
-        );
-      }
-      return ret;
-    }),
-  );
-}
 
 type AddToolResultFunctionType = ({
   toolCallId,
