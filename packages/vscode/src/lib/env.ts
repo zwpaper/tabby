@@ -10,13 +10,13 @@ export function getSystemInfo(): {
   os: string;
   homedir: string;
 } {
-  const os = process.platform;
-  const homedir = process.env.HOME || "";
+  const platform = process.platform;
+  const homedir = os.homedir();
   const shell = process.env.SHELL || "";
   const cwd =
     vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
 
-  return { cwd, shell, os, homedir };
+  return { cwd, shell, os: platform, homedir };
 }
 
 /**
