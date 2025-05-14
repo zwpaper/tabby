@@ -260,7 +260,6 @@ describe("DiffView with real file system", () => {
       const diffViewInstance = await DiffView.getOrCreate(id, relPath);
 
       assert.ok(diffViewInstance instanceof DiffView, "Should return an instance of DiffView");
-      assert.strictEqual(DiffView.get(id), diffViewInstance, "Instance should be stored in the map");
     });
 
     it("should return an existing DiffView instance if one exists for the id", async () => {
@@ -283,9 +282,8 @@ describe("DiffView with real file system", () => {
 
       const id = "test-id-2";
       const relPath = "test-file.txt";
-      await DiffView.getOrCreate(id, relPath);
+      const firstInstance = await DiffView.getOrCreate(id, relPath);
       const secondInstance = await DiffView.getOrCreate(id, relPath);
-      const firstInstance = DiffView.get(id);
 
       assert.strictEqual(secondInstance, firstInstance, "Should return the same instance");
     });

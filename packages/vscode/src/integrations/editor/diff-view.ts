@@ -291,10 +291,6 @@ export class DiffView implements vscode.Disposable {
       return diffView;
     },
   );
-
-  static get(id: string): DiffView | undefined {
-    return DiffViewMap.get(id);
-  }
 }
 
 const DiffViewMap = new Map<string, DiffView>();

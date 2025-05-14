@@ -71,11 +71,8 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
     );
   }
 
-  const diffView = DiffView.get(toolCallId);
-  if (!diffView) {
-    throw new Error("User has closed the diff view, cannot save changes.");
-  }
-
+  const diffView = await DiffView.getOrCreate(toolCallId, path);
+  await diffView.update(updatedContent, true);
   const edits = await diffView.saveChanges(path, updatedContent);
 
   logger.info(`Successfully applied diff to ${path}`);

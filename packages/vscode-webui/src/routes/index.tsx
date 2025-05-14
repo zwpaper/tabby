@@ -870,7 +870,8 @@ const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     if (executingToolCallId) {
       const timer = setTimeout(() => {
         setShowAbort(true);
-      }, 5000);
+        // 15 seconds
+      }, 10_000);
 
       return () => clearTimeout(timer);
     }
