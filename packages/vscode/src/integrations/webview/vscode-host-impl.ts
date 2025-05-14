@@ -28,6 +28,51 @@ import type { PochiConfiguration } from "../configuration";
 
 const logger = getLogger("VSCodeHostImpl");
 
+function getOpenTabFiles(): { filepath: string; isDir: boolean }[] {
+  const currentOpenTabFiles: { filepath: string; isDir: boolean }[] = [];
+  const processedFilepaths = new Set<string>(); // To ensure uniqueness by final relative filepath
+
+  // Prioritize active editor
+  const activeEditor = vscode.window.activeTextEditor;
+  if (activeEditor?.document) {
+    const relativePath = vscode.workspace.asRelativePath(
+      activeEditor.document.uri,
+    );
+    if (!processedFilepaths.has(relativePath)) {
+      currentOpenTabFiles.push({ filepath: relativePath, isDir: false });
+      processedFilepaths.add(relativePath);
+    }
+  }
+
+  for (const tabGroup of vscode.window.tabGroups.all) {
+    for (const tab of tabGroup.tabs) {
+      let uri: vscode.Uri | undefined;
+
+      if (tab.input instanceof vscode.TabInputText) {
+        uri = tab.input.uri;
+      } else if (tab.input instanceof vscode.TabInputTextDiff) {
+        uri = tab.input.modified;
+      } else if (tab.input instanceof vscode.TabInputNotebook) {
+        uri = tab.input.uri;
+      } else if (tab.input instanceof vscode.TabInputNotebookDiff) {
+        uri = tab.input.modified;
+      } else if (tab.input instanceof vscode.TabInputCustom) {
+        uri = tab.input.uri;
+      }
+      // Other tab input types like vscode.TabInputWebview or vscode.TabInputTerminal are generally not considered file-backed code editors.
+
+      if (uri) {
+        const relativePath = vscode.workspace.asRelativePath(uri);
+        if (!processedFilepaths.has(relativePath)) {
+          currentOpenTabFiles.push({ filepath: relativePath, isDir: false });
+          processedFilepaths.add(relativePath);
+        }
+      }
+    }
+  }
+  return currentOpenTabFiles;
+}
+
 export default class VSCodeHostImpl implements VSCodeHostApi {
   private toolCallGroup = runExclusive.createGroupRef();
 
@@ -110,14 +155,26 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
       return [];
     }
 
+    const currentOpenTabFiles = getOpenTabFiles();
+
     const results = await ignoreWalk({
       dir: workspaceFolders[0].uri,
       recursive: true,
     });
-    return results.map((item) => ({
-      filepath: vscode.workspace.asRelativePath(item.uri),
-      isDir: item.isDir,
-    }));
+    return [
+      ...currentOpenTabFiles,
+      ...results
+        .map((item) => ({
+          filepath: vscode.workspace.asRelativePath(item.uri),
+          isDir: item.isDir,
+        }))
+        .filter(
+          (item) =>
+            !currentOpenTabFiles.some(
+              (openTabFile) => openTabFile.filepath === item.filepath,
+            ),
+        ),
+    ];
   };
 
   executeToolCall = runExclusive.build(
