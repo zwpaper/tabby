@@ -9,7 +9,7 @@ export const readFileTool: React.FC<ToolProps<ClientToolsType["readFile"]>> = ({
 }) => {
   const { path, startLine, endLine } = tool.args || {};
   return (
-    <div className="text-sm">
+    <div className="pr-1 text-sm">
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       Reading

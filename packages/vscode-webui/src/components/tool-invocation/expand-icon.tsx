@@ -5,7 +5,7 @@ export const ExpandIcon: React.FC<{
   onClick?: () => void;
 }> = ({ isExpanded, onClick }) => {
   return (
-    <span className="my-1 self-start rounded bg-muted p-1" onClick={onClick}>
+    <span className="self-start rounded bg-muted p-1" onClick={onClick}>
       {isExpanded ? (
         <ChevronRight className="size-3 rotate-90" />
       ) : (
