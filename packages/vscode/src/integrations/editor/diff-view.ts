@@ -59,8 +59,16 @@ export class DiffView implements vscode.Disposable {
   }
 
   async update(content: string, isFinal: boolean) {
-    if (this.isFinalized) return;
+    if (this.isFinalized) {
+      logger.debug(
+        "File is already finalized, skipping update",
+        this.fileUri.fsPath,
+      );
+      return;
+    }
+
     if (isFinal) {
+      logger.debug("Finalizing file", this.fileUri.fsPath);
       this.isFinalized = true;
     }
 

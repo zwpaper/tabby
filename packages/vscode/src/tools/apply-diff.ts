@@ -17,7 +17,7 @@ const logger = getLogger("applyDiffTool");
  */
 export const previewApplyDiff: PreviewToolFunctionType<
   ClientToolsType["applyDiff"]
-> = async (args, { toolCallId }) => {
+> = async (args, { toolCallId, state }) => {
   const { path, diff, startLine, endLine } = args || {};
   if (!args || !path || !diff || !startLine || !endLine) {
     return;
@@ -37,7 +37,7 @@ export const previewApplyDiff: PreviewToolFunctionType<
   );
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
-  await diffView.update(updatedContent, true);
+  await diffView.update(updatedContent, state !== "partial-call");
 
   logger.info(`Successfully previewed diff for ${path} with ID ${toolCallId}`);
 };
