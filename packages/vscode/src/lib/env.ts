@@ -54,7 +54,7 @@ export async function collectCustomRules(
       const rule = Buffer.from(ruleContent).toString("utf8");
       rules += `# Rules from ${vscode.workspace.asRelativePath(rulePath)}\n${rule}\n`;
     } catch (error) {
-      console.error(`Error reading custom rule file ${rulePath}:`, error);
+      console.error(`Error reading custom rule file: ${rulePath}`);
     }
   }
 

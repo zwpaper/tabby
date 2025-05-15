@@ -232,15 +232,9 @@ describe("env.ts", () => {
 
   describe("collectCustomRules", () => {
     let workspaceReadmeUri: vscode.Uri;
-    let homePochiDirUri: vscode.Uri;
-    let homeReadmeUri: vscode.Uri;
 
     beforeEach(async () => {
       workspaceReadmeUri = vscode.Uri.joinPath(testWorkspaceUri, "README.pochi.md");
-      
-      homePochiDirUri = vscode.Uri.joinPath(testHomeDirUri, ".pochi"); 
-      await createDirectory(homePochiDirUri);
-      homeReadmeUri = vscode.Uri.joinPath(homePochiDirUri, "README.pochi.md");
     });
 
     it("should collect rules from workspace README.pochi.md", async () => {
@@ -251,19 +245,6 @@ describe("env.ts", () => {
       assert.ok(rules.includes(workspaceRuleContent), `Rules should include workspace rule content. Got: ${rules}`);
       // Check that the path is somewhat correct, using basename as asRelativePath mock does
       assert.ok(rules.includes(`# Rules from ${nodePath.basename(workspaceReadmeUri.fsPath)}`), "Rule header for workspace should be present");
-    });
-
-    it("should collect rules from home ~/.pochi/README.pochi.md", async () => {
-      // This test relies on the fact that collectCustomRules will look for README.pochi.md
-      // in the directory returned by os.homedir() + "/.pochi/"
-      // The mockOsHomedirStub is set to return testHomeDirUri.fsPath in the main beforeEach
-      const homeRuleContent = "home rule content";
-      await createFile(homeReadmeUri, homeRuleContent);
-      
-      // We pass homeReadmeUri.fsPath so it's treated as a "custom" rule file by the current env.ts logic
-      const rules = await env.collectCustomRules([homeReadmeUri.fsPath]);
-      assert.ok(rules.includes(homeRuleContent), `Rules should include home rule content. Got: ${rules}`);
-      assert.ok(rules.includes(`# Rules from ${nodePath.basename(homeReadmeUri.fsPath)}`), "Rule header for home rule should be present");
     });
 
     it("should collect rules from custom rule files", async () => {
@@ -294,23 +275,19 @@ describe("env.ts", () => {
 
     it("should collect rules from all sources", async () => {
       const wsRuleContent = "ws rule";
-      const homeRuleContent = "home rule"; // This will be treated as a custom rule due to current env.ts logic
       const customCRuleContent = "custom C";
 
       await createFile(workspaceReadmeUri, wsRuleContent);
-      await createFile(homeReadmeUri, homeRuleContent); // Create the "home" rule file
       const customRuleFile1Path = nodePath.join(currentTestTempDirUri.fsPath, "custom-rule-C.md");
       await createFile(vscode.Uri.file(customRuleFile1Path), customCRuleContent);
 
       // Pass homeReadmeUri.fsPath and customRuleFile1Path as custom rules
-      const rules = await env.collectCustomRules([homeReadmeUri.fsPath, customRuleFile1Path]);
+      const rules = await env.collectCustomRules([customRuleFile1Path]);
       
       assert.ok(rules.includes(wsRuleContent), "Should include workspace rule content");
-      assert.ok(rules.includes(homeRuleContent), "Should include home rule content (as custom)");
       assert.ok(rules.includes(customCRuleContent), "Should include custom C rule content");
 
       assert.ok(rules.includes(`# Rules from ${nodePath.basename(workspaceReadmeUri.fsPath)}`), "Rule header for workspace should be present");
-      assert.ok(rules.includes(`# Rules from ${nodePath.basename(homeReadmeUri.fsPath)}`), "Rule header for home rule (as custom) should be present");
       assert.ok(rules.includes(`# Rules from ${nodePath.basename(customRuleFile1Path)}`), "Rule header for custom C rule should be present");
     });
 
