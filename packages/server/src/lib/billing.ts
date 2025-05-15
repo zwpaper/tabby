@@ -17,15 +17,15 @@ export async function readActiveSubscriptionLimits(user: User, r: HonoRequest) {
 
   const planId = activeSubscription?.plan ?? StripePlans[0].name.toLowerCase();
   let limits = activeSubscription?.limits ?? StripePlans[0].limits;
-  if (user.isWaitlistApproved) {
-    limits =
-      StripePlans.find((p) => p.name === "Pro")?.limits ??
-      StripePlans[0].limits;
-  } else if (user.email.endsWith("@tabbyml.com")) {
+  if (user.email.endsWith("@tabbyml.com")) {
     limits = {
       basic: 100_000,
       premium: 10_000,
     };
+  } else if (user.isWaitlistApproved) {
+    limits =
+      StripePlans.find((p) => p.name === "Pro")?.limits ??
+      StripePlans[0].limits;
   }
 
   return {
