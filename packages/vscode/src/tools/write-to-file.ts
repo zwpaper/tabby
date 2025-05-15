@@ -1,4 +1,5 @@
 import { DiffView } from "@/integrations/editor/diff-view";
+import { fixCodeGenerationOutput } from "@/tools/output-utils";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type {
   PreviewToolFunctionType,
@@ -11,8 +12,10 @@ export const previewWriteToFile: PreviewToolFunctionType<
   const { path, content } = args || {};
   if (path === undefined || content === undefined) return;
 
+  const processedContent = fixCodeGenerationOutput(content);
+
   const diffView = await DiffView.getOrCreate(toolCallId, path);
-  await diffView.update(content, state !== "partial-call");
+  await diffView.update(processedContent, state !== "partial-call");
 };
 
 /**
@@ -22,8 +25,9 @@ export const previewWriteToFile: PreviewToolFunctionType<
 export const writeToFile: ToolFunctionType<
   ClientToolsType["writeToFile"]
 > = async ({ path, content }, { toolCallId }) => {
+  const processedContent = fixCodeGenerationOutput(content);
   const diffView = await DiffView.getOrCreate(toolCallId, path);
-  await diffView.update(content, true);
-  const edits = await diffView.saveChanges(path, content);
+  await diffView.update(processedContent, true);
+  const edits = await diffView.saveChanges(path, processedContent);
   return { success: true, ...edits };
 };

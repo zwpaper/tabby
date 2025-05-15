@@ -2,6 +2,7 @@ import { DiffView } from "@/integrations/editor/diff-view";
 import { parseDiffAndApply } from "@/lib/diff"; // Import the extracted function
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import { fixCodeGenerationOutput } from "@/tools/output-utils";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type {
   PreviewToolFunctionType,
@@ -23,6 +24,8 @@ export const previewApplyDiff: PreviewToolFunctionType<
     return;
   }
 
+  const processedDiff = fixCodeGenerationOutput(diff);
+
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
 
@@ -30,7 +33,7 @@ export const previewApplyDiff: PreviewToolFunctionType<
   const fileContent = fileBuffer.toString();
 
   const updatedContent = await parseDiffAndApply(
-    diff,
+    processedDiff,
     startLine,
     endLine,
     fileContent,
@@ -49,6 +52,8 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   { path, diff, startLine, endLine },
   { toolCallId },
 ) => {
+  const processedDiff = fixCodeGenerationOutput(diff);
+
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
   await ensureFileDirectoryExists(fileUri);
@@ -57,7 +62,7 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   const fileContent = fileBuffer.toString();
 
   const updatedContent = await parseDiffAndApply(
-    diff,
+    processedDiff,
     startLine,
     endLine,
     fileContent,
