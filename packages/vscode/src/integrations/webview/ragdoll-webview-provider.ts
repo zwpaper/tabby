@@ -41,14 +41,19 @@ class RagdollWebviewProvider
     private readonly tabState: TabState,
   ) {}
 
-  private readonly registeration = vscode.window.registerWebviewViewProvider(
-    RagdollWebviewProvider.viewType,
-    this,
-    { webviewOptions: { retainContextWhenHidden: true } },
-  );
+  private disposables: vscode.Disposable[] = [
+    vscode.window.registerWebviewViewProvider(
+      RagdollWebviewProvider.viewType,
+      this,
+      { webviewOptions: { retainContextWhenHidden: true } },
+    ),
+  ];
 
   dispose() {
-    this.registeration.dispose();
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+    this.disposables = [];
   }
 
   public async retrieveWebviewHost(): Promise<WebviewHostApi> {
@@ -57,7 +62,9 @@ class RagdollWebviewProvider
     }
 
     return new Promise((resolve) => {
-      this.webviewHostReady.event((host) => resolve(host));
+      this.disposables.push(
+        this.webviewHostReady.event((host) => resolve(host)),
+      );
     });
   }
 
@@ -76,13 +83,14 @@ class RagdollWebviewProvider
 
     this.view.webview.html = this.getHtmlForWebview(this.view.webview);
 
-    this.events.loginEvent.event(() => {
-      this.webviewHost?.onAuthChanged();
-    });
-
-    this.events.logoutEvent.event(() => {
-      this.webviewHost?.onAuthChanged();
-    });
+    this.disposables.push(
+      this.events.loginEvent.event(() => {
+        this.webviewHost?.onAuthChanged();
+      }),
+      this.events.logoutEvent.event(() => {
+        this.webviewHost?.onAuthChanged();
+      }),
+    );
 
     this.webviewHost = this.createWebviewThread(webviewView.webview).imports;
     this.webviewHostReady.fire(this.webviewHost);
