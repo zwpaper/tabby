@@ -1,9 +1,3 @@
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { isFolder } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
@@ -47,35 +41,24 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
     );
   };
   return (
-    <TooltipProvider delayDuration={700}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick ? onClick() : defaultOnClick();
-            }}
-            className={cn(
-              "cursor-pointer rounded-sm border border-zinc-400 box-decoration-clone px-1 py-0.5 text-xs active:bg-zinc-200 dark:border-zinc-600 dark:active:bg-zinc-700",
-              className,
-            )}
-          >
-            <File
-              path={path}
-              className="inline size-3 text-blue-600 dark:text-blue-400"
-            />
-            <span className="ml-1 break-all">
-              {path}
-              <span className="text-zinc-500 dark:text-zinc-400">
-                {lineRange}
-              </span>
-            </span>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{path}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <span
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick ? onClick() : defaultOnClick();
+      }}
+      className={cn(
+        "cursor-pointer rounded-sm border border-border box-decoration-clone px-1 py-0.5 text-sm hover:bg-zinc-200 active:bg-zinc-200 dark:active:bg-zinc-700 dark:hover:bg-zinc-700",
+        className,
+      )}
+    >
+      <FileIcon
+        path={path}
+        className="inline size-3 text-blue-600 dark:text-blue-400"
+      />
+      <span className="ml-1 break-words">
+        {path}
+        <span className="text-zinc-500 dark:text-zinc-400">{lineRange}</span>
+      </span>
+    </span>
   );
 };

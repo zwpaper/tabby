@@ -45,7 +45,7 @@ export const globFilesTool: React.FC<
   );
 
   const title = (
-    <span>
+    <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       <span>
@@ -59,8 +59,8 @@ export const globFilesTool: React.FC<
           </>
         )}
       </span>
-    </span>
+    </>
   );
 
-  return <ExpandableToolContainer title={title} detail={resultEl} />;
+  return <ExpandableToolContainer title={title} expandableDetail={resultEl} />;
 };

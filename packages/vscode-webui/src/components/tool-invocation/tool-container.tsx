@@ -7,7 +7,7 @@ const ToolContainer: React.FC<{ children: React.ReactNode }> = ({
   return <div className="flex flex-col gap-1 text-sm">{children}</div>;
 };
 
-export const ToolTitle: React.FC<{
+const ToolTitle: React.FC<{
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
@@ -15,7 +15,7 @@ export const ToolTitle: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-2 break-words rounded text-sm ${className}`}
+      className={`flex items-center gap-2 break-all rounded text-sm ${className}`}
     >
       {children}
     </div>
@@ -24,9 +24,10 @@ export const ToolTitle: React.FC<{
 
 export const ExpandableToolContainer: React.FC<{
   title: React.ReactNode;
+  expandableDetail?: React.ReactNode;
   detail?: React.ReactNode;
   onToggle?: (expand: boolean) => void;
-}> = ({ title, detail, onToggle }) => {
+}> = ({ title, expandableDetail, detail, onToggle }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   const handleToggle = () => {
@@ -40,11 +41,13 @@ export const ExpandableToolContainer: React.FC<{
     <ToolContainer>
       <ToolTitle
         onClick={handleToggle}
-        className={detail ? "cursor-pointer" : undefined}
+        className={expandableDetail ? "cursor-pointer" : undefined}
       >
-        {title} {detail && <ExpandIcon isExpanded={showDetails} />}
+        <span className="break-words pr-1 ">{title}</span>
+        {expandableDetail && <ExpandIcon isExpanded={showDetails} />}
       </ToolTitle>
-      {showDetails && detail}
+      {showDetails && expandableDetail}
+      {detail}
     </ToolContainer>
   );
 };

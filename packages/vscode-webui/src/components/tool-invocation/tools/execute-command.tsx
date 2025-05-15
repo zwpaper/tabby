@@ -1,6 +1,7 @@
 import { CodeBlock } from "@/components/message";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { StatusIcon } from "../status-icon";
+import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
 export const executeCommandTool: React.FC<
@@ -16,21 +17,26 @@ export const executeCommandTool: React.FC<
   const text = isDevServer
     ? "I will start a dev server"
     : "I will execute the following command";
+  const title = (
+    <>
+      <StatusIcon isExecuting={isExecuting} tool={tool} />
+      <span className="ml-2">
+        {text}
+        {cwdNode}
+      </span>
+    </>
+  );
   return (
-    <div className="break-words text-sm">
-      <div>
-        <StatusIcon isExecuting={isExecuting} tool={tool} />
-        <span className="ml-2">
-          {text}
-          {cwdNode}
-        </span>
-      </div>
-      <CodeBlock
-        className="mt-1.5"
-        language={"bash"}
-        value={command || ""}
-        canWrapLongLines={true}
-      />
-    </div>
+    <ExpandableToolContainer
+      title={title}
+      detail={
+        <CodeBlock
+          className="mt-1.5"
+          language={"bash"}
+          value={command || ""}
+          canWrapLongLines={true}
+        />
+      }
+    />
   );
 };

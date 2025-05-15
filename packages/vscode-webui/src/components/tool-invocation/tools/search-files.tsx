@@ -43,7 +43,7 @@ export const searchFilesTool: React.FC<
   );
 
   const title = (
-    <span>
+    <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       {isExecuting || tool.state !== "result" ? (
@@ -55,8 +55,8 @@ export const searchFilesTool: React.FC<
           {isTruncated && ", results truncated"}
         </span>
       )}
-    </span>
+    </>
   );
 
-  return <ExpandableToolContainer title={title} detail={resultEl} />;
+  return <ExpandableToolContainer title={title} expandableDetail={resultEl} />;
 };

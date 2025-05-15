@@ -35,7 +35,7 @@ export const listFilesTool: React.FC<
   }
 
   const title = (
-    <span>
+    <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       {isExecuting || tool.state !== "result" ? (
@@ -48,8 +48,8 @@ export const listFilesTool: React.FC<
           {files.length > 1 ? "s" : ""} {isTruncated && ", results truncated"}
         </>
       )}
-    </span>
+    </>
   );
 
-  return <ExpandableToolContainer title={title} detail={resultEl} />;
+  return <ExpandableToolContainer title={title} expandableDetail={resultEl} />;
 };

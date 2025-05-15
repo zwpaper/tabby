@@ -1,11 +1,19 @@
+import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 
 export const ExpandIcon: React.FC<{
   isExpanded: boolean;
   onClick?: () => void;
-}> = ({ isExpanded, onClick }) => {
+  className?: string;
+}> = ({ isExpanded, onClick, className }) => {
   return (
-    <span className="self-start rounded bg-muted p-1" onClick={onClick}>
+    <span
+      className={cn(
+        "self-start rounded bg-muted p-1 hover:bg-secondary",
+        className,
+      )}
+      onClick={onClick}
+    >
       {isExpanded ? (
         <ChevronRight className="size-3 rotate-90" />
       ) : (
