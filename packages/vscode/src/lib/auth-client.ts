@@ -13,12 +13,12 @@ export function createAuthClient(container: DependencyContainer) {
     fetchOptions: {
       auth: {
         type: "Bearer",
-        token: () => tokenStorage.getToken(),
+        token: () => tokenStorage.token.value,
       },
       onResponse: (ctx) => {
         const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
         if (authToken) {
-          tokenStorage.setToken(authToken);
+          tokenStorage.token.value = authToken;
         }
       },
     },

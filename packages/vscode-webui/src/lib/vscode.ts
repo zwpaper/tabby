@@ -42,8 +42,7 @@ function createVSCodeHost(): VSCodeHostApi {
     },
     {
       imports: [
-        "getToken",
-        "setToken",
+        "readToken",
         "getSessionState",
         "setSessionState",
         "readEnvironment",

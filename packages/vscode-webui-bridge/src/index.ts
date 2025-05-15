@@ -5,8 +5,7 @@ import type { Environment } from "@ragdoll/server";
 export interface VSCodeHostApi {
   readResourceURI(): Promise<ResourceURI>;
 
-  getToken(): Promise<string | undefined>;
-  setToken(token: string | undefined): Promise<void>;
+  readToken(): Promise<ThreadSignalSerialization<string | undefined>>;
 
   getSessionState<K extends keyof SessionState>(
     keys?: K[],

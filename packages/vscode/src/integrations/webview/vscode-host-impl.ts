@@ -40,12 +40,12 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     private readonly tabState: TabState,
   ) {}
 
-  getToken = async (): Promise<string | undefined> => {
-    return this.tokenStorage.getToken();
-  };
-
-  setToken = async (token: string | undefined): Promise<void> => {
-    return this.tokenStorage.setToken(token);
+  readToken = async (): Promise<
+    ThreadSignalSerialization<string | undefined>
+  > => {
+    return ThreadSignal.serialize(this.tokenStorage.token, {
+      writable: true,
+    });
   };
 
   getSessionState = async <K extends keyof SessionState>(
