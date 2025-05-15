@@ -20,6 +20,7 @@ import {
 } from "./mention-list";
 import "./prompt-form.css";
 import { debounceWithCachedValue } from "@/lib/debounce";
+import { useActiveTabs } from "@/lib/hooks/use-active-tabs";
 import uFuzzy from "@leeoniya/ufuzzy";
 
 // Custom keyboard shortcuts extension that handles Enter key behavior
@@ -94,6 +95,12 @@ export function FormEditor({
     onSubmit(e);
   };
 
+  const activeTabs = useActiveTabs();
+  const activeTabsRef = useRef(activeTabs);
+  useEffect(() => {
+    activeTabsRef.current = activeTabs;
+  }, [activeTabs]);
+
   const editor = useEditor(
     {
       extensions: [
@@ -110,7 +117,12 @@ export function FormEditor({
             items: async ({ query }: { query: string }) => {
               const data = await debouncedListWorkspaceFiles();
               if (!data) return [];
-              return fuzzySearch(query, data);
+
+              return fuzzySearch(query, {
+                files: data.files,
+                haystack: data.haystack,
+                activeTabs: activeTabsRef.current,
+              });
             },
             render: () => {
               let component: ReactRenderer<
@@ -123,7 +135,12 @@ export function FormEditor({
               const fetchItems = async (query?: string) => {
                 const data = await debouncedListWorkspaceFiles();
                 if (!data) return [];
-                return fuzzySearch(query, data);
+
+                return fuzzySearch(query, {
+                  files: data.files,
+                  haystack: data.haystack,
+                  activeTabs: activeTabsRef.current,
+                });
               };
 
               return {
@@ -275,22 +292,86 @@ function fuzzySearch(
   needle: string | undefined,
   data: {
     haystack: string[];
-    files: { filepath: string }[];
+    files: { filepath: string; isDir: boolean }[];
+    activeTabs?: { filepath: string; isDir: boolean }[];
   },
-): { filepath: string }[] {
+): { filepath: string; isDir: boolean }[] {
+  const activeTabsSet = new Set(data.activeTabs?.map((d) => d.filepath) || []);
+
+  const uniqueFilesMap = new Map<
+    string,
+    { filepath: string; isDir: boolean }
+  >();
+
+  for (const file of data.files) {
+    uniqueFilesMap.set(file.filepath, file);
+  }
+
+  if (data.activeTabs) {
+    for (const tab of data.activeTabs) {
+      uniqueFilesMap.set(tab.filepath, tab);
+    }
+  }
+
   if (!needle) {
     const MAX_RESULTS = 500;
-    return data.files.length > MAX_RESULTS
-      ? data.files.slice(0, MAX_RESULTS)
-      : data.files;
+    const allResults = Array.from(uniqueFilesMap.values());
+
+    return sortResultsByActiveTabs(allResults, activeTabsSet).slice(
+      0,
+      MAX_RESULTS,
+    );
+  }
+
+  const allFilepaths = new Set(data.haystack);
+
+  if (data.activeTabs) {
+    for (const tab of data.activeTabs) {
+      allFilepaths.add(tab.filepath);
+    }
   }
 
   const uf = new uFuzzy({});
-
-  const [_, info, order] = uf.search(data.haystack, needle);
+  const haystackArray = Array.from(allFilepaths);
+  const [_, info, order] = uf.search(haystackArray, needle);
 
   if (!order) return [];
-  return order.map((i) => data.files[info.idx[i]]);
+
+  const searchResultsMap = new Map<
+    string,
+    { filepath: string; isDir: boolean }
+  >();
+
+  for (const i of order) {
+    const filepath = haystackArray[info.idx[i]];
+    const file = uniqueFilesMap.get(filepath);
+    if (file) {
+      searchResultsMap.set(filepath, file);
+    }
+  }
+
+  return sortResultsByActiveTabs(
+    Array.from(searchResultsMap.values()),
+    activeTabsSet,
+  );
+}
+
+function sortResultsByActiveTabs<T extends { filepath: string }>(
+  results: T[],
+  activeTabsSet: Set<string>,
+): T[] {
+  const activeResults: T[] = [];
+  const normalResults: T[] = [];
+
+  for (const result of results) {
+    if (activeTabsSet.has(result.filepath)) {
+      activeResults.push(result);
+    } else {
+      normalResults.push(result);
+    }
+  }
+
+  return [...activeResults, ...normalResults];
 }
 
 const debouncedListWorkspaceFiles = debounceWithCachedValue(

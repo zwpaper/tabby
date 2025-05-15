@@ -46,6 +46,19 @@ export interface VSCodeHostApi {
   >;
 
   /**
+   * Get active tabs with real-time updates via ThreadSignal
+   * Each tab is represented by an object with:
+   * - filepath: Path to the file
+   *   - For files within workspace: Returns path relative to workspace root (e.g., "src/index.ts")
+   *   - For files outside workspace: Returns the absolute file path unchanged (e.g., "/Users/name/project/file.ts")
+   * - isDir: Boolean indicating if the item is a directory
+   *
+   */
+  readActiveTabs(): Promise<
+    ThreadSignalSerialization<Array<{ filepath: string; isDir: boolean }>>
+  >;
+
+  /**
    * Opens a file at the specified file path.
    *
    * @param filePath - The path to the file to be opened.

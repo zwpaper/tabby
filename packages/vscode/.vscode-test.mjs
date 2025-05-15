@@ -16,4 +16,6 @@ export default defineConfig({
   version: "stable",
   extensionDevelopmentPath: path.resolve(__dirname),
   installExtensions: ["ms-vscode.js-debug-nightly"],
+  // Launch VS Code with the test-workspace folder open
+  launchArgs: [path.resolve(__dirname, "test-workspace")],
 });

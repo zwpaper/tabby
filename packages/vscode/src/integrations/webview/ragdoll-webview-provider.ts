@@ -17,6 +17,8 @@ import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PochiConfiguration } from "../configuration";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { TabState } from "../editor/tab-state";
 
 @injectable()
 @singleton()
@@ -36,6 +38,7 @@ class RagdollWebviewProvider
     private readonly tokenStorage: TokenStorage,
     private readonly pochiConfiguration: PochiConfiguration,
     private readonly events: AuthEvents,
+    private readonly tabState: TabState,
   ) {}
 
   private readonly registeration = vscode.window.registerWebviewViewProvider(
@@ -106,6 +109,7 @@ class RagdollWebviewProvider
       this.sessionState,
       this.pochiConfiguration,
       this.readResourceURI.bind(this),
+      this.tabState,
     );
     return new Thread<WebviewHostApi, VSCodeHostApi>(
       {

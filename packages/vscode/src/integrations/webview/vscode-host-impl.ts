@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 
+import type { TabState } from "@/integrations/editor/tab-state";
 import { collectCustomRules, getSystemInfo } from "@/lib/env";
 import { ignoreWalk, isBinaryFile } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
@@ -36,6 +37,7 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     private readonly sessionState: SessionState,
     private readonly pochiConfiguration: PochiConfiguration,
     readonly readResourceURI: VSCodeHostApi["readResourceURI"],
+    private readonly tabState: TabState,
   ) {}
 
   getToken = async (): Promise<string | undefined> => {
@@ -97,6 +99,12 @@ export default class VSCodeHostImpl implements VSCodeHostApi {
     };
 
     return environment;
+  };
+
+  readActiveTabs = async (): Promise<
+    ThreadSignalSerialization<Array<{ filepath: string; isDir: boolean }>>
+  > => {
+    return ThreadSignal.serialize(this.tabState.activeTabs);
   };
 
   listFilesInWorkspace = async (): Promise<
