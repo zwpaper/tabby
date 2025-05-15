@@ -7,7 +7,7 @@ const ToolContainer: React.FC<{ children: React.ReactNode }> = ({
   return <div className="flex flex-col gap-1 text-sm">{children}</div>;
 };
 
-const ToolTitle: React.FC<{
+export const ToolTitle: React.FC<{
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
@@ -15,7 +15,7 @@ const ToolTitle: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-2 rounded ${className}`}
+      className={`flex items-center gap-2 break-words rounded text-sm ${className}`}
     >
       {children}
     </div>

@@ -17,7 +17,7 @@ export const executeCommandTool: React.FC<
     ? "I will start a dev server"
     : "I will execute the following command";
   return (
-    <div className="text-sm">
+    <div className="break-words text-sm">
       <div>
         <StatusIcon isExecuting={isExecuting} tool={tool} />
         <span className="ml-2">

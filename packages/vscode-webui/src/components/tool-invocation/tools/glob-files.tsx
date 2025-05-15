@@ -48,7 +48,7 @@ export const globFilesTool: React.FC<
     <span>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
-      <span className="leading-7">
+      <span>
         {isExecuting || tool.state !== "result" ? (
           <>Searching {searchCondition}</>
         ) : (

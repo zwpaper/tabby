@@ -32,7 +32,7 @@ export const applyDiffTool: React.FC<
       : undefined;
 
   const title = (
-    <span>
+    <span className="pr-1">
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       <span>

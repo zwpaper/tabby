@@ -199,4 +199,7 @@ export const Tools: Story = {
       attemptCompletionProps,
     ],
   },
+  parameters: {
+    backgrounds: { disable: true },
+  },
 };

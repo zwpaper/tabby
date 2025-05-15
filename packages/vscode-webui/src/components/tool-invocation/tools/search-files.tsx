@@ -47,9 +47,9 @@ export const searchFilesTool: React.FC<
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       {isExecuting || tool.state !== "result" ? (
-        <span className="leading-7">Searching for {searchCondition}</span>
+        <span>Searching for {searchCondition}</span>
       ) : (
-        <span className="leading-7">
+        <span>
           Searched for {searchCondition}, {matches.length} match
           {matches.length > 1 ? "es" : ""}
           {isTruncated && ", results truncated"}
