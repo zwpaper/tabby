@@ -24,7 +24,7 @@ const storage = new HonoS3Storage({
 // FIXME: add rate limiter https://github.com/rhinobase/hono-rate-limiter
 const upload = new Hono().post(
   "/",
-  requireAuth,
+  requireAuth(),
   bodyLimit({
     maxSize: 1024 * 1024 * 10, // 10Mb
     onError: (c) => c.text("overflow :(", 413),

@@ -26,7 +26,7 @@ const titleSelect =
 // Create a tasks router with authentication
 const tasks = new Hono()
   // List tasks with pagination
-  .get("/", zValidator("query", PaginationSchema), requireAuth, async (c) => {
+  .get("/", zValidator("query", PaginationSchema), requireAuth(), async (c) => {
     const { cwd, page, limit } = c.req.valid("query"); // Use page and limit
     const user = c.get("user");
 
@@ -94,7 +94,7 @@ const tasks = new Hono()
   .get(
     "/:id",
     zValidator("param", TaskParamsSchema),
-    requireAuth,
+    requireAuth(),
     async (c) => {
       const { id } = c.req.valid("param") || {};
       const user = c.get("user");
@@ -128,7 +128,7 @@ const tasks = new Hono()
   .delete(
     "/:id",
     zValidator("param", TaskParamsSchema),
-    requireAuth,
+    requireAuth(),
     async (c) => {
       const { id } = c.req.valid("param");
       const user = c.get("user");

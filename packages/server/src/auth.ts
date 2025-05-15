@@ -115,15 +115,18 @@ export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
   })(),
 );
 
-export const requireAuth = createMiddleware<{ Variables: { user: User } }>(
-  async (c, next) => {
+export const requireAuth = (role?: string) =>
+  createMiddleware<{ Variables: { user: User } }>(async (c, next) => {
     const user = c.get("user");
     if (!user) {
       return c.json({ error: "Unauthorized" }, 401);
     }
+    // Check for role if provided.
+    if (role && user.role !== role) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
     await next();
-  },
-);
+  });
 
 export type Session = typeof auth.$Infer.Session;
 export type User = Session["user"];

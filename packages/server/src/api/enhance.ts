@@ -13,7 +13,7 @@ const EnhancePromptSchema = z.object({
 const enhance = new Hono().post(
   "/",
   zValidator("json", EnhancePromptSchema),
-  requireAuth,
+  requireAuth(),
   async (c) => {
     const { prompt } = await c.req.valid("json");
     const user = c.get("user");

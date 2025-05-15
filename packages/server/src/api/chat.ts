@@ -48,7 +48,7 @@ export type ContextVariables = {
 const chat = new Hono<{ Variables: ContextVariables }>().post(
   "/stream",
   zValidator("json", ZodChatRequestType),
-  requireAuth,
+  requireAuth(),
   async (c) => {
     const req = await c.req.valid("json");
     const {

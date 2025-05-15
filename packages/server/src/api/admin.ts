@@ -13,16 +13,9 @@ const admin = new Hono().post(
       userId: z.string(),
     }),
   ),
-  requireAuth,
+  requireAuth("admin"),
   async (c) => {
     const { userId } = c.req.valid("query");
-    const user = c.get("user");
-
-    if (!user || user.role !== "admin") {
-      throw new HTTPException(403, {
-        message: "Forbidden: Admin access required",
-      });
-    }
 
     try {
       const result = await db

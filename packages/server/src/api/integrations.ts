@@ -5,7 +5,7 @@ import { type DB, db } from "../db";
 
 const integrations = new Hono()
   // Get all integrations for the current user
-  .get("/", requireAuth, async (c) => {
+  .get("/", requireAuth(), async (c) => {
     const user = c.get("user");
     try {
       const data = await db
@@ -28,7 +28,7 @@ const integrations = new Hono()
     }
   })
   // Delete an integration
-  .delete("/:id", requireAuth, async (c) => {
+  .delete("/:id", requireAuth(), async (c) => {
     const user = c.get("user");
     const integrationId = Number.parseInt(c.req.param("id"), 10);
 

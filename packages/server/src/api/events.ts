@@ -8,7 +8,7 @@ const { upgradeWebSocket, websocket } = createBunWebSocket();
 
 const events = new Hono().get(
   "/",
-  requireAuth,
+  requireAuth(),
   upgradeWebSocket((c) => {
     const user = c.get("user") as User;
     const channel = getUserEventChannel(user.id);

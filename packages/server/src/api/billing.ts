@@ -26,7 +26,7 @@ const UserIdParamSchema = z.object({
 const billing = new Hono()
   .get(
     "/history",
-    requireAuth,
+    requireAuth(),
     zValidator("query", BillingHistoryQuerySchema),
     async (c) => {
       const user = c.get("user");
@@ -64,23 +64,16 @@ const billing = new Hono()
       }
     },
   )
-  .get("/quota/me", requireAuth, async (c) => {
+  .get("/quota/me", requireAuth(), async (c) => {
     const usage = await readCurrentMonthQuota(c.get("user"), c.req);
     return c.json(usage);
   })
   .get(
     "/quota/:userId",
-    requireAuth,
+    requireAuth("admin"),
     zValidator("param", UserIdParamSchema),
     async (c) => {
-      const user = c.get("user");
       const { userId } = c.req.valid("param");
-
-      if (!user || user.role !== "admin") {
-        throw new HTTPException(403, {
-          message: "Forbidden: Admin access required",
-        });
-      }
 
       const targetUser = await db
         .selectFrom("user")

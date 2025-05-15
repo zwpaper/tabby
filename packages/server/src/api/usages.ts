@@ -16,7 +16,7 @@ const UsageQuerySchema = z.object({
 
 const usages = new Hono().get(
   "/chat",
-  requireAuth,
+  requireAuth(),
   zValidator("query", UsageQuerySchema),
   async (c) => {
     const user = c.get("user");
