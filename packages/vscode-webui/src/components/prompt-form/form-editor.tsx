@@ -23,6 +23,8 @@ import { debounceWithCachedValue } from "@/lib/debounce";
 import { useActiveTabs } from "@/lib/hooks/use-active-tabs";
 import uFuzzy from "@leeoniya/ufuzzy";
 
+const newLineCharacter = "\n";
+
 // Custom keyboard shortcuts extension that handles Enter key behavior
 function CustomEnterKeyHandler(
   formRef: React.RefObject<HTMLFormElement>,
@@ -32,27 +34,18 @@ function CustomEnterKeyHandler(
     addKeyboardShortcuts() {
       return {
         "Shift-Enter": () => {
-          return this.editor.commands.first(() => [
-            () => this.editor.commands.newlineInCode(),
-            () => this.editor.commands.createParagraphNear(),
-            () => this.editor.commands.liftEmptyBlock(),
-            () => this.editor.commands.splitBlock(),
+          return this.editor.commands.first(({ commands }) => [
+            () => commands.newlineInCode(),
+            () => commands.createParagraphNear(),
+            () => commands.liftEmptyBlock(),
+            () => commands.splitBlock(),
           ]);
         },
-        Enter: ({ editor }) => {
-          const isMentionSuggestionActive =
-            editor.isActive("mention") ||
-            document.querySelector(".tippy-box") !== null;
-
-          if (!isMentionSuggestionActive) {
-            setTimeout(() => {
-              if (isLoadingRef.current) return;
-              if (!formRef.current) return;
-              formRef.current.requestSubmit();
-            }, 0);
-            return true;
+        Enter: () => {
+          if (formRef.current && !isLoadingRef.current) {
+            formRef.current.requestSubmit();
           }
-          return false;
+          return true;
         },
       };
     },
@@ -188,35 +181,13 @@ export function FormEditor({
                   popup[0].destroy();
                   component.destroy();
                 },
-                onKeyDown: (props: unknown) => {
-                  const keyProps = props as { event: KeyboardEvent };
-                  if (keyProps.event.key === "Escape") {
+                onKeyDown: (props) => {
+                  if (props.event.key === "Escape") {
                     popup[0].hide();
                     return true;
                   }
 
-                  if (keyProps.event.key === "Enter") {
-                    keyProps.event.stopPropagation();
-                    keyProps.event.preventDefault();
-
-                    // Call the onKeyDown method of the MentionList component
-                    const result =
-                      (
-                        component.ref as {
-                          onKeyDown: (props: unknown) => boolean;
-                        }
-                      )?.onKeyDown(props) ?? false;
-
-                    return result;
-                  }
-
-                  return (
-                    (
-                      component.ref as {
-                        onKeyDown: (props: unknown) => boolean;
-                      }
-                    )?.onKeyDown(props) ?? false
-                  );
+                  return component.ref?.onKeyDown(props) ?? false;
                 },
               };
             },
@@ -230,7 +201,9 @@ export function FormEditor({
         },
       },
       onUpdate(props) {
-        const text = props.editor.getText();
+        const text = props.editor.getText({
+          blockSeparator: newLineCharacter,
+        });
         setInput(text);
       },
       onPaste: (e) => {
@@ -248,7 +221,10 @@ export function FormEditor({
 
   // Update editor content when input changes
   useEffect(() => {
-    if (editor && input !== editor.getText()) {
+    if (
+      editor &&
+      input !== editor.getText({ blockSeparator: newLineCharacter })
+    ) {
       editor.commands.setContent(input);
     }
   }, [editor, input]);
