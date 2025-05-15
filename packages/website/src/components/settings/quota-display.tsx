@@ -9,7 +9,7 @@ export function QuotaDisplay() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["billingQuota"],
     queryFn: async () => {
-      const res = await apiClient.api.billing.quota.$get();
+      const res = await apiClient.api.billing.quota.me.$get();
       if (!res.ok) {
         throw new Error("Failed to fetch quota");
       }

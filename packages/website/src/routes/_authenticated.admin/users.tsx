@@ -16,6 +16,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -26,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { type User, apiClient, authClient } from "@/lib/auth-client";
+import { useQuery } from "@tanstack/react-query"; // Added useQuery import
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Ban,
@@ -38,8 +44,13 @@ import {
   Undo,
   UserCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react"; // Removed useEffect
 import { toast } from "sonner";
+
+interface UserQuotaData {
+  limit: number;
+  premiumUsageDetails: Array<{ modelId: string; count: number }>;
+}
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   async loader() {
@@ -49,7 +60,7 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
     return {
       users,
       pageSize,
-      error: null, // Assuming error handling is done elsewhere or not needed here
+      error: null,
     };
   },
   component: UsersPage,
@@ -78,8 +89,101 @@ function UsersPending() {
   );
 }
 
+function UserQuotaDisplay({ userId }: { userId: string }) {
+  const {
+    data: quotaData,
+    isLoading,
+    error,
+  } = useQuery<UserQuotaData, Error>({
+    queryKey: ["userQuota", userId],
+    queryFn: async () => {
+      const res = await apiClient.api.billing.quota[":userId"].$get({
+        param: { userId },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch quota");
+      }
+      return await res.json();
+    },
+  });
+
+  const totalUsed = useMemo(() => {
+    if (!quotaData) return 0;
+    return quotaData.premiumUsageDetails.reduce(
+      (sum, item) => sum + item.count,
+      0,
+    );
+  }, [quotaData]);
+
+  if (isLoading) {
+    return <Skeleton className="h-5 w-20" />;
+  }
+
+  if (error) {
+    return (
+      <span className="text-destructive text-xs">Error: {error.message}</span>
+    );
+  }
+
+  if (!quotaData) {
+    return <span className="text-muted-foreground text-xs">N/A</span>;
+  }
+
+  const usagePercent =
+    quotaData.limit > 0
+      ? Math.min((totalUsed / quotaData.limit) * 100, 100)
+      : 0;
+
+  return (
+    <HoverCard openDelay={200} closeDelay={200}>
+      <HoverCardTrigger asChild>
+        <Button variant="link" className="h-auto p-0 text-xs">
+          {totalUsed} / {quotaData.limit}
+        </Button>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-80" side="right" align="start">
+        {" "}
+        {/* Added side="right" */}
+        <div className="space-y-2">
+          <h4 className="font-semibold">Monthly Premium Quota</h4>
+          <div className="flex items-center justify-between text-xs">
+            <span>
+              {totalUsed} / {quotaData.limit} requests
+            </span>
+            <span>{usagePercent.toFixed(0)}%</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+            <div
+              className="h-2 rounded-full bg-blue-500"
+              style={{ width: `${usagePercent}%` }}
+            />
+          </div>
+          {quotaData.premiumUsageDetails.length > 0 && (
+            <div className="mt-2 space-y-1 border-t pt-2">
+              <h5 className="font-medium text-muted-foreground text-xs">
+                Usage by Premium Model:
+              </h5>
+              {quotaData.premiumUsageDetails.map((modelUsage) => (
+                <div
+                  key={modelUsage.modelId}
+                  className="flex justify-between text-xs"
+                >
+                  <span className="text-muted-foreground">
+                    {modelUsage.modelId}
+                  </span>
+                  <span>{modelUsage.count} requests</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
 function UsersPage() {
-  const { users, pageSize, error } = Route.useLoaderData();
+  const { users, pageSize, error: loaderError } = Route.useLoaderData(); // Renamed error to loaderError
   const [currentPage, setCurrentPage] = useState(1);
   const [userData, setUserData] = useState(users);
   const [userToBan, setUserToBan] = useState<(typeof userList)[0] | null>(null);
@@ -241,10 +345,11 @@ function UsersPage() {
   };
 
   const renderUsersTable = () => {
-    if (error) {
+    if (loaderError) {
+      // Use loaderError
       return (
         <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-center text-destructive">
-          Error loading users: {error}
+          Error loading users: {loaderError}
         </div>
       );
     }
@@ -266,7 +371,8 @@ function UsersPage() {
               <TableHead>Name</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Waitlist Approved</TableHead> {/* New Column Header */}
+              <TableHead>Quota</TableHead>
+              <TableHead>Waitlist Approved</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -288,7 +394,6 @@ function UsersPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  {/* Status logic simplified: Banned, Active (email verified), Inactive */}
                   {user.banned ? (
                     <Badge variant="destructive">Banned</Badge>
                   ) : user.emailVerified ? (
@@ -298,7 +403,9 @@ function UsersPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  {/* New Column Cell for waitlist Status */}
+                  <UserQuotaDisplay userId={user.id} />
+                </TableCell>
+                <TableCell>
                   {user.isWaitlistApproved ? (
                     <Badge variant="default">Yes</Badge>
                   ) : (
@@ -314,7 +421,6 @@ function UsersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {/* Approve User dropdown item - visible if not banned and not approved */}
                       {!user.banned && !user.isWaitlistApproved && (
                         <>
                           <DropdownMenuItem

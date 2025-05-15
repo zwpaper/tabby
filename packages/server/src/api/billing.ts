@@ -1,19 +1,29 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import moment from "moment";
 import Stripe from "stripe";
 import { z } from "zod";
-import { requireAuth } from "../auth";
-import { readCurrentMonthQuota } from "../lib/billing";
+import { type User, requireAuth } from "../auth";
+import { db } from "../db";
+import {
+  readActiveSubscriptionLimits,
+  readCurrentMonthQuota,
+} from "../lib/billing";
+import { AvailableModels } from "../lib/constants";
 import { stripeClient } from "../lib/stripe";
 
 // Define the schema for query parameters for history endpoint
 const BillingHistoryQuerySchema = z.object({
-  limit: z.string().optional().default("10").transform(Number), // Number of invoices to fetch
-  after: z.string().optional(), // ID of the invoice to start after for pagination
+  limit: z.string().optional().default("10").transform(Number),
+  after: z.string().optional(),
 });
 
-const billing = new Hono() // Add DB type to Hono variables
+const UserIdParamSchema = z.object({
+  userId: z.string(),
+});
+
+const billing = new Hono()
   .get(
     "/history",
     requireAuth,
@@ -33,7 +43,6 @@ const billing = new Hono() // Add DB type to Hono variables
           starting_after: after,
         });
 
-        // Format the response to match Stripe's list object structure
         return c.json({
           data: invoices.data.map((invoice) => ({
             id: invoice.id,
@@ -46,7 +55,6 @@ const billing = new Hono() // Add DB type to Hono variables
           hasMore: invoices.has_more,
         });
       } catch (error) {
-        // Check for specific Stripe errors if needed
         if (error instanceof Stripe.errors.StripeError) {
           throw new HTTPException(400, { message: error.message });
         }
@@ -56,12 +64,65 @@ const billing = new Hono() // Add DB type to Hono variables
       }
     },
   )
+  .get("/quota/me", requireAuth, async (c) => {
+    const usage = await readCurrentMonthQuota(c.get("user"), c.req);
+    return c.json(usage);
+  })
   .get(
-    "/quota", // New quota endpoint
+    "/quota/:userId",
     requireAuth,
+    zValidator("param", UserIdParamSchema),
     async (c) => {
-      const usage = await readCurrentMonthQuota(c.get("user"), c.req);
-      return c.json(usage);
+      const user = c.get("user");
+      const { userId } = c.req.valid("param");
+
+      if (!user || user.role !== "admin") {
+        throw new HTTPException(403, {
+          message: "Forbidden: Admin access required",
+        });
+      }
+
+      const targetUser = await db
+        .selectFrom("user")
+        .selectAll()
+        .where("id", "=", userId)
+        .executeTakeFirst();
+
+      if (!targetUser) {
+        throw new HTTPException(404, { message: "User not found" });
+      }
+
+      const now = moment.utc(); // Use UTC for current time
+      const startOfMonth = now.clone().startOf("month").toDate(); // Clone before mutation
+      const endOfMonth = now.clone().endOf("month").toDate(); // Clone before mutation
+
+      const premiumModelIds = AvailableModels.filter(
+        (m) => m.costType === "premium",
+      ).map((m) => m.id);
+
+      const userMonthlyPremiumUsageDetails = await db
+        .selectFrom("monthlyUsage")
+        .select(["modelId", db.fn.sum("count").as("totalCount")])
+        .where("userId", "=", userId)
+        .where("startDayOfMonth", ">=", startOfMonth)
+        .where("startDayOfMonth", "<=", endOfMonth)
+        .where("modelId", "in", premiumModelIds)
+        .groupBy("modelId")
+        .execute();
+
+      const { limits: userLimits } = await readActiveSubscriptionLimits(
+        targetUser as User,
+        c.req,
+      );
+
+      return c.json({
+        userId,
+        limit: userLimits.premium,
+        premiumUsageDetails: userMonthlyPremiumUsageDetails.map((usage) => ({
+          modelId: usage.modelId,
+          count: Number(usage.totalCount),
+        })),
+      });
     },
   );
 
