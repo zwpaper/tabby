@@ -85,7 +85,7 @@ export interface WebviewHostApi {
 const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";
 
-const isDev = true;
+const isDev = false;
 
 export function getServerBaseUrl() {
   return isDev ? DevBaseUrl : ProdBaseUrl;
