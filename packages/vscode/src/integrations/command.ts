@@ -1,5 +1,5 @@
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import RagdollWebviewProvider from "@/integrations/webview/ragdoll-webview-provider";
+import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
 import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";

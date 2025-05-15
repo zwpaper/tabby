@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 
-import type { TabState } from "@/integrations/editor/tab-state";
 import { collectCustomRules, getSystemInfo } from "@/lib/env";
 import { ignoreWalk, isBinaryFile } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import type { TokenStorage } from "@/lib/token-storage";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { TokenStorage } from "@/lib/token-storage";
 import { applyDiff, previewApplyDiff } from "@/tools/apply-diff";
 import { executeCommand } from "@/tools/execute-command";
 import { globFiles } from "@/tools/glob-files";
@@ -23,22 +23,35 @@ import {
 import type { Environment } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
-import type { SessionState, VSCodeHostApi } from "@ragdoll/vscode-webui-bridge";
+import type {
+  ResourceURI,
+  SessionState,
+  VSCodeHostApi,
+} from "@ragdoll/vscode-webui-bridge";
 import * as runExclusive from "run-exclusive";
-import type { PochiConfiguration } from "../configuration";
+import { injectable, singleton } from "tsyringe";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { PochiConfiguration } from "../configuration";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { TabState } from "../editor/tab-state";
 
 const logger = getLogger("VSCodeHostImpl");
 
-export default class VSCodeHostImpl implements VSCodeHostApi {
+@injectable()
+@singleton()
+export class VSCodeHostImpl implements VSCodeHostApi {
   private toolCallGroup = runExclusive.createGroupRef();
+  private sessionState: SessionState = {};
 
   constructor(
     private readonly tokenStorage: TokenStorage,
-    private readonly sessionState: SessionState,
     private readonly pochiConfiguration: PochiConfiguration,
-    readonly readResourceURI: VSCodeHostApi["readResourceURI"],
     private readonly tabState: TabState,
   ) {}
+
+  readResourceURI = (): Promise<ResourceURI> => {
+    throw new Error("Method not implemented.");
+  };
 
   readToken = async (): Promise<
     ThreadSignalSerialization<string | undefined>

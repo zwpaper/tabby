@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
 import RagdollUriHandler from "@/integrations/uri-handler";
-import RagdollWebviewProvider from "@/integrations/webview/ragdoll-webview-provider";
+import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
 import { container, instanceCachingFactory } from "tsyringe";
 import type * as vscode from "vscode";
 import { CommandManager } from "./integrations/command";

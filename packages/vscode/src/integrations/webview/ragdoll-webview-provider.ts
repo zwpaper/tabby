@@ -1,28 +1,21 @@
-import VSCodeHostImpl from "@/integrations/webview/vscode-host-impl";
+import { VSCodeHostImpl } from "@/integrations/webview/vscode-host-impl";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
 import { getNonce } from "@/lib/get-nonce";
 import { getUri } from "@/lib/get-uri";
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { TokenStorage } from "@/lib/token-storage";
 import { Thread } from "@quilted/threads";
 import {
   type ResourceURI,
-  type SessionState,
   type VSCodeHostApi,
   type WebviewHostApi,
   getServerBaseUrl,
 } from "@ragdoll/vscode-webui-bridge";
-import { inject, injectable, singleton } from "tsyringe";
+import { container, inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { PochiConfiguration } from "../configuration";
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { TabState } from "../editor/tab-state";
 
 @injectable()
 @singleton()
-class RagdollWebviewProvider
+export class RagdollWebviewProvider
   implements vscode.WebviewViewProvider, vscode.Disposable
 {
   public static readonly viewType = "ragdollWebui";
@@ -30,15 +23,11 @@ class RagdollWebviewProvider
   private view?: vscode.WebviewView;
   private webviewHost?: WebviewHostApi;
   private webviewHostReady = new vscode.EventEmitter<WebviewHostApi>();
-  private sessionState: SessionState = {};
 
   constructor(
     @inject("vscode.ExtensionContext")
     private readonly context: vscode.ExtensionContext,
-    private readonly tokenStorage: TokenStorage,
-    private readonly pochiConfiguration: PochiConfiguration,
     private readonly events: AuthEvents,
-    private readonly tabState: TabState,
   ) {}
 
   private disposables: vscode.Disposable[] = [
@@ -96,7 +85,7 @@ class RagdollWebviewProvider
     this.webviewHostReady.fire(this.webviewHost);
   }
 
-  readResourceURI: VSCodeHostApi["readResourceURI"] =
+  readonly readResourceURI: VSCodeHostApi["readResourceURI"] =
     async (): Promise<ResourceURI> => {
       if (!this.view) {
         throw new Error("Webview not initialized");
@@ -112,13 +101,10 @@ class RagdollWebviewProvider
     };
 
   private createWebviewThread(webview: vscode.Webview) {
-    const vscodeHost = new VSCodeHostImpl(
-      this.tokenStorage,
-      this.sessionState,
-      this.pochiConfiguration,
-      this.readResourceURI.bind(this),
-      this.tabState,
-    );
+    const vscodeHost = container.resolve(VSCodeHostImpl);
+    // Inject the readResourceURI to avoid circular dependency
+    vscodeHost.readResourceURI = this.readResourceURI;
+
     return new Thread<WebviewHostApi, VSCodeHostApi>(
       {
         send(message) {
@@ -232,5 +218,3 @@ class RagdollWebviewProvider
     </html>`;
   }
 }
-
-export default RagdollWebviewProvider;
