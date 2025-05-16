@@ -78,6 +78,8 @@ export interface WebviewHostApi {
 
   openTaskList(): void;
 
+  openSettings(): void;
+
   onAuthChanged(): void;
 }
 

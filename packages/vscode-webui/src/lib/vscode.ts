@@ -84,6 +84,13 @@ function createVSCodeHost(): VSCodeHostApi {
           });
         },
 
+        openSettings() {
+          window.router.navigate({
+            to: "/settings",
+            replace: true,
+          });
+        },
+
         onAuthChanged() {
           queryClient.resetQueries();
         },

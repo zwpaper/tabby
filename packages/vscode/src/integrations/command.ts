@@ -3,6 +3,7 @@ import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-p
 import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
+import { getWorkspaceRulesFileUri } from "@/lib/env";
 import { showOutputPanel } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
@@ -39,6 +40,12 @@ export class CommandManager implements vscode.Disposable {
         );
       }),
 
+      vscode.commands.registerCommand("ragdoll.openAccountPage", async () => {
+        vscode.env.openExternal(
+          vscode.Uri.parse(`${getServerBaseUrl()}/account`),
+        );
+      }),
+
       vscode.commands.registerCommand("ragdoll.logout", async () => {
         const selection = await vscode.window.showInformationMessage(
           "Are you sure you want to logout?",
@@ -51,6 +58,38 @@ export class CommandManager implements vscode.Disposable {
           this.authEvents.logoutEvent.fire();
         }
       }),
+
+      vscode.commands.registerCommand(
+        "ragdoll.editWorkspaceRules",
+        async () => {
+          try {
+            const workspaceRulesUri = getWorkspaceRulesFileUri();
+            let textDocument: vscode.TextDocument;
+
+            try {
+              textDocument =
+                await vscode.workspace.openTextDocument(workspaceRulesUri);
+            } catch (error) {
+              const fileContent =
+                "<!-- Add your custom workspace rules here -->";
+              await vscode.workspace.fs.writeFile(
+                workspaceRulesUri,
+                Buffer.from(fileContent, "utf8"),
+              );
+              textDocument =
+                await vscode.workspace.openTextDocument(workspaceRulesUri);
+            }
+
+            await vscode.window.showTextDocument(textDocument);
+          } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : "Unknown error";
+            vscode.window.showErrorMessage(
+              `Pochi: Failed to open workspace rules. ${errorMessage}`,
+            );
+          }
+        },
+      ),
 
       vscode.commands.registerCommand(
         "ragdoll.createProject",
@@ -141,6 +180,16 @@ export class CommandManager implements vscode.Disposable {
           const webviewHost =
             await this.ragdollWebviewProvider.retrieveWebviewHost();
           webviewHost.openTaskList();
+        },
+      ),
+
+      vscode.commands.registerCommand(
+        "ragdoll.webui.navigate.settings",
+        async () => {
+          await vscode.commands.executeCommand("ragdollWebui.focus");
+          const webviewHost =
+            await this.ragdollWebviewProvider.retrieveWebviewHost();
+          webviewHost.openSettings();
         },
       ),
 

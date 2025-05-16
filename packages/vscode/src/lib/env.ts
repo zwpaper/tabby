@@ -20,6 +20,19 @@ export function getSystemInfo(): {
   return { cwd, shell, os: platform, homedir };
 }
 
+export function getWorkspaceRulesFileUri() {
+  if (
+    vscode.workspace.workspaceFolders &&
+    vscode.workspace.workspaceFolders.length > 0
+  ) {
+    return vscode.Uri.joinPath(
+      vscode.workspace.workspaceFolders[0].uri,
+      "README.pochi.md",
+    );
+  }
+  return vscode.Uri.file("README.pochi.md");
+}
+
 /**
  * Collects custom rules from README.pochi.md and specified custom rule files.
  * Uses VSCode APIs instead of Node.js fs functions for better reliability.
@@ -37,12 +50,7 @@ export async function collectCustomRules(
     vscode.workspace.workspaceFolders &&
     vscode.workspace.workspaceFolders.length > 0
   ) {
-    customRuleFiles.push(
-      vscode.Uri.joinPath(
-        vscode.workspace.workspaceFolders[0].uri,
-        "README.pochi.md",
-      ).fsPath,
-    );
+    customRuleFiles.push(getWorkspaceRulesFileUri().fsPath);
   }
 
   // Read custom rule files

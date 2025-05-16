@@ -125,7 +125,7 @@ export class RagdollWebviewProvider
       },
       {
         exports: vscodeHost,
-        imports: ["openTask", "openTaskList", "onAuthChanged"],
+        imports: ["openTask", "openTaskList", "openSettings", "onAuthChanged"],
       },
     );
   }

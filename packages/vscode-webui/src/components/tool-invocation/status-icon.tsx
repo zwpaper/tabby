@@ -55,7 +55,7 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
 
   const tooltipContent = [];
 
-  if (isDevMode) {
+  if (isDevMode?.value) {
     tooltipContent.push(devButton);
   }
 

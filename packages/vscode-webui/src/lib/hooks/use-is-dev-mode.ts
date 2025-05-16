@@ -8,11 +8,7 @@ export const useIsDevMode = () => {
     queryFn: fetchIsDevModeSignal,
   });
 
-  if (isDevMode === undefined) {
-    return false;
-  }
-
-  return isDevMode.value;
+  return isDevMode;
 };
 
 async function fetchIsDevModeSignal() {

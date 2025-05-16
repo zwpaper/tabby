@@ -613,7 +613,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           />
 
           <div className="flex shrink-0 items-center gap-1">
-            {isDevMode && <DevModeButton messages={messages} />}
+            {isDevMode?.value && <DevModeButton messages={messages} />}
             <Button
               variant="ghost"
               size="icon"

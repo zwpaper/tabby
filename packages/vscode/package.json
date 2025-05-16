@@ -34,8 +34,18 @@
         "category": "Pochi"
       },
       {
+        "command": "ragdoll.openAccountPage",
+        "title": "Open Account Page",
+        "category": "Pochi"
+      },
+      {
         "command": "ragdoll.logout",
         "title": "Logout",
+        "category": "Pochi"
+      },
+      {
+        "command": "ragdoll.editWorkspaceRules",
+        "title": "Edit Workspace Rules",
         "category": "Pochi"
       },
       {
@@ -51,6 +61,12 @@
         "category": "Pochi"
       },
       {
+        "command": "ragdoll.webui.navigate.settings",
+        "title": "Settings",
+        "icon": "$(gear)",
+        "category": "Pochi"
+      },
+      {
         "command": "ragdoll.openSettings",
         "title": "Open Settings",
         "category": "Pochi"
@@ -63,11 +79,23 @@
           "when": "false"
         },
         {
+          "command": "ragdoll.openAccountPage",
+          "when": "false"
+        },
+        {
+          "command": "ragdoll.logout",
+          "when": "false"
+        },
+        {
           "command": "ragdoll.webui.navigate.newTask",
           "when": "false"
         },
         {
           "command": "ragdoll.webui.navigate.taskList",
+          "when": "false"
+        },
+        {
+          "command": "ragdoll.webui.navigate.settings",
           "when": "false"
         }
       ],
@@ -81,6 +109,11 @@
           "command": "ragdoll.webui.navigate.taskList",
           "when": "view == ragdollWebui",
           "group": "navigation@1"
+        },
+        {
+          "command": "ragdoll.webui.navigate.settings",
+          "when": "view == ragdollWebui",
+          "group": "navigation@2"
         }
       ]
     },

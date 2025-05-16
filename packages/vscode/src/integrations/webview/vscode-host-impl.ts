@@ -224,7 +224,9 @@ export class VSCodeHostImpl implements VSCodeHostApi {
   };
 
   readIsDevMode = async (): Promise<ThreadSignalSerialization<boolean>> => {
-    return ThreadSignal.serialize(this.pochiConfiguration.isDevMode);
+    return ThreadSignal.serialize(this.pochiConfiguration.isDevMode, {
+      writable: true,
+    });
   };
 }
 
