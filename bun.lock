@@ -54,7 +54,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.1.29",
+      "version": "0.1.30",
       "dependencies": {
         "@preact/signals-core": "^1.8.0",
         "@quilted/threads": "^3.1.3",
@@ -115,6 +115,7 @@
         "@tanstack/react-router-devtools": "^1.119.0",
         "@tanstack/router-plugin": "^1.119.0",
         "@tiptap/extension-document": "^2.11.7",
+        "@tiptap/extension-history": "^2.12.0",
         "@tiptap/extension-mention": "^2.11.7",
         "@tiptap/extension-paragraph": "^2.11.7",
         "@tiptap/extension-placeholder": "^2.11.7",
@@ -1175,6 +1176,8 @@
     "@tiptap/extension-document": ["@tiptap/extension-document@2.11.7", "", { "peerDependencies": { "@tiptap/core": "^2.7.0" } }, "sha512-95ouJXPjdAm9+VBRgFo4lhDoMcHovyl/awORDI8gyEn0Rdglt+ZRZYoySFzbVzer9h0cre+QdIwr9AIzFFbfdA=="],
 
     "@tiptap/extension-floating-menu": ["@tiptap/extension-floating-menu@2.11.7", "", { "dependencies": { "tippy.js": "^6.3.7" }, "peerDependencies": { "@tiptap/core": "^2.7.0", "@tiptap/pm": "^2.7.0" } }, "sha512-DG54WoUu2vxHRVzKZiR5I5RMOYj45IlxQMkBAx1wjS0ch41W8DUYEeipvMMjCeKtEI+emz03xYUcOAP9LRmg+w=="],
+
+    "@tiptap/extension-history": ["@tiptap/extension-history@2.12.0", "", { "peerDependencies": { "@tiptap/core": "^2.7.0", "@tiptap/pm": "^2.7.0" } }, "sha512-+B9CAf2BFURC6mQiM1OQtahVTzdEOEgT/UUNlRZkeeBc0K5of3dr6UdBqaoaMAefja3jx5PqiQ7mhUBAjSt6AA=="],
 
     "@tiptap/extension-mention": ["@tiptap/extension-mention@2.11.7", "", { "peerDependencies": { "@tiptap/core": "^2.7.0", "@tiptap/pm": "^2.7.0", "@tiptap/suggestion": "^2.7.0" } }, "sha512-Q/fkceDOug4VjiqrCRLzBnOL9Oj+XugWwDgwfucJJMBOJxZ3++3eZGZ54dri/xK39A4ZD+xuMBF7PrJIy+Z5dw=="],
 

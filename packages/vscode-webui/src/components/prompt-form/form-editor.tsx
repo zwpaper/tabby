@@ -1,5 +1,6 @@
 import { vscodeHost } from "@/lib/vscode";
 import Document from "@tiptap/extension-document";
+import History from "@tiptap/extension-history";
 import Paragraph from "@tiptap/extension-paragraph";
 import Placeholder from "@tiptap/extension-placeholder";
 import Text from "@tiptap/extension-text";
@@ -192,6 +193,9 @@ export function FormEditor({
               };
             },
           },
+        }),
+        History.configure({
+          depth: 20,
         }),
       ],
       editorProps: {
