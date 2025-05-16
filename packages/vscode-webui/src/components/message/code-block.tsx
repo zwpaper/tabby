@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useTheme } from "@/lib/hooks/use-theme";
 import { cn } from "@/lib/utils";
+import "./code-block.css";
 
 export interface CodeBlockProps {
   language: string;

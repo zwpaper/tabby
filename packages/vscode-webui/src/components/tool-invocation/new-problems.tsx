@@ -6,8 +6,8 @@ export const NewProblems: React.FC<{
   return (
     <div className="my-2 ml-1 flex flex-col">
       <CodeBlock className="" language="log" value={newProblems} />
-      <p className="mt-1 self-center text-sm italic">
-        Following problems have been detected for the change
+      <p className="mt-1 self-center text-xs italic">
+        Above problems have been detected after the change
       </p>
     </div>
   );

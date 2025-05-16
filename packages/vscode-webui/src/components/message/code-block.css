@@ -1,0 +1,7 @@
+@reference '../../styles.css';
+
+code[class*="language-"],
+pre[class*="language-"] {
+  @apply text-sm!;
+  background-color: transparent;
+}

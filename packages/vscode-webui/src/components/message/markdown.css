@@ -7,7 +7,3 @@
   color: var(--vscode-textPreformat-foreground);
   background-color: var(--vscode-textPreformat-background);
 }
-
-.code-block code {
-  background-color: transparent !important;
-}
