@@ -176,6 +176,7 @@ describe("DiffView with real file system", () => {
         getConfiguration: sinon.stub().returns({
           get: sinon.stub(),
         }),
+        onDidChangeTextDocument: sinon.stub().returns({ dispose: sinon.stub() }),
       },
       window: {
         showTextDocument: sinon.stub().resolves({

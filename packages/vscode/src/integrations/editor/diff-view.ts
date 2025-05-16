@@ -27,6 +27,9 @@ export class DiffView implements vscode.Disposable {
     vscode.languages.getDiagnostics();
   private fadedOverlayController: DecorationController;
   private activeLineController: DecorationController;
+  private editorDocumentUpdatedAt: number | undefined;
+
+  private disposables: vscode.Disposable[] = [];
 
   private constructor(
     private readonly fileUri: vscode.Uri,
@@ -42,6 +45,19 @@ export class DiffView implements vscode.Disposable {
       "activeLine",
       this.activeDiffEditor,
     );
+    this.disposables.push(
+      vscode.workspace.onDidChangeTextDocument(
+        ({ document, contentChanges }) => {
+          if (
+            document.uri.toString() ===
+              this.activeDiffEditor.document.uri.toString() &&
+            contentChanges.length > 0
+          ) {
+            this.editorDocumentUpdatedAt = Date.now();
+          }
+        },
+      ),
+    );
   }
 
   dispose() {
@@ -55,6 +71,9 @@ export class DiffView implements vscode.Disposable {
       })().catch((err) => {
         logger.debug("Error deleting file", err);
       });
+    }
+    for (const d of this.disposables) {
+      d.dispose();
     }
   }
 
@@ -176,6 +195,7 @@ export class DiffView implements vscode.Disposable {
     });
     await closeAllNonDirtyDiffViews();
 
+    await this.waitForDiagnostic();
     const postDiagnostics = vscode.languages.getDiagnostics();
     const newProblems = diagnosticsToProblemsString(
       getNewDiagnostics(this.preDiagnostics, postDiagnostics),
@@ -220,6 +240,29 @@ export class DiffView implements vscode.Disposable {
       autoFormattingEdits,
       newProblems,
     };
+  }
+
+  private async waitForDiagnostic() {
+    if (process.env.VSCODE_TEST_OPTIONS) {
+      // No waiting in test mode
+      return;
+    }
+
+    const waitForDiagnosticMs = 1000;
+    const timeoutDuration =
+      this.editorDocumentUpdatedAt !== undefined
+        ? Math.max(
+            1,
+            Math.min(
+              waitForDiagnosticMs,
+              this.editorDocumentUpdatedAt + waitForDiagnosticMs - Date.now(),
+            ),
+          )
+        : waitForDiagnosticMs;
+    logger.debug(`Waiting ${timeoutDuration}ms for diagnostics to update...`);
+    await new Promise((resolve) => {
+      setTimeout(resolve, timeoutDuration);
+    });
   }
 
   private scrollEditorToLine(line: number) {
