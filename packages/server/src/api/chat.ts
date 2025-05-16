@@ -15,6 +15,7 @@ import {
   appendClientMessage,
   appendResponseMessages,
   createDataStream,
+  generateId,
   streamText,
 } from "ai";
 import type { User } from "better-auth";
@@ -39,7 +40,6 @@ import { MakeServerTools } from "../lib/tools";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
-import { createTask } from "./tasks";
 
 export type ContextVariables = {
   model?: LanguageModel;
@@ -367,6 +367,53 @@ async function getTask(
     ...data,
     id: taskId,
   };
+}
+
+async function createTask(
+  userId: string,
+  prompt?: string,
+  event: UserEvent | null = null,
+) {
+  const { taskId } = await db.transaction().execute(async (trx) => {
+    const { nextTaskId } = await trx
+      .insertInto("taskSequence")
+      .values({ userId })
+      .onConflict((oc) =>
+        oc
+          .column("userId")
+          .doUpdateSet({ nextTaskId: sql`"taskSequence"."nextTaskId" + 1` }),
+      )
+      .returning("nextTaskId")
+      .executeTakeFirstOrThrow();
+
+    return await trx
+      .insertInto("task")
+      .values({
+        userId,
+        taskId: nextTaskId,
+        conversation: prompt
+          ? {
+              messages: [
+                {
+                  id: generateId(),
+                  createdAt: new Date().toISOString(),
+                  role: "user",
+                  parts: [
+                    {
+                      type: "text",
+                      text: prompt,
+                    },
+                  ],
+                },
+              ],
+            }
+          : undefined,
+        event,
+      })
+      .returning("taskId")
+      .executeTakeFirstOrThrow();
+  });
+  return taskId;
 }
 
 function verifyEnvironment(

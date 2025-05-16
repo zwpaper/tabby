@@ -1,5 +1,4 @@
 import { zValidator } from "@hono/zod-validator";
-import { generateId } from "ai";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
@@ -156,50 +155,3 @@ const tasks = new Hono()
   );
 
 export default tasks;
-
-export async function createTask(
-  userId: string,
-  prompt?: string,
-  event: UserEvent | null = null,
-) {
-  const { taskId } = await db.transaction().execute(async (trx) => {
-    const { nextTaskId } = await trx
-      .insertInto("taskSequence")
-      .values({ userId })
-      .onConflict((oc) =>
-        oc
-          .column("userId")
-          .doUpdateSet({ nextTaskId: sql`"taskSequence"."nextTaskId" + 1` }),
-      )
-      .returning("nextTaskId")
-      .executeTakeFirstOrThrow();
-
-    return await trx
-      .insertInto("task")
-      .values({
-        userId,
-        taskId: nextTaskId,
-        conversation: prompt
-          ? {
-              messages: [
-                {
-                  id: generateId(),
-                  createdAt: new Date().toISOString(),
-                  role: "user",
-                  parts: [
-                    {
-                      type: "text",
-                      text: prompt,
-                    },
-                  ],
-                },
-              ],
-            }
-          : undefined,
-        event,
-      })
-      .returning("taskId")
-      .executeTakeFirstOrThrow();
-  });
-  return taskId;
-}
