@@ -44,7 +44,8 @@ def calculate_total(items):
     return sum(item * 1.1 for item in items)
 >>>>>>> REPLACE
 \`\`\`
-`,
+
+After the file is written, if the user edits the file, userEdits field will present in result. You should pay a special attention to it and apply the preference in future operations`,
   inputSchema: z.object({
     path: z
       .string()

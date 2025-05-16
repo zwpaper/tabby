@@ -2,8 +2,11 @@ import { z } from "zod";
 import { defineClientTool } from "./types";
 
 export const writeToFile = defineClientTool({
-  description:
-    "Request to write full content to a file at the specified path. If the file exists, it will be overwritten with the provided content. If the file doesn't exist, it will be created. This tool will automatically create any directories needed to write the file.",
+  description: `Request to write full content to a file at the specified path.
+If the file exists, it will be overwritten with the provided content.
+If the file doesn't exist, it will be created. This tool will automatically create any directories needed to write the file.
+
+After the file is written, if the user edits the file, userEdits field will present in result. You should pay a special attention to it and apply the preference in future operations`,
   inputSchema: z.object({
     path: z
       .string()
