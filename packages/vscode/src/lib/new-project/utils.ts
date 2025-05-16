@@ -1,3 +1,4 @@
+import * as os from "node:os";
 import { getLogger } from "@/lib/logger";
 import * as jszip from "jszip";
 import generate from "project-name-generator";
@@ -6,7 +7,7 @@ import { isFileExists } from "../fs";
 
 const logger = getLogger("newProjectUtils");
 
-const homeUri = vscode.Uri.file(process.env.HOME || "~");
+const homeUri = vscode.Uri.file(os.homedir());
 const baseUri = vscode.Uri.joinPath(homeUri, "PochiProjects");
 
 async function createDirectoryIfNotExists(uri: vscode.Uri) {
