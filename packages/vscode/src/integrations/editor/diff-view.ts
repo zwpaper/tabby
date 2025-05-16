@@ -34,7 +34,6 @@ export class DiffView implements vscode.Disposable {
   private constructor(
     private readonly fileUri: vscode.Uri,
     private readonly fileExists: boolean,
-    private readonly originalContent: string,
     private readonly activeDiffEditor: vscode.TextEditor,
   ) {
     this.fadedOverlayController = new DecorationController(
@@ -167,14 +166,6 @@ export class DiffView implements vscode.Disposable {
         );
         await vscode.workspace.applyEdit(edit);
       }
-      // Add empty last line if original content had one
-      const hasEmptyLastLine = this.originalContent?.endsWith("\n");
-      if (hasEmptyLastLine) {
-        const accumulatedLines = accumulatedContent.split("\n");
-        if (accumulatedLines[accumulatedLines.length - 1] !== "") {
-          accumulatedContent += "\n";
-        }
-      }
       this.fadedOverlayController.clear();
       this.activeLineController.clear();
     }
@@ -289,7 +280,7 @@ export class DiffView implements vscode.Disposable {
       fileExists,
       originalContent,
     );
-    return new DiffView(fileUri, fileExists, originalContent, activeDiffEditor);
+    return new DiffView(fileUri, fileExists, activeDiffEditor);
   }
 
   private static readonly diffViewGetGroup = runExclusive.createGroupRef();
