@@ -9,8 +9,8 @@ import {
 import { type FC, memo, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
-  coldarkDark,
   oneLight,
+  vscDarkPlus,
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import {
@@ -104,7 +104,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
         {/* @ts-ignore */}
         <SyntaxHighlighter
           language={languageForSyntax}
-          style={theme === "dark" ? coldarkDark : oneLight}
+          style={theme === "dark" ? vscDarkPlus : oneLight}
           PreTag="div"
           customStyle={{
             margin: 0,
