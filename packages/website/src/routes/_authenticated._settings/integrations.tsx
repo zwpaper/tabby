@@ -15,13 +15,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { apiClient } from "@/lib/auth-client";
-import { useSession } from "@/lib/auth-hooks";
+import { apiClient, authClient } from "@/lib/auth-client";
+import {
+  useListAccounts,
+  useSession,
+  useUnlinkAccount,
+} from "@/lib/auth-hooks";
 import { IconBrandGithub, IconBrandSlack } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -168,7 +172,7 @@ function SlackIntegrationSection({
   );
 }
 
-// --- GitHub Integration Component ---
+// --- GitHub App Integration Component ---
 
 interface GithubIntegrationSectionProps {
   isLoading: boolean;
@@ -193,15 +197,15 @@ function GithubIntegrationSection({
           id: integrationId.toString(),
         },
       });
-      if (!response.ok) throw new Error("Failed to disconnect GitHub");
+      if (!response.ok) throw new Error("Failed to disconnect GitHub App");
       return response.json();
     },
     onSuccess: () => {
-      toast.success("GitHub integration disconnected successfully");
+      toast.success("GitHub App integration disconnected successfully");
       queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
     },
     onError: (error) => {
-      toast.error("Failed to disconnect GitHub integration", {
+      toast.error("Failed to disconnect GitHub App integration", {
         description: error.message,
       });
     },
@@ -221,7 +225,7 @@ function GithubIntegrationSection({
         <div className="flex items-center gap-2">
           <IconBrandGithub size={20} className="text-[#333]" />
           <CardTitle className="font-medium text-base">
-            GitHub Integration
+            GitHub App Integration
           </CardTitle>
           <Button
             variant="outline"
@@ -233,8 +237,8 @@ function GithubIntegrationSection({
           </Button>
         </div>
         <CardDescription>
-          Connect your GitHub repositories to enable tools like automated pull
-          requests and issue tracking.
+          Connect your GitHub account by installing our GitHub App. This allows
+          Pochi to interact with your repositories.
         </CardDescription>
       </CardHeader>
 
@@ -248,7 +252,7 @@ function GithubIntegrationSection({
       ) : githubIntegrations.length === 0 ? (
         <CardContent className="flex flex-col items-center justify-center text-center">
           <p className="text-muted-foreground text-sm">
-            No GitHub repositories connected yet.
+            No GitHub App installations found.
           </p>
         </CardContent>
       ) : (
@@ -283,14 +287,16 @@ function GithubIntegrationSection({
                       className="h-8 w-8 text-destructive hover:bg-destructive/10"
                       onClick={() => handleDisconnectGithub(integration.id)}
                       disabled={disconnectGithubMutation.isPending}
-                      title="Disconnect Repository"
+                      title="Disconnect GitHub App Installation"
                     >
                       {disconnectGithubMutation.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <Trash2 size={16} />
                       )}
-                      <span className="sr-only">Disconnect Repository</span>
+                      <span className="sr-only">
+                        Disconnect GitHub App Installation
+                      </span>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -298,6 +304,137 @@ function GithubIntegrationSection({
             </TableBody>
           </Table>
         </div>
+      )}
+    </Card>
+  );
+}
+
+// --- GitHub OAuth Integration Component ---
+const GithubOauthScopes = [
+  "gist",
+  "read:org",
+  "read:user",
+  "repo",
+  "user:email",
+  "workflow",
+];
+
+function GithubOauthIntegrationSection() {
+  const { data: accounts, isLoading } = useListAccounts();
+  const githubOauthIntegration = accounts?.find((a) => a.provider === "github");
+  const disconnectGithubOauthMutation = useUnlinkAccount();
+
+  const handleConnectGithubOauth = () => {
+    authClient.signIn.social({
+      provider: "github",
+      scopes: GithubOauthScopes,
+      callbackURL: "/integrations/?github_oauth_connected=true",
+    });
+  };
+
+  const handleDisconnectGithubOauth = async (accountId: string) => {
+    disconnectGithubOauthMutation.mutate({
+      providerId: "github",
+      accountId,
+    });
+  };
+
+  const hasAllRequestedScopes = (
+    currentScopes: string[] | undefined | null,
+  ) => {
+    if (!currentScopes) return false;
+    return GithubOauthScopes.every((scope) => currentScopes.includes(scope));
+  };
+
+  const sufficientScopes = hasAllRequestedScopes(
+    githubOauthIntegration?.scopes,
+  );
+
+  return (
+    <Card className="w-full overflow-hidden border border-border bg-card/50">
+      <CardHeader className="px-6">
+        <div className="flex items-center gap-2">
+          <IconBrandGithub size={20} className="text-[#333]" />
+          <CardTitle className="font-medium text-base">
+            GitHub OAuth Integration
+          </CardTitle>
+          {!isLoading && !githubOauthIntegration && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleConnectGithubOauth}
+              className="ml-auto flex items-center gap-1"
+              disabled={disconnectGithubOauthMutation.isPending}
+            >
+              <Plus size={16} /> Connect
+            </Button>
+          )}
+          {!isLoading && githubOauthIntegration && !sufficientScopes && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleConnectGithubOauth} // Re-use connect logic to request missing scopes
+              className="ml-auto flex items-center gap-1"
+              disabled={disconnectGithubOauthMutation.isPending}
+              title="Request missing repository access scopes"
+            >
+              <RefreshCw size={16} /> Request access
+            </Button>
+          )}
+          {!isLoading && githubOauthIntegration && sufficientScopes && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                handleDisconnectGithubOauth(githubOauthIntegration.accountId)
+              }
+              className="ml-auto flex items-center gap-1 text-destructive hover:bg-destructive/10"
+              disabled={disconnectGithubOauthMutation.isPending}
+              title="Disconnect GitHub OAuth"
+            >
+              {disconnectGithubOauthMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 size={16} />
+              )}
+              Disconnect
+            </Button>
+          )}
+        </div>
+        <CardDescription>
+          Connect your GitHub account using OAuth to allow Pochi to perform
+          actions on your behalf.
+        </CardDescription>
+      </CardHeader>
+
+      {isLoading ? (
+        <CardContent>
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        </CardContent>
+      ) : !githubOauthIntegration ? (
+        <CardContent className="flex flex-col items-center justify-center text-center">
+          <p className="text-muted-foreground text-sm">
+            GitHub OAuth not connected.
+          </p>
+        </CardContent>
+      ) : (
+        <CardContent className="flex flex-col items-center justify-center text-center">
+          <div className="flex flex-col items-center justify-center text-center">
+            <p className="text-muted-foreground text-sm">
+              Connected on{" "}
+              {new Date(githubOauthIntegration.createdAt).toLocaleDateString()}
+            </p>
+            {githubOauthIntegration.scopes &&
+              githubOauthIntegration.scopes.length > 0 && (
+                <p className="mt-1 text-muted-foreground text-sm">
+                  Granted Scopes: {githubOauthIntegration.scopes.join(", ")}
+                </p>
+              )}
+          </div>
+        </CardContent>
       )}
     </Card>
   );
@@ -328,18 +465,35 @@ function IntegrationsPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const slackSuccess = urlParams.get("slack_connected");
     const githubSuccess = urlParams.get("github_connected");
-    const needsInvalidation = slackSuccess !== null || githubSuccess !== null;
+    const githubOauthSuccess = urlParams.get("github_oauth_connected");
 
-    if (slackSuccess === "true") {
-      toast.success("Slack workspace connected successfully");
-    } else if (slackSuccess === "false") {
-      toast.error("Failed to connect Slack workspace");
+    let needsInvalidation = false;
+
+    if (slackSuccess !== null) {
+      needsInvalidation = true;
+      if (slackSuccess === "true") {
+        toast.success("Slack workspace connected successfully");
+      } else {
+        toast.error("Failed to connect Slack workspace");
+      }
     }
 
-    if (githubSuccess === "true") {
-      toast.success("GitHub integration connected successfully");
-    } else if (githubSuccess === "false") {
-      toast.error("Failed to connect GitHub integration");
+    if (githubSuccess !== null) {
+      needsInvalidation = true;
+      if (githubSuccess === "true") {
+        toast.success("GitHub App integration connected successfully");
+      } else {
+        toast.error("Failed to connect GitHub App integration");
+      }
+    }
+
+    if (githubOauthSuccess !== null) {
+      needsInvalidation = true;
+      if (githubOauthSuccess === "true") {
+        toast.success("GitHub OAuth connected successfully");
+      } else {
+        toast.error("Failed to connect GitHub OAuth");
+      }
     }
 
     if (needsInvalidation) {
@@ -347,6 +501,7 @@ function IntegrationsPage() {
       window.history.replaceState(null, "", window.location.pathname);
       // Refetch integrations
       queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
+      queryClient.invalidateQueries({ queryKey: ["listAccounts"] }); // Invalidate accounts to refetch scopes
     }
   }, [queryClient, userId]);
 
@@ -362,7 +517,7 @@ function IntegrationsPage() {
         />
       </div>
 
-      {/* GitHub Integration Section */}
+      {/* GitHub App Integration Section */}
       <div className="flex flex-col gap-3">
         <GithubIntegrationSection
           isLoading={isLoading}
@@ -370,6 +525,11 @@ function IntegrationsPage() {
           userId={userId}
           queryClient={queryClient}
         />
+      </div>
+
+      {/* GitHub OAuth Integration Section */}
+      <div className="flex flex-col gap-3">
+        <GithubOauthIntegrationSection />
       </div>
     </div>
   );
