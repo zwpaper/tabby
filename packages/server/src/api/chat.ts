@@ -15,7 +15,6 @@ import {
   appendClientMessage,
   appendResponseMessages,
   createDataStream,
-  generateId,
   streamText,
 } from "ai";
 import type { User } from "better-auth";
@@ -66,7 +65,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     checkWaitlist(user);
 
-    const { id, conversation, event } = await getTask(
+    const { id, conversation, event } = await getTaskOrCreate(
       user,
       req.id,
       req.event,
@@ -345,7 +344,7 @@ async function trackUsage(
     .execute();
 }
 
-async function getTask(
+async function getTaskOrCreate(
   user: User,
   chatId: string | undefined,
   event: UserEvent | undefined,
@@ -353,7 +352,7 @@ async function getTask(
 ) {
   let taskId = chatId ? Number.parseInt(chatId) : undefined;
   if (taskId === undefined) {
-    taskId = await createTask(user.id, undefined, event);
+    taskId = await createTask(user.id, event);
   }
 
   const data = await db
@@ -369,11 +368,7 @@ async function getTask(
   };
 }
 
-async function createTask(
-  userId: string,
-  prompt?: string,
-  event: UserEvent | null = null,
-) {
+async function createTask(userId: string, event: UserEvent | null = null) {
   const { taskId } = await db.transaction().execute(async (trx) => {
     const { nextTaskId } = await trx
       .insertInto("taskSequence")
@@ -391,23 +386,6 @@ async function createTask(
       .values({
         userId,
         taskId: nextTaskId,
-        conversation: prompt
-          ? {
-              messages: [
-                {
-                  id: generateId(),
-                  createdAt: new Date().toISOString(),
-                  role: "user",
-                  parts: [
-                    {
-                      type: "text",
-                      text: prompt,
-                    },
-                  ],
-                },
-              ],
-            }
-          : undefined,
         event,
       })
       .returning("taskId")
