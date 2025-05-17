@@ -258,6 +258,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     }
   };
 
+  const chatHasFinishedOnce = useRef(false);
   const {
     data,
     error,
@@ -273,6 +274,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
+    onFinish: () => {
+      chatHasFinishedOnce.current = true;
+    },
     experimental_prepareRequestBody: (req) =>
       prepareRequestBody(taskId, req, selectedModel?.id),
     fetch: async (url, options) =>
@@ -565,6 +569,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           addToolResult={addToolResultWithForceUpdate}
           executingToolCallId={executingToolCallId}
           setIsExecuting={setIsExecuting}
+          chatHasFinishedOnce={chatHasFinishedOnce.current}
         />
         <AutoApproveMenu />
         {files.length > 0 && (

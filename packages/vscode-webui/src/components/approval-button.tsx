@@ -84,6 +84,7 @@ interface ApprovalButtonProps {
   addToolResult: AddToolResultFunctionType;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
+  chatHasFinishedOnce: boolean;
 }
 
 // Hook
@@ -114,6 +115,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   addToolResult,
   setIsExecuting,
   executingToolCallId,
+  chatHasFinishedOnce,
 }) => {
   if (isLoading || !pendingApproval) return null;
 
@@ -189,7 +191,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   const isAutoRejected = isAutoInjectTool(pendingApproval.name);
 
   useEffect(() => {
-    if (isAutoApproved) {
+    if (isAutoApproved && chatHasFinishedOnce) {
       onAccept();
     } else if (isAutoRejected) {
       onReject();
@@ -202,6 +204,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     previewToolCallError,
     onAccept,
     onReject,
+    chatHasFinishedOnce,
   ]);
 
   const [showAbort, setShowAbort] = useState(false);
