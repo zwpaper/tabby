@@ -515,24 +515,28 @@ function IntegrationsPage() {
   return (
     <div className="w-full space-y-4 md:w-[700px]">
       {/* Slack Integration Section */}
-      <div className="flex flex-col gap-3">
-        <SlackIntegrationSection
-          isLoading={isLoading}
-          integrations={integrations}
-          userId={userId}
-          queryClient={queryClient}
-        />
-      </div>
+      {false && (
+        <div className="flex flex-col gap-3">
+          <SlackIntegrationSection
+            isLoading={isLoading}
+            integrations={integrations}
+            userId={userId}
+            queryClient={queryClient}
+          />
+        </div>
+      )}
 
       {/* GitHub App Integration Section */}
-      <div className="flex flex-col gap-3">
-        <GithubIntegrationSection
-          isLoading={isLoading}
-          integrations={integrations}
-          userId={userId}
-          queryClient={queryClient}
-        />
-      </div>
+      {false && (
+        <div className="flex flex-col gap-3">
+          <GithubIntegrationSection
+            isLoading={isLoading}
+            integrations={integrations}
+            userId={userId}
+            queryClient={queryClient}
+          />
+        </div>
+      )}
 
       {/* GitHub OAuth Integration Section */}
       <div className="flex flex-col gap-3">

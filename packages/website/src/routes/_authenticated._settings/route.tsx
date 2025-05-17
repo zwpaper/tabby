@@ -53,7 +53,6 @@ const MainPanes: Pane[] = [
     title: "Integrations",
     url: "/integrations",
     icon: IconBlocks,
-    hide: true,
   },
   {
     title: "Model",

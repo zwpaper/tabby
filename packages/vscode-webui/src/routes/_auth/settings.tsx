@@ -1,4 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -6,32 +8,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
+import { apiClient } from "@/lib/auth-client";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { cn } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, EllipsisVertical } from "lucide-react";
+import { ChevronLeft, Dot, EllipsisVertical, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_auth/settings")({
   component: SettingsPage,
 });
 
-interface SectionProps {
+interface AccordionSectionProps {
   children: React.ReactNode;
   className?: string;
+  title: string;
 }
 
-const Section: React.FC<SectionProps> = ({ children, className }) => {
-  return (
-    <div className={cn("py-4", className)}>
-      {/* <h2 className="mb-3 px-6 font-bold text-base">{title}</h2> */}
-      <div>{children}</div>
-    </div>
-  );
-};
-
-const AccordionSection: React.FC<SectionProps & { title: string }> = ({
+const AccordionSection: React.FC<AccordionSectionProps> = ({
   title,
   children,
   className,
@@ -42,10 +37,10 @@ const AccordionSection: React.FC<SectionProps & { title: string }> = ({
     <div className={className}>
       <button
         type="button"
-        className="flex w-full items-center justify-between px-2 py-4 text-left focus:outline-none"
+        className="flex w-full items-center justify-between py-4 text-left focus:outline-none"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="font-bold text-base">{title}</span>
+        <span className="ml-1 font-bold text-base">{title}</span>
         <ChevronLeft
           className={cn(
             "size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-in-out",
@@ -69,10 +64,8 @@ const AccountSection: React.FC = () => {
   const { auth: authData } = Route.useRouteContext();
 
   return (
-    <Section>
+    <div className={cn("py-4")}>
       <div className="flex items-center justify-between gap-3">
-        {" "}
-        {/* Added px-6 here to maintain original padding for content within this specific section */}
         <a
           href="command:ragdoll.openAccountPage"
           target="_blank"
@@ -121,16 +114,15 @@ const AccountSection: React.FC = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </Section>
+    </div>
   );
 };
 
 const WorkspaceRulesSection: React.FC = () => {
   return (
-    <Section>
+    <div className={cn("py-4")}>
       <div className="flex items-center gap-3">
         {" "}
-        {/* Added px-6 here to maintain original padding */}
         <a
           href="command:ragdoll.editWorkspaceRules"
           target="_blank"
@@ -143,7 +135,59 @@ const WorkspaceRulesSection: React.FC = () => {
           Customize rules for Pochi in this workspace.
         </span>
       </div>
-    </Section>
+    </div>
+  );
+};
+
+const ConnectionsSection: React.FC = () => {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["githubOauthIntegration"],
+    queryFn: async () => {
+      const res = await apiClient.api.integrations.github.$get();
+      if (!res.ok) {
+        throw new Error("Failed to fetch GitHub integration status");
+      }
+      return res.json();
+    },
+  });
+
+  const onRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["githubOauthIntegration"] });
+  };
+
+  return (
+    <div className="py-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="ml-1 font-bold text-base">Connections</h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRefresh}
+          disabled={isLoading} // Disable if GitHub data is loading
+          className="flex items-center gap-1"
+        >
+          <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
+          Refresh
+        </Button>
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between rounded-md border px-2 py-2">
+          <span className="flex items-center">
+            <Dot
+              className={cn({
+                "text-green-500": data?.status === "connected",
+              })}
+            />
+            Github
+          </span>
+          <span className="space-x-2">
+            <Badge variant="secondary">createPullRequest</Badge>
+            <Badge variant="secondary">createIssue</Badge>
+          </span>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -153,8 +197,6 @@ const AdvancedSettingsSection: React.FC = () => {
   return (
     <AccordionSection title="Advanced Settings">
       <div className="flex flex-col gap-4 px-6">
-        {" "}
-        {/* Added px-6 here as accordion content should likely retain its padding unless specified otherwise for its direct children */}
         {isDevMode !== undefined && (
           <div className="flex items-center gap-2">
             <Checkbox
@@ -184,7 +226,7 @@ export function SettingsPage() {
       <div>
         <AccountSection />
         <WorkspaceRulesSection />
-        <Separator />
+        <ConnectionsSection />
         <AdvancedSettingsSection />
       </div>
     </div>
