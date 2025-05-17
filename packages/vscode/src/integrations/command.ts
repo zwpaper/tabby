@@ -46,6 +46,15 @@ export class CommandManager implements vscode.Disposable {
         );
       }),
 
+      vscode.commands.registerCommand(
+        "ragdoll.openIntegrationPage",
+        async () => {
+          vscode.env.openExternal(
+            vscode.Uri.parse(`${getServerBaseUrl()}/integrations`),
+          );
+        },
+      ),
+
       vscode.commands.registerCommand("ragdoll.logout", async () => {
         const selection = await vscode.window.showInformationMessage(
           "Are you sure you want to logout?",

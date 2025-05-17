@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -13,7 +13,13 @@ import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, Dot, EllipsisVertical, RefreshCw } from "lucide-react";
+import {
+  Blocks,
+  ChevronLeft,
+  Dot,
+  EllipsisVertical,
+  RefreshCw,
+} from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_auth/settings")({
@@ -141,8 +147,8 @@ const WorkspaceRulesSection: React.FC = () => {
 
 const ConnectionsSection: React.FC = () => {
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ["githubOauthIntegration"],
+  const { data, isFetching } = useQuery({
+    queryKey: ["integrations", "github"],
     queryFn: async () => {
       const res = await apiClient.api.integrations.github.$get();
       if (!res.ok) {
@@ -153,30 +159,41 @@ const ConnectionsSection: React.FC = () => {
   });
 
   const onRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["githubOauthIntegration"] });
+    queryClient.invalidateQueries({
+      queryKey: ["integrations", "github"],
+    });
   };
 
   return (
     <div className="py-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="ml-1 font-bold text-base">Connections</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onRefresh}
-          disabled={isLoading} // Disable if GitHub data is loading
-          className="flex items-center gap-1"
-        >
-          <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
-          Refresh
-        </Button>
+        <span className="flex gap-1">
+          <a
+            href="command:ragdoll.openIntegrationPage"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            <Blocks className="size-4" />
+            Manage
+          </a>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRefresh}
+            disabled={isFetching}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
+            Refresh
+          </Button>
+        </span>
       </div>
       <div className="space-y-2">
         <div className="flex justify-between rounded-md border px-2 py-2">
           <span className="flex items-center">
             <Dot
               className={cn({
-                "text-green-500": data?.status === "connected",
+                "text-green-400": !isFetching && data?.status === "connected",
               })}
             />
             Github

@@ -39,6 +39,11 @@
         "category": "Pochi"
       },
       {
+        "command": "ragdoll.openIntegrationPage",
+        "title": "Open Integration Page",
+        "category": "Pochi"
+      },
+      {
         "command": "ragdoll.logout",
         "title": "Logout",
         "category": "Pochi"
@@ -80,6 +85,10 @@
         },
         {
           "command": "ragdoll.openAccountPage",
+          "when": "false"
+        },
+        {
+          "command": "ragdoll.openIntegrationPage",
           "when": "false"
         },
         {
