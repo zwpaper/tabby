@@ -1,9 +1,16 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { cn } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronRight, EllipsisVertical } from "lucide-react";
+import { ChevronLeft, EllipsisVertical } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_auth/settings")({
@@ -11,45 +18,45 @@ export const Route = createFileRoute("/_auth/settings")({
 });
 
 interface SectionProps {
-  title: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-const StaticSection: React.FC<SectionProps> = ({ title, children }) => {
+const Section: React.FC<SectionProps> = ({ children, className }) => {
   return (
-    <div className="px-6 py-4">
-      <h2 className="mb-3 font-medium text-lg">{title}</h2>
+    <div className={cn("py-4", className)}>
+      {/* <h2 className="mb-3 px-6 font-bold text-base">{title}</h2> */}
       <div>{children}</div>
     </div>
   );
 };
 
-const AccordionSection: React.FC<SectionProps> = ({ title, children }) => {
+const AccordionSection: React.FC<SectionProps & { title: string }> = ({
+  title,
+  children,
+  className,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div>
+    <div className={className}>
       <button
         type="button"
-        className="px-6 py-4 text-left focus:outline-none"
+        className="flex w-full items-center justify-between px-2 py-4 text-left focus:outline-none"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex items-center justify-start">
-          <span className="font-medium">{title}</span>
-          <ChevronRight
-            className={cn(
-              "mr-2 size-5 shrink-0 text-[var(--vscode-descriptionForeground)] transition-transform duration-200 ease-in-out",
-              isOpen ? "rotate-90 transform" : "",
-            )}
-          />
-        </div>
+        <span className="font-bold text-base">{title}</span>
+        <ChevronLeft
+          className={cn(
+            "size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-in-out",
+            isOpen ? "-rotate-90" : "",
+          )}
+        />
       </button>
       <div
         className={cn(
-          "origin-top overflow-hidden px-4 transition-all duration-100 ease-in-out",
-          isOpen
-            ? "max-h-[1000px] px-6 py-4 opacity-100"
-            : "max-h-0 scale-y-90 opacity-0",
+          "origin-top overflow-hidden transition-all duration-100 ease-in-out",
+          isOpen ? "max-h-[1000px] py-4 opacity-100" : "max-h-0 opacity-0",
         )}
       >
         {children}
@@ -60,69 +67,83 @@ const AccordionSection: React.FC<SectionProps> = ({ title, children }) => {
 
 const AccountSection: React.FC = () => {
   const { auth: authData } = Route.useRouteContext();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <StaticSection title="Account">
-      <div className="flex items-center justify-between gap-2">
+    <Section>
+      <div className="flex items-center justify-between gap-3">
+        {" "}
+        {/* Added px-6 here to maintain original padding for content within this specific section */}
         <a
           href="command:ragdoll.openAccountPage"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
+          className="flex flex-grow items-center gap-3 rounded-md p-2 hover:bg-secondary"
         >
-          <Avatar className="size-12">
+          <Avatar className="size-10">
             <AvatarImage src={authData.user.image ?? undefined} />
-            <AvatarFallback>{authData.user.name}</AvatarFallback>
+            <AvatarFallback>
+              {authData.user.name
+                ? authData.user.name.charAt(0).toUpperCase()
+                : "U"}
+            </AvatarFallback>
           </Avatar>
-          <strong>{authData.user.name || `USER-${authData.user.id}`}</strong>
-          <span className="text-gray-600 text-sm dark:text-gray-400">
-            {authData.user.email}
-          </span>
+          <div className="flex flex-col">
+            <span className="font-semibold">
+              {authData.user.name || `USER-${authData.user.id}`}
+            </span>
+            {authData.user.email && (
+              <span className="text-muted-foreground text-sm">
+                {authData.user.email}
+              </span>
+            )}
+          </div>
         </a>
-        <div className="relative">
-          <button
-            type="button"
-            className="rounded-full p-2 hover:bg-gray-200 dark:hover:bg-gray-700"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <EllipsisVertical className="size-5" />
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="rounded-full p-2 hover:bg-secondary"
+              aria-label="Account options"
+            >
+              <EllipsisVertical className="size-5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild className="cursor-pointer">
               <a
                 href="command:ragdoll.logout"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-md px-4 py-2 text-gray-700 text-sm hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Sign Out
               </a>
-            </div>
-          )}
-        </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </StaticSection>
+    </Section>
   );
 };
 
 const WorkspaceRulesSection: React.FC = () => {
   return (
-    <StaticSection title="Workspace Rules">
-      <div className="flex items-center gap-2">
+    <Section>
+      <div className="flex items-center gap-3">
+        {" "}
+        {/* Added px-6 here to maintain original padding */}
         <a
           href="command:ragdoll.editWorkspaceRules"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md border px-4 py-2 hover:bg-secondary hover:text-secondary-foreground"
+          className="rounded-md border bg-secondary px-4 py-2 text-sm hover:bg-secondary/80"
         >
           Edit Rules
         </a>
-        <span className="text-gray-600 text-sm dark:text-gray-400">
-          Your custom rules for this workspace.
+        <span className="text-muted-foreground text-sm">
+          Customize your rules for this workspace.
         </span>
       </div>
-    </StaticSection>
+    </Section>
   );
 };
 
@@ -131,7 +152,9 @@ const AdvancedSettingsSection: React.FC = () => {
 
   return (
     <AccordionSection title="Advanced Settings">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 px-6">
+        {" "}
+        {/* Added px-6 here as accordion content should likely retain its padding unless specified otherwise for its direct children */}
         {isDevMode !== undefined && (
           <div className="flex items-center gap-2">
             <Checkbox
@@ -143,12 +166,13 @@ const AdvancedSettingsSection: React.FC = () => {
             />
             <label
               htmlFor="dev-mode"
-              className="text-gray-700 text-sm dark:text-gray-300"
+              className="font-bold text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              Dev Mode
+              Developer Mode
             </label>
           </div>
         )}
+        {/* Add other advanced settings here */}
       </div>
     </AccordionSection>
   );
@@ -156,10 +180,11 @@ const AdvancedSettingsSection: React.FC = () => {
 
 export function SettingsPage() {
   return (
-    <div className="container p-4">
-      <div className="space-y-4">
+    <div className="container mx-auto max-w-6xl p-4">
+      <div>
         <AccountSection />
         <WorkspaceRulesSection />
+        <Separator />
         <AdvancedSettingsSection />
       </div>
     </div>
