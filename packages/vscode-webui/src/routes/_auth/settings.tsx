@@ -133,7 +133,7 @@ const WorkspaceRulesSection: React.FC = () => {
           href="command:ragdoll.editWorkspaceRules"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md border bg-secondary px-4 py-2 text-sm hover:bg-secondary/80"
+          className={buttonVariants({ variant: "secondary" })}
         >
           Edit Rules
         </a>
@@ -193,7 +193,7 @@ const ConnectionsSection: React.FC = () => {
           <span className="flex items-center">
             <Dot
               className={cn({
-                "text-green-400": !isFetching && data?.status === "connected",
+                "text-green-400": data?.status === "connected",
               })}
             />
             Github
