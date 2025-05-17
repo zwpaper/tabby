@@ -22,7 +22,6 @@ import type {
   CreateMessage,
   Message,
   TextPart,
-  ToolInvocation,
 } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
@@ -37,7 +36,6 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useReducer,
   useRef,
   useState,
@@ -45,6 +43,11 @@ import {
 import { z } from "zod";
 
 import "@/components/prompt-form/prompt-form.css";
+import {
+  ApprovalButton,
+  type PendingApproval,
+  usePendingApproval,
+} from "@/components/approval-button";
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ImagePreviewList } from "@/components/image-preview-list";
@@ -55,11 +58,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
-import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
-import {
-  useSettingsStore,
-  useToolAutoApproval,
-} from "@/lib/stores/settings-store";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import {
   createImageFileName,
   isDuplicateFile,
@@ -67,11 +66,7 @@ import {
   validateImages,
 } from "@/lib/utils/image";
 import { vscodeHost } from "@/lib/vscode";
-import {
-  type ClientToolsType,
-  isAutoInjectTool,
-  isUserInputTool,
-} from "@ragdoll/tools";
+import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 import type { ResourceURI } from "@ragdoll/vscode-webui-bridge";
 
 const searchSchema = z.object({
@@ -724,161 +719,6 @@ function prepareRequestBody(
   };
 }
 
-interface ApprovalButtonProps {
-  isLoading: boolean;
-  pendingApproval?: PendingApproval;
-  retry: () => void;
-  addToolResult: AddToolResultFunctionType;
-  setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
-  executingToolCallId?: string;
-}
-
-const ApprovalButton: React.FC<ApprovalButtonProps> = ({
-  isLoading,
-  pendingApproval,
-  retry,
-  addToolResult,
-  setIsExecuting,
-  executingToolCallId,
-}) => {
-  if (isLoading || !pendingApproval) return;
-  const { executeTool, rejectTool, abortTool } = useVSCodeTool({
-    addToolResult,
-  });
-
-  const ToolAcceptText: Record<string, string> = {
-    retry: "Retry",
-    writeToFile: "Save",
-    executeCommand: "Run",
-  };
-
-  const ToolRejectText: Record<string, string> = {
-    retry: "Cancel",
-  };
-
-  const ToolAbortText: Record<string, string> = {
-    executeCommand: "Complete",
-  };
-
-  const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
-  const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
-  const abortText = ToolAbortText[pendingApproval.name] || null;
-
-  const executed = useRef(false);
-  const shouldSkipExecute = useCallback(() => {
-    if (executed.current) {
-      return true;
-    }
-    executed.current = true;
-    return false;
-  }, []);
-
-  const { previewToolCall, error: previewToolCallError } = usePreviewToolCall();
-  useEffect(() => {
-    if (pendingApproval.name !== "retry" && !executed.current) {
-      previewToolCall(pendingApproval.tool);
-    }
-  }, [pendingApproval, previewToolCall]);
-
-  const onAccept = useCallback(async () => {
-    if (pendingApproval.name === "retry") {
-      retry();
-    } else {
-      if (shouldSkipExecute()) {
-        return;
-      }
-
-      try {
-        setIsExecuting(true);
-        await executeTool(pendingApproval.tool);
-      } finally {
-        setIsExecuting(false);
-      }
-    }
-  }, [shouldSkipExecute, pendingApproval, retry, executeTool, setIsExecuting]);
-
-  const onReject = useCallback(
-    (error = "User rejected tool call") => {
-      if (pendingApproval.name !== "retry") {
-        if (shouldSkipExecute()) {
-          return;
-        }
-        rejectTool(pendingApproval.tool, error);
-      }
-    },
-    [shouldSkipExecute, pendingApproval, rejectTool],
-  );
-  const onRejectByUser = useCallback(() => onReject(), [onReject]);
-
-  const isAutoApproved = useToolAutoApproval(pendingApproval.name);
-  const isAutoRejected = isAutoInjectTool(pendingApproval.name);
-
-  useEffect(() => {
-    if (isAutoApproved) {
-      onAccept();
-    } else if (isAutoRejected) {
-      onReject();
-    } else if (previewToolCallError) {
-      onReject(previewToolCallError);
-    }
-  }, [
-    isAutoApproved,
-    isAutoRejected,
-    previewToolCallError,
-    onAccept,
-    onReject,
-  ]);
-
-  const [showAbort, setShowAbort] = useState(false);
-
-  useEffect(() => {
-    setShowAbort(false);
-
-    if (executingToolCallId) {
-      const timer = setTimeout(() => {
-        setShowAbort(true);
-        // 15 seconds
-      }, 10_000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [executingToolCallId]);
-
-  let body: React.ReactNode;
-  if (!executingToolCallId) {
-    body = (
-      <>
-        <Button onClick={onAccept}>{acceptText}</Button>
-        {pendingApproval.name !== "retry" && (
-          <Button onClick={onRejectByUser} variant="secondary">
-            {rejectText}
-          </Button>
-        )}
-      </>
-    );
-  }
-
-  if (showAbort && abortText && executingToolCallId) {
-    /*
-    Only display the abort button if:
-    1. There's executing tool call
-    2. The abort text is provided
-    3. The showAbort flag is true (delayed for a bit to avoid flashing)
-    */
-    body = (
-      <Button onClick={abortTool} variant="secondary">
-        {abortText}
-      </Button>
-    );
-  }
-
-  return (
-    <div className="mb-2 flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
-      {body}
-    </div>
-  );
-};
-
 function useRetry({
   messages,
   setMessages,
@@ -936,15 +776,15 @@ function createRenderMessages(messages: UIMessage[]): UIMessage[] {
   return x;
 }
 
-type PendingApproval =
-  | {
-      name: "retry";
-    }
-  | {
-      name: keyof ClientToolsType;
-      tool: ToolInvocation;
-    };
+const useResourceURI = () => {
+  const [resourceURI, setResourceURI] = useState<ResourceURI>();
+  useEffect(() => {
+    vscodeHost.readResourceURI().then(setResourceURI);
+  }, []);
+  return resourceURI;
+};
 
+// Helper function
 function pendingApprovalKey(
   pendingApproval: PendingApproval | undefined,
 ): string | undefined {
@@ -956,88 +796,3 @@ function pendingApprovalKey(
   }
   return pendingApproval.tool.toolCallId;
 }
-
-function usePendingApproval({
-  error,
-  messages,
-}: { error?: Error; messages: UIMessage[] }) {
-  const [isExecuting, setIsExecuting] = useState(false);
-
-  const pendingApproval = useMemo((): PendingApproval | undefined => {
-    if (error) {
-      return {
-        name: "retry",
-      };
-    }
-
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role !== "assistant") {
-      return undefined;
-    }
-
-    for (const part of lastMessage.parts) {
-      if (
-        part.type === "tool-invocation" &&
-        part.toolInvocation.state === "call" &&
-        !isUserInputTool(part.toolInvocation.toolName)
-      ) {
-        return {
-          name: part.toolInvocation.toolName as keyof ClientToolsType,
-          tool: part.toolInvocation,
-        };
-      }
-    }
-    return undefined;
-  }, [error, messages]);
-
-  const executingToolCallId = useMemo(() => {
-    if (pendingApproval && pendingApproval.name !== "retry" && isExecuting) {
-      return pendingApproval.tool.toolCallId;
-    }
-    return undefined;
-  }, [pendingApproval, isExecuting]);
-
-  // Reset isExecuting when pendingApproval changes or disappears
-  useEffect(() => {
-    if (!pendingApproval || pendingApproval.name === "retry") {
-      setIsExecuting(false);
-    }
-  }, [pendingApproval]);
-
-  return { pendingApproval, setIsExecuting, executingToolCallId };
-}
-
-function usePreviewToolCall() {
-  const [error, setError] = useState<string | undefined>(undefined);
-  const previewToolCall = useCallback(async (tool: ToolInvocation) => {
-    const { state, args, toolCallId, toolName } = tool;
-    if (state === "result") return;
-    const result = await vscodeHost.previewToolCall(toolName, args, {
-      toolCallId,
-      state,
-    });
-    if (result?.error && state === "call") {
-      setError((prev) => {
-        if (prev) return prev;
-        return result.error;
-      });
-    }
-  }, []);
-  return { error, previewToolCall };
-}
-
-const useResourceURI = () => {
-  const [resourceURI, setResourceURI] = useState<ResourceURI>();
-  useEffect(() => {
-    vscodeHost.readResourceURI().then(setResourceURI);
-  }, []);
-  return resourceURI;
-};
-
-type AddToolResultFunctionType = ({
-  toolCallId,
-  result,
-}: {
-  toolCallId: string;
-  result: unknown;
-}) => void;
