@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
 
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { GitStatus } from "@/integrations/git/git-status";
 import { collectCustomRules, getSystemInfo } from "@/lib/env";
 import { ignoreWalk, isBinaryFile } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
@@ -47,6 +49,7 @@ export class VSCodeHostImpl implements VSCodeHostApi {
     private readonly tokenStorage: TokenStorage,
     private readonly pochiConfiguration: PochiConfiguration,
     private readonly tabState: TabState,
+    private readonly gitStatus: GitStatus,
   ) {}
 
   readResourceURI = (): Promise<ResourceURI> => {
@@ -99,6 +102,8 @@ export class VSCodeHostImpl implements VSCodeHostApi {
 
     const systemInfo = await getSystemInfo();
 
+    const gitStatus = await this.gitStatus.readGitStatus();
+
     const environment = {
       currentTime: new Date().toString(),
       workspace: {
@@ -108,6 +113,7 @@ export class VSCodeHostImpl implements VSCodeHostApi {
       info: {
         ...systemInfo,
         customRules,
+        gitStatus,
       },
     };
 

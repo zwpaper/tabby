@@ -26,6 +26,10 @@ export const ZodChatRequestType = z.object({
         os: z.string().describe("The operating system."),
         homedir: z.string().describe("The home directory."),
         customRules: z.string().optional(),
+        gitStatus: z
+          .string()
+          .optional()
+          .describe("Git status information for the current workspace."),
       }),
     })
     .optional(),

@@ -8,6 +8,7 @@ export function getReadEnvironmentResult(
   const sections = [
     getCurrentTime(environment.currentTime),
     getWorkspaceFiles(environment.workspace, environment.info),
+    getGitStatus(environment.info.gitStatus),
     getEvent(event),
   ]
     .filter(Boolean)
@@ -39,4 +40,9 @@ function getEvent(event: DB["task"]["event"]) {
     return `# Event triggered this task\n${JSON.stringify(event, null, 2)}`;
   }
   return "";
+}
+
+function getGitStatus(gitStatus: string | undefined) {
+  if (!gitStatus) return "";
+  return `# GIT STATUS\nthis git status will keep latest changes in the repository.\n${gitStatus}`;
 }

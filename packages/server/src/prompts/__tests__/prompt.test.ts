@@ -28,6 +28,20 @@ test("environment", () => {
           os: "linux",
           homedir: "/home/user",
           shell: "bash",
+          gitStatus: `Current branch: add-environment-to-chat-request-body
+Main branch (you will usually use this for PRs): main
+
+Status:
+M packages/vscode-webui-bridge/src/index.ts
+A packages/vscode-webui/src/lib/use-environment.ts
+M packages/vscode-webui/src/lib/vscode.ts
+M packages/vscode-webui/src/routes/chat.tsx
+?? src/fib.test.ts
+?? vitest.config.ts
+
+Recent commits:
+02b50f727 feat(chat): add environment property to prepareRequestBody
+962185adb feat(webui): add new task link and pending component`
         },
       },
       {
