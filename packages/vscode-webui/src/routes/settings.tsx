@@ -60,6 +60,7 @@ const AccordionSection: React.FC<SectionProps> = ({ title, children }) => {
 
 const AccountSection: React.FC = () => {
   const { auth: authData } = Route.useRouteContext();
+  if (!authData) return null;
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (

@@ -166,6 +166,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   }, [loaderData]);
 
   const { auth: authData } = Route.useRouteContext();
+  if (!authData) return null;
+
   const {
     models,
     selectedModel,

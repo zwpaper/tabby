@@ -3,7 +3,7 @@ import {
   createHashHistory,
   createRouter,
 } from "@tanstack/react-router";
-import { StrictMode, useEffect } from "react";
+import { StrictMode, useCallback, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 
 // Import the generated route tree
@@ -22,7 +22,6 @@ const hashHistory = createHashHistory();
 const router = createRouter({
   routeTree,
   context: {
-    // @ts-expect-error
     auth: null,
   },
   defaultPreload: "intent",
@@ -62,36 +61,39 @@ declare module "@tanstack/react-router" {
 function InnerApp() {
   const { data: auth, isPending } = authHooks.useSession();
 
-  useEffect(() => {
-    if (!auth && !isPending) {
-      const currentRoute = router.state.location.pathname;
-      if (currentRoute !== "/sign-in") {
+  const handleNavigation = useCallback(
+    (pathname: string, searchStr: string) => {
+      if (pathname !== "/sign-in") {
         router.navigate({
           to: "/sign-in",
-          search: { redirect: currentRoute + router.state.location.searchStr },
+          search: { redirect: pathname + searchStr },
           replace: true,
         });
       }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!auth && !isPending) {
+      handleNavigation(
+        router.state.location.pathname,
+        router.state.location.searchStr,
+      );
     }
+  }, [isPending, auth, handleNavigation]);
 
-    const unsubscribe = router.subscribe(
-      "onBeforeNavigate",
-      ({ toLocation }) => {
-        const targetPath = toLocation.pathname;
-        const requiresAuth = targetPath !== "/sign-in";
+  useEffect(() => {
+    // Returns a cleanup function that unsubscribes from the router event.
+    return router.subscribe("onBeforeNavigate", ({ toLocation }) => {
+      const targetPath = toLocation.pathname;
+      const requiresAuth = targetPath !== "/sign-in";
 
-        if (requiresAuth && !auth && !isPending) {
-          router.navigate({
-            to: "/sign-in",
-            search: { redirect: targetPath + toLocation.searchStr },
-            replace: true,
-          });
-        }
-      },
-    );
-
-    return () => unsubscribe();
-  }, [isPending, auth]);
+      if (requiresAuth && !auth && !isPending) {
+        handleNavigation(targetPath, toLocation.searchStr);
+      }
+    });
+  }, [auth, isPending, handleNavigation]);
 
   if (isPending) {
     return (

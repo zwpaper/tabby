@@ -3,7 +3,7 @@ import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 interface RouterContext {
-  auth: typeof authClient.$Infer.Session;
+  auth: typeof authClient.$Infer.Session | null;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
