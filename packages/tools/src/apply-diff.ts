@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { EditFileOutputSchema, EditFileResultPrompt } from "./constants";
 import { defineClientTool } from "./types";
 
 export const applyDiff = defineClientTool({
-  description: `Request to replace existing code using a search and replace block.
+  description: `
+Request to replace existing code using a search and replace block.
 This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with.
 The tool will maintain proper indentation and formatting while making changes.
 Only a single operation is allowed per tool use.
@@ -45,7 +47,7 @@ def calculate_total(items):
 >>>>>>> REPLACE
 \`\`\`
 
-After the file is written, if the user edits the file, userEdits field will present in result. You should pay a special attention to it and apply the preference in future operations`,
+${EditFileResultPrompt}`.trim(),
   inputSchema: z.object({
     path: z
       .string()
@@ -60,28 +62,5 @@ After the file is written, if the user edits the file, userEdits field will pres
       .number()
       .describe("The line number where the search block ends."),
   }),
-  outputSchema: z.object({
-    success: z
-      .boolean()
-      .describe("Indicates whether the operation was successful."),
-
-    userEdits: z
-      .string()
-      .describe(
-        "The user's edits to the file, only present if the file was edited by the user.",
-      )
-      .optional(),
-
-    autoFormattingEdits: z
-      .string()
-      .describe(
-        "The auto-formatting edits to the file, only present if the auto formatter made changes.",
-      )
-      .optional(),
-
-    newProblems: z
-      .string()
-      .optional()
-      .describe("The new problems found after applying the diff, if any."),
-  }),
+  outputSchema: EditFileOutputSchema,
 });

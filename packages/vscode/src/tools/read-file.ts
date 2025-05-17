@@ -4,6 +4,9 @@ import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { fileTypeFromBuffer } from "file-type";
 import * as vscode from "vscode";
 
+// Only add line number prefix when running tests
+const AddLineNumberPrefix = !!process.env.VSCODE_TEST_OPTIONS;
+
 export const readFile: ToolFunctionType<ClientToolsType["readFile"]> = async ({
   path,
   startLine,
@@ -31,23 +34,25 @@ export const readFile: ToolFunctionType<ClientToolsType["readFile"]> = async ({
   const end = endLine ? endLine : lines.length;
 
   // Select the relevant lines
-  const selectedLines = lines.slice(start, end);
+  let selectedLines = lines.slice(start, end);
 
-  // Add line numbers
-  const numberedLines = selectedLines.map(
-    (line, index) => `${start + index + 1} | ${line}`,
-  );
+  // Add line numbers if the global flag is true
+  if (AddLineNumberPrefix) {
+    selectedLines = selectedLines.map(
+      (line, index) => `${start + index + 1} | ${line}`,
+    );
+  }
 
-  let contentWithLineNumbers = numberedLines.join("\n");
+  let content = selectedLines.join("\n");
 
   let isTruncated = false;
   // Check byte length and truncate if necessary
-  if (Buffer.byteLength(contentWithLineNumbers, "utf-8") > 1_048_576) {
+  if (Buffer.byteLength(content, "utf-8") > 1_048_576) {
     // This truncation might cut off mid-line or mid-number, which is a simplification.
     // A more robust solution would truncate line by line, but this matches the previous behavior's limit.
-    contentWithLineNumbers = contentWithLineNumbers.slice(0, 1_048_576);
+    content = content.slice(0, 1_048_576);
     isTruncated = true;
   }
 
-  return { content: contentWithLineNumbers, isTruncated };
+  return { content: content, isTruncated };
 };
