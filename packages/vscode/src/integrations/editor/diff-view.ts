@@ -10,6 +10,7 @@ import {
 } from "@/lib/fs";
 import { createPrettyPatch } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import * as diff from "diff";
 import * as runExclusive from "run-exclusive";
 import * as vscode from "vscode";
 import { DecorationController } from "./decoration-controller";
@@ -34,6 +35,7 @@ export class DiffView implements vscode.Disposable {
   private constructor(
     private readonly fileUri: vscode.Uri,
     private readonly fileExists: boolean,
+    private readonly originalContent: string,
     private readonly activeDiffEditor: vscode.TextEditor,
   ) {
     this.fadedOverlayController = new DecorationController(
@@ -233,6 +235,25 @@ export class DiffView implements vscode.Disposable {
     };
   }
 
+  scrollToFirstDiff() {
+    const currentContent = this.activeDiffEditor.document.getText();
+    const diffs = diff.diffLines(this.originalContent || "", currentContent);
+    let lineCount = 0;
+    for (const part of diffs) {
+      if (part.added || part.removed) {
+        // Found the first diff, scroll to it
+        this.activeDiffEditor.revealRange(
+          new vscode.Range(lineCount, 0, lineCount, 0),
+          vscode.TextEditorRevealType.InCenter,
+        );
+        return;
+      }
+      if (!part.removed) {
+        lineCount += part.count || 0;
+      }
+    }
+  }
+
   private async waitForDiagnostic() {
     if (process.env.VSCODE_TEST_OPTIONS) {
       // No waiting in test mode
@@ -280,7 +301,7 @@ export class DiffView implements vscode.Disposable {
       fileExists,
       originalContent,
     );
-    return new DiffView(fileUri, fileExists, activeDiffEditor);
+    return new DiffView(fileUri, fileExists, originalContent, activeDiffEditor);
   }
 
   private static readonly diffViewGetGroup = runExclusive.createGroupRef();

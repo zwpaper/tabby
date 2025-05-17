@@ -1,3 +1,4 @@
+import { setTimeout as setTimeoutPromise } from "node:timers/promises";
 import { DiffView } from "@/integrations/editor/diff-view";
 import { fixCodeGenerationOutput } from "@/tools/output-utils";
 import type { ClientToolsType } from "@ragdoll/tools";
@@ -16,6 +17,10 @@ export const previewWriteToFile: PreviewToolFunctionType<
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
   await diffView.update(processedContent, state !== "partial-call");
+  if (state === "call") {
+    await setTimeoutPromise(300); // wait for diff view to update
+    diffView.scrollToFirstDiff();
+  }
 };
 
 /**
