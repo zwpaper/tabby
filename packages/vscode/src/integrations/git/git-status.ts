@@ -1,7 +1,7 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { injectable, singleton } from "tsyringe";
-import { getWorkspaceFolder } from "../../lib/fs";
+import * as vscode from "vscode";
 import { getLogger } from "../../lib/logger";
 
 const logger = getLogger("GitStatus");
@@ -13,7 +13,8 @@ export class GitStatus {
   private rootPath: string | undefined = undefined;
 
   constructor() {
-    this.rootPath = getWorkspaceFolder().uri.fsPath;
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    this.rootPath = workspaceFolders?.[0]?.uri.fsPath;
   }
 
   /**
@@ -22,46 +23,29 @@ export class GitStatus {
    */
   private async execGit(command: string): Promise<string> {
     if (!this.rootPath) {
-      logger.warn("No Git repository found");
-      return "";
+      throw new Error("No workspace folder found");
     }
 
-    try {
-      const { stdout } = await this.execPromise(`git ${command}`, {
-        cwd: this.rootPath,
-      });
-      return stdout.trim();
-    } catch (error) {
-      logger.trace(`Git command failed: git ${command}`, error);
-      return "";
-    }
+    const { stdout } = await this.execPromise(`git ${command}`, {
+      cwd: this.rootPath,
+    });
+    return stdout.trim();
   }
 
   /**
    * Implementation of git status collection
    * Collects all git data and returns it as structured data
    */
-  private async readGitStatusImpl(): Promise<
-    | {
-        currentBranch: string;
-        mainBranch: string;
-        statusOutput: string;
-        logOutput: string;
-      }
-    | undefined
-  > {
+  private async readGitStatusImpl(): Promise<{
+    currentBranch: string;
+    mainBranch: string;
+    statusOutput: string;
+    logOutput: string;
+  }> {
     const currentBranch = await this.execGit("rev-parse --abbrev-ref HEAD");
-    if (!currentBranch) {
-      logger.warn("No current branch found or repository is empty");
-      return undefined;
-    }
     const mainBranch = await this.execGit(
       "symbolic-ref refs/remotes/origin/HEAD --short",
     );
-    if (!mainBranch) {
-      logger.warn("No main branch found or repository is empty");
-      return undefined;
-    }
     const statusOutput = await this.execGit("status --porcelain");
     const logOutput = await this.execGit('log -n 5 --pretty=format:"%h %s"');
 
@@ -112,20 +96,17 @@ export class GitStatus {
   /**
    * Get Git status information for the current repository as a formatted string
    */
-  async readGitStatus(): Promise<string> {
+  async readGitStatus(): Promise<string | undefined> {
     if (!this.rootPath) {
       logger.warn("No Git repository found");
-      return "";
+      return undefined;
     }
 
     try {
       const gitData = await this.readGitStatusImpl();
-      if (!gitData) {
-        return "";
-      }
       return this.formatGitStatus(gitData);
     } catch (error) {
-      return "";
+      logger.error("Error reading Git status");
     }
   }
 }
