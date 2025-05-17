@@ -6,7 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ChevronRight, EllipsisVertical } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_auth/settings")({
   component: SettingsPage,
 });
 
@@ -60,7 +60,6 @@ const AccordionSection: React.FC<SectionProps> = ({ title, children }) => {
 
 const AccountSection: React.FC = () => {
   const { auth: authData } = Route.useRouteContext();
-  if (!authData) return null;
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (

@@ -92,7 +92,7 @@ const searchSchema = z.object({
   ts: z.number().optional(),
 });
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_auth/")({
   validateSearch: (search) => searchSchema.parse(search),
   component: RouteComponent,
 });
@@ -166,7 +166,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   }, [loaderData]);
 
   const { auth: authData } = Route.useRouteContext();
-  if (!authData) return null;
 
   const {
     models,

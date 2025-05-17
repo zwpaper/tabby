@@ -155,7 +155,6 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
           return;
         }
 
-        vscode.window.showInformationMessage("Successfully logged in!");
         this.authEvents.loginEvent.fire();
       },
     );

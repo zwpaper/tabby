@@ -3,7 +3,7 @@ import {
   createHashHistory,
   createRouter,
 } from "@tanstack/react-router";
-import { StrictMode, useCallback, useEffect } from "react";
+import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
 // Import the generated route tree
@@ -60,40 +60,6 @@ declare module "@tanstack/react-router" {
 
 function InnerApp() {
   const { data: auth, isPending } = authHooks.useSession();
-
-  const handleNavigation = useCallback(
-    (pathname: string, searchStr: string) => {
-      if (pathname !== "/sign-in") {
-        router.navigate({
-          to: "/sign-in",
-          search: { redirect: pathname + searchStr },
-          replace: true,
-        });
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!auth && !isPending) {
-      handleNavigation(
-        router.state.location.pathname,
-        router.state.location.searchStr,
-      );
-    }
-  }, [isPending, auth, handleNavigation]);
-
-  useEffect(() => {
-    // Returns a cleanup function that unsubscribes from the router event.
-    return router.subscribe("onBeforeNavigate", ({ toLocation }) => {
-      const targetPath = toLocation.pathname;
-      const requiresAuth = targetPath !== "/sign-in";
-
-      if (requiresAuth && !auth && !isPending) {
-        handleNavigation(targetPath, toLocation.searchStr);
-      }
-    });
-  }, [auth, isPending, handleNavigation]);
 
   if (isPending) {
     return (

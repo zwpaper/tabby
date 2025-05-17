@@ -27,7 +27,7 @@ import type { Parent, Root, Text } from "mdast";
 import { remark } from "remark";
 import remarkStringify from "remark-stringify";
 
-export const Route = createFileRoute("/tasks")({
+export const Route = createFileRoute("/_auth/tasks")({
   validateSearch: (search: Record<string, unknown>): { page?: number } => {
     return {
       page: Number(search.page ?? 1),
