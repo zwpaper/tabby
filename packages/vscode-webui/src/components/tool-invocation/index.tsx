@@ -12,6 +12,7 @@ import { globFilesTool } from "./tools/glob-files";
 import { listFilesTool } from "./tools/list-files";
 import { readFileTool } from "./tools/read-file";
 import { searchFilesTool } from "./tools/search-files";
+import { webFetchTool } from "./tools/web-fetch";
 import { writeToFileTool } from "./tools/write-to-file";
 import type { ToolProps } from "./types";
 
@@ -56,4 +57,5 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   searchFiles: searchFilesTool,
   listFiles: listFilesTool,
   globFiles: globFilesTool,
+  webFetch: webFetchTool,
 };

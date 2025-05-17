@@ -36,6 +36,7 @@ import {
   toUIMessages,
 } from "../lib/message-utils";
 import { MakeServerTools } from "../lib/tools";
+import { webFetch } from "../lib/tools/web-fetch";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
@@ -84,7 +85,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       .execute();
 
     // Prepare the tools to be used in the streamText call
-    const enabledServerTools: Record<string, Tool> = {};
+    const enabledServerTools: Record<string, Tool> = {
+      webFetch: webFetch(user),
+    };
     if (req.tools && req.tools.length > 0) {
       // Only include the requested server tools
       for (const toolName of req.tools) {
@@ -117,6 +120,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
           environment,
           event,
         ),
+        maxSteps: 5, // setup a default max steps
         tools: {
           ...ClientTools,
           ...enabledServerTools, // Add the enabled server tools

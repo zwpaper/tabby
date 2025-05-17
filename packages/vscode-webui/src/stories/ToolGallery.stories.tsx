@@ -24,6 +24,16 @@ type AskFollowupQuestionProp = ToolProps<
 >;
 type AttemptCompletionProp = ToolProps<ClientToolsType["attemptCompletion"]>;
 
+// FIXME(Meng): adding a type helper for ServerToolsType
+type WebFetchProp = ToolProps<{
+  parameters: {
+    properties: {
+      url: { type: "string" };
+    };
+    required: ["url"];
+  };
+}>;
+
 const searchProps: SearchFilesProp["tool"] = {
   args: {
     path: ".",
@@ -185,6 +195,20 @@ const attemptCompletionProps: AttemptCompletionProp["tool"] = {
   },
 };
 
+const webFetchProps: WebFetchProp["tool"] = {
+  state: "result",
+  step: 0,
+  toolCallId: "tool_web_fetch_1",
+  toolName: "webFetch",
+  args: {
+    url: "https://example.com",
+  },
+  result: {
+    result:
+      "This is the content fetched from example.com. The page contains information about domain examples and placeholder websites. It includes a header, some paragraphs explaining the purpose of example domains, and links to more information about domain names.",
+  },
+};
+
 export const Tools: Story = {
   args: {
     tools: [
@@ -197,6 +221,7 @@ export const Tools: Story = {
       writeToFileProps,
       askFollowupQuestionProps,
       attemptCompletionProps,
+      webFetchProps,
     ],
   },
   parameters: {
