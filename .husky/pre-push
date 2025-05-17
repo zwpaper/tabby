@@ -6,6 +6,7 @@ check_git_clean() {
 main() {
     bun fix
     check_git_clean
+    bun tsc
     bun run test 
     cd packages/vscode && bun run test
 }
