@@ -6,7 +6,6 @@ import { container, instanceCachingFactory } from "tsyringe";
 import type * as vscode from "vscode";
 import { CommandManager } from "./integrations/command";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
-import { StatusBarController } from "./integrations/status-bar";
 import { type AuthClient, createAuthClient } from "./lib/auth-client";
 
 // This method is called when your extension is activated
@@ -27,7 +26,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   container.resolve(RagdollWebviewProvider);
   container.resolve(RagdollUriHandler);
-  container.resolve(StatusBarController);
+  // FIXME(zhiming): remove status bar controller
+  // container.resolve(StatusBarController);
   container.resolve(CommandManager);
   container.resolve(DiffOriginContentProvider);
 }
