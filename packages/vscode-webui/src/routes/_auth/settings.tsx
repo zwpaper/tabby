@@ -140,7 +140,7 @@ const WorkspaceRulesSection: React.FC = () => {
           Edit Rules
         </a>
         <span className="text-muted-foreground text-sm">
-          Customize your rules for this workspace.
+          Customize rules for Pochi in this workspace.
         </span>
       </div>
     </Section>
