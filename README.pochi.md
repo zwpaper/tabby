@@ -23,3 +23,4 @@ When encountering issues like `TypeError: Descriptor for property readFile is no
 2. use `bun tsc` to check the types.
 3. For packages/code it uses `ink` for react terminal ui.
 4. Prefer `@/lib` over `../lib` for imports.
+5. For global variable in typescript, prefer using PascalCase, e.g `GlobalVariableName`, instead of `GLOBAL_VARIABLE_NAME`.

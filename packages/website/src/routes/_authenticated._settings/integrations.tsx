@@ -310,24 +310,30 @@ function GithubIntegrationSection({
 }
 
 // --- GitHub OAuth Integration Component ---
-const GithubOauthScopes = [
-  "gist",
-  "read:org",
-  "read:user",
-  "repo",
-  "user:email",
-  "workflow",
-];
-
 function GithubOauthIntegrationSection() {
-  const { data: accounts, isLoading } = useListAccounts();
+  const { data: accounts, isLoading: isLoadingAccounts } = useListAccounts();
+  const { data: githubOauthData, isLoading: isLoadingGithubOauthData } =
+    useQuery({
+      queryKey: ["githubOauthIntegration"],
+      queryFn: async () => {
+        const response = await apiClient.api.integrations.github.$get();
+        if (!response.ok)
+          throw new Error("Failed to fetch GitHub OAuth status");
+        return response.json();
+      },
+    });
+
   const githubOauthIntegration = accounts?.find((a) => a.provider === "github");
   const disconnectGithubOauthMutation = useUnlinkAccount();
 
   const handleConnectGithubOauth = () => {
+    if (!githubOauthData?.scopes) {
+      toast.error("GitHub OAuth scopes not loaded yet.");
+      return;
+    }
     authClient.signIn.social({
       provider: "github",
-      scopes: GithubOauthScopes,
+      scopes: githubOauthData.scopes,
       callbackURL: "/integrations/?github_oauth_connected=true",
     });
   };
@@ -339,16 +345,7 @@ function GithubOauthIntegrationSection() {
     });
   };
 
-  const hasAllRequestedScopes = (
-    currentScopes: string[] | undefined | null,
-  ) => {
-    if (!currentScopes) return false;
-    return GithubOauthScopes.every((scope) => currentScopes.includes(scope));
-  };
-
-  const sufficientScopes = hasAllRequestedScopes(
-    githubOauthIntegration?.scopes,
-  );
+  const isLoading = isLoadingAccounts || isLoadingGithubOauthData;
 
   return (
     <Card className="w-full overflow-hidden border border-border bg-card/50">
@@ -358,48 +355,56 @@ function GithubOauthIntegrationSection() {
           <CardTitle className="font-medium text-base">
             GitHub OAuth Integration
           </CardTitle>
-          {!isLoading && !githubOauthIntegration && (
+          {!isLoading && githubOauthData?.status === "not-connected" && (
             <Button
               variant="outline"
               size="sm"
               onClick={handleConnectGithubOauth}
               className="ml-auto flex items-center gap-1"
-              disabled={disconnectGithubOauthMutation.isPending}
+              disabled={
+                disconnectGithubOauthMutation.isPending ||
+                isLoadingGithubOauthData
+              }
             >
               <Plus size={16} /> Connect
             </Button>
           )}
-          {!isLoading && githubOauthIntegration && !sufficientScopes && (
+          {!isLoading && githubOauthData?.status === "missing-scopes" && (
             <Button
               variant="outline"
               size="sm"
               onClick={handleConnectGithubOauth} // Re-use connect logic to request missing scopes
               className="ml-auto flex items-center gap-1"
-              disabled={disconnectGithubOauthMutation.isPending}
+              disabled={
+                disconnectGithubOauthMutation.isPending ||
+                isLoadingGithubOauthData
+              }
               title="Request missing repository access scopes"
             >
-              <RefreshCw size={16} /> Request access
+              <RefreshCw size={16} /> Grant
             </Button>
           )}
-          {!isLoading && githubOauthIntegration && sufficientScopes && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                handleDisconnectGithubOauth(githubOauthIntegration.accountId)
-              }
-              className="ml-auto flex items-center gap-1 text-destructive hover:bg-destructive/10"
-              disabled={disconnectGithubOauthMutation.isPending}
-              title="Disconnect GitHub OAuth"
-            >
-              {disconnectGithubOauthMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 size={16} />
-              )}
-              Disconnect
-            </Button>
-          )}
+          {!isLoading &&
+            githubOauthData?.status === "connected" &&
+            githubOauthIntegration && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  handleDisconnectGithubOauth(githubOauthIntegration.accountId)
+                }
+                className="ml-auto flex items-center gap-1 text-destructive hover:bg-destructive/10"
+                disabled={disconnectGithubOauthMutation.isPending}
+                title="Disconnect GitHub OAuth"
+              >
+                {disconnectGithubOauthMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 size={16} />
+                )}
+                Disconnect
+              </Button>
+            )}
         </div>
         <CardDescription>
           Connect your GitHub account using OAuth to allow Pochi to perform
@@ -414,7 +419,8 @@ function GithubOauthIntegrationSection() {
             <Skeleton className="h-4 w-3/4" />
           </div>
         </CardContent>
-      ) : !githubOauthIntegration ? (
+      ) : githubOauthData?.status === "not-connected" ||
+        !githubOauthIntegration ? (
         <CardContent className="flex flex-col items-center justify-center text-center">
           <p className="text-muted-foreground text-sm">
             GitHub OAuth not connected.
@@ -502,6 +508,7 @@ function IntegrationsPage() {
       // Refetch integrations
       queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
       queryClient.invalidateQueries({ queryKey: ["listAccounts"] }); // Invalidate accounts to refetch scopes
+      queryClient.invalidateQueries({ queryKey: ["githubOauthIntegration"] }); // Invalidate github oauth integration data
     }
   }, [queryClient, userId]);
 
