@@ -91,17 +91,16 @@ export const auth = betterAuth({
     account: {
       update: {
         before: async (accountData) => {
-          if (
-            accountData.providerId === "github" &&
-            (await handleGithubAccountUpdate(accountData))
-          ) {
-            return {
-              data: {
-                ...accountData,
-                updatedAt: new Date(),
-              },
-            };
+          if (accountData.providerId === "github") {
+            await handleGithubAccountUpdate(accountData);
           }
+
+          return {
+            data: {
+              ...accountData,
+              updatedAt: new Date(),
+            },
+          };
         },
       },
     },
