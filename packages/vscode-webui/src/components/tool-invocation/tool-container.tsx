@@ -1,5 +1,6 @@
+import { cn } from "@/lib/utils";
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { ExpandIcon } from "./expand-icon";
 
 const ToolContainer: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -15,10 +16,32 @@ const ToolTitle: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-2 break-all rounded text-sm ${className}`}
+      className={`flex items-center gap-2 break-words rounded text-sm ${className}`}
     >
       {children}
     </div>
+  );
+};
+
+const ExpandIcon: React.FC<{
+  isExpanded: boolean;
+  onClick?: () => void;
+  className?: string;
+}> = ({ isExpanded, onClick, className }) => {
+  return (
+    <span
+      className={cn(
+        "mt-0.5 self-start rounded bg-muted p-1 hover:bg-accent",
+        className,
+      )}
+      onClick={onClick}
+    >
+      {isExpanded ? (
+        <ChevronRight className="size-3 rotate-90" />
+      ) : (
+        <ChevronRight className="size-3 rotate-180" />
+      )}
+    </span>
   );
 };
 
@@ -43,7 +66,7 @@ export const ExpandableToolContainer: React.FC<{
         onClick={handleToggle}
         className={expandableDetail ? "cursor-pointer" : undefined}
       >
-        <span className="break-words pr-1 ">{title}</span>
+        <span className="pr-1 leading-relaxed">{title}</span>
         {expandableDetail && <ExpandIcon isExpanded={showDetails} />}
       </ToolTitle>
       {showDetails && expandableDetail}

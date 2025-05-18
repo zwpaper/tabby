@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { isFolder } from "@/lib/utils/file";
+import { addLineBreak, isFolder } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
 import { File, Folder } from "lucide-react";
 
@@ -56,7 +56,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
         className="inline size-3 text-blue-600 dark:text-blue-400"
       />
       <span className="ml-1 break-words">
-        {path}
+        {addLineBreak(path)}
         <span className="text-zinc-500 dark:text-zinc-400">{lineRange}</span>
       </span>
     </span>

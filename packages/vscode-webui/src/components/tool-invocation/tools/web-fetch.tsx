@@ -1,3 +1,4 @@
+import { addLineBreak } from "@/lib/utils/file";
 import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
@@ -12,7 +13,7 @@ export const webFetchTool: React.FC<ToolProps> = ({ tool, isExecuting }) => {
       Reading
       {url && (
         <a href={url} target="_blank" className="ml-2" rel="noreferrer">
-          {url}
+          {addLineBreak(url)}
         </a>
       )}
     </>

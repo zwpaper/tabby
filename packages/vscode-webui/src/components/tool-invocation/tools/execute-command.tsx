@@ -1,5 +1,6 @@
 import { CodeBlock } from "@/components/message";
 import type { ClientToolsType } from "@ragdoll/tools";
+import { HighlightedText } from "../highlight-text";
 import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
@@ -11,7 +12,7 @@ export const executeCommandTool: React.FC<
   const cwdNode = cwd ? (
     <span>
       {" "}
-      in <b>{cwd}</b>
+      in <HighlightedText>{cwd}</HighlightedText>
     </span>
   ) : null;
   const text = isDevServer
