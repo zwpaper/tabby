@@ -126,6 +126,10 @@ export class VSCodeHostImpl implements VSCodeHostApi {
     return ThreadSignal.serialize(this.tabState.activeTabs);
   };
 
+  isWorkspaceActive = async (): Promise<boolean> => {
+    return !!vscode.workspace.workspaceFolders?.length;
+  };
+
   listFilesInWorkspace = async (): Promise<
     {
       filepath: string;

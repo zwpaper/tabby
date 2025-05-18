@@ -11,6 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/auth-client";
 import { CustomHtmlTags } from "@/lib/constants";
+import { useIsWorkspaceActive } from "@/lib/hooks/use-is-workspace-active";
 import { vscodeHost } from "@/lib/vscode";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
@@ -26,6 +27,7 @@ import {
 import type { Parent, Root, Text } from "mdast";
 import { remark } from "remark";
 import remarkStringify from "remark-stringify";
+import { WorkspaceRequiredPlaceholder } from "../../components/workspace-required-placeholder";
 
 export const Route = createFileRoute("/_auth/tasks")({
   validateSearch: (search: Record<string, unknown>): { page?: number } => {
@@ -152,8 +154,18 @@ function App() {
     queryFn: () => vscodeHost.readEnvironment(),
   });
 
+  const { data: isWorkspaceActive, isFetching } = useIsWorkspaceActive();
+
   if (!environment) {
     return;
+  }
+
+  if (!isWorkspaceActive) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center">
+        <WorkspaceRequiredPlaceholder isFetching={isFetching} />
+      </div>
+    );
   }
 
   return <Tasks cwd={environment.info.cwd} />;

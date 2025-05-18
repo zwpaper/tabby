@@ -56,8 +56,10 @@ import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
+import { useIsWorkspaceActive } from "@/lib/hooks/use-is-workspace-active";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import {
   createImageFileName,
@@ -159,6 +161,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   useEffect(() => {
     taskId.current = loaderData?.id;
   }, [loaderData]);
+
+  const { data: isWorkspaceActive, isFetching } = useIsWorkspaceActive();
 
   const { auth: authData } = Route.useRouteContext();
 
@@ -561,94 +565,103 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             uploadImageError?.message ||
             error?.message}
         </div>
-        <ApprovalButton
-          key={pendingApprovalKey(pendingApproval)}
-          isLoading={isLoading}
-          retry={retry}
-          pendingApproval={pendingApproval}
-          addToolResult={addToolResultWithForceUpdate}
-          executingToolCallId={executingToolCallId}
-          setIsExecuting={setIsExecuting}
-          chatHasFinishedOnce={chatHasFinishedOnce.current}
-        />
-        <AutoApproveMenu />
-        {files.length > 0 && (
-          <ImagePreviewList
-            files={files}
-            onRemove={handleRemoveImage}
-            uploadingFiles={uploadingFilesMap}
+        {!isWorkspaceActive ? (
+          <WorkspaceRequiredPlaceholder
+            isFetching={isFetching}
+            className="mb-12"
           />
-        )}
-        <FormEditor
-          input={input}
-          setInput={setInput}
-          onSubmit={wrappedHandleSubmit}
-          isLoading={isModelsLoading || isLoading || isTaskLoading}
-          formRef={formRef}
-          editorRef={editorRef}
-          onPaste={handlePasteImage}
-        >
-          {false && taskId.current && (
-            <span className="absolute top-1 right-2 text-foreground/80 text-xs">
-              TASK-{String(taskId.current).padStart(3, "0")}
-            </span>
-          )}
-        </FormEditor>
-
-        {/* Hidden file input for image uploads */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileSelect}
-          accept="image/*"
-          multiple
-          className="hidden"
-        />
-
-        <div className="my-2 flex shrink-0 justify-between gap-3 overflow-x-hidden">
-          <ModelSelect
-            value={selectedModel?.id}
-            models={models}
-            isLoading={isModelsLoading}
-            onChange={handleSelectModel}
-          />
-
-          <div className="flex shrink-0 items-center gap-1">
-            {isDevMode?.value && <DevModeButton messages={messages} />}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-              className="h-6 w-6 rounded-md p-0"
+        ) : (
+          <>
+            <ApprovalButton
+              key={pendingApprovalKey(pendingApproval)}
+              isLoading={isLoading}
+              retry={retry}
+              pendingApproval={pendingApproval}
+              addToolResult={addToolResultWithForceUpdate}
+              executingToolCallId={executingToolCallId}
+              setIsExecuting={setIsExecuting}
+              chatHasFinishedOnce={chatHasFinishedOnce.current}
+            />
+            <AutoApproveMenu />
+            {files.length > 0 && (
+              <ImagePreviewList
+                files={files}
+                onRemove={handleRemoveImage}
+                uploadingFiles={uploadingFilesMap}
+              />
+            )}
+            <FormEditor
+              input={input}
+              setInput={setInput}
+              onSubmit={wrappedHandleSubmit}
+              isLoading={isModelsLoading || isLoading || isTaskLoading}
+              formRef={formRef}
+              editorRef={editorRef}
+              onPaste={handlePasteImage}
             >
-              <ImageIcon className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={
-                isTaskLoading ||
-                isModelsLoading ||
-                (!isLoading && !input && files.length === 0)
-              }
-              className="h-6 w-6 rounded-md p-0 transition-opacity"
-              onClick={() => {
-                if (isLoading || isUploadingImages) {
-                  handleStop();
-                } else {
-                  formRef.current?.requestSubmit();
-                }
-              }}
-            >
-              {isLoading || isUploadingImages ? (
-                <StopCircleIcon className="size-4" />
-              ) : (
-                <SendHorizonal className="size-4" />
+              {false && taskId.current && (
+                <span className="absolute top-1 right-2 text-foreground/80 text-xs">
+                  TASK-{String(taskId.current).padStart(3, "0")}
+                </span>
               )}
-            </Button>
-          </div>
-        </div>
+            </FormEditor>
+
+            {/* Hidden file input for image uploads */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/*"
+              multiple
+              className="hidden"
+            />
+
+            <div className="my-2 flex shrink-0 justify-between gap-3 overflow-x-hidden">
+              <ModelSelect
+                value={selectedModel?.id}
+                models={models}
+                isLoading={isModelsLoading}
+                onChange={handleSelectModel}
+              />
+
+              <div className="flex shrink-0 items-center gap-1">
+                {isDevMode?.value && <DevModeButton messages={messages} />}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-6 w-6 rounded-md p-0"
+                >
+                  <ImageIcon className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={
+                    isTaskLoading ||
+                    isModelsLoading ||
+                    (!isLoading && !input && files.length === 0)
+                  }
+                  className="h-6 w-6 rounded-md p-0 transition-opacity"
+                  onClick={() => {
+                    if (isLoading || isUploadingImages) {
+                      handleStop();
+                    } else {
+                      formRef.current?.requestSubmit();
+                    }
+                  }}
+                >
+                  {isLoading || isUploadingImages ? (
+                    <StopCircleIcon className="size-4" />
+                  ) : (
+                    <SendHorizonal className="size-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
