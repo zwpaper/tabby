@@ -96,8 +96,10 @@ export const auth = betterAuth({
             (await handleGithubAccountUpdate(accountData))
           ) {
             return {
-              // Do not update the account
-              data: {},
+              data: {
+                ...accountData,
+                updatedAt: new Date(),
+              },
             };
           }
         },
