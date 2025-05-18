@@ -145,14 +145,33 @@ const WorkspaceRulesSection: React.FC = () => {
   );
 };
 
+interface IntegrationDisplayConfig {
+  provider: string;
+  displayName: string;
+  capabilities: string[];
+}
+
+const integrationDisplayConfigs: IntegrationDisplayConfig[] = [
+  {
+    provider: "github",
+    displayName: "GitHub",
+    capabilities: ["createPullRequest", "createIssue"],
+  },
+  {
+    provider: "slack",
+    displayName: "Slack",
+    capabilities: ["sendMessage"],
+  },
+];
+
 const ConnectionsSection: React.FC = () => {
   const queryClient = useQueryClient();
-  const { data, isFetching } = useQuery({
+  const { data: connectedIntegrationsData, isFetching } = useQuery({
     queryKey: ["integrations"],
     queryFn: async () => {
       const res = await apiClient.api.integrations.$get();
       if (!res.ok) {
-        throw new Error("Failed to fetch GitHub integration status");
+        throw new Error("Failed to fetch integration status");
       }
       return res.json();
     },
@@ -163,8 +182,6 @@ const ConnectionsSection: React.FC = () => {
       queryKey: ["integrations"],
     });
   };
-
-  const isGithubConnected = !!data?.find((i) => i.provider === "github");
 
   return (
     <div className="py-4">
@@ -191,20 +208,36 @@ const ConnectionsSection: React.FC = () => {
         </span>
       </div>
       <div className="space-y-2">
-        <div className="flex justify-between rounded-md border px-2 py-2">
-          <span className="flex items-center">
-            <Dot
-              className={cn({
-                "text-green-400": isGithubConnected,
-              })}
-            />
-            Github
-          </span>
-          <span className="space-x-2">
-            <Badge variant="secondary">createPullRequest</Badge>
-            <Badge variant="secondary">createIssue</Badge>
-          </span>
-        </div>
+        {integrationDisplayConfigs.map((config) => {
+          const isConnected = !!connectedIntegrationsData?.find(
+            (i) => i.provider === config.provider,
+          );
+          return (
+            <div
+              key={config.provider}
+              className="flex justify-between rounded-md border px-2 py-2"
+            >
+              <span className="flex items-center">
+                <Dot
+                  className={cn("size-6", {
+                    "text-green-400": isConnected,
+                    "text-muted-foreground": !isConnected,
+                  })}
+                />
+                {config.displayName}
+              </span>
+              {config.capabilities.length > 0 && (
+                <span className="space-x-2">
+                  {config.capabilities.map((capability) => (
+                    <Badge key={capability} variant="secondary">
+                      {capability}
+                    </Badge>
+                  ))}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
