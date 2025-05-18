@@ -11,6 +11,7 @@ import {
 import { apiClient } from "@/lib/auth-client";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { cn } from "@/lib/utils";
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -73,7 +74,7 @@ const AccountSection: React.FC = () => {
     <div className={cn("py-4")}>
       <div className="flex items-center justify-between gap-3">
         <a
-          href="command:ragdoll.openAccountPage"
+          href={`${getServerBaseUrl()}/account`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex flex-grow items-center gap-3 rounded-md p-2 hover:bg-secondary"
@@ -189,7 +190,7 @@ const ConnectionsSection: React.FC = () => {
         <h2 className="ml-1 font-bold text-base">Connections</h2>
         <span className="flex gap-1">
           <a
-            href="command:ragdoll.openIntegrationPage"
+            href={`${getServerBaseUrl()}/integrations`}
             className={buttonVariants({ variant: "ghost", size: "sm" })}
           >
             <Blocks className="size-4" />

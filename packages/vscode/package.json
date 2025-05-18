@@ -34,16 +34,6 @@
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.openAccountPage",
-        "title": "Open Account Page",
-        "category": "Pochi"
-      },
-      {
-        "command": "ragdoll.openIntegrationPage",
-        "title": "Open Integration Page",
-        "category": "Pochi"
-      },
-      {
         "command": "ragdoll.logout",
         "title": "Logout",
         "category": "Pochi"
@@ -81,14 +71,6 @@
       "commandPalette": [
         {
           "command": "ragdoll.openLoginPage",
-          "when": "false"
-        },
-        {
-          "command": "ragdoll.openAccountPage",
-          "when": "false"
-        },
-        {
-          "command": "ragdoll.openIntegrationPage",
           "when": "false"
         },
         {
