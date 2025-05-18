@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { admin, bearer, magicLink, oAuthProxy } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
 import { db } from "./db";
+import { handleGithubAccountUpdate } from "./github";
 import { StripePlans } from "./lib/constants";
 import { deviceLink } from "./lib/device-link";
 import { resend } from "./lib/resend";
@@ -86,6 +87,23 @@ export const auth = betterAuth({
       },
     }),
   ],
+  databaseHooks: {
+    account: {
+      update: {
+        before: async (accountData) => {
+          if (
+            accountData.providerId === "github" &&
+            (await handleGithubAccountUpdate(accountData))
+          ) {
+            return {
+              // Do not update the account
+              data: {},
+            };
+          }
+        },
+      },
+    },
+  },
 });
 
 export const authRequest = createMiddleware<{ Variables: { user?: User } }>(

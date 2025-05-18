@@ -148,9 +148,9 @@ const WorkspaceRulesSection: React.FC = () => {
 const ConnectionsSection: React.FC = () => {
   const queryClient = useQueryClient();
   const { data, isFetching } = useQuery({
-    queryKey: ["integrations", "github"],
+    queryKey: ["integrations"],
     queryFn: async () => {
-      const res = await apiClient.api.integrations.github.$get();
+      const res = await apiClient.api.integrations.$get();
       if (!res.ok) {
         throw new Error("Failed to fetch GitHub integration status");
       }
@@ -160,9 +160,11 @@ const ConnectionsSection: React.FC = () => {
 
   const onRefresh = () => {
     queryClient.invalidateQueries({
-      queryKey: ["integrations", "github"],
+      queryKey: ["integrations"],
     });
   };
+
+  const isGithubConnected = !!data?.find((i) => i.provider === "github");
 
   return (
     <div className="py-4">
@@ -193,7 +195,7 @@ const ConnectionsSection: React.FC = () => {
           <span className="flex items-center">
             <Dot
               className={cn({
-                "text-green-400": data?.status === "connected",
+                "text-green-400": isGithubConnected,
               })}
             />
             Github

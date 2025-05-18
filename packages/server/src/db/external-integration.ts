@@ -1,4 +1,3 @@
-import type { Endpoints } from "@octokit/types";
 import type { Installation } from "@slack/bolt";
 
 interface SlackProvider {
@@ -8,7 +7,10 @@ interface SlackProvider {
 
 interface GithubProvider {
   provider: "github";
-  payload: Endpoints["GET /user/installations"]["response"]["data"]["installations"][number];
+  payload: {
+    accessToken: string;
+    scopes: string[];
+  };
 }
 
 export type ExternalIntegrationVendorData = {

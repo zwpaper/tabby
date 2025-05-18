@@ -1,17 +1,7 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { auth, requireAuth } from "../auth";
+import { requireAuth } from "../auth";
 import { type DB, db } from "../db";
-
-// Define GithubOauthScopes constant
-const GithubOauthScopes = [
-  "gist",
-  "read:org",
-  "read:user",
-  "repo",
-  "user:email",
-  "workflow",
-];
 
 const integrations = new Hono()
   .use(requireAuth())
@@ -37,30 +27,6 @@ const integrations = new Hono()
       console.error("Failed to fetch integrations:", error);
       throw new HTTPException(500, { message: "Failed to fetch integrations" });
     }
-  })
-  // Special integration to github oauth is through the better auth.
-  .get("/github", async (c) => {
-    const userAccounts = await auth.api.listUserAccounts({
-      headers: c.req.raw.headers,
-    });
-    const githubAccount = userAccounts.find((x) => x.provider === "github");
-    const missingScopes = new Set(GithubOauthScopes).difference(
-      new Set(githubAccount?.scopes),
-    );
-
-    let status: "connected" | "missing-scopes" | "not-connected";
-    if (!githubAccount) {
-      status = "not-connected";
-    } else if (missingScopes.size > 0) {
-      status = "missing-scopes";
-    } else {
-      status = "connected";
-    }
-
-    return c.json({
-      status,
-      scopes: GithubOauthScopes,
-    });
   })
   // Delete an integration
   .delete("/:id", async (c) => {
