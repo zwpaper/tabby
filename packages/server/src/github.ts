@@ -1,26 +1,35 @@
+import type { GenericEndpointContext } from "better-auth";
+import { getSessionFromCtx } from "better-auth/api";
 import { sql } from "kysely";
+import { auth } from "./auth";
 import { type DB, db } from "./db";
 
-export async function handleGithubAccountUpdate({
-  userId,
-  accountId,
-  accessToken,
-  scope,
-}: {
-  userId?: string | null;
-  accountId?: string | null;
-  accessToken?: string | null;
-  scope?: string | null;
-}) {
-  if (!userId || !accountId || !accessToken || !scope) {
-    return false;
-  }
-  if (!scope.includes("repo")) {
-    return false;
-  }
+export async function handleGithubAccountUpdate(
+  {
+    accessToken,
+    scope,
+  }: {
+    accessToken: string;
+    scope: string;
+  },
+  ctx: GenericEndpointContext,
+) {
+  const session = await getSessionFromCtx(ctx, {
+    disableRefresh: true,
+  });
+  if (!session) return;
+
+  const userAccounts = await auth.api.listUserAccounts({
+    headers: ctx.request?.headers,
+  });
+  const githubUserAccount = userAccounts.find(
+    (account) => account.provider === "github",
+  );
+  if (!githubUserAccount) return;
+
   const vendorData = JSON.stringify({
     provider: "github",
-    integrationId: accountId,
+    integrationId: githubUserAccount.accountId,
     payload: {
       accessToken: accessToken,
       scopes: scope.split(","),
@@ -30,7 +39,7 @@ export async function handleGithubAccountUpdate({
   await db
     .insertInto("externalIntegration")
     .values({
-      userId,
+      userId: session.user.id,
       vendorData,
     })
     .onConflict((oc) =>
@@ -39,7 +48,7 @@ export async function handleGithubAccountUpdate({
           sql`("vendorData"->>'provider'), ("vendorData"->>'integrationId')`,
         )
         .doUpdateSet({
-          userId,
+          userId: session.user.id,
           vendorData,
         }),
     )

@@ -90,9 +90,19 @@ export const auth = betterAuth({
   databaseHooks: {
     account: {
       update: {
-        before: async (accountData) => {
-          if (accountData.providerId === "github") {
-            await handleGithubAccountUpdate(accountData);
+        before: async (accountData, ctx) => {
+          if (
+            accountData.accessToken?.startsWith("gho_") &&
+            accountData.scope?.includes("repo") &&
+            ctx
+          ) {
+            await handleGithubAccountUpdate(
+              {
+                accessToken: accountData.accessToken,
+                scope: accountData.scope,
+              },
+              ctx,
+            );
           }
 
           return {
