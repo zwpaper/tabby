@@ -1,6 +1,7 @@
 import { withThemeByClassName } from "@storybook/addon-themes";
 import { MINIMAL_VIEWPORTS } from "@storybook/addon-viewport";
 import type { Preview } from "@storybook/react";
+import { Providers } from "../src/providers";
 import "./background.css";
 import "./vscode-modern-dark.css";
 import "./vscode-modern-light.css";
@@ -66,6 +67,9 @@ export const decorators = [
       document.body.classList.add("vscode-light");
     }
     return story();
+  },
+  (Story) => {
+    return <Providers>{Story()}</Providers>;
   },
 ];
 
