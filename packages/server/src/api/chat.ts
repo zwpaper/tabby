@@ -4,6 +4,7 @@ import { isUserInputTool, selectServerTools } from "@ragdoll/tools";
 import { ClientTools } from "@ragdoll/tools";
 import {
   APICallError,
+  type DataStreamWriter,
   type FinishReason,
   type LanguageModel,
   type LanguageModelUsage,
@@ -87,58 +88,60 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
         .catch(console.error);
     }
 
-    const processedMessages = await preprocessMessages(
-      messages,
-      selectedModel,
-      environment,
-      user,
-      event,
-    );
-
-    const result = Laminar.withSession(`${user.id}-${id}`, () =>
-      streamText({
-        toolCallStreaming: true,
-        model: c.get("model") || selectedModel,
-        system: environment?.info && generateSystemPrompt(environment.info),
-        messages: processedMessages,
-        tools: {
-          ...ClientTools,
-          ...enabledServerTools, // Add the enabled server tools
-        },
-        onFinish: async ({ usage, finishReason, response }) => {
-          const messagesToSave = postProcessMessages(
-            appendResponseMessages({
-              messages,
-              responseMessages: response.messages,
-            }),
-          );
-          const taskStatus = getTaskStatus(messagesToSave, finishReason);
-
-          await taskRepository
-            .updateMessages(id, user.id, taskStatus, messagesToSave)
-            .catch(console.error);
-
-          if (!Number.isNaN(usage.totalTokens)) {
-            await trackUsage(user, requestedModelId, usage);
-          }
-        },
-        experimental_telemetry: {
-          isEnabled: true,
-          tracer: getTracer(),
-          metadata: {
-            "user-id": user.id,
-            "user-email": user.email,
-            "task-id": id,
-          },
-        },
-      }),
-    );
-
     const dataStream = createDataStream({
-      execute: (stream) => {
+      execute: async (stream) => {
         if (req.id === undefined) {
           stream.writeData({ id });
         }
+
+        const processedMessages = await preprocessMessages(
+          messages,
+          selectedModel,
+          environment,
+          user,
+          event,
+          stream,
+        );
+
+        const result = Laminar.withSession(`${user.id}-${id}`, () =>
+          streamText({
+            toolCallStreaming: true,
+            model: c.get("model") || selectedModel,
+            system: environment?.info && generateSystemPrompt(environment.info),
+            messages: processedMessages,
+            tools: {
+              ...ClientTools,
+              ...enabledServerTools, // Add the enabled server tools
+            },
+            onFinish: async ({ usage, finishReason, response }) => {
+              const messagesToSave = postProcessMessages(
+                appendResponseMessages({
+                  messages,
+                  responseMessages: response.messages,
+                }),
+              );
+              const taskStatus = getTaskStatus(messagesToSave, finishReason);
+
+              await taskRepository
+                .updateMessages(id, user.id, taskStatus, messagesToSave)
+                .catch(console.error);
+
+              if (!Number.isNaN(usage.totalTokens)) {
+                await trackUsage(user, requestedModelId, usage);
+              }
+            },
+            experimental_telemetry: {
+              isEnabled: true,
+              tracer: getTracer(),
+              metadata: {
+                "user-id": user.id,
+                "user-email": user.email,
+                "task-id": id,
+              },
+            },
+          }),
+        );
+
         result.mergeIntoDataStream(stream);
       },
       onError(error) {
@@ -178,14 +181,15 @@ async function preprocessMessages(
   environment: Environment | undefined,
   user: User,
   event: DB["task"]["event"],
+  stream: DataStreamWriter,
 ): Promise<Message[]> {
   let messages = resolvePendingTools(inputMessages);
   messages = injectReadEnvironment(messages, model, environment, event);
-  messages = await resolveServerTools(messages, user);
+  messages = await resolveServerTools(messages, user, stream);
   return messages;
 }
 
-function resolvePendingTools(inputMessages: Message[]) {
+function resolvePendingTools(inputMessages: Message[]): Message[] {
   return inputMessages.map((message) => {
     if (message.role === "assistant" && message.parts) {
       for (let i = 0; i < message.parts.length; i++) {
@@ -194,14 +198,15 @@ function resolvePendingTools(inputMessages: Message[]) {
           part.type === "tool-invocation" &&
           part.toolInvocation.state !== "result"
         ) {
+          const result = isUserInputTool(part.toolInvocation.toolName)
+            ? { success: true }
+            : {
+                error: "User cancelled the tool call.",
+              };
           part.toolInvocation = {
             ...part.toolInvocation,
             state: "result",
-            result: isUserInputTool(part.toolInvocation.toolName)
-              ? { success: true }
-              : {
-                  error: "User cancelled the tool call.",
-                },
+            result,
           };
         }
       }

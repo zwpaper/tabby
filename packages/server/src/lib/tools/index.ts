@@ -1,5 +1,11 @@
 import { ServerToolApproved, ServerTools } from "@ragdoll/tools";
-import type { Message, Tool, ToolInvocation } from "ai";
+import {
+  type DataStreamWriter,
+  type Message,
+  type Tool,
+  type ToolInvocation,
+  formatDataStreamPart,
+} from "ai";
 import type { User } from "../../auth";
 import { slackReplyThreadImpl } from "./slack-reply-thread";
 import { webFetchImpl } from "./web-fetch";
@@ -27,7 +33,11 @@ const executeServerTools = async (ctx: User, toolCall: ToolInvocation) => {
   });
 };
 
-export async function resolveServerTools(messages: Message[], user: User) {
+export async function resolveServerTools(
+  messages: Message[],
+  user: User,
+  stream: DataStreamWriter,
+) {
   const lastMessage = messages[messages.length - 1];
   if (!lastMessage) return messages;
   lastMessage.parts = await Promise.all(
@@ -40,6 +50,12 @@ export async function resolveServerTools(messages: Message[], user: User) {
       ) {
         const toolInvocation = part.toolInvocation;
         const result = await executeServerTools(user, toolInvocation);
+        stream.write(
+          formatDataStreamPart("tool_result", {
+            toolCallId: toolInvocation.toolCallId,
+            result,
+          }),
+        );
 
         return {
           ...part,
