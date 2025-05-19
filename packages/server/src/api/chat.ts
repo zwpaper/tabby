@@ -17,28 +17,23 @@ import {
   streamText,
 } from "ai";
 import { Hono } from "hono";
-import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
-import { sql } from "kysely";
 import moment from "moment";
 import { type User, requireAuth } from "../auth";
-import { type DB, type UserEvent, db } from "../db";
+import { type DB, db } from "../db";
 import {
   checkModel,
   checkUserQuota,
   checkWaitlist,
 } from "../lib/check-request";
-import {
-  fromUIMessages,
-  toUIMessage,
-  toUIMessages,
-} from "../lib/message-utils";
+import { toUIMessage, toUIMessages } from "../lib/message-utils"; // Removed fromUIMessages
 import { resolveServerTools } from "../lib/tools";
 import {
   injectReadEnvironment,
   stripReadEnvironment,
 } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
+import { taskRepository } from "../repositories/task-repository";
 import { type Environment, ZodChatRequestType } from "../types";
 
 export type ContextVariables = {
@@ -66,7 +61,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     checkWaitlist(user);
 
-    const { id, conversation, event } = await getTaskOrCreate(
+    const { id, conversation, event } = await taskRepository.getOrCreate(
       user,
       req.id,
       req.event,
@@ -77,12 +72,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       message: toUIMessage(message),
     });
 
-    await db
-      .updateTable("task")
-      .set({ status: "streaming" })
-      .where("taskId", "=", id)
-      .where("userId", "=", user.id)
-      .execute();
+    await taskRepository.updateStatus(id, user.id, "streaming");
 
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(
@@ -90,16 +80,12 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     );
 
     // Update the environment.
-    await db
-      .updateTable("task")
-      .set({
-        environment,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("taskId", "=", id)
-      .where("userId", "=", user.id)
-      .executeTakeFirstOrThrow()
-      .catch(console.error);
+    if (environment) {
+      // Ensure environment is defined before updating
+      await taskRepository
+        .updateEnvironment(id, user.id, environment)
+        .catch(console.error);
+    }
 
     const processedMessages = await preprocessMessages(
       messages,
@@ -126,20 +112,10 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
               responseMessages: response.messages,
             }),
           );
+          const taskStatus = getTaskStatus(messagesToSave, finishReason);
 
-          await db
-            .updateTable("task")
-            .set({
-              environment,
-              status: getTaskStatus(messagesToSave, finishReason),
-              conversation: {
-                messages: fromUIMessages(messagesToSave),
-              },
-              updatedAt: sql`CURRENT_TIMESTAMP`,
-            })
-            .where("taskId", "=", id)
-            .where("userId", "=", user.id)
-            .executeTakeFirstOrThrow()
+          await taskRepository
+            .updateMessages(id, user.id, taskStatus, messagesToSave)
             .catch(console.error);
 
           if (!Number.isNaN(usage.totalTokens)) {
@@ -270,80 +246,6 @@ async function trackUsage(
         })),
     )
     .execute();
-}
-
-async function getTaskOrCreate(
-  user: User,
-  chatId: string | undefined,
-  event: UserEvent | undefined,
-  environment: Environment | undefined,
-) {
-  let taskId = chatId ? Number.parseInt(chatId) : undefined;
-  if (taskId === undefined) {
-    taskId = await createTask(user.id, event);
-  }
-
-  const data = await db
-    .selectFrom("task")
-    .select(["conversation", "event", "environment"])
-    .where("taskId", "=", taskId)
-    .where("userId", "=", user.id)
-    .executeTakeFirstOrThrow();
-  await verifyEnvironment(environment, data.environment);
-  return {
-    ...data,
-    id: taskId,
-  };
-}
-
-async function createTask(userId: string, event: UserEvent | null = null) {
-  const { taskId } = await db.transaction().execute(async (trx) => {
-    const { nextTaskId } = await trx
-      .insertInto("taskSequence")
-      .values({ userId })
-      .onConflict((oc) =>
-        oc
-          .column("userId")
-          .doUpdateSet({ nextTaskId: sql`"taskSequence"."nextTaskId" + 1` }),
-      )
-      .returning("nextTaskId")
-      .executeTakeFirstOrThrow();
-
-    return await trx
-      .insertInto("task")
-      .values({
-        userId,
-        taskId: nextTaskId,
-        event,
-      })
-      .returning("taskId")
-      .executeTakeFirstOrThrow();
-  });
-  return taskId;
-}
-
-function verifyEnvironment(
-  environment: Environment | undefined,
-  expectedEnvironment: Environment | null,
-) {
-  if (expectedEnvironment === null) return;
-  if (environment === undefined) {
-    throw new HTTPException(400, {
-      message: "Environment is required",
-    });
-  }
-
-  if (environment.info.os !== expectedEnvironment.info.os) {
-    throw new HTTPException(400, {
-      message: "Environment OS mismatch",
-    });
-  }
-
-  if (environment.info.cwd !== expectedEnvironment.info.cwd) {
-    throw new HTTPException(400, {
-      message: "Environment CWD mismatch",
-    });
-  }
 }
 
 export default chat;
