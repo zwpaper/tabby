@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import { setTimeout as setTimeoutPromise } from "node:timers/promises";
 import {
   diagnosticsToProblemsString,
   getNewDiagnostics,
@@ -166,6 +167,9 @@ export class DiffView implements vscode.Disposable {
       }
       this.fadedOverlayController.clear();
       this.activeLineController.clear();
+
+      await setTimeoutPromise(300);
+      this.scrollToFirstDiff();
     }
   }
 
@@ -231,7 +235,7 @@ export class DiffView implements vscode.Disposable {
     };
   }
 
-  scrollToFirstDiff() {
+  private scrollToFirstDiff() {
     const currentContent = this.activeDiffEditor.document.getText();
     const diffs = diff.diffLines(this.originalContent || "", currentContent);
     let lineCount = 0;
