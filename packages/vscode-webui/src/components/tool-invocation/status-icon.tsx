@@ -30,6 +30,7 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
   let error: string | undefined;
   if (
     tool.state === "result" &&
+    typeof tool.result === "object" &&
     "error" in tool.result &&
     typeof tool.result.error === "string"
   ) {

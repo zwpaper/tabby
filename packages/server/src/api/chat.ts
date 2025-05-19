@@ -1,6 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
-import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
+import {
+  isAutoInjectTool,
+  isUserInputTool,
+  selectServerTools,
+} from "@ragdoll/tools";
 import { ClientTools } from "@ragdoll/tools";
 import {
   APICallError,
@@ -11,19 +15,17 @@ import {
   type Message,
   NoSuchToolError,
   RetryError,
-  type Tool,
   appendClientMessage,
   appendResponseMessages,
   createDataStream,
   streamText,
 } from "ai";
-import type { User } from "better-auth";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
 import { sql } from "kysely";
 import moment from "moment";
-import { requireAuth } from "../auth";
+import { type User, requireAuth } from "../auth";
 import { type DB, type UserEvent, db } from "../db";
 import {
   checkModel,
@@ -35,8 +37,7 @@ import {
   toUIMessage,
   toUIMessages,
 } from "../lib/message-utils";
-import { MakeServerTools } from "../lib/tools";
-import { webFetch } from "../lib/tools/web-fetch";
+import { resolveServerTools } from "../lib/tools";
 import { getReadEnvironmentResult } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
@@ -85,17 +86,9 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       .execute();
 
     // Prepare the tools to be used in the streamText call
-    const enabledServerTools: Record<string, Tool> = {
-      webFetch: webFetch(user),
-    };
-    if (req.tools && req.tools.length > 0) {
-      // Only include the requested server tools
-      for (const toolName of req.tools) {
-        if (toolName in MakeServerTools) {
-          enabledServerTools[toolName] = MakeServerTools[toolName](user);
-        }
-      }
-    }
+    const enabledServerTools = selectServerTools(
+      ["webFetch"].concat(req.tools || []),
+    );
 
     // Update the environment.
     await db
@@ -109,18 +102,20 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       .executeTakeFirstOrThrow()
       .catch(console.error);
 
+    const processedMessages = await preprocessMessages(
+      messages,
+      selectedModel,
+      environment,
+      user,
+      event,
+    );
+
     const result = Laminar.withSession(`${user.id}-${id}`, () =>
       streamText({
         toolCallStreaming: true,
         model: c.get("model") || selectedModel,
         system: environment?.info && generateSystemPrompt(environment.info),
-        messages: preprocessMessages(
-          messages,
-          selectedModel,
-          environment,
-          event,
-        ),
-        maxSteps: 5, // setup a default max steps
+        messages: processedMessages,
         tools: {
           ...ClientTools,
           ...enabledServerTools, // Add the enabled server tools
@@ -230,14 +225,32 @@ function postProcessMessages(messages: Message[]) {
   return ret;
 }
 
-function preprocessMessages(
+async function preprocessMessages(
   inputMessages: Message[],
   model: LanguageModelV1,
   environment: Environment | undefined,
+  user: User,
   event: DB["task"]["event"],
-): Message[] {
-  // Auto reject User input tools.
-  const messages = inputMessages.map((message) => {
+): Promise<Message[]> {
+  let messages = resolvePendingTools(inputMessages);
+  messages = injectReadEnvironment(messages, model, environment, event);
+  messages = await resolveServerTools(messages, user);
+  return messages;
+}
+
+function getMessageToInject(messages: Message[]): Message | undefined {
+  if (messages[messages.length - 1].role === "assistant") {
+    // Last message is a function call result, inject it directly.
+    return messages[messages.length - 1];
+  }
+  if (messages[messages.length - 2].role === "assistant") {
+    // Last message is a user message, inject to the assistant message.
+    return messages[messages.length - 2];
+  }
+}
+
+function resolvePendingTools(inputMessages: Message[]) {
+  return inputMessages.map((message) => {
     if (message.role === "assistant" && message.parts) {
       for (let i = 0; i < message.parts.length; i++) {
         const part = message.parts[i];
@@ -259,7 +272,15 @@ function preprocessMessages(
     }
     return message;
   });
+}
 
+function injectReadEnvironment(
+  messages: Message[],
+
+  model: LanguageModelV1,
+  environment: Environment | undefined,
+  event: DB["task"]["event"],
+) {
   const isGemini = model.provider.includes("gemini");
 
   if (environment === undefined) return messages;
@@ -297,17 +318,6 @@ function preprocessMessages(
 
   messageToInject.parts = parts;
   return messages;
-}
-
-function getMessageToInject(messages: Message[]): Message | undefined {
-  if (messages[messages.length - 1].role === "assistant") {
-    // Last message is a function call result, inject it directly.
-    return messages[messages.length - 1];
-  }
-  if (messages[messages.length - 2].role === "assistant") {
-    // Last message is a user message, inject to the assistant message.
-    return messages[messages.length - 2];
-  }
 }
 
 async function trackUsage(

@@ -23,7 +23,11 @@ import {
   type ThreadSignalSerialization,
 } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/server";
-import type { ToolFunctionType } from "@ragdoll/tools";
+import {
+  ServerToolApproved,
+  ServerTools,
+  type ToolFunctionType,
+} from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type {
   ResourceURI,
@@ -161,6 +165,10 @@ export class VSCodeHostImpl implements VSCodeHostApi {
         abortSignal: ThreadAbortSignalSerialization;
       },
     ) => {
+      if (toolName in ServerTools) {
+        return ServerToolApproved;
+      }
+
       const tool = ToolMap[toolName];
       if (!tool) {
         return {

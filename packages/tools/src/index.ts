@@ -9,7 +9,10 @@ import { readEnvironment } from "./read-environment";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import type { ToolFunctionType } from "./types";
+import { webFetch } from "./web-fetch";
 export type { ToolFunctionType };
+import type { Tool } from "ai";
+import { slackReplyThread } from "./slack-reply-thread";
 import { writeToFile } from "./write-to-file";
 
 export function isUserInputTool(toolName: string): boolean {
@@ -38,7 +41,14 @@ export const ClientTools = {
   readEnvironment,
 };
 
-type ToolName = keyof typeof ClientTools;
+export type ClientToolsType = typeof ClientTools;
+
+export const ServerTools = {
+  webFetch,
+  slackReplyThread,
+};
+
+type ToolName = keyof typeof ClientTools | keyof typeof ServerTools;
 
 export const ToolsByPermission = {
   read: [
@@ -46,9 +56,23 @@ export const ToolsByPermission = {
     "listFiles",
     "globFiles",
     "searchFiles",
+    "webFetch",
   ] satisfies ToolName[] as string[],
   write: ["writeToFile", "applyDiff"] satisfies ToolName[] as string[],
   execute: ["executeCommand"] satisfies ToolName[] as string[],
 };
 
-export type ClientToolsType = typeof ClientTools;
+export const ServerToolApproved = "<server-tool-approved>";
+
+export const selectServerTools = (tools: string[]) => {
+  const ret: Record<string, Tool> = {};
+  for (const tool of tools) {
+    if (!(tool in ServerTools)) {
+      throw new Error(`Tool ${tool} not found`);
+    }
+
+    ret[tool] = ServerTools[tool as keyof typeof ServerTools];
+  }
+
+  return ret;
+};

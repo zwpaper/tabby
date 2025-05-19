@@ -43,20 +43,34 @@ export function defineServerTool<
   RESULT extends z.ZodTypeAny,
   T,
 >({
-  description,
-  inputSchema,
+  tool: toolDef,
   makeExecuteFn,
 }: {
-  description: string;
-  inputSchema: PARAMETERS;
-  outputSchema: RESULT; // Define the expected output shape
+  tool: Tool<PARAMETERS, RESULT>;
   makeExecuteFn: (ctx: T) => ToolFunctionType<Tool<PARAMETERS, RESULT>>; // Use the existing type
 }) {
   return (ctx: T): Tool<PARAMETERS, RESULT> => {
     return tool({
-      description,
-      parameters: inputSchema,
+      description: toolDef.description,
+      parameters: toolDef.parameters,
       execute: makeExecuteFn(ctx),
     });
   };
+}
+
+export function declareServerTool<
+  PARAMETERS extends z.ZodTypeAny,
+  RESULT extends z.ZodTypeAny,
+>({
+  description,
+  inputSchema,
+}: {
+  description: string;
+  inputSchema: PARAMETERS;
+  outputSchema: RESULT;
+}): Tool<PARAMETERS, RESULT> {
+  return tool({
+    description,
+    parameters: inputSchema,
+  });
 }

@@ -1,19 +1,7 @@
-import { defineServerTool } from "@ragdoll/tools";
-import { z } from "zod";
+import { ServerTools, defineServerTool } from "@ragdoll/tools";
 
-const inputSchema = z.object({
-  url: z.string().describe("The URL to fetch content from"),
-});
-
-const outputSchema = z.object({
-  result: z.string().describe("The AI model's response about the content"),
-});
-
-export const webFetch = defineServerTool({
-  description:
-    "Fetches content from a specified URL with properly formatted response content.",
-  inputSchema,
-  outputSchema,
+export const webFetchImpl = defineServerTool({
+  tool: ServerTools.webFetch,
   makeExecuteFn: () => {
     return async ({ url }) => {
       try {
