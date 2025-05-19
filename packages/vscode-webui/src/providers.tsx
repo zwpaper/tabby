@@ -14,10 +14,13 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
           shouldDehydrateQuery: (query) => {
             const isSuccess = query.state.status === "success";
 
-            // Only persist tasks query page 1.
-            const cacheTasks =
-              query.queryKey[0] === "tasks" && query.queryKey[1] === 1;
-            return isSuccess && (query.queryKey[0] !== "tasks" || cacheTasks);
+            const cacheQuery =
+              query.queryKey[0] === "session" ||
+              // Only persist tasks query page 1.
+              (query.queryKey[0] === "tasks" && query.queryKey[1] === 1) ||
+              query.queryKey[0] === "integrations";
+
+            return isSuccess && cacheQuery;
           },
         },
       }}

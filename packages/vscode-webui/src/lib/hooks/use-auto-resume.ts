@@ -23,6 +23,7 @@ export function useAutoResume({
   // biome-ignore lint/correctness/useExhaustiveDependencies: run once.
   useEffect(() => {
     if (!autoResume || executed.current) return;
+    executed.current = true;
 
     const lastMessage = initialMessages.at(-1);
     if (!lastMessage) return;
@@ -31,7 +32,6 @@ export function useAutoResume({
       lastMessage.role === "user" ||
       isAssistantMessageWithCompletedToolCalls(lastMessage as UIMessage)
     ) {
-      executed.current = true;
       experimental_resume();
     }
   }, [autoResume]);

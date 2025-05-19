@@ -304,7 +304,10 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   });
 
   useAutoResume({
-    autoResume: initialMessages.length === messages.length,
+    autoResume:
+      loaderData?.status === "streaming" &&
+      initialMessages.length > 0 &&
+      initialMessages.length === messages.length,
     initialMessages,
     experimental_resume,
     setMessages,
