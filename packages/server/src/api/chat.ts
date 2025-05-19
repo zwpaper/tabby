@@ -97,18 +97,23 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               ...enabledServerTools, // Add the enabled server tools
             },
             onFinish: async ({ usage, finishReason, response }) => {
+              const finalMessages = appendResponseMessages({
+                messages,
+                responseMessages: response.messages,
+              });
+              const totalTokens = !Number.isNaN(usage.totalTokens)
+                ? usage.totalTokens
+                : undefined;
               await taskService.finishStreaming(
                 id,
                 user.id,
-                appendResponseMessages({
-                  messages,
-                  responseMessages: response.messages,
-                }),
+                finalMessages,
                 finishReason,
+                totalTokens,
                 !!req.notify,
               );
 
-              if (!Number.isNaN(usage.totalTokens)) {
+              if (totalTokens) {
                 await usageService.trackUsage(user, requestedModelId, usage);
               }
             },

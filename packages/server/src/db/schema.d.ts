@@ -21,12 +21,7 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type TaskStatus =
-  | "completed"
-  | "failed"
-  | "pending-input"
-  | "pending-tool"
-  | "streaming";
+export type TaskStatus = "completed" | "failed" | "pending-input" | "pending-tool" | "streaming";
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
@@ -105,6 +100,7 @@ export interface Task {
   status: Generated<TaskStatus>;
   streamIds: string[] | null;
   taskId: number;
+  totalTokens: number | null;
   updatedAt: Generated<Timestamp>;
   userId: string;
 }

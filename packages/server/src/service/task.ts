@@ -63,6 +63,7 @@ class TaskService {
     userId: string,
     messages: Message[],
     finishReason: FinishReason,
+    totalTokens: number | undefined,
     notify: boolean,
   ) {
     const status = getTaskStatus(messages, finishReason);
@@ -74,6 +75,7 @@ class TaskService {
         conversation: {
           messages: fromUIMessages(messagesToSave),
         },
+        totalTokens,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where("taskId", "=", taskId)
@@ -235,6 +237,7 @@ class TaskService {
         "createdAt",
         "updatedAt",
         "status",
+        "totalTokens",
         sql<UserEvent["type"] | null>`event -> 'type'`.as("eventType"),
         titleSelect,
       ])
@@ -270,7 +273,14 @@ class TaskService {
       .selectFrom("task")
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
-      .select(["createdAt", "updatedAt", "status", "conversation", titleSelect])
+      .select([
+        "createdAt",
+        "updatedAt",
+        "status",
+        "conversation",
+        "totalTokens",
+        titleSelect,
+      ])
       .executeTakeFirst();
 
     if (!task) {

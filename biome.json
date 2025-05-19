@@ -15,7 +15,7 @@
       "packages/website/src/components/ui/*.tsx",
       "packages/code/src/lib/db/*.ts",
       "packages/server/migrations/*.ts",
-      "packages/server/db/schema.d.ts",
+      "packages/server/src/db/schema.d.ts",
       "packages/server/scripts/migrate-db-schema.ts",
       "packages/vscode/.vscode-test",
       "packages/vscode/out",
