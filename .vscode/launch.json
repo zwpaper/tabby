@@ -17,7 +17,18 @@
       "request": "launch",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/vscode"],
       "outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
-      "preLaunchTask": "watch-vscode"
+      "preLaunchTask": "dev:vscode"
+    },
+    {
+      "name": "Run VSCode Extension (Local Server)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/vscode"],
+      "env": {
+        "POCHI_LOCAL_SERVER": "true"
+      },
+      "outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
+      "preLaunchTask": "dev:vscode-local"
     },
     {
       "name": "Run VSCode Extension Tests",

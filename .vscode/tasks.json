@@ -5,8 +5,18 @@
   "tasks": [
     {
       "type": "shell",
-      "label": "watch-vscode",
-      "command": "bun --filter 'pochi' watch",
+      "label": "dev:vscode",
+      "command": "cd packages/vscode && bun run watch",
+      "group": {
+        "kind": "none",
+        "isDefault": true
+      },
+      "isBackground": true
+    },
+    {
+      "type": "shell",
+      "label": "dev:vscode-local",
+      "command": "cd packages/vscode && POCHI_LOCAL_SERVER=true bun run watch",
       "group": {
         "kind": "none",
         "isDefault": true
@@ -16,7 +26,7 @@
     {
       "type": "shell",
       "label": "dev:server-server",
-      "command": "bun --filter '@ragdoll/server' dev:server",
+      "command": "cd packages/server && bun run dev:server",
       "group": {
         "kind": "none",
         "isDefault": true
@@ -26,7 +36,7 @@
     {
       "type": "shell",
       "label": "dev:server-website",
-      "command": "bun --filter '@ragdoll/website' dev:server",
+      "command": "cd packages/website && bun run dev:server",
       "group": {
         "kind": "none",
         "isDefault": true
@@ -35,7 +45,8 @@
     },
     {
       "label": "dev:server",
-      "dependsOn": ["dev:server-website", "dev:server-server"]
+      "dependsOn": ["dev:server-website", "dev:server-server"],
+      "isBackground": true
     }
   ]
 }

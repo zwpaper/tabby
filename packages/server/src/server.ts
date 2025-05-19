@@ -96,6 +96,7 @@ const server = Bun.serve({
   idleTimeout: 255,
   websocket,
 });
+console.log(`Listening on http://localhost:${server.port} ...`);
 
 export function getUserEventChannel(userId: string) {
   return `user-events:${userId}`;
