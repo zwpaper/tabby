@@ -105,6 +105,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
                   responseMessages: response.messages,
                 }),
                 finishReason,
+                !!req.notify,
               );
 
               if (!Number.isNaN(usage.totalTokens)) {

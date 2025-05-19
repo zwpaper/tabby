@@ -33,6 +33,7 @@ export const ZodChatRequestType = z.object({
       }),
     })
     .optional(),
+  notify: z.boolean().optional(),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;

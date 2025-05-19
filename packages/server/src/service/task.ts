@@ -11,6 +11,7 @@ import {
 } from "../lib/message-utils";
 import { stripReadEnvironment } from "../prompts/environment";
 import type { Environment, ZodChatRequestType } from "../types";
+import { slackService } from "./slack";
 
 const titleSelect =
   sql<string>`LEFT(SPLIT_PART((conversation #>> '{messages, 0, parts, 0, text}')::text, '\n', 1), 256)`.as(
@@ -62,6 +63,7 @@ class TaskService {
     userId: string,
     messages: Message[],
     finishReason: FinishReason,
+    notify: boolean,
   ) {
     const status = getTaskStatus(messages, finishReason);
     const messagesToSave = postProcessMessages(messages);
@@ -77,6 +79,50 @@ class TaskService {
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
+
+    if (notify) {
+      await this.sendTaskCompletionNotification(userId, taskId, status);
+    }
+  }
+
+  private async sendTaskCompletionNotification(
+    userId: string,
+    taskId: number,
+    status: DB["task"]["status"]["__select__"],
+  ) {
+    if (status === "pending-tool") {
+      return;
+    }
+
+    try {
+      const slackIntegration = await slackService.getIntegration(userId);
+      if (slackIntegration) {
+        const { webClient, slackUserId } = slackIntegration;
+        // Open a conversation with the user
+        const openConversation = await webClient.conversations.open({
+          users: slackUserId,
+        });
+
+        if (openConversation.ok && openConversation.channel?.id) {
+          const channelId = openConversation.channel.id;
+          await webClient.chat.postMessage({
+            channel: channelId,
+            text: `Task ${taskId} finished with status: ${status}`,
+          });
+        } else {
+          console.error(
+            `Failed to open conversation with user ${slackUserId}: ${openConversation.error}`,
+          );
+        }
+      } else {
+        console.warn(`Slack client not found for user ${userId}`);
+      }
+    } catch (error) {
+      console.error(
+        `Error sending Slack notification for task ${taskId}:`,
+        error,
+      );
+    }
   }
 
   private async prepareTask(

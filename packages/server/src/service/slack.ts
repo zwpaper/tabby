@@ -2,10 +2,10 @@ import type { Server } from "node:http";
 import { App, type Installation } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
 import { sql } from "kysely";
-import { auth } from "./auth";
-import { type DB, db } from "./db";
-import { connectToWeb } from "./lib/connect";
-import { publishUserEvent } from "./server";
+import { auth } from "../auth";
+import { type DB, db } from "../db";
+import { connectToWeb } from "../lib/connect";
+import { publishUserEvent } from "../server";
 
 class SlackService {
   private app: App;
@@ -29,6 +29,10 @@ class SlackService {
         // sendMessage / reaction.
         "chat:write",
         "reactions:write",
+        "channels:manage",
+        "group:write",
+        "mpim:write",
+        "im:write",
 
         // History.
         "channels:history",
@@ -171,24 +175,40 @@ class SlackService {
     }
   }
 
-  async getWebClient(userId: string, vendorIntegrationId: string) {
-    const { vendorData } = await db
+  async getIntegration(userId: string, vendorIntegrationId?: string) {
+    let query = db
       .selectFrom("externalIntegration")
       .select("vendorData")
       .where(sql`"vendorData"->>'provider'`, "=", "slack")
-      .where(sql`"vendorData"->>'integrationId'`, "=", vendorIntegrationId)
-      .where("userId", "=", userId)
-      .executeTakeFirstOrThrow();
+      .where("userId", "=", userId);
+
+    if (vendorIntegrationId) {
+      query = query.where(
+        sql`"vendorData"->>'integrationId'`,
+        "=",
+        vendorIntegrationId,
+      );
+    }
+
+    const result = await query.executeTakeFirst();
+    if (!result) return null;
+
+    const { vendorData } = result;
+
     if (vendorData.provider === "slack") {
-      if (vendorData.payload.bot?.token) {
-        return new WebClient(
-          vendorData.payload.bot.token,
-          this.app.webClientOptions,
-        );
+      const installation = vendorData.payload as Installation<"v2", boolean>; // Add type assertion
+      if (installation.bot?.token) {
+        return {
+          webClient: new WebClient(
+            installation.bot.token,
+            this.app.webClientOptions,
+          ),
+          slackUserId: installation.user.id,
+        };
       }
     }
-    throw new Error("No bot token found");
+    return null;
   }
 }
 
-export default new SlackService();
+export const slackService = new SlackService();
