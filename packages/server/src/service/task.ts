@@ -12,7 +12,7 @@ const titleSelect =
   );
 
 class TaskService {
-  async getOrCreate(
+  async start(
     user: User,
     chatId: string | undefined,
     event: UserEvent | undefined,
@@ -25,15 +25,23 @@ class TaskService {
 
     const data = await db
       .selectFrom("task")
-      .select(["conversation", "event", "environment"])
+      .select(["conversation", "event", "environment", "status"])
       .where("taskId", "=", taskId)
       .where("userId", "=", user.id)
       .executeTakeFirstOrThrow();
 
     this.verifyEnvironment(environment, data.environment);
 
+    if (data.status === "streaming") {
+      throw new HTTPException(409, {
+        message: "Task is already streaming",
+      });
+    }
+
     return {
       ...data,
+      environment: undefined,
+      status: undefined,
       id: taskId,
     };
   }
@@ -88,26 +96,11 @@ class TaskService {
     }
   }
 
-  async updateEnvironment(
-    taskId: number,
-    userId: string,
-    environment: Environment,
-  ) {
-    return db
-      .updateTable("task")
-      .set({
-        environment,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("taskId", "=", taskId)
-      .where("userId", "=", userId)
-      .executeTakeFirstOrThrow();
-  }
-
-  async updateMessages(
+  async update(
     taskId: number,
     userId: string,
     status: DB["task"]["status"]["__update__"],
+    environment: Environment | undefined,
     messages: Message[],
   ) {
     return db
@@ -117,6 +110,7 @@ class TaskService {
         conversation: {
           messages: fromUIMessages(messages),
         },
+        environment,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where("taskId", "=", taskId)

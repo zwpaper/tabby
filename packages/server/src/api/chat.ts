@@ -68,7 +68,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
     checkWaitlist(user);
 
-    const { id, conversation, event } = await taskService.getOrCreate(
+    const { id, conversation, event } = await taskService.start(
       user,
       req.id,
       req.event,
@@ -83,20 +83,12 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       message: toUIMessage(message),
     });
 
-    await saveMessages(id, user.id, "streaming", messages);
+    await saveMessages(id, user.id, "streaming", environment, messages);
 
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(
       ["webFetch"].concat(req.tools || []),
     );
-
-    // Update the environment.
-    if (environment) {
-      // Ensure environment is defined before updating
-      await taskService
-        .updateEnvironment(id, user.id, environment)
-        .catch(console.error);
-    }
 
     const dataStream = createDataStream({
       execute: async (stream) => {
@@ -128,17 +120,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
                 messages,
                 responseMessages: response.messages,
               });
-              const taskStatus = getTaskStatus(messagesToSave, finishReason);
               await saveMessages(
                 id,
                 user.id,
                 getTaskStatus(messages, finishReason),
+                environment,
                 messagesToSave,
               );
-
-              await taskService
-                .updateMessages(id, user.id, taskStatus, messagesToSave)
-                .catch(console.error);
 
               if (!Number.isNaN(usage.totalTokens)) {
                 await usageService.trackUsage(user, requestedModelId, usage);
@@ -334,10 +322,11 @@ async function saveMessages(
   taskId: number,
   userId: string,
   status: DB["task"]["status"]["__select__"],
+  environment: Environment | undefined,
   messages: Message[],
 ) {
   const messagesToSave = postProcessMessages(messages);
   await taskService
-    .updateMessages(taskId, userId, status, messagesToSave)
+    .update(taskId, userId, status, environment, messagesToSave)
     .catch(console.error);
 }
