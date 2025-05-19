@@ -37,15 +37,15 @@ export function useAutoResume({
   }, [autoResume]);
 
   useEffect(() => {
-    if (!data || data.length === 0 || !autoResume || executed.current) return;
+    if (!data || data.length === 0) return;
     const dataParts = data as DataPart[];
 
     for (const part of dataParts) {
       if (part.type === "append-message") {
-        executed.current = true;
         const message = JSON.parse(part.message) as Message;
         setMessages([...initialMessages, message]);
+        return;
       }
     }
-  }, [autoResume, data, initialMessages, setMessages]);
+  }, [data, initialMessages, setMessages]);
 }
