@@ -769,8 +769,7 @@ function useRetry({
 function createRenderMessages(messages: UIMessage[]): UIMessage[] {
   const x = messages.map((message, index) => {
     if (index < messages.length - 1 && message.role === "assistant") {
-      for (let i = 0; i < message.parts.length; i++) {
-        const part = message.parts[i];
+      const parts = message.parts.map((part) => {
         if (
           part.type === "tool-invocation" &&
           part.toolInvocation.state !== "result" &&
@@ -778,15 +777,23 @@ function createRenderMessages(messages: UIMessage[]): UIMessage[] {
         ) {
           // Tools have already been rejected on the server side.
           // Here, we only need to ensure they are rendered to the user in a consistent manner.
-          part.toolInvocation = {
-            ...part.toolInvocation,
-            state: "result",
-            result: {
-              error: "User cancelled the tool call.",
+          return {
+            ...part,
+            toolInvocation: {
+              ...part.toolInvocation,
+              state: "result",
+              result: {
+                error: "User cancelled the tool call.",
+              },
             },
-          };
+          } satisfies UIMessage["parts"][number];
         }
-      }
+        return part;
+      });
+      return {
+        ...message,
+        parts,
+      };
     }
     return message;
   });
