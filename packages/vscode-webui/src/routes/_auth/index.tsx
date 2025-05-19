@@ -62,6 +62,7 @@ import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useIsWorkspaceActive } from "@/lib/hooks/use-is-workspace-active";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { cn } from "@/lib/utils";
 import {
   createImageFileName,
   isDuplicateFile,
@@ -503,6 +504,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   const resourceUri = useResourceURI();
 
+  // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error
+  const displayError = imageSelectionError || uploadImageError || error;
+
   return (
     <div className="flex h-screen flex-col">
       {renderMessages.length === 0 &&
@@ -573,12 +577,18 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         )}
       </ScrollArea>
       <div className="flex flex-col px-4">
-        <div className="mb-2 text-center text-red-500 dark:text-red-400">
-          {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error */}
-          {imageSelectionError?.message ||
-            uploadImageError?.message ||
-            error?.message}
-        </div>
+        {displayError && (
+          <div
+            className={cn("mb-2 text-center text-red-500 dark:text-red-400", {
+              "cursor-help": isDevMode?.value,
+            })}
+            onClick={
+              isDevMode?.value ? () => console.error(displayError) : undefined
+            }
+          >
+            {displayError.message}
+          </div>
+        )}
         {!isWorkspaceActive ? (
           <WorkspaceRequiredPlaceholder
             isFetching={isFetching}
