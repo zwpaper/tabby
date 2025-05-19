@@ -191,6 +191,7 @@ describe("DiffView with real file system", () => {
         tabGroups: {
           all: [], // Default to empty, will be overridden in specific tests
           close: sinon.stub().resolves(true),
+          onDidChangeTabs: sinon.stub().returns({ dispose: sinon.stub() }), // Added this line
         },
         onDidChangeActiveTextEditor: sinon.stub().returns({ dispose: sinon.stub() }),
         createOutputChannel: sinon

@@ -80,10 +80,6 @@ export class DiffView implements vscode.Disposable {
 
   async update(content: string, isFinal: boolean) {
     if (this.isFinalized) {
-      logger.debug(
-        "File is already finalized, skipping update",
-        this.fileUri.fsPath,
-      );
       return;
     }
 
@@ -309,14 +305,27 @@ export class DiffView implements vscode.Disposable {
     DiffView.diffViewGetGroup,
     async (id: string, relpath: string) => {
       // Install hook for first diff view
-      if (DiffViewMap.size === 0) {
+      if (DiffViewMap.size === 0 && !DiffViewDisposable) {
         logger.info("Installing diff view hook");
-        const disposable = vscode.workspace.onDidCloseTextDocument((e) => {
-          logger.debug(`Closed document ${e.uri.scheme}:${e.uri.fsPath}`);
-          if (e.uri.scheme === DiffOriginContentProvider.scheme) {
-            const id = e.uri.path; // id is stored in path.
-            const diffView = DiffViewMap.get(id);
-            if (diffView) {
+        DiffViewDisposable = vscode.window.tabGroups.onDidChangeTabs((e) => {
+          // Only handle close events
+          if (e.closed.length === 0) return;
+
+          const visibleDiffViewIds = new Set<string>();
+          for (const group of vscode.window.tabGroups.all) {
+            for (const tab of group.tabs) {
+              if (
+                tab.input instanceof vscode.TabInputTextDiff &&
+                tab.input.original.scheme === DiffOriginContentProvider.scheme
+              ) {
+                // id is stored in path
+                visibleDiffViewIds.add(tab.input.original.path);
+              }
+            }
+          }
+
+          for (const [id, diffView] of DiffViewMap) {
+            if (!visibleDiffViewIds.has(id)) {
               diffView.dispose();
               DiffViewMap.delete(id);
               logger.debug(`Closed diff view for ${id}`);
@@ -325,20 +334,20 @@ export class DiffView implements vscode.Disposable {
             if (ReuseDiffView) {
               // As we reuse the diff view in openDiffEditor, we need to close all diff views for the same file.
               for (const [id, value] of DiffViewMap) {
-                if (value.fileUri.fsPath === e.uri.fragment) {
+                if (value.fileUri.fsPath === diffView.fileUri.fsPath) {
                   value.dispose();
                   DiffViewMap.delete(id);
                   logger.debug(`Closed diff view for ${id}`);
                 }
               }
             }
+          }
 
-            logger.debug(`Remaining diff views: ${DiffViewMap.size}`);
-
-            if (DiffViewMap.size === 0) {
-              logger.debug("Disposing diff view hook");
-              disposable.dispose();
-            }
+          logger.debug(`Remaining diff views: ${DiffViewMap.size}`);
+          if (DiffViewMap.size === 0 && DiffViewDisposable) {
+            logger.debug("Disposing diff view hook");
+            DiffViewDisposable.dispose();
+            DiffViewDisposable = undefined;
           }
         });
       }
@@ -357,6 +366,7 @@ export class DiffView implements vscode.Disposable {
 }
 
 const DiffViewMap = new Map<string, DiffView>();
+let DiffViewDisposable: vscode.Disposable | undefined;
 
 async function openDiffEditor(
   id: string,
