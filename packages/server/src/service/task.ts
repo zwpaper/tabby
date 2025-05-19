@@ -1,6 +1,6 @@
 import type { Message } from "ai";
 import { HTTPException } from "hono/http-exception";
-import { type Kysely, sql } from "kysely";
+import { sql } from "kysely";
 import type { User } from "../auth";
 import { type DB, type UserEvent, db } from "../db";
 import { fromUIMessages } from "../lib/message-utils";
@@ -11,9 +11,7 @@ const titleSelect =
     "title",
   );
 
-export class TaskService {
-  constructor(private readonly dbClient: Kysely<DB>) {}
-
+class TaskService {
   async getOrCreate(
     user: User,
     chatId: string | undefined,
@@ -25,7 +23,7 @@ export class TaskService {
       taskId = await this.create(user.id, event);
     }
 
-    const data = await this.dbClient
+    const data = await db
       .selectFrom("task")
       .select(["conversation", "event", "environment"])
       .where("taskId", "=", taskId)
@@ -41,30 +39,28 @@ export class TaskService {
   }
 
   async create(userId: string, event: UserEvent | null = null) {
-    const { taskId } = await this.dbClient
-      .transaction()
-      .execute(async (trx) => {
-        const { nextTaskId } = await trx
-          .insertInto("taskSequence")
-          .values({ userId })
-          .onConflict((oc) =>
-            oc.column("userId").doUpdateSet({
-              nextTaskId: sql`\"taskSequence\".\"nextTaskId\" + 1`,
-            }),
-          )
-          .returning("nextTaskId")
-          .executeTakeFirstOrThrow();
+    const { taskId } = await db.transaction().execute(async (trx) => {
+      const { nextTaskId } = await trx
+        .insertInto("taskSequence")
+        .values({ userId })
+        .onConflict((oc) =>
+          oc.column("userId").doUpdateSet({
+            nextTaskId: sql`\"taskSequence\".\"nextTaskId\" + 1`,
+          }),
+        )
+        .returning("nextTaskId")
+        .executeTakeFirstOrThrow();
 
-        return await trx
-          .insertInto("task")
-          .values({
-            userId,
-            taskId: nextTaskId,
-            event,
-          })
-          .returning("taskId")
-          .executeTakeFirstOrThrow();
-      });
+      return await trx
+        .insertInto("task")
+        .values({
+          userId,
+          taskId: nextTaskId,
+          event,
+        })
+        .returning("taskId")
+        .executeTakeFirstOrThrow();
+    });
     return taskId;
   }
 
@@ -97,7 +93,7 @@ export class TaskService {
     userId: string,
     status: DB["task"]["status"]["__update__"],
   ) {
-    return this.dbClient
+    return db
       .updateTable("task")
       .set({ status })
       .where("taskId", "=", taskId)
@@ -110,7 +106,7 @@ export class TaskService {
     userId: string,
     environment: Environment,
   ) {
-    return this.dbClient
+    return db
       .updateTable("task")
       .set({
         environment,
@@ -127,7 +123,7 @@ export class TaskService {
     status: DB["task"]["status"]["__update__"],
     messages: Message[],
   ) {
-    return this.dbClient
+    return db
       .updateTable("task")
       .set({
         status,
@@ -144,10 +140,10 @@ export class TaskService {
   async list(userId: string, page: number, limit: number, cwd?: string) {
     const offset = (page - 1) * limit;
 
-    let totalCountQuery = this.dbClient
+    let totalCountQuery = db
       .selectFrom("task")
       .where("userId", "=", userId)
-      .select(this.dbClient.fn.count("id").as("count"));
+      .select(db.fn.count("id").as("count"));
 
     if (cwd) {
       totalCountQuery = totalCountQuery.where(
@@ -160,7 +156,7 @@ export class TaskService {
     const totalCount = Number(totalCountResult?.count ?? 0);
     const totalPages = Math.ceil(totalCount / limit);
 
-    let query = this.dbClient
+    let query = db
       .selectFrom("task")
       .where("userId", "=", userId)
       .select([
@@ -199,7 +195,7 @@ export class TaskService {
   }
 
   async get(taskId: number, userId: string) {
-    const task = await this.dbClient
+    const task = await db
       .selectFrom("task")
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
@@ -216,7 +212,7 @@ export class TaskService {
   }
 
   async delete(taskId: number, userId: string): Promise<boolean> {
-    const task = await this.dbClient
+    const task = await db
       .selectFrom("task")
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
@@ -227,7 +223,7 @@ export class TaskService {
       return false; // Task not found
     }
 
-    const result = await this.dbClient
+    const result = await db
       .deleteFrom("task")
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
@@ -237,4 +233,4 @@ export class TaskService {
   }
 }
 
-export const taskService = new TaskService(db);
+export const taskService = new TaskService();

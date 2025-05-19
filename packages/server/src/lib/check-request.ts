@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { User } from "../auth";
-import { readCurrentMonthQuota } from "./billing";
+import { usageService } from "../service/usage";
 import { AvailableModels, getModelById } from "./constants";
 
 export function checkModel(modelId: string) {
@@ -28,7 +28,7 @@ export async function checkUserQuota(user: User, c: Context, modelId: string) {
   }
 
   // Check quota
-  const quota = await readCurrentMonthQuota(user, c.req);
+  const quota = await usageService.readCurrentMonthQuota(user, c.req);
   const modelCostType = AvailableModels.find(
     (model) => model.id === modelId,
   )?.costType;

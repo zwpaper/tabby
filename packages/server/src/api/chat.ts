@@ -7,7 +7,6 @@ import {
   type DataStreamWriter,
   type FinishReason,
   type LanguageModel,
-  type LanguageModelUsage,
   type LanguageModelV1,
   type Message,
   NoSuchToolError,
@@ -19,9 +18,8 @@ import {
 } from "ai";
 import { Hono } from "hono";
 import { stream } from "hono/streaming";
-import moment from "moment";
 import { type User, requireAuth } from "../auth";
-import { type DB, db } from "../db";
+import type { DB } from "../db";
 import {
   checkModel,
   checkUserQuota,
@@ -35,6 +33,7 @@ import {
 } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { taskService } from "../service/task";
+import { usageService } from "../service/usage";
 import { type Environment, ZodChatRequestType } from "../types";
 
 export type ContextVariables = {
@@ -127,7 +126,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
                 .catch(console.error);
 
               if (!Number.isNaN(usage.totalTokens)) {
-                await trackUsage(user, requestedModelId, usage);
+                await usageService.trackUsage(user, requestedModelId, usage);
               }
             },
             experimental_telemetry: {
@@ -213,44 +212,6 @@ function resolvePendingTools(inputMessages: Message[]): Message[] {
     }
     return message;
   });
-}
-
-async function trackUsage(
-  user: User,
-  modelId: string,
-  usage: LanguageModelUsage,
-) {
-  // Track individual completion details
-  await db
-    .insertInto("chatCompletion")
-    .values({
-      modelId,
-      userId: user.id,
-      promptTokens: usage.promptTokens,
-      completionTokens: usage.completionTokens,
-    })
-    .execute();
-
-  // Track monthly usage count
-  const now = moment.utc();
-  const startDayOfMonth = now.startOf("month").toDate();
-
-  await db
-    .insertInto("monthlyUsage")
-    .values({
-      userId: user.id,
-      modelId,
-      startDayOfMonth,
-      count: 1, // Start count at 1 for a new entry
-    })
-    .onConflict((oc) =>
-      oc
-        .columns(["userId", "startDayOfMonth", "modelId"])
-        .doUpdateSet((eb) => ({
-          count: eb("monthlyUsage.count", "+", 1),
-        })),
-    )
-    .execute();
 }
 
 export default chat;

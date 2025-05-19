@@ -1,17 +1,12 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import moment from "moment";
 import Stripe from "stripe";
 import { z } from "zod";
 import { type User, requireAuth } from "../auth";
 import { db } from "../db";
-import {
-  readActiveSubscriptionLimits,
-  readCurrentMonthQuota,
-} from "../lib/billing";
-import { AvailableModels } from "../lib/constants";
 import { stripeClient } from "../lib/stripe";
+import { usageService } from "../service/usage";
 
 // Define the schema for query parameters for history endpoint
 const BillingHistoryQuerySchema = z.object({
@@ -44,7 +39,7 @@ const billing = new Hono()
         });
 
         return c.json({
-          data: invoices.data.map((invoice) => ({
+          data: invoices.data.map((invoice: Stripe.Invoice) => ({
             id: invoice.id,
             created: invoice.created,
             status: invoice.status,
@@ -65,7 +60,10 @@ const billing = new Hono()
     },
   )
   .get("/quota/me", requireAuth(), async (c) => {
-    const usage = await readCurrentMonthQuota(c.get("user"), c.req);
+    const usage = await usageService.readCurrentMonthQuota(
+      c.get("user"),
+      c.req,
+    );
     return c.json(usage);
   })
   .get(
@@ -85,37 +83,12 @@ const billing = new Hono()
         throw new HTTPException(404, { message: "User not found" });
       }
 
-      const now = moment.utc(); // Use UTC for current time
-      const startOfMonth = now.clone().startOf("month").toDate(); // Clone before mutation
-      const endOfMonth = now.clone().endOf("month").toDate(); // Clone before mutation
-
-      const premiumModelIds = AvailableModels.filter(
-        (m) => m.costType === "premium",
-      ).map((m) => m.id);
-
-      const userMonthlyPremiumUsageDetails = await db
-        .selectFrom("monthlyUsage")
-        .select(["modelId", db.fn.sum("count").as("totalCount")])
-        .where("userId", "=", userId)
-        .where("startDayOfMonth", ">=", startOfMonth)
-        .where("startDayOfMonth", "<=", endOfMonth)
-        .where("modelId", "in", premiumModelIds)
-        .groupBy("modelId")
-        .execute();
-
-      const { limits: userLimits } = await readActiveSubscriptionLimits(
+      const usage = await usageService.readCurrentMonthUsage(
+        userId,
         targetUser as User,
         c.req,
       );
-
-      return c.json({
-        userId,
-        limit: userLimits.premium,
-        premiumUsageDetails: userMonthlyPremiumUsageDetails.map((usage) => ({
-          modelId: usage.modelId,
-          count: Number(usage.totalCount),
-        })),
-      });
+      return c.json(usage);
     },
   );
 
