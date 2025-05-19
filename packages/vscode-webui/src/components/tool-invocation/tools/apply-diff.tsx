@@ -13,13 +13,6 @@ export const applyDiffTool: React.FC<
 > = ({ tool, isExecuting }) => {
   const { path, startLine, endLine } = tool.args || {};
 
-  // Determine if the operation was successful
-  const isSuccess =
-    tool.state === "result" &&
-    typeof tool.result === "object" &&
-    tool.result !== null &&
-    "success" in tool.result &&
-    tool.result.success === true;
   const handleClick = useCallback(() => {
     vscodeHost.previewToolCall(tool.toolName, tool.args, {
       toolCallId: tool.toolCallId,
@@ -36,9 +29,7 @@ export const applyDiffTool: React.FC<
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
-      <span>
-        {isExecuting ? "Applying" : isSuccess ? "Applied" : "Apply"} diff to
-      </span>
+      <span>Applying diff to</span>
       <span className="ml-2" />
       {path && (
         <FileBadge
