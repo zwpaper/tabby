@@ -58,6 +58,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
+import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useIsWorkspaceActive } from "@/lib/hooks/use-is-workspace-active";
 import { useSettingsStore } from "@/lib/stores/settings-store";
@@ -67,6 +68,7 @@ import {
   processImageFiles,
   validateImages,
 } from "@/lib/utils/image";
+import type { DataPart } from "@/lib/utils/message";
 import { vscodeHost } from "@/lib/vscode";
 import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 import type { ResourceURI } from "@ragdoll/vscode-webui-bridge";
@@ -275,6 +277,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     status,
     stop,
     addToolResult,
+    experimental_resume,
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
@@ -286,15 +289,25 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     fetch: async (url, options) =>
       fetch(url, {
         ...options,
-        body: JSON.stringify({
-          ...JSON.parse(options?.body as string),
-          // Inject the environment variables into the request body
-          environment: await vscodeHost.readEnvironment(),
-        }),
+        body:
+          options?.body &&
+          JSON.stringify({
+            ...JSON.parse(options.body as string),
+            // Inject the environment variables into the request body
+            environment: await vscodeHost.readEnvironment(),
+          }),
       }),
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
+  });
+
+  useAutoResume({
+    autoResume: initialMessages.length === messages.length,
+    initialMessages,
+    experimental_resume,
+    setMessages,
+    data,
   });
 
   const initMessageSent = useRef<boolean>(false);
@@ -418,19 +431,20 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (
-      taskId.current === undefined &&
-      typeof data?.[0] === "object" &&
-      data[0] &&
-      "id" in data[0] &&
-      typeof data[0].id === "number"
-    ) {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      taskId.current = data[0].id;
+    if (!data || data.length === 0 || taskId.current !== undefined) return;
 
-      vscodeHost.setSessionState({
-        lastVisitedRoute: `/?taskId=${taskId.current}`,
-      });
+    const dataParts = data as DataPart[];
+    for (const part of dataParts) {
+      if (part.type === "append-id") {
+        taskId.current = part.id;
+
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+
+        vscodeHost.setSessionState({
+          lastVisitedRoute: `/?taskId=${taskId.current}`,
+        });
+        return;
+      }
     }
   }, [data, queryClient]);
 
@@ -726,14 +740,14 @@ function prepareRequestBody(
   },
   model: string | undefined,
 ): Omit<RagdollChatRequest, "environment"> {
-  const message = fromUIMessage(request.messages[request.messages.length - 1]);
+  const message = request.messages[request.messages.length - 1];
   const triggerError =
     message.parts[0].type === "text" &&
     message.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
   return {
     id: taskId.current?.toString(),
     model: triggerError ? "fake-model" : (model ?? DefaultModelId),
-    message: fromUIMessage(request.messages[request.messages.length - 1]),
+    message: fromUIMessage(message),
   };
 }
 

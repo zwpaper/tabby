@@ -18,7 +18,8 @@
       "packages/server/db/schema.d.ts",
       "packages/server/scripts/migrate-db-schema.ts",
       "packages/vscode/.vscode-test",
-      "packages/vscode/out"
+      "packages/vscode/out",
+      "**/node_modules/**"
     ]
   },
   "formatter": {

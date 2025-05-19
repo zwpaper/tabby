@@ -104,3 +104,5 @@ export function getUserEventChannel(userId: string) {
 export function publishUserEvent(userId: string, event: UserEvent) {
   server.publish(getUserEventChannel(userId), JSON.stringify(event));
 }
+
+export function after(_promise: Promise<unknown>): void {}

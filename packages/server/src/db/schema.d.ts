@@ -103,6 +103,7 @@ export interface Task {
   event: Json | null;
   id: Generated<number>;
   status: Generated<TaskStatus>;
+  streamIds: string[] | null;
   taskId: number;
   updatedAt: Generated<Timestamp>;
   userId: string;

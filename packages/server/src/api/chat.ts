@@ -14,10 +14,14 @@ import {
   appendClientMessage,
   appendResponseMessages,
   createDataStream,
+  generateId,
   streamText,
 } from "ai";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
+import { createResumableStreamContext } from "resumable-stream";
+import { z } from "zod";
 import { type User, requireAuth } from "../auth";
 import type { DB } from "../db";
 import {
@@ -32,19 +36,22 @@ import {
   stripReadEnvironment,
 } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
+import { after } from "../server";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
 import { type Environment, ZodChatRequestType } from "../types";
+
+const streamContext = createResumableStreamContext({
+  waitUntil: after,
+});
 
 export type ContextVariables = {
   model?: LanguageModel;
 };
 
-const chat = new Hono<{ Variables: ContextVariables }>().post(
-  "/stream",
-  zValidator("json", ZodChatRequestType),
-  requireAuth(),
-  async (c) => {
+const chat = new Hono<{ Variables: ContextVariables }>()
+  .use(requireAuth())
+  .post("/stream", zValidator("json", ZodChatRequestType), async (c) => {
     const req = await c.req.valid("json");
     const {
       message,
@@ -67,12 +74,16 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       req.event,
       environment,
     );
+
+    const streamId = generateId();
+    await taskService.appendStreamId(id, user.id, streamId);
+
     const messages = appendClientMessage({
       messages: toUIMessages(conversation?.messages || []),
       message: toUIMessage(message),
     });
 
-    await taskService.updateStatus(id, user.id, "streaming");
+    await saveMessages(id, user.id, "streaming", messages);
 
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(
@@ -90,7 +101,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     const dataStream = createDataStream({
       execute: async (stream) => {
         if (req.id === undefined) {
-          stream.writeData({ id });
+          stream.writeData({ type: "append-id", id });
         }
 
         const processedMessages = await preprocessMessages(
@@ -113,13 +124,17 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
               ...enabledServerTools, // Add the enabled server tools
             },
             onFinish: async ({ usage, finishReason, response }) => {
-              const messagesToSave = postProcessMessages(
-                appendResponseMessages({
-                  messages,
-                  responseMessages: response.messages,
-                }),
-              );
+              const messagesToSave = appendResponseMessages({
+                messages,
+                responseMessages: response.messages,
+              });
               const taskStatus = getTaskStatus(messagesToSave, finishReason);
+              await saveMessages(
+                id,
+                user.id,
+                getTaskStatus(messages, finishReason),
+                messagesToSave,
+              );
 
               await taskService
                 .updateMessages(id, user.id, taskStatus, messagesToSave)
@@ -161,9 +176,64 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       },
     });
 
-    return stream(c, (stream) => stream.pipe(dataStream));
-  },
-);
+    const resumableStream = await streamContext.resumableStream(
+      streamId,
+      () => dataStream,
+    );
+    if (!resumableStream) {
+      throw new HTTPException(500, {
+        message: "Failed to create resumable stream.",
+      });
+    }
+
+    return stream(c, (stream) => stream.pipe(resumableStream));
+  })
+  .get(
+    "/stream",
+    zValidator("query", z.object({ chatId: z.string() })),
+    async (c) => {
+      const query = c.req.valid("query");
+      const user = c.get("user");
+      const id = Number.parseInt(query.chatId);
+      c.header("X-Vercel-AI-Data-Stream", "v1");
+      c.header("Content-Type", "text/plain; charset=utf-8");
+
+      const streamId = await taskService.fetchLatestStreamId(id, user.id);
+      if (!streamId) {
+        throw new HTTPException(404, { message: "Stream not found." });
+      }
+
+      const emptyDataStream = createDataStream({
+        execute: () => {},
+      });
+
+      const resumableStream = await streamContext.resumableStream(
+        streamId,
+        () => emptyDataStream,
+      );
+
+      if (resumableStream) {
+        return stream(c, (stream) => stream.pipe(resumableStream));
+      }
+
+      const task = await taskService.get(id, user.id);
+      const mostRecentMessage = task?.conversation?.messages?.at(-1);
+      if (!mostRecentMessage || mostRecentMessage.role !== "assistant") {
+        return stream(c, (stream) => stream.pipe(emptyDataStream));
+      }
+
+      const streamWithMessage = createDataStream({
+        execute: (buffer) => {
+          buffer.writeData({
+            type: "append-message",
+            message: JSON.stringify(mostRecentMessage),
+          });
+        },
+      });
+
+      return stream(c, (stream) => stream.pipe(streamWithMessage));
+    },
+  );
 
 function postProcessMessages(messages: Message[]) {
   const ret = stripReadEnvironment(messages);
@@ -258,4 +328,16 @@ function hasUserInputTool(message: Message): boolean {
       part.type === "tool-invocation" &&
       isUserInputTool(part.toolInvocation.toolName),
   );
+}
+
+async function saveMessages(
+  taskId: number,
+  userId: string,
+  status: DB["task"]["status"]["__select__"],
+  messages: Message[],
+) {
+  const messagesToSave = postProcessMessages(messages);
+  await taskService
+    .updateMessages(taskId, userId, status, messagesToSave)
+    .catch(console.error);
 }

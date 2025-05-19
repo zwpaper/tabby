@@ -88,19 +88,6 @@ class TaskService {
     }
   }
 
-  async updateStatus(
-    taskId: number,
-    userId: string,
-    status: DB["task"]["status"]["__update__"],
-  ) {
-    return db
-      .updateTable("task")
-      .set({ status })
-      .where("taskId", "=", taskId)
-      .where("userId", "=", userId)
-      .execute();
-  }
-
   async updateEnvironment(
     taskId: number,
     userId: string,
@@ -230,6 +217,37 @@ class TaskService {
       .executeTakeFirst(); // Use executeTakeFirst for delete to get affected rows count
 
     return result.numDeletedRows > 0; // Return true if deletion was successful
+  }
+
+  async appendStreamId(taskId: number, userId: string, streamId: string) {
+    return db
+      .updateTable("task")
+      .set({
+        streamIds: sql<
+          string[]
+        >`COALESCE("streamIds", '{}') || ARRAY[${streamId}]`,
+      })
+      .where("taskId", "=", taskId)
+      .where("userId", "=", userId)
+      .executeTakeFirstOrThrow();
+  }
+
+  async fetchLatestStreamId(
+    taskId: number,
+    userId: string,
+  ): Promise<string | null> {
+    const result = await db
+      .selectFrom("task")
+      .select(
+        sql<string>`("streamIds")[array_upper("streamIds", 1)]`.as(
+          "latestStreamId",
+        ),
+      )
+      .where("taskId", "=", taskId)
+      .where("userId", "=", userId)
+      .executeTakeFirst();
+
+    return result?.latestStreamId ?? null;
   }
 }
 
