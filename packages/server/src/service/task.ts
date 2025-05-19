@@ -11,7 +11,7 @@ const titleSelect =
     "title",
   );
 
-export class TaskRepository {
+export class TaskService {
   constructor(private readonly dbClient: Kysely<DB>) {}
 
   async getOrCreate(
@@ -237,4 +237,4 @@ export class TaskRepository {
   }
 }
 
-export const taskRepository = new TaskRepository(db);
+export const taskService = new TaskService(db);

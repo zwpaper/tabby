@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireAuth } from "../auth";
-import { taskRepository } from "../repositories/task-repository"; // Added import
+import { taskService } from "../service/task"; // Added import
 
 // Define validation schemas
 const PaginationSchema = z.object({
@@ -23,7 +23,7 @@ const tasks = new Hono()
     const { cwd, page, limit } = c.req.valid("query");
     const user = c.get("user");
 
-    const result = await taskRepository.list(user.id, page, limit, cwd);
+    const result = await taskService.list(user.id, page, limit, cwd);
 
     return c.json(result);
   })
@@ -38,7 +38,7 @@ const tasks = new Hono()
       const user = c.get("user");
       const taskId = Number.parseInt(id);
 
-      const task = await taskRepository.get(taskId, user.id);
+      const task = await taskService.get(taskId, user.id);
 
       if (!task) {
         throw new HTTPException(404, { message: "Task not found" });
@@ -58,7 +58,7 @@ const tasks = new Hono()
       const user = c.get("user");
       const taskId = Number.parseInt(id);
 
-      const deleted = await taskRepository.delete(taskId, user.id);
+      const deleted = await taskService.delete(taskId, user.id);
 
       if (!deleted) {
         throw new HTTPException(404, { message: "Task not found" });

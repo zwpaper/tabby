@@ -34,7 +34,7 @@ import {
   stripReadEnvironment,
 } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
-import { taskRepository } from "../repositories/task-repository";
+import { taskService } from "../service/task";
 import { type Environment, ZodChatRequestType } from "../types";
 
 export type ContextVariables = {
@@ -62,7 +62,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
 
     checkWaitlist(user);
 
-    const { id, conversation, event } = await taskRepository.getOrCreate(
+    const { id, conversation, event } = await taskService.getOrCreate(
       user,
       req.id,
       req.event,
@@ -73,7 +73,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
       message: toUIMessage(message),
     });
 
-    await taskRepository.updateStatus(id, user.id, "streaming");
+    await taskService.updateStatus(id, user.id, "streaming");
 
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(
@@ -83,7 +83,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
     // Update the environment.
     if (environment) {
       // Ensure environment is defined before updating
-      await taskRepository
+      await taskService
         .updateEnvironment(id, user.id, environment)
         .catch(console.error);
     }
@@ -122,7 +122,7 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
               );
               const taskStatus = getTaskStatus(messagesToSave, finishReason);
 
-              await taskRepository
+              await taskService
                 .updateMessages(id, user.id, taskStatus, messagesToSave)
                 .catch(console.error);
 
