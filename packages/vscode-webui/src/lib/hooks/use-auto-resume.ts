@@ -1,6 +1,6 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
-import type { Message, UIMessage } from "ai";
+import { type Message, type UIMessage, appendClientMessage } from "ai";
 import { useEffect, useRef } from "react";
 import type { DataPart } from "../utils/message";
 
@@ -43,7 +43,10 @@ export function useAutoResume({
     for (const part of dataParts) {
       if (part.type === "append-message") {
         const message = JSON.parse(part.message) as Message;
-        setMessages([...initialMessages, message]);
+        setMessages(
+          // appendClientMessage will handle the case where the message is already in the list
+          appendClientMessage({ messages: initialMessages, message }),
+        );
         return;
       }
     }
