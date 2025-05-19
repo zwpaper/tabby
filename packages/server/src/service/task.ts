@@ -1,10 +1,16 @@
-import type { Message } from "ai";
+import { isUserInputTool } from "@ragdoll/tools";
+import { type FinishReason, type Message, appendClientMessage } from "ai";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
-import type { User } from "../auth";
+import type { z } from "zod";
 import { type DB, type UserEvent, db } from "../db";
-import { fromUIMessages } from "../lib/message-utils";
-import type { Environment } from "../types";
+import {
+  fromUIMessages,
+  toUIMessage,
+  toUIMessages,
+} from "../lib/message-utils";
+import { stripReadEnvironment } from "../prompts/environment";
+import type { Environment, ZodChatRequestType } from "../types";
 
 const titleSelect =
   sql<string>`LEFT(SPLIT_PART((conversation #>> '{messages, 0, parts, 0, text}')::text, '\n', 1), 256)`.as(
@@ -12,22 +18,82 @@ const titleSelect =
   );
 
 class TaskService {
-  async start(
-    user: User,
-    chatId: string | undefined,
-    event: UserEvent | undefined,
-    environment: Environment | undefined,
+  async startStreaming(
+    userId: string,
+    streamId: string,
+    request: z.infer<typeof ZodChatRequestType>,
   ) {
+    const { id, conversation, event } = await this.prepareTask(userId, request);
+
+    const messages = appendClientMessage({
+      messages: toUIMessages(conversation?.messages || []),
+      message: toUIMessage(request.message),
+    });
+
+    const messagesToSave = postProcessMessages(messages);
+
+    await db
+      .updateTable("task")
+      .set({
+        status: "streaming",
+        conversation: {
+          messages: fromUIMessages(messagesToSave),
+        },
+        environment: request.environment,
+        streamIds: sql<
+          string[]
+        >`COALESCE("streamIds", '{}') || ARRAY[${streamId}]`,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("taskId", "=", id)
+      .where("userId", "=", userId)
+      .executeTakeFirstOrThrow();
+
+    return {
+      id,
+      streamId,
+      event,
+      messages,
+    };
+  }
+
+  async finishStreaming(
+    taskId: number,
+    userId: string,
+    messages: Message[],
+    finishReason: FinishReason,
+  ) {
+    const status = getTaskStatus(messages, finishReason);
+    const messagesToSave = postProcessMessages(messages);
+    await db
+      .updateTable("task")
+      .set({
+        status,
+        conversation: {
+          messages: fromUIMessages(messagesToSave),
+        },
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("taskId", "=", taskId)
+      .where("userId", "=", userId)
+      .executeTakeFirstOrThrow();
+  }
+
+  private async prepareTask(
+    userId: string,
+    request: z.infer<typeof ZodChatRequestType>,
+  ) {
+    const { id: chatId, event, environment } = request;
     let taskId = chatId ? Number.parseInt(chatId) : undefined;
     if (taskId === undefined) {
-      taskId = await this.create(user.id, event);
+      taskId = await this.create(userId, event);
     }
 
     const data = await db
       .selectFrom("task")
       .select(["conversation", "event", "environment", "status"])
       .where("taskId", "=", taskId)
-      .where("userId", "=", user.id)
+      .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
     this.verifyEnvironment(environment, data.environment);
@@ -46,7 +112,7 @@ class TaskService {
     };
   }
 
-  async create(userId: string, event: UserEvent | null = null) {
+  private async create(userId: string, event: UserEvent | null = null) {
     const { taskId } = await db.transaction().execute(async (trx) => {
       const { nextTaskId } = await trx
         .insertInto("taskSequence")
@@ -94,28 +160,6 @@ class TaskService {
         message: "Environment CWD mismatch",
       });
     }
-  }
-
-  async update(
-    taskId: number,
-    userId: string,
-    status: DB["task"]["status"]["__update__"],
-    environment: Environment | undefined,
-    messages: Message[],
-  ) {
-    return db
-      .updateTable("task")
-      .set({
-        status,
-        conversation: {
-          messages: fromUIMessages(messages),
-        },
-        environment,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("taskId", "=", taskId)
-      .where("userId", "=", userId)
-      .executeTakeFirstOrThrow();
   }
 
   async list(userId: string, page: number, limit: number, cwd?: string) {
@@ -213,19 +257,6 @@ class TaskService {
     return result.numDeletedRows > 0; // Return true if deletion was successful
   }
 
-  async appendStreamId(taskId: number, userId: string, streamId: string) {
-    return db
-      .updateTable("task")
-      .set({
-        streamIds: sql<
-          string[]
-        >`COALESCE("streamIds", '{}') || ARRAY[${streamId}]`,
-      })
-      .where("taskId", "=", taskId)
-      .where("userId", "=", userId)
-      .executeTakeFirstOrThrow();
-  }
-
   async fetchLatestStreamId(
     taskId: number,
     userId: string,
@@ -246,3 +277,59 @@ class TaskService {
 }
 
 export const taskService = new TaskService();
+
+function postProcessMessages(messages: Message[]) {
+  const ret = stripReadEnvironment(messages);
+  for (const x of ret) {
+    x.toolInvocations = undefined;
+  }
+
+  return ret;
+}
+
+export function getTaskStatus(
+  messages: Message[],
+  finishReason: FinishReason,
+): DB["task"]["status"]["__select__"] {
+  const lastMessage = messages[messages.length - 1];
+
+  if (finishReason === "tool-calls") {
+    if (hasAttemptCompletion(lastMessage)) {
+      return "completed";
+    }
+    if (hasUserInputTool(lastMessage)) {
+      return "pending-input";
+    }
+    return "pending-tool";
+  }
+
+  if (finishReason === "stop") {
+    return "pending-input";
+  }
+
+  return "failed";
+}
+
+function hasAttemptCompletion(message: Message): boolean {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  return !!message.parts?.some(
+    (part) =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation.toolName === "attemptCompletion",
+  );
+}
+
+function hasUserInputTool(message: Message): boolean {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  return !!message.parts?.some(
+    (part) =>
+      part.type === "tool-invocation" &&
+      isUserInputTool(part.toolInvocation.toolName),
+  );
+}

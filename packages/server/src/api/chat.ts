@@ -5,13 +5,11 @@ import { ClientTools } from "@ragdoll/tools";
 import {
   APICallError,
   type DataStreamWriter,
-  type FinishReason,
   type LanguageModel,
   type LanguageModelV1,
   type Message,
   NoSuchToolError,
   RetryError,
-  appendClientMessage,
   appendResponseMessages,
   createDataStream,
   generateId,
@@ -29,12 +27,8 @@ import {
   checkUserQuota,
   checkWaitlist,
 } from "../lib/check-request";
-import { toUIMessage, toUIMessages } from "../lib/message-utils"; // Removed fromUIMessages
 import { resolveServerTools } from "../lib/tools";
-import {
-  injectReadEnvironment,
-  stripReadEnvironment,
-} from "../prompts/environment";
+import { injectReadEnvironment } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { after } from "../server";
 import { taskService } from "../service/task";
@@ -53,11 +47,8 @@ const chat = new Hono<{ Variables: ContextVariables }>()
   .use(requireAuth())
   .post("/stream", zValidator("json", ZodChatRequestType), async (c) => {
     const req = await c.req.valid("json");
-    const {
-      message,
-      environment,
-      model: requestedModelId = "google/gemini-2.5-pro",
-    } = req;
+    const { environment, model: requestedModelId = "google/gemini-2.5-pro" } =
+      req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
 
@@ -68,30 +59,20 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
     checkWaitlist(user);
 
-    const { id, conversation, event } = await taskService.start(
-      user,
-      req.id,
-      req.event,
-      environment,
-    );
-
-    const streamId = generateId();
-    await taskService.appendStreamId(id, user.id, streamId);
-
-    const messages = appendClientMessage({
-      messages: toUIMessages(conversation?.messages || []),
-      message: toUIMessage(message),
-    });
-
-    await saveMessages(id, user.id, "streaming", environment, messages);
-
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(
       ["webFetch"].concat(req.tools || []),
     );
 
+    const streamId = generateId();
     const dataStream = createDataStream({
       execute: async (stream) => {
+        const { id, messages, event } = await taskService.startStreaming(
+          user.id,
+          streamId,
+          req,
+        );
+
         if (req.id === undefined) {
           stream.writeData({ type: "append-id", id });
         }
@@ -116,16 +97,14 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               ...enabledServerTools, // Add the enabled server tools
             },
             onFinish: async ({ usage, finishReason, response }) => {
-              const messagesToSave = appendResponseMessages({
-                messages,
-                responseMessages: response.messages,
-              });
-              await saveMessages(
+              await taskService.finishStreaming(
                 id,
                 user.id,
-                getTaskStatus(messages, finishReason),
-                environment,
-                messagesToSave,
+                appendResponseMessages({
+                  messages,
+                  responseMessages: response.messages,
+                }),
+                finishReason,
               );
 
               if (!Number.isNaN(usage.totalTokens)) {
@@ -223,15 +202,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     },
   );
 
-function postProcessMessages(messages: Message[]) {
-  const ret = stripReadEnvironment(messages);
-  for (const x of ret) {
-    x.toolInvocations = undefined;
-  }
-
-  return ret;
-}
-
 async function preprocessMessages(
   inputMessages: Message[],
   model: LanguageModelV1,
@@ -273,60 +243,3 @@ function resolvePendingTools(inputMessages: Message[]): Message[] {
 }
 
 export default chat;
-
-function getTaskStatus(messages: Message[], finishReason: FinishReason) {
-  const lastMessage = messages[messages.length - 1];
-
-  if (finishReason === "tool-calls") {
-    if (hasAttemptCompletion(lastMessage)) {
-      return "completed";
-    }
-    if (hasUserInputTool(lastMessage)) {
-      return "pending-input";
-    }
-    return "pending-tool";
-  }
-
-  if (finishReason === "stop") {
-    return "pending-input";
-  }
-
-  return "failed";
-}
-
-function hasAttemptCompletion(message: Message): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolName === "attemptCompletion",
-  );
-}
-
-function hasUserInputTool(message: Message): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      isUserInputTool(part.toolInvocation.toolName),
-  );
-}
-
-async function saveMessages(
-  taskId: number,
-  userId: string,
-  status: DB["task"]["status"]["__select__"],
-  environment: Environment | undefined,
-  messages: Message[],
-) {
-  const messagesToSave = postProcessMessages(messages);
-  await taskService
-    .update(taskId, userId, status, environment, messagesToSave)
-    .catch(console.error);
-}
