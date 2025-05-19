@@ -31,7 +31,7 @@ const ExpandIcon: React.FC<{
   return (
     <span
       className={cn(
-        "mt-0.5 self-start rounded bg-muted p-1 hover:bg-accent",
+        "mt-0.5 self-start rounded bg-muted p-1 hover:bg-secondary",
         className,
       )}
       onClick={onClick}
@@ -48,9 +48,10 @@ const ExpandIcon: React.FC<{
 export const ExpandableToolContainer: React.FC<{
   title: React.ReactNode;
   expandableDetail?: React.ReactNode;
+  expandableDetailIcon?: React.ReactNode;
   detail?: React.ReactNode;
   onToggle?: (expand: boolean) => void;
-}> = ({ title, expandableDetail, detail, onToggle }) => {
+}> = ({ title, expandableDetail, expandableDetailIcon, detail, onToggle }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   const handleToggle = () => {
@@ -62,12 +63,20 @@ export const ExpandableToolContainer: React.FC<{
 
   return (
     <ToolContainer>
-      <ToolTitle
-        onClick={handleToggle}
-        className={expandableDetail ? "cursor-pointer" : undefined}
-      >
+      <ToolTitle>
         <span className="pr-1 leading-relaxed">{title}</span>
-        {expandableDetail && <ExpandIcon isExpanded={showDetails} />}
+        {expandableDetailIcon && (
+          <span className={"mt-0.5 self-start rounded p-1"}>
+            {expandableDetailIcon}
+          </span>
+        )}
+        {expandableDetail && (
+          <ExpandIcon
+            isExpanded={showDetails}
+            onClick={handleToggle}
+            className="cursor-pointer"
+          />
+        )}
       </ToolTitle>
       {showDetails && expandableDetail}
       {detail}

@@ -87,9 +87,11 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>{statusIcon}</TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent className="max-w-[calc(100vw-30px)]">
             {tooltipContent.map((item, index) => (
-              <div key={index}>{item}</div>
+              <div className="text-wrap break-words" key={index}>
+                {item}
+              </div>
             ))}
           </TooltipContent>
         </Tooltip>

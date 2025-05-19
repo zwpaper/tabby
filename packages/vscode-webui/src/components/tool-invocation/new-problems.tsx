@@ -1,3 +1,9 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { TriangleAlertIcon } from "lucide-react";
 import { CodeBlock } from "../message";
 
 export const NewProblems: React.FC<{
@@ -10,5 +16,18 @@ export const NewProblems: React.FC<{
         Above problems have been detected after the change
       </p>
     </div>
+  );
+};
+
+export const NewProblemsIcon: React.FC = () => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <TriangleAlertIcon className="size-3 text-yellow-600 dark:text-yellow-400" />
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="m-0">Problems detected after change</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };

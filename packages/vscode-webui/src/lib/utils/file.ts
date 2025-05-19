@@ -9,9 +9,12 @@ export const isFolder = (filePath: string) => {
 };
 
 /**
- * Adds a zero-width space (U+200B) after each slash and period
+ * Adds a zero-width space (U+200B) after each URL special character
  * to improve line breaking in URIs.
  */
 export const addLineBreak = (text: string) => {
-  return text.replace(/\/|\./g, (match) => `${match}\u200B`);
+  return text.replace(
+    /[\/\.\+\?\=\%\&\#\:\;\,\_\~]/g,
+    (match) => `${match}\u200B`,
+  );
 };

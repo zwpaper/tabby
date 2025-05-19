@@ -2,7 +2,7 @@ import { vscodeHost } from "@/lib/vscode";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
-import { NewProblems } from "../new-problems";
+import { NewProblems, NewProblemsIcon } from "../new-problems";
 import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
@@ -51,15 +51,23 @@ export const applyDiffTool: React.FC<
     </>
   );
 
+  const detials = [];
+
+  if (result?.newProblems) {
+    detials.push(<NewProblems newProblems={result?.newProblems} />);
+  }
+
+  if (result?.userEdits) {
+    detials.push(<UserEdits userEdits={result?.userEdits} />);
+  }
+
+  const detail = detials.length > 0 ? <>{detials}</> : undefined;
+
   return (
     <ExpandableToolContainer
       title={title}
-      expandableDetail={
-        result?.userEdits && <UserEdits userEdits={result?.userEdits} />
-      }
-      detail={
-        result?.newProblems && <NewProblems newProblems={result?.newProblems} />
-      }
+      expandableDetail={detail}
+      expandableDetailIcon={result?.newProblems && <NewProblemsIcon />}
     />
   );
 };
