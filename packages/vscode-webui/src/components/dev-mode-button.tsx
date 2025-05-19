@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
-import { createCoreMessagesForCopy } from "@/lib/message-utils";
+import { createCoreMessagesForCopy } from "@/lib/utils/message";
 import { vscodeHost } from "@/lib/vscode"; // Corrected import
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import { CheckIcon, CopyIcon, SettingsIcon } from "lucide-react"; // Removed FilesIcon
@@ -46,7 +46,13 @@ interface DevModeButtonProps {
 
 export function DevModeButton({ messages }: DevModeButtonProps) {
   const getMessagesContent = () => {
-    return JSON.stringify(messages, null, 2);
+    const x = messages.map((x) => {
+      return {
+        ...x,
+        toolInvocations: undefined,
+      };
+    });
+    return JSON.stringify(x, null, 2);
   };
   const getCoreMessagesContent = () => {
     const coreMessages = createCoreMessagesForCopy(messages);
