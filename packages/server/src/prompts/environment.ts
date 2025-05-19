@@ -1,3 +1,4 @@
+import type { LanguageModelV1, Message } from "ai";
 import type { DB } from "../db";
 import type { Environment } from "../types";
 
@@ -45,4 +46,88 @@ function getEvent(event: DB["task"]["event"]) {
 function getGitStatus(gitStatus: string | undefined) {
   if (!gitStatus) return "";
   return `# GIT STATUS\nthis git status will keep latest changes in the repository.\n${gitStatus}`;
+}
+
+function getMessageToInject(messages: Message[]): Message | undefined {
+  if (messages[messages.length - 1].role === "assistant") {
+    // Last message is a function call result, inject it directly.
+    return messages[messages.length - 1];
+  }
+  if (messages[messages.length - 2].role === "assistant") {
+    // Last message is a user message, inject to the assistant message.
+    return messages[messages.length - 2];
+  }
+}
+
+export function injectReadEnvironment(
+  messages: Message[],
+  model: LanguageModelV1,
+  environment: Environment | undefined,
+  event: DB["task"]["event"],
+) {
+  const isGemini = model.provider.includes("gemini");
+
+  if (environment === undefined) return messages;
+  // There\'s only user message.
+  if (messages.length === 1 && messages[0].role === "user") {
+    // Prepend an empty assistant message.
+    messages.unshift({
+      id: `environmentMessage-assistant-${Date.now()}`,
+      role: "assistant",
+      content: " ",
+    });
+    messages.unshift({
+      id: `environmentMessage-user-${Date.now()}`,
+      role: "user",
+      content: " ",
+    });
+  }
+  const messageToInject = getMessageToInject(messages);
+  if (!messageToInject) return messages;
+
+  const parts = [...(messageToInject.parts || [])];
+
+  // create toolCallId with timestamp
+  const toolCallId = `environmentToolCall-${Date.now()}`;
+  parts.push({
+    type: "tool-invocation",
+    toolInvocation: {
+      toolName: "readEnvironment",
+      state: "result",
+      args: isGemini ? undefined : null,
+      toolCallId,
+      result: getReadEnvironmentResult(environment, event),
+    },
+  });
+
+  messageToInject.parts = parts;
+  return messages;
+}
+
+export function stripReadEnvironment(messages: Message[]) {
+  const ret = [];
+  for (const x of messages) {
+    // Remove environment message
+    if (x.id.startsWith("environmentMessage-")) {
+      continue;
+    }
+
+    const m = {
+      ...x,
+    };
+
+    if (m.parts) {
+      m.parts = m.parts.filter((x) => {
+        if (
+          x.type === "tool-invocation" &&
+          x.toolInvocation.toolName === "readEnvironment"
+        )
+          return false;
+        return true;
+      });
+    }
+
+    ret.push(m);
+  }
+  return ret;
 }

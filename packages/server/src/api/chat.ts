@@ -1,10 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
-import {
-  isAutoInjectTool,
-  isUserInputTool,
-  selectServerTools,
-} from "@ragdoll/tools";
+import { isUserInputTool, selectServerTools } from "@ragdoll/tools";
 import { ClientTools } from "@ragdoll/tools";
 import {
   APICallError,
@@ -38,7 +34,10 @@ import {
   toUIMessages,
 } from "../lib/message-utils";
 import { resolveServerTools } from "../lib/tools";
-import { getReadEnvironmentResult } from "../prompts/environment";
+import {
+  injectReadEnvironment,
+  stripReadEnvironment,
+} from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { type Environment, ZodChatRequestType } from "../types";
 
@@ -188,36 +187,8 @@ const chat = new Hono<{ Variables: ContextVariables }>().post(
   },
 );
 
-function removeAutoInject(messages: Message[]) {
-  const ret = [];
-  for (const x of messages) {
-    // Remove environment message
-    if (x.id.startsWith("environmentMessage-")) {
-      continue;
-    }
-
-    const m = {
-      ...x,
-    };
-
-    if (m.parts) {
-      m.parts = m.parts.filter((x) => {
-        if (
-          x.type === "tool-invocation" &&
-          isAutoInjectTool(x.toolInvocation.toolName)
-        )
-          return false;
-        return true;
-      });
-    }
-
-    ret.push(m);
-  }
-  return ret;
-}
-
 function postProcessMessages(messages: Message[]) {
-  const ret = removeAutoInject(messages);
+  const ret = stripReadEnvironment(messages);
   for (const x of ret) {
     x.toolInvocations = undefined;
   }
@@ -236,17 +207,6 @@ async function preprocessMessages(
   messages = injectReadEnvironment(messages, model, environment, event);
   messages = await resolveServerTools(messages, user);
   return messages;
-}
-
-function getMessageToInject(messages: Message[]): Message | undefined {
-  if (messages[messages.length - 1].role === "assistant") {
-    // Last message is a function call result, inject it directly.
-    return messages[messages.length - 1];
-  }
-  if (messages[messages.length - 2].role === "assistant") {
-    // Last message is a user message, inject to the assistant message.
-    return messages[messages.length - 2];
-  }
 }
 
 function resolvePendingTools(inputMessages: Message[]) {
@@ -272,52 +232,6 @@ function resolvePendingTools(inputMessages: Message[]) {
     }
     return message;
   });
-}
-
-function injectReadEnvironment(
-  messages: Message[],
-
-  model: LanguageModelV1,
-  environment: Environment | undefined,
-  event: DB["task"]["event"],
-) {
-  const isGemini = model.provider.includes("gemini");
-
-  if (environment === undefined) return messages;
-  // There's only user message.
-  if (messages.length === 1 && messages[0].role === "user") {
-    // Prepend an empty assistant message.
-    messages.unshift({
-      id: `environmentMessage-assistant-${Date.now()}`,
-      role: "assistant",
-      content: " ",
-    });
-    messages.unshift({
-      id: `environmentMessage-user-${Date.now()}`,
-      role: "user",
-      content: " ",
-    });
-  }
-  const messageToInject = getMessageToInject(messages);
-  if (!messageToInject) return messages;
-
-  const parts = [...(messageToInject.parts || [])];
-
-  // create toolCallId with timestamp
-  const toolCallId = `environmentToolCall-${Date.now()}`;
-  parts.push({
-    type: "tool-invocation",
-    toolInvocation: {
-      toolName: "readEnvironment",
-      state: "result",
-      args: isGemini ? undefined : null,
-      toolCallId,
-      result: getReadEnvironmentResult(environment, event),
-    },
-  });
-
-  messageToInject.parts = parts;
-  return messages;
 }
 
 async function trackUsage(
