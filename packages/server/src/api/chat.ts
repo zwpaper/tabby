@@ -151,7 +151,11 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           return `${error.toolName} is not a valid tool.`;
         }
 
-        console.error("error", error);
+        if (error instanceof Error) {
+          return error.message;
+        }
+
+        console.error(error);
         return "Something went wrong. Please try again.";
       },
     });
