@@ -92,6 +92,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
         const result = Laminar.withSession(`${user.id}-${id}`, () =>
           streamText({
+            abortSignal: c.req.raw.signal,
             toolCallStreaming: true,
             model: c.get("model") || selectedModel,
             system: environment?.info && generateSystemPrompt(environment.info),
@@ -151,12 +152,17 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           return `${error.toolName} is not a valid tool.`;
         }
 
-        if (error instanceof Error) {
-          return error.message;
+        if (!(error instanceof Error)) {
+          console.error("Unknown error", error);
+          return "Something went wrong. Please try again.";
         }
 
-        console.error(error);
-        return "Something went wrong. Please try again.";
+        if (error.name === "AbortError") {
+          return "Request was aborted.";
+        }
+
+        console.log("Unknown error", error);
+        return error.message;
       },
     });
 
