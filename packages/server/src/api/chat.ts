@@ -1,7 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
-import { isUserInputTool, selectServerTools } from "@ragdoll/tools";
-import { ClientTools } from "@ragdoll/tools";
+import {
+  isUserInputTool,
+  selectClientTools,
+  selectServerTools,
+} from "@ragdoll/tools";
 import {
   APICallError,
   type DataStreamWriter,
@@ -59,6 +62,10 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
     checkWaitlist(user);
 
+    const enabledClientTools = selectClientTools(
+      environment?.todos !== undefined,
+    );
+
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(
       ["webFetch"].concat(req.tools || []),
@@ -93,7 +100,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             system: environment?.info && generateSystemPrompt(environment.info),
             messages: processedMessages,
             tools: {
-              ...ClientTools,
+              ...enabledClientTools,
               ...enabledServerTools, // Add the enabled server tools
             },
             onFinish: async ({ usage, finishReason, response }) => {

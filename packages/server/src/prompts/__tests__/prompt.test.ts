@@ -23,6 +23,12 @@ test("environment", () => {
           files: ["index.ts", "package.json"],
           isTruncated: false,
         },
+        todos: [{
+          content: "fix this",
+          id: "1",
+          status: "pending",
+          priority: "high",
+        }],
         info: {
           cwd: "/home/user/project",
           os: "linux",

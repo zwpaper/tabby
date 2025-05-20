@@ -1,8 +1,10 @@
+import type { ClientToolsType } from "@ragdoll/tools";
 import { z } from "zod";
 import type { DBMessage, UserEvent } from "./db";
 
 const ZodMessageType: z.ZodType<DBMessage> = z.any();
 const ZodEventType: z.ZodType<UserEvent> = z.any();
+const ZodTodoType: z.ZodType<Todo> = z.any();
 
 export const ZodChatRequestType = z.object({
   id: z.string().optional(),
@@ -31,6 +33,7 @@ export const ZodChatRequestType = z.object({
           .optional()
           .describe("Git status information for the current workspace."),
       }),
+      todos: z.array(ZodTodoType).optional().describe("Todos in current task"),
     })
     .optional(),
   notify: z.boolean().optional(),
@@ -41,3 +44,6 @@ export type Environment = NonNullable<ChatRequest["environment"]>;
 export type SystemPromptEnvironment = NonNullable<
   NonNullable<ChatRequest["environment"]>["info"]
 >;
+export type Todo = z.infer<
+  ClientToolsType["todoWrite"]["parameters"]
+>["todos"][number];

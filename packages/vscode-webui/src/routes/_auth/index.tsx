@@ -11,7 +11,11 @@ import {
   type UIMessage,
   isAssistantMessageWithCompletedToolCalls,
 } from "@ai-sdk/ui-utils";
-import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
+import type {
+  Environment,
+  ChatRequest as RagdollChatRequest,
+  Todo,
+} from "@ragdoll/server";
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -265,7 +269,16 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     }
   };
 
+  const enableTodos = useSettingsStore((state) => state.enableTodos);
   const chatHasFinishedOnce = useRef(false);
+  // FIXME(jueliang): load initial todos from loaderData.
+  const todos = useRef<Todo[] | undefined>(enableTodos ? [] : undefined);
+  const buildEnvironment = useCallback(async () => {
+    return {
+      todos: todos.current,
+      ...(await vscodeHost.readEnvironment()),
+    } satisfies Environment;
+  }, []);
   const {
     data,
     error,
@@ -295,7 +308,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           JSON.stringify({
             ...JSON.parse(options.body as string),
             // Inject the environment variables into the request body
-            environment: await vscodeHost.readEnvironment(),
+            environment: await buildEnvironment(),
           }),
       }),
     headers: {
@@ -606,6 +619,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
               chatHasFinishedOnce={chatHasFinishedOnce.current}
+              todos={todos}
             />
             <AutoApproveMenu />
             {files.length > 0 && (
@@ -650,7 +664,12 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               />
 
               <div className="flex shrink-0 items-center gap-1">
-                {isDevMode && <DevModeButton messages={messages} />}
+                {isDevMode && (
+                  <DevModeButton
+                    messages={messages}
+                    buildEnvironment={buildEnvironment}
+                  />
+                )}
                 <Button
                   variant="ghost"
                   size="icon"

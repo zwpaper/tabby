@@ -8,8 +8,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { createCoreMessagesForCopy } from "@/lib/utils/message";
-import { vscodeHost } from "@/lib/vscode"; // Corrected import
 import type { UIMessage } from "@ai-sdk/ui-utils";
+import type { Environment } from "@ragdoll/server";
 import { CheckIcon, CopyIcon, SettingsIcon } from "lucide-react"; // Removed FilesIcon
 import type React from "react";
 
@@ -42,9 +42,13 @@ function CopyMenuItem({ fetchContent, text }: UpdatedCopyMenuItemProps) {
 
 interface DevModeButtonProps {
   messages: UIMessage[];
+  buildEnvironment: () => Promise<Environment>;
 }
 
-export function DevModeButton({ messages }: DevModeButtonProps) {
+export function DevModeButton({
+  messages,
+  buildEnvironment,
+}: DevModeButtonProps) {
   const getMessagesContent = () => {
     const x = messages.map((x) => {
       return {
@@ -60,7 +64,7 @@ export function DevModeButton({ messages }: DevModeButtonProps) {
   };
 
   const getEnvironmentContent = async () => {
-    const environment = await vscodeHost.readEnvironment();
+    const environment = await buildEnvironment();
     return JSON.stringify(environment, null, 2);
   };
 

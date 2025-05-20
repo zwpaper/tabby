@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import { useToolAutoApproval } from "@/lib/stores/settings-store";
 import { vscodeHost } from "@/lib/vscode";
+import type { Todo } from "@ragdoll/server";
 
 // Type definitions
 type AddToolResultFunctionType = ({
@@ -85,6 +86,7 @@ interface ApprovalButtonProps {
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
   chatHasFinishedOnce: boolean;
+  todos: React.MutableRefObject<Todo[] | undefined>;
 }
 
 // Hook
@@ -116,11 +118,13 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   setIsExecuting,
   executingToolCallId,
   chatHasFinishedOnce,
+  todos,
 }) => {
   if (isLoading || !pendingApproval) return null;
 
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
+    todos,
   });
 
   const ToolAcceptText: Record<string, string> = {

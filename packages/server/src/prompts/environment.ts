@@ -11,6 +11,7 @@ export function getReadEnvironmentResult(
     getWorkspaceFiles(environment.workspace, environment.info),
     getGitStatus(environment.info.gitStatus),
     getEvent(event),
+    getTodos(environment.todos),
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -130,4 +131,15 @@ export function stripReadEnvironment(messages: Message[]) {
     ret.push(m);
   }
   return ret;
+}
+function getTodos(todos: Environment["todos"]) {
+  if (todos === undefined) {
+    return "";
+  }
+
+  if (todos.length === 0) {
+    return "# TODOs\nNo TODOs yet";
+  }
+
+  return `# TODOs\n${JSON.stringify(todos, null, 2)}`;
 }

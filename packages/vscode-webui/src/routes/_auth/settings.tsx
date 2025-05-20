@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiClient } from "@/lib/auth-client";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -246,6 +247,7 @@ const ConnectionsSection: React.FC = () => {
 
 const AdvancedSettingsSection: React.FC = () => {
   const [isDevMode, setIsDevMode] = useIsDevMode();
+  const { enableTodos, updateEnableTodos } = useSettingsStore();
 
   return (
     <AccordionSection title="Advanced Settings">
@@ -267,6 +269,21 @@ const AdvancedSettingsSection: React.FC = () => {
             </label>
           </div>
         )}
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="enable-todos"
+            checked={enableTodos}
+            onCheckedChange={(checked) => {
+              updateEnableTodos(!!checked);
+            }}
+          />
+          <label
+            htmlFor="enable-todos"
+            className="font-bold text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Enable Todos
+          </label>
+        </div>
         {/* Add other advanced settings here */}
       </div>
     </AccordionSection>

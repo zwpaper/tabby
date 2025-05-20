@@ -10,7 +10,7 @@ import {
   toUIMessages,
 } from "../lib/message-utils";
 import { stripReadEnvironment } from "../prompts/environment";
-import type { Environment, ZodChatRequestType } from "../types";
+import type { Environment, Todo, ZodChatRequestType } from "../types";
 import { slackService } from "./slack";
 
 const titleSelect =
@@ -254,6 +254,7 @@ class TaskService {
       ...task,
       id: task.taskId, // Map taskId to id
       title: task.title || "(empty)",
+      totalTokens: task.totalTokens || undefined,
       // Ensure all selected fields are correctly mapped if names differ
     }));
 
@@ -280,6 +281,7 @@ class TaskService {
         "conversation",
         "totalTokens",
         titleSelect,
+        sql<Todo[] | null>`environment->'todos'`.as("todos"),
       ])
       .executeTakeFirst();
 
@@ -289,6 +291,8 @@ class TaskService {
     return {
       ...task,
       id: taskId, // Map taskId to id
+      totalTokens: task.totalTokens || undefined,
+      todos: task.todos || undefined,
     };
   }
 

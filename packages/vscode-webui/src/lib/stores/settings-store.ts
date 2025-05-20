@@ -11,11 +11,13 @@ export interface SettingsState {
   autoApproveSettings: AutoApprove;
 
   isDevMode: boolean;
+  enableTodos: boolean;
 
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
+  updateEnableTodos: (value: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -27,8 +29,10 @@ export const useSettingsStore = create<SettingsState>()(
         read: false,
         write: false,
         execute: false,
+        default: true,
       },
       isDevMode: false,
+      enableTodos: false,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
@@ -42,6 +46,8 @@ export const useSettingsStore = create<SettingsState>()(
         set(() => ({ autoApproveActive: value })),
 
       updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
+      updateEnableTodos: (value: boolean) =>
+        set(() => ({ enableTodos: value })),
     }),
     {
       name: "ragdoll-settings-storage",
@@ -55,6 +61,11 @@ export const useSettingsStore = create<SettingsState>()(
 
 export function useToolAutoApproval(toolName: string): boolean {
   const { autoApproveActive, autoApproveSettings } = useSettingsStore();
+
+  if (ToolsByPermission.default.includes(toolName)) {
+    return true;
+  }
+
   if (!autoApproveActive) {
     return false;
   }

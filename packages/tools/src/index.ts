@@ -8,6 +8,7 @@ import { listFiles } from "./list-files";
 import { readEnvironment } from "./read-environment";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
+import { todoWrite } from "./todo-write";
 import type { ToolFunctionType } from "./types";
 import { webFetch } from "./web-fetch";
 export type { ToolFunctionType };
@@ -38,6 +39,7 @@ export const ClientTools = {
   globFiles,
   searchFiles,
   writeToFile,
+  todoWrite,
   readEnvironment,
 };
 
@@ -60,6 +62,7 @@ export const ToolsByPermission = {
   ] satisfies ToolName[] as string[],
   write: ["writeToFile", "applyDiff"] satisfies ToolName[] as string[],
   execute: ["executeCommand"] satisfies ToolName[] as string[],
+  default: ["todoWrite"] satisfies ToolName[] as string[],
 };
 
 export const ServerToolApproved = "<server-tool-approved>";
@@ -75,4 +78,15 @@ export const selectServerTools = (tools: string[]) => {
   }
 
   return ret;
+};
+
+export const selectClientTools = (enableTodos: boolean) => {
+  if (enableTodos) {
+    return ClientTools;
+  }
+
+  const tools = Object.fromEntries(
+    Object.entries(ClientTools).filter(([name]) => name !== "todoWrite"),
+  );
+  return tools satisfies Record<string, Tool>;
 };
