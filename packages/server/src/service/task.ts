@@ -1,5 +1,10 @@
 import { isUserInputTool } from "@ragdoll/tools";
-import { type FinishReason, type Message, appendClientMessage } from "ai";
+import {
+  type FinishReason,
+  type Message,
+  appendClientMessage,
+  generateId,
+} from "ai";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import type { z } from "zod";
@@ -21,9 +26,9 @@ const titleSelect =
 class TaskService {
   async startStreaming(
     userId: string,
-    streamId: string,
     request: z.infer<typeof ZodChatRequestType>,
   ) {
+    const streamId = generateId();
     const { id, conversation, event } = await this.prepareTask(userId, request);
 
     const messages = appendClientMessage({
@@ -85,6 +90,15 @@ class TaskService {
     if (notify) {
       await this.sendTaskCompletionNotification(userId, taskId, status);
     }
+  }
+
+  async failStreaming(taskId: number, userId: string) {
+    await db
+      .updateTable("task")
+      .set({ status: "failed", updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where("taskId", "=", taskId)
+      .where("userId", "=", userId)
+      .execute();
   }
 
   private async sendTaskCompletionNotification(

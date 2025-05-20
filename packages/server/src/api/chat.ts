@@ -15,7 +15,6 @@ import {
   RetryError,
   appendResponseMessages,
   createDataStream,
-  generateId,
   streamText,
 } from "ai";
 import { Hono } from "hono";
@@ -71,15 +70,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       ["webFetch"].concat(req.tools || []),
     );
 
-    const streamId = generateId();
+    const { id, streamId, messages, event } = await taskService.startStreaming(
+      user.id,
+      req,
+    );
+
     const dataStream = createDataStream({
       execute: async (stream) => {
-        const { id, messages, event } = await taskService.startStreaming(
-          user.id,
-          streamId,
-          req,
-        );
-
         if (req.id === undefined) {
           stream.writeData({ type: "append-id", id });
         }
@@ -139,6 +136,9 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         result.mergeIntoDataStream(stream);
       },
       onError(error) {
+        // Failed to stream the response.
+        taskService.failStreaming(id, user.id);
+
         if (RetryError.isInstance(error)) {
           if (APICallError.isInstance(error.lastError)) {
             if (error.lastError.statusCode === 429) {
