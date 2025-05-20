@@ -6,11 +6,9 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
-import { type UseChatHelpers, useChat } from "@ai-sdk/react";
-import {
-  type UIMessage,
-  isAssistantMessageWithCompletedToolCalls,
-} from "@ai-sdk/ui-utils";
+import { useRetry } from "@/lib/hooks/use-retry";
+import { useChat } from "@ai-sdk/react";
+import type { UIMessage } from "@ai-sdk/ui-utils";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
@@ -807,35 +805,6 @@ function prepareRequestBody(
     model: triggerError ? "fake-model" : (model ?? DefaultModelId),
     message: fromUIMessage(message),
   };
-}
-
-function useRetry({
-  messages,
-  setMessages,
-  append,
-  reload,
-}: {
-  messages: UIMessage[];
-  append: UseChatHelpers["append"];
-  setMessages: UseChatHelpers["setMessages"];
-  reload: UseChatHelpers["reload"];
-}) {
-  const retryRequest = useCallback(async () => {
-    if (messages.length === 0) {
-      return;
-    }
-
-    const lastMessage = messages[messages.length - 1];
-    if (isAssistantMessageWithCompletedToolCalls(lastMessage as UIMessage)) {
-      setMessages(messages.slice(0, -1));
-      append(lastMessage);
-      return;
-    }
-
-    return await reload();
-  }, [messages, setMessages, append, reload]);
-
-  return retryRequest;
 }
 
 function createRenderMessages(messages: UIMessage[]): UIMessage[] {
