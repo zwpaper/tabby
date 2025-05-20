@@ -2,6 +2,7 @@ import { ModelSelect } from "@/components/model-select";
 import { FormEditor } from "@/components/prompt-form/form-editor";
 import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
@@ -29,6 +30,10 @@ import type {
 } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Circle,
   ImageIcon,
   Loader2,
   SendHorizonal,
@@ -58,6 +63,7 @@ import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
@@ -160,6 +166,76 @@ interface ChatProps {
   > | null;
   isTaskLoading: boolean;
   initMessage: CreateMessage | undefined;
+}
+
+function TodoList({ todos }: { todos: Todo[] }) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  if (!todos || todos.length === 0) {
+    return null;
+  }
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const getPriorityBadgeVariant = (
+    priority: Todo["priority"],
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    switch (priority) {
+      case "high":
+        return "destructive";
+      case "medium":
+        return "secondary";
+      case "low":
+        return "outline";
+      default:
+        return "default";
+    }
+  };
+
+  return (
+    <div className="mb-4 rounded-md border">
+      <button
+        type="button"
+        onClick={toggleCollapse}
+        className="flex w-full items-center justify-between p-4 focus:outline-none"
+      >
+        <h3 className="font-semibold text-lg">TODOs ({todos.length})</h3>
+        {isCollapsed ? (
+          <ChevronRight className="h-5 w-5" />
+        ) : (
+          <ChevronDown className="h-5 w-5" />
+        )}
+      </button>
+      {!isCollapsed && (
+        <div className="p-4 pt-0">
+          <ul className="space-y-2">
+            {todos.map((todo) => (
+              <li key={todo.id} className="flex items-center space-x-2">
+                {todo.status === "completed" ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                ) : (
+                  <Circle className="h-5 w-5 text-gray-400" />
+                )}
+                <Label
+                  htmlFor={`todo-${todo.id}`}
+                  className={cn("flex-1", {
+                    "line-through": todo.status === "completed",
+                  })}
+                >
+                  {todo.content}
+                </Label>
+                <Badge variant={getPriorityBadgeVariant(todo.priority)}>
+                  {todo.priority}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
@@ -271,15 +347,18 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   const enableTodos = useSettingsStore((state) => state.enableTodos);
   const chatHasFinishedOnce = useRef(false);
-  // FIXME(jueliang): load initial todos from loaderData.
   const todosRef = useRef<Todo[] | undefined>(enableTodos ? [] : undefined);
   const [todos, setTodos] = useState(todosRef.current);
-  // FIXME(jueliang): render todolist.
-  todos;
-  const updateTodos = useCallback((todos: Todo[]) => {
-    todosRef.current = mergeTodos(todosRef.current || [], todos);
+  const updateTodos = useCallback((newTodos: Todo[]) => {
+    todosRef.current = mergeTodos(todosRef.current || [], newTodos);
     setTodos(todosRef.current);
   }, []);
+
+  useEffect(() => {
+    if (enableTodos && loaderData?.todos) {
+      updateTodos(loaderData.todos);
+    }
+  }, [updateTodos, enableTodos, loaderData?.todos]);
   const buildEnvironment = useCallback(async () => {
     return {
       todos: todosRef.current,
@@ -617,6 +696,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           />
         ) : (
           <>
+            {todos && todos.length > 0 && <TodoList todos={todos} />}
             <ApprovalButton
               key={pendingApprovalKey(pendingApproval)}
               isLoading={isLoading}
@@ -882,7 +962,11 @@ function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
   const ret = Array.from(todoMap.values());
   ret.sort((a, b) => {
     const priorityOrder = { low: 0, medium: 1, high: 2 };
-    return priorityOrder[a.priority] - priorityOrder[b.priority];
+    // Sort by priority first, then by content for stable sort
+    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+      return priorityOrder[b.priority] - priorityOrder[a.priority]; // Higher priority first
+    }
+    return a.content.localeCompare(b.content);
   });
   return ret;
 }
