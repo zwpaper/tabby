@@ -2,7 +2,6 @@ import { ModelSelect } from "@/components/model-select";
 import { FormEditor } from "@/components/prompt-form/form-editor";
 import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
@@ -30,10 +29,6 @@ import type {
 } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Circle,
   ImageIcon,
   Loader2,
   SendHorizonal,
@@ -63,8 +58,9 @@ import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
+import { TodoList } from "@/components/todo/todo-list";
+import { useTodos } from "@/components/todo/use-todos";
 import { TokenUsage } from "@/components/token-usage";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
@@ -84,7 +80,6 @@ import type { DataPart } from "@/lib/utils/message";
 import { vscodeHost } from "@/lib/vscode";
 import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
 import type { ResourceURI } from "@ragdoll/vscode-webui-bridge";
-import { AnimatePresence, motion } from "motion/react";
 
 const searchSchema = z.object({
   taskId: z
@@ -168,125 +163,6 @@ interface ChatProps {
   > | null;
   isTaskLoading: boolean;
   initMessage: CreateMessage | undefined;
-}
-
-const collapsibleSectionVariants = {
-  open: {
-    height: "auto",
-    transition: { duration: 0.2, ease: "easeInOut" },
-  },
-  collapsed: {
-    height: 0,
-    transition: { duration: 0.1, ease: "easeInOut" },
-  },
-};
-
-interface TodoListProps {
-  todos: Todo[];
-}
-
-function TodoList({ todos }: TodoListProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [animationCompleted, setAnimationCompleted] = useState(false);
-  const inProgressTodoId = todos.find((x) => x.status === "in-progress")?.id;
-
-  // Effect to scroll to the in-progress todo item when it's present and the list is open
-  useEffect(() => {
-    if (inProgressTodoId && !isCollapsed && animationCompleted) {
-      const timer = setTimeout(() => {
-        const element = document.getElementById(
-          `todo-item-${inProgressTodoId}`,
-        );
-        element?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 400); // Delay to allow expand animation to complete + item animation
-      return () => clearTimeout(timer);
-    }
-  }, [inProgressTodoId, isCollapsed, animationCompleted]);
-
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
-  const getPriorityBadgeVariant = (
-    priority: Todo["priority"],
-  ): "default" | "secondary" | "destructive" | "outline" => {
-    switch (priority) {
-      case "high":
-        return "destructive";
-      case "medium":
-        return "secondary";
-      case "low":
-        return "outline";
-      default:
-        return "default";
-    }
-  };
-
-  return (
-    <div className="mb-4 rounded-md border">
-      <button
-        type="button"
-        onClick={toggleCollapse}
-        className="flex w-full items-center justify-between px-3 py-2 focus:outline-none"
-      >
-        <h3 className="font-semibold text-lg">TODOs ({todos.length})</h3>
-        {isCollapsed ? (
-          <ChevronRight className="h-5 w-5" />
-        ) : (
-          <ChevronDown className="h-5 w-5" />
-        )}
-      </button>
-      <motion.div
-        initial={false}
-        animate={isCollapsed ? "collapsed" : "open"}
-        variants={collapsibleSectionVariants}
-        className="overflow-hidden"
-      >
-        <div className="max-h-36 space-y-2 overflow-y-auto p-4 pt-0">
-          <AnimatePresence>
-            {todos.map((todo, idx) => (
-              <motion.div
-                id={`todo-item-${todo.id}`} // Assign DOM ID
-                key={todo.id}
-                className="flex items-center space-x-2"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  delay: idx * 0.1 + 0.2,
-                }}
-                onAnimationComplete={() => {
-                  if (idx === todos.length - 1) {
-                    console.log("callllllll");
-                    setAnimationCompleted(true);
-                  }
-                }}
-              >
-                {todo.status === "completed" ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-700 dark:text-green-500" />
-                ) : (
-                  <Circle className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                )}
-                <Label
-                  htmlFor={`todo-${todo.id}`}
-                  className={cn("flex-1 text-foreground", {
-                    "text-foreground": todo.status === "completed",
-                    "animated-gradient-text font-semibold":
-                      todo.status === "in-progress",
-                    "text-muted-foreground": todo.status === "pending",
-                  })}
-                >
-                  {todo.content}
-                </Label>
-                <Badge variant={getPriorityBadgeVariant(todo.priority)}>
-                  {todo.priority}
-                </Badge>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-    </div>
-  );
 }
 
 function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
@@ -403,26 +279,16 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     }
   };
 
-  const enableTodos = useSettingsStore((state) => state.enableTodos);
-  const chatHasFinishedOnce = useRef(false);
-  const todosRef = useRef<Todo[] | undefined>(enableTodos ? [] : undefined);
-  const [todos, setTodos] = useState(todosRef.current);
-  const updateTodos = useCallback((newTodos: Todo[]) => {
-    todosRef.current = mergeTodos(todosRef.current || [], newTodos);
-    setTodos(todosRef.current);
-  }, []);
-
-  useEffect(() => {
-    if (enableTodos && loaderData?.todos) {
-      updateTodos(loaderData.todos);
-    }
-  }, [updateTodos, enableTodos, loaderData?.todos]);
+  const todosRef = useRef<Todo[] | undefined>(undefined);
   const buildEnvironment = useCallback(async () => {
     return {
       todos: todosRef.current,
       ...(await vscodeHost.readEnvironment()),
     } satisfies Environment;
   }, []);
+
+  const chatHasFinishedOnce = useRef(false);
+
   const {
     data,
     error,
@@ -462,6 +328,12 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
+  });
+
+  const { todos } = useTodos({
+    initialTodos: loaderData?.todos,
+    messages,
+    todosRef,
   });
 
   useAutoResume({
@@ -767,7 +639,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
               chatHasFinishedOnce={chatHasFinishedOnce.current}
-              updateTodos={updateTodos}
             />
             <AutoApproveMenu />
             {files.length > 0 && (
@@ -811,21 +682,16 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
                   isLoading={isModelsLoading}
                   onChange={handleSelectModel}
                 />
-                {!!selectedModel && (
-                  <>
-                    <Separator
-                      orientation="vertical"
-                      className="!h-3.5 bg-foreground/50"
-                    />
-                    <TokenUsage
-                      contextWindow={selectedModel.contextWindow}
-                      totalTokens={totalTokens}
-                    />
-                  </>
-                )}
               </div>
 
               <div className="flex shrink-0 items-center gap-1">
+                {!!selectedModel && (
+                  <TokenUsage
+                    contextWindow={selectedModel.contextWindow}
+                    totalTokens={totalTokens}
+                    className="mr-5"
+                  />
+                )}
                 {isDevMode && (
                   <DevModeButton
                     messages={messages}
@@ -1026,22 +892,4 @@ function pendingApprovalKey(
     return "retry";
   }
   return pendingApproval.tool.toolCallId;
-}
-
-function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
-  const todoMap = new Map(todos.map((todo) => [todo.id, todo]));
-  for (const newTodo of newTodos) {
-    todoMap.set(newTodo.id, newTodo);
-  }
-
-  const ret = Array.from(todoMap.values());
-  ret.sort((a, b) => {
-    const priorityOrder = { low: 0, medium: 1, high: 2 };
-    // Sort by priority first, then by content for stable sort
-    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-      return priorityOrder[b.priority] - priorityOrder[a.priority]; // Higher priority first
-    }
-    return a.content.localeCompare(b.content);
-  });
-  return ret;
 }

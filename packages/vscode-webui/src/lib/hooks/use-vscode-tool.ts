@@ -1,16 +1,13 @@
 import type { useChat } from "@ai-sdk/react";
 import { ThreadAbortSignal } from "@quilted/threads";
-import type { Todo } from "@ragdoll/server";
 import type { ToolInvocation } from "ai";
 import { useCallback, useRef } from "react";
 import { vscodeHost } from "../vscode";
 
 export function useVSCodeTool({
-  updateTodos,
   addToolResult,
 }: {
   addToolResult: ReturnType<typeof useChat>["addToolResult"];
-  updateTodos: (todos: Todo[]) => void;
 }) {
   const abort = useRef(new AbortController());
 
@@ -20,17 +17,6 @@ export function useVSCodeTool({
 
   const executeTool = useCallback(
     async (tool: ToolInvocation) => {
-      if (tool.toolName === "todoWrite") {
-        updateTodos(tool.args.todos);
-        addToolResult({
-          toolCallId: tool.toolCallId,
-          result: {
-            success: true,
-          },
-        });
-        return;
-      }
-
       let result = await vscodeHost
         .executeToolCall(tool.toolName, tool.args, {
           toolCallId: tool.toolCallId,
@@ -52,7 +38,7 @@ export function useVSCodeTool({
         result,
       });
     },
-    [addToolResult, updateTodos],
+    [addToolResult],
   );
   const rejectTool = useCallback(
     async (tool: ToolInvocation, error: string) => {

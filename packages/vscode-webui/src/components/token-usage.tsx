@@ -1,23 +1,24 @@
 import { cn } from "@/lib/utils";
-import { AppWindowIcon } from "lucide-react";
 
 interface Props {
   contextWindow: number;
   totalTokens: number;
+  className?: string;
 }
 
-export function TokenUsage({ totalTokens, contextWindow }: Props) {
+export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
+  const percentage = Math.ceil((totalTokens / contextWindow) * 100);
+
   return (
     <div
       className={cn(
-        "flex flex-nowrap items-center gap-1 overflow-x-hidden pl-1.5 text-sm",
+        "flex flex-nowrap items-center gap-1 overflow-x-hidden text-muted-foreground text-xs",
+        className,
       )}
     >
-      <span className="flex-1 truncate">
-        {Math.ceil((totalTokens / contextWindow) * 100)}% of{" "}
-        {formatTokens(contextWindow)} tokens
+      <span className="font-medium">
+        {percentage}% of {formatTokens(contextWindow)} tokens
       </span>
-      <AppWindowIcon className="size-4 shrink-0" />
     </div>
   );
 }

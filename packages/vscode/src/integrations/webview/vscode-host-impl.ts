@@ -13,6 +13,7 @@ import { globFiles } from "@/tools/glob-files";
 import { listFiles as listFilesTool } from "@/tools/list-files";
 import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
+import { todoWrite } from "@/tools/todo-write";
 import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
 import {
   ThreadAbortSignal,
@@ -259,6 +260,7 @@ const ToolMap: Record<
   globFiles,
   writeToFile,
   applyDiff,
+  todoWrite,
 };
 
 const ToolPreviewMap: Record<
