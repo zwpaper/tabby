@@ -37,8 +37,6 @@ import type {
 import * as runExclusive from "run-exclusive";
 import { injectable, singleton } from "tsyringe";
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { PochiConfiguration } from "../configuration";
-// biome-ignore lint/style/useImportType: needed for dependency injection
 import { TabState } from "../editor/tab-state";
 
 const logger = getLogger("VSCodeHostImpl");
@@ -51,7 +49,6 @@ export class VSCodeHostImpl implements VSCodeHostApi {
 
   constructor(
     private readonly tokenStorage: TokenStorage,
-    private readonly pochiConfiguration: PochiConfiguration,
     private readonly tabState: TabState,
     private readonly gitStatus: GitStatus,
   ) {}
@@ -239,12 +236,6 @@ export class VSCodeHostImpl implements VSCodeHostApi {
         selection: new vscode.Range(start - 1, 0, end - 1, 0),
       });
     }
-  };
-
-  readIsDevMode = async (): Promise<ThreadSignalSerialization<boolean>> => {
-    return ThreadSignal.serialize(this.pochiConfiguration.isDevMode, {
-      writable: true,
-    });
   };
 }
 

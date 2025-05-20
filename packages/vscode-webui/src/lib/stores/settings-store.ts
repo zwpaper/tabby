@@ -10,9 +10,12 @@ export interface SettingsState {
   autoApproveActive: boolean;
   autoApproveSettings: AutoApprove;
 
+  isDevMode: boolean;
+
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
+  updateIsDevMode: (value: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -25,6 +28,8 @@ export const useSettingsStore = create<SettingsState>()(
         write: false,
         execute: false,
       },
+      isDevMode: false,
+
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
 
@@ -35,6 +40,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       updateAutoApproveActive: (value: boolean) =>
         set(() => ({ autoApproveActive: value })),
+
+      updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
     }),
     {
       name: "ragdoll-settings-storage",

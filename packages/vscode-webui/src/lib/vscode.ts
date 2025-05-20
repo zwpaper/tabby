@@ -53,7 +53,6 @@ function createVSCodeHost(): VSCodeHostApi {
         "previewToolCall",
         "openFile",
         "readResourceURI",
-        "readIsDevMode",
       ],
       exports: {
         openTask(params) {

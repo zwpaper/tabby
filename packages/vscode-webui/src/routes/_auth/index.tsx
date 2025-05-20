@@ -159,7 +159,7 @@ interface ChatProps {
 }
 
 function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
-  const isDevMode = useIsDevMode();
+  const [isDevMode] = useIsDevMode();
   const taskId = useRef<number | undefined>(loaderData?.id);
   useEffect(() => {
     taskId.current = loaderData?.id;
@@ -583,11 +583,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         {displayError && (
           <div
             className={cn("mb-2 text-center text-red-500 dark:text-red-400", {
-              "cursor-help": isDevMode?.value,
+              "cursor-help": isDevMode,
             })}
-            onClick={
-              isDevMode?.value ? () => console.error(displayError) : undefined
-            }
+            onClick={isDevMode ? () => console.error(displayError) : undefined}
           >
             {displayError.message}
           </div>
@@ -652,7 +650,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               />
 
               <div className="flex shrink-0 items-center gap-1">
-                {isDevMode?.value && <DevModeButton messages={messages} />}
+                {isDevMode && <DevModeButton messages={messages} />}
                 <Button
                   variant="ghost"
                   size="icon"

@@ -25,7 +25,7 @@ interface StatusIconProps {
 }
 
 export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
-  const isDevMode = useIsDevMode();
+  const [isDevMode] = useIsDevMode();
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
   let error: string | undefined;
   if (
@@ -56,7 +56,7 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
 
   const tooltipContent = [];
 
-  if (isDevMode?.value) {
+  if (isDevMode) {
     tooltipContent.push(devButton);
   }
 

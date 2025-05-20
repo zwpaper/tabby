@@ -67,8 +67,6 @@ export interface VSCodeHostApi {
    */
   openFile(filePath: string, options?: { start?: number; end?: number }): void;
 
-  readIsDevMode(): Promise<ThreadSignalSerialization<boolean>>;
-
   isWorkspaceActive(): Promise<boolean>;
 }
 

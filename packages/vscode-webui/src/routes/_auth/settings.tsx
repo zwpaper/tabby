@@ -245,7 +245,7 @@ const ConnectionsSection: React.FC = () => {
 };
 
 const AdvancedSettingsSection: React.FC = () => {
-  const isDevMode = useIsDevMode();
+  const [isDevMode, setIsDevMode] = useIsDevMode();
 
   return (
     <AccordionSection title="Advanced Settings">
@@ -254,9 +254,9 @@ const AdvancedSettingsSection: React.FC = () => {
           <div className="flex items-center gap-2">
             <Checkbox
               id="dev-mode"
-              checked={isDevMode.value}
+              checked={isDevMode}
               onCheckedChange={(checked) => {
-                isDevMode.value = !!checked;
+                setIsDevMode(!!checked);
               }}
             />
             <label
