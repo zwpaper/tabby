@@ -1,3 +1,4 @@
+import { isAbortError } from "@ai-sdk/provider-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import {
@@ -152,13 +153,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           return `${error.toolName} is not a valid tool.`;
         }
 
+        if (isAbortError(error)) {
+          return "Request was aborted.";
+        }
+
         if (!(error instanceof Error)) {
           console.error("Unknown error", error);
           return "Something went wrong. Please try again.";
-        }
-
-        if (error.name === "AbortError") {
-          return "Request was aborted.";
         }
 
         console.log("Unknown error", error);
