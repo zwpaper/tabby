@@ -182,3 +182,27 @@ code {
 
   --sidebar-background: var(--vscode-sideBar-background);
 }
+
+@keyframes gradient-animation {
+  0% {
+    background-position: right;
+  }
+  100% {
+    background-position: left;
+  }
+}
+
+.animated-gradient-text {
+  @apply text-foreground/70;
+  /* background: linear-gradient(to right, transparent 30%, var(--vscode-foreground) 40%, transparent 50%); */
+  background: linear-gradient(
+    to right,
+    transparent 30%,
+    var(--foreground) 40%,
+    transparent 50%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: gradient-animation 1.4s linear infinite;
+}
