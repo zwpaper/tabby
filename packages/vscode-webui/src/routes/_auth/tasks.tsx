@@ -11,8 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/auth-client";
 import { CustomHtmlTags } from "@/lib/constants";
-import { useIsWorkspaceActive } from "@/lib/hooks/use-is-workspace-active";
-import { vscodeHost } from "@/lib/vscode";
+import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import {
@@ -149,18 +148,12 @@ const getPaginationItems = (
 };
 
 function App() {
-  const { data: environment } = useQuery({
-    queryKey: ["environment"],
-    queryFn: () => vscodeHost.readEnvironment(),
-  });
-
-  const { data: isWorkspaceActive, isFetching } = useIsWorkspaceActive();
-
-  if (!environment) {
+  const { data: currentWorkspace, isFetching } = useCurrentWorkspace();
+  if (isFetching) {
     return;
   }
 
-  if (!isWorkspaceActive) {
+  if (!currentWorkspace) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center">
         <WorkspaceRequiredPlaceholder isFetching={isFetching} />
@@ -168,15 +161,15 @@ function App() {
     );
   }
 
-  return <Tasks cwd={environment.info.cwd} />;
+  return <Tasks cwd={currentWorkspace} />;
 }
 
 function Tasks({ cwd }: { cwd: string }) {
+  const limit = 20;
   const router = useRouter();
   const { page = 1 } = Route.useSearch();
-  const limit = 20;
 
-  const { data, isPlaceholderData } = useQuery({
+  const { data, isPlaceholderData, isLoading } = useQuery({
     queryKey: ["tasks", page, limit, cwd],
     queryFn: () =>
       apiClient.api.tasks
@@ -202,7 +195,7 @@ function Tasks({ cwd }: { cwd: string }) {
     });
   };
 
-  if (tasks.length === 0) {
+  if (!isLoading && tasks.length === 0) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center">
         <EmptyTaskPlaceholder />
@@ -211,10 +204,10 @@ function Tasks({ cwd }: { cwd: string }) {
   }
 
   return (
-    <div className="flex h-screen w-full flex-col pt-4">
+    <div className="flex h-screen w-full flex-col">
       <ScrollArea className="h-full max-h-screen overflow-y-auto">
-        <div className="flex flex-1 flex-col gap-4 px-4">
-          {isPlaceholderData
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          {isPlaceholderData || isLoading
             ? [...Array(limit)].map((_, i) => (
                 <div
                   key={i}

@@ -67,7 +67,7 @@ export interface VSCodeHostApi {
    */
   openFile(filePath: string, options?: { start?: number; end?: number }): void;
 
-  isWorkspaceActive(): Promise<boolean>;
+  readCurrentWorkspace(): Promise<string | undefined>;
 }
 
 export interface WebviewHostApi {

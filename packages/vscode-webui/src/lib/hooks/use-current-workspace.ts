@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { vscodeHost } from "../vscode";
 
-export function useIsWorkspaceActive() {
+export function useCurrentWorkspace() {
   const result = useQuery({
-    queryKey: ["isWorkspaceActive"],
-    queryFn: () => vscodeHost.isWorkspaceActive(),
+    queryKey: ["currentWorkspace"],
+    queryFn: () => vscodeHost.readCurrentWorkspace(),
   });
 
   return result;
