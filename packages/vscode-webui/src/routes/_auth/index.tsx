@@ -63,6 +63,7 @@ import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
+import { TokenUsage } from "@/components/token-usage";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -241,8 +242,15 @@ function TodoList({ todos }: { todos: Todo[] }) {
 function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const [isDevMode] = useIsDevMode();
   const taskId = useRef<number | undefined>(loaderData?.id);
+  const [totalTokens, setTotalTokens] = useState<number>(
+    loaderData?.totalTokens || 0,
+  );
+
   useEffect(() => {
     taskId.current = loaderData?.id;
+    if (loaderData) {
+      setTotalTokens(loaderData.totalTokens || 0);
+    }
   }, [loaderData]);
 
   const { data: currentWorkspace, isFetching } = useCurrentWorkspace();
@@ -381,8 +389,12 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
-    onFinish: () => {
+    onFinish: (_, { usage }) => {
       chatHasFinishedOnce.current = true;
+
+      if (usage.totalTokens) {
+        setTotalTokens(usage.totalTokens);
+      }
     },
     experimental_prepareRequestBody: (req) =>
       prepareRequestBody(taskId, req, selectedModel?.id),
@@ -742,13 +754,27 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               className="hidden"
             />
 
-            <div className="my-2 flex shrink-0 justify-between gap-3 overflow-x-hidden">
-              <ModelSelect
-                value={selectedModel?.id}
-                models={models}
-                isLoading={isModelsLoading}
-                onChange={handleSelectModel}
-              />
+            <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
+              <div className="flex items-center gap-2 overflow-x-hidden truncate">
+                <ModelSelect
+                  value={selectedModel?.id}
+                  models={models}
+                  isLoading={isModelsLoading}
+                  onChange={handleSelectModel}
+                />
+                {!!selectedModel && (
+                  <>
+                    <Separator
+                      orientation="vertical"
+                      className="!h-3.5 bg-foreground/50"
+                    />
+                    <TokenUsage
+                      contextWindow={selectedModel.contextWindow}
+                      totalTokens={totalTokens}
+                    />
+                  </>
+                )}
+              </div>
 
               <div className="flex shrink-0 items-center gap-1">
                 {isDevMode && (

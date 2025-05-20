@@ -51,7 +51,7 @@ export function ModelSelect({
               <Button
                 variant="ghost"
                 className={cn(
-                  "h-6 max-w-full gap-2 px-1 py-0 text-foreground/90 focus-visible:ring-1",
+                  "!gap-0.5 !px-1 h-6 max-w-full py-0 font-normal focus-visible:ring-1",
                   triggerClassName,
                 )}
               >
