@@ -10,7 +10,6 @@ import {
   APICallError,
   type DataStreamWriter,
   type LanguageModel,
-  type LanguageModelV1,
   type Message,
   NoSuchToolError,
   RetryError,
@@ -84,7 +83,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
         const processedMessages = await preprocessMessages(
           messages,
-          selectedModel,
           environment,
           user,
           event,
@@ -228,14 +226,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
 async function preprocessMessages(
   inputMessages: Message[],
-  model: LanguageModelV1,
   environment: Environment | undefined,
   user: User,
   event: DB["task"]["event"],
   stream: DataStreamWriter,
 ): Promise<Message[]> {
   let messages = resolvePendingTools(inputMessages);
-  messages = injectReadEnvironment(messages, model, environment, event);
+  messages = injectReadEnvironment(messages, environment, event);
   messages = await resolveServerTools(messages, user, stream);
   return messages;
 }

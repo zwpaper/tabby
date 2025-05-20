@@ -1,8 +1,8 @@
 // packages/server/src/lib/constants.ts
 
+import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import { openrouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModelV1 } from "ai";
 
 // Define available models
@@ -11,7 +11,6 @@ export const AvailableModels: {
   contextWindow: number;
   costType: "basic" | "premium";
 }[] = [
-  { id: "openai/gpt-4o", contextWindow: 128_000, costType: "premium" },
   { id: "openai/gpt-4o-mini", contextWindow: 128_000, costType: "basic" },
   {
     id: "google/gemini-2.5-pro",
@@ -22,11 +21,6 @@ export const AvailableModels: {
     id: "google/gemini-2.0-flash",
     contextWindow: 1_048_576,
     costType: "basic",
-  },
-  {
-    id: "anthropic/claude-3.5-sonnet",
-    contextWindow: 200_000,
-    costType: "premium",
   },
   {
     id: "anthropic/claude-3.7-sonnet",
@@ -56,14 +50,10 @@ export const StripePlans = [
 
 export function getModelById(modelId: string): LanguageModelV1 | null {
   switch (modelId) {
-    case "anthropic/claude-3.5-sonnet":
-      return openrouter("anthropic/claude-3.5-sonnet");
     case "anthropic/claude-3.7-sonnet":
-      return openrouter("anthropic/claude-3.7-sonnet");
+      return anthropic("claude-3-7-sonnet-20250219");
     case "openai/gpt-4o-mini":
       return openai("gpt-4o-mini");
-    case "openai/gpt-4o":
-      return openai("gpt-4o");
     case "google/gemini-2.5-pro":
       return google("gemini-2.5-pro-preview-05-06");
     case "google/gemini-2.0-flash":

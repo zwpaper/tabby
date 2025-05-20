@@ -1,4 +1,4 @@
-import type { LanguageModelV1, Message } from "ai";
+import type { Message } from "ai";
 import type { DB } from "../db";
 import type { Environment } from "../types";
 
@@ -62,12 +62,9 @@ function getMessageToInject(messages: Message[]): Message | undefined {
 
 export function injectReadEnvironment(
   messages: Message[],
-  model: LanguageModelV1,
   environment: Environment | undefined,
   event: DB["task"]["event"],
 ) {
-  const isGemini = model.provider.includes("gemini");
-
   if (environment === undefined) return messages;
   // There\'s only user message.
   if (messages.length === 1 && messages[0].role === "user") {
@@ -75,12 +72,12 @@ export function injectReadEnvironment(
     messages.unshift({
       id: `environmentMessage-assistant-${Date.now()}`,
       role: "assistant",
-      content: " ",
+      content: "I'll use readEnvironment tool to check the environment.",
     });
     messages.unshift({
       id: `environmentMessage-user-${Date.now()}`,
       role: "user",
-      content: " ",
+      content: "Please check the environment.",
     });
   }
   const messageToInject = getMessageToInject(messages);
@@ -95,7 +92,7 @@ export function injectReadEnvironment(
     toolInvocation: {
       toolName: "readEnvironment",
       state: "result",
-      args: isGemini ? undefined : null,
+      args: {},
       toolCallId,
       result: getReadEnvironmentResult(environment, event),
     },
