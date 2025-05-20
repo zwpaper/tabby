@@ -16,7 +16,7 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
         className,
       )}
     >
-      <span className="font-medium">
+      <span className="select-none font-medium">
         {percentage}% of {formatTokens(contextWindow)} tokens
       </span>
     </div>
