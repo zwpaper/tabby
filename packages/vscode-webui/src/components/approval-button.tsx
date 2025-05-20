@@ -86,7 +86,7 @@ interface ApprovalButtonProps {
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
   chatHasFinishedOnce: boolean;
-  todos: React.MutableRefObject<Todo[] | undefined>;
+  updateTodos: (todos: Todo[]) => void;
 }
 
 // Hook
@@ -118,13 +118,13 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   setIsExecuting,
   executingToolCallId,
   chatHasFinishedOnce,
-  todos,
+  updateTodos,
 }) => {
   if (isLoading || !pendingApproval) return null;
 
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
-    todos,
+    updateTodos,
   });
 
   const ToolAcceptText: Record<string, string> = {

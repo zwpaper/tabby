@@ -6,11 +6,11 @@ import { useCallback, useRef } from "react";
 import { vscodeHost } from "../vscode";
 
 export function useVSCodeTool({
-  todos,
+  updateTodos,
   addToolResult,
 }: {
   addToolResult: ReturnType<typeof useChat>["addToolResult"];
-  todos: React.MutableRefObject<Todo[] | undefined>;
+  updateTodos: (todos: Todo[]) => void;
 }) {
   const abort = useRef(new AbortController());
 
@@ -21,7 +21,7 @@ export function useVSCodeTool({
   const executeTool = useCallback(
     async (tool: ToolInvocation) => {
       if (tool.toolName === "todoWrite") {
-        todos.current = mergeTodos(todos.current || [], tool.args.todos);
+        updateTodos(tool.args.todos);
         addToolResult({
           toolCallId: tool.toolCallId,
           result: {
@@ -52,7 +52,7 @@ export function useVSCodeTool({
         result,
       });
     },
-    [addToolResult, todos],
+    [addToolResult, updateTodos],
   );
   const rejectTool = useCallback(
     async (tool: ToolInvocation, error: string) => {
@@ -66,18 +66,4 @@ export function useVSCodeTool({
     [addToolResult],
   );
   return { executeTool, rejectTool, abortTool };
-}
-
-function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
-  const todoMap = new Map(todos.map((todo) => [todo.id, todo]));
-  for (const newTodo of newTodos) {
-    todoMap.set(newTodo.id, newTodo);
-  }
-
-  const ret = Array.from(todoMap.values());
-  ret.sort((a, b) => {
-    const priorityOrder = { low: 0, medium: 1, high: 2 };
-    return priorityOrder[a.priority] - priorityOrder[b.priority];
-  });
-  return ret;
 }

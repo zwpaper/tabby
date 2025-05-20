@@ -272,10 +272,17 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const enableTodos = useSettingsStore((state) => state.enableTodos);
   const chatHasFinishedOnce = useRef(false);
   // FIXME(jueliang): load initial todos from loaderData.
-  const todos = useRef<Todo[] | undefined>(enableTodos ? [] : undefined);
+  const todosRef = useRef<Todo[] | undefined>(enableTodos ? [] : undefined);
+  const [todos, setTodos] = useState(todosRef.current);
+  // FIXME(jueliang): render todolist.
+  todos;
+  const updateTodos = useCallback((todos: Todo[]) => {
+    todosRef.current = mergeTodos(todosRef.current || [], todos);
+    setTodos(todosRef.current);
+  }, []);
   const buildEnvironment = useCallback(async () => {
     return {
-      todos: todos.current,
+      todos: todosRef.current,
       ...(await vscodeHost.readEnvironment()),
     } satisfies Environment;
   }, []);
@@ -619,7 +626,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
               chatHasFinishedOnce={chatHasFinishedOnce.current}
-              todos={todos}
+              updateTodos={updateTodos}
             />
             <AutoApproveMenu />
             {files.length > 0 && (
@@ -864,4 +871,18 @@ function pendingApprovalKey(
     return "retry";
   }
   return pendingApproval.tool.toolCallId;
+}
+
+function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
+  const todoMap = new Map(todos.map((todo) => [todo.id, todo]));
+  for (const newTodo of newTodos) {
+    todoMap.set(newTodo.id, newTodo);
+  }
+
+  const ret = Array.from(todoMap.values());
+  ret.sort((a, b) => {
+    const priorityOrder = { low: 0, medium: 1, high: 2 };
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
+  });
+  return ret;
 }
