@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, Eye, FileEdit, Play, RotateCcw } from "lucide-react";
+import { ChevronLeft, Eye, FileEdit, Play } from "lucide-react";
 import { useState } from "react";
 
 export function AutoApproveMenu() {
@@ -20,15 +20,7 @@ export function AutoApproveMenu() {
     .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
 
   const handleToggle = (key: keyof typeof autoApproveSettings) => {
-    if (key === "retry") {
-      if (autoApproveSettings.retry > 0) {
-        updateAutoApproveSettings({ retry: 0 });
-      } else {
-        updateAutoApproveSettings({ retry: 5 });
-      }
-    } else {
-      updateAutoApproveSettings({ [key]: !autoApproveSettings[key] });
-    }
+    updateAutoApproveSettings({ [key]: !autoApproveSettings[key] });
   };
 
   const toggleActive = (enable: boolean) => {
@@ -129,13 +121,6 @@ export function AutoApproveMenu() {
                 label="Execute"
                 isActive={autoApproveSettings.execute}
                 onClick={() => handleToggle("execute")}
-              />
-
-              <ToggleButton
-                icon={<RotateCcw />}
-                label="Retry"
-                isActive={autoApproveSettings.retry > 0}
-                onClick={() => handleToggle("retry")}
               />
             </div>
           </div>
