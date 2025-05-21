@@ -11,8 +11,18 @@ export const FileList: React.FC<{
   if (matches.length === 0) {
     return null;
   }
+
   return (
-    <ScrollArea className="flex max-h-[100px] flex-col gap-1 rounded border p-1">
+    <ScrollArea
+      className="flex max-h-[100px] flex-col gap-1 rounded border p-1"
+      onBlur={(e) => {
+        if (e.currentTarget === e.relatedTarget) {
+          return;
+        }
+        setActiveIndex(-1);
+      }}
+      tabIndex={0}
+    >
       {matches.map((match, index) => (
         <div
           key={match.file + (match.line ?? "") + index}
@@ -20,8 +30,13 @@ export const FileList: React.FC<{
           title={match.context}
           onClick={() => {
             setActiveIndex(index);
-            vscodeHost.openFile(match.file, { start: match.line });
+            vscodeHost.openFile(match.file, {
+              start: match.line,
+              preserveFocus: true,
+            });
           }}
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: <explanation>
+          tabIndex={0}
         >
           <span
             className={`truncate px-1 font-semibold ${activeIndex === index ? "text-secondary-foreground" : "text-foreground"}`}

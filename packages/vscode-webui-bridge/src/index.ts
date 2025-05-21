@@ -64,8 +64,12 @@ export interface VSCodeHostApi {
    * @param options - Optional parameters for opening the file.
    * @param options.start - The starting line number (1-based) to open the file at.
    * @param options.end - The ending line number (1-based) to open the file at.
+   * @param options.preserveFocus - If true, the file will be opened without changing focus. Only applicable for text files.
    */
-  openFile(filePath: string, options?: { start?: number; end?: number }): void;
+  openFile(
+    filePath: string,
+    options?: { start?: number; end?: number; preserveFocus?: boolean },
+  ): void;
 
   readCurrentWorkspace(): Promise<string | undefined>;
 }

@@ -208,7 +208,7 @@ export class VSCodeHostImpl implements VSCodeHostApi {
 
   openFile = async (
     filePath: string,
-    options?: { start?: number; end?: number },
+    options?: { start?: number; end?: number; preserveFocus?: boolean },
   ) => {
     const current = vscode.workspace.workspaceFolders?.[0].uri;
     if (!current) {
@@ -235,6 +235,7 @@ export class VSCodeHostImpl implements VSCodeHostApi {
       const end = options?.end ?? start;
       vscode.window.showTextDocument(fileUri, {
         selection: new vscode.Range(start - 1, 0, end - 1, 0),
+        preserveFocus: options?.preserveFocus,
       });
     }
   };
