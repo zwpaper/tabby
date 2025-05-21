@@ -30,7 +30,7 @@ class SlackService {
         "chat:write",
         "reactions:write",
         "channels:manage",
-        "group:write",
+        "groups:write",
         "mpim:write",
         "im:write",
 

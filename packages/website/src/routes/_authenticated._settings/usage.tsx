@@ -273,7 +273,7 @@ function Usage() {
   };
 
   return (
-    <div className="container max-w-5xl space-y-6">
+    <div className="container space-y-6">
       {/* Render Summary Cards Section */}
       {renderSummaryCards()}
 
