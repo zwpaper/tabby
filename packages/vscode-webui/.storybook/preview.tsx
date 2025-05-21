@@ -59,13 +59,13 @@ export const decorators = [
     defaultTheme: "dark",
   }),
   (story, context) => {
-    const theme = context.globals.theme;
-    if (theme === "dark") {
+    const className = document.querySelector("html")?.className;
+    if (className?.includes("dark")) {
+      document.body.classList.remove("vscode-dark");
+      document.body.classList.add("vscode-light");
+    } else {
       document.body.classList.remove("vscode-light");
       document.body.classList.add("vscode-dark");
-    } else {
-      document.body.classList.toggle("vscode-dark");
-      document.body.classList.add("vscode-light");
     }
     return story();
   },
