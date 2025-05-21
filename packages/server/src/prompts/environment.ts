@@ -135,7 +135,7 @@ function getTodos(todos: Environment["todos"]) {
   }
 
   if (todos.length === 0) {
-    return "# TODOs\nNo TODOs yet";
+    return "# TODOs\nNo TODOs yet, if you are working on tasks that would benefit from a todo list please use the todoWrite tool to create one.";
   }
 
   return `# TODOs\n${JSON.stringify(todos, null, 2)}`;
