@@ -201,7 +201,7 @@ export function FormEditor({
       editorProps: {
         attributes: {
           class:
-            "prose min-h-[3.5em] font-sans dark:prose-invert focus:outline-none prose-p:my-0 leading-[1.25]",
+            "prose max-w-full min-h-[3.5em] font-sans dark:prose-invert focus:outline-none prose-p:my-0 leading-[1.25]",
         },
       },
       onUpdate(props) {
