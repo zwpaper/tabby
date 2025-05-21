@@ -13,6 +13,7 @@ import events, { websocket } from "./api/events";
 import integrations from "./api/integrations";
 import models from "./api/models";
 import tasks from "./api/tasks";
+import tools from "./api/tools";
 import upload from "./api/upload";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
@@ -86,6 +87,7 @@ const route = api
   .route("/integrations", integrations)
   .route("/upload", upload)
   .route("/enhancePrompt", enhance)
+  .route("/tools", tools)
   .route("/admin", admin);
 
 export type AppType = typeof route;

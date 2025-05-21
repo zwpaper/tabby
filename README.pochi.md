@@ -24,3 +24,4 @@ When encountering issues like `TypeError: Descriptor for property readFile is no
 3. For packages/code it uses `ink` for react terminal ui.
 4. Prefer `@/lib` over `../lib` for imports.
 5. For global variable in typescript, prefer using PascalCase, e.g `GlobalVariableName`, instead of `GLOBAL_VARIABLE_NAME`.
+6. For biome related warning / errors, prefer using `bun fix` in the root directory to fix the issues.

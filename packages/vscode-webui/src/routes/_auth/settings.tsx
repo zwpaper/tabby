@@ -1,3 +1,4 @@
+import { ToolsSection } from "@/components/settings/tools-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -157,12 +158,12 @@ const integrationDisplayConfigs: IntegrationDisplayConfig[] = [
   {
     provider: "github",
     displayName: "GitHub",
-    capabilities: ["createPullRequest", "createIssue"],
+    capabilities: ["issue", "pr", "repository"],
   },
   {
     provider: "slack",
     displayName: "Slack",
-    capabilities: ["sendMessage"],
+    capabilities: ["message", "history"],
   },
 ];
 
@@ -231,7 +232,7 @@ const ConnectionsSection: React.FC = () => {
               {config.capabilities.length > 0 && (
                 <span className="space-x-2">
                   {config.capabilities.map((capability) => (
-                    <Badge key={capability} variant="secondary">
+                    <Badge key={capability} className="bg-accent">
                       {capability}
                     </Badge>
                   ))}
@@ -296,6 +297,7 @@ export function SettingsPage() {
       <div>
         <AccountSection />
         <WorkspaceRulesSection />
+        <ToolsSection />
         <ConnectionsSection />
         <AdvancedSettingsSection />
       </div>
