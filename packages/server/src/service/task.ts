@@ -374,6 +374,10 @@ class TaskService {
 
   async onProcessExit() {
     const streamingTasksToFail = Array.from(this.streamingTasks.values());
+    const numTasksToFail = streamingTasksToFail.length;
+    if (numTasksToFail === 0) return;
+
+    console.info(`Process exiting, failing ${numTasksToFail} streaming tasks`);
     this.streamingTasks.clear();
 
     const promises = [];
@@ -382,6 +386,7 @@ class TaskService {
     }
 
     await Promise.all([promises]);
+    console.info(`Failed ${numTasksToFail} streaming tasks`);
   }
 }
 
