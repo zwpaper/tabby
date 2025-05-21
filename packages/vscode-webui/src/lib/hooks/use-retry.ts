@@ -8,14 +8,24 @@ export function useRetry({
   setMessages,
   append,
   reload,
+  experimental_resume,
+  latestHttpCode,
 }: {
   messages: UIMessage[];
   append: UseChatHelpers["append"];
   setMessages: UseChatHelpers["setMessages"];
   reload: UseChatHelpers["reload"];
+  experimental_resume: UseChatHelpers["experimental_resume"];
+  latestHttpCode: React.RefObject<number | undefined>;
 }) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies(latestHttpCode.current): is ref.
   const retryRequest = useCallback(async () => {
     if (messages.length === 0) {
+      return;
+    }
+
+    if (latestHttpCode.current === 409) {
+      experimental_resume();
       return;
     }
 
@@ -31,7 +41,7 @@ export function useRetry({
     }
 
     return await reload();
-  }, [messages, setMessages, append, reload]);
+  }, [messages, setMessages, append, reload, experimental_resume]);
 
   return retryRequest;
 }

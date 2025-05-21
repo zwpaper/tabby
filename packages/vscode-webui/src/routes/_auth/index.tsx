@@ -286,7 +286,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   }, []);
 
   const chatHasFinishedOnce = useRef(false);
-
+  const latestHttpCode = useRef<number | undefined>(undefined);
   const {
     data,
     error,
@@ -324,11 +324,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           }),
       });
       // If the task is already streaming, resume the stream
-      if (resp.status === 409) {
-        setTimeout(() => {
-          experimental_resume();
-        }, 200);
-      }
+      latestHttpCode.current = resp.status;
       return resp;
     },
     headers: {
@@ -496,7 +492,14 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const editorRef = useRef<Editor | null>(null);
 
   const renderMessages = createRenderMessages(messages);
-  const retry = useRetry({ messages, append, setMessages, reload });
+  const retry = useRetry({
+    messages,
+    append,
+    setMessages,
+    reload,
+    experimental_resume,
+    latestHttpCode,
+  });
   const { pendingApproval, setIsExecuting, executingToolCallId } =
     usePendingApproval({
       error,
