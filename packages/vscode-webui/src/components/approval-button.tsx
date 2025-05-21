@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import { useToolAutoApproval } from "@/lib/stores/settings-store";
-import { vscodeHost } from "@/lib/vscode";
 
 // Type definitions
 type AddToolResultFunctionType = ({
@@ -87,26 +86,6 @@ interface ApprovalButtonProps {
   chatHasFinishedOnce: boolean;
 }
 
-// Hook
-function usePreviewToolCall() {
-  const [error, setError] = useState<string | undefined>(undefined);
-  const previewToolCall = useCallback(async (tool: ToolInvocation) => {
-    const { state, args, toolCallId, toolName } = tool;
-    if (state === "result") return;
-    const result = await vscodeHost.previewToolCall(toolName, args, {
-      toolCallId,
-      state,
-    });
-    if (result?.error && state === "call") {
-      setError((prev) => {
-        if (prev) return prev;
-        return result.error;
-      });
-    }
-  }, []);
-  return { error, previewToolCall };
-}
-
 // Component
 export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   isLoading,
@@ -150,13 +129,6 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     return false;
   }, []);
 
-  const { previewToolCall, error: previewToolCallError } = usePreviewToolCall();
-  useEffect(() => {
-    if (pendingApproval.name !== "retry" && !executed.current) {
-      previewToolCall(pendingApproval.tool);
-    }
-  }, [pendingApproval, previewToolCall]);
-
   const onAccept = useCallback(async () => {
     if (pendingApproval.name === "retry") {
       retry();
@@ -195,17 +167,8 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
       onAccept();
     } else if (isAutoRejected) {
       onReject();
-    } else if (previewToolCallError) {
-      onReject(previewToolCallError);
     }
-  }, [
-    isAutoApproved,
-    isAutoRejected,
-    previewToolCallError,
-    onAccept,
-    onReject,
-    chatHasFinishedOnce,
-  ]);
+  }, [isAutoApproved, isAutoRejected, onAccept, onReject, chatHasFinishedOnce]);
 
   const [showAbort, setShowAbort] = useState(false);
 

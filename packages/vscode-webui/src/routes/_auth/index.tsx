@@ -55,6 +55,7 @@ import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
+import { PreviewTool } from "@/components/preview-tool";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { TodoList } from "@/components/todo/todo-list";
 import { useTodos } from "@/components/todo/use-todos";
@@ -553,6 +554,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const displayError = imageSelectionError || uploadImageError || error;
   return (
     <div className="flex h-screen flex-col">
+      <PreviewTool messages={renderMessages} addToolResult={addToolResult} />
+
       {renderMessages.length === 0 &&
         (isTaskLoading ? (
           <div className="flex h-full w-full items-center justify-center">
