@@ -85,7 +85,6 @@ export function TodoList({ todos }: TodoListProps) {
                 }}
                 onAnimationComplete={() => {
                   if (idx === todos.length - 1) {
-                    console.log("callllllll");
                     setAnimationCompleted(true);
                   }
                 }}
