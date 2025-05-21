@@ -3,7 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Todo } from "@ragdoll/server";
-import { Circle, CircleCheckBig, Loader2 } from "lucide-react";
+import { Circle, CircleCheckBig } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -105,11 +105,7 @@ export function TodoList({ todos, status }: TodoListProps) {
                     id={`todo-item-${todo.id}`}
                     key={todo.id}
                     className={cn(
-                      "flex items-start space-x-2.5 rounded-sm p-1 transition-colors",
-                      {
-                        "bg-accent/5": todo.status === "in-progress",
-                        "hover:bg-accent/5": todo.status !== "in-progress",
-                      },
+                      "flex items-start space-x-2.5 rounded-sm p-1 transition-colors hover:bg-accent/5",
                     )}
                     variants={todoItemVariants}
                     initial="initial"
@@ -130,8 +126,6 @@ export function TodoList({ todos, status }: TodoListProps) {
                     <span className="flex h-6 shrink-0 items-center">
                       {todo.status === "completed" ? (
                         <CircleCheckBig className="size-4 text-muted-foreground" />
-                      ) : todo.status === "in-progress" ? (
-                        <Loader2 className="size-4 animate-spin text-primary" />
                       ) : (
                         <Circle className="size-4 text-muted-foreground/70" />
                       )}
