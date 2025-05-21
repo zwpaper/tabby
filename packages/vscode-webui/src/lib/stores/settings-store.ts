@@ -32,7 +32,7 @@ export const useSettingsStore = create<SettingsState>()(
         default: true,
       },
       isDevMode: false,
-      enableTodos: false,
+      enableTodos: true,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
