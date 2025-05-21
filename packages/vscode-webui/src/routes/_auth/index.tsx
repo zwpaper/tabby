@@ -641,7 +641,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           />
         ) : (
           <>
-            {todos && todos.length > 0 && <TodoList todos={todos} />}
+            {todos && todos.length > 0 && (
+              <TodoList todos={todos} status={status} />
+            )}
             <ApprovalButton
               key={pendingApprovalKey(pendingApproval)}
               isLoading={isLoading}

@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Todo } from "@ragdoll/server";
 import { Circle, CircleCheckBig, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -25,9 +26,10 @@ const todoItemVariants = {
 
 export interface TodoListProps {
   todos: Todo[];
+  status: UseChatHelpers["status"];
 }
 
-export function TodoList({ todos }: TodoListProps) {
+export function TodoList({ todos, status }: TodoListProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [animationCompleted, setAnimationCompleted] = useState(false);
 
@@ -71,7 +73,12 @@ export function TodoList({ todos }: TodoListProps) {
         <div className="flex w-full flex-nowrap items-center justify-center gap-2 overflow-hidden">
           <span className="truncate font-medium">
             {inProgressTodo ? (
-              <span className="animated-gradient-text font-semibold">
+              <span
+                className={cn("font-semibold", {
+                  "animated-gradient-text":
+                    status === "submitted" || status === "streaming",
+                })}
+              >
                 {inProgressTodo.content}
               </span>
             ) : (
@@ -134,8 +141,6 @@ export function TodoList({ todos }: TodoListProps) {
                       className={cn("flex-1 text-md", {
                         "text-muted-foreground line-through":
                           todo.status === "completed",
-                        "animated-gradient-text font-semibold":
-                          todo.status === "in-progress",
                         "text-muted-foreground/90": todo.status === "pending",
                       })}
                     >
