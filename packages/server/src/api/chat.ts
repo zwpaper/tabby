@@ -50,8 +50,10 @@ const chat = new Hono<{ Variables: ContextVariables }>()
   .post("/stream", zValidator("json", ZodChatRequestType), async (c) => {
     setIdleTimeout(c.req.raw, 60);
     const req = await c.req.valid("json");
-    const { environment, model: requestedModelId = "google/gemini-2.5-pro" } =
-      req;
+    const {
+      environment,
+      model: requestedModelId = "anthropic/claude-3.7-sonnet",
+    } = req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
 
