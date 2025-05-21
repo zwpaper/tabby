@@ -37,7 +37,7 @@ function getRetryDelay(attempts: number, limit: number) {
   if (attempts >= limit) {
     return undefined;
   }
-  return fib(attempts);
+  return fib(attempts + 2);
 }
 
 function isSameError(a: Error, b: Error) {
@@ -83,7 +83,7 @@ export function usePendingRetryApproval({
       }
       return {
         error: error,
-        count: 1,
+        count: 2,
       };
     });
   }, [error]);
