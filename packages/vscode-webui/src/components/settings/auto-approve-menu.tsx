@@ -3,7 +3,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, Eye, FileEdit, Play } from "lucide-react";
+import { motion } from "motion/react";
 import { useState } from "react";
+
+const collapsibleSectionVariants = {
+  open: {
+    height: "auto",
+    transition: { duration: 0.1, ease: "easeOut" },
+  },
+  collapsed: {
+    height: 0,
+    transition: { duration: 0.1, ease: "easeIn" },
+  },
+};
 
 export function AutoApproveMenu() {
   const {
@@ -30,14 +42,15 @@ export function AutoApproveMenu() {
   const hasEnabledOptions = Object.values(autoApproveSettings).some(Boolean);
 
   return (
-    <div className="-mx-4 select-none">
+    <div className="select-none">
+      {isOpen && <div className="-mx-4 h-0 border-t" />}
+
       <div
         className={cn(
-          "flex cursor-pointer items-center justify-between px-4 pt-2.5",
+          "flex cursor-pointer items-center justify-between pt-2.5",
           {
             "py-2.5": !isOpen,
             "pt-2.5": isOpen,
-            "border-t": isOpen,
           },
         )}
       >
@@ -88,11 +101,11 @@ export function AutoApproveMenu() {
         </div>
       </div>
 
-      <div
-        className={cn(
-          "origin-top overflow-hidden px-4 transition-all duration-100 ease-in-out",
-          isOpen ? "max-h-[700px] opacity-100" : "max-h-0 scale-y-90 opacity-0",
-        )}
+      <motion.div
+        initial={false}
+        animate={isOpen ? "open" : "collapsed"}
+        variants={collapsibleSectionVariants}
+        className="overflow-hidden"
       >
         <div className="rounded-md bg-[var(--vscode-editorWidget-background)] px-4 pt-2 pb-4 shadow-md">
           <p className="mb-4 text-muted-foreground text-sm">
@@ -125,7 +138,7 @@ export function AutoApproveMenu() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -141,7 +154,7 @@ function ToggleButton({ icon, label, isActive, onClick }: ToggleButtonProps) {
   return (
     <Button
       className={cn(
-        "flex flex-col items-center justify-center gap-3 border bg-transparent p-2 text-foreground transition-all duration-100 sm:gap-4 sm:p-3",
+        "flex flex-col items-center justify-center gap-3 border bg-transparent p-2 text-foreground sm:gap-4 sm:p-3",
         "size-[80px]",
         isActive
           ? "bg-primary text-primary-foreground hover:bg-primary/70"

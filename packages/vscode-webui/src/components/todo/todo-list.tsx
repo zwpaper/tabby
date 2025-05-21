@@ -2,9 +2,9 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@ragdoll/server";
-import { CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { Circle, CircleCheckBig, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const collapsibleSectionVariants = {
   open: {
@@ -30,7 +30,17 @@ export interface TodoListProps {
 export function TodoList({ todos }: TodoListProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [animationCompleted, setAnimationCompleted] = useState(false);
-  const inProgressTodoId = todos.find((x) => x.status === "in-progress")?.id;
+
+  const inProgressTodo = useMemo(
+    () => todos.find((x) => x.status === "in-progress"),
+    [todos],
+  );
+  const inProgressTodoId = inProgressTodo?.id;
+
+  const pendingTodosNum = useMemo(
+    () => todos.filter((todo) => todo.status === "pending").length,
+    [todos],
+  );
 
   // Effect to scroll to the in-progress todo item when it's present and the list is open
   useEffect(() => {
@@ -50,15 +60,26 @@ export function TodoList({ todos }: TodoListProps) {
   };
 
   return (
-    <div className={cn("mb-4")}>
+    <div className={cn("mb-2")}>
+      <div className="-mx-4 h-0 border-t" />
       <button
         type="button"
         onClick={toggleCollapse}
-        className="flex w-full items-center justify-between rounded-sm px-2 py-2 transition-colors hover:bg-accent/5 focus:outline-none"
+        className="flex w-full items-center justify-between overflow-hidden rounded-sm py-2 transition-colors focus:outline-none"
         aria-expanded={!isCollapsed}
       >
-        <div className="flex justify-center justify-center gap-2">
-          <h3 className="font-semibold text-sm">TODOs</h3>
+        <div className="flex w-full flex-nowrap items-center justify-center gap-2 overflow-hidden">
+          <span className="truncate font-medium">
+            {inProgressTodo ? (
+              <span className="animated-gradient-text font-semibold">
+                {inProgressTodo.content}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">
+                {pendingTodosNum > 0 ? "TODOs" : "🎉 All done!"}
+              </span>
+            )}
+          </span>
         </div>
       </button>
       <motion.div
@@ -67,57 +88,61 @@ export function TodoList({ todos }: TodoListProps) {
         variants={collapsibleSectionVariants}
         className="overflow-hidden"
       >
-        <ScrollArea className="h-48 px-1 pt-1 pb-2">
+        <ScrollArea className="px-1 pt-1 pb-2" viewportClassname="max-h-48">
           <div className="space-y-1">
             <AnimatePresence mode="popLayout">
-              {todos.map((todo, idx) => (
-                <motion.div
-                  id={`todo-item-${todo.id}`}
-                  key={todo.id}
-                  className={cn(
-                    "flex items-center space-x-2.5 rounded-sm p-1 transition-colors",
-                    {
-                      "bg-accent/5": todo.status === "in-progress",
-                      "hover:bg-accent/5": todo.status !== "in-progress",
-                    },
-                  )}
-                  variants={todoItemVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30,
-                    delay: idx * 0.08 + 0.1,
-                  }}
-                  onAnimationComplete={() => {
-                    if (idx === todos.length - 1) {
-                      setAnimationCompleted(true);
-                    }
-                  }}
-                >
-                  {todo.status === "completed" ? (
-                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                  ) : todo.status === "in-progress" ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  ) : (
-                    <Circle className="h-4 w-4 text-muted-foreground/70" />
-                  )}
-                  <Label
-                    htmlFor={`todo-${todo.id}`}
-                    className={cn("flex-1 text-md", {
-                      "text-muted-foreground line-through":
-                        todo.status === "completed",
-                      "animated-gradient-text font-semibold":
-                        todo.status === "in-progress",
-                      "text-muted-foreground/90": todo.status === "pending",
-                    })}
+              {todos
+                .filter((todo) => todo.id !== inProgressTodoId)
+                .map((todo, idx) => (
+                  <motion.div
+                    id={`todo-item-${todo.id}`}
+                    key={todo.id}
+                    className={cn(
+                      "flex items-start space-x-2.5 rounded-sm p-1 transition-colors",
+                      {
+                        "bg-accent/5": todo.status === "in-progress",
+                        "hover:bg-accent/5": todo.status !== "in-progress",
+                      },
+                    )}
+                    variants={todoItemVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                      delay: idx * 0.08 + 0.1,
+                    }}
+                    onAnimationComplete={() => {
+                      if (idx === todos.length - 1) {
+                        setAnimationCompleted(true);
+                      }
+                    }}
                   >
-                    {todo.content}
-                  </Label>
-                </motion.div>
-              ))}
+                    <span className="flex h-6 shrink-0 items-center">
+                      {todo.status === "completed" ? (
+                        <CircleCheckBig className="size-4 text-muted-foreground" />
+                      ) : todo.status === "in-progress" ? (
+                        <Loader2 className="size-4 animate-spin text-primary" />
+                      ) : (
+                        <Circle className="size-4 text-muted-foreground/70" />
+                      )}
+                    </span>
+                    <Label
+                      htmlFor={`todo-item-${todo.id}`}
+                      className={cn("flex-1 text-md", {
+                        "text-muted-foreground line-through":
+                          todo.status === "completed",
+                        "animated-gradient-text font-semibold":
+                          todo.status === "in-progress",
+                        "text-muted-foreground/90": todo.status === "pending",
+                      })}
+                    >
+                      {todo.content}
+                    </Label>
+                  </motion.div>
+                ))}
             </AnimatePresence>
           </div>
         </ScrollArea>

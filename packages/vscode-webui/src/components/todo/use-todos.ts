@@ -11,12 +11,20 @@ function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
 
   const ret = Array.from(todoMap.values());
   ret.sort((a, b) => {
+    const statusOrder = { completed: 0, pending: 1, "in-progress": 2 };
     const priorityOrder = { low: 0, medium: 1, high: 2 };
-    // Sort by priority first, then by content for stable sort
-    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-      return priorityOrder[b.priority] - priorityOrder[a.priority]; // Higher priority first
+
+    // Higher status order first (in-progress, then pending, then completed)
+    if (statusOrder[a.status] !== statusOrder[b.status]) {
+      return statusOrder[b.status] - statusOrder[a.status];
     }
-    return a.content.localeCompare(b.content);
+
+    // If statuses are the same, sort by priority (higher priority first)
+    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    }
+
+    return 0;
   });
   return ret;
 }
