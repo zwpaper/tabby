@@ -333,6 +333,11 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     },
   });
 
+  const initialError =
+    !chatHasFinishedOnce.current && loaderData?.status === "failed"
+      ? new Error("Streaming failed in previous session")
+      : undefined;
+
   const { todos } = useTodos({
     initialTodos: loaderData?.todos,
     messages,
@@ -503,7 +508,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   });
   const { pendingApproval, setIsExecuting, executingToolCallId } =
     usePendingApproval({
-      error,
+      error: error || initialError,
       messages: renderMessages,
     });
 
