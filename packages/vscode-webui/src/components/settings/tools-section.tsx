@@ -135,7 +135,7 @@ const Connections: React.FC<{
               key={config.provider}
               className="flex justify-between rounded-md border px-2 py-2"
             >
-              <span className="flex items-center">
+              <span className="flex items-center font-semibold">
                 <Dot
                   className={cn("size-6", {
                     "text-green-400": isConnected,
