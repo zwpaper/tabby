@@ -74,8 +74,8 @@ export function TodoList({ todos, status }: TodoListProps) {
           <span className="truncate font-medium">
             {inProgressTodo ? (
               <span
-                className={cn("font-semibold", {
-                  "animated-gradient-text":
+                className={cn({
+                  "animated-gradient-text font-semibold":
                     status === "submitted" || status === "streaming",
                 })}
               >

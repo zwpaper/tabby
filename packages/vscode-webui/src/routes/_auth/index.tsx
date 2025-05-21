@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
-import { useRetry } from "@/lib/hooks/use-retry";
+import { isReadyForRetry, useRetry } from "@/lib/hooks/use-retry";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type {
@@ -333,10 +333,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     },
   });
 
-  const initialError =
-    !chatHasFinishedOnce.current && loaderData?.status === "failed"
-      ? new Error("Streaming failed in previous session")
-      : undefined;
+  const initialError = isReadyForRetry(messages)
+    ? new Error("Streaming failed in previous session")
+    : undefined;
 
   const { todos } = useTodos({
     initialTodos: loaderData?.todos,

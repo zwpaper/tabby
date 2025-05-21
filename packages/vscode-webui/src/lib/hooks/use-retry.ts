@@ -66,3 +66,17 @@ function prepareLastMessageForRetry(lastMessage: UIMessage): UIMessage | null {
 
   return null;
 }
+
+export function isReadyForRetry(messages: UIMessage[]): boolean {
+  const lastMessage = messages.at(-1);
+  if (!lastMessage) return false;
+  if (lastMessage.role === "user") return true;
+  if (
+    lastMessage.role === "assistant" &&
+    isAssistantMessageWithCompletedToolCalls(lastMessage)
+  ) {
+    return true;
+  }
+
+  return false;
+}
