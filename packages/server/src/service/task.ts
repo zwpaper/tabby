@@ -23,13 +23,33 @@ const titleSelect =
     "title",
   );
 
+class StreamingTask {
+  constructor(
+    readonly streamId: string,
+    readonly userId: string,
+    readonly taskId: number,
+  ) {}
+
+  get key() {
+    return StreamingTask.key(this.userId, this.taskId);
+  }
+
+  static key(userId: string, taskId: number) {
+    return `${userId}:${taskId}`;
+  }
+}
+
 class TaskService {
+  private streamingTasks = new Map<string, StreamingTask>();
+
   async startStreaming(
     userId: string,
     request: z.infer<typeof ZodChatRequestType>,
   ) {
     const streamId = generateId();
     const { id, conversation, event } = await this.prepareTask(userId, request);
+    const streamingTask = new StreamingTask(streamId, userId, id);
+    this.streamingTasks.set(streamingTask.key, streamingTask);
 
     const messages = appendClientMessage({
       messages: toUIMessages(conversation?.messages || []),
@@ -87,6 +107,7 @@ class TaskService {
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
+    this.streamingTasks.delete(StreamingTask.key(userId, taskId));
     if (notify) {
       await this.sendTaskCompletionNotification(userId, taskId, status);
     }
@@ -99,6 +120,8 @@ class TaskService {
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .execute();
+
+    this.streamingTasks.delete(StreamingTask.key(userId, taskId));
   }
 
   private async sendTaskCompletionNotification(
@@ -348,9 +371,24 @@ class TaskService {
 
     return result?.latestStreamId ?? null;
   }
+
+  async onProcessExit() {
+    const streamingTasksToFail = Array.from(this.streamingTasks.values());
+    this.streamingTasks.clear();
+
+    const promises = [];
+    for (const task of streamingTasksToFail) {
+      promises.push(this.failStreaming(task.taskId, task.userId));
+    }
+
+    await Promise.all([promises]);
+  }
 }
 
 export const taskService = new TaskService();
+
+// Ensure that all streaming tasks are closed when the process exits.
+process.on("exit", taskService.onProcessExit.bind(taskService));
 
 function postProcessMessages(messages: Message[]) {
   const ret = stripReadEnvironment(messages);
