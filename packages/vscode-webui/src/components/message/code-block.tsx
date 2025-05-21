@@ -114,6 +114,11 @@ const CodeBlock: FC<CodeBlockProps> = memo(
             borderRadius: "0.25rem",
           }}
           wrapLongLines={wrapLongLines}
+          codeTagProps={{
+            style: {
+              backgroundColor: "transparent",
+            },
+          }}
         >
           {value}
         </SyntaxHighlighter>
