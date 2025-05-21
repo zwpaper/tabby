@@ -95,7 +95,6 @@ export type AppType = typeof route;
 const server = Bun.serve({
   port: process.env.PORT || 4113,
   fetch: app.fetch,
-  idleTimeout: 255,
   websocket,
 });
 console.log(`Listening on http://localhost:${server.port} ...`);
@@ -109,3 +108,7 @@ export function publishUserEvent(userId: string, event: UserEvent) {
 }
 
 export function after(_promise: Promise<unknown>): void {}
+
+export function setIdleTimeout(request: Request, secs: number) {
+  server.timeout(request, secs);
+}

@@ -32,7 +32,7 @@ import {
 import { resolveServerTools } from "../lib/tools";
 import { injectReadEnvironment } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
-import { after } from "../server";
+import { after, setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
 import { type Environment, ZodChatRequestType } from "../types";
@@ -48,6 +48,7 @@ export type ContextVariables = {
 const chat = new Hono<{ Variables: ContextVariables }>()
   .use(requireAuth())
   .post("/stream", zValidator("json", ZodChatRequestType), async (c) => {
+    setIdleTimeout(c.req.raw, 60);
     const req = await c.req.valid("json");
     const { environment, model: requestedModelId = "google/gemini-2.5-pro" } =
       req;

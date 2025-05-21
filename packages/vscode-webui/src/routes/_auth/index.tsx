@@ -312,8 +312,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     },
     experimental_prepareRequestBody: (req) =>
       prepareRequestBody(taskId, req, selectedModel?.id),
-    fetch: async (url, options) =>
-      fetch(url, {
+    fetch: async (url, options) => {
+      const resp = await fetch(url, {
         ...options,
         body:
           options?.body &&
@@ -322,7 +322,15 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             // Inject the environment variables into the request body
             environment: await buildEnvironment(),
           }),
-      }),
+      });
+      // If the task is already streaming, resume the stream
+      if (resp.status === 409) {
+        setTimeout(() => {
+          experimental_resume();
+        }, 200);
+      }
+      return resp;
+    },
     headers: {
       Authorization: `Bearer ${authData.session.token}`,
     },
