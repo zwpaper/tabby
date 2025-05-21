@@ -47,11 +47,14 @@ import { z } from "zod";
 import "@/components/prompt-form/prompt-form.css";
 import {
   ApprovalButton,
-  type PendingApproval,
+  getDisplayError,
+  pendingApprovalKey,
+  shouldShowLoading,
   usePendingApproval,
 } from "@/components/approval-button";
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
+import { ErrorMessage } from "@/components/error-message";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
@@ -68,7 +71,6 @@ import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useSettingsStore } from "@/lib/stores/settings-store";
-import { cn } from "@/lib/utils";
 import {
   createImageFileName,
   isDuplicateFile,
@@ -488,12 +490,27 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     }
   }, [data, queryClient]);
 
-  const isLoading = status === "streaming" || status === "submitted";
-
   const editorRef = useRef<Editor | null>(null);
 
   const renderMessages = createRenderMessages(messages);
-  const retry = useRetry({
+
+  const {
+    pendingApproval,
+    setIsExecuting,
+    executingToolCallId,
+    increaseRetryCount,
+  } = usePendingApproval({
+    error,
+    messages: renderMessages,
+    status,
+  });
+
+  const isLoading =
+    status === "streaming" ||
+    status === "submitted" ||
+    shouldShowLoading(pendingApproval);
+
+  const retryImpl = useRetry({
     messages,
     append,
     setMessages,
@@ -501,11 +518,11 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     experimental_resume,
     latestHttpCode,
   });
-  const { pendingApproval, setIsExecuting, executingToolCallId } =
-    usePendingApproval({
-      error,
-      messages: renderMessages,
-    });
+
+  const retry = useCallback(() => {
+    increaseRetryCount();
+    retryImpl();
+  }, [retryImpl, increaseRetryCount]);
 
   // Workaround for https://github.com/vercel/ai/issues/4491#issuecomment-2848999826
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -550,8 +567,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   const resourceUri = useResourceURI();
 
-  // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error
-  const displayError = imageSelectionError || uploadImageError || error;
+  // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error pending retry approval
+  const displayError =
+    imageSelectionError || uploadImageError || getDisplayError(pendingApproval);
   return (
     <div className="flex h-screen flex-col">
       <PreviewTool messages={renderMessages} addToolResult={addToolResult} />
@@ -624,16 +642,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         )}
       </ScrollArea>
       <div className="flex flex-col px-4">
-        {displayError && (
-          <div
-            className={cn("mb-2 text-center text-red-500 dark:text-red-400", {
-              "cursor-help": isDevMode,
-            })}
-            onClick={isDevMode ? () => console.error(displayError) : undefined}
-          >
-            {displayError.message}
-          </div>
-        )}
+        <ErrorMessage error={displayError} />
         {!isWorkspaceActive ? (
           <WorkspaceRequiredPlaceholder
             isFetching={isFetching}
@@ -644,9 +653,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             {todos && todos.length > 0 && <TodoList todos={todos} />}
             <ApprovalButton
               key={pendingApprovalKey(pendingApproval)}
-              isLoading={isLoading}
-              retry={retry}
               pendingApproval={pendingApproval}
+              retry={retry}
               addToolResult={addToolResultWithForceUpdate}
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
@@ -863,16 +871,3 @@ const useResourceURI = () => {
   }, []);
   return resourceURI;
 };
-
-// Helper function
-function pendingApprovalKey(
-  pendingApproval: PendingApproval | undefined,
-): string | undefined {
-  if (!pendingApproval) {
-    return;
-  }
-  if (pendingApproval.name === "retry") {
-    return "retry";
-  }
-  return pendingApproval.tool.toolCallId;
-}
