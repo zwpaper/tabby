@@ -2,7 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { getFileName } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
 import { useState } from "react";
-import { FileIcon } from "./file-badge";
+import { FileIcon } from "./file-icon/file-icon";
 
 export const FileList: React.FC<{
   matches: { file: string; line?: number; context?: string }[];
@@ -43,7 +43,7 @@ export const FileList: React.FC<{
           >
             <FileIcon
               path={match.file}
-              className="mr-1.5 mb-0.5 inline size-3"
+              className="mr-1.5 inline w-5 text-lg/4"
             />
             {getFileName(match.file)}
             {match.line && (

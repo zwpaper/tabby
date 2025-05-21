@@ -134,6 +134,18 @@ export class RagdollWebviewProvider
     const isProd =
       this.context.extensionMode === vscode.ExtensionMode.Production;
 
+    const setiFontUri = getUri(webview, this.context.extensionUri, [
+      "assets",
+      "fonts",
+      "seti.woff",
+    ]);
+    const setiFontStyle = `<style type="text/css">
+      @font-face {
+        font-family: "seti";
+        src: url("${setiFontUri}") format("woff");
+      }
+    </style>`;
+
     if (isProd) {
       const nonce = getNonce();
 
@@ -163,7 +175,7 @@ export class RagdollWebviewProvider
       ];
       const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
-      return this.buildHtml([cspHeader, style], [script]);
+      return this.buildHtml([cspHeader, style, setiFontStyle], [script]);
     }
 
     const devWebUIPort = "4112";
@@ -197,7 +209,7 @@ export class RagdollWebviewProvider
     ];
     const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
-    return this.buildHtml([cspHeader], [reactRefresh, script]);
+    return this.buildHtml([cspHeader, setiFontStyle], [reactRefresh, script]);
   }
 
   private buildHtml(headElements: string[], bodyElements: string[]): string {

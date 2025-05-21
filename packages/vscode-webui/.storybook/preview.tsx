@@ -7,6 +7,7 @@ import "./vscode-modern-dark.css";
 import "./vscode-modern-light.css";
 import "./vscode-default.css";
 import "../src/styles.css";
+import "./font.css";
 
 const vscodeViewports = {
   vscodeSmall: {
