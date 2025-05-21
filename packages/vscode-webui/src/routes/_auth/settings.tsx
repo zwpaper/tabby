@@ -1,3 +1,4 @@
+import { Section } from "@/components/settings/section";
 import { ToolsSection } from "@/components/settings/tools-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -43,10 +44,10 @@ const AccordionSection: React.FC<AccordionSectionProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className={className}>
+    <div className={cn("py-6", className)}>
       <button
         type="button"
-        className="flex w-full items-center justify-between py-4 text-left focus:outline-none"
+        className="mb-4 flex w-full items-center justify-between text-left focus:outline-none"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="ml-1 font-bold text-base">{title}</span>
@@ -60,7 +61,7 @@ const AccordionSection: React.FC<AccordionSectionProps> = ({
       <div
         className={cn(
           "origin-top overflow-hidden transition-all duration-100 ease-in-out",
-          isOpen ? "max-h-[1000px] py-4 opacity-100" : "max-h-0 opacity-0",
+          isOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0",
         )}
       >
         {children}
@@ -73,7 +74,7 @@ const AccountSection: React.FC = () => {
   const { auth: authData } = Route.useRouteContext();
 
   return (
-    <div className={cn("py-4")}>
+    <Section>
       <div className="flex items-center justify-between gap-3">
         <a
           href={`${getServerBaseUrl()}/account`}
@@ -123,15 +124,14 @@ const AccountSection: React.FC = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </div>
+    </Section>
   );
 };
 
 const WorkspaceRulesSection: React.FC = () => {
   return (
-    <div className={cn("py-4")}>
+    <Section>
       <div className="flex items-center gap-3">
-        {" "}
         <a
           href="command:ragdoll.editWorkspaceRules"
           target="_blank"
@@ -144,7 +144,7 @@ const WorkspaceRulesSection: React.FC = () => {
           Customize rules for Pochi in this workspace.
         </span>
       </div>
-    </div>
+    </Section>
   );
 };
 
@@ -186,30 +186,30 @@ const ConnectionsSection: React.FC = () => {
     });
   };
 
+  const rightElement = (
+    <span className="flex gap-1">
+      <a
+        href={`${getServerBaseUrl()}/integrations`}
+        className={buttonVariants({ variant: "ghost", size: "sm" })}
+      >
+        <Blocks className="size-4" />
+        Manage
+      </a>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onRefresh}
+        disabled={isFetching}
+        className="flex items-center gap-1"
+      >
+        <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
+        Refresh
+      </Button>
+    </span>
+  );
+
   return (
-    <div className="py-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="ml-1 font-bold text-base">Connections</h2>
-        <span className="flex gap-1">
-          <a
-            href={`${getServerBaseUrl()}/integrations`}
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-          >
-            <Blocks className="size-4" />
-            Manage
-          </a>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRefresh}
-            disabled={isFetching}
-            className="flex items-center gap-1"
-          >
-            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
-            Refresh
-          </Button>
-        </span>
-      </div>
+    <Section title="Connections" rightElement={rightElement}>
       <div className="space-y-2">
         {integrationDisplayConfigs.map((config) => {
           const isConnected = !!connectedIntegrationsData?.find(
@@ -242,7 +242,7 @@ const ConnectionsSection: React.FC = () => {
           );
         })}
       </div>
-    </div>
+    </Section>
   );
 };
 
@@ -294,7 +294,7 @@ const AdvancedSettingsSection: React.FC = () => {
 export function SettingsPage() {
   return (
     <div className="container mx-auto max-w-6xl p-4">
-      <div>
+      <div className="space-y-1">
         <AccountSection />
         <WorkspaceRulesSection />
         <ToolsSection />

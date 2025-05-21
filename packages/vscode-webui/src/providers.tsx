@@ -18,7 +18,8 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
               query.queryKey[0] === "session" ||
               // Only persist tasks query page 1.
               (query.queryKey[0] === "tasks" && query.queryKey[1] === 1) ||
-              query.queryKey[0] === "integrations";
+              query.queryKey[0] === "integrations" ||
+              query.queryKey[0] === "tools";
 
             return isSuccess && cacheQuery;
           },
