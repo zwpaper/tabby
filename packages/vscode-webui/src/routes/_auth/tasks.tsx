@@ -337,21 +337,9 @@ const TaskStatusIcon = ({ status }: { status: string }) => {
     case "pending-input":
       return <Edit3 {...iconProps} aria-label="Pending Input" />;
     case "completed":
-      return (
-        <CheckCircle2
-          {...iconProps}
-          className={`${iconProps.className} text-green-700 dark:text-green-500`}
-          aria-label="Completed"
-        />
-      );
+      return <CheckCircle2 {...iconProps} aria-label="Completed" />;
     case "failed":
-      return (
-        <XCircle
-          {...iconProps}
-          className={`${iconProps.className} text-red-600 dark:text-red-500`}
-          aria-label="Failed"
-        />
-      );
+      return <XCircle {...iconProps} aria-label="Failed" />;
     default:
       return (
         <HelpCircle {...iconProps} aria-label={`Unknown Status: ${status}`} />
