@@ -82,9 +82,7 @@ export function TodoList({ todos, status }: TodoListProps) {
                 {inProgressTodo.content}
               </span>
             ) : (
-              <span className="text-muted-foreground">
-                {pendingTodosNum > 0 ? "TODOs" : "🎉 All done!"}
-              </span>
+              <span>{pendingTodosNum > 0 ? "TODOs" : "🎉 All done!"}</span>
             )}
           </span>
         </div>
@@ -135,7 +133,6 @@ export function TodoList({ todos, status }: TodoListProps) {
                       className={cn("flex-1 text-md", {
                         "text-muted-foreground line-through":
                           todo.status === "completed",
-                        "text-muted-foreground/90": todo.status === "pending",
                       })}
                     >
                       {todo.content}
