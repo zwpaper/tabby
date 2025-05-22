@@ -1,5 +1,6 @@
 import { ModelSelect } from "@/components/model-select";
 import { FormEditor } from "@/components/prompt-form/form-editor";
+import { ReasoningPartUI } from "@/components/reasoning-part.tsx"; // Updated import
 import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { isReadyForRetry, useRetry } from "@/lib/hooks/use-retry";
 import { useChat } from "@ai-sdk/react";
-import type { ReasoningUIPart, UIMessage } from "@ai-sdk/ui-utils";
+import type { UIMessage } from "@ai-sdk/ui-utils";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
@@ -28,7 +29,6 @@ import type {
 import type { InferResponseType } from "hono/client";
 import {
   Bug,
-  ChevronLeft,
   ImageIcon,
   Loader2,
   SendHorizonal,
@@ -860,28 +860,6 @@ function TextPartUI({ message, part }: { message: UIMessage; part: TextPart }) {
     >
       {part.text}
     </MessageMarkdown>
-  );
-}
-
-function ReasoningPartUI({ part }: { part: ReasoningUIPart }) {
-  const showThinking = useSettingsStore((x) => x.showThinking);
-  const [showDetails, setShowDetails] = useState(false);
-  if (!showThinking) return null;
-  return (
-    <>
-      <span
-        onClick={() => setShowDetails(!showDetails)}
-        className="flex cursor-pointer items-center italic"
-      >
-        Pochi is thinking ...
-        <ChevronLeft className="ml-2 inline size-3" />
-      </span>
-      {showDetails && (
-        <MessageMarkdown className="text-muted-foreground">
-          {part.reasoning}
-        </MessageMarkdown>
-      )}
-    </>
   );
 }
 

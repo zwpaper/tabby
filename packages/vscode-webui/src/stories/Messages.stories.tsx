@@ -36,6 +36,12 @@ const messages1: UIMessage[] = [
         type: "text",
       },
       {
+        type: "reasoning",
+        reasoning:
+          "#### Reasoning\n\nI need to check if the path is a directory or a file.",
+        details: [],
+      },
+      {
         type: "tool-invocation",
         toolInvocation: {
           args: {
