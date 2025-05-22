@@ -180,7 +180,7 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
           ),
         content: z.string().describe("The content of the task."),
         status: z
-          .enum(["pending", "in-progress", "completed"])
+          .enum(["pending", "in-progress", "completed", "cancelled"])
           .describe("The status of the task."),
         priority: z
           .enum(["low", "medium", "high"])

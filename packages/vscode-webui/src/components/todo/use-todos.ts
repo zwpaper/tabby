@@ -11,7 +11,12 @@ function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
 
   const ret = Array.from(todoMap.values());
   ret.sort((a, b) => {
-    const statusOrder = { completed: 0, pending: 1, "in-progress": 2 };
+    const statusOrder = {
+      cancelled: -1,
+      completed: 0,
+      pending: 1,
+      "in-progress": 2,
+    };
     const priorityOrder = { low: 0, medium: 1, high: 2 };
 
     // Higher status order first (in-progress, then pending, then completed)
@@ -26,7 +31,9 @@ function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
 
     return 0;
   });
-  return ret;
+
+  // Filter out cancelled todos
+  return ret.filter((todo) => todo.status !== "cancelled");
 }
 
 function findTodos(message: UIMessage) {
