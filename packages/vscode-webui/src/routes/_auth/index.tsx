@@ -350,6 +350,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   useAutoResume({
     autoResume:
+      !isTaskLoading &&
       loaderData?.status === "streaming" &&
       initialMessages.length > 0 &&
       initialMessages.length === messages.length,
@@ -614,7 +615,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             )}
             <ApprovalButton
               key={pendingApprovalKey(pendingApproval)}
-              isLoading={isChatLoading}
+              isLoading={isChatLoading || isTaskLoading}
               pendingApproval={pendingApproval}
               retry={retry}
               addToolResult={addToolResultWithForceUpdate}
