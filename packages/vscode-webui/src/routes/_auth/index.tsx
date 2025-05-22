@@ -31,6 +31,7 @@ import {
   Loader2,
   SendHorizonal,
   StopCircleIcon,
+  UserIcon,
 } from "lucide-react";
 import type React from "react";
 import {
@@ -737,12 +738,20 @@ export const Messages: React.FC<{
               {m.role === "user" ? (
                 <Avatar className="size-7">
                   <AvatarImage src={user.image ?? undefined} />
-                  <AvatarFallback>{user.name}</AvatarFallback>
+                  <AvatarFallback
+                    className={cn(
+                      "bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)] text-xs uppercase",
+                    )}
+                  >
+                    {user.name.slice(0, 2) || (
+                      <UserIcon className={cn("size-[50%]")} />
+                    )}
+                  </AvatarFallback>
                 </Avatar>
               ) : (
                 <Avatar className="size-7">
                   <AvatarImage src={logo} className="scale-110" />
-                  <AvatarFallback>Pochi</AvatarFallback>
+                  <AvatarFallback className="bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)]" />
                 </Avatar>
               )}
               <strong>{m.role === "user" ? user.name : "Pochi"}</strong>
