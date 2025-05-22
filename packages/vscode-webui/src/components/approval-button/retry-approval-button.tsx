@@ -10,8 +10,10 @@ const DelayThresholdToShowError = 5;
 
 export function shouldShowLoadingForRetry(
   pendingApproval: PendingRetryApproval,
+  chatHasFinishedOnce: boolean,
 ): boolean {
   return (
+    chatHasFinishedOnce &&
     pendingApproval.countdown !== undefined &&
     pendingApproval.delay !== undefined &&
     pendingApproval.delay < DelayThresholdToShowError
@@ -20,8 +22,9 @@ export function shouldShowLoadingForRetry(
 
 export function shouldShowErrorForRetry(
   pendingApproval: PendingRetryApproval,
+  chatHasFinishedOnce: boolean,
 ): boolean {
-  return !shouldShowLoadingForRetry(pendingApproval);
+  return !shouldShowLoadingForRetry(pendingApproval, chatHasFinishedOnce);
 }
 
 const CountdownInterval = 1000; // ms
@@ -192,10 +195,12 @@ export function usePendingRetryApproval({
 interface RetryApprovalButtonProps {
   pendingApproval: PendingRetryApproval;
   retry: () => void;
+  chatHasFinishedOnce: boolean;
 }
 
 export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
   pendingApproval,
+  chatHasFinishedOnce,
   retry,
 }) => {
   useEffect(() => {
@@ -211,7 +216,7 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
 
   return (
     <>
-      {shouldShowErrorForRetry(pendingApproval) && (
+      {shouldShowErrorForRetry(pendingApproval, chatHasFinishedOnce) && (
         <>
           <Button onClick={doRetry}>
             Retry
@@ -219,7 +224,7 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
               ? ` (Attempts: ${pendingApproval.attempts})`
               : ""}
           </Button>
-          {pendingApproval.countdown !== undefined && (
+          {chatHasFinishedOnce && pendingApproval.countdown !== undefined && (
             <Button onClick={pendingApproval.stopCountdown} variant="secondary">
               Cancel {` (Auto-retry in ${pendingApproval.countdown}s)`}
             </Button>

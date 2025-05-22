@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import type { UIMessage } from "ai";
 import logo from "../../../vscode/assets/icons/logo128.png";
-import { Messages } from "../routes/_auth/index";
+import { MessageList } from "../routes/_auth/index";
 
-const meta: Meta<typeof Messages> = {
+const meta: Meta<typeof MessageList> = {
   title: "Pochi/Messages",
-  component: Messages,
+  component: MessageList,
 };
 
 export default meta;

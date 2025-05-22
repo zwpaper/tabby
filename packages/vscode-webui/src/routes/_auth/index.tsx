@@ -27,6 +27,7 @@ import type {
 } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
+  Bug,
   ImageIcon,
   Loader2,
   SendHorizonal,
@@ -517,7 +518,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     status,
   });
 
-  const isLoading = isChatLoading || shouldShowLoading(pendingApproval);
+  const isLoading =
+    isChatLoading ||
+    shouldShowLoading(pendingApproval, chatHasFinishedOnce.current);
 
   const retryImpl = useRetry({
     messages,
@@ -578,7 +581,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error pending retry approval
   const displayError =
-    imageSelectionError || uploadImageError || getDisplayError(pendingApproval);
+    imageSelectionError ||
+    uploadImageError ||
+    getDisplayError(pendingApproval, chatHasFinishedOnce.current);
   return (
     <div className="flex h-screen flex-col">
       <PreviewTool messages={renderMessages} addToolResult={addToolResult} />
@@ -592,7 +597,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
           <EmptyChatPlaceholder />
         ))}
       {renderMessages.length > 0 && <div className="h-4" />}
-      <Messages
+      <MessageList
         messages={renderMessages}
         user={authData.user}
         logo={resourceUri?.logo128}
@@ -640,9 +645,10 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               editorRef={editorRef}
               onPaste={handlePasteImage}
             >
-              {false && taskId.current && (
+              {isDevMode && (
                 <span className="absolute top-1 right-2 text-foreground/80 text-xs">
-                  TASK-{String(taskId.current).padStart(3, "0")}
+                  <Bug className="mr-1 inline size-3" />
+                  {status}
                 </span>
               )}
             </FormEditor>
@@ -722,7 +728,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   );
 }
 
-export const Messages: React.FC<{
+export const MessageList: React.FC<{
   messages: UIMessage[];
   user: { name: string; image?: string | null };
   logo?: string;
