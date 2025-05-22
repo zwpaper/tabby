@@ -18,12 +18,17 @@ export const AvailableModels: {
     costType: "premium",
   },
   {
-    id: "google/gemini-2.0-flash",
+    id: "google/gemini-2.5-flash",
     contextWindow: 1_048_576,
     costType: "basic",
   },
   {
     id: "anthropic/claude-3.7-sonnet",
+    contextWindow: 200_000,
+    costType: "premium",
+  },
+  {
+    id: "anthropic/claude-4-sonnet",
     contextWindow: 200_000,
     costType: "premium",
   },
@@ -51,13 +56,15 @@ export const StripePlans = [
 export function getModelById(modelId: string): LanguageModelV1 | null {
   switch (modelId) {
     case "anthropic/claude-3.7-sonnet":
-      return anthropic("claude-3-7-sonnet-20250219");
+      return anthropic("claude-4-sonnet-20250219");
+    case "anthropic/claude-4-sonnet":
+      return anthropic("claude-4-sonnet-20250514");
     case "openai/gpt-4o-mini":
       return openai("gpt-4o-mini");
     case "google/gemini-2.5-pro":
       return google("gemini-2.5-pro-preview-05-06");
-    case "google/gemini-2.0-flash":
-      return google("gemini-2.0-flash");
+    case "google/gemini-2.5-flash":
+      return google("gemini-2.5-flash-preview-04-17");
     default:
       return null;
   }
