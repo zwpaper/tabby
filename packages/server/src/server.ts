@@ -18,6 +18,7 @@ import upload from "./api/upload";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
 import { slackService } from "./service/slack";
+import { taskService } from "./service/task";
 
 export const app = new Hono().use(authRequest);
 
@@ -112,3 +113,11 @@ export function after(_promise: Promise<unknown>): void {}
 export function setIdleTimeout(request: Request, secs: number) {
   server.timeout(request, secs);
 }
+
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM received, shutting down...");
+  await taskService.gracefulShutdown();
+
+  console.log("Shutdown complete, exiting...");
+  process.exit(143);
+});

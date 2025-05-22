@@ -372,12 +372,13 @@ class TaskService {
     return result?.latestStreamId ?? null;
   }
 
-  async onProcessExit() {
+  async gracefulShutdown() {
     const streamingTasksToFail = Array.from(this.streamingTasks.values());
     const numTasksToFail = streamingTasksToFail.length;
+    console.info(
+      `Process exiting, cleaning up ${numTasksToFail} streaming tasks`,
+    );
     if (numTasksToFail === 0) return;
-
-    console.info(`Process exiting, failing ${numTasksToFail} streaming tasks`);
     this.streamingTasks.clear();
 
     const promises = [];
@@ -385,15 +386,11 @@ class TaskService {
       promises.push(this.failStreaming(task.taskId, task.userId));
     }
 
-    await Promise.all([promises]);
-    console.info(`Failed ${numTasksToFail} streaming tasks`);
+    await Promise.all(promises);
   }
 }
 
 export const taskService = new TaskService();
-
-// Ensure that all streaming tasks are closed when the process exits.
-process.on("exit", taskService.onProcessExit.bind(taskService));
 
 function postProcessMessages(messages: Message[]) {
   const ret = stripReadEnvironment(messages);
