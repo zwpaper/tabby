@@ -64,6 +64,21 @@ app.use(
       if (origin.startsWith("vscode-webview://")) {
         return origin;
       }
+
+      // Allow hosts for cloud based vscode workers
+      try {
+        const requestOriginUrl = new URL(origin);
+        const hostname = requestOriginUrl.hostname;
+        if (
+          hostname === "vscode-cdn.net" ||
+          hostname.endsWith(".vscode-cdn.net")
+        ) {
+          return origin;
+        }
+      } catch (e) {
+        console.error(`Invalid origin ${origin}: ${e}`);
+      }
+
       return undefined;
     },
     allowHeaders: ["Content-Type", "Authorization"],
