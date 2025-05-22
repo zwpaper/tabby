@@ -133,7 +133,7 @@ function RouteComponent() {
         }
       : undefined;
 
-  const { data: loaderData, isLoading: isTaskLoading } = useQuery({
+  const { data: loaderData, isFetching: isTaskLoading } = useQuery({
     queryKey: ["task", taskIdFromRoute],
     queryFn: async () => {
       if (typeof taskIdFromRoute === "number") {
@@ -146,6 +146,7 @@ function RouteComponent() {
       }
       return null;
     },
+    refetchOnWindowFocus: false,
     enabled: typeof taskIdFromRoute === "number",
   });
 
@@ -594,7 +595,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         user={authData.user}
         logo={resourceUri?.logo128}
         sendMessage={append}
-        isLoading={isLoading}
+        isLoading={isLoading || isTaskLoading}
         executingToolCallId={executingToolCallId}
         containerRef={messagesContainerRef}
       />
