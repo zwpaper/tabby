@@ -350,7 +350,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   useAutoResume({
     autoResume:
-      !isTaskLoading &&
       loaderData?.status === "streaming" &&
       initialMessages.length > 0 &&
       initialMessages.length === messages.length,
@@ -597,8 +596,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         user={authData.user}
         logo={resourceUri?.logo128}
         sendMessage={append}
-        isLoading={isLoading}
-        isTaskLoading={isTaskLoading}
+        isLoading={isLoading || isTaskLoading}
         executingToolCallId={executingToolCallId}
         containerRef={messagesContainerRef}
       />
@@ -614,17 +612,16 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             {todos && todos.length > 0 && (
               <TodoList todos={todos} status={status} />
             )}
-            {!isTaskLoading && !isChatLoading && !!pendingApproval && (
-              <ApprovalButton
-                key={pendingApprovalKey(pendingApproval)}
-                pendingApproval={pendingApproval}
-                retry={retry}
-                addToolResult={addToolResultWithForceUpdate}
-                executingToolCallId={executingToolCallId}
-                setIsExecuting={setIsExecuting}
-                chatHasFinishedOnce={chatHasFinishedOnce.current}
-              />
-            )}
+            <ApprovalButton
+              key={pendingApprovalKey(pendingApproval)}
+              isLoading={isChatLoading}
+              pendingApproval={pendingApproval}
+              retry={retry}
+              addToolResult={addToolResultWithForceUpdate}
+              executingToolCallId={executingToolCallId}
+              setIsExecuting={setIsExecuting}
+              chatHasFinishedOnce={chatHasFinishedOnce.current}
+            />
             <AutoApproveMenu />
             {files.length > 0 && (
               <ImagePreviewList
@@ -733,13 +730,11 @@ export const Messages: React.FC<{
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
   isLoading: boolean;
-  isTaskLoading: boolean;
   executingToolCallId?: string;
   containerRef?: React.RefObject<HTMLDivElement>;
 }> = ({
   messages: renderMessages,
   isLoading,
-  isTaskLoading,
   user,
   logo,
   sendMessage,
@@ -797,7 +792,7 @@ export const Messages: React.FC<{
           )}
         </div>
       ))}
-      {(isLoading || isTaskLoading) && (
+      {isLoading && (
         <div className="pb-4">
           <Loader2 className="mx-auto size-6 animate-spin" />
         </div>

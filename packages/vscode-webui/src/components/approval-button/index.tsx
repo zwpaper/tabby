@@ -46,7 +46,8 @@ export function usePendingApproval({
 }
 
 interface ApprovalButtonProps {
-  pendingApproval: PendingApproval;
+  isLoading: boolean;
+  pendingApproval?: PendingApproval;
   retry: () => void;
   addToolResult: AddToolResultFunctionType;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
@@ -55,6 +56,7 @@ interface ApprovalButtonProps {
 }
 
 export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
+  isLoading,
   pendingApproval,
   retry,
   addToolResult,
@@ -62,6 +64,8 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   executingToolCallId,
   chatHasFinishedOnce,
 }) => {
+  if (isLoading || !pendingApproval) return null;
+
   return (
     <div className="mb-2 flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
       {pendingApproval.name === "retry" ? (
