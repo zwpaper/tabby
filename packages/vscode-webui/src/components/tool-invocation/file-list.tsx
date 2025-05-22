@@ -43,7 +43,7 @@ export const FileList: React.FC<{
           >
             <FileIcon
               path={match.file}
-              className="mr-1.5 inline w-5 text-lg/4"
+              className="mr-1.5 inline w-5 text-xl/4"
             />
             {getFileName(match.file)}
             {match.line && (

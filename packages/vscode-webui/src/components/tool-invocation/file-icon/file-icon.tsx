@@ -167,7 +167,7 @@ export const File: React.FC<{
 
   return (
     <span
-      className={cn("icon", `icon${iconId}`, className)}
+      className={cn("icon", `icon${iconId}`, "text-lg/4", className)}
       title={path}
       aria-label={`File: ${path}`}
     />
