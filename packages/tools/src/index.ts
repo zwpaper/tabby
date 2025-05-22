@@ -5,7 +5,6 @@ import { attemptCompletion } from "./attempt-completion";
 import { executeCommand } from "./execute-command";
 import { globFiles } from "./glob-files";
 import { listFiles } from "./list-files";
-import { readEnvironment } from "./read-environment";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
@@ -25,7 +24,7 @@ export function isUserInputTool(toolName: string): boolean {
 }
 
 export function isAutoInjectTool(toolName: string): boolean {
-  const autoInjectTools: string[] = ["readEnvironment"] satisfies ToolName[];
+  const autoInjectTools: string[] = [] satisfies ToolName[];
   return autoInjectTools.includes(toolName);
 }
 
@@ -40,7 +39,6 @@ export const ClientTools = {
   searchFiles,
   writeToFile,
   todoWrite,
-  readEnvironment,
 };
 
 export type ClientToolsType = typeof ClientTools;

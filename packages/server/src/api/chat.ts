@@ -30,10 +30,7 @@ import {
   checkWaitlist,
 } from "../lib/check-request";
 import { resolveServerTools } from "../lib/tools";
-import {
-  injectReadEnvironment,
-  stripReadEnvironment,
-} from "../prompts/environment";
+import { injectReadEnvironment } from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { after, setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
@@ -86,7 +83,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         }
 
         const processedMessages = await preprocessMessages(
-          requestedModelId,
           messages,
           environment,
           user,
@@ -238,21 +234,14 @@ const chat = new Hono<{ Variables: ContextVariables }>()
   );
 
 async function preprocessMessages(
-  requestedModelId: string,
   inputMessages: Message[],
   environment: Environment | undefined,
   user: User,
   event: DB["task"]["event"],
   stream: DataStreamWriter,
 ): Promise<Message[]> {
-  let messages = stripReadEnvironment(inputMessages);
-  messages = resolvePendingTools(messages);
-  messages = injectReadEnvironment(
-    requestedModelId,
-    messages,
-    environment,
-    event,
-  );
+  let messages = resolvePendingTools(inputMessages);
+  messages = injectReadEnvironment(messages, environment, event);
   messages = await resolveServerTools(messages, user, stream);
   return messages;
 }
