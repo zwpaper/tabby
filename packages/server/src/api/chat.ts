@@ -30,7 +30,10 @@ import {
   checkWaitlist,
 } from "../lib/check-request";
 import { resolveServerTools } from "../lib/tools";
-import { injectReadEnvironment } from "../prompts/environment";
+import {
+  injectReadEnvironment,
+  stripReadEnvironment,
+} from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { after, setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
@@ -50,10 +53,8 @@ const chat = new Hono<{ Variables: ContextVariables }>()
   .post("/stream", zValidator("json", ZodChatRequestType), async (c) => {
     setIdleTimeout(c.req.raw, 120);
     const req = await c.req.valid("json");
-    const {
-      environment,
-      model: requestedModelId = "anthropic/claude-3.7-sonnet",
-    } = req;
+    const { environment, model: requestedModelId = "google/gemini-2.5-pro" } =
+      req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
 
@@ -163,7 +164,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           return "Something went wrong. Please try again.";
         }
 
-        console.log("Unknown error", error);
+        console.log("Misc error", error);
         return error.message;
       },
     });
@@ -234,7 +235,8 @@ async function preprocessMessages(
   event: DB["task"]["event"],
   stream: DataStreamWriter,
 ): Promise<Message[]> {
-  let messages = resolvePendingTools(inputMessages);
+  let messages = stripReadEnvironment(inputMessages);
+  messages = resolvePendingTools(messages);
   messages = injectReadEnvironment(messages, environment, event);
   messages = await resolveServerTools(messages, user, stream);
   return messages;
