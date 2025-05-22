@@ -75,8 +75,8 @@ app.use(
         ) {
           return origin;
         }
-      } catch (e) {
-        console.error(`Invalid origin ${origin}: ${e}`);
+      } finally {
+        // noop
       }
 
       return undefined;
