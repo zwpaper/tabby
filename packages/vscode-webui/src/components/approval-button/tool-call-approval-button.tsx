@@ -9,7 +9,7 @@ import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import { useToolAutoApproval } from "@/lib/stores/settings-store";
 
 // Type definitions
-type AddToolResultFunctionType = ({
+export type AddToolResultFunctionType = ({
   toolCallId,
   result,
 }: {
@@ -17,26 +17,20 @@ type AddToolResultFunctionType = ({
   result: unknown;
 }) => void;
 
-export type PendingApproval =
-  | {
-      name: "retry";
-    }
-  | {
-      name: keyof ClientToolsType;
-      tool: ToolInvocation;
-    };
+export interface PendingToolCallApproval {
+  name: keyof ClientToolsType;
+  tool: ToolInvocation;
+}
 
-export function usePendingApproval({
+export function usePendingToolCallApproval({
   error,
   messages,
 }: { error?: Error; messages: UIMessage[] }) {
   const [isExecuting, setIsExecuting] = useState(false);
 
-  const pendingApproval = useMemo((): PendingApproval | undefined => {
+  const pendingApproval = useMemo((): PendingToolCallApproval | undefined => {
     if (error) {
-      return {
-        name: "retry",
-      };
+      return undefined;
     }
 
     const lastMessage = messages[messages.length - 1];
@@ -60,7 +54,7 @@ export function usePendingApproval({
   }, [error, messages]);
 
   const executingToolCallId = useMemo(() => {
-    if (pendingApproval && pendingApproval.name !== "retry" && isExecuting) {
+    if (pendingApproval && isExecuting) {
       return pendingApproval.tool.toolCallId;
     }
     return undefined;
@@ -68,7 +62,7 @@ export function usePendingApproval({
 
   // Reset isExecuting when pendingApproval changes or disappears
   useEffect(() => {
-    if (!pendingApproval || pendingApproval.name === "retry") {
+    if (!pendingApproval) {
       setIsExecuting(false);
     }
   }, [pendingApproval]);
@@ -76,10 +70,8 @@ export function usePendingApproval({
   return { pendingApproval, setIsExecuting, executingToolCallId };
 }
 
-interface ApprovalButtonProps {
-  isLoading: boolean;
-  pendingApproval?: PendingApproval;
-  retry: () => void;
+interface ToolCallApprovalButtonProps {
+  pendingApproval: PendingToolCallApproval;
   addToolResult: AddToolResultFunctionType;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
@@ -87,29 +79,20 @@ interface ApprovalButtonProps {
 }
 
 // Component
-export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
-  isLoading,
+export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
-  retry,
   addToolResult,
   setIsExecuting,
   executingToolCallId,
   chatHasFinishedOnce,
 }) => {
-  if (isLoading || !pendingApproval) return null;
-
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
   });
 
   const ToolAcceptText: Record<string, string> = {
-    retry: "Retry",
     writeToFile: "Save",
     executeCommand: "Run",
-  };
-
-  const ToolRejectText: Record<string, string> = {
-    retry: "Cancel",
   };
 
   const ToolAbortText: Record<string, string> = {
@@ -117,7 +100,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   };
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
-  const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
+  const rejectText = "Reject";
   const abortText = ToolAbortText[pendingApproval.name] || null;
 
   const executed = useRef(false);
@@ -130,30 +113,24 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   }, []);
 
   const onAccept = useCallback(async () => {
-    if (pendingApproval.name === "retry") {
-      retry();
-    } else {
-      if (shouldSkipExecute()) {
-        return;
-      }
-
-      try {
-        setIsExecuting(true);
-        await executeTool(pendingApproval.tool);
-      } finally {
-        setIsExecuting(false);
-      }
+    if (shouldSkipExecute()) {
+      return;
     }
-  }, [shouldSkipExecute, pendingApproval, retry, executeTool, setIsExecuting]);
+
+    try {
+      setIsExecuting(true);
+      await executeTool(pendingApproval.tool);
+    } finally {
+      setIsExecuting(false);
+    }
+  }, [shouldSkipExecute, pendingApproval, executeTool, setIsExecuting]);
 
   const onReject = useCallback(
     (error = "User rejected tool call") => {
-      if (pendingApproval.name !== "retry") {
-        if (shouldSkipExecute()) {
-          return;
-        }
-        rejectTool(pendingApproval.tool, error);
+      if (shouldSkipExecute()) {
+        return;
       }
+      rejectTool(pendingApproval.tool, error);
     },
     [shouldSkipExecute, pendingApproval, rejectTool],
   );
@@ -184,16 +161,13 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     }
   }, [executingToolCallId]);
 
-  let body: React.ReactNode;
   if (!executingToolCallId) {
-    body = (
+    return (
       <>
         <Button onClick={onAccept}>{acceptText}</Button>
-        {pendingApproval.name !== "retry" && (
-          <Button onClick={onRejectByUser} variant="secondary">
-            {rejectText}
-          </Button>
-        )}
+        <Button onClick={onRejectByUser} variant="secondary">
+          {rejectText}
+        </Button>
       </>
     );
   }
@@ -205,18 +179,12 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
     2. The abort text is provided
     3. The showAbort flag is true (delayed for a bit to avoid flashing)
     */
-    body = (
+    return (
       <Button onClick={abortTool} variant="secondary">
         {abortText}
       </Button>
     );
   }
 
-  if (!body) return null; // If no body content, render nothing
-
-  return (
-    <div className="mb-2 flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
-      {body}
-    </div>
-  );
+  return null;
 };
