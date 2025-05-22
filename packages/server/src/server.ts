@@ -75,8 +75,8 @@ app.use(
         ) {
           return origin;
         }
-      } finally {
-        // noop
+      } catch (err) {
+        // Ignore invalid origin
       }
 
       return undefined;
