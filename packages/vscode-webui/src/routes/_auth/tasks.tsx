@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Edit3,
   HelpCircle,
+  Loader2,
   TerminalIcon,
   Wrench,
   XCircle,
@@ -169,7 +170,7 @@ function Tasks({ cwd }: { cwd: string }) {
   const router = useRouter();
   const { page = 1 } = Route.useSearch();
 
-  const { data, isPlaceholderData, isLoading } = useQuery({
+  const { data, isPlaceholderData, isLoading, isRefetching } = useQuery({
     queryKey: ["tasks", page, limit, cwd],
     queryFn: () =>
       apiClient.api.tasks
@@ -186,6 +187,7 @@ function Tasks({ cwd }: { cwd: string }) {
 
   const tasks = data?.data || [];
   const meta = data?.pagination; // Adjusted to use 'pagination' from API response
+  const isRefetchingFirstPage = !isLoading && isRefetching && page === 1;
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || (meta?.totalPages && newPage > meta.totalPages)) return;
@@ -207,6 +209,11 @@ function Tasks({ cwd }: { cwd: string }) {
     <div className="flex h-screen w-full flex-col">
       <ScrollArea className="h-full max-h-screen overflow-y-auto">
         <div className="flex flex-1 flex-col gap-4 p-4">
+          {isRefetchingFirstPage && (
+            <div className="flex justify-center">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          )}
           {isPlaceholderData || isLoading
             ? [...Array(limit)].map((_, i) => (
                 <div
