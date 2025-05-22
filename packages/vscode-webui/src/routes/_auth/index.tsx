@@ -72,6 +72,7 @@ import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { cn } from "@/lib/utils";
 import {
   createImageFileName,
   isDuplicateFile,
