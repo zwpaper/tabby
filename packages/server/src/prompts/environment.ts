@@ -67,7 +67,7 @@ export function injectReadEnvironment(
   event: DB["task"]["event"],
 ) {
   if (environment === undefined) return messages;
-  // There\'s only user message.
+  // There's only user message.
   if (messages.length === 1 && messages[0].role === "user") {
     // Prepend an empty assistant message.
     messages.unshift({
@@ -89,10 +89,24 @@ export function injectReadEnvironment(
   // create toolCallId with timestamp
   const isGemini = requestedModelId.includes("gemini");
   const toolCallId = `environmentToolCall-${Date.now()}`;
+  const lastStepStartIndex = parts.findLastIndex(
+    (part) => part.type === "step-start",
+  );
+  const lastToolInvocationIndex = parts.findLastIndex(
+    (part) => part.type === "tool-invocation",
+  );
+  let step =
+    parts.findLast((part) => part.type === "tool-invocation")?.toolInvocation
+      .step || 0;
+  if (lastStepStartIndex > lastToolInvocationIndex) {
+    step += 1;
+  }
+
   parts.push({
     type: "tool-invocation",
     toolInvocation: {
       toolName: "readEnvironment",
+      step,
       state: "result",
       args: isGemini ? undefined : {},
       toolCallId,

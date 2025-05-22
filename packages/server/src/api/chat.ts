@@ -149,6 +149,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             if (error.lastError.statusCode === 429) {
               return "Too many requests. Please try again later.";
             }
+
+            console.log(
+              "API call error",
+              error.lastError.message,
+              error.lastError.requestBodyValues,
+            );
+            return error.message;
           }
         }
 
@@ -157,6 +164,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         }
 
         if (isAbortError(error)) {
+          console.log("Request Aborted", error);
           return "Request was aborted.";
         }
 
