@@ -1,3 +1,5 @@
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { isAbortError } from "@ai-sdk/provider-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
@@ -47,6 +49,8 @@ const streamContext = createResumableStreamContext({
 export type ContextVariables = {
   model?: LanguageModel;
 };
+
+const EnableInterleavedThinking = false;
 
 const chat = new Hono<{ Variables: ContextVariables }>()
   .use(requireAuth())
@@ -104,6 +108,17 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               ...enabledClientTools,
               ...enabledServerTools, // Add the enabled server tools
             },
+            providerOptions: {
+              google: {
+                thinkingConfig: {
+                  includeThoughts: true,
+                  thinkingBudget: 1024,
+                },
+              } satisfies GoogleGenerativeAIProviderOptions,
+              anthropic: {
+                thinking: { type: "enabled", budgetTokens: 10_000 },
+              } satisfies AnthropicProviderOptions,
+            },
             onFinish: async ({ usage, finishReason, response }) => {
               const finalMessages = appendResponseMessages({
                 messages,
@@ -125,6 +140,12 @@ const chat = new Hono<{ Variables: ContextVariables }>()
                 await usageService.trackUsage(user, requestedModelId, usage);
               }
             },
+            headers:
+              requestedModelId.includes("claude-4") && EnableInterleavedThinking
+                ? {
+                    "anthropic-beta": "interleaved-thinking-2025-05-14",
+                  }
+                : undefined,
             experimental_telemetry: {
               isEnabled: true,
               tracer: getTracer(),
@@ -137,11 +158,17 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           }),
         );
 
-        result.mergeIntoDataStream(stream);
+        result.mergeIntoDataStream(stream, {
+          sendReasoning: true,
+        });
       },
       onError(error) {
         // Failed to stream the response.
         taskService.failStreaming(id, user.id);
+
+        const logApiCallError = (error: APICallError) => {
+          console.log("API call error", error.message, error.requestBodyValues);
+        };
 
         if (RetryError.isInstance(error)) {
           if (APICallError.isInstance(error.lastError)) {
@@ -149,13 +176,14 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               return "Too many requests. Please try again later.";
             }
 
-            console.log(
-              "API call error",
-              error.lastError.message,
-              error.lastError.requestBodyValues,
-            );
+            logApiCallError(error.lastError);
             return error.message;
           }
+        }
+
+        if (APICallError.isInstance(error)) {
+          logApiCallError(error);
+          return error.message;
         }
 
         if (NoSuchToolError.isInstance(error)) {

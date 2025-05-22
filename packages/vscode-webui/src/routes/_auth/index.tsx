@@ -8,7 +8,7 @@ import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { isReadyForRetry, useRetry } from "@/lib/hooks/use-retry";
 import { useChat } from "@ai-sdk/react";
-import type { UIMessage } from "@ai-sdk/ui-utils";
+import type { ReasoningUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type {
   Environment,
   ChatRequest as RagdollChatRequest,
@@ -28,6 +28,7 @@ import type {
 import type { InferResponseType } from "hono/client";
 import {
   Bug,
+  ChevronLeft,
   ImageIcon,
   Loader2,
   SendHorizonal,
@@ -339,9 +340,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     },
   });
 
-  const initialError = isReadyForRetry(messages)
-    ? new Error("Streaming failed in previous session")
-    : undefined;
+  const initialError = isReadyForRetry(messages) ? new Error() : undefined;
 
   const { todos } = useTodos({
     initialTodos: loaderData?.todos,
@@ -828,6 +827,10 @@ function Part({
     return <TextPartUI message={message} part={part} />;
   }
 
+  if (part.type === "reasoning") {
+    return <ReasoningPartUI part={part} />;
+  }
+
   if (part.type === "step-start") {
     return null;
   }
@@ -857,6 +860,28 @@ function TextPartUI({ message, part }: { message: UIMessage; part: TextPart }) {
     >
       {part.text}
     </MessageMarkdown>
+  );
+}
+
+function ReasoningPartUI({ part }: { part: ReasoningUIPart }) {
+  const showThinking = useSettingsStore((x) => x.showThinking);
+  const [showDetails, setShowDetails] = useState(false);
+  if (!showThinking) return null;
+  return (
+    <>
+      <span
+        onClick={() => setShowDetails(!showDetails)}
+        className="flex cursor-pointer items-center italic"
+      >
+        Pochi is thinking ...
+        <ChevronLeft className="ml-2 inline size-3" />
+      </span>
+      {showDetails && (
+        <MessageMarkdown className="text-muted-foreground">
+          {part.reasoning}
+        </MessageMarkdown>
+      )}
+    </>
   );
 }
 

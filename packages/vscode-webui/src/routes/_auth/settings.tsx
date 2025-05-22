@@ -1,8 +1,8 @@
 import { Section } from "@/components/settings/section";
+import { SettingsCheckboxOption } from "@/components/settings/settings-checkbox-option";
 import { ToolsSection } from "@/components/settings/tools-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -142,43 +142,37 @@ const WorkspaceRulesSection: React.FC = () => {
 const AdvancedSettingsSection: React.FC = () => {
   const [isDevMode, setIsDevMode] = useIsDevMode();
   const { enableTodos, updateEnableTodos } = useSettingsStore();
+  const { showThinking, updateShowThinking } = useSettingsStore();
 
   return (
     <AccordionSection title="Advanced Settings">
       <div className="flex flex-col gap-4 px-6">
         {isDevMode !== undefined && (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="dev-mode"
-              checked={isDevMode}
-              onCheckedChange={(checked) => {
-                setIsDevMode(!!checked);
-              }}
-            />
-            <label
-              htmlFor="dev-mode"
-              className="font-bold text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Developer Mode
-            </label>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="enable-todos"
-            checked={enableTodos}
+          <SettingsCheckboxOption
+            id="dev-mode"
+            label="Developer Mode"
+            checked={isDevMode}
             onCheckedChange={(checked) => {
-              updateEnableTodos(!!checked);
+              setIsDevMode(!!checked);
             }}
           />
-          <label
-            htmlFor="enable-todos"
-            className="font-bold text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Enable Todos
-          </label>
-        </div>
-        {/* Add other advanced settings here */}
+        )}
+        <SettingsCheckboxOption
+          id="enable-todos"
+          label="Enable Todos"
+          checked={enableTodos}
+          onCheckedChange={(checked) => {
+            updateEnableTodos(!!checked);
+          }}
+        />
+        <SettingsCheckboxOption
+          id="show-thinking"
+          label="Show Thinking"
+          checked={showThinking}
+          onCheckedChange={(checked) => {
+            updateShowThinking(!!checked);
+          }}
+        />
       </div>
     </AccordionSection>
   );
