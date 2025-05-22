@@ -86,6 +86,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         }
 
         const processedMessages = await preprocessMessages(
+          requestedModelId,
           messages,
           environment,
           user,
@@ -229,6 +230,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
   );
 
 async function preprocessMessages(
+  requestedModelId: string,
   inputMessages: Message[],
   environment: Environment | undefined,
   user: User,
@@ -237,7 +239,12 @@ async function preprocessMessages(
 ): Promise<Message[]> {
   let messages = stripReadEnvironment(inputMessages);
   messages = resolvePendingTools(messages);
-  messages = injectReadEnvironment(messages, environment, event);
+  messages = injectReadEnvironment(
+    requestedModelId,
+    messages,
+    environment,
+    event,
+  );
   messages = await resolveServerTools(messages, user, stream);
   return messages;
 }

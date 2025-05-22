@@ -61,6 +61,7 @@ function getMessageToInject(messages: Message[]): Message | undefined {
 }
 
 export function injectReadEnvironment(
+  requestedModelId: string,
   messages: Message[],
   environment: Environment | undefined,
   event: DB["task"]["event"],
@@ -86,13 +87,14 @@ export function injectReadEnvironment(
   const parts = [...(messageToInject.parts || [])];
 
   // create toolCallId with timestamp
+  const isGemini = requestedModelId.includes("gemini");
   const toolCallId = `environmentToolCall-${Date.now()}`;
   parts.push({
     type: "tool-invocation",
     toolInvocation: {
       toolName: "readEnvironment",
       state: "result",
-      args: {},
+      args: isGemini ? undefined : {},
       toolCallId,
       result: getReadEnvironmentResult(environment, event),
     },
