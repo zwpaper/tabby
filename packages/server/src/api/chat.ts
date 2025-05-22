@@ -30,7 +30,10 @@ import {
   checkWaitlist,
 } from "../lib/check-request";
 import { resolveServerTools } from "../lib/tools";
-import { injectReadEnvironment } from "../prompts/environment";
+import {
+  injectReadEnvironment,
+  stripReadEnvironment,
+} from "../prompts/environment";
 import { generateSystemPrompt } from "../prompts/system";
 import { after, setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
@@ -240,7 +243,8 @@ async function preprocessMessages(
   event: DB["task"]["event"],
   stream: DataStreamWriter,
 ): Promise<Message[]> {
-  let messages = resolvePendingTools(inputMessages);
+  let messages = stripReadEnvironment(inputMessages);
+  messages = resolvePendingTools(messages);
   messages = injectReadEnvironment(messages, environment, event);
   messages = await resolveServerTools(messages, user, stream);
   return messages;

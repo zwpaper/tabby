@@ -14,6 +14,7 @@ import {
   toUIMessage,
   toUIMessages,
 } from "../lib/message-utils";
+import { stripReadEnvironment } from "../prompts/environment";
 import type { Environment, Todo, ZodChatRequestType } from "../types";
 import { slackService } from "./slack";
 
@@ -392,6 +393,7 @@ class TaskService {
 export const taskService = new TaskService();
 
 function postProcessMessages(messages: Message[]) {
+  stripReadEnvironment(messages);
   for (const x of messages) {
     x.toolInvocations = undefined;
   }
