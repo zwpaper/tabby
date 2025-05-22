@@ -81,7 +81,7 @@ export function injectReadEnvironment(
 
   const parts = [...(messageToInject.parts || [])];
 
-  parts.push({
+  parts.unshift({
     type: "text",
     text: `<environment>\n${getReadEnvironmentResult(environment, event)}\n</environment>`,
   });
