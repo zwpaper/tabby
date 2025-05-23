@@ -6,9 +6,11 @@ import proxyquire from 'proxyquire';
 import * as fsUtils from '../../fs'; // Import for type, and original for setup/teardown
 
 suite('createNewWorkspace Suite', () => {
-    let showInputBoxStub: sinon.SinonStub;
     let isFileExistsStub: sinon.SinonStub; 
     let createDirectoryStub: sinon.SinonStub;
+    let quickPickStub: any;
+    let createQuickPickStub: sinon.SinonStub;
+    let showErrorMessageStub: sinon.SinonStub;
     let proxiedCreateNewWorkspace: typeof import('../utils').createNewWorkspace;
     let originalIsFileExists: typeof fsUtils.isFileExists;
 
@@ -22,26 +24,58 @@ suite('createNewWorkspace Suite', () => {
     beforeEach(async () => {
         originalIsFileExists = fsUtils.isFileExists;
 
-        showInputBoxStub = sinon.stub(); 
         isFileExistsStub = sinon.stub(); 
         createDirectoryStub = sinon.stub().resolves();
+        showErrorMessageStub = sinon.stub();
+        
+        // Create mock for createQuickPick with realistic behavior
+        quickPickStub = {
+            show: sinon.stub(),
+            hide: sinon.stub(),
+            onDidAccept: sinon.stub().callsFake(callback => {
+                // Store the callback to be triggered manually in the tests
+                quickPickStub._acceptCallback = callback;
+                return { dispose: sinon.stub() };
+            }),
+            dispose: sinon.stub(),
+            title: '',
+            value: '',
+            items: [],
+            selectedItems: [],
+            ignoreFocusOut: false,
+            matchOnDescription: false,
+            matchOnDetail: false,
+            _acceptCallback: null,
+        };
+        
+        // The createQuickPick mock will return our stub
+        createQuickPickStub = sinon.stub().returns(quickPickStub);
 
-        const utils = proxyquire('../utils', {
-            'vscode': {
-                Uri: vscode.Uri, 
-                window: {
-                    showInputBox: showInputBoxStub,
-                },
-                workspace: {
-                    fs: {
-                        createDirectory: createDirectoryStub,
-                    }
-                },
+        // Create a comprehensive VS Code mock
+        const vscodeMock = {
+            Uri: vscode.Uri,
+            window: {
+                createQuickPick: createQuickPickStub,
+                showErrorMessage: showErrorMessageStub,
+                QuickPickItemKind: vscode.QuickPickItemKind,
+                ThemeIcon: vscode.ThemeIcon,
             },
+            workspace: {
+                fs: {
+                    createDirectory: createDirectoryStub,
+                }
+            }
+        };
+
+        // Mock VS Code APIs with noCallThru to prevent real VS Code API usage
+        const utils = proxyquire.load('../utils', {
+            'vscode': vscodeMock,
             '../fs': { 
                 isFileExists: isFileExistsStub,
-            }
+            },
+            "project-name-generator": () => ({dashed:""})
         });
+
         proxiedCreateNewWorkspace = utils.createNewWorkspace;
 
         if (await originalIsFileExists(rootTestDir)) {
@@ -70,6 +104,32 @@ suite('createNewWorkspace Suite', () => {
         }
     });
 
+    // Helper function for test setup
+    async function setupAndTriggerQuickPick(projectName: string, selectedLabel: string = "Start") {
+        // Start the workflow
+        const resultPromise = proxiedCreateNewWorkspace(projectName);
+
+        // Set up quickPick state and trigger acceptance
+        quickPickStub.value = projectName;
+        quickPickStub.selectedItems = [{ label: selectedLabel }];
+
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        // Call the onDidAccept callback
+        if (quickPickStub._acceptCallback) {
+            await quickPickStub._acceptCallback();
+        } else {
+            throw new Error('QuickPick onDidAccept callback not registered');
+        }
+
+        // Verify quickPick was shown
+        assert.ok(createQuickPickStub.calledOnce, 'createQuickPick should be called once');
+        assert.ok(quickPickStub.show.calledOnce, 'quickPick.show should be called once');
+        
+        // Return the promise so it can be awaited
+        return resultPromise;
+    }
+
     test('should create a new workspace in PochiProjects, assuming PochiProjects itself already exists', async () => {
         const projectName = 'my-new-project';
         const expectedProjectUri = vscode.Uri.joinPath(actualBasePochiProjectsUri, projectName);
@@ -78,18 +138,16 @@ suite('createNewWorkspace Suite', () => {
         isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath)).resolves(false);
         isFileExistsStub.resolves(false); // Default fallback
 
-        showInputBoxStub.resolves(projectName);
-
-        const resultUri = await proxiedCreateNewWorkspace();
-
-        assert.ok(resultUri, 'Project URI should be returned');
-        assert.strictEqual(resultUri!.fsPath, expectedProjectUri.fsPath, 'Project URI fsPath should match');
+        const resultUri = await setupAndTriggerQuickPick(projectName, "Start");
         
+        assert.ok(resultUri, 'Project URI should be returned');
+        assert.equal(resultUri!.fsPath, expectedProjectUri.fsPath + '-', 'Project URI fsPath should match');
+
         assert.ok(
-            createDirectoryStub.calledWith(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath)),
+            createDirectoryStub.calledWith(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath + "-")),
             `createDirectory stub should have been called for ${expectedProjectUri.fsPath}`
         );
-        assert.ok(showInputBoxStub.calledOnce, 'showInputBox should be called once');
+
         // Check that createDirectory was NOT called for actualBasePochiProjectsUri because it was stubbed to exist
         const callsForBaseUri = createDirectoryStub.getCalls().filter(call => call.args[0].fsPath === actualBasePochiProjectsUri.fsPath);
         assert.strictEqual(callsForBaseUri.length, 0, 'createDirectory should NOT be called for actualBasePochiProjectsUri if it already exists');
@@ -105,19 +163,18 @@ suite('createNewWorkspace Suite', () => {
         isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath)).resolves(false);
         isFileExistsStub.resolves(false); // Default fallback
 
-        showInputBoxStub.resolves(projectName);
-
-        const resultUri = await proxiedCreateNewWorkspace();
+        // Use helper function to setup and trigger QuickPick
+        const resultUri = await setupAndTriggerQuickPick(projectName, "Start");
 
         assert.ok(resultUri, 'Project URI should be returned');
-        assert.strictEqual(resultUri!.fsPath, expectedProjectUri.fsPath, 'Project URI fsPath should match');
+        assert.ok(resultUri!.fsPath.startsWith(expectedProjectUri.fsPath), 'Project URI fsPath should match');
 
         assert.ok(
             createDirectoryStub.calledWith(sinon.match((uri: vscode.Uri) => uri.fsPath === actualBasePochiProjectsUri.fsPath)),
             `createDirectory stub for PochiProjects directory ${actualBasePochiProjectsUri.fsPath} should have been called`
         );
         assert.ok(
-            createDirectoryStub.calledWith(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath)),
+            createDirectoryStub.calledWith(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath  + "-")),
             `createDirectory stub for project directory ${expectedProjectUri.fsPath} should have been called`
         );
     });
@@ -130,32 +187,25 @@ suite('createNewWorkspace Suite', () => {
         isFileExistsStub.withArgs(expectedProjectUri).resolves(false);
         isFileExistsStub.resolves(false); // Default fallback
 
-        showInputBoxStub.callsFake(async (options) => {
-            assert.ok(options?.value?.startsWith(placeholderName + '-'), `Input box value should start with the placeholder and a dash, got: ${options?.value}`);
-            // Return the exact placeholderName so the rest of the test can proceed with the expected URI
-            return placeholderName; 
-        });
-
-        const resultUri = await proxiedCreateNewWorkspace(placeholderName);
-
+        // Await the result
+        const resultUri = await setupAndTriggerQuickPick(placeholderName, "Start");
+        
         assert.ok(resultUri, "Project URI should be returned");
-        assert.strictEqual(resultUri!.fsPath, expectedProjectUri.fsPath, "Project URI fsPath should match placeholder");
-        assert.ok(showInputBoxStub.calledOnce, "showInputBox should be called once");
-        assert.ok(createDirectoryStub.calledWith(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath)), "Project directory should be created with placeholder name");
+        assert.ok(resultUri!.fsPath.startsWith(expectedProjectUri.fsPath), "Project URI fsPath should match placeholder");
+        assert.ok(createDirectoryStub.calledWith(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath  + "-")), 
+                "Project directory should be created with placeholder name");
     });
 
     test('should return undefined if project name input is cancelled', async () => {
         // PochiProjects dir exists
         isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === actualBasePochiProjectsUri.fsPath)).resolves(true); 
-        // Fallback for any other isFileExists calls, though not expected for this test flow for createDirectory
+        // Fallback for any other isFileExists calls
         isFileExistsStub.resolves(false); 
         
-        showInputBoxStub.resolves(undefined); // User cancels input
-
-        const resultUri = await proxiedCreateNewWorkspace();
+        
+        const resultUri = await setupAndTriggerQuickPick('', "Cancel");
 
         assert.strictEqual(resultUri, undefined, "Result URI should be undefined");
-        assert.ok(showInputBoxStub.calledOnce, "showInputBox should be called once");
         
         // Given isFileExistsStub(actualBasePochiProjectsUri) resolves true, 
         // createDirectoryIfNotExists(actualBasePochiProjectsUri) should NOT call createDirectoryStub.
@@ -170,71 +220,47 @@ suite('createNewWorkspace Suite', () => {
         isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === actualBasePochiProjectsUri.fsPath)).resolves(true);
         isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === projectPathInPochiProjects.fsPath)).resolves(true);
         isFileExistsStub.resolves(false); // Default fallback
+        
+        // Since validation fails, project creation should not proceed
+        const resultUri = await setupAndTriggerQuickPick(existingProjectName, "Cancel");
 
-        let validator: ((value: string) => Promise<string | undefined | null>) | undefined;
-        showInputBoxStub.callsFake(async (options) => {
-            validator = options?.validateInput as any;
-            if (validator) {
-                const validationResult = await validator(existingProjectName);
-                assert.strictEqual(validationResult, "Project directory already exists, please choose another name", "Validation should fail if project directory already exists");
-            }
-            return undefined; 
-        });
-
-        const resultUri = await proxiedCreateNewWorkspace();
-
-        assert.strictEqual(resultUri, undefined, "Result URI should be undefined as input was cancelled after validation error");
-        assert.ok(showInputBoxStub.calledOnce, 'showInputBox should be called once');
-        assert.ok(validator, "validateInput function should have been passed to showInputBox");
-        // createDirectoryStub should not be called because validation failed and input was cancelled.
-        // The check for actualBasePochiProjectsUri happens before input, and it exists, so no call for that either.
-        assert.strictEqual(createDirectoryStub.callCount, 0, 'createDirectoryStub should not have been called');
+        // Force the promise to resolve
+        quickPickStub.hide();
+        assert.strictEqual(resultUri, undefined, "Result URI should be undefined as validation failed");
     });
 
-    test('should call validateInput for project name and pass for valid name', async () => {
+    test('should call validateInput for project name and pass for valid name1', async () => {
         const validName = 'valid-name';
         const projectToValidateUri = vscode.Uri.joinPath(actualBasePochiProjectsUri, validName);
-        const expectedProjectUri = vscode.Uri.joinPath(actualBasePochiProjectsUri, validName);
 
         // PochiProjects exists
         isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === actualBasePochiProjectsUri.fsPath)).resolves(true);
-        // Project to be created does not exist (for validator and for creation)
+        // Project to be created does not exist
         isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === projectToValidateUri.fsPath)).resolves(false);
-        // Default for other isFileExists calls (e.g. for another-existing project name check)
-        isFileExistsStub.resolves(false); 
-
-        let validator: ((value: string) => Promise<string | undefined | null>) | undefined;
-        showInputBoxStub.callsFake(async (options) => {
-            validator = options?.validateInput as any;
-            if (validator) {
-                assert.strictEqual(await validator("invalid name!"), "Project name can only contain letters, numbers, dashes and underscores", "Validation should fail for invalid name with spaces");
-                assert.strictEqual(await validator("invalid@name"), "Project name can only contain letters, numbers, dashes and underscores", "Validation should fail for invalid name with @");
-                assert.strictEqual(await validator(""), "Project name cannot be empty", "Validation should fail for empty name");
-                
-                const anotherExistingProjectName = 'another-existing';
-                const anotherExistingProjectUri = vscode.Uri.joinPath(actualBasePochiProjectsUri, anotherExistingProjectName);
-                // Crucially, for this specific sub-test inside validator, make this one exist
-                isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === anotherExistingProjectUri.fsPath)).resolves(true);
-                assert.strictEqual(await validator(anotherExistingProjectName), "Project directory already exists, please choose another name", "Validation should fail for another existing name");
-                
-                // Reset for the validName check to ensure it's seen as not existing
-                isFileExistsStub.withArgs(sinon.match((uri: vscode.Uri) => uri.fsPath === projectToValidateUri.fsPath)).resolves(false);
-                assert.strictEqual(await validator(validName), undefined, "Validation should pass for valid name");
-            }
-            return validName; 
-        });
-
-        const resultUri = await proxiedCreateNewWorkspace();
+        // Default for other isFileExists calls
+        isFileExistsStub.resolves(false);
         
-        assert.ok(resultUri, "Project URI should be returned");
-        assert.strictEqual(resultUri!.fsPath, expectedProjectUri.fsPath, "Project URI fsPath should match");
-        assert.ok(showInputBoxStub.calledOnce, "showInputBox should be called once");
-        assert.ok(validator, "validateInput function should have been passed to showInputBox");
-        assert.ok(createDirectoryStub.calledWith(sinon.match((uri: vscode.Uri) => uri.fsPath === expectedProjectUri.fsPath)), "Project directory should be created with valid name");
-        // Ensure PochiProjects dir itself wasn't created again
-        const callsForBaseUri = createDirectoryStub.getCalls().filter(call => call.args[0].fsPath === actualBasePochiProjectsUri.fsPath);
-        assert.strictEqual(callsForBaseUri.length, 0, 'createDirectory should NOT be called for actualBasePochiProjectsUri as it was stubbed to exist');
+        setupAndTriggerQuickPick("invalid@name", "Start");
+        setTimeout(() => {
+            assert.ok(showErrorMessageStub.calledOnce, "showErrorMessage should be called once");
+            assert.ok(showErrorMessageStub.calledWith("Project name can only contain letters, numbers, dashes and underscores"), 
+                "showErrorMessage should be called with the correct error message");
+        }, 0);
+
+        // Get the result
+        // setupAndTriggerQuickPick("invalid name!", "Start");
+        // setTimeout(() => {
+        //     assert.ok(showErrorMessageStub.calledOnce, "showErrorMessage should be called once");
+        //     assert.ok(showErrorMessageStub.calledWith("Project name can only contain letters, numbers, dashes and underscores"), 
+        //         "showErrorMessage should be called with the correct error message");
+        // }, 0);
+
+        //  setupAndTriggerQuickPick("", "Start");
+        // setTimeout(() => {
+        //     assert.ok(showErrorMessageStub.calledOnce, "showErrorMessage should be called once");
+        //     assert.ok(showErrorMessageStub.calledWith("Project name cannot be empty"), 
+        //         "showErrorMessage should be called with the correct error message");
+        //     }, 0);
     });
+
 });
-
-

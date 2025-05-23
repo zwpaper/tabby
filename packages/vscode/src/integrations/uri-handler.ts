@@ -119,7 +119,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     const newWorkspaceUri = await createNewWorkspace(name);
 
     if (!newWorkspaceUri) {
-      vscode.window.showWarningMessage("Cancelled creating new workspace.");
+      vscode.window.showWarningMessage("Cancelled creating new project.");
       return;
     }
 

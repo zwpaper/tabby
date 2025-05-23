@@ -17,6 +17,99 @@ async function createDirectoryIfNotExists(uri: vscode.Uri) {
   }
 }
 
+async function validateInput(value: string) {
+  if (value.trim() === "") {
+    return "Project name cannot be empty";
+  }
+  if (/[^a-zA-Z0-9-_]/.test(value)) {
+    return "Project name can only contain letters, numbers, dashes and underscores";
+  }
+  const projectUri = vscode.Uri.joinPath(baseUri, value);
+  if (await isFileExists(projectUri)) {
+    return "Project directory already exists, please choose another name";
+  }
+  return undefined;
+}
+
+const CreateLabel = "Start";
+const CancelLabel = "Cancel";
+
+export async function showInputBox(
+  placeholder: string,
+  baseUri: vscode.Uri,
+): Promise<string | undefined> {
+  const quickpick = vscode.window.createQuickPick();
+  quickpick.title = "Enter a name for the new project";
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  (quickpick as any).sortByLabel = false;
+  quickpick.matchOnDescription = false;
+  quickpick.matchOnDetail = false;
+  quickpick.value = placeholder;
+  quickpick.ignoreFocusOut = true;
+  quickpick.items = [
+    {
+      alwaysShow: true,
+      label: CreateLabel,
+      detail: "Pochi will create a new project with the name you entered",
+    },
+    {
+      alwaysShow: true,
+      label: CancelLabel,
+      detail: "Abort this process and do nothing",
+    },
+    {
+      alwaysShow: true,
+      kind: vscode.QuickPickItemKind.Separator,
+      label: "What Pochi Does",
+    },
+    {
+      alwaysShow: true,
+      label: `1. Create a new project in ${baseUri.fsPath}`,
+      iconPath: new vscode.ThemeIcon("add"),
+    },
+    {
+      alwaysShow: true,
+      label: "2. Open the project in a current window",
+      iconPath: new vscode.ThemeIcon("multiple-windows"),
+    },
+    {
+      alwaysShow: true,
+      label: "3. Initialize the project",
+      iconPath: new vscode.ThemeIcon("cloud-download"),
+    },
+    {
+      alwaysShow: true,
+      label: "4. Start working on the project",
+      iconPath: new vscode.ThemeIcon("rocket"),
+    },
+  ];
+
+  quickpick.show();
+
+  return new Promise((resolve) => {
+    quickpick.onDidAccept(async () => {
+      if (quickpick.selectedItems.length === 0) {
+        return;
+      }
+
+      const selectedItem = quickpick.selectedItems[0];
+      if (selectedItem.label === CreateLabel) {
+        const input = quickpick.value.trim();
+        const validationError = await validateInput(input);
+        if (validationError) {
+          vscode.window.showErrorMessage(validationError);
+          return;
+        }
+        quickpick.hide();
+        resolve(input);
+      } else if (selectedItem.label === CancelLabel) {
+        quickpick.hide();
+        resolve(undefined);
+      }
+    });
+  });
+}
+
 export async function createNewWorkspace(
   namePlaceholder?: string | undefined,
 ): Promise<vscode.Uri | undefined> {
@@ -25,25 +118,7 @@ export async function createNewWorkspace(
   const { dashed } = generate();
   const namePrefix = namePlaceholder || "my-project";
   const placeholder = `${namePrefix}-${dashed}`;
-  const projectName = await vscode.window.showInputBox({
-    title: "Enter a name for the project",
-    value: placeholder,
-    valueSelection: [0, placeholder.length],
-    ignoreFocusOut: true,
-    validateInput: async (value) => {
-      if (value.trim() === "") {
-        return "Project name cannot be empty";
-      }
-      if (/[^a-zA-Z0-9-_]/.test(value)) {
-        return "Project name can only contain letters, numbers, dashes and underscores";
-      }
-      const projectUri = vscode.Uri.joinPath(baseUri, value);
-      if (await isFileExists(projectUri)) {
-        return "Project directory already exists, please choose another name";
-      }
-      return undefined;
-    },
-  });
+  const projectName = await showInputBox(placeholder, baseUri);
   if (!projectName) {
     return undefined;
   }
