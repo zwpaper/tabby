@@ -43,6 +43,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useReducer,
   useRef,
   useState,
@@ -513,7 +514,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   const editorRef = useRef<Editor | null>(null);
 
-  const renderMessages = formatters.ui(messages);
+  const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
 
   const {
     pendingApproval,
