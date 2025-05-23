@@ -77,14 +77,3 @@ export const selectServerTools = (tools: string[]) => {
 
   return ret;
 };
-
-export const selectClientTools = (enableTodos: boolean) => {
-  if (enableTodos) {
-    return ClientTools;
-  }
-
-  const tools = Object.fromEntries(
-    Object.entries(ClientTools).filter(([name]) => name !== "todoWrite"),
-  );
-  return tools satisfies Record<string, Tool>;
-};

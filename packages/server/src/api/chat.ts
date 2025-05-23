@@ -4,8 +4,8 @@ import { isAbortError } from "@ai-sdk/provider-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import {
+  ClientTools,
   isUserInputTool,
-  selectClientTools,
   selectServerTools,
 } from "@ragdoll/tools";
 import {
@@ -69,9 +69,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
     checkWaitlist(user);
 
-    const enabledClientTools = selectClientTools(
-      environment?.todos !== undefined,
-    );
+    const enabledClientTools = ClientTools;
 
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(
