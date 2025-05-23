@@ -50,7 +50,6 @@ export type ContextVariables = {
   model?: LanguageModel;
 };
 
-const EnableThinking = false;
 const EnableInterleavedThinking = false;
 
 const chat = new Hono<{ Variables: ContextVariables }>()
@@ -96,7 +95,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           stream,
         );
 
-        const providerOptions = EnableThinking
+        const providerOptions = req.reasoning?.enabled
           ? {
               google: {
                 thinkingConfig: {

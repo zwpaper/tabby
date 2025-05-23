@@ -3,7 +3,6 @@ import { ChevronDown, ChevronRight, Dot } from "lucide-react";
 import { useState } from "react";
 
 import { MessageMarkdown } from "@/components/message/markdown";
-import { useSettingsStore } from "@/lib/stores/settings-store";
 
 interface ReasoningPartUIProps {
   isLoading: boolean;
@@ -11,12 +10,7 @@ interface ReasoningPartUIProps {
 }
 
 export function ReasoningPartUI({ part, isLoading }: ReasoningPartUIProps) {
-  const showThinking = useSettingsStore((x) => x.showThinking);
   const [showDetails, setShowDetails] = useState(false);
-
-  if (!showThinking) {
-    return null;
-  }
 
   return (
     <div className="flex items-start">

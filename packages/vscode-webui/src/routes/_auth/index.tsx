@@ -73,6 +73,7 @@ import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
+import { useLatest } from "@/lib/hooks/use-latest";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import {
@@ -329,6 +330,10 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             ...JSON.parse(options.body as string),
             // Inject the environment variables into the request body
             environment: await buildEnvironment(),
+            // Inject reasoning configuration
+            reasoning: enableReasoningRef.current
+              ? { enabled: true }
+              : undefined,
           }),
       });
       // If the task is already streaming, resume the stream
@@ -444,6 +449,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const updateSelectedModelId = useSettingsStore(
     (x) => x.updateSelectedModelId,
   );
+  const enableReasoning = useSettingsStore((x) => x.enableReasoning);
+  const enableReasoningRef = useLatest(enableReasoning);
 
   const handleSelectModel = (v: string) => {
     updateSelectedModelId(v);

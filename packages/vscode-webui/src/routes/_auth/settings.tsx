@@ -141,7 +141,7 @@ const WorkspaceRulesSection: React.FC = () => {
 
 const AdvancedSettingsSection: React.FC = () => {
   const [isDevMode, setIsDevMode] = useIsDevMode();
-  const { showThinking, updateShowThinking } = useSettingsStore();
+  const { enableReasoning, updateEnableReasoning } = useSettingsStore();
 
   return (
     <AccordionSection title="Advanced Settings">
@@ -157,11 +157,11 @@ const AdvancedSettingsSection: React.FC = () => {
           />
         )}
         <SettingsCheckboxOption
-          id="show-thinking"
-          label="Show Thinking"
-          checked={showThinking}
+          id="enable-reasoning"
+          label="Enable Reasoning"
+          checked={enableReasoning}
           onCheckedChange={(checked) => {
-            updateShowThinking(!!checked);
+            updateEnableReasoning(!!checked);
           }}
         />
       </div>

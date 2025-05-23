@@ -15,6 +15,14 @@ export const ZodChatRequestType = z.object({
     .array(z.string())
     .optional()
     .describe("Server side tools to use with this request"),
+  reasoning: z
+    .object({
+      enabled: z
+        .boolean()
+        .describe("Whether to enable reasoning/thinking mode"),
+    })
+    .optional()
+    .describe("Reasoning configuration"),
   environment: z
     .object({
       currentTime: z.string().describe("The current time."),

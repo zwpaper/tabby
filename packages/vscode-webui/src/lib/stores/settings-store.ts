@@ -13,13 +13,13 @@ export interface SettingsState {
   autoApproveSettings: AutoApprove;
 
   isDevMode: boolean;
-  showThinking: boolean;
+  enableReasoning: boolean;
 
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
-  updateShowThinking: (value: boolean) => void;
+  updateEnableReasoning: (value: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -35,7 +35,7 @@ export const useSettingsStore = create<SettingsState>()(
         default: true,
       },
       isDevMode: false,
-      showThinking: false,
+      enableReasoning: false,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
@@ -49,8 +49,8 @@ export const useSettingsStore = create<SettingsState>()(
         set(() => ({ autoApproveActive: value })),
 
       updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
-      updateShowThinking: (value: boolean) =>
-        set(() => ({ showThinking: value })),
+      updateEnableReasoning: (value: boolean) =>
+        set(() => ({ enableReasoning: value })),
     }),
     {
       name: "ragdoll-settings-storage",
