@@ -52,7 +52,6 @@ import {
   ApprovalButton,
   getDisplayError,
   pendingApprovalKey,
-  shouldShowLoading,
   usePendingApproval,
 } from "@/components/approval-button";
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
@@ -439,7 +438,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const handleStop = () => {
     if (isUploadingImages) {
       stopUpload();
-    } else if (isChatLoading) {
+    } else if (isLoading) {
       stop();
     } else if (pendingApproval?.name === "retry") {
       pendingApproval.stopCountdown();
@@ -507,7 +506,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     }
   }, [data, queryClient]);
 
-  const isChatLoading = status === "streaming" || status === "submitted";
+  const isLoading = status === "streaming" || status === "submitted";
 
   const editorRef = useRef<Editor | null>(null);
 
@@ -523,10 +522,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     messages: renderMessages,
     status,
   });
-
-  const isLoading =
-    isChatLoading ||
-    shouldShowLoading(pendingApproval, chatHasFinishedOnce.current);
 
   const retryImpl = useRetry({
     messages,
@@ -587,9 +582,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error pending retry approval
   const displayError =
-    imageSelectionError ||
-    uploadImageError ||
-    getDisplayError(pendingApproval, chatHasFinishedOnce.current);
+    imageSelectionError || uploadImageError || getDisplayError(pendingApproval);
   return (
     <div className="flex h-screen flex-col">
       <PreviewTool messages={renderMessages} addToolResult={addToolResult} />
@@ -626,7 +619,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             )}
             <ApprovalButton
               key={pendingApprovalKey(pendingApproval)}
-              isLoading={isChatLoading || isTaskLoading}
+              isLoading={isLoading || isTaskLoading}
               pendingApproval={pendingApproval}
               retry={retry}
               addToolResult={addToolResultWithForceUpdate}

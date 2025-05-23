@@ -4,8 +4,6 @@ import type React from "react";
 import {
   type PendingRetryApproval,
   RetryApprovalButton,
-  shouldShowErrorForRetry,
-  shouldShowLoadingForRetry,
   usePendingRetryApproval,
 } from "./retry-approval-button";
 import {
@@ -69,11 +67,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   return (
     <div className="flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
       {pendingApproval.name === "retry" ? (
-        <RetryApprovalButton
-          pendingApproval={pendingApproval}
-          retry={retry}
-          chatHasFinishedOnce={chatHasFinishedOnce}
-        />
+        <RetryApprovalButton pendingApproval={pendingApproval} retry={retry} />
       ) : (
         <ToolCallApprovalButton
           pendingApproval={pendingApproval}
@@ -102,23 +96,9 @@ export function pendingApprovalKey(
 
 export function getDisplayError(
   pendingApproval: PendingApproval | undefined,
-  chatHasFinishedOnce: boolean,
 ): Error | undefined {
-  if (
-    pendingApproval?.name === "retry" &&
-    shouldShowErrorForRetry(pendingApproval, chatHasFinishedOnce)
-  ) {
+  if (pendingApproval?.name === "retry") {
     return pendingApproval.error;
   }
   return undefined;
-}
-
-export function shouldShowLoading(
-  pendingApproval: PendingApproval | undefined,
-  chatHasFinishedOnce: boolean,
-): boolean {
-  return (
-    pendingApproval?.name === "retry" &&
-    shouldShowLoadingForRetry(pendingApproval, chatHasFinishedOnce)
-  );
 }

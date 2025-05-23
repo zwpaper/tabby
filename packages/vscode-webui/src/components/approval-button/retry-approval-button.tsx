@@ -4,29 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 
-// when auto-retry delay is less than 5s, only a loading indicator is displayed,
-// otherwise error message and approval buttons will be displayed
-const DelayThresholdToShowError = 5;
-
-export function shouldShowLoadingForRetry(
-  pendingApproval: PendingRetryApproval,
-  chatHasFinishedOnce: boolean,
-): boolean {
-  return (
-    chatHasFinishedOnce &&
-    pendingApproval.countdown !== undefined &&
-    pendingApproval.delay !== undefined &&
-    pendingApproval.delay < DelayThresholdToShowError
-  );
-}
-
-export function shouldShowErrorForRetry(
-  pendingApproval: PendingRetryApproval,
-  chatHasFinishedOnce: boolean,
-): boolean {
-  return !shouldShowLoadingForRetry(pendingApproval, chatHasFinishedOnce);
-}
-
 const CountdownInterval = 1000; // ms
 
 // fibonacci sequence starting from 1, 2, 3, 5, 8...
@@ -41,7 +18,7 @@ function getRetryDelay(attempts: number, limit: number) {
   if (attempts > limit) {
     return undefined;
   }
-  return fib(attempts + 1);
+  return fib(attempts + 2);
 }
 
 function isSameError(a: Error, b: Error) {
@@ -195,12 +172,10 @@ export function usePendingRetryApproval({
 interface RetryApprovalButtonProps {
   pendingApproval: PendingRetryApproval;
   retry: () => void;
-  chatHasFinishedOnce: boolean;
 }
 
 export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
   pendingApproval,
-  chatHasFinishedOnce,
   retry,
 }) => {
   useEffect(() => {
@@ -216,20 +191,15 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
 
   return (
     <>
-      {shouldShowErrorForRetry(pendingApproval, chatHasFinishedOnce) && (
-        <>
-          <Button onClick={doRetry}>
-            Retry
-            {pendingApproval.attempts > 1
-              ? ` (Attempts: ${pendingApproval.attempts})`
-              : ""}
-          </Button>
-          {chatHasFinishedOnce && pendingApproval.countdown !== undefined && (
-            <Button onClick={pendingApproval.stopCountdown} variant="secondary">
-              Cancel {` (Auto-retry in ${pendingApproval.countdown}s)`}
-            </Button>
-          )}
-        </>
+      <Button onClick={doRetry}>
+        {pendingApproval.attempts > 1 && pendingApproval.countdown !== undefined
+          ? ` Auto-retry in ${pendingApproval.countdown}s`
+          : "Retry"}
+      </Button>
+      {pendingApproval.countdown !== undefined && (
+        <Button onClick={pendingApproval.stopCountdown} variant="secondary">
+          Cancel
+        </Button>
       )}
     </>
   );
