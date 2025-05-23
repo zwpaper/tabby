@@ -56,7 +56,7 @@ export const StripePlans = [
 export function getModelById(modelId: string): LanguageModelV1 | null {
   switch (modelId) {
     case "anthropic/claude-3.7-sonnet":
-      return anthropic("claude-4-sonnet-20250219");
+      return anthropic("claude-3-7-sonnet-20250219");
     case "anthropic/claude-4-sonnet":
       return anthropic("claude-4-sonnet-20250514");
     case "openai/gpt-4o-mini":
