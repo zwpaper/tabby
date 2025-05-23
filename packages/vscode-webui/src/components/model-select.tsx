@@ -45,7 +45,7 @@ export function ModelSelect({
       }
     >
       {!!models?.length && (
-        <div className="h-6 select-none overflow-x-hidden">
+        <div className="h-6 select-none overflow-hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
