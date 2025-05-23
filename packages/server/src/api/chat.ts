@@ -50,6 +50,7 @@ export type ContextVariables = {
   model?: LanguageModel;
 };
 
+const EnableThinking = false;
 const EnableInterleavedThinking = false;
 
 const chat = new Hono<{ Variables: ContextVariables }>()
@@ -95,6 +96,20 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           stream,
         );
 
+        const providerOptions = EnableThinking
+          ? {
+              google: {
+                thinkingConfig: {
+                  includeThoughts: true,
+                  thinkingBudget: 1024,
+                },
+              } satisfies GoogleGenerativeAIProviderOptions,
+              anthropic: {
+                thinking: { type: "enabled", budgetTokens: 10_000 },
+              } satisfies AnthropicProviderOptions,
+            }
+          : undefined;
+
         const result = Laminar.withSession(`${user.id}-${id}`, () =>
           streamText({
             abortSignal: c.req.raw.signal,
@@ -106,17 +121,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               ...enabledClientTools,
               ...enabledServerTools, // Add the enabled server tools
             },
-            providerOptions: {
-              google: {
-                thinkingConfig: {
-                  includeThoughts: true,
-                  thinkingBudget: 1024,
-                },
-              } satisfies GoogleGenerativeAIProviderOptions,
-              anthropic: {
-                thinking: { type: "enabled", budgetTokens: 10_000 },
-              } satisfies AnthropicProviderOptions,
-            },
+            providerOptions,
             onFinish: async ({ usage, finishReason, response }) => {
               const finalMessages = appendResponseMessages({
                 messages,
