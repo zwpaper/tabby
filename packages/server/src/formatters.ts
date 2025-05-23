@@ -43,9 +43,68 @@ function removeDeprecatedToolInvocations(messages: UIMessage[]): UIMessage[] {
   });
 }
 
+function stripKnownXMLTags(messages: UIMessage[]): UIMessage[] {
+  const knownTags = ["file", "user-reminder"];
+  return messages.map((message) => {
+    const parts = message.parts.map((part) => {
+      if (part.type === "text") {
+        const text = knownTags.reduce((acc, tag) => {
+          return acc.replace(
+            new RegExp(`<${tag}[^>]*>(.*?)<\/${tag}>`, "gs"),
+            "$1",
+          );
+        }, part.text);
+        return {
+          ...part,
+          text,
+        };
+      }
+      return part;
+    });
+    return {
+      ...message,
+      parts,
+    };
+  });
+}
+
+function removeUserReminderMessage(messages: UIMessage[]): UIMessage[] {
+  return messages.filter((message) => {
+    if (message.role !== "user") return true;
+    return !message.parts.some((part) => {
+      if (part.type !== "text") return false;
+      return (
+        part.text.startsWith("<user-reminder>") &&
+        part.text.endsWith("</user-reminder>")
+      );
+    });
+  });
+}
+
+function combineConsecutiveAssistantMessages(
+  messages: UIMessage[],
+): UIMessage[] {
+  for (let i = 0; i < messages.length - 1; i++) {
+    if (
+      messages[i].role === "assistant" &&
+      messages[i + 1].role === "assistant"
+    ) {
+      messages[i].parts.push(...messages[i + 1].parts);
+      messages.splice(i + 1, 1);
+      i--;
+    }
+  }
+
+  return messages;
+}
+
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
-const LLMFormatOps: FormatOp[] = [resolvePendingToolCalls];
-const UIFormatOps = [resolvePendingToolCalls];
+const LLMFormatOps: FormatOp[] = [resolvePendingToolCalls, stripKnownXMLTags];
+const UIFormatOps = [
+  resolvePendingToolCalls,
+  removeUserReminderMessage,
+  combineConsecutiveAssistantMessages,
+];
 const StorageFormatOps = [
   stripReadEnvironment,
   removeDeprecatedToolInvocations,

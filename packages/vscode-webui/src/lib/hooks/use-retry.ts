@@ -44,7 +44,7 @@ export function useRetry({
       return await append({
         role: "user",
         content:
-          "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
+          "<user-reminder>You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.</user-reminder>",
       });
     }
 
