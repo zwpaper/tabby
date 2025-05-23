@@ -1,7 +1,10 @@
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
 import { useMemo } from "react";
-import { isAssistantMessageWithNoToolCalls } from "../utils";
+import {
+  isAssistantMessageWithEmptyParts,
+  isAssistantMessageWithNoToolCalls,
+} from "../utils";
 
 type RetryKind = "retry" | "no-tool-calls";
 
@@ -21,6 +24,10 @@ export function useReadyForRetryError(
     const lastMessage = messages.at(-1);
     if (!lastMessage) return;
     if (lastMessage.role === "user") return new ReadyForRetryError();
+
+    if (isAssistantMessageWithEmptyParts(lastMessage)) {
+      return new ReadyForRetryError();
+    }
 
     if (isAssistantMessageWithCompletedToolCalls(lastMessage)) {
       return new ReadyForRetryError();

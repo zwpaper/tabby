@@ -14,7 +14,11 @@ export function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {
     .slice(lastStepStartIndex + 1)
     .filter((part) => part.type === "tool-invocation");
 
-  return lastStepToolInvocations.length === 0;
+  return message.parts.length > 0 && lastStepToolInvocations.length === 0;
+}
+
+export function isAssistantMessageWithEmptyParts(message: UIMessage): boolean {
+  return message.role === "assistant" && message.parts.length === 0;
 }
 
 export function pendingApprovalKey(
