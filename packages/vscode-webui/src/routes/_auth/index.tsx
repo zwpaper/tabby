@@ -297,7 +297,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const latestHttpCode = useRef<number | undefined>(undefined);
   const {
     data,
-    error,
+    error: chatError,
     messages,
     setMessages,
     reload,
@@ -343,8 +343,10 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
       Authorization: `Bearer ${authData.session.token}`,
     },
   });
-
-  const readyForRetryError = useReadyForRetryError(messages);
+  const error = useErrorAndReadyForRetryError({
+    messages,
+    error: chatError,
+  });
 
   const { todos } = useTodos({
     initialTodos: loaderData?.todos,
@@ -518,13 +520,13 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     executingToolCallId,
     increaseRetryCount,
   } = usePendingApproval({
-    error: error || readyForRetryError,
+    error,
     messages: renderMessages,
     status,
   });
 
   const retryImpl = useRetry({
-    error: error || readyForRetryError,
+    error,
     messages,
     append,
     setMessages,
@@ -939,4 +941,12 @@ const useResourceURI = () => {
     vscodeHost.readResourceURI().then(setResourceURI);
   }, []);
   return resourceURI;
+};
+
+const useErrorAndReadyForRetryError = ({
+  messages,
+  error,
+}: { messages: UIMessage[]; error: Error | undefined }) => {
+  const readyForRetryError = useReadyForRetryError(messages);
+  return error || readyForRetryError;
 };
