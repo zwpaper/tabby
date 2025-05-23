@@ -87,7 +87,7 @@ function prepareLastMessageForRetry(lastMessage: UIMessage): UIMessage | null {
 
 type RetryKind = "retry" | "no-tool-calls";
 
-class ReadyForRetryError extends Error {
+export class ReadyForRetryError extends Error {
   kind: RetryKind;
 
   constructor(kind: RetryKind = "retry") {

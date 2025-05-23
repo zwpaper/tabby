@@ -141,16 +141,19 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   );
   const onRejectByUser = useCallback(() => onReject(), [onReject]);
 
-  const isAutoApproved = useToolAutoApproval(pendingApproval.name);
+  const isAutoApproved = useToolAutoApproval(
+    pendingApproval.name,
+    chatHasFinishedOnce,
+  );
   const isAutoRejected = isAutoInjectTool(pendingApproval.name);
 
   useEffect(() => {
-    if (isAutoApproved && chatHasFinishedOnce) {
+    if (isAutoApproved) {
       onAccept();
     } else if (isAutoRejected) {
       onReject();
     }
-  }, [isAutoApproved, isAutoRejected, onAccept, onReject, chatHasFinishedOnce]);
+  }, [isAutoApproved, isAutoRejected, onAccept, onReject]);
 
   const [showAbort, setShowAbort] = useState(false);
 

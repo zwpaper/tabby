@@ -524,6 +524,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     error,
     messages: renderMessages,
     status,
+    chatHasFinishedOnce: chatHasFinishedOnce.current,
   });
 
   const retryImpl = useRetry({

@@ -2,7 +2,8 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useSettingsStore } from "@/lib/stores/settings-store";
+import { ReadyForRetryError } from "@/lib/hooks/use-retry";
+import { useAutoApprove } from "@/lib/stores/settings-store";
 
 const CountdownInterval = 1000; // ms
 
@@ -50,8 +51,14 @@ interface PendingRetry {
 export function usePendingRetryApproval({
   error,
   status,
-}: { error?: Error; status: "submitted" | "streaming" | "ready" | "error" }) {
-  const { autoApproveActive, autoApproveSettings } = useSettingsStore();
+  chatHasFinishedOnce,
+}: {
+  error?: Error;
+  status: "submitted" | "streaming" | "ready" | "error";
+  chatHasFinishedOnce: boolean;
+}) {
+  const { autoApproveActive, autoApproveSettings } =
+    useAutoApprove(chatHasFinishedOnce);
   const [retryCount, setRetryCount] = useState<RetryCount | undefined>(
     undefined,
   );
@@ -182,13 +189,19 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
     retry();
   }, [retry, pendingApproval]);
 
+  const isNoToolCalls =
+    pendingApproval.error instanceof ReadyForRetryError &&
+    pendingApproval.error.kind === "no-tool-calls";
+  const autoRetryText = isNoToolCalls ? "Continue" : "Auto-retry";
+  const retryText = isNoToolCalls ? "Continue" : "Retry";
+
   return (
     <>
       <Button onClick={doRetry}>
         {pendingApproval.attempts !== undefined &&
         pendingApproval.countdown !== undefined
-          ? ` Auto-retry in ${pendingApproval.countdown}s`
-          : "Retry"}
+          ? `${autoRetryText} in ${pendingApproval.countdown}s`
+          : retryText}
       </Button>
       {pendingApproval.countdown !== undefined && (
         <Button onClick={pendingApproval.stopCountdown} variant="secondary">
