@@ -67,7 +67,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   if (isLoading || !pendingApproval) return null;
 
   return (
-    <div className="mb-2 flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
+    <div className="flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">
       {pendingApproval.name === "retry" ? (
         <RetryApprovalButton
           pendingApproval={pendingApproval}

@@ -194,14 +194,13 @@ code {
 
 .animated-gradient-text {
   @apply text-foreground/70;
-  /* background: linear-gradient(to right, transparent 30%, var(--vscode-foreground) 40%, transparent 50%); */
   background: linear-gradient(
     to right,
     transparent 30%,
     var(--foreground) 40%,
     transparent 50%
   );
-  background-size: 200% 200%;
+  background-size: 300%;
   -webkit-background-clip: text;
   background-clip: text;
   animation: gradient-animation 1.4s linear infinite;

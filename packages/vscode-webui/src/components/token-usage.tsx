@@ -12,11 +12,11 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
   return (
     <div
       className={cn(
-        "flex flex-nowrap items-center gap-1 overflow-x-hidden text-muted-foreground text-xs",
+        "overflow-x-hidden text-muted-foreground text-xs",
         className,
       )}
     >
-      <span className="select-none font-medium">
+      <span className="select-none whitespace-nowrap font-medium">
         {percentage}% of {formatTokens(contextWindow)} tokens
       </span>
     </div>

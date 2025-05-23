@@ -14,7 +14,7 @@ function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
       cancelled: -1,
       completed: 0,
       pending: 1,
-      "in-progress": 2,
+      "in-progress": 1,
     };
     const priorityOrder = { low: 0, medium: 1, high: 2 };
 

@@ -50,7 +50,7 @@ export function AutoApproveMenu() {
   const hasEnabledOptions = Object.values(autoApproveSettings).some(Boolean);
 
   return (
-    <div className="select-none">
+    <div className="mt-2 select-none">
       {isOpen && <div className="-mx-4 h-0 border-t" />}
 
       <div
