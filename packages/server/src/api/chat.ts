@@ -8,7 +8,6 @@ import {
   APICallError,
   type DataStreamWriter,
   type LanguageModel,
-  type Message,
   NoSuchToolError,
   RetryError,
   type UIMessage,
@@ -82,7 +81,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           stream.writeData({ type: "append-id", id });
         }
 
-        const processedMessages = await preprocessMessages(
+        const preparedMessages = await prepareMessages(
           messages,
           environment,
           user,
@@ -110,7 +109,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             toolCallStreaming: true,
             model: c.get("model") || selectedModel,
             system: environment?.info && generateSystemPrompt(environment.info),
-            messages: processedMessages,
+            messages: formatters.llm(preparedMessages),
             tools: {
               ...enabledClientTools,
               ...enabledServerTools, // Add the enabled server tools
@@ -118,7 +117,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             providerOptions,
             onFinish: async ({ usage, finishReason, response }) => {
               const finalMessages = appendResponseMessages({
-                messages: processedMessages,
+                messages: preparedMessages,
                 responseMessages: response.messages,
               }) as UIMessage[];
               const totalTokens = !Number.isNaN(usage.totalTokens)
@@ -261,16 +260,15 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     },
   );
 
-async function preprocessMessages(
+async function prepareMessages(
   inputMessages: UIMessage[],
   environment: Environment | undefined,
   user: User,
   event: DB["task"]["event"],
   stream: DataStreamWriter,
-): Promise<Message[]> {
-  let messages = formatters.llm(inputMessages);
+): Promise<UIMessage[]> {
+  let messages = await resolveServerTools(inputMessages, user, stream);
   messages = injectReadEnvironment(messages, environment, event);
-  messages = await resolveServerTools(messages, user, stream);
   return messages;
 }
 
