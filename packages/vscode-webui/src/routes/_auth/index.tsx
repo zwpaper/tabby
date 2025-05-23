@@ -10,10 +10,11 @@ import { useSelectedModels } from "@/lib/hooks/use-models";
 import { useReadyForRetryError, useRetry } from "@/lib/hooks/use-retry";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import type {
-  Environment,
-  ChatRequest as RagdollChatRequest,
-  Todo,
+import {
+  type Environment,
+  type ChatRequest as RagdollChatRequest,
+  type Todo,
+  formatters,
 } from "@ragdoll/server";
 import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -83,7 +84,7 @@ import {
 } from "@/lib/utils/image";
 import type { DataPart } from "@/lib/utils/message";
 import { vscodeHost } from "@/lib/vscode";
-import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
+import { isAutoInjectTool } from "@ragdoll/tools";
 import type { ResourceURI } from "@ragdoll/vscode-webui-bridge";
 
 const searchSchema = z.object({
@@ -512,7 +513,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   const editorRef = useRef<Editor | null>(null);
 
-  const renderMessages = createRenderMessages(messages);
+  const renderMessages = formatters.ui(messages);
 
   const {
     pendingApproval,
@@ -898,41 +899,6 @@ function prepareRequestBody(
     model: triggerError ? "fake-model" : (model ?? DefaultModelId),
     message: fromUIMessage(message),
   };
-}
-
-function createRenderMessages(messages: UIMessage[]): UIMessage[] {
-  const x = messages.map((message, index) => {
-    if (index < messages.length - 1 && message.role === "assistant") {
-      const parts = message.parts.map((part) => {
-        if (
-          part.type === "tool-invocation" &&
-          part.toolInvocation.state !== "result" &&
-          !isUserInputTool(part.toolInvocation.toolName)
-        ) {
-          // Tools have already been rejected on the server side.
-          // Here, we only need to ensure they are rendered to the user in a consistent manner.
-          return {
-            ...part,
-            toolInvocation: {
-              ...part.toolInvocation,
-              state: "result",
-              result: {
-                error: "User cancelled the tool call.",
-              },
-            },
-          } satisfies UIMessage["parts"][number];
-        }
-        return part;
-      });
-      return {
-        ...message,
-        parts,
-      };
-    }
-    return message;
-  });
-
-  return x;
 }
 
 const useResourceURI = () => {

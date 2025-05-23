@@ -1,5 +1,4 @@
-import type { TextUIPart } from "@ai-sdk/ui-utils";
-import type { Message } from "ai";
+import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { DB } from "../db";
 import type { Environment } from "../types";
 
@@ -72,9 +71,9 @@ function getGitStatus(gitStatus: string | undefined) {
   return `# GIT STATUS\nthis git status will keep latest changes in the repository.\n${gitStatus}`;
 }
 
-export function stripReadEnvironment(messages: Message[]) {
+export function stripReadEnvironment(messages: UIMessage[]) {
   for (const message of messages) {
-    message.parts = message.parts?.filter((part) => {
+    message.parts = message.parts.filter((part) => {
       if (part.type !== "text") return true;
       return !part.text.startsWith("<environment-details>");
     });
@@ -83,7 +82,7 @@ export function stripReadEnvironment(messages: Message[]) {
 }
 
 export function injectReadEnvironment(
-  messages: Message[],
+  messages: UIMessage[],
   environment: Environment | undefined,
   event: DB["task"]["event"],
 ) {

@@ -2,6 +2,7 @@ import { isUserInputTool } from "@ragdoll/tools";
 import {
   type FinishReason,
   type Message,
+  type UIMessage,
   appendClientMessage,
   generateId,
 } from "ai";
@@ -9,12 +10,12 @@ import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import type { z } from "zod";
 import { type DB, type UserEvent, db } from "../db";
+import { formatters } from "../formatters";
 import {
   fromUIMessages,
   toUIMessage,
   toUIMessages,
 } from "../lib/message-utils";
-import { stripReadEnvironment } from "../prompts/environment";
 import type { Environment, Todo, ZodChatRequestType } from "../types";
 import { slackService } from "./slack";
 
@@ -54,9 +55,9 @@ class TaskService {
     const messages = appendClientMessage({
       messages: toUIMessages(conversation?.messages || []),
       message: toUIMessage(request.message),
-    });
+    }) as UIMessage[];
 
-    const messagesToSave = postProcessMessages(messages);
+    const messagesToSave = formatters.storage(messages);
 
     await db
       .updateTable("task")
@@ -86,13 +87,13 @@ class TaskService {
   async finishStreaming(
     taskId: number,
     userId: string,
-    messages: Message[],
+    messages: UIMessage[],
     finishReason: FinishReason,
     totalTokens: number | undefined,
     notify: boolean,
   ) {
     const status = getTaskStatus(messages, finishReason);
-    const messagesToSave = postProcessMessages(messages);
+    const messagesToSave = formatters.storage(messages);
     await db
       .updateTable("task")
       .set({
@@ -391,15 +392,6 @@ class TaskService {
 }
 
 export const taskService = new TaskService();
-
-function postProcessMessages(messages: Message[]) {
-  stripReadEnvironment(messages);
-  for (const x of messages) {
-    x.toolInvocations = undefined;
-  }
-
-  return messages;
-}
 
 export function getTaskStatus(
   messages: Message[],

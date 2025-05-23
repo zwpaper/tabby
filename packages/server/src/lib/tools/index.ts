@@ -1,9 +1,9 @@
 import { ServerToolApproved, ServerTools } from "@ragdoll/tools";
 import {
   type DataStreamWriter,
-  type Message,
   type Tool,
   type ToolInvocation,
+  type UIMessage,
   formatDataStreamPart,
 } from "ai";
 import type { User } from "../../auth";
@@ -34,7 +34,7 @@ const executeServerTools = async (ctx: User, toolCall: ToolInvocation) => {
 };
 
 export async function resolveServerTools(
-  messages: Message[],
+  messages: UIMessage[],
   user: User,
   stream: DataStreamWriter,
 ) {
