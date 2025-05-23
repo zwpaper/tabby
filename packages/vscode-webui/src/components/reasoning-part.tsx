@@ -1,20 +1,21 @@
 import type { ReasoningUIPart } from "@ai-sdk/ui-utils";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Dot } from "lucide-react";
 import { useState } from "react";
 
 import { MessageMarkdown } from "@/components/message/markdown";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 
 interface ReasoningPartUIProps {
+  isLoading: boolean;
   part: ReasoningUIPart;
 }
 
-export function ReasoningPartUI({ part }: ReasoningPartUIProps) {
+export function ReasoningPartUI({ part, isLoading }: ReasoningPartUIProps) {
   const showThinking = useSettingsStore((x) => x.showThinking);
   const [showDetails, setShowDetails] = useState(false);
 
   if (!showThinking) {
-    // return null;
+    return null;
   }
 
   return (
@@ -36,7 +37,10 @@ export function ReasoningPartUI({ part }: ReasoningPartUIProps) {
           className="cursor-pointer font-medium italic"
           onClick={() => setShowDetails(!showDetails)} // Also allow clicking text to toggle
         >
-          Pochi is thinking ...
+          Pochi is thinking
+          {isLoading && (
+            <Dot className="inline-block size-6 animate-ping duration-2000" />
+          )}
         </div>
         {showDetails && (
           <div className="pt-2">

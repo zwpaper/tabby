@@ -779,6 +779,10 @@ export const MessageList: React.FC<{
                 <Part
                   key={index}
                   message={m}
+                  isLastPartInMessages={
+                    index === m.parts.length - 1 &&
+                    messageIndex === renderMessages.length - 1
+                  }
                   part={part}
                   isLoading={isLoading}
                   sendMessage={sendMessage}
@@ -813,6 +817,7 @@ function Part({
   executingToolCallId,
   sendMessage,
   isLoading,
+  isLastPartInMessages,
 }: {
   message: UIMessage;
   part: NonNullable<UIMessage["parts"]>[number];
@@ -822,13 +827,14 @@ function Part({
   ) => Promise<string | null | undefined>;
   executingToolCallId: string | undefined;
   isLoading: boolean;
+  isLastPartInMessages: boolean;
 }) {
   if (part.type === "text") {
     return <TextPartUI message={message} part={part} />;
   }
 
   if (part.type === "reasoning") {
-    return <ReasoningPartUI part={part} />;
+    return <ReasoningPartUI part={part} isLoading={isLastPartInMessages} />;
   }
 
   if (part.type === "step-start") {
