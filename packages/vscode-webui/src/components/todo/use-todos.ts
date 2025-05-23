@@ -1,4 +1,3 @@
-import { useSettingsStore } from "@/lib/stores/settings-store";
 import type { Message, UIMessage } from "@ai-sdk/ui-utils";
 import type { Todo } from "@ragdoll/server";
 import { useCallback, useEffect, useState } from "react";
@@ -69,22 +68,19 @@ export function useTodos({
   messages: Message[];
   todosRef: React.MutableRefObject<Todo[] | undefined>;
 }) {
-  const enableTodos = useSettingsStore((state) => state.enableTodos);
-  const [todos, setTodosImpl] = useState<Todo[] | undefined>(
-    enableTodos ? [] : undefined,
-  );
+  const [todos, setTodosImpl] = useState<Todo[]>([]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef): todosRef is a ref
-  const setTodos = useCallback((newTodos: Todo[] | undefined) => {
+  const setTodos = useCallback((newTodos: Todo[]) => {
     todosRef.current = newTodos;
     setTodosImpl(newTodos);
   }, []);
 
   useEffect(() => {
-    if (enableTodos && initialTodos) {
+    if (initialTodos) {
       setTodos(initialTodos);
     }
-  }, [enableTodos, initialTodos, setTodos]);
+  }, [initialTodos, setTodos]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef.current): todosRef is a ref
   const updateTodos = useCallback(

@@ -13,14 +13,12 @@ export interface SettingsState {
   autoApproveSettings: AutoApprove;
 
   isDevMode: boolean;
-  enableTodos: boolean;
   showThinking: boolean;
 
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
-  updateEnableTodos: (value: boolean) => void;
   updateShowThinking: (value: boolean) => void;
 }
 
@@ -37,7 +35,6 @@ export const useSettingsStore = create<SettingsState>()(
         default: true,
       },
       isDevMode: false,
-      enableTodos: true,
       showThinking: false,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
@@ -52,8 +49,6 @@ export const useSettingsStore = create<SettingsState>()(
         set(() => ({ autoApproveActive: value })),
 
       updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
-      updateEnableTodos: (value: boolean) =>
-        set(() => ({ enableTodos: value })),
       updateShowThinking: (value: boolean) =>
         set(() => ({ showThinking: value })),
     }),

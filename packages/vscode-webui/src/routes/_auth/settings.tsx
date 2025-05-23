@@ -141,7 +141,6 @@ const WorkspaceRulesSection: React.FC = () => {
 
 const AdvancedSettingsSection: React.FC = () => {
   const [isDevMode, setIsDevMode] = useIsDevMode();
-  const { enableTodos, updateEnableTodos } = useSettingsStore();
   const { showThinking, updateShowThinking } = useSettingsStore();
 
   return (
@@ -157,14 +156,6 @@ const AdvancedSettingsSection: React.FC = () => {
             }}
           />
         )}
-        <SettingsCheckboxOption
-          id="enable-todos"
-          label="Enable Todos"
-          checked={enableTodos}
-          onCheckedChange={(checked) => {
-            updateEnableTodos(!!checked);
-          }}
-        />
         <SettingsCheckboxOption
           id="show-thinking"
           label="Show Thinking"
