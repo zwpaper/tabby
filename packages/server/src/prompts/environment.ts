@@ -1,3 +1,4 @@
+import type { TextUIPart } from "@ai-sdk/ui-utils";
 import type { Message } from "ai";
 import type { DB } from "../db";
 import type { Environment } from "../types";
@@ -71,17 +72,6 @@ function getGitStatus(gitStatus: string | undefined) {
   return `# GIT STATUS\nthis git status will keep latest changes in the repository.\n${gitStatus}`;
 }
 
-function getMessageToInject(messages: Message[]): Message | undefined {
-  if (messages[messages.length - 1].role === "user") {
-    // Last message is a function call result, inject it directly.
-    return messages[messages.length - 1];
-  }
-  if (messages[messages.length - 2].role === "user") {
-    // Last message is a user message, inject to the assistant message.
-    return messages[messages.length - 2];
-  }
-}
-
 export function stripReadEnvironment(messages: Message[]) {
   for (const message of messages) {
     message.parts = message.parts?.filter((part) => {
@@ -98,17 +88,33 @@ export function injectReadEnvironment(
   event: DB["task"]["event"],
 ) {
   if (environment === undefined) return messages;
-  const messageToInject = getMessageToInject(messages);
-  if (!messageToInject) return messages;
+  const lastMessage = messages.at(-1);
+  if (!lastMessage) return messages;
 
-  const parts = [...(messageToInject.parts || [])];
-
-  parts.unshift({
+  const textPart = {
     type: "text",
     text: `<environment-details>\n${getReadEnvironmentResult(environment, event)}\n</environment-details>`,
-  });
+  } satisfies TextUIPart;
 
-  messageToInject.parts = parts;
+  const parts = lastMessage.parts || [];
+
+  if (lastMessage.role === "user") {
+    lastMessage.parts = [textPart, ...parts];
+  }
+
+  if (lastMessage.role === "assistant") {
+    const lastStepStartIndex = parts.reduce((lastIndex, part, index) => {
+      return part.type === "step-start" ? index : lastIndex;
+    }, -1);
+
+    // insert textPart after stepStart
+    if (lastStepStartIndex !== -1) {
+      parts.splice(lastStepStartIndex + 1, 0, textPart);
+    } else {
+      parts.unshift(textPart);
+    }
+  }
+
   return messages;
 }
 
