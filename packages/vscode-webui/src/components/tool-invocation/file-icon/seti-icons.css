@@ -9,6 +9,7 @@
   font-style: normal;
   font-weight: normal !important;
   vertical-align: middle;
+  line-height: calc(var(--spacing) * 6);
 }
 .icon_R_light:before {
   content: "\E001";

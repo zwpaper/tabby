@@ -26,7 +26,7 @@ export const FileList: React.FC<{
       {matches.map((match, index) => (
         <div
           key={match.file + (match.line ?? "") + index}
-          className={`cursor-pointer truncate rounded p-1 ${activeIndex === index ? "bg-secondary" : "hover:bg-secondary/50"}`}
+          className={`cursor-pointer truncate rounded py-0.5 ${activeIndex === index ? "bg-secondary" : "hover:bg-secondary/50"}`}
           title={match.context}
           onClick={() => {
             setActiveIndex(index);
@@ -41,10 +41,7 @@ export const FileList: React.FC<{
           <span
             className={`truncate px-1 font-semibold ${activeIndex === index ? "text-secondary-foreground" : "text-foreground"}`}
           >
-            <FileIcon
-              path={match.file}
-              className="mr-1.5 inline w-5 text-xl/4"
-            />
+            <FileIcon path={match.file} className="mr-1 ml-0.5 w-5 text-xl/4" />
             {getFileName(match.file)}
             {match.line && (
               <span

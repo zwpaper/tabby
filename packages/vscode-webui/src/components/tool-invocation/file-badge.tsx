@@ -36,12 +36,12 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
         onClick ? onClick() : defaultOnClick();
       }}
       className={cn(
-        "cursor-pointer rounded-sm border border-border box-decoration-clone px-1 py-0.5 text-sm hover:bg-zinc-200 active:bg-zinc-200 dark:active:bg-zinc-700 dark:hover:bg-zinc-700",
+        "cursor-pointer rounded-sm border border-border box-decoration-clone p-0.5 text-sm/6 hover:bg-zinc-200 active:bg-zinc-200 dark:active:bg-zinc-700 dark:hover:bg-zinc-700",
         className,
       )}
     >
       <FileIcon path={path} />
-      <span className="ml-1 break-words">
+      <span className="ml-0.5 break-words">
         {addLineBreak(path)}
         <span className="text-zinc-500 dark:text-zinc-400">{lineRange}</span>
       </span>

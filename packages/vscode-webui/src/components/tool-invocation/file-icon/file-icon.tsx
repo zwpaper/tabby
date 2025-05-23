@@ -149,12 +149,12 @@ export const FileIcon: React.FC<{ path: string; className?: string }> = ({
   return isFolder(path) ? (
     <Folder
       className={cn(
-        "inline size-3 text-blue-600 dark:text-blue-400",
+        "mx-0.5 inline size-3 text-blue-600 dark:text-blue-400",
         className,
       )}
     />
   ) : (
-    <File className={cn("size-3", className)} path={path} theme={theme} />
+    <File className={className} path={path} theme={theme} />
   );
 };
 
