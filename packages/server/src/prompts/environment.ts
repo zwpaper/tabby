@@ -64,7 +64,7 @@ export function stripReadEnvironment(messages: Message[]) {
   for (const message of messages) {
     message.parts = message.parts?.filter((part) => {
       if (part.type !== "text") return true;
-      return !part.text.startsWith("<environment>");
+      return !part.text.startsWith("<environment-details>");
     });
   }
   return messages;
@@ -83,7 +83,7 @@ export function injectReadEnvironment(
 
   parts.unshift({
     type: "text",
-    text: `<environment>\n${getReadEnvironmentResult(environment, event)}\n</environment>`,
+    text: `<environment-details>\n${getReadEnvironmentResult(environment, event)}\n</environment-details>`,
   });
 
   messageToInject.parts = parts;
