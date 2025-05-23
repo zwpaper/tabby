@@ -684,6 +684,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
                   <DevModeButton
                     messages={messages}
                     buildEnvironment={buildEnvironment}
+                    todos={todos}
                   />
                 )}
                 <Button

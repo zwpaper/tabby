@@ -9,7 +9,7 @@ import {
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { createCoreMessagesForCopy } from "@/lib/utils/message";
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import type { Environment } from "@ragdoll/server";
+import type { Environment, Todo } from "@ragdoll/server";
 import { CheckIcon, CopyIcon, SettingsIcon } from "lucide-react"; // Removed FilesIcon
 import type React from "react";
 
@@ -42,12 +42,14 @@ function CopyMenuItem({ fetchContent, text }: UpdatedCopyMenuItemProps) {
 
 interface DevModeButtonProps {
   messages: UIMessage[];
+  todos: Todo[] | undefined;
   buildEnvironment: () => Promise<Environment>;
 }
 
 export function DevModeButton({
   messages,
   buildEnvironment,
+  todos,
 }: DevModeButtonProps) {
   const getMessagesContent = () => {
     const x = messages.map((x) => {
@@ -66,6 +68,10 @@ export function DevModeButton({
   const getEnvironmentContent = async () => {
     const environment = await buildEnvironment();
     return JSON.stringify(environment, null, 2);
+  };
+
+  const getTodosContent = () => {
+    return JSON.stringify(todos, null, 2);
   };
 
   return (
@@ -98,6 +104,7 @@ export function DevModeButton({
             fetchContent={getEnvironmentContent}
             text="Copy Environment"
           />
+          <CopyMenuItem fetchContent={getTodosContent} text="Copy TODOs" />
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
