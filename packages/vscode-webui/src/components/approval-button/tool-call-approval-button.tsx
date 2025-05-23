@@ -93,6 +93,11 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const ToolAcceptText: Record<string, string> = {
     writeToFile: "Save",
     executeCommand: "Run",
+    todoWrite: "Continue",
+  };
+
+  const ToolRejectText: Record<string, string> = {
+    todoWrite: "<disabled>",
   };
 
   const ToolAbortText: Record<string, string> = {
@@ -100,7 +105,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   };
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
-  const rejectText = "Reject";
+  const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
   const abortText = ToolAbortText[pendingApproval.name] || null;
 
   const executed = useRef(false);
@@ -165,9 +170,11 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     return (
       <>
         <Button onClick={onAccept}>{acceptText}</Button>
-        <Button onClick={onRejectByUser} variant="secondary">
-          {rejectText}
-        </Button>
+        {rejectText !== "<disabled>" && (
+          <Button onClick={onRejectByUser} variant="secondary">
+            {rejectText}
+          </Button>
+        )}
       </>
     );
   }
