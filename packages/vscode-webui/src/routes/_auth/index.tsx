@@ -58,8 +58,6 @@ import { useUploadImage } from "@/components/image-preview-list/use-upload-image
 import { MessageAttachments, MessageMarkdown } from "@/components/message";
 import { PreviewTool } from "@/components/preview-tool";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
-import { TodoList } from "@/components/todo/todo-list";
-import { useTodos } from "@/components/todo/use-todos";
 import { TokenUsage } from "@/components/token-usage";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -70,6 +68,7 @@ import {
   pendingApprovalKey,
 } from "@/features/approval";
 import { usePendingApproval } from "@/features/approval/hooks/use-pending-approval";
+import { TodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";

@@ -1,4 +1,4 @@
-import { TodoList } from "@/components/todo/todo-list";
+import { TodoList } from "@/features/todo";
 import type { Todo } from "@ragdoll/server";
 import type { Meta, StoryObj } from "@storybook/react";
 
