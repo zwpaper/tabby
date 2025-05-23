@@ -1,11 +1,5 @@
-import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { ReadyForRetryError } from "@/lib/hooks/use-retry";
 import { useAutoApprove } from "@/lib/stores/settings-store";
-
-const CountdownInterval = 1000; // ms
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // fibonacci sequence starting from 1, 2, 3, 5, 8...
 function fib(n: number): number {
@@ -129,13 +123,13 @@ export function usePendingRetryApproval({
       pendingRetryInCountDown.current = pendingRetry;
       if (delay !== undefined) {
         timer.current = setInterval(() => {
-          setCountdown((countdown) => {
-            if (countdown !== undefined && countdown > 0) {
-              return countdown - 1;
+          setCountdown((countdownValue) => {
+            if (countdownValue !== undefined && countdownValue > 0) {
+              return countdownValue - 1;
             }
-            return countdown;
+            return countdownValue;
           });
-        }, CountdownInterval);
+        }, 1000); // Assuming CountdownInterval was 1000ms
       }
     }
     if (!pendingRetry) {
@@ -168,46 +162,3 @@ export function usePendingRetryApproval({
 
   return { pendingApproval, increaseRetryCount };
 }
-
-interface RetryApprovalButtonProps {
-  pendingApproval: PendingRetryApproval;
-  retry: () => void;
-}
-
-export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
-  pendingApproval,
-  retry,
-}) => {
-  useEffect(() => {
-    if (pendingApproval.countdown === 0) {
-      doRetry();
-    }
-  }, [pendingApproval]);
-
-  const doRetry = useCallback(() => {
-    pendingApproval.stopCountdown();
-    retry();
-  }, [retry, pendingApproval]);
-
-  const isNoToolCalls =
-    pendingApproval.error instanceof ReadyForRetryError &&
-    pendingApproval.error.kind === "no-tool-calls";
-  const autoRetryText = isNoToolCalls ? "Continue" : "Auto-retry";
-  const retryText = isNoToolCalls ? "Continue" : "Retry";
-
-  return (
-    <>
-      <Button onClick={doRetry}>
-        {pendingApproval.attempts !== undefined &&
-        pendingApproval.countdown !== undefined
-          ? `${autoRetryText} in ${pendingApproval.countdown}s`
-          : retryText}
-      </Button>
-      {pendingApproval.countdown !== undefined && (
-        <Button onClick={pendingApproval.stopCountdown} variant="secondary">
-          Cancel
-        </Button>
-      )}
-    </>
-  );
-};

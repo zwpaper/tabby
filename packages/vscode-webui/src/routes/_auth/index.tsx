@@ -4,10 +4,11 @@ import { ReasoningPartUI } from "@/components/reasoning-part.tsx"; // Updated im
 import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useReadyForRetryError } from "@/features/approval/hooks/use-ready-for-retry-error";
+import { useRetry } from "@/features/approval/hooks/use-retry";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
-import { useReadyForRetryError, useRetry } from "@/lib/hooks/use-retry";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import {
@@ -49,12 +50,6 @@ import {
 import { z } from "zod";
 
 import "@/components/prompt-form/prompt-form.css";
-import {
-  ApprovalButton,
-  getDisplayError,
-  pendingApprovalKey,
-  usePendingApproval,
-} from "@/components/approval-button";
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ErrorMessage } from "@/components/error-message";
@@ -69,6 +64,12 @@ import { TokenUsage } from "@/components/token-usage";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
+import {
+  ApprovalButton,
+  getDisplayError,
+  pendingApprovalKey,
+} from "@/features/approval";
+import { usePendingApproval } from "@/features/approval/hooks/use-pending-approval";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";

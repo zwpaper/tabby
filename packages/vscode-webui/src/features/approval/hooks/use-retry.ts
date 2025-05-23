@@ -1,7 +1,9 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
+import { isAssistantMessageWithNoToolCalls } from "../utils";
+import { ReadyForRetryError } from "./use-ready-for-retry-error";
 
 export function useRetry({
   error,
@@ -83,49 +85,4 @@ function prepareLastMessageForRetry(lastMessage: UIMessage): UIMessage | null {
   } while (message.parts.length > 0);
 
   return null;
-}
-
-type RetryKind = "retry" | "no-tool-calls";
-
-export class ReadyForRetryError extends Error {
-  kind: RetryKind;
-
-  constructor(kind: RetryKind = "retry") {
-    super();
-    this.kind = kind;
-  }
-}
-
-export function useReadyForRetryError(
-  messages: UIMessage[],
-): ReadyForRetryError | undefined {
-  return useMemo(() => {
-    const lastMessage = messages.at(-1);
-    if (!lastMessage) return;
-    if (lastMessage.role === "user") return new ReadyForRetryError();
-
-    if (isAssistantMessageWithCompletedToolCalls(lastMessage)) {
-      return new ReadyForRetryError();
-    }
-
-    if (isAssistantMessageWithNoToolCalls(lastMessage)) {
-      return new ReadyForRetryError("no-tool-calls");
-    }
-  }, [messages]);
-}
-
-function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  const lastStepStartIndex = message.parts.reduce((lastIndex, part, index) => {
-    return part.type === "step-start" ? index : lastIndex;
-  }, -1);
-
-  const lastStepToolInvocations = message.parts
-    .slice(lastStepStartIndex + 1)
-    .filter((part) => part.type === "tool-invocation");
-
-  return lastStepToolInvocations.length === 0;
 }

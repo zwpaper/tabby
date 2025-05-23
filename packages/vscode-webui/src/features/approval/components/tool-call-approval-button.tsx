@@ -1,12 +1,12 @@
-import type { ClientToolsType } from "@ragdoll/tools";
-import { isAutoInjectTool, isUserInputTool } from "@ragdoll/tools";
-import type { ToolInvocation, UIMessage } from "ai";
+import { isAutoInjectTool } from "@ragdoll/tools"; // isUserInputTool is now in the hook
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react"; // useMemo is now in the hook
 
 import { Button } from "@/components/ui/button";
+import type { PendingToolCallApproval } from "@/features/approval/hooks/use-pending-tool-call-approval";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import { useToolAutoApproval } from "@/lib/stores/settings-store";
+// usePendingToolCallApproval is not directly used here anymore, it's used by usePendingApproval
 
 // Type definitions
 export type AddToolResultFunctionType = ({
@@ -16,59 +16,6 @@ export type AddToolResultFunctionType = ({
   toolCallId: string;
   result: unknown;
 }) => void;
-
-export interface PendingToolCallApproval {
-  name: keyof ClientToolsType;
-  tool: ToolInvocation;
-}
-
-export function usePendingToolCallApproval({
-  error,
-  messages,
-}: { error?: Error; messages: UIMessage[] }) {
-  const [isExecuting, setIsExecuting] = useState(false);
-
-  const pendingApproval = useMemo((): PendingToolCallApproval | undefined => {
-    if (error) {
-      return undefined;
-    }
-
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role !== "assistant") {
-      return undefined;
-    }
-
-    for (const part of lastMessage.parts) {
-      if (
-        part.type === "tool-invocation" &&
-        part.toolInvocation.state === "call" &&
-        !isUserInputTool(part.toolInvocation.toolName)
-      ) {
-        return {
-          name: part.toolInvocation.toolName as keyof ClientToolsType,
-          tool: part.toolInvocation,
-        };
-      }
-    }
-    return undefined;
-  }, [error, messages]);
-
-  const executingToolCallId = useMemo(() => {
-    if (pendingApproval && isExecuting) {
-      return pendingApproval.tool.toolCallId;
-    }
-    return undefined;
-  }, [pendingApproval, isExecuting]);
-
-  // Reset isExecuting when pendingApproval changes or disappears
-  useEffect(() => {
-    if (!pendingApproval) {
-      setIsExecuting(false);
-    }
-  }, [pendingApproval]);
-
-  return { pendingApproval, setIsExecuting, executingToolCallId };
-}
 
 interface ToolCallApprovalButtonProps {
   pendingApproval: PendingToolCallApproval;
@@ -131,11 +78,12 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   }, [shouldSkipExecute, pendingApproval, executeTool, setIsExecuting]);
 
   const onReject = useCallback(
-    (error = "User rejected tool call") => {
+    (errorText = "User rejected tool call") => {
+      // Renamed 'error' to 'errorText' to avoid conflict
       if (shouldSkipExecute()) {
         return;
       }
-      rejectTool(pendingApproval.tool, error);
+      rejectTool(pendingApproval.tool, errorText);
     },
     [shouldSkipExecute, pendingApproval, rejectTool],
   );
