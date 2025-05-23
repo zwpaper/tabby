@@ -21,10 +21,6 @@ function getRetryDelay(attempts: number, limit: number) {
   return fib(attempts + 2);
 }
 
-function isSameError(a: Error, b: Error) {
-  return a.name === b.name && a.message === b.message;
-}
-
 interface RetryCount {
   error: Error;
   count: number;
@@ -71,7 +67,7 @@ export function usePendingRetryApproval({
     }
 
     setRetryCount((current) => {
-      if (current && isSameError(current.error, error)) {
+      if (current) {
         return {
           error: current.error,
           count: current.count + 1,
@@ -79,7 +75,7 @@ export function usePendingRetryApproval({
       }
       return {
         error: error,
-        count: 2,
+        count: 1,
       };
     });
   }, [error]);
@@ -103,10 +99,7 @@ export function usePendingRetryApproval({
       return undefined;
     }
     if (error) {
-      const attempts =
-        retryCount && isSameError(retryCount.error, error)
-          ? retryCount.count
-          : 1;
+      const attempts = retryCount ? retryCount.count : 1;
       const delay = getRetryDelay(attempts, limit);
       return {
         error,
@@ -192,7 +185,8 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
   return (
     <>
       <Button onClick={doRetry}>
-        {pendingApproval.attempts > 1 && pendingApproval.countdown !== undefined
+        {pendingApproval.attempts !== undefined &&
+        pendingApproval.countdown !== undefined
           ? ` Auto-retry in ${pendingApproval.countdown}s`
           : "Retry"}
       </Button>

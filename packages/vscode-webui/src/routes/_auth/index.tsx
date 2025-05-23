@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
-import { isReadyForRetry, useRetry } from "@/lib/hooks/use-retry";
+import { useReadyForRetryError, useRetry } from "@/lib/hooks/use-retry";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type {
@@ -344,7 +344,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     },
   });
 
-  const initialError = isReadyForRetry(messages) ? new Error() : undefined;
+  const readyForRetryError = useReadyForRetryError(messages);
 
   const { todos } = useTodos({
     initialTodos: loaderData?.todos,
@@ -518,12 +518,13 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     executingToolCallId,
     increaseRetryCount,
   } = usePendingApproval({
-    error: error || initialError,
+    error: error || readyForRetryError,
     messages: renderMessages,
     status,
   });
 
   const retryImpl = useRetry({
+    error: error || readyForRetryError,
     messages,
     append,
     setMessages,
@@ -646,8 +647,17 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
             >
               {isDevMode && (
                 <span className="absolute top-1 right-2 text-foreground/80 text-xs">
-                  <Bug className="mr-1 inline size-3" />
-                  {status}
+                  <span className="flex items-center gap-1">
+                    <Bug className="inline size-3" />
+                    <span>{status}</span>
+                    {pendingApproval?.name === "retry" ? (
+                      <div>
+                        <span>Attempts: {pendingApproval.attempts}</span> /{" "}
+                        <span>Countdown: {pendingApproval.countdown}</span> /{" "}
+                        <span>Delay: {pendingApproval.delay}</span>
+                      </div>
+                    ) : undefined}
+                  </span>
                 </span>
               )}
             </FormEditor>

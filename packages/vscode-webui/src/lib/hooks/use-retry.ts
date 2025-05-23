@@ -1,9 +1,10 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 export function useRetry({
+  error,
   messages,
   setMessages,
   append,
@@ -11,6 +12,7 @@ export function useRetry({
   experimental_resume,
   latestHttpCode,
 }: {
+  error: Error | undefined;
   messages: UIMessage[];
   append: UseChatHelpers["append"];
   setMessages: UseChatHelpers["setMessages"];
@@ -20,6 +22,10 @@ export function useRetry({
 }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies(latestHttpCode.current): is ref.
   const retryRequest = useCallback(async () => {
+    if (error === undefined) {
+      return;
+    }
+
     if (messages.length === 0) {
       return;
     }
@@ -34,6 +40,14 @@ export function useRetry({
       return await reload();
     }
 
+    if (error instanceof ReadyForRetryError && error.kind === "no-tool-calls") {
+      return await append({
+        role: "user",
+        content:
+          "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
+      });
+    }
+
     setMessages(messages.slice(0, -1));
     const lastMessageForRetry = prepareLastMessageForRetry(lastMessage);
     if (lastMessageForRetry != null) {
@@ -41,7 +55,7 @@ export function useRetry({
     }
 
     return await reload();
-  }, [messages, setMessages, append, reload, experimental_resume]);
+  }, [error, messages, setMessages, append, reload, experimental_resume]);
 
   return retryRequest;
 }
@@ -57,6 +71,10 @@ function prepareLastMessageForRetry(lastMessage: UIMessage): UIMessage | null {
       return message;
     }
 
+    if (isAssistantMessageWithNoToolCalls(message)) {
+      return message;
+    }
+
     const lastStepStartIndex = message.parts.findLastIndex(
       (part) => part.type === "step-start",
     );
@@ -67,16 +85,47 @@ function prepareLastMessageForRetry(lastMessage: UIMessage): UIMessage | null {
   return null;
 }
 
-export function isReadyForRetry(messages: UIMessage[]): boolean {
-  const lastMessage = messages.at(-1);
-  if (!lastMessage) return false;
-  if (lastMessage.role === "user") return true;
-  if (
-    lastMessage.role === "assistant" &&
-    isAssistantMessageWithCompletedToolCalls(lastMessage)
-  ) {
-    return true;
+type RetryKind = "retry" | "no-tool-calls";
+
+class ReadyForRetryError extends Error {
+  kind: RetryKind;
+
+  constructor(kind: RetryKind = "retry") {
+    super();
+    this.kind = kind;
+  }
+}
+
+export function useReadyForRetryError(
+  messages: UIMessage[],
+): ReadyForRetryError | undefined {
+  return useMemo(() => {
+    const lastMessage = messages.at(-1);
+    if (!lastMessage) return;
+    if (lastMessage.role === "user") return new ReadyForRetryError();
+
+    if (isAssistantMessageWithCompletedToolCalls(lastMessage)) {
+      return new ReadyForRetryError();
+    }
+
+    if (isAssistantMessageWithNoToolCalls(lastMessage)) {
+      return new ReadyForRetryError("no-tool-calls");
+    }
+  }, [messages]);
+}
+
+function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {
+  if (message.role !== "assistant") {
+    return false;
   }
 
-  return false;
+  const lastStepStartIndex = message.parts.reduce((lastIndex, part, index) => {
+    return part.type === "step-start" ? index : lastIndex;
+  }, -1);
+
+  const lastStepToolInvocations = message.parts
+    .slice(lastStepStartIndex + 1)
+    .filter((part) => part.type === "tool-invocation");
+
+  return lastStepToolInvocations.length === 0;
 }
