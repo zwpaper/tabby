@@ -20,15 +20,33 @@ test("environment", () => {
       {
         currentTime: "2021-01-01T00:00:00.000Z",
         workspace: {
-          files: ["index.ts", "package.json"],
+          files: ["index.ts", "package.json", "tsconfig.json", "README.md"],
           isTruncated: false,
+          activeTabs: ["README.md", "tsconfig.json", "package.json"],
+          activeSelection: {
+            filepath: "README.md",
+            range: {
+              start: {
+                line: 2,
+                character: 0,
+              },
+              end: {
+                line: 4,
+                character: 46,
+              },
+            },
+            content:
+              "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.\n\nCurrently, two official plugins are available:",
+          },
         },
-        todos: [{
-          content: "fix this",
-          id: "1",
-          status: "pending",
-          priority: "high",
-        }],
+        todos: [
+          {
+            content: "fix this",
+            id: "1",
+            status: "pending",
+            priority: "high",
+          },
+        ],
         info: {
           cwd: "/home/user/project",
           os: "linux",
@@ -47,7 +65,7 @@ M packages/vscode-webui/src/routes/chat.tsx
 
 Recent commits:
 02b50f727 feat(chat): add environment property to prepareRequestBody
-962185adb feat(webui): add new task link and pending component`
+962185adb feat(webui): add new task link and pending component`,
         },
       },
       {

@@ -2,11 +2,23 @@ import { signal } from "@preact/signals-core";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
+export type FileSelection = {
+  filepath: string;
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  content: string;
+};
+
 @injectable()
 @singleton()
 export class TabState implements vscode.Disposable {
   // Signal containing the current active tabs
   activeTabs = signal(listOpenTabs());
+
+  activeSelection = signal(getActiveSelection());
+
   private disposables: vscode.Disposable[] = [];
 
   constructor() {
@@ -26,6 +38,10 @@ export class TabState implements vscode.Disposable {
     this.disposables.push(
       vscode.window.onDidChangeActiveTextEditor(this.onTabChanged),
     );
+
+    this.disposables.push(
+      vscode.window.onDidChangeTextEditorSelection(this.onSelectionChanged),
+    );
   }
 
   /**
@@ -34,6 +50,11 @@ export class TabState implements vscode.Disposable {
   private onTabChanged = () => {
     // Update the existing signal value instead of creating a new signal
     this.activeTabs.value = listOpenTabs();
+    this.activeSelection.value = getActiveSelection();
+  };
+
+  private onSelectionChanged = () => {
+    this.activeSelection.value = getActiveSelection();
   };
 
   /**
@@ -45,6 +66,31 @@ export class TabState implements vscode.Disposable {
     }
     this.disposables = [];
   }
+}
+
+function getActiveSelection(): FileSelection | undefined {
+  const activeEditor = vscode.window.activeTextEditor;
+  if (activeEditor?.document) {
+    const selection = activeEditor.selection;
+    const relativePath = vscode.workspace.asRelativePath(
+      activeEditor.document.uri,
+    );
+    return {
+      filepath: relativePath,
+      range: {
+        start: {
+          line: selection.start.line,
+          character: selection.start.character,
+        },
+        end: {
+          line: selection.end.line,
+          character: selection.end.character,
+        },
+      },
+      content: activeEditor.document.getText(selection),
+    };
+  }
+  return undefined;
 }
 
 function listOpenTabs(): { filepath: string; isDir: boolean }[] {

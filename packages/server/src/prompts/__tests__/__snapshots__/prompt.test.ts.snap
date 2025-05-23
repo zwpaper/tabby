@@ -7,6 +7,22 @@ exports[`environment 1`] = `
 # Current Working Directory (/home/user/project) Files
 index.ts
 package.json
+tsconfig.json
+README.md
+
+# Active File Tabs in Editor
+README.md
+tsconfig.json
+package.json
+
+# Active Selection (README.md:3-5)
+
+\`\`\`
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+\`\`\`
+
 
 # GIT STATUS
 this git status will keep latest changes in the repository.

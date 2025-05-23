@@ -106,11 +106,13 @@ export class VSCodeHostImpl implements VSCodeHostApi {
 
     const gitStatus = await this.gitStatus.readGitStatus();
 
-    const environment = {
+    const environment: Environment = {
       currentTime: new Date().toString(),
       workspace: {
         files,
         isTruncated,
+        activeTabs: this.tabState.activeTabs.value.map((tab) => tab.filepath),
+        activeSelection: this.tabState.activeSelection.value,
       },
       info: {
         ...systemInfo,

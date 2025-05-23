@@ -29,6 +29,27 @@ export const ZodChatRequestType = z.object({
       workspace: z.object({
         files: z.array(z.string()),
         isTruncated: z.boolean(),
+        activeTabs: z
+          .array(z.string())
+          .optional()
+          .describe("Active editor tabs opened in the current workspace."),
+        activeSelection: z
+          .object({
+            filepath: z.string(),
+            range: z.object({
+              start: z.object({
+                line: z.number(),
+                character: z.number(),
+              }),
+              end: z.object({
+                line: z.number(),
+                character: z.number(),
+              }),
+            }),
+            content: z.string(),
+          })
+          .optional()
+          .describe("Active editor selection in the current workspace."),
       }),
       info: z.object({
         cwd: z.string().describe("The current working directory."),

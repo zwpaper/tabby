@@ -9,6 +9,8 @@ export function getReadEnvironmentResult(
   const sections = [
     getCurrentTime(environment.currentTime),
     getWorkspaceFiles(environment.workspace, environment.info),
+    getCurrentOpenedFiles(environment.workspace),
+    getCurrentWorkingFile(environment.workspace),
     getGitStatus(environment.info.gitStatus),
     getEvent(event),
     getTodos(environment.todos),
@@ -35,6 +37,26 @@ function getWorkspaceFiles(
     ? "\n(Note: The list of files is truncated. Use listFiles tool to explore if needed)"
     : "";
   return `# Current Working Directory (${info.cwd}) Files\n${filesList}${truncatedMessage}`;
+}
+
+function getCurrentOpenedFiles(workspace: Environment["workspace"]) {
+  const openFiles = workspace.activeTabs ?? [];
+  if (openFiles.length === 0) {
+    return "";
+  }
+  return `# Active File Tabs in Editor\n${openFiles.join("\n")}`;
+}
+
+function getCurrentWorkingFile(workspace: Environment["workspace"]) {
+  const selection = workspace.activeSelection;
+  if (!selection) {
+    return "";
+  }
+  const { filepath, range, content } = selection;
+  if (!content || content.trim() === "") {
+    return "";
+  }
+  return `# Active Selection (${filepath}:${range.start.line + 1}-${range.end.line + 1})\n\n\`\`\`\n${content}\n\`\`\`\n`;
 }
 
 function getEvent(event: DB["task"]["event"]) {
