@@ -2,7 +2,7 @@ import { FileIcon } from "@/components/tool-invocation/file-icon/file-icon";
 import type { Meta, StoryObj } from "@storybook/react";
 
 const meta = {
-  title: "Example/FileIcon",
+  title: "Pochi/FileIcon",
   component: FileIcon,
   parameters: {
     layout: "centered",
