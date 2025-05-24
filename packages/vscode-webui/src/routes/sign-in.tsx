@@ -3,6 +3,7 @@ import { authHooks } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { LogInIcon, TerminalIcon } from "lucide-react";
+import posthog from "posthog-js";
 import { useEffect } from "react";
 import { z } from "zod";
 
@@ -18,7 +19,16 @@ export const Route = createFileRoute("/sign-in")({
 function SignInPage() {
   const { navigate } = useRouter();
   const { redirect } = Route.useSearch();
-  const { session } = authHooks.useSession();
+  const { user, session } = authHooks.useSession();
+
+  useEffect(() => {
+    if (user) {
+      posthog.identify(user.id, {
+        name: user.name,
+        email: user.email,
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (session) {

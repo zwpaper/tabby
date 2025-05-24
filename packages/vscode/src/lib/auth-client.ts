@@ -22,12 +22,13 @@ export function createAuthClient(container: DependencyContainer) {
         const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
         if (authToken) {
           tokenStorage.token.value = authToken;
+          identifyUser();
         }
       },
     },
   });
 
-  if (tokenStorage.token !== undefined) {
+  const identifyUser = () => {
     authClient.getSession().then(({ data }) => {
       if (data?.user) {
         posthog.identify(data.user.id, {
@@ -36,7 +37,8 @@ export function createAuthClient(container: DependencyContainer) {
         });
       }
     });
-  }
+  };
+
   return authClient;
 }
 
