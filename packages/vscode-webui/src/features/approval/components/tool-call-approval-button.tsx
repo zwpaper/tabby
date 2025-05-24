@@ -22,7 +22,7 @@ interface ToolCallApprovalButtonProps {
   addToolResult: AddToolResultFunctionType;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
-  chatHasFinishedOnce: boolean;
+  autoApproveGuard: boolean;
 }
 
 // Component
@@ -31,7 +31,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   addToolResult,
   setIsExecuting,
   executingToolCallId,
-  chatHasFinishedOnce,
+  autoApproveGuard,
 }) => {
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
@@ -91,7 +91,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
 
   const isAutoApproved = useToolAutoApproval(
     pendingApproval.name,
-    chatHasFinishedOnce,
+    autoApproveGuard,
   );
   const isAutoRejected = isAutoInjectTool(pendingApproval.name);
 

@@ -16,7 +16,7 @@ interface ApprovalButtonProps {
   addToolResult: AddToolResultFunctionType;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
-  chatHasFinishedOnce: boolean;
+  autoApproveGuard: boolean;
 }
 
 export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
@@ -26,7 +26,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   addToolResult,
   setIsExecuting,
   executingToolCallId,
-  chatHasFinishedOnce,
+  autoApproveGuard,
 }) => {
   if (isLoading || !pendingApproval) return null;
 
@@ -40,7 +40,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
           addToolResult={addToolResult}
           setIsExecuting={setIsExecuting}
           executingToolCallId={executingToolCallId}
-          chatHasFinishedOnce={chatHasFinishedOnce}
+          autoApproveGuard={autoApproveGuard}
         />
       )}
     </div>

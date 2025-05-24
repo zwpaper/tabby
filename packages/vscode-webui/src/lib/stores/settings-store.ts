@@ -62,20 +62,20 @@ export const useSettingsStore = create<SettingsState>()(
   ),
 );
 
-export function useAutoApprove(chatHasFinishedOnce: boolean) {
+export function useAutoApprove(guard: boolean) {
   const { autoApproveActive, autoApproveSettings } = useSettingsStore();
   return {
-    autoApproveActive: autoApproveActive && chatHasFinishedOnce,
+    autoApproveActive: autoApproveActive && guard,
     autoApproveSettings,
   };
 }
 
 export function useToolAutoApproval(
   toolName: string,
-  chatHasFinishedOnce: boolean,
+  autoApproveGuard: boolean,
 ): boolean {
   const { autoApproveActive, autoApproveSettings } =
-    useAutoApprove(chatHasFinishedOnce);
+    useAutoApprove(autoApproveGuard);
 
   if (ToolsByPermission.default.includes(toolName)) {
     return true;

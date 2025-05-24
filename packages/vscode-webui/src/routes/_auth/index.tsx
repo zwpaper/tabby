@@ -295,7 +295,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     } satisfies Environment;
   }, []);
 
-  const chatHasFinishedOnce = useRef(false);
+  // Auto approve initially turned-off if user hasn't interacted with the chat yet
+  const autoApproveGuard = useRef(false);
   const latestHttpCode = useRef<number | undefined>(undefined);
   const {
     data,
@@ -307,14 +308,15 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     append,
     input,
     status,
-    stop,
+    stop: stopChat,
     addToolResult,
     experimental_resume,
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
     onFinish: (_, { usage }) => {
-      chatHasFinishedOnce.current = true;
+      // Allow auto approve once the chat is finished (means that user has interacted with the chat)
+      autoApproveGuard.current = true;
 
       if (usage.totalTokens) {
         setTotalTokens(usage.totalTokens);
@@ -440,10 +442,13 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   };
 
   const handleStop = () => {
+    // If user abort anything, we should disable auto-approval
+    autoApproveGuard.current = false;
+
     if (isUploadingImages) {
       stopUpload();
     } else if (isLoading) {
-      stop();
+      stopChat();
     } else if (pendingApproval?.name === "retry") {
       pendingApproval.stopCountdown();
     }
@@ -525,7 +530,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     error,
     messages: renderMessages,
     status,
-    chatHasFinishedOnce: chatHasFinishedOnce.current,
+    autoApproveGuard: autoApproveGuard.current,
   });
 
   const retryImpl = useRetry({
@@ -631,7 +636,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               addToolResult={addToolResultWithForceUpdate}
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
-              chatHasFinishedOnce={chatHasFinishedOnce.current}
+              autoApproveGuard={autoApproveGuard.current}
             />
             <AutoApproveMenu />
             {files.length > 0 && (

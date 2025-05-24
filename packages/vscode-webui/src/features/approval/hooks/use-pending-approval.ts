@@ -14,18 +14,18 @@ export function usePendingApproval({
   error,
   messages,
   status,
-  chatHasFinishedOnce,
+  autoApproveGuard,
 }: {
   error?: Error;
   messages: UIMessage[];
   status: "submitted" | "streaming" | "ready" | "error";
-  chatHasFinishedOnce: boolean;
+  autoApproveGuard: boolean;
 }) {
   const { pendingApproval: pendingRetryApproval, increaseRetryCount } =
     usePendingRetryApproval({
       error,
       status,
-      chatHasFinishedOnce,
+      autoApproveGuard,
     });
   const {
     pendingApproval: pendingToolCallApproval,

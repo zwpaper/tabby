@@ -45,14 +45,15 @@ interface PendingRetry {
 export function usePendingRetryApproval({
   error,
   status,
-  chatHasFinishedOnce,
+  autoApproveGuard,
 }: {
   error?: Error;
   status: "submitted" | "streaming" | "ready" | "error";
-  chatHasFinishedOnce: boolean;
+  autoApproveGuard: boolean;
 }) {
   const { autoApproveActive, autoApproveSettings } =
-    useAutoApprove(chatHasFinishedOnce);
+    useAutoApprove(autoApproveGuard);
+
   const [retryCount, setRetryCount] = useState<RetryCount | undefined>(
     undefined,
   );
