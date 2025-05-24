@@ -10,43 +10,45 @@
   background-color: var(--vscode-textPreformat-background);
 }
 
-h1,
-h2,
-h3 {
-  @apply text-lg;
-}
+.prose {
+  h1,
+  h2,
+  h3 {
+    @apply text-lg;
+  }
 
-h1 {
-  @apply uppercase;
-}
+  h1 {
+    @apply uppercase;
+  }
 
-h2::before {
-  content: "§ ";
-}
+  h2::before {
+    content: "§ ";
+  }
 
-h3 {
-  @apply underline;
-}
+  h3 {
+    @apply underline;
+  }
 
-h1,
-h2,
-h3,
-h4 {
-  @apply my-0 mt-0.5 mb-1;
-}
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply my-0 mt-0.5 mb-1;
+  }
 
-ol,
-li,
-p,
-ul,
-pre {
-  @apply my-0;
-}
+  ol,
+  li,
+  p,
+  ul,
+  pre {
+    @apply my-0;
+  }
 
-pre {
-  @apply mt-1 p-0;
-}
+  pre {
+    @apply mt-1 p-0;
+  }
 
-p {
-  @apply leading-relaxed;
+  p {
+    @apply leading-relaxed;
+  }
 }
