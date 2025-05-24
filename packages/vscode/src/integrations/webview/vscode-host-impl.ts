@@ -6,6 +6,8 @@ import { collectCustomRules, getSystemInfo } from "@/lib/env";
 import { ignoreWalk, isBinaryFile } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
+import { PostHog } from "@/lib/posthog";
+// biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
 import { applyDiff, previewApplyDiff } from "@/tools/apply-diff";
 import { executeCommand } from "@/tools/execute-command";
@@ -31,6 +33,7 @@ import {
 } from "@ragdoll/tools";
 import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type {
+  CaptureEvent,
   ResourceURI,
   SessionState,
   VSCodeHostApi,
@@ -52,6 +55,7 @@ export class VSCodeHostImpl implements VSCodeHostApi {
     private readonly tokenStorage: TokenStorage,
     private readonly tabState: TabState,
     private readonly gitStatus: GitStatus,
+    private readonly posthog: PostHog,
   ) {}
 
   readResourceURI = (): Promise<ResourceURI> => {
@@ -240,6 +244,10 @@ export class VSCodeHostImpl implements VSCodeHostApi {
         preserveFocus: options?.preserveFocus,
       });
     }
+  };
+
+  capture = async ({ event, properties }: CaptureEvent) => {
+    this.posthog.capture(event, properties);
   };
 }
 

@@ -157,6 +157,7 @@
     "ignore": "^7.0.4",
     "jszip": "^3.10.1",
     "minimatch": "^10.0.1",
+    "posthog-node": "^4.17.2",
     "project-name-generator": "^2.1.9",
     "reflect-metadata": "^0.2.2",
     "run-exclusive": "^2.2.19",

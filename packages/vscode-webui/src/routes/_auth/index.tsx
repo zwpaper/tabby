@@ -505,6 +505,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     const dataParts = data as DataPart[];
     for (const part of dataParts) {
       if (part.type === "append-id") {
+        vscodeHost.capture({
+          event: "newTask",
+        });
         taskId.current = part.id;
 
         queryClient.invalidateQueries({ queryKey: ["tasks"] });

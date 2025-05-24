@@ -72,6 +72,12 @@ export interface VSCodeHostApi {
   ): void;
 
   readCurrentWorkspace(): Promise<string | undefined>;
+
+  /**
+   * @param event - The event name.
+   * @param properties - The event properties.
+   */
+  capture(e: CaptureEvent): Promise<void>;
 }
 
 export interface WebviewHostApi {
@@ -120,3 +126,15 @@ export interface NewTaskAttachment {
   name?: string;
   contentType?: string;
 }
+
+export type CaptureEvent =
+  | {
+      event: "newTask";
+      properties?: undefined;
+    }
+  | {
+      event: "addToolResult";
+      properties: {
+        toolName: string;
+      };
+    };

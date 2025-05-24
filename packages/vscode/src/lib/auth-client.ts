@@ -2,10 +2,13 @@ import { deviceLinkClient } from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 import type { DependencyContainer } from "tsyringe";
+import { PostHog } from "./posthog";
 import { TokenStorage } from "./token-storage";
 
 export function createAuthClient(container: DependencyContainer) {
   const tokenStorage = container.resolve(TokenStorage);
+  const posthog = container.resolve(PostHog);
+
   const authClient = createAuthClientImpl({
     baseURL: getServerBaseUrl(),
     plugins: [deviceLinkClient()],
@@ -24,6 +27,16 @@ export function createAuthClient(container: DependencyContainer) {
     },
   });
 
+  if (tokenStorage.token !== undefined) {
+    authClient.getSession().then(({ data }) => {
+      if (data?.user) {
+        posthog.identify(data.user.id, {
+          email: data.user.email,
+          name: data.user.name,
+        });
+      }
+    });
+  }
   return authClient;
 }
 
