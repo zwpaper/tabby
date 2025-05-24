@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react"; // useMemo is 
 import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval/hooks/use-pending-tool-call-approval";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
+import { useChatState } from "@/lib/stores/chat-state";
 import { useToolAutoApproval } from "@/lib/stores/settings-store";
 // usePendingToolCallApproval is not directly used here anymore, it's used by usePendingApproval
 
@@ -22,7 +23,6 @@ interface ToolCallApprovalButtonProps {
   addToolResult: AddToolResultFunctionType;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
-  autoApproveGuard: boolean;
 }
 
 // Component
@@ -31,8 +31,8 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   addToolResult,
   setIsExecuting,
   executingToolCallId,
-  autoApproveGuard,
 }) => {
+  const { autoApproveGuard } = useChatState();
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
   });
@@ -91,7 +91,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
 
   const isAutoApproved = useToolAutoApproval(
     pendingApproval.name,
-    autoApproveGuard,
+    autoApproveGuard.current,
   );
   const isAutoRejected = isAutoInjectTool(pendingApproval.name);
 

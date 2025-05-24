@@ -9,6 +9,7 @@ import { useRetry } from "@/features/approval/hooks/use-retry";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
+import { ChatStateProvider, useChatState } from "@/lib/stores/chat-state";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import {
@@ -156,12 +157,14 @@ function RouteComponent() {
   });
 
   return (
-    <Chat
-      key={key}
-      loaderData={loaderData || null}
-      isTaskLoading={isTaskLoading}
-      initMessage={initMessage}
-    />
+    <ChatStateProvider>
+      <Chat
+        key={key}
+        loaderData={loaderData || null}
+        isTaskLoading={isTaskLoading}
+        initMessage={initMessage}
+      />
+    </ChatStateProvider>
   );
 }
 
@@ -175,6 +178,7 @@ interface ChatProps {
 
 function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const [isDevMode] = useIsDevMode();
+  const { autoApproveGuard } = useChatState();
   const taskId = useRef<number | undefined>(loaderData?.id);
   const [totalTokens, setTotalTokens] = useState<number>(
     loaderData?.totalTokens || 0,
@@ -295,8 +299,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     } satisfies Environment;
   }, []);
 
-  // Auto approve initially turned-off if user hasn't interacted with the chat yet
-  const autoApproveGuard = useRef(false);
   const latestHttpCode = useRef<number | undefined>(undefined);
   const {
     data,
@@ -530,7 +532,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     error,
     messages: renderMessages,
     status,
-    autoApproveGuard: autoApproveGuard.current,
   });
 
   const retryImpl = useRetry({
@@ -636,7 +637,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               addToolResult={addToolResultWithForceUpdate}
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
-              autoApproveGuard={autoApproveGuard.current}
             />
             <AutoApproveMenu />
             {files.length > 0 && (

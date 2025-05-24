@@ -1,3 +1,4 @@
+import { useChatState } from "@/lib/stores/chat-state";
 import { useAutoApprove } from "@/lib/stores/settings-store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -45,14 +46,14 @@ interface PendingRetry {
 export function usePendingRetryApproval({
   error,
   status,
-  autoApproveGuard,
 }: {
   error?: Error;
   status: "submitted" | "streaming" | "ready" | "error";
-  autoApproveGuard: boolean;
 }) {
-  const { autoApproveActive, autoApproveSettings } =
-    useAutoApprove(autoApproveGuard);
+  const { autoApproveGuard } = useChatState();
+  const { autoApproveActive, autoApproveSettings } = useAutoApprove(
+    autoApproveGuard.current,
+  );
 
   const [retryCount, setRetryCount] = useState<RetryCount | undefined>(
     undefined,
