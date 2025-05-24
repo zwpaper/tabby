@@ -2,7 +2,7 @@
   "name": "@ragdoll/vscode-webui-bridge",
   "main": "src/index.ts",
   "devDependencies": {
-    "@quilted/threads": "^3.1.3"
+    "@quilted/threads": "catalog:"
   },
   "private": true
 }

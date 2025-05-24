@@ -17,11 +17,11 @@
     "@openrouter/ai-sdk-provider": "^0.4.4",
     "@ragdoll/tools": "workspace:*",
     "@slack/bolt": "^4.2.1",
-    "ai": "^4.3.16",
-    "better-auth": "^1.2.7",
+    "ai": "catalog:",
+    "better-auth": "catalog:",
     "hono": "^4.7.5",
     "kysely": "^0.27.6",
-    "moment": "^2.30.1",
+    "moment": "catalog:",
     "moment-timezone": "^0.5.48",
     "pg": "^8.14.1",
     "pg-connection-string": "^2.7.0",
@@ -29,8 +29,8 @@
     "resend": "^4.2.0",
     "resumable-stream": "^2.1.0",
     "stripe": "17",
-    "zod": "^3.24.2",
-    "remeda": "^2.21.3"
+    "zod": "catalog:",
+    "remeda": "catalog:"
   },
   "scripts": {
     "tsc": "tsc --noEmit",

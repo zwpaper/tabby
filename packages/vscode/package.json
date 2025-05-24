@@ -149,8 +149,8 @@
     "release": "bunx bumpp --tag=vscode@%s"
   },
   "dependencies": {
-    "@preact/signals-core": "^1.8.0",
-    "@quilted/threads": "^3.1.3",
+    "@preact/signals-core": "catalog:",
+    "@quilted/threads": "catalog:",
     "diff": "^7.0.0",
     "fast-deep-equal": "^3.1.3",
     "file-type": "^20.4.1",
