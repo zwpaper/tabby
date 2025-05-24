@@ -55,8 +55,8 @@ export function TodoList({ todos, status }: TodoListProps) {
         className="flex w-full items-center justify-between overflow-hidden rounded-sm py-2 transition-colors focus:outline-none"
         aria-expanded={!isCollapsed}
       >
-        <div className="flex w-full justify-center gap-2 overflow-hidden">
-          <span className="font-semibold">
+        <div className="flex w-full flex-nowrap items-center justify-center gap-2 overflow-hidden">
+          <span className="h-6 truncate font-semibold">
             {inProgressTodo ? (
               <span
                 className={cn({
