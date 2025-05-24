@@ -10,6 +10,10 @@ import { resend } from "./lib/resend";
 import { stripeClient } from "./lib/stripe";
 
 export const auth = betterAuth({
+  advanced: {
+    // Force use non-secure cookie to ensure oauthProxy can forward cookies to local development server
+    useSecureCookies: false,
+  },
   user: {
     additionalFields: {
       isWaitlistApproved: {

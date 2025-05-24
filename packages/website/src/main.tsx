@@ -68,3 +68,10 @@ if (rootElement && !rootElement.innerHTML) {
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+import posthog from "posthog-js";
+
+// Initialize PostHog
+posthog.init("phc_yAshPRA7kVY4GKm30kh4TSdyKwlbw0PGD2r5T5Tzv5U", {
+  api_host: "https://us.i.posthog.com",
+});
