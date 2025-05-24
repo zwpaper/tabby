@@ -6,7 +6,7 @@ import type * as vscode from "vscode";
 @singleton()
 export class PostHog implements vscode.Disposable {
   private readonly client = new PostHogNode(
-    "phc_aBzNGHzlOy2C8n1BBDtH7d4qQsIw9d8T0unVlnKfdxB",
+    "phc_yAshPRA7kVY4GKm30kh4TSdyKwlbw0PGD2r5T5Tzv5U",
     {
       host: "https://us.i.posthog.com",
     },
