@@ -1,9 +1,3 @@
-import {
-  injectEnvironmentDetails,
-  stripEnvironmentDetails,
-} from "./prompts/environment";
-import { generateSystemPrompt } from "./prompts/system";
-
 export type UserEvent = {
   type: string;
   data: unknown;
@@ -19,10 +13,5 @@ export {
   fromUIMessages,
 } from "./message";
 
-export const prompts = {
-  system: generateSystemPrompt,
-  injectEnvironmentDetails,
-  stripEnvironmentDetails,
-};
-
+export { prompts } from "./prompts";
 export { formatters } from "./formatters";
