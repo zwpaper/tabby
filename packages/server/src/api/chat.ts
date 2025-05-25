@@ -127,6 +127,10 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             },
             providerOptions,
             onFinish: async ({ usage, finishReason, response }) => {
+              if (finishReason === "length") {
+                throw new Error("The response was too long.");
+              }
+
               const finalMessages = appendResponseMessages({
                 messages: preparedMessages,
                 responseMessages: response.messages,
