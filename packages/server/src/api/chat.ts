@@ -288,7 +288,7 @@ async function prepareMessages(
     messages,
     environment,
     event,
-    true,
+    process.env.POCHI_INJECT_ENVIRONMENT_DETAILS_MODE === "assistant",
   );
   return messages;
 }
