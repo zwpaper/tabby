@@ -4,7 +4,7 @@ import { type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
 import { EnvironmentDetailsTag } from "./prompts/environment";
 
-function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
+export function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
   return messages.map((message, index) => {
     if (index < messages.length - 1 && message.role === "assistant") {
       const parts = message.parts.map((part) => {
@@ -37,14 +37,16 @@ function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
   });
 }
 
-function removeDeprecatedToolInvocations(messages: UIMessage[]): UIMessage[] {
+export function removeDeprecatedToolInvocations(
+  messages: UIMessage[],
+): UIMessage[] {
   return messages.map((message) => {
     message.toolInvocations = undefined;
     return message;
   });
 }
 
-function stripKnownXMLTags(messages: UIMessage[]): UIMessage[] {
+export function stripKnownXMLTags(messages: UIMessage[]): UIMessage[] {
   const knownTags = ["file", "user-reminder"];
   return messages.map((message) => {
     const parts = message.parts.map((part) => {
@@ -69,7 +71,7 @@ function stripKnownXMLTags(messages: UIMessage[]): UIMessage[] {
   });
 }
 
-function removeUserReminderMessage(messages: UIMessage[]): UIMessage[] {
+export function removeUserReminderMessage(messages: UIMessage[]): UIMessage[] {
   return messages.filter((message) => {
     if (message.role !== "user") return true;
     return !message.parts.some((part) => {
@@ -82,7 +84,7 @@ function removeUserReminderMessage(messages: UIMessage[]): UIMessage[] {
   });
 }
 
-function combineConsecutiveAssistantMessages(
+export function combineConsecutiveAssistantMessages(
   messages: UIMessage[],
 ): UIMessage[] {
   for (let i = 0; i < messages.length - 1; i++) {
