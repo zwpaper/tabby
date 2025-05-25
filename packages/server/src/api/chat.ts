@@ -105,6 +105,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         const result = Laminar.withSession(`${user.id}-${id}`, () =>
           streamText({
             abortSignal: c.req.raw.signal,
+            temperature: 0.75,
             toolCallStreaming: true,
             model: c.get("model") || selectedModel,
             messages: [
