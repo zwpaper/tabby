@@ -1,6 +1,7 @@
 import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
+import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -34,6 +35,8 @@ export interface NewProjectParams {
   githubTemplateUrl?: string;
 }
 
+const logger = getLogger("RagdollUriHandler");
+
 @injectable()
 @singleton()
 class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
@@ -51,6 +54,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
   }
 
   handleUri(uri: vscode.Uri): vscode.ProviderResult<void> {
+    logger.debug("handleUri", uri.toString());
     this.handleUriImpl(uri);
   }
 
