@@ -1,4 +1,5 @@
 import {
+  EnvironmentDetailsTag,
   injectEnvironmentDetails,
   stripEnvironmentDetails,
 } from "./environment";
@@ -8,4 +9,5 @@ export const prompts = {
   system: generateSystemPrompt,
   injectEnvironmentDetails,
   stripEnvironmentDetails,
+  EnvironmentDetailsTag,
 };

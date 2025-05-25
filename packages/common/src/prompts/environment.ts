@@ -74,7 +74,7 @@ export function stripEnvironmentDetails(messages: UIMessage[]) {
   for (const message of messages) {
     message.parts = message.parts.filter((part) => {
       if (part.type !== "text") return true;
-      return !part.text.startsWith("<environment-details>");
+      return !part.text.startsWith(`<${EnvironmentDetailsTag}>`);
     });
   }
   return messages;
@@ -117,7 +117,7 @@ export function injectEnvironmentDetails(
 
   const textPart = {
     type: "text",
-    text: `<environment-details>\n${getReadEnvironmentResult(environment, event)}\n</environment-details>`,
+    text: `<${EnvironmentDetailsTag}>\n${getReadEnvironmentResult(environment, event)}\n</${EnvironmentDetailsTag}>`,
   } satisfies TextUIPart;
 
   const parts = messageToInject.parts || [];
@@ -149,3 +149,5 @@ function getTodos(todos: Environment["todos"]) {
 
   return `# TODOs\n${JSON.stringify(todos, null, 2)}`;
 }
+
+export const EnvironmentDetailsTag = "environment-details";

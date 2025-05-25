@@ -1,7 +1,8 @@
 import { prompts } from "@ragdoll/common";
 import { isUserInputTool } from "@ragdoll/tools";
-import type { UIMessage } from "ai";
+import { type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
+import { EnvironmentDetailsTag } from "./prompts/environment";
 
 function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
   return messages.map((message, index) => {
@@ -121,7 +122,24 @@ export const formatters = {
   ui: (messages: UIMessage[]) => formatMessages(messages, UIFormatOps),
 
   // Format messages before sending them to the LLM.
-  llm: (messages: UIMessage[]) => formatMessages(messages, LLMFormatOps),
+  llm: (messages: UIMessage[]) => {
+    const coreMessages = convertToCoreMessages(
+      formatMessages(messages, LLMFormatOps),
+    );
+    const environmentDetailIndex = coreMessages.findIndex(
+      (message) =>
+        typeof message.content === "string" &&
+        message.content.startsWith(`<${EnvironmentDetailsTag}>`),
+    );
+
+    const cacheControlMessage = coreMessages.at(environmentDetailIndex - 2);
+    if (cacheControlMessage) {
+      cacheControlMessage.providerOptions = {
+        anthropic: { cacheControl: { type: "ephemeral" } },
+      };
+    }
+    return coreMessages;
+  },
 
   // Format messages before storing them in the database.
   storage: (messages: UIMessage[]) =>

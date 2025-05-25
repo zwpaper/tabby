@@ -8,6 +8,7 @@ import { formatters } from "@ragdoll/common";
 import { ClientTools, selectServerTools } from "@ragdoll/tools";
 import {
   APICallError,
+  type CoreMessage,
   type DataStreamWriter,
   type LanguageModel,
   NoSuchToolError,
@@ -106,12 +107,25 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           streamText({
             // Disallowing the model to repeat the environment details from our injection.
             // see injectEnvironmentDetails for more details.
-            stopSequences: ["<environment-details>"],
+            stopSequences: [`<${prompts.EnvironmentDetailsTag}>`],
             abortSignal: c.req.raw.signal,
             toolCallStreaming: true,
             model: c.get("model") || selectedModel,
             system: environment?.info && prompts.system(environment.info),
-            messages: formatters.llm(preparedMessages),
+            messages: [
+              ...(environment?.info
+                ? [
+                    {
+                      role: "system",
+                      content: prompts.system(environment.info),
+                      providerOptions: {
+                        anthropic: { cacheControl: { type: "ephemeral" } },
+                      },
+                    } satisfies CoreMessage,
+                  ]
+                : []),
+              ...formatters.llm(preparedMessages),
+            ],
             tools: {
               ...enabledClientTools,
               ...enabledServerTools, // Add the enabled server tools
