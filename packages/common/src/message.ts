@@ -1,5 +1,14 @@
 import type { Message } from "ai";
-import type { DBMessage } from "../db";
+
+export type DBMessage = {
+  id: string;
+  createdAt: string;
+  role: Message["role"];
+  parts: Array<
+    Exclude<NonNullable<Message["parts"]>[number], { type: "source" }>
+  >;
+  experimental_attachments?: Message["experimental_attachments"];
+};
 
 export function toUIMessage(message: DBMessage): Message {
   return {

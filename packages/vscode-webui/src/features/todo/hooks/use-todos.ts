@@ -1,5 +1,5 @@
 import type { Message, UIMessage } from "@ai-sdk/ui-utils";
-import type { Todo } from "@ragdoll/server";
+import type { Todo } from "@ragdoll/common";
 import { useCallback, useEffect, useState } from "react";
 
 function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {

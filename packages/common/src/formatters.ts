@@ -1,7 +1,7 @@
+import { prompts } from "@ragdoll/common";
 import { isUserInputTool } from "@ragdoll/tools";
 import type { UIMessage } from "ai";
 import { clone } from "remeda";
-import { stripReadEnvironment } from "./prompts/environment";
 
 function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
   return messages.map((message, index) => {
@@ -106,7 +106,7 @@ const UIFormatOps = [
   combineConsecutiveAssistantMessages,
 ];
 const StorageFormatOps = [
-  stripReadEnvironment,
+  prompts.stripEnvironmentDetails,
   removeDeprecatedToolInvocations,
 ];
 

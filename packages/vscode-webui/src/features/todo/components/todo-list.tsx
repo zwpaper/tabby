@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import type { Todo } from "@ragdoll/server";
+import type { Todo } from "@ragdoll/common";
 import { Circle, CircleCheckBig } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";

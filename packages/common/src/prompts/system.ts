@@ -1,4 +1,6 @@
-import type { SystemPromptEnvironment } from "../types";
+import type { Environment } from "../environment";
+
+type SystemPromptEnvironment = Environment["info"];
 
 export function generateSystemPrompt(environment: SystemPromptEnvironment) {
   const prompt = `You are Pochi, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.

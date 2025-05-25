@@ -1,5 +1,5 @@
 import { TodoList } from "@/features/todo";
-import type { Todo } from "@ragdoll/server";
+import type { Todo } from "@ragdoll/common";
 import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof TodoList> = {

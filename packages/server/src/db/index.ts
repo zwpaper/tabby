@@ -1,24 +1,11 @@
-import type { Message } from "ai";
+import type { DBMessage } from "@ragdoll/common";
+import type { Environment, UserEvent } from "@ragdoll/common";
 import { type JSONColumnType, Kysely, PostgresDialect } from "kysely";
 import moment from "moment";
 import { Pool } from "pg";
 import { parse } from "pg-connection-string";
-import type { Environment } from "../types";
-import type { UserEvent } from "./event";
 import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";
-
-export type { UserEvent };
-
-export type DBMessage = {
-  id: string;
-  createdAt: string;
-  role: Message["role"];
-  parts: Array<
-    Exclude<NonNullable<Message["parts"]>[number], { type: "source" }>
-  >;
-  experimental_attachments?: Message["experimental_attachments"];
-};
 
 export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
   externalIntegration: Omit<DbImpl["externalIntegration"], "vendorData"> & {

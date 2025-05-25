@@ -3,6 +3,8 @@ import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { isAbortError } from "@ai-sdk/provider-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
+import { type Environment, prompts } from "@ragdoll/common";
+import { formatters } from "@ragdoll/common";
 import { ClientTools, selectServerTools } from "@ragdoll/tools";
 import {
   APICallError,
@@ -22,19 +24,16 @@ import { createResumableStreamContext } from "resumable-stream";
 import { z } from "zod";
 import { type User, requireAuth } from "../auth";
 import type { DB } from "../db";
-import { formatters } from "../formatters";
 import {
   checkModel,
   checkUserQuota,
   checkWaitlist,
 } from "../lib/check-request";
 import { resolveServerTools } from "../lib/tools";
-import { injectReadEnvironment } from "../prompts/environment";
-import { generateSystemPrompt } from "../prompts/system";
 import { after, setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
-import { type Environment, ZodChatRequestType } from "../types";
+import { ZodChatRequestType } from "../types";
 
 const streamContext = createResumableStreamContext({
   waitUntil: after,
@@ -108,7 +107,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             abortSignal: c.req.raw.signal,
             toolCallStreaming: true,
             model: c.get("model") || selectedModel,
-            system: environment?.info && generateSystemPrompt(environment.info),
+            system: environment?.info && prompts.system(environment.info),
             messages: formatters.llm(preparedMessages),
             tools: {
               ...enabledClientTools,
@@ -268,7 +267,7 @@ async function prepareMessages(
   stream: DataStreamWriter,
 ): Promise<UIMessage[]> {
   let messages = await resolveServerTools(inputMessages, user, stream);
-  messages = injectReadEnvironment(messages, environment, event);
+  messages = prompts.injectEnvironmentDetails(messages, environment, event);
   return messages;
 }
 

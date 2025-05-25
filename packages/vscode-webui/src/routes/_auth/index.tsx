@@ -12,13 +12,10 @@ import { useSelectedModels } from "@/lib/hooks/use-models";
 import { ChatStateProvider, useChatState } from "@/lib/stores/chat-state";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import {
-  type Environment,
-  type ChatRequest as RagdollChatRequest,
-  type Todo,
-  formatters,
-} from "@ragdoll/server";
-import { fromUIMessage, toUIMessages } from "@ragdoll/server/message-utils";
+import type { Todo } from "@ragdoll/common";
+import type { Environment } from "@ragdoll/common";
+import { formatters, fromUIMessage, toUIMessages } from "@ragdoll/common";
+import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Editor } from "@tiptap/react";

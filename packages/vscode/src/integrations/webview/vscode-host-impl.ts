@@ -25,7 +25,7 @@ import {
   ThreadSignal,
   type ThreadSignalSerialization,
 } from "@quilted/threads/signals";
-import type { Environment } from "@ragdoll/server";
+import type { Environment } from "@ragdoll/common";
 import {
   ServerToolApproved,
   ServerTools,

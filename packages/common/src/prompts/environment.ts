@@ -1,12 +1,11 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
-import type { DB } from "../db";
-import type { Environment } from "../types";
+import type { Environment, UserEvent } from "@ragdoll/common";
 
 const InjectReadEnvironmentInAssistantMessage = false;
 
 export function getReadEnvironmentResult(
   environment: Environment,
-  event: DB["task"]["event"],
+  event: UserEvent | null,
 ) {
   const sections = [
     getCurrentTime(environment.currentTime),
@@ -61,7 +60,7 @@ function getCurrentWorkingFile(workspace: Environment["workspace"]) {
   return `# Active Selection (${filepath}:${range.start.line + 1}-${range.end.line + 1})\n\n\`\`\`\n${content}\n\`\`\`\n`;
 }
 
-function getEvent(event: DB["task"]["event"]) {
+function getEvent(event: UserEvent | null) {
   if (event) {
     return `# Event triggered this task\n${JSON.stringify(event, null, 2)}`;
   }
@@ -73,7 +72,7 @@ function getGitStatus(gitStatus: string | undefined) {
   return `# GIT STATUS\nthis git status will keep latest changes in the repository.\n${gitStatus}`;
 }
 
-export function stripReadEnvironment(messages: UIMessage[]) {
+export function stripEnvironmentDetails(messages: UIMessage[]) {
   for (const message of messages) {
     message.parts = message.parts.filter((part) => {
       if (part.type !== "text") return true;
@@ -96,10 +95,10 @@ function getInjectMessage(messages: UIMessage[]) {
   }
 }
 
-export function injectReadEnvironment(
+export function injectEnvironmentDetails(
   messages: UIMessage[],
   environment: Environment | undefined,
-  event: DB["task"]["event"],
+  event: UserEvent | null,
 ) {
   if (environment === undefined) return messages;
   const messageToInject = getInjectMessage(messages);
