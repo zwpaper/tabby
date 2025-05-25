@@ -143,11 +143,7 @@ export function injectEnvironmentDetails(
 }
 
 function getTodos(todos: Environment["todos"]) {
-  if (todos === undefined) {
-    return "";
-  }
-
-  if (todos.length === 0) {
+  if (todos === undefined || todos.length === 0) {
     return "# TODOs\nNo TODOs yet, if you are working on tasks that would benefit from a todo list please use the todoWrite tool to create one.";
   }
 
