@@ -1,4 +1,4 @@
-import type { DBMessage, Environment, UserEvent } from "@ragdoll/common";
+import type { DBMessage, UserEvent } from "@ragdoll/common";
 import { ZodEnvironment } from "@ragdoll/common";
 import { z } from "zod";
 
@@ -27,4 +27,3 @@ export const ZodChatRequestType = z.object({
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;
-export type SystemPromptEnvironment = NonNullable<Environment["info"]>;
