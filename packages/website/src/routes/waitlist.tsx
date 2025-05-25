@@ -4,7 +4,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 export const Route = createFileRoute("/waitlist")({
   beforeLoad: async ({ context }) => {
     // If user is not logged in, redirect to home page
-    if (!context.auth) {
+    if (!context.auth || context.auth.user.isWaitlistApproved) {
       throw redirect({
         to: "/",
       });
