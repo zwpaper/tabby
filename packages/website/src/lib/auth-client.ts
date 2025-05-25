@@ -17,15 +17,6 @@ export const authClient = createAuthClient({
     stripeClient({ subscription: true }),
     inferAdditionalFields<typeof auth>(),
   ],
-  fetchOptions: {
-    onResponse: (ctx) => {
-      if (ctx.response.headers.get("set-auth-token")) {
-        setTimeout(() => {
-          identifyUser();
-        }, 1000);
-      }
-    },
-  },
 });
 
 const identifyUser = () => {
@@ -38,6 +29,8 @@ const identifyUser = () => {
     }
   });
 };
+
+window.addEventListener("load", identifyUser, { once: true });
 
 export const apiClient = hc<AppType>("/");
 
