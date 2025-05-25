@@ -104,6 +104,9 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
         const result = Laminar.withSession(`${user.id}-${id}`, () =>
           streamText({
+            // Disallowing the model to repeat the environment details from our injection.
+            // see injectEnvironmentDetails for more details.
+            stopSequences: ["<environment-details>"],
             abortSignal: c.req.raw.signal,
             toolCallStreaming: true,
             model: c.get("model") || selectedModel,
@@ -267,7 +270,12 @@ async function prepareMessages(
   stream: DataStreamWriter,
 ): Promise<UIMessage[]> {
   let messages = await resolveServerTools(inputMessages, user, stream);
-  messages = prompts.injectEnvironmentDetails(messages, environment, event);
+  messages = prompts.injectEnvironmentDetails(
+    messages,
+    environment,
+    event,
+    true,
+  );
   return messages;
 }
 

@@ -1,8 +1,6 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment, UserEvent } from "@ragdoll/common";
 
-const InjectReadEnvironmentInAssistantMessage = false;
-
 export function getReadEnvironmentResult(
   environment: Environment,
   event: UserEvent | null,
@@ -82,26 +80,39 @@ export function stripEnvironmentDetails(messages: UIMessage[]) {
   return messages;
 }
 
-function getInjectMessage(messages: UIMessage[]) {
+function getInjectMessage(
+  messages: UIMessage[],
+  injectInAssistantMessage: boolean,
+) {
   const lastMessage = messages.at(-1);
   if (!lastMessage) return;
   if (lastMessage.role === "user") return lastMessage;
   if (lastMessage.role === "assistant") {
-    if (InjectReadEnvironmentInAssistantMessage) {
+    if (injectInAssistantMessage) {
       return lastMessage;
     }
 
-    return getInjectMessage(messages.slice(0, -1));
+    return getInjectMessage(messages.slice(0, -1), injectInAssistantMessage);
   }
 }
 
+/**
+ * Injects environment details into the messages.
+ *
+ * @param messages - The array of UI messages.
+ * @param environment - The environment object containing workspace and todos.
+ * @param event - The user event that triggered this task.
+ * @param injectInAssistantMessage - By default, we inject the environment details in the user message. If this is true, we inject it in both the user and the assistant message.
+ * @returns The updated array of UI messages with injected environment details.
+ */
 export function injectEnvironmentDetails(
   messages: UIMessage[],
   environment: Environment | undefined,
   event: UserEvent | null,
+  injectInAssistantMessage: boolean,
 ) {
   if (environment === undefined) return messages;
-  const messageToInject = getInjectMessage(messages);
+  const messageToInject = getInjectMessage(messages, injectInAssistantMessage);
   if (!messageToInject) return messages;
 
   const textPart = {
