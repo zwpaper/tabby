@@ -12,7 +12,6 @@ import {
   type DataStreamWriter,
   type LanguageModel,
   NoSuchToolError,
-  RetryError,
   type UIMessage,
   appendResponseMessages,
   createDataStream,
@@ -184,17 +183,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         const logApiCallError = (error: APICallError) => {
           console.log("API call error", error.message, error.requestBodyValues);
         };
-
-        if (RetryError.isInstance(error)) {
-          if (APICallError.isInstance(error.lastError)) {
-            if (error.lastError.statusCode === 429) {
-              return "Too many requests. Please try again later.";
-            }
-
-            logApiCallError(error.lastError);
-            return error.message;
-          }
-        }
 
         if (APICallError.isInstance(error)) {
           logApiCallError(error);
