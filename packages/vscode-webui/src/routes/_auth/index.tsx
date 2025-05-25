@@ -313,7 +313,15 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
-    onFinish: (_, { usage }) => {
+    onFinish: (_, { usage, finishReason }) => {
+      vscodeHost.capture({
+        event: "chatFinish",
+        properties: {
+          ...usage,
+          finishReason,
+        },
+      });
+
       // Allow auto approve once user has submitted a message
       autoApproveGuard.current = true;
 

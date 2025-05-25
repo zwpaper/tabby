@@ -137,4 +137,13 @@ export type CaptureEvent =
       properties: {
         toolName: string;
       };
+    }
+  | {
+      event: "chatFinish";
+      properties: {
+        promptTokens: number;
+        completionTokens: number;
+        totalTokens: number;
+        finishReason: string;
+      };
     };
