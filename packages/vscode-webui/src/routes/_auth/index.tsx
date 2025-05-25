@@ -314,6 +314,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
     onFinish: (_, { usage }) => {
+      // Allow auto approve once user has submitted a message
+      autoApproveGuard.current = true;
+
       if (usage.totalTokens) {
         setTotalTokens(usage.totalTokens);
       }
@@ -416,9 +419,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Allow auto approve once user has submitted a message
-    autoApproveGuard.current = true;
 
     if (files.length > 0) {
       const uploadedImages: Attachment[] = await uploadImages();

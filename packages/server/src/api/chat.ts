@@ -104,13 +104,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
         const result = Laminar.withSession(`${user.id}-${id}`, () =>
           streamText({
-            // Disallowing the model to repeat the environment details from our injection.
-            // see injectEnvironmentDetails for more details.
-            stopSequences: [`<${prompts.EnvironmentDetailsTag}>`],
-
-            // Disable retries as we handle them ourselves.
-            maxRetries: 0,
-
             abortSignal: c.req.raw.signal,
             toolCallStreaming: true,
             model: c.get("model") || selectedModel,
@@ -169,6 +162,15 @@ const chat = new Hono<{ Variables: ContextVariables }>()
                 "task-id": id,
               },
             },
+            // Disallowing the model to repeat the environment details from our injection.
+            // see injectEnvironmentDetails for more details.
+            stopSequences: [`<${prompts.EnvironmentDetailsTag}>`],
+
+            // Disable retries as we handle them ourselves.
+            maxRetries: 0,
+
+            // 8k tokens.
+            maxTokens: 1024 * 8,
           }),
         );
 
