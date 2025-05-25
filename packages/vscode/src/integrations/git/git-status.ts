@@ -33,6 +33,41 @@ export class GitStatus {
   }
 
   /**
+   * Detect the main branch using multiple fallback strategies
+   */
+  private async detectMainBranch(): Promise<string> {
+    /*
+     * Fallback strategies to detect the main branch
+     * 1. Check if HEAD is a symbolic ref to the main branch
+     * 2. Check if the main branch exists in the remote
+     * 3. Check if the master branch exists in the remote
+     */
+    const strategies = [
+      () => this.execGit("symbolic-ref refs/remotes/origin/HEAD --short"),
+      () =>
+        this.execGit("show-ref --verify --quiet refs/remotes/origin/main").then(
+          () => "main",
+        ),
+      () =>
+        this.execGit(
+          "show-ref --verify --quiet refs/remotes/origin/master",
+        ).then(() => "master"),
+    ];
+
+    for (const strategy of strategies) {
+      try {
+        const result = await strategy();
+        if (result) {
+          return result.replace("refs/remotes/origin/", "").trim();
+        }
+      } catch (error) {
+        // skip to the next strategy
+      }
+    }
+    return "";
+  }
+
+  /**
    * Implementation of git status collection
    * Collects all git data and returns it as structured data
    */
@@ -42,18 +77,20 @@ export class GitStatus {
     statusOutput: string;
     logOutput: string;
   }> {
-    const currentBranch = await this.execGit("rev-parse --abbrev-ref HEAD");
-    const mainBranch = await this.execGit(
-      "symbolic-ref refs/remotes/origin/HEAD --short",
-    );
-    const statusOutput = await this.execGit("status --porcelain");
-    const logOutput = await this.execGit('log -n 5 --pretty=format:"%h %s"');
+    const results = await Promise.allSettled([
+      this.execGit("rev-parse --abbrev-ref HEAD"),
+      this.detectMainBranch(),
+      this.execGit("status --porcelain"),
+      this.execGit('log -n 5 --pretty=format:"%h %s"'),
+    ]);
 
     return {
-      currentBranch,
-      mainBranch,
-      statusOutput,
-      logOutput,
+      currentBranch:
+        results[0].status === "fulfilled" ? results[0].value : "unknown",
+      mainBranch:
+        results[1].status === "fulfilled" ? results[1].value : "unknown",
+      statusOutput: results[2].status === "fulfilled" ? results[2].value : "",
+      logOutput: results[3].status === "fulfilled" ? results[3].value : "",
     };
   }
 
@@ -96,17 +133,28 @@ export class GitStatus {
   /**
    * Get Git status information for the current repository as a formatted string
    */
-  async readGitStatus(): Promise<string | undefined> {
+  public async readGitStatus(): Promise<string | undefined> {
     if (!this.rootPath) {
       logger.warn("No Git repository found");
       return undefined;
     }
 
     try {
+      logger.debug("Reading Git status for repository", {
+        path: this.rootPath,
+      });
+
       const gitData = await this.readGitStatusImpl();
+
+      logger.debug("Git status read completed", {
+        currentBranch: gitData.currentBranch,
+        mainBranch: gitData.mainBranch,
+        hasChanges: gitData.statusOutput.length > 0,
+      });
+
       return this.formatGitStatus(gitData);
     } catch (error) {
-      logger.error("Error reading Git status");
+      logger.error("Error reading Git status", error);
     }
   }
 }
