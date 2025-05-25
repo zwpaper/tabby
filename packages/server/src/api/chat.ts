@@ -111,7 +111,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             abortSignal: c.req.raw.signal,
             toolCallStreaming: true,
             model: c.get("model") || selectedModel,
-            system: environment?.info && prompts.system(environment.info),
             messages: [
               ...(environment?.info
                 ? [
