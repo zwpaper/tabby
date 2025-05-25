@@ -101,6 +101,7 @@ function combineConsecutiveAssistantMessages(
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
 const LLMFormatOps: FormatOp[] = [resolvePendingToolCalls, stripKnownXMLTags];
 const UIFormatOps = [
+  prompts.stripEnvironmentDetails,
   resolvePendingToolCalls,
   removeUserReminderMessage,
   combineConsecutiveAssistantMessages,
