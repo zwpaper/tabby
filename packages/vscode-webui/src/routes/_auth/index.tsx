@@ -370,13 +370,15 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   useEffect(() => {
     if (
       taskId.current === undefined &&
+      // Requires models to be loaded before sending the initial message
+      !isModelsLoading &&
       initMessage &&
       !initMessageSent.current
     ) {
       initMessageSent.current = true;
       append(initMessage);
     }
-  }, [initMessage, append]);
+  }, [initMessage, isModelsLoading, append]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
