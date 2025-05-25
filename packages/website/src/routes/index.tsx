@@ -1,5 +1,6 @@
 import { Home, HomeWaitlist } from "@/components/home";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useWaitlistCheck } from "@/hooks/use-waitlist-check";
+import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -7,23 +8,15 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/")({
-  beforeLoad: async ({ context }) => {
-    if (
-      context.auth &&
-      !context.auth.user.isWaitlistApproved &&
-      !context.auth.user.email.endsWith("@tabbyml.com")
-    ) {
-      throw redirect({
-        to: "/waitlist",
-      });
-    }
-  },
   component: Root,
   validateSearch: (search) => searchSchema.parse(search),
 });
 
 function Root() {
   const { auth } = Route.useRouteContext();
+
+  // Use waitlist check hook to get latest waitlist approval status
+  useWaitlistCheck();
 
   // If signed in, show HomeComponent
   if (auth) {
