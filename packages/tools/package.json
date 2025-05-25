@@ -2,6 +2,7 @@
   "name": "@ragdoll/tools",
   "main": "src/index.ts",
   "dependencies": {
+    "@ragdoll/common": "workspace:*",
     "ai": "catalog:",
     "zod": "catalog:"
   }

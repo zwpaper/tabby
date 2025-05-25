@@ -4,6 +4,7 @@ export type UserEvent = {
 };
 
 export type { Todo } from "./todo";
+export { ZodTodo } from "./todo";
 export { ZodEnvironment, type Environment } from "./environment";
 export {
   type DBMessage,

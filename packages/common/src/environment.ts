@@ -1,7 +1,5 @@
 import { z } from "zod";
-import type { Todo } from "./todo";
-
-const ZodTodoType: z.ZodType<Todo> = z.any();
+import { ZodTodo } from "./todo";
 
 export const ZodEnvironment = z.object({
   currentTime: z.string().describe("The current time."),
@@ -41,7 +39,7 @@ export const ZodEnvironment = z.object({
       .optional()
       .describe("Git status information for the current workspace."),
   }),
-  todos: z.array(ZodTodoType).optional().describe("Todos in current task"),
+  todos: z.array(ZodTodo).optional().describe("Todos in current task"),
 });
 
 export type Environment = z.infer<typeof ZodEnvironment>;

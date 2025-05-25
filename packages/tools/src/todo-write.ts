@@ -1,3 +1,4 @@
+import { ZodTodo } from "@ragdoll/common";
 import { z } from "zod";
 import { defineClientTool } from "./types";
 
@@ -171,22 +172,7 @@ The assistant did not use the todo list because this is a single command executi
 When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
 `.trim(),
   inputSchema: z.object({
-    todos: z.array(
-      z.object({
-        id: z
-          .string()
-          .describe(
-            'The unique identifier of the task, e.g "collect-information".',
-          ),
-        content: z.string().describe("The content of the task."),
-        status: z
-          .enum(["pending", "in-progress", "completed", "cancelled"])
-          .describe("The status of the task."),
-        priority: z
-          .enum(["low", "medium", "high"])
-          .describe("The priority of the task."),
-      }),
-    ),
+    todos: z.array(ZodTodo),
   }),
   outputSchema: z.object({
     success: z
