@@ -2,6 +2,8 @@ import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { DB } from "../db";
 import type { Environment } from "../types";
 
+const InjectReadEnvironmentInAssistantMessage = false;
+
 export function getReadEnvironmentResult(
   environment: Environment,
   event: DB["task"]["event"],
@@ -81,27 +83,40 @@ export function stripReadEnvironment(messages: UIMessage[]) {
   return messages;
 }
 
+function getInjectMessage(messages: UIMessage[]) {
+  const lastMessage = messages.at(-1);
+  if (!lastMessage) return;
+  if (lastMessage.role === "user") return lastMessage;
+  if (lastMessage.role === "assistant") {
+    if (InjectReadEnvironmentInAssistantMessage) {
+      return lastMessage;
+    }
+
+    return getInjectMessage(messages.slice(0, -1));
+  }
+}
+
 export function injectReadEnvironment(
   messages: UIMessage[],
   environment: Environment | undefined,
   event: DB["task"]["event"],
 ) {
   if (environment === undefined) return messages;
-  const lastMessage = messages.at(-1);
-  if (!lastMessage) return messages;
+  const messageToInject = getInjectMessage(messages);
+  if (!messageToInject) return messages;
 
   const textPart = {
     type: "text",
     text: `<environment-details>\n${getReadEnvironmentResult(environment, event)}\n</environment-details>`,
   } satisfies TextUIPart;
 
-  const parts = lastMessage.parts || [];
+  const parts = messageToInject.parts || [];
 
-  if (lastMessage.role === "user") {
-    lastMessage.parts = [textPart, ...parts];
+  if (messageToInject.role === "user") {
+    messageToInject.parts = [textPart, ...parts];
   }
 
-  if (lastMessage.role === "assistant") {
+  if (messageToInject.role === "assistant") {
     const lastStepStartIndex = parts.reduce((lastIndex, part, index) => {
       return part.type === "step-start" ? index : lastIndex;
     }, -1);
