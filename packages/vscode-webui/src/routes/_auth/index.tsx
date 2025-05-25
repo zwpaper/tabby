@@ -317,6 +317,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
       vscodeHost.capture({
         event: "chatFinish",
         properties: {
+          modelId: selectedModel?.id,
           ...usage,
           finishReason,
         },
