@@ -110,6 +110,9 @@ function createPochiTerminal(name: string, cwd?: string) {
     cwd,
     iconPath: new vscode.ThemeIcon("terminal"),
     location: vscode.TerminalLocation.Panel,
+    env: {
+      PAGER: "",
+    },
   });
 }
 
