@@ -11,6 +11,7 @@ import {
   APICallError,
   type CoreMessage,
   type DataStreamWriter,
+  InvalidToolArgumentsError,
   type LanguageModel,
   NoSuchToolError,
   type UIMessage,
@@ -194,6 +195,10 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         if (APICallError.isInstance(error)) {
           logApiCallError(error);
           return error.message;
+        }
+
+        if (InvalidToolArgumentsError.isInstance(error)) {
+          return `Invalid arguments provided to tool "${error.toolName}". Please try again.`;
         }
 
         if (NoSuchToolError.isInstance(error)) {
