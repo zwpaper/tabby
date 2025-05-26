@@ -175,7 +175,7 @@ const Quota: React.FC = () => {
   });
 
   if (isLoading) {
-    return <Skeleton className="mb-6 h-24 w-full bg-secondary" />;
+    return <Skeleton className="h-17 w-full bg-secondary" />;
   }
 
   if (error) {

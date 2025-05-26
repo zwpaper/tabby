@@ -96,7 +96,7 @@ export const ToolsSection: React.FC = () => {
         <Connections integrations={connectedIntegrationsData} />
       )}
       <div className="h-2" />
-      {renderToolsContent()}
+      {false && renderToolsContent()}
     </Section>
   );
 };
