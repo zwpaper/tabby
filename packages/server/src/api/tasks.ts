@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireAuth } from "../auth";
+import { parseEventFilter } from "../lib/event-filter";
 import { taskService } from "../service/task"; // Added import
 
 // Define validation schemas
@@ -10,6 +11,10 @@ const PaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
   cwd: z.string().optional(),
+  eventFilter: z
+    .string()
+    .optional()
+    .transform((val) => parseEventFilter(val)),
 });
 
 const TaskParamsSchema = z.object({
@@ -20,10 +25,16 @@ const TaskParamsSchema = z.object({
 const tasks = new Hono()
   // List tasks with pagination
   .get("/", zValidator("query", PaginationSchema), requireAuth(), async (c) => {
-    const { cwd, page, limit } = c.req.valid("query");
+    const { cwd, page, limit, eventFilter } = c.req.valid("query");
     const user = c.get("user");
 
-    const result = await taskService.list(user.id, page, limit, cwd);
+    const result = await taskService.list(
+      user.id,
+      page,
+      limit,
+      cwd,
+      eventFilter,
+    );
 
     return c.json(result);
   })

@@ -15,6 +15,7 @@ import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import type { z } from "zod";
 import { db } from "../db";
+import { applyEventFilter } from "../lib/event-filter";
 import { publishTaskEvent } from "../server";
 import type { ZodChatRequestType } from "../types";
 import { slackService } from "./slack";
@@ -273,7 +274,13 @@ class TaskService {
     }
   }
 
-  async list(userId: string, page: number, limit: number, cwd?: string) {
+  async list(
+    userId: string,
+    page: number,
+    limit: number,
+    cwd?: string,
+    eventFilter?: Record<string, unknown>,
+  ) {
     const offset = (page - 1) * limit;
 
     let totalCountQuery = db
@@ -288,6 +295,9 @@ class TaskService {
         `"${cwd}"`,
       );
     }
+
+    totalCountQuery = applyEventFilter(totalCountQuery, eventFilter);
+
     const totalCountResult = await totalCountQuery.executeTakeFirst();
     const totalCount = Number(totalCountResult?.count ?? 0);
     const totalPages = Math.ceil(totalCount / limit);
@@ -311,6 +321,8 @@ class TaskService {
     if (cwd) {
       query = query.where(sql`environment->'info'->'cwd'`, "@>", `"${cwd}"`);
     }
+
+    query = applyEventFilter(query, eventFilter);
 
     const items = await query.execute();
     const data = items.map((task) => ({
