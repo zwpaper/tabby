@@ -6,7 +6,11 @@ import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { type Environment, prompts } from "@ragdoll/common";
 import { formatters } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
-import { ClientTools, selectServerTools } from "@ragdoll/tools";
+import {
+  ClientTools,
+  parseMcpToolSet,
+  selectServerTools,
+} from "@ragdoll/tools";
 import {
   APICallError,
   type CoreMessage,
@@ -51,10 +55,15 @@ const chat = new Hono<{ Variables: ContextVariables }>()
   .post("/stream", zValidator("json", ZodChatRequestType), async (c) => {
     setIdleTimeout(c.req.raw, 120);
     const req = await c.req.valid("json");
-    const { environment, model: requestedModelId = "google/gemini-2.5-pro" } =
-      req;
+    const {
+      environment,
+      mcpToolSet,
+      model: requestedModelId = "google/gemini-2.5-pro",
+    } = req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
+
+    const parsedMcpTools = parseMcpToolSet(mcpToolSet);
 
     const user = c.get("user");
 
@@ -126,6 +135,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             tools: {
               ...enabledClientTools,
               ...enabledServerTools, // Add the enabled server tools
+              ...parsedMcpTools,
             },
             providerOptions,
             onFinish: async ({ usage, finishReason, response }) => {

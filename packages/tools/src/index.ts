@@ -1,4 +1,8 @@
 export { defineServerTool } from "./types";
+export {
+  ZodMcpToolType,
+  parseMcpToolSet,
+} from "./mcp-tools";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
 import { attemptCompletion } from "./attempt-completion";

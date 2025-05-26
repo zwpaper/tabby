@@ -1,5 +1,6 @@
 import type { DBMessage, UserEvent } from "@ragdoll/common";
 import { ZodEnvironment } from "@ragdoll/common";
+import { ZodMcpToolType } from "@ragdoll/tools";
 import { z } from "zod";
 
 const ZodMessageType: z.ZodType<DBMessage> = z.any();
@@ -14,6 +15,13 @@ export const ZodChatRequestType = z.object({
     .array(z.string())
     .optional()
     .describe("Server side tools to use with this request"),
+  mcpToolSet: z
+    .record(
+      z.string().describe("The name of the MCP tool."),
+      ZodMcpToolType.describe("The MCP tool definition."),
+    )
+    .optional()
+    .describe("MCP tools to use with this request"),
   reasoning: z
     .object({
       enabled: z
