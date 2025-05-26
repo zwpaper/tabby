@@ -22,7 +22,6 @@ export function createAuthClient(container: DependencyContainer) {
         const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
         if (authToken) {
           tokenStorage.token.value = authToken;
-          identifyUser();
         }
       },
     },
@@ -39,6 +38,7 @@ export function createAuthClient(container: DependencyContainer) {
     });
   };
 
+  identifyUser();
   return authClient;
 }
 
