@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DefaultModelId } from "../constants";
 
-type AutoApprove = Record<keyof typeof ToolsByPermission, boolean> & {
+export type AutoApprove = Record<keyof typeof ToolsByPermission, boolean> & {
   retry: number;
 };
 

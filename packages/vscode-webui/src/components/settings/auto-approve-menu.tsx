@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useSettingsStore } from "@/lib/stores/settings-store";
+import {
+  type AutoApprove,
+  useSettingsStore,
+} from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, Eye, FileEdit, Play, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
@@ -17,6 +20,12 @@ const collapsibleSectionVariants = {
   },
 };
 
+interface ToggleButtonConfig {
+  key: Exclude<keyof AutoApprove, "default">;
+  label: string;
+  icon: React.ReactNode;
+}
+
 export function AutoApproveMenu() {
   const {
     autoApproveActive,
@@ -26,12 +35,18 @@ export function AutoApproveMenu() {
   } = useSettingsStore();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Create a list of enabled options for the title
-  const enabledOptions = Object.entries(autoApproveSettings)
-    .filter(([_, value]) => value)
-    .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
+  const orderedToggleButtons: ToggleButtonConfig[] = [
+    { key: "read", label: "Read", icon: <Eye /> },
+    { key: "write", label: "Write", icon: <FileEdit /> },
+    { key: "execute", label: "Execute", icon: <Play /> },
+    { key: "retry", label: "Retry", icon: <RotateCcw /> },
+  ];
 
-  const handleToggle = (key: keyof typeof autoApproveSettings) => {
+  const enabledOptions = orderedToggleButtons
+    .filter(({ key }) => autoApproveSettings[key])
+    .map((x) => x.label);
+
+  const handleToggle = (key: ToggleButtonConfig["key"]) => {
     if (key === "retry") {
       if (autoApproveSettings.retry > 0) {
         updateAutoApproveSettings({ retry: 0 });
@@ -123,33 +138,22 @@ export function AutoApproveMenu() {
 
           <div className="flex flex-wrap justify-center">
             <div className="mx-auto flex w-full max-w-full flex-wrap justify-center gap-3 sm:max-w-[600px] sm:gap-4 md:max-w-[800px] lg:max-w-[1000px]">
-              <ToggleButton
-                icon={<Eye />}
-                label="Read"
-                isActive={autoApproveSettings.read}
-                onClick={() => handleToggle("read")}
-              />
+              {orderedToggleButtons.map(({ key, label, icon }) => {
+                const isActive =
+                  key === "retry"
+                    ? autoApproveSettings.retry > 0
+                    : autoApproveSettings[key];
 
-              <ToggleButton
-                icon={<FileEdit />}
-                label="Write"
-                isActive={autoApproveSettings.write}
-                onClick={() => handleToggle("write")}
-              />
-
-              <ToggleButton
-                icon={<Play />}
-                label="Execute"
-                isActive={autoApproveSettings.execute}
-                onClick={() => handleToggle("execute")}
-              />
-
-              <ToggleButton
-                icon={<RotateCcw />}
-                label="Retry"
-                isActive={autoApproveSettings.retry > 0}
-                onClick={() => handleToggle("retry")}
-              />
+                return (
+                  <ToggleButton
+                    key={key}
+                    icon={icon}
+                    label={label}
+                    isActive={isActive}
+                    onClick={() => handleToggle(key)}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
