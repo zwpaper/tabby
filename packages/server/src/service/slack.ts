@@ -1,9 +1,10 @@
 import type { Server } from "node:http";
+import type { DB } from "@ragdoll/db";
 import { App, type Installation } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
 import { sql } from "kysely";
 import { auth } from "../auth";
-import { type DB, db } from "../db";
+import { db } from "../db";
 import { connectToWeb } from "../lib/connect";
 import { publishUserEvent } from "../server";
 

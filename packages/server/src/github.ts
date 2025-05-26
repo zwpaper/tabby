@@ -1,8 +1,9 @@
+import type { DB } from "@ragdoll/db";
 import type { GenericEndpointContext } from "better-auth";
 import { getSessionFromCtx } from "better-auth/api";
 import { sql } from "kysely";
 import { auth } from "./auth";
-import { type DB, db } from "./db";
+import { db } from "./db";
 
 export async function handleGithubAccountUpdate(
   {

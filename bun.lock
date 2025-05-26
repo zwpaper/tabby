@@ -17,9 +17,20 @@
       "name": "@ragdoll/common",
       "version": "0.0.1",
       "dependencies": {
-        "@ragdoll/tools": "workspace:*",
         "ai": "catalog:",
+        "remeda": "catalog:",
         "zod": "catalog:",
+      },
+    },
+    "packages/db": {
+      "name": "@ragdoll/db",
+      "dependencies": {
+        "@ragdoll/common": "workspace:*",
+        "kysely": "catalog:",
+      },
+      "devDependencies": {
+        "@slack/bolt": "catalog:",
+        "kysely-codegen": "^0.18.3",
       },
     },
     "packages/server": {
@@ -35,18 +46,18 @@
         "@lmnr-ai/lmnr": "^0.6.0",
         "@openrouter/ai-sdk-provider": "^0.4.4",
         "@ragdoll/common": "workspace:*",
+        "@ragdoll/db": "workspace:*",
         "@ragdoll/tools": "workspace:*",
-        "@slack/bolt": "^4.2.1",
+        "@slack/bolt": "catalog:",
         "ai": "catalog:",
         "better-auth": "catalog:",
         "hono": "^4.7.5",
-        "kysely": "^0.27.6",
+        "kysely": "catalog:",
         "moment": "catalog:",
         "moment-timezone": "^0.5.48",
         "pg": "^8.14.1",
         "pg-connection-string": "^2.7.0",
         "redis": "^5.0.1",
-        "remeda": "catalog:",
         "resend": "^4.2.0",
         "resumable-stream": "^2.1.0",
         "stripe": "17",
@@ -54,19 +65,19 @@
       },
       "devDependencies": {
         "@types/pg": "^8.11.11",
-        "kysely-codegen": "^0.18.3",
       },
     },
     "packages/tools": {
       "name": "@ragdoll/tools",
       "dependencies": {
+        "@ragdoll/common": "workspace:*",
         "ai": "catalog:",
         "zod": "catalog:",
       },
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.2.12",
+      "version": "0.2.14",
       "dependencies": {
         "@preact/signals-core": "catalog:",
         "@quilted/threads": "catalog:",
@@ -267,8 +278,10 @@
   "catalog": {
     "@preact/signals-core": "^1.8.0",
     "@quilted/threads": "^3.1.3",
+    "@slack/bolt": "^4.2.1",
     "ai": "^4.3.16",
     "better-auth": "^1.2.7",
+    "kysely": "^0.27.6",
     "moment": "^2.30.1",
     "react": "^19",
     "remeda": "^2.21.3",
@@ -802,6 +815,8 @@
     "@radix-ui/rect": ["@radix-ui/rect@1.1.1", "", {}, "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw=="],
 
     "@ragdoll/common": ["@ragdoll/common@workspace:packages/common"],
+
+    "@ragdoll/db": ["@ragdoll/db@workspace:packages/db"],
 
     "@ragdoll/server": ["@ragdoll/server@workspace:packages/server"],
 

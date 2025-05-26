@@ -1,0 +1,19 @@
+{
+  "name": "@ragdoll/db",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ragdoll/common": "workspace:*",
+    "kysely": "catalog:"
+  },
+  "scripts": {
+    "tsc": "tsc",
+    "db:genschema": "kysely-codegen --out-file ./src/schema.d.ts"
+  },
+  "devDependencies": {
+    "@slack/bolt": "catalog:",
+    "kysely-codegen": "^0.18.3"
+  }
+}

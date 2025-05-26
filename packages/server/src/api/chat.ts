@@ -5,6 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { type Environment, prompts } from "@ragdoll/common";
 import { formatters } from "@ragdoll/common";
+import type { DB } from "@ragdoll/db";
 import { ClientTools, selectServerTools } from "@ragdoll/tools";
 import {
   APICallError,
@@ -23,7 +24,6 @@ import { stream } from "hono/streaming";
 import { createResumableStreamContext } from "resumable-stream";
 import { z } from "zod";
 import { type User, requireAuth } from "../auth";
-import type { DB } from "../db";
 import {
   checkModel,
   checkUserQuota,

@@ -2,6 +2,7 @@ import type { Environment, UserEvent } from "@ragdoll/common";
 import type { Todo } from "@ragdoll/common";
 import { fromUIMessages, toUIMessage, toUIMessages } from "@ragdoll/common";
 import { formatters } from "@ragdoll/common";
+import type { DB } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
 import {
   type FinishReason,
@@ -13,7 +14,7 @@ import {
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import type { z } from "zod";
-import { type DB, db } from "../db";
+import { db } from "../db";
 import type { ZodChatRequestType } from "../types";
 import { slackService } from "./slack";
 

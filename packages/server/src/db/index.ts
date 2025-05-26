@@ -1,26 +1,8 @@
-import type { DBMessage } from "@ragdoll/common";
-import type { Environment, UserEvent } from "@ragdoll/common";
-import { type JSONColumnType, Kysely, PostgresDialect } from "kysely";
+import type { DB } from "@ragdoll/db";
+import { Kysely, PostgresDialect } from "kysely";
 import moment from "moment";
 import { Pool } from "pg";
 import { parse } from "pg-connection-string";
-import type { ExternalIntegrationVendorData } from "./external-integration";
-import type { DB as DbImpl } from "./schema";
-
-export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
-  externalIntegration: Omit<DbImpl["externalIntegration"], "vendorData"> & {
-    vendorData: JSONColumnType<ExternalIntegrationVendorData>;
-  };
-
-  task: Omit<
-    DbImpl["task"],
-    "event" | "conversation" | "environment" | "id"
-  > & {
-    event: UserEvent | null;
-    conversation: { messages: DBMessage[] } | null;
-    environment: Environment | null;
-  };
-};
 
 export const db = new Kysely<DB>({
   dialect: new PostgresDialect({
