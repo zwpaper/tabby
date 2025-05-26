@@ -4,6 +4,7 @@ import { vscodeHost } from "@/lib/vscode";
 import { FileIcon } from "./file-icon/file-icon";
 
 interface FileBadgeProps {
+  label?: string;
   path: string;
   startLine?: number;
   endLine?: number;
@@ -12,6 +13,7 @@ interface FileBadgeProps {
 }
 
 export const FileBadge: React.FC<FileBadgeProps> = ({
+  label,
   path,
   startLine,
   endLine,
@@ -42,7 +44,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
     >
       <FileIcon path={path} />
       <span className="ml-0.5 break-words">
-        {addLineBreak(path)}
+        {addLineBreak(label || path)}
         <span className="text-zinc-500 dark:text-zinc-400">{lineRange}</span>
       </span>
     </span>

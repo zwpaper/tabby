@@ -40,11 +40,11 @@ export function fuzzySearchStrings(
 /**
  * Fuzzy search function for workflow objects with name and content properties
  */
-export function fuzzySearchWorkflows(
+export function fuzzySearchWorkflows<T extends { id: string }>(
   needle: string | undefined,
-  workflows: { name: string; content: string }[],
+  workflows: T[],
   options: FuzzySearchOptions = {},
-): { name: string; content: string }[] {
+): T[] {
   if (!workflows || !Array.isArray(workflows)) {
     return [];
   }
@@ -55,13 +55,13 @@ export function fuzzySearchWorkflows(
   }
 
   // Create a haystack of workflow names for searching
-  const haystack = workflows.map((w) => w.name);
+  const haystack = workflows.map((w) => w.id);
   const uf = new uFuzzy({});
   const [_, info, order] = uf.search(haystack, needle);
 
   if (!order) return [];
 
-  const results: { name: string; content: string }[] = [];
+  const results = [];
   for (const i of order) {
     const workflow = workflows[info.idx[i]];
     results.push(workflow);

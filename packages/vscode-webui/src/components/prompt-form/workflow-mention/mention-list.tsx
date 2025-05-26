@@ -9,14 +9,14 @@ import {
 
 // Types for workflow items
 export interface WorkflowItem {
-  name: string;
-  content: string;
   id: string;
+  path: string;
+  content: string;
 }
 
 export interface WorkflowListProps {
   items: WorkflowItem[];
-  command: (item: { id: string; name: string; content: string }) => void;
+  command: (item: { id: string; path: string; content: string }) => void;
   query?: string;
   fetchItems?: (query?: string) => Promise<WorkflowItem[]>;
 }
@@ -34,11 +34,7 @@ export const WorkflowMentionList = forwardRef<
   const items = useMentionItems(initialItems, query, fetchItems);
 
   const handleSelect = async (item: WorkflowItem) => {
-    command({
-      id: item.id,
-      name: item.name,
-      content: item.content,
-    });
+    command(item);
   };
 
   const keyboardNavigation = useMentionKeyboardNavigation(
@@ -52,13 +48,6 @@ export const WorkflowMentionList = forwardRef<
 
   return (
     <div className="relative flex max-h-[300px] w-[80vw] flex-col overflow-hidden rounded-md border bg-popover p-1 sm:w-[600px]">
-      <div className="flex items-center justify-between px-2 py-1.5 font-medium text-sm">
-        <span>Workflows</span>
-        <span className="text-muted-foreground text-xs">
-          {items.length} workflows found
-        </span>
-      </div>
-
       <div className="flex-1 overflow-y-auto">
         {items.length === 0 ? (
           <div className="px-2 py-1.5 text-muted-foreground text-xs">
@@ -68,7 +57,7 @@ export const WorkflowMentionList = forwardRef<
           <div className="grid gap-0.5">
             {items.map((item, index) => (
               <WorkflowItemView
-                key={item.name}
+                key={item.id}
                 onClick={() => handleSelect(item)}
                 onMouseEnter={() => setSelectedIndex(index)}
                 isSelected={index === selectedIndex}
@@ -111,7 +100,7 @@ function WorkflowItemView({
     >
       <FileIcon className="size-4 shrink-0" />
       <span className="mr-2 ml-1 truncate whitespace-nowrap font-medium">
-        {data.name}
+        {data.id}
       </span>
     </div>
   );

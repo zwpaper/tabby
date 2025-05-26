@@ -220,11 +220,7 @@ export function FormEditor({
                 data.workflows,
               );
 
-              return workflowResults.map((workflow) => ({
-                name: workflow.name,
-                content: workflow.content,
-                id: workflow.name,
-              }));
+              return workflowResults;
             },
             render: () => {
               let component: ReactRenderer<
@@ -241,11 +237,7 @@ export function FormEditor({
                   query,
                   data.workflows,
                 );
-                return workflowResults.map((workflow) => ({
-                  name: workflow.name,
-                  content: workflow.content,
-                  id: workflow.name,
-                }));
+                return workflowResults;
               };
 
               return {

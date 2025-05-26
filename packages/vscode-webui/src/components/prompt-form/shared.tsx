@@ -56,7 +56,6 @@ export function useMentionItems<T>(
     if (fetchItems) {
       const fetch = async () => {
         const newItems = await fetchItems(query);
-        console.log("newItems", newItems);
         if (active) setItems(newItems);
       };
       fetch();

@@ -56,9 +56,12 @@ export class VSCodeHostImpl implements VSCodeHostApi {
     private readonly gitStatus: GitStatus,
     private readonly posthog: PostHog,
   ) {}
-  listWorkflowsInWorkspace(): Promise<{ name: string; content: string }[]> {
+
+  listWorkflowsInWorkspace = (): Promise<
+    { id: string; path: string; content: string }[]
+  > => {
     return collectWorkflows();
-  }
+  };
 
   readResourceURI = (): Promise<ResourceURI> => {
     throw new Error("Method not implemented.");

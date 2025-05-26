@@ -86,7 +86,7 @@ export async function collectCustomRules(
  * @returns Array of workflow file paths
  */
 export async function collectWorkflows(): Promise<
-  { name: string; content: string }[]
+  { id: string; path: string; content: string }[]
 > {
   const workflowsDir = getWorkflowsDirectoryUri();
   const isMarkdownFile = (name: string, type: vscode.FileType) =>
@@ -102,10 +102,11 @@ export async function collectWorkflows(): Promise<
       const content = await readFileContent(absolutePath);
 
       // e.g., ".pochirules/workflows/workflow1.md" -> "workflow1.md"
-      const fileName = file.split("/").pop() || file;
+      const fileName = file.split("/").pop()?.replace(/\.md$/, "") || file;
 
       return {
-        name: fileName,
+        id: fileName,
+        path: file,
         content: content || "",
       };
     }),

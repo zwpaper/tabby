@@ -30,6 +30,8 @@ interface FileComponentProps {
 }
 
 interface WorkflowComponentProps {
+  id: string;
+  path: string;
   children: string;
 }
 
@@ -42,10 +44,10 @@ function escapeMarkdown(text: string): string {
  */
 function escapeMarkdownTag(tag: string): (text: string) => string {
   return (text: string): string => {
-    const regex = new RegExp(`<${tag}[^>]*?>(.*?)</${tag}>`, "gs");
-    return text.replace(regex, (_match, content) => {
+    const regex = new RegExp(`<${tag}([^>]*?)>(.*?)</${tag}>`, "gs");
+    return text.replace(regex, (_match, attr, content) => {
       const escapedContent = escapeMarkdown(content);
-      return `<${tag}>${escapedContent}</${tag}>`;
+      return `<${tag}${attr}>${escapedContent}</${tag}>`;
     });
   };
 }
@@ -92,6 +94,7 @@ export function MessageMarkdown({
               tagNames: [...(defaultSchema.tagNames || []), ...CustomHtmlTags],
               attributes: {
                 ...defaultSchema.attributes,
+                workflow: ["path", "id"],
               },
             },
           ],
@@ -103,11 +106,12 @@ export function MessageMarkdown({
             return <FileBadge path={filepath} />;
           },
           workflow: (props: WorkflowComponentProps) => {
-            const { children } = props;
+            const { id, path } = props;
             return (
-              <span className="space-x-0.5 rounded bg-muted box-decoration-clone px-1.5 py-0.5 align-middle font-medium text-foreground text-sm">
-                /{children}
-              </span>
+              <FileBadge
+                label={id.replaceAll("user-content-", "/")}
+                path={path}
+              />
             );
           },
           code({ className, children, ...props }) {

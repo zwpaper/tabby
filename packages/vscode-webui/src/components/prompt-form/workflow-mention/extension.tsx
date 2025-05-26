@@ -12,12 +12,12 @@ import {
  */
 export const WorkflowComponent = (props: NodeViewProps) => {
   const { node } = props;
-  const { name } = node.attrs;
+  const { id } = node.attrs;
 
   return (
     <NodeViewWrapper as="span" className="rounded-sm px-1">
       <span className="space-x-0.5 rounded bg-muted box-decoration-clone px-1.5 py-0.5 align-middle font-medium text-foreground text-sm">
-        /{name}
+        /{id}
       </span>
     </NodeViewWrapper>
   );
@@ -38,14 +38,10 @@ export const PromptFormWorkflowExtension = Mention.extend({
   },
 
   renderText({ node }) {
-    const { name } = node.attrs;
+    const { id, path } = node.attrs;
     const content = node.attrs.content || "error loading workflow";
 
-    const safeContent = content
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-    return `<workflow content="${safeContent}">${name}</workflow>`;
+    return `<workflow id="${id}" path="${path}">${content}</workflow>`;
   },
 
   addAttributes() {
@@ -53,7 +49,7 @@ export const PromptFormWorkflowExtension = Mention.extend({
       id: {
         default: "",
       },
-      name: {
+      path: {
         default: "",
       },
       // the content of the workflow file
