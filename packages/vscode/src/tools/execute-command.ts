@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { streamWithAbort, streamWithTimeout } from "@/lib/stream-utils";
+import { streamWithTimeout } from "@/lib/stream-utils";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import * as vscode from "vscode";
 
@@ -55,7 +55,7 @@ async function collectOutput(
     return streamWithTimeout(outputStream, abortSignal);
   }
 
-  return streamWithAbort(outputStream, abortSignal);
+  return streamWithTimeout(outputStream, abortSignal);
 }
 
 async function retrieveShellIntegration(
