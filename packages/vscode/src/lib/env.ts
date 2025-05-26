@@ -4,7 +4,7 @@ import { readDirectoryFiles, readFileContent } from "./fs";
 
 // Path constants - using arrays for consistency
 const WorkspaceRulesFilePath = ["README.pochi.md"];
-const WorkflowsDirPath = [".pochirules", "workflows"];
+const WorkflowsDirPath = [".pochi", "workflows"];
 
 /**
  * Gets system information such as current working directory, shell, OS, and home directory.
