@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import { streamWithAbort, streamWithTimeout } from "@/lib/stream-utils";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import * as vscode from "vscode";
 
@@ -38,38 +39,6 @@ export const executeCommand: ToolFunctionType<
   return { output };
 };
 
-async function collectDevServerOutputWithTimeout(
-  outputStream: AsyncIterable<string>,
-): Promise<string> {
-  let output = "";
-  let timeoutId: Timer | undefined;
-
-  return new Promise<string>((resolve) => {
-    const resetTimeout = () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      timeoutId = setTimeout(() => {
-        resolve(output);
-      }, 5000);
-    };
-
-    resetTimeout(); // Initial timeout
-
-    (async () => {
-      for await (const data of outputStream) {
-        output += data;
-        resetTimeout(); // Reset timeout on new data
-      }
-      // Command finished before timeout
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      resolve(output);
-    })();
-  });
-}
-
 async function collectOutput(
   execution: vscode.TerminalShellExecution,
   isDevServer?: boolean,
@@ -83,38 +52,10 @@ async function collectOutput(
 
   const outputStream = execution.read();
   if (isDevServer) {
-    return collectDevServerOutputWithTimeout(outputStream);
+    return streamWithTimeout(outputStream, abortSignal);
   }
 
-  const pollStreamAndAbortSignal = async (
-    outputStream: AsyncIterable<string>,
-    abortSignal?: AbortSignal,
-  ): Promise<string> => {
-    let output = "";
-
-    const pollStream = async () => {
-      for await (const data of outputStream) {
-        output += data;
-      }
-    };
-
-    const pollAbortSignal = async () => {
-      return new Promise<void>((resolve) => {
-        if (abortSignal) {
-          abortSignal.addEventListener("abort", () => {
-            logger.info("Aborted collecting output");
-            resolve();
-          });
-        }
-      });
-    };
-
-    await Promise.race([pollStream(), pollAbortSignal()]);
-
-    return output;
-  };
-
-  return await pollStreamAndAbortSignal(outputStream, abortSignal);
+  return streamWithAbort(outputStream, abortSignal);
 }
 
 async function retrieveShellIntegration(
