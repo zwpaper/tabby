@@ -23,6 +23,7 @@ import { Route as AuthenticatedTasksIndexImport } from './routes/_authenticated.
 import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authenticated.auth/vscode-link'
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
+import { Route as AuthenticatedAdminPromptEvaluationImport } from './routes/_authenticated.admin/prompt-evaluation'
 import { Route as AuthenticatedSettingsUsageImport } from './routes/_authenticated._settings/usage'
 import { Route as AuthenticatedSettingsModelImport } from './routes/_authenticated._settings/model'
 import { Route as AuthenticatedSettingsIntegrationsImport } from './routes/_authenticated._settings/integrations'
@@ -106,6 +107,13 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+
+const AuthenticatedAdminPromptEvaluationRoute =
+  AuthenticatedAdminPromptEvaluationImport.update({
+    id: '/prompt-evaluation',
+    path: '/prompt-evaluation',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 const AuthenticatedSettingsUsageRoute = AuthenticatedSettingsUsageImport.update(
   {
@@ -239,6 +247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsUsageImport
       parentRoute: typeof AuthenticatedSettingsRouteImport
     }
+    '/_authenticated/admin/prompt-evaluation': {
+      id: '/_authenticated/admin/prompt-evaluation'
+      path: '/prompt-evaluation'
+      fullPath: '/admin/prompt-evaluation'
+      preLoaderRoute: typeof AuthenticatedAdminPromptEvaluationImport
+      parentRoute: typeof AuthenticatedAdminRouteImport
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/users'
@@ -296,11 +311,14 @@ const AuthenticatedSettingsRouteRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminPromptEvaluationRoute: typeof AuthenticatedAdminPromptEvaluationRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminPromptEvaluationRoute:
+      AuthenticatedAdminPromptEvaluationRoute,
     AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   }
 
@@ -346,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/model': typeof AuthenticatedSettingsModelRoute
   '/usage': typeof AuthenticatedSettingsUsageRoute
+  '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -365,6 +384,7 @@ export interface FileRoutesByTo {
   '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/model': typeof AuthenticatedSettingsModelRoute
   '/usage': typeof AuthenticatedSettingsUsageRoute
+  '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -386,6 +406,7 @@ export interface FileRoutesById {
   '/_authenticated/_settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/_settings/model': typeof AuthenticatedSettingsModelRoute
   '/_authenticated/_settings/usage': typeof AuthenticatedSettingsUsageRoute
+  '/_authenticated/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/_authenticated/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -407,6 +428,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/model'
     | '/usage'
+    | '/admin/prompt-evaluation'
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
@@ -425,6 +447,7 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/model'
     | '/usage'
+    | '/admin/prompt-evaluation'
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
@@ -444,6 +467,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_settings/integrations'
     | '/_authenticated/_settings/model'
     | '/_authenticated/_settings/usage'
+    | '/_authenticated/admin/prompt-evaluation'
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
     | '/_authenticated/auth/vscode-link'
@@ -514,6 +538,7 @@ export const routeTree = rootRoute
       "filePath": "_authenticated.admin/route.tsx",
       "parent": "/_authenticated",
       "children": [
+        "/_authenticated/admin/prompt-evaluation",
         "/_authenticated/admin/users"
       ]
     },
@@ -547,6 +572,10 @@ export const routeTree = rootRoute
     "/_authenticated/_settings/usage": {
       "filePath": "_authenticated._settings/usage.tsx",
       "parent": "/_authenticated/_settings"
+    },
+    "/_authenticated/admin/prompt-evaluation": {
+      "filePath": "_authenticated.admin/prompt-evaluation.tsx",
+      "parent": "/_authenticated/admin"
     },
     "/_authenticated/admin/users": {
       "filePath": "_authenticated.admin/users.tsx",

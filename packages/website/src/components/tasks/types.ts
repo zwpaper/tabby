@@ -6,3 +6,4 @@ export const taskSchema: z.ZodType<Task> = z.any();
 
 type TasksResponse = InferResponseType<typeof apiClient.api.tasks.$get>;
 export type Task = TasksResponse["data"][number];
+export type TaskStatus = Task["status"];

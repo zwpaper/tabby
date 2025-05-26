@@ -1,9 +1,20 @@
 import type { DB } from "@ragdoll/db";
 
-export type UserEvent = {
-  type: string;
-  data: unknown;
-};
+export type UserEvent =
+  | {
+      type: "batch:evaluation";
+      data: {
+        batchId: string;
+        githubTemplateUrl: string;
+        prompt: string;
+        startedAt: string;
+        projectDirectory: string;
+      };
+    }
+  | {
+      type: string;
+      data: unknown;
+    };
 
 export type TaskEvent = {
   type: "task:status-changed";
