@@ -10,8 +10,7 @@ import { useSelectedModels } from "@/lib/hooks/use-models";
 import { ChatStateProvider, useChatState } from "@/lib/stores/chat-state";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import type { Todo } from "@ragdoll/common";
-import type { Environment } from "@ragdoll/common";
+import type { Environment, Todo } from "@ragdoll/common";
 import { formatters, fromUIMessage, toUIMessages } from "@ragdoll/common";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,7 +38,6 @@ import {
 } from "react";
 import { z } from "zod";
 
-import "@/components/prompt-form/prompt-form.css";
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ErrorMessage } from "@/components/error-message";
@@ -47,6 +45,7 @@ import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageList } from "@/components/message/message-list";
 import { PreviewTool } from "@/components/preview-tool";
+import "@/components/prompt-form/prompt-form.css";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";

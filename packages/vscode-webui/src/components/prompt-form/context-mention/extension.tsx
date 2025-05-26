@@ -1,4 +1,5 @@
 import Mention from "@tiptap/extension-mention";
+import { PluginKey } from "@tiptap/pm/state";
 import {
   type NodeViewProps,
   NodeViewWrapper,
@@ -22,10 +23,13 @@ export const MentionComponent = (props: NodeViewProps) => {
   );
 };
 
+export const fileMentionPluginKey = new PluginKey("fileMentionPluginKey");
+
 /**
  * A custom TipTap extension to handle mentions (like @name).
  */
 export const PromptFormMentionExtension = Mention.extend({
+  name: "fileMention",
   // Uses ReactNodeViewRenderer for custom node rendering
   addNodeView() {
     return ReactNodeViewRenderer(MentionComponent);

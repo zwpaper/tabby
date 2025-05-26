@@ -47,7 +47,7 @@ export function removeDeprecatedToolInvocations(
 }
 
 export function stripKnownXMLTags(messages: UIMessage[]): UIMessage[] {
-  const knownTags = ["file", "user-reminder"];
+  const knownTags = ["file", "user-reminder", "workflow"];
   return messages.map((message) => {
     const parts = message.parts.map((part) => {
       if (part.type === "text") {

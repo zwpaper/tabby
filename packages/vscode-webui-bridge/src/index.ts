@@ -45,6 +45,12 @@ export interface VSCodeHostApi {
   >;
 
   /**
+   * List all workflows from .pochirules/workflows directory
+   * Returns an array of objects containing the name and content of each workflow.
+   */
+  listWorkflowsInWorkspace(): Promise<{ name: string; content: string }[]>;
+
+  /**
    * Get active tabs with real-time updates via ThreadSignal
    * Each tab is represented by an object with:
    * - filepath: Path to the file

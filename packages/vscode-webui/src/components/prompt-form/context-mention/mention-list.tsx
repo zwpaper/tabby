@@ -1,21 +1,17 @@
-import type { SuggestionKeyDownProps } from "@tiptap/suggestion";
 import { FileIcon, FolderIcon } from "lucide-react";
+import { forwardRef, useImperativeHandle, useState } from "react";
+import type { MentionListActions } from "../shared";
 import {
-  forwardRef,
-  useImperativeHandle,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+  useMentionItems,
+  useMentionKeyboardNavigation,
+  useScrollIntoView,
+} from "../shared";
+import { formatPathForDisplay } from "../utils";
 
 // Types for mention items (only id and filepath)
 export interface MentionItem {
   isDir: boolean;
   filepath: string;
-}
-
-export interface MentionListActions {
-  onKeyDown: (props: SuggestionKeyDownProps) => boolean;
 }
 
 export interface MentionListProps {
@@ -32,52 +28,20 @@ export interface MentionListProps {
 export const MentionList = forwardRef<MentionListActions, MentionListProps>(
   ({ items: initialItems, command, query, fetchItems }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
-    const [items, setItems] = useState<MentionItem[]>(initialItems);
-
-    // Fetch items on mount and when query changes
-    useLayoutEffect(() => {
-      let active = true;
-      if (fetchItems) {
-        fetchItems(query).then((newItems) => {
-          if (active) setItems(newItems);
-        });
-      } else {
-        setItems(initialItems);
-      }
-      return () => {
-        active = false;
-      };
-    }, [fetchItems, query, initialItems]);
+    const items = useMentionItems(initialItems, query, fetchItems);
 
     const handleSelect = (item: MentionItem) => {
       command({ id: item.filepath, filepath: item.filepath });
     };
 
-    useImperativeHandle(ref, () => ({
-      onKeyDown: ({ event }) => {
-        const lastIndex = items.length - 1;
-        let newIndex = selectedIndex;
+    const keyboardNavigation = useMentionKeyboardNavigation(
+      items,
+      selectedIndex,
+      setSelectedIndex,
+      handleSelect,
+    );
 
-        switch (event.key) {
-          case "ArrowUp":
-            newIndex = Math.max(0, selectedIndex - 1);
-            break;
-          case "ArrowDown":
-            newIndex = Math.min(lastIndex, selectedIndex + 1);
-            break;
-          case "Enter":
-            if (items[selectedIndex]) {
-              handleSelect(items[selectedIndex]);
-            }
-            return true;
-          default:
-            return false;
-        }
-
-        setSelectedIndex(newIndex);
-        return true;
-      },
-    }));
+    useImperativeHandle(ref, () => keyboardNavigation);
 
     return (
       <div className="relative flex max-h-[300px] w-[80vw] flex-col overflow-hidden rounded-md border bg-popover p-1 sm:w-[600px]">
@@ -118,17 +82,8 @@ interface MentionItemViewProps {
  * Mention item view for displaying id and filepath
  */
 function MentionItemView({ isSelected, data, ...rest }: MentionItemViewProps) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useScrollIntoView(isSelected);
   const { basename, displayPath } = formatPathForDisplay(data.filepath);
-
-  useLayoutEffect(() => {
-    if (isSelected && ref.current) {
-      ref.current?.scrollIntoView({
-        block: "nearest",
-        inline: "nearest",
-      });
-    }
-  }, [isSelected]);
 
   return (
     <div
@@ -151,22 +106,4 @@ function MentionItemView({ isSelected, data, ...rest }: MentionItemViewProps) {
       </span>
     </div>
   );
-}
-
-/**
- * Extracts basename and formats path for display
- */
-function formatPathForDisplay(filepath: string): {
-  basename: string;
-  displayPath: string;
-} {
-  // FIXME: hack way to handle both Unix and Windows paths
-  const separator = filepath.includes("\\") ? "\\" : "/";
-  const parts = filepath.split(separator);
-  const basename = parts[parts.length - 1];
-
-  // Format display path (excluding basename)
-  const displayPath = parts.slice(0, -1).join(separator);
-
-  return { basename, displayPath };
 }

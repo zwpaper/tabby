@@ -29,6 +29,10 @@ interface FileComponentProps {
   children: string;
 }
 
+interface WorkflowComponentProps {
+  children: string;
+}
+
 function escapeMarkdown(text: string): string {
   return text.replace(/[\\`*_{}\[\]()#+\-.!|<]/g, "\\$&");
 }
@@ -38,7 +42,7 @@ function escapeMarkdown(text: string): string {
  */
 function escapeMarkdownTag(tag: string): (text: string) => string {
   return (text: string): string => {
-    const regex = new RegExp(`<${tag}>(.*?)</${tag}>`, "gs");
+    const regex = new RegExp(`<${tag}[^>]*?>(.*?)</${tag}>`, "gs");
     return text.replace(regex, (_match, content) => {
       const escapedContent = escapeMarkdown(content);
       return `<${tag}>${escapedContent}</${tag}>`;
@@ -86,6 +90,9 @@ export function MessageMarkdown({
             {
               ...defaultSchema,
               tagNames: [...(defaultSchema.tagNames || []), ...CustomHtmlTags],
+              attributes: {
+                ...defaultSchema.attributes,
+              },
             },
           ],
         ]}
@@ -94,6 +101,14 @@ export function MessageMarkdown({
             const { children } = props;
             const filepath = String(children);
             return <FileBadge path={filepath} />;
+          },
+          workflow: (props: WorkflowComponentProps) => {
+            const { children } = props;
+            return (
+              <span className="space-x-0.5 rounded bg-muted box-decoration-clone px-1.5 py-0.5 align-middle font-medium text-foreground text-sm">
+                /{children}
+              </span>
+            );
           },
           code({ className, children, ...props }) {
             if (children && Array.isArray(children) && children.length) {

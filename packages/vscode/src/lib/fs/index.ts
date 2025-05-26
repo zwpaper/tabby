@@ -55,3 +55,48 @@ export async function isBinaryFile(fileUri: vscode.Uri): Promise<boolean> {
   }
   return false;
 }
+
+/**
+ * Generic file reader with error handling
+ */
+export async function readFileContent(
+  filePath: string,
+): Promise<string | null> {
+  try {
+    const fileUri = vscode.Uri.file(filePath);
+    const fileContent = await vscode.workspace.fs.readFile(fileUri);
+    return Buffer.from(fileContent).toString("utf8");
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Generic directory reader with filtering
+ */
+export async function readDirectoryFiles(
+  directoryUri: vscode.Uri,
+  fileFilter: (name: string, type: vscode.FileType) => boolean,
+): Promise<string[]> {
+  try {
+    const stat = await vscode.workspace.fs.stat(directoryUri);
+    if (stat.type !== vscode.FileType.Directory) {
+      return [];
+    }
+
+    const entries = await vscode.workspace.fs.readDirectory(directoryUri);
+    const files: string[] = [];
+
+    for (const [name, type] of entries) {
+      if (fileFilter(name, type)) {
+        const fileUri = vscode.Uri.joinPath(directoryUri, name);
+        const relativePath = vscode.workspace.asRelativePath(fileUri);
+        files.push(relativePath);
+      }
+    }
+
+    return files;
+  } catch (error) {
+    return [];
+  }
+}

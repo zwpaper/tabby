@@ -1,5 +1,10 @@
 import os from "node:os";
 import * as vscode from "vscode";
+import { readDirectoryFiles, readFileContent } from "./fs";
+
+// Path constants - using arrays for consistency
+const WorkspaceRulesFilePath = ["README.pochi.md"];
+const WorkflowsDirPath = [".pochirules", "workflows"];
 
 /**
  * Gets system information such as current working directory, shell, OS, and home directory.
@@ -20,17 +25,28 @@ export function getSystemInfo(): {
   return { cwd, shell, os: platform, homedir };
 }
 
-export function getWorkspaceRulesFileUri() {
+/**
+ * Gets a URI relative to workspace root, or fallback to current directory
+ */
+function getWorkspaceUri(...pathSegments: string[]): vscode.Uri {
   if (
     vscode.workspace.workspaceFolders &&
     vscode.workspace.workspaceFolders.length > 0
   ) {
     return vscode.Uri.joinPath(
       vscode.workspace.workspaceFolders[0].uri,
-      "README.pochi.md",
+      ...pathSegments,
     );
   }
-  return vscode.Uri.file("README.pochi.md");
+  return vscode.Uri.file(pathSegments.join("/"));
+}
+
+export function getWorkspaceRulesFileUri() {
+  return getWorkspaceUri(...WorkspaceRulesFilePath);
+}
+
+function getWorkflowsDirectoryUri() {
+  return getWorkspaceUri(...WorkflowsDirPath);
 }
 
 /**
@@ -38,14 +54,14 @@ export function getWorkspaceRulesFileUri() {
  * Uses VSCode APIs instead of Node.js fs functions for better reliability.
  *
  * @param customRuleFiles Array of paths to custom rule files
- * @returns A string containing all collected rules, or undefined if no rules found
+ * @returns A string containing all collected rules, or empty string if no rules found
  */
 export async function collectCustomRules(
   customRuleFiles: string[] = [],
 ): Promise<string> {
   let rules = "";
 
-  // Try to read README.pochi.md from workspace root
+  // Add workspace rules file if workspace exists
   if (
     vscode.workspace.workspaceFolders &&
     vscode.workspace.workspaceFolders.length > 0
@@ -53,18 +69,45 @@ export async function collectCustomRules(
     customRuleFiles.push(getWorkspaceRulesFileUri().fsPath);
   }
 
-  // Read custom rule files
+  // Read all rule files
   for (const rulePath of customRuleFiles) {
-    try {
-      // Convert string path to URI
-      const ruleUri = vscode.Uri.file(rulePath);
-      const ruleContent = await vscode.workspace.fs.readFile(ruleUri);
-      const rule = Buffer.from(ruleContent).toString("utf8");
-      rules += `# Rules from ${vscode.workspace.asRelativePath(rulePath)}\n${rule}\n`;
-    } catch (error) {
-      console.error(`Error reading custom rule file: ${rulePath}`);
+    const content = await readFileContent(rulePath);
+    if (content !== null) {
+      const relativePath = vscode.workspace.asRelativePath(rulePath);
+      rules += `# Rules from ${relativePath}\n${content}\n`;
     }
   }
 
   return rules;
+}
+
+/**
+ * Collects all workflow files from .pochirules/workflows directory
+ * @returns Array of workflow file paths
+ */
+export async function collectWorkflows(): Promise<
+  { name: string; content: string }[]
+> {
+  const workflowsDir = getWorkflowsDirectoryUri();
+  const isMarkdownFile = (name: string, type: vscode.FileType) =>
+    type === vscode.FileType.File && name.toLowerCase().endsWith(".md");
+  const files = await readDirectoryFiles(workflowsDir, isMarkdownFile);
+  return Promise.all(
+    files.map(async (file) => {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      const absolutePath = workspaceFolder
+        ? vscode.Uri.joinPath(workspaceFolder.uri, file).fsPath
+        : file;
+
+      const content = await readFileContent(absolutePath);
+
+      // e.g., ".pochirules/workflows/workflow1.md" -> "workflow1.md"
+      const fileName = file.split("/").pop() || file;
+
+      return {
+        name: fileName,
+        content: content || "",
+      };
+    }),
+  );
 }

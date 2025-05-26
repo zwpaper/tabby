@@ -1,8 +1,6 @@
-import * as vscode from "vscode";
-
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { GitStatus } from "@/integrations/git/git-status";
-import { collectCustomRules, getSystemInfo } from "@/lib/env";
+import { collectCustomRules, collectWorkflows, getSystemInfo } from "@/lib/env";
 import { ignoreWalk, isBinaryFile } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -40,6 +38,7 @@ import type {
 } from "@ragdoll/vscode-webui-bridge";
 import * as runExclusive from "run-exclusive";
 import { injectable, singleton } from "tsyringe";
+import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TabState } from "../editor/tab-state";
 
@@ -57,6 +56,9 @@ export class VSCodeHostImpl implements VSCodeHostApi {
     private readonly gitStatus: GitStatus,
     private readonly posthog: PostHog,
   ) {}
+  listWorkflowsInWorkspace(): Promise<{ name: string; content: string }[]> {
+    return collectWorkflows();
+  }
 
   readResourceURI = (): Promise<ResourceURI> => {
     throw new Error("Method not implemented.");

@@ -1,3 +1,6 @@
+import { debounceWithCachedValue } from "@/lib/debounce";
+import { fuzzySearchFiles, fuzzySearchWorkflows } from "@/lib/fuzzy-search";
+import { useActiveTabs } from "@/lib/hooks/use-active-tabs";
 import { vscodeHost } from "@/lib/vscode";
 import Document from "@tiptap/extension-document";
 import History from "@tiptap/extension-history";
@@ -13,16 +16,24 @@ import {
 } from "@tiptap/react";
 import { useEffect, useRef } from "react";
 import tippy from "tippy.js";
-import { PromptFormMentionExtension } from "./mention-extension";
+import {
+  PromptFormMentionExtension,
+  fileMentionPluginKey,
+} from "./context-mention/extension";
 import {
   MentionList,
-  type MentionListActions,
   type MentionListProps,
-} from "./mention-list";
+} from "./context-mention/mention-list";
 import "./prompt-form.css";
-import { debounceWithCachedValue } from "@/lib/debounce";
-import { useActiveTabs } from "@/lib/hooks/use-active-tabs";
-import uFuzzy from "@leeoniya/ufuzzy";
+import type { MentionListActions } from "./shared";
+import {
+  PromptFormWorkflowExtension,
+  workflowMentionPluginKey,
+} from "./workflow-mention/extension";
+import {
+  type WorkflowListProps,
+  WorkflowMentionList,
+} from "./workflow-mention/mention-list";
 
 const newLineCharacter = "\n";
 
@@ -102,17 +113,18 @@ export function FormEditor({
         Paragraph,
         Text,
         Placeholder.configure({
-          placeholder: "Ask anything, @ to mention",
+          placeholder: "Ask anything, @ to mention files, / to use workflows",
         }),
         CustomEnterKeyHandler(formRef, isLoadingRef),
         PromptFormMentionExtension.configure({
           suggestion: {
             char: "@",
+            pluginKey: fileMentionPluginKey,
             items: async ({ query }: { query: string }) => {
               const data = await debouncedListWorkspaceFiles();
               if (!data) return [];
 
-              return fuzzySearch(query, {
+              return fuzzySearchFiles(query, {
                 files: data.files,
                 haystack: data.haystack,
                 activeTabs: activeTabsRef.current,
@@ -130,7 +142,7 @@ export function FormEditor({
                 const data = await debouncedListWorkspaceFiles();
                 if (!data) return [];
 
-                return fuzzySearch(query, {
+                return fuzzySearchFiles(query, {
                   files: data.files,
                   haystack: data.haystack,
                   activeTabs: activeTabsRef.current,
@@ -163,6 +175,97 @@ export function FormEditor({
                       (extension) =>
                         extension.name === "custom-enter-key-handler",
                     );
+
+                  popup = tippy("body", {
+                    getReferenceClientRect: tiptapProps.clientRect,
+                    appendTo: () => document.body,
+                    content: component.element,
+                    showOnCreate: true,
+                    interactive: true,
+                    trigger: "manual",
+                    placement: "top-start",
+                    maxWidth: "none",
+                  });
+                },
+                onUpdate: (props) => {
+                  component.updateProps(props);
+                },
+                onExit: () => {
+                  popup[0].destroy();
+                  component.destroy();
+                },
+                onKeyDown: (props) => {
+                  if (props.event.key === "Escape") {
+                    popup[0].hide();
+                    return true;
+                  }
+
+                  return component.ref?.onKeyDown(props) ?? false;
+                },
+              };
+            },
+          },
+        }),
+        // Use the already configured PromptFormWorkflowExtension
+        PromptFormWorkflowExtension.configure({
+          suggestion: {
+            char: "/",
+            pluginKey: workflowMentionPluginKey,
+            items: async ({ query }: { query: string }) => {
+              const data = await debouncedListWorkflows();
+              if (!data) return [];
+
+              const workflowResults = fuzzySearchWorkflows(
+                query,
+                data.workflows,
+              );
+
+              return workflowResults.map((workflow) => ({
+                name: workflow.name,
+                content: workflow.content,
+                id: workflow.name,
+              }));
+            },
+            render: () => {
+              let component: ReactRenderer<
+                MentionListActions,
+                WorkflowListProps
+              >;
+              let popup: Array<{ destroy: () => void; hide: () => void }>;
+
+              // Fetch items function for WorkflowList
+              const fetchItems = async (query?: string) => {
+                const data = await debouncedListWorkflows();
+                if (!data) return [];
+                const workflowResults = fuzzySearchWorkflows(
+                  query,
+                  data.workflows,
+                );
+                return workflowResults.map((workflow) => ({
+                  name: workflow.name,
+                  content: workflow.content,
+                  id: workflow.name,
+                }));
+              };
+
+              return {
+                onStart: (props) => {
+                  const tiptapProps = props as {
+                    editor: unknown;
+                    clientRect?: () => DOMRect;
+                  };
+
+                  component = new ReactRenderer(WorkflowMentionList, {
+                    props: {
+                      ...props,
+                      fetchItems,
+                    },
+                    editor: props.editor,
+                  });
+
+                  if (!tiptapProps.clientRect) {
+                    return;
+                  }
 
                   popup = tippy("body", {
                     getReferenceClientRect: tiptapProps.clientRect,
@@ -268,92 +371,6 @@ export function FormEditor({
   );
 }
 
-function fuzzySearch(
-  needle: string | undefined,
-  data: {
-    haystack: string[];
-    files: { filepath: string; isDir: boolean }[];
-    activeTabs?: { filepath: string; isDir: boolean }[];
-  },
-): { filepath: string; isDir: boolean }[] {
-  const activeTabsSet = new Set(data.activeTabs?.map((d) => d.filepath) || []);
-
-  const uniqueFilesMap = new Map<
-    string,
-    { filepath: string; isDir: boolean }
-  >();
-
-  for (const file of data.files) {
-    uniqueFilesMap.set(file.filepath, file);
-  }
-
-  if (data.activeTabs) {
-    for (const tab of data.activeTabs) {
-      uniqueFilesMap.set(tab.filepath, tab);
-    }
-  }
-
-  if (!needle) {
-    const MAX_RESULTS = 500;
-    const allResults = Array.from(uniqueFilesMap.values());
-
-    return sortResultsByActiveTabs(allResults, activeTabsSet).slice(
-      0,
-      MAX_RESULTS,
-    );
-  }
-
-  const allFilepaths = new Set(data.haystack);
-
-  if (data.activeTabs) {
-    for (const tab of data.activeTabs) {
-      allFilepaths.add(tab.filepath);
-    }
-  }
-
-  const uf = new uFuzzy({});
-  const haystackArray = Array.from(allFilepaths);
-  const [_, info, order] = uf.search(haystackArray, needle);
-
-  if (!order) return [];
-
-  const searchResultsMap = new Map<
-    string,
-    { filepath: string; isDir: boolean }
-  >();
-
-  for (const i of order) {
-    const filepath = haystackArray[info.idx[i]];
-    const file = uniqueFilesMap.get(filepath);
-    if (file) {
-      searchResultsMap.set(filepath, file);
-    }
-  }
-
-  return sortResultsByActiveTabs(
-    Array.from(searchResultsMap.values()),
-    activeTabsSet,
-  );
-}
-
-function sortResultsByActiveTabs<T extends { filepath: string }>(
-  results: T[],
-  activeTabsSet: Set<string>,
-): T[] {
-  const activeResults: T[] = [];
-  const normalResults: T[] = [];
-
-  for (const result of results) {
-    if (activeTabsSet.has(result.filepath)) {
-      activeResults.push(result);
-    } else {
-      normalResults.push(result);
-    }
-  }
-
-  return [...activeResults, ...normalResults];
-}
-
 const debouncedListWorkspaceFiles = debounceWithCachedValue(
   async () => {
     const files = await vscodeHost.listFilesInWorkspace();
@@ -363,6 +380,19 @@ const debouncedListWorkspaceFiles = debounceWithCachedValue(
     };
   },
   1000 * 60, // 1 minute
+  {
+    leading: true,
+  },
+);
+
+export const debouncedListWorkflows = debounceWithCachedValue(
+  async () => {
+    const workflows = await vscodeHost.listWorkflowsInWorkspace();
+    return {
+      workflows,
+    };
+  },
+  1000 * 60,
   {
     leading: true,
   },
