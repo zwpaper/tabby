@@ -288,6 +288,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const latestHttpCode = useRef<number | undefined>(undefined);
   const {
     data,
+    setData,
     error: chatError,
     messages,
     setMessages,
@@ -302,26 +303,23 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   } = useChat({
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
-    onFinish: (_, { usage, finishReason }) => {
+    onFinish: (_, { finishReason }) => {
       vscodeHost.capture({
         event: "chatFinish",
         properties: {
           modelId: selectedModel?.id,
-          ...usage,
           finishReason,
         },
       });
 
       // Allow auto approve once user has submitted a message
       autoApproveGuard.current = true;
-
-      if (usage.totalTokens) {
-        setTotalTokens(usage.totalTokens);
-      }
     },
     experimental_prepareRequestBody: (req) =>
       prepareRequestBody(taskId, req, selectedModel?.id),
     fetch: async (url, options) => {
+      // Clear the data when a new request is made
+      setData(undefined);
       const resp = await fetch(url, {
         ...options,
         body:
@@ -490,11 +488,11 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!data || data.length === 0 || taskId.current !== undefined) return;
+    if (!data || data.length === 0) return;
 
     const dataParts = data as DataPart[];
     for (const part of dataParts) {
-      if (part.type === "append-id") {
+      if (taskId.current === undefined && part.type === "append-id") {
         vscodeHost.capture({
           event: "newTask",
         });
@@ -505,7 +503,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         vscodeHost.setSessionState({
           lastVisitedRoute: `/?taskId=${taskId.current}`,
         });
-        return;
+      } else if (part.type === "update-usage") {
+        setTotalTokens(part.totalTokens);
       }
     }
   }, [data, queryClient]);

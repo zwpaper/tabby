@@ -155,9 +155,6 @@ export type CaptureEvent =
       event: "chatFinish";
       properties: {
         modelId: string | undefined;
-        promptTokens: number;
-        completionTokens: number;
-        totalTokens: number;
         finishReason: string;
       };
     }

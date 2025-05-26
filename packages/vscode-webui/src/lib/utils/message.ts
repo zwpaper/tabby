@@ -1,5 +1,5 @@
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import type { CoreMessage } from "ai";
+import type { CoreMessage, LanguageModelUsage } from "ai";
 import { convertToCoreMessages } from "ai";
 
 export function createCoreMessagesForCopy(
@@ -31,4 +31,7 @@ export type DataPart =
   | {
       type: "append-id";
       id: number;
-    };
+    }
+  | ({
+      type: "update-usage";
+    } & LanguageModelUsage);

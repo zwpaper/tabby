@@ -138,7 +138,12 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               ...parsedMcpTools,
             },
             providerOptions,
-            onFinish: async ({ usage, finishReason, response }) => {
+            onFinish: async ({
+              usage,
+              finishReason,
+              response,
+              providerMetadata,
+            }) => {
               if (finishReason === "length") {
                 throw new Error("The response was too long.");
               }
@@ -147,21 +152,32 @@ const chat = new Hono<{ Variables: ContextVariables }>()
                 messages: preparedMessages,
                 responseMessages: response.messages,
               }) as UIMessage[];
-              const totalTokens = !Number.isNaN(usage.totalTokens)
-                ? usage.totalTokens
-                : undefined;
+              if (providerMetadata?.anthropic) {
+                const { cacheReadInputTokens } = providerMetadata.anthropic;
+                if (typeof cacheReadInputTokens === "number") {
+                  usage = {
+                    promptTokens: cacheReadInputTokens + usage.promptTokens,
+                    completionTokens: usage.completionTokens,
+                    totalTokens: cacheReadInputTokens + usage.totalTokens,
+                  };
+                }
+              }
+
               await taskService.finishStreaming(
                 id,
                 user.id,
                 finalMessages,
                 finishReason,
-                totalTokens,
+                usage.totalTokens,
                 !!req.notify,
               );
 
-              if (totalTokens) {
-                await usageService.trackUsage(user, requestedModelId, usage);
-              }
+              await usageService.trackUsage(user, requestedModelId, usage);
+
+              stream.writeData({
+                type: "update-usage",
+                ...usage,
+              });
             },
             headers:
               requestedModelId.includes("claude-4") && EnableInterleavedThinking
@@ -216,7 +232,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         }
 
         if (isAbortError(error)) {
-          console.log("Request Aborted", error);
+          console.log("Request Aborted");
           return "Request was aborted.";
         }
 
