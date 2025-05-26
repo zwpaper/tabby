@@ -26,8 +26,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   container.resolve(RagdollWebviewProvider);
   container.resolve(RagdollUriHandler);
-  // FIXME(zhiming): remove status bar controller
-  // container.resolve(StatusBarController);
   container.resolve(CommandManager);
   container.resolve(DiffOriginContentProvider);
 }
