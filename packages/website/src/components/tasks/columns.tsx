@@ -53,8 +53,8 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => {
       return (
         <div className="flex space-x-2">
-          {row.original.eventType && (
-            <Badge variant="outline">{row.original.eventType}</Badge>
+          {row.original.event?.type && (
+            <Badge variant="outline">{row.original.event.type}</Badge>
           )}
           <span className="max-w-[500px] truncate font-medium">
             {row.getValue("title")}

@@ -311,7 +311,7 @@ class TaskService {
         "updatedAt",
         "status",
         "totalTokens",
-        sql<UserEvent["type"] | null>`event -> 'type'`.as("eventType"),
+        "event",
         titleSelect,
       ])
       .orderBy("taskId", "desc")
@@ -355,6 +355,7 @@ class TaskService {
         "status",
         "conversation",
         "totalTokens",
+        "event",
         titleSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
       ])
