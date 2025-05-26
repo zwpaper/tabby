@@ -146,12 +146,6 @@ export type CaptureEvent =
       properties?: undefined;
     }
   | {
-      event: "addToolResult";
-      properties: {
-        toolName: string;
-      };
-    }
-  | {
       event: "chatFinish";
       properties: {
         modelId: string | undefined;
@@ -162,5 +156,13 @@ export type CaptureEvent =
       event: "selectWorkflow";
       properties: {
         workflowId: string;
+      };
+    }
+  | {
+      event: "executeToolCall";
+      properties: {
+        toolName: string;
+        durationMs: number;
+        status: "success" | "error" | "aborted";
       };
     };

@@ -33,13 +33,6 @@ export function useVSCodeTool({
         };
       }
 
-      vscodeHost.capture({
-        event: "addToolResult",
-        properties: {
-          toolName: tool.toolName,
-        },
-      });
-
       addToolResult({
         toolCallId: tool.toolCallId,
         result,

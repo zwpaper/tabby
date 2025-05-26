@@ -193,13 +193,29 @@ export class VSCodeHostImpl implements VSCodeHostApi {
 
       const abortSignal = new ThreadAbortSignal(options.abortSignal);
 
-      return safeCall(
+      const toolCallStart = Date.now();
+      const result = await safeCall(
         tool(args, {
           abortSignal,
           messages: [],
           toolCallId: options.toolCallId,
         }),
       );
+
+      this.capture({
+        event: "executeToolCall",
+        properties: {
+          toolName,
+          durationMs: Date.now() - toolCallStart,
+          status: abortSignal.aborted
+            ? "aborted"
+            : result.error
+              ? "error"
+              : "success",
+        },
+      });
+
+      return result;
     },
   );
 
