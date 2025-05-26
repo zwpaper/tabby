@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useReadyForRetryError } from "@/features/approval/hooks/use-ready-for-retry-error";
 import { useRetry } from "@/features/approval/hooks/use-retry";
 import { apiClient } from "@/lib/auth-client";
+import { useAppendInitMessage } from "@/lib/hooks/use-append-init-message";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import { ChatStateProvider, useChatState } from "@/lib/stores/chat-state";
@@ -378,19 +379,12 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     data,
   });
 
-  const initMessageSent = useRef<boolean>(false);
-  useEffect(() => {
-    if (
-      taskId.current === undefined &&
-      // Requires models to be loaded before sending the initial message
-      !isModelsLoading &&
-      initMessage &&
-      !initMessageSent.current
-    ) {
-      initMessageSent.current = true;
-      append(initMessage);
-    }
-  }, [initMessage, isModelsLoading, append]);
+  useAppendInitMessage({
+    taskId: taskId.current,
+    initMessage,
+    isModelsLoading,
+    append,
+  });
 
   useEffect(() => {
     const handler = setTimeout(() => {
