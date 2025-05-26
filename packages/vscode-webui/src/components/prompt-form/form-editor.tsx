@@ -354,11 +354,11 @@ export function FormEditor({
         // do nothing
       }}
     >
+      {children}
       <EditorContent
         editor={editor}
         className="prose !border-none max-h-32 min-h-20 w-full max-w-none overflow-hidden overflow-y-auto break-words text-[var(--vscode-input-foreground)] focus:outline-none"
       />
-      {children}
     </form>
   );
 }

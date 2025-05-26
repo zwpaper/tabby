@@ -48,6 +48,7 @@ import { PreviewTool } from "@/components/preview-tool";
 import "@/components/prompt-form/prompt-form.css";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { TokenUsage } from "@/components/token-usage";
+import { FileBadge } from "@/components/tool-invocation/file-badge";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import {
   ApprovalButton,
@@ -57,11 +58,13 @@ import {
 import { usePendingApproval } from "@/features/approval/hooks/use-pending-approval";
 import { TodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
+import { useActiveSelection } from "@/lib/hooks/use-active-selection";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useLatest } from "@/lib/hooks/use-latest";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { cn } from "@/lib/utils";
 import {
   createImageFileName,
   isDuplicateFile,
@@ -524,6 +527,8 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     status,
   });
 
+  const activeSelection = useActiveSelection();
+
   const retryImpl = useRetry({
     error,
     messages,
@@ -645,21 +650,54 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               editorRef={editorRef}
               onPaste={handlePasteImage}
             >
-              {isDevMode && (
-                <span className="absolute top-1 right-2 text-foreground/80 text-xs">
-                  <span className="flex items-center gap-1">
-                    <Bug className="inline size-3" />
-                    <span>{status}</span>
-                    {pendingApproval?.name === "retry" ? (
-                      <div>
-                        <span>Attempts: {pendingApproval.attempts}</span> /{" "}
-                        <span>Countdown: {pendingApproval.countdown}</span> /{" "}
-                        <span>Delay: {pendingApproval.delay}</span>
-                      </div>
-                    ) : undefined}
+              <div className="mt-1 select-none pl-2">
+                <div
+                  className={cn(
+                    "inline-flex h-[1.7rem] max-w-full items-center gap-1 overflow-hidden truncate rounded-sm border border-[var(--vscode-chat-requestBorder)]",
+                    {
+                      "border-dashed italic": !activeSelection,
+                    },
+                  )}
+                >
+                  {activeSelection ? (
+                    <>
+                      <FileBadge
+                        className="hover:!bg-transparent !py-0 m-0 cursor-default truncate rounded-sm border-none"
+                        labelClassName="whitespace-nowrap"
+                        label={activeSelection.filepath.split("/").pop()}
+                        path={activeSelection.filepath}
+                        startLine={activeSelection.range.start.line}
+                        endLine={activeSelection.range.end.line}
+                        onClick={() => {
+                          editorRef.current?.commands.focus();
+                        }}
+                      />
+                      <span className="px-1 text-muted-foreground text-sm">
+                        Current file
+                      </span>
+                    </>
+                  ) : (
+                    <p className="px-3 text-muted-foreground text-sm">
+                      No active file
+                    </p>
+                  )}
+                </div>
+                {isDevMode && (
+                  <span className="absolute top-1 right-2 text-foreground/80 text-xs">
+                    <span className="flex items-center gap-1">
+                      <Bug className="inline size-3" />
+                      <span>{status}</span>
+                      {pendingApproval?.name === "retry" ? (
+                        <div>
+                          <span>Attempts: {pendingApproval.attempts}</span> /{" "}
+                          <span>Countdown: {pendingApproval.countdown}</span> /{" "}
+                          <span>Delay: {pendingApproval.delay}</span>
+                        </div>
+                      ) : undefined}
+                    </span>
                   </span>
-                </span>
-              )}
+                )}
+              </div>
             </FormEditor>
 
             {/* Hidden file input for image uploads */}

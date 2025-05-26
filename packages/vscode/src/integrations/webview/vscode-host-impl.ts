@@ -40,7 +40,7 @@ import * as runExclusive from "run-exclusive";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { TabState } from "../editor/tab-state";
+import { type FileSelection, TabState } from "../editor/tab-state";
 
 const logger = getLogger("VSCodeHostImpl");
 
@@ -137,6 +137,12 @@ export class VSCodeHostImpl implements VSCodeHostApi {
     ThreadSignalSerialization<Array<{ filepath: string; isDir: boolean }>>
   > => {
     return ThreadSignal.serialize(this.tabState.activeTabs);
+  };
+
+  readActiveSelection = async (): Promise<
+    ThreadSignalSerialization<FileSelection | undefined>
+  > => {
+    return ThreadSignal.serialize(this.tabState.activeSelection);
   };
 
   readCurrentWorkspace = async (): Promise<string | undefined> => {

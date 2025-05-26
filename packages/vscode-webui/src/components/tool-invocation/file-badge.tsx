@@ -10,6 +10,7 @@ interface FileBadgeProps {
   endLine?: number;
   onClick?: () => void;
   className?: string;
+  labelClassName?: string;
 }
 
 export const FileBadge: React.FC<FileBadgeProps> = ({
@@ -19,9 +20,10 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
   endLine,
   onClick,
   className,
+  labelClassName,
 }) => {
   const lineRange = startLine
-    ? endLine
+    ? endLine && startLine !== endLine
       ? `:${startLine}-${endLine}`
       : `:${startLine}`
     : "";
@@ -43,7 +45,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
       )}
     >
       <FileIcon path={path} />
-      <span className="ml-0.5 break-words">
+      <span className={cn("ml-0.5 break-words", labelClassName)}>
         {addLineBreak(label || path)}
         <span className="text-zinc-500 dark:text-zinc-400">{lineRange}</span>
       </span>

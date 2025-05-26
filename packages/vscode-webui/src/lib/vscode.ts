@@ -49,6 +49,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "executeToolCall",
         "listFilesInWorkspace",
         "readActiveTabs",
+        "readActiveSelection",
         "readCurrentWorkspace",
         "previewToolCall",
         "openFile",
