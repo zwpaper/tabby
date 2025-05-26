@@ -1,3 +1,4 @@
+import { vscodeHost } from "@/lib/vscode";
 import { FileIcon } from "lucide-react";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { MentionListActions } from "../shared";
@@ -34,6 +35,12 @@ export const WorkflowMentionList = forwardRef<
   const items = useMentionItems(initialItems, query, fetchItems);
 
   const handleSelect = async (item: WorkflowItem) => {
+    vscodeHost.capture({
+      event: "selectWorkflow",
+      properties: {
+        workflowId: item.id,
+      },
+    });
     command(item);
   };
 

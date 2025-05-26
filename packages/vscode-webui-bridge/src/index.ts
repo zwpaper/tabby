@@ -155,4 +155,10 @@ export type CaptureEvent =
         totalTokens: number;
         finishReason: string;
       };
+    }
+  | {
+      event: "selectWorkflow";
+      properties: {
+        workflowId: string;
+      };
     };
