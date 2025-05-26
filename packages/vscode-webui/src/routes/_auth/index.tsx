@@ -22,6 +22,7 @@ import {
   Bug,
   ImageIcon,
   Loader2,
+  Plus,
   SendHorizonal,
   StopCircleIcon,
 } from "lucide-react";
@@ -654,30 +655,39 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
                   className={cn(
                     "inline-flex h-[1.7rem] max-w-full items-center gap-1 overflow-hidden truncate rounded-sm border border-[var(--vscode-chat-requestBorder)]",
                     {
-                      "border-dashed italic": !activeSelection,
+                      "border-dashed": !activeSelection,
                     },
                   )}
                 >
                   {activeSelection ? (
-                    <>
-                      <FileBadge
-                        className="hover:!bg-transparent !py-0 m-0 cursor-default truncate rounded-sm border-none"
-                        labelClassName="whitespace-nowrap"
-                        label={activeSelection.filepath.split("/").pop()}
-                        path={activeSelection.filepath}
-                        startLine={activeSelection.range.start.line}
-                        endLine={activeSelection.range.end.line}
-                        onClick={() => {
-                          editorRef.current?.commands.focus();
-                        }}
-                      />
-                      <span className="px-1 text-muted-foreground text-sm">
-                        Current file
-                      </span>
-                    </>
+                    <FileBadge
+                      className="hover:!bg-transparent !py-0 m-0 cursor-default truncate rounded-sm border-none pr-1"
+                      labelClassName="whitespace-nowrap"
+                      label={activeSelection.filepath.split("/").pop()}
+                      path={activeSelection.filepath}
+                      startLine={
+                        activeSelection.content.length > 0
+                          ? activeSelection.range.start.line
+                          : undefined
+                      }
+                      endLine={
+                        activeSelection.content.length > 0
+                          ? activeSelection.range.end.line
+                          : undefined
+                      }
+                      onClick={() => {
+                        editorRef.current?.commands.focus();
+                      }}
+                    />
                   ) : (
-                    <p className="px-3 text-muted-foreground text-sm">
-                      No active file
+                    <p
+                      className="flex items-center gap-1 px-2 text-muted-foreground text-sm"
+                      onClick={() =>
+                        editorRef.current?.commands.insertContent(" @")
+                      }
+                    >
+                      <Plus className="size-3" />
+                      Add Context
                     </p>
                   )}
                 </div>

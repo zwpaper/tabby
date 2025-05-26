@@ -20,6 +20,9 @@ export function EmptyChatPlaceholder() {
         <li className="mb-2 flex items-center">
           <span className="mr-2 text-base">@</span> to attach context
         </li>
+        <li className="mb-2 flex items-center">
+          <span className="mr-3 ml-1 text-base">/</span> to trigger workflow
+        </li>
       </ul>
     </div>
   );

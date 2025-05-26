@@ -113,7 +113,7 @@ export function FormEditor({
         Paragraph,
         Text,
         Placeholder.configure({
-          placeholder: "Ask anything, @ to mention files, / to use workflows",
+          placeholder: "Ask anything ...",
         }),
         CustomEnterKeyHandler(formRef, isLoadingRef),
         PromptFormMentionExtension.configure({
