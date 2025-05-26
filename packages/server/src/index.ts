@@ -25,16 +25,24 @@ export class UserEventSource {
     );
   }
 
-  subscribe(type: string, listener: (e: UserEvent) => void) {
+  subscribe<T extends { type: string }>(
+    type: string,
+    listener: (data: T) => void,
+  ) {
     this.ws.addEventListener("message", (message) => {
-      if (typeof message.data !== "string") return;
-      const data = JSON.parse(message.data) as UserEvent;
-      if (
-        data.type === type ||
-        type === "*" ||
-        (type.endsWith("*") && data.type.startsWith(type.slice(0, -1)))
-      ) {
-        listener(data);
+      try {
+        if (typeof message.data !== "string") return;
+        const data = JSON.parse(message.data) as T;
+
+        if (
+          data.type === type ||
+          type === "*" ||
+          (type.endsWith("*") && data.type.startsWith(type.slice(0, -1)))
+        ) {
+          listener(data);
+        }
+      } catch (error) {
+        console.error(`Error processing ${type} event:`, error);
       }
     });
   }

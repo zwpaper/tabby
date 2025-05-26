@@ -10,6 +10,7 @@
   "dependencies": {
     "ai": "catalog:",
     "zod": "catalog:",
-    "remeda": "catalog:"
+    "remeda": "catalog:",
+    "@ragdoll/db": "workspace:*"
   }
 }

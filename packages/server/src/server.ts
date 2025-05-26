@@ -1,10 +1,10 @@
 import "./lib/laminar";
 
+import type { TaskEvent, UserEvent } from "@ragdoll/common";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { etag } from "hono/etag";
 import { logger } from "hono/logger";
-import type { UserEvent } from ".";
 import admin from "./api/admin";
 import billing from "./api/billing";
 import chat from "./api/chat";
@@ -121,6 +121,14 @@ export function getUserEventChannel(userId: string) {
 
 export function publishUserEvent(userId: string, event: UserEvent) {
   server.publish(getUserEventChannel(userId), JSON.stringify(event));
+}
+
+export function getTaskEventChannel(userId: string) {
+  return `task-events:${userId}`;
+}
+
+export function publishTaskEvent(userId: string, event: TaskEvent) {
+  server.publish(getTaskEventChannel(userId), JSON.stringify(event));
 }
 
 export function after(_promise: Promise<unknown>): void {}

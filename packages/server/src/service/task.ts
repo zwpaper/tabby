@@ -15,6 +15,7 @@ import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import type { z } from "zod";
 import { db } from "../db";
+import { publishTaskEvent } from "../server";
 import type { ZodChatRequestType } from "../types";
 import { slackService } from "./slack";
 
@@ -75,6 +76,14 @@ class TaskService {
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
+    publishTaskEvent(userId, {
+      type: "task:status-changed",
+      data: {
+        taskId: id,
+        status: "streaming",
+      },
+    });
+
     return {
       id,
       streamId,
@@ -107,9 +116,18 @@ class TaskService {
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
+    publishTaskEvent(userId, {
+      type: "task:status-changed",
+      data: {
+        taskId,
+        status: status,
+      },
+    });
+
     this.streamingTasks.delete(StreamingTask.key(userId, taskId));
+
     if (notify) {
-      await this.sendTaskCompletionNotification(userId, taskId, status);
+      this.sendTaskCompletionNotification(userId, taskId, status);
     }
   }
 
@@ -120,6 +138,14 @@ class TaskService {
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .execute();
+
+    publishTaskEvent(userId, {
+      type: "task:status-changed",
+      data: {
+        taskId,
+        status: "failed",
+      },
+    });
 
     this.streamingTasks.delete(StreamingTask.key(userId, taskId));
   }

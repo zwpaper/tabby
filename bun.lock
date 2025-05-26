@@ -17,6 +17,7 @@
       "name": "@ragdoll/common",
       "version": "0.0.1",
       "dependencies": {
+        "@ragdoll/db": "workspace:*",
         "ai": "catalog:",
         "remeda": "catalog:",
         "zod": "catalog:",
