@@ -316,6 +316,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
       // Allow auto approve once user has submitted a message
       autoApproveGuard.current = true;
     },
+    onError: () => {
+      autoApproveGuard.current = true;
+    },
     experimental_prepareRequestBody: (req) =>
       prepareRequestBody(taskId, req, selectedModel?.id),
     fetch: async (url, options) => {
