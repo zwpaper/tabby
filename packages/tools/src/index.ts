@@ -12,11 +12,10 @@ import { listFiles } from "./list-files";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
-import type { ToolFunctionType } from "./types";
-import { webFetch } from "./web-fetch";
-export type { ToolFunctionType };
+export type { PreviewToolFunctionType, ToolFunctionType } from "./types";
 import type { Tool } from "ai";
 import { slackReplyThread } from "./slack-reply-thread";
+import { webFetch } from "./web-fetch";
 import { writeToFile } from "./write-to-file";
 
 export function isUserInputTool(toolName: string): boolean {

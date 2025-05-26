@@ -1,10 +1,7 @@
 import { DiffView } from "@/integrations/editor/diff-view";
 import { fixCodeGenerationOutput } from "@/tools/output-utils";
 import type { ClientToolsType } from "@ragdoll/tools";
-import type {
-  PreviewToolFunctionType,
-  ToolFunctionType,
-} from "@ragdoll/tools/src/types";
+import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
 
 export const previewWriteToFile: PreviewToolFunctionType<
   ClientToolsType["writeToFile"]

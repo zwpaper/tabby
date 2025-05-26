@@ -25,11 +25,11 @@ import {
 } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/common";
 import {
+  type PreviewToolFunctionType,
   ServerToolApproved,
   ServerTools,
   type ToolFunctionType,
 } from "@ragdoll/tools";
-import type { PreviewToolFunctionType } from "@ragdoll/tools/src/types";
 import type {
   CaptureEvent,
   ResourceURI,
