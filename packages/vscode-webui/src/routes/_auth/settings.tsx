@@ -9,12 +9,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient } from "@/lib/auth-client";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
-import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, EllipsisVertical } from "lucide-react";
+import { ChevronLeft, ChevronsUpDown, LogOut } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_auth/settings")({
@@ -65,63 +67,54 @@ const AccountSection: React.FC = () => {
   const { auth: authData } = Route.useRouteContext();
 
   return (
-    <Section>
-      <div className="flex items-center justify-between gap-3">
-        <a
-          href={`${getServerBaseUrl()}/account`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex flex-grow items-center gap-3 rounded-md p-2 hover:bg-secondary"
-        >
-          <Avatar className="size-10">
-            <AvatarImage src={authData.user.image ?? undefined} />
-            <AvatarFallback>
-              {authData.user.name
-                ? authData.user.name.charAt(0).toUpperCase()
-                : "U"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="font-semibold">
-              {authData.user.name || `USER-${authData.user.id}`}
-            </span>
-            {authData.user.email && (
-              <span className="text-muted-foreground text-sm">
-                {authData.user.email}
-              </span>
-            )}
+    <Section className="pt-0">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <div className="flex flex-grow cursor-pointer items-center justify-between gap-3 rounded-md p-2 hover:bg-secondary">
+            <div className="flex items-center gap-3">
+              <Avatar className="size-10">
+                <AvatarImage src={authData.user.image ?? undefined} />
+                <AvatarFallback>
+                  {authData.user.name
+                    ? authData.user.name.charAt(0).toUpperCase()
+                    : "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-semibold">
+                  {authData.user.name || `USER-${authData.user.id}`}
+                </span>
+                {authData.user.email && (
+                  <span className="text-muted-foreground text-sm">
+                    {authData.user.email}
+                  </span>
+                )}
+              </div>
+            </div>
+            <ChevronsUpDown className="size-5" />
           </div>
-        </a>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="rounded-full p-2 hover:bg-secondary"
-              aria-label="Account options"
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <a
+              href="command:ragdoll.logout"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <EllipsisVertical className="size-5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <a
-                href="command:ragdoll.logout"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Sign Out
-              </a>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+              <LogOut className="size-4" />
+              Sign Out
+            </a>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Quota />
     </Section>
   );
 };
 
 const WorkspaceRulesSection: React.FC = () => {
   return (
-    <Section>
+    <Section title="Rules">
       <div className="flex items-center gap-3">
         <a
           href="command:ragdoll.editWorkspaceRules"
@@ -166,6 +159,76 @@ const AdvancedSettingsSection: React.FC = () => {
         />
       </div>
     </AccordionSection>
+  );
+};
+
+const Quota: React.FC = () => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["billingQuota"],
+    queryFn: async () => {
+      const res = await apiClient.api.billing.quota.me.$get();
+      if (!res.ok) {
+        throw new Error("Failed to fetch quota");
+      }
+      return await res.json();
+    },
+  });
+
+  if (isLoading) {
+    return <Skeleton className="mb-6 h-24 w-full bg-secondary" />;
+  }
+
+  if (error) {
+    return null;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const { usages, limits } = data;
+  const basicUsagePercent =
+    limits.basic > 0 ? Math.min((usages.basic / limits.basic) * 100, 100) : 0;
+  const premiumUsagePercent =
+    limits.premium > 0
+      ? Math.min((usages.premium / limits.premium) * 100, 100)
+      : 0;
+
+  return (
+    <div className="select-none px-2">
+      <div className="space-y-2">
+        {data.plan === "Community" && (
+          <div className="flex flex-col gap-1">
+            <div className="mb-0.5 flex justify-between text-sm">
+              <span className="text-muted-foreground">Basic</span>
+              <span className="font-mono">
+                {usages.basic} / {limits.basic}
+              </span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+              <div
+                className="h-1 rounded-full bg-primary"
+                style={{ width: `${basicUsagePercent}%` }}
+              />
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col gap-1">
+          <div className="mb-0.5 flex justify-between text-sm">
+            <span className="text-muted-foreground">Premium</span>
+            <span className="font-mono">
+              {usages.premium} / {limits.premium}
+            </span>
+          </div>
+          <div className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+            <div
+              className="h-1 rounded-full bg-primary"
+              style={{ width: `${premiumUsagePercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
