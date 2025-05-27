@@ -2,8 +2,8 @@ import type { Environment, UserEvent } from "@ragdoll/common";
 import type { Todo } from "@ragdoll/common";
 import { fromUIMessages, toUIMessage, toUIMessages } from "@ragdoll/common";
 import { formatters } from "@ragdoll/common";
-import { parseTitle } from "@ragdoll/common/message-utils";
 import type { DBMessage } from "@ragdoll/common";
+import { parseTitle } from "@ragdoll/common/message-utils";
 import type { DB } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
 import {
@@ -242,8 +242,6 @@ class TaskService {
       conversation: {
         messages: [message],
       },
-      // dont set status or now
-      status: undefined,
     });
   }
 
@@ -252,8 +250,6 @@ class TaskService {
     taskData: Partial<{
       event: UserEvent | null;
       conversation: { messages: DBMessage[] } | null;
-      environment: Environment | null;
-      status: DB["task"]["status"]["__select__"];
     }>,
   ): Promise<number> {
     const { taskId } = await db.transaction().execute(async (trx) => {

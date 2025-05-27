@@ -16,7 +16,7 @@ import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { vscodeHost } from "@/lib/vscode";
-import { getWorkflowPath } from "@ragdoll/common";
+import { getWorkflowPath } from "@/lib/workflow";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
