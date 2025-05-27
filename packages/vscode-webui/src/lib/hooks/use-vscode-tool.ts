@@ -1,7 +1,7 @@
 import type { useChat } from "@ai-sdk/react";
 import { ThreadAbortSignal } from "@quilted/threads";
 import type { ToolInvocation } from "ai";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { vscodeHost } from "../vscode";
 
 export function useVSCodeTool({
@@ -10,6 +10,9 @@ export function useVSCodeTool({
   addToolResult: ReturnType<typeof useChat>["addToolResult"];
 }) {
   const abort = useRef(new AbortController());
+  useUnmountOnce(() => {
+    abort.current.abort();
+  });
 
   const abortTool = useCallback(() => {
     abort.current.abort();
@@ -52,4 +55,30 @@ export function useVSCodeTool({
     [addToolResult],
   );
   return { executeTool, rejectTool, abortTool };
+}
+
+function useUnmountOnce(fn: () => void) {
+  if (process.env.NODE_ENV === "development") {
+    // We need to unmount twice in development mode because of React Strict Mode
+    const unmountCountDown = useRef(2);
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies(fn): run once on unmount
+    useEffect(() => {
+      return () => {
+        unmountCountDown.current--;
+        if (unmountCountDown.current === 0) {
+          fn();
+        } else if (unmountCountDown.current < 0) {
+          throw new Error("useUnmountOnce unmounted too many times");
+        }
+      };
+    }, []);
+  } else {
+    // biome-ignore lint/correctness/useExhaustiveDependencies(fn): run once on unmount
+    useEffect(() => {
+      return () => {
+        fn();
+      };
+    }, []);
+  }
 }
