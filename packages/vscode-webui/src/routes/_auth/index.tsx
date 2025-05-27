@@ -302,6 +302,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     addToolResult,
     experimental_resume,
   } = useChat({
+    experimental_throttle: 100,
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
     onFinish: (_, { finishReason }) => {
