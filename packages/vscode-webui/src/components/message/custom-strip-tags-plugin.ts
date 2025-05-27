@@ -1,5 +1,4 @@
 import type { Root } from "hast";
-// import type { Raw } from 'react-markdown'
 import { visit } from "unist-util-visit";
 
 type Raw = {

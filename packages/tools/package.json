@@ -4,8 +4,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@ai-sdk/ui-utils": "catalog:",
     "@ragdoll/common": "workspace:*",
     "ai": "catalog:",
+    "json-schema": "^0.4.0",
     "zod": "catalog:"
   }
 }

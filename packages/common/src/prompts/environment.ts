@@ -1,5 +1,6 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
-import type { Environment, UserEvent } from "@ragdoll/common";
+import type { UserEvent } from "..";
+import type { Environment } from "../environment";
 
 export function getReadEnvironmentResult(
   environment: Environment,

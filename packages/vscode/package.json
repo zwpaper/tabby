@@ -149,8 +149,11 @@
     "release": "bunx bumpp --tag=vscode@%s"
   },
   "dependencies": {
+    "@ragdoll/common": "workspace:*",
+    "@ragdoll/server": "workspace:*",
     "@preact/signals-core": "catalog:",
     "@quilted/threads": "catalog:",
+    "better-auth": "catalog:",
     "diff": "^7.0.0",
     "fast-deep-equal": "^3.1.3",
     "file-type": "^20.4.1",

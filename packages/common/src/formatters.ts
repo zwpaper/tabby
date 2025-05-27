@@ -1,8 +1,8 @@
-import { prompts } from "@ragdoll/common";
 import { isUserInputTool } from "@ragdoll/tools";
 import { type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
+import { prompts } from "./prompts";
 import { EnvironmentDetailsTag } from "./prompts/environment";
 
 export function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {

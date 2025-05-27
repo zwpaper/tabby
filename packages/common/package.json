@@ -11,9 +11,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
+    "@ai-sdk/ui-utils": "catalog:",
     "@ragdoll/db": "workspace:*",
+    "@ragdoll/tools": "workspace:*",
     "ai": "catalog:",
-    "hast": "^1.0.0",
     "hast-util-to-text": "^4.0.2",
     "rehype": "^13.0.2",
     "remeda": "catalog:",
