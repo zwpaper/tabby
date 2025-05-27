@@ -72,7 +72,8 @@ app.use(
         if (
           hostname === "vscode-cdn.net" ||
           hostname.endsWith(".vscode-cdn.net") ||
-          hostname === "vscode.ikw.app"
+          hostname === "vscode.ikw.app" ||
+          hostname.endsWith(".e2b.app")
         ) {
           return origin;
         }
