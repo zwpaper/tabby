@@ -2,6 +2,7 @@ import type { Environment, UserEvent } from "@ragdoll/common";
 import type { Todo } from "@ragdoll/common";
 import { fromUIMessages, toUIMessage, toUIMessages } from "@ragdoll/common";
 import { formatters } from "@ragdoll/common";
+import type { DBMessage } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
 import {
@@ -225,6 +226,35 @@ class TaskService {
   }
 
   private async create(userId: string, event: UserEvent | null = null) {
+    return await this.createTaskImpl(userId, {
+      event,
+    });
+  }
+
+  async createWithMessage(
+    userId: string,
+    message: DBMessage,
+    event?: UserEvent,
+  ): Promise<number> {
+    return await this.createTaskImpl(userId, {
+      event: event || null,
+      conversation: {
+        messages: [message],
+      },
+      // dont set status or now
+      status: undefined,
+    });
+  }
+
+  private async createTaskImpl(
+    userId: string,
+    taskData: Partial<{
+      event: UserEvent | null;
+      conversation: { messages: DBMessage[] } | null;
+      environment: Environment | null;
+      status: DB["task"]["status"]["__select__"];
+    }>,
+  ): Promise<number> {
     const { taskId } = await db.transaction().execute(async (trx) => {
       const { nextTaskId } = await trx
         .insertInto("taskSequence")
@@ -242,7 +272,7 @@ class TaskService {
         .values({
           userId,
           taskId: nextTaskId,
-          event,
+          ...taskData,
         })
         .returning("taskId")
         .executeTakeFirstOrThrow();
