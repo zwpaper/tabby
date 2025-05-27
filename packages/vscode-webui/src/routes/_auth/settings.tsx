@@ -2,21 +2,30 @@ import { Section } from "@/components/settings/section";
 import { SettingsCheckboxOption } from "@/components/settings/settings-checkbox-option";
 import { ToolsSection } from "@/components/settings/tools-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
+import { vscodeHost } from "@/lib/vscode";
+import { getWorkflowPath } from "@ragdoll/common";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronsUpDown, LogOut } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronsUpDown,
+  Edit,
+  LogOut,
+  Workflow,
+} from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_auth/settings")({
@@ -132,6 +141,65 @@ const WorkspaceRulesSection: React.FC = () => {
   );
 };
 
+const WorkflowsSection: React.FC = () => {
+  const { data: workflows, isLoading } = useQuery({
+    queryKey: ["workflows"],
+    queryFn: async () => {
+      return await vscodeHost.listWorkflowsInWorkspace();
+    },
+    refetchInterval: 3000,
+  });
+
+  const handleEditWorkflow = (workflowName: string) => {
+    const workflowPath = getWorkflowPath(workflowName);
+    vscodeHost.openFile(workflowPath);
+  };
+
+  return (
+    <Section title="Workflows">
+      <div className="space-y-3">
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full bg-secondary" />
+            ))}
+          </div>
+        ) : workflows && workflows.length > 0 ? (
+          <ScrollArea className="max-h-30 select-none overflow-y-auto">
+            <div className="flex flex-col gap-1">
+              {workflows.map(
+                (workflow: { id: string; path: string; content: string }) => (
+                  <div
+                    key={workflow.id}
+                    className="flex items-center gap-3 rounded-md border border-border px-2"
+                  >
+                    <Workflow className="size-4 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm">{workflow.id}</div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditWorkflow(workflow.id)}
+                    >
+                      <Edit className="size-4" />
+                    </Button>
+                  </div>
+                ),
+              )}
+            </div>
+          </ScrollArea>
+        ) : (
+          <div className="text-muted-foreground text-sm">
+            No workflows found in this workspace.
+          </div>
+        )}
+      </div>
+    </Section>
+  );
+};
+
 const AdvancedSettingsSection: React.FC = () => {
   const [isDevMode, setIsDevMode] = useIsDevMode();
   const { enableReasoning, updateEnableReasoning } = useSettingsStore();
@@ -238,6 +306,7 @@ export function SettingsPage() {
       <div className="space-y-1">
         <AccountSection />
         <WorkspaceRulesSection />
+        <WorkflowsSection />
         <ToolsSection />
         <AdvancedSettingsSection />
       </div>

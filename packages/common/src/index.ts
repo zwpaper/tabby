@@ -37,3 +37,5 @@ export {
 
 export { prompts } from "./prompts";
 export { formatters } from "./formatters";
+
+export { getWorkflowPath } from "./workflow";
