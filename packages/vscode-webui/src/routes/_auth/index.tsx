@@ -412,6 +412,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
 
   const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitDisabled) return;
 
     if (files.length > 0) {
       const uploadedImages: Attachment[] = await uploadImages();
@@ -514,6 +515,10 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   }, [data, queryClient]);
 
   const isLoading = status === "streaming" || status === "submitted";
+  const isSubmitDisabled =
+    isTaskLoading ||
+    isModelsLoading ||
+    (!isLoading && !input && files.length === 0);
 
   const editorRef = useRef<Editor | null>(null);
 
@@ -648,7 +653,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               input={input}
               setInput={setInput}
               onSubmit={wrappedHandleSubmit}
-              isLoading={isModelsLoading || isLoading || isTaskLoading}
+              isLoading={isLoading}
               formRef={formRef}
               editorRef={editorRef}
               onPaste={handlePasteImage}
@@ -759,11 +764,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  disabled={
-                    isTaskLoading ||
-                    isModelsLoading ||
-                    (!isLoading && !input && files.length === 0)
-                  }
+                  disabled={isSubmitDisabled}
                   className="h-6 w-6 rounded-md p-0 transition-opacity"
                   onClick={() => {
                     if (isLoading || isUploadingImages) {

@@ -25,6 +25,7 @@ import {
   type MentionListProps,
 } from "./context-mention/mention-list";
 import "./prompt-form.css";
+import { cn } from "@/lib/utils";
 import type { MentionListActions } from "./shared";
 import {
   PromptFormWorkflowExtension,
@@ -38,10 +39,7 @@ import {
 const newLineCharacter = "\n";
 
 // Custom keyboard shortcuts extension that handles Enter key behavior
-function CustomEnterKeyHandler(
-  formRef: React.RefObject<HTMLFormElement>,
-  isLoadingRef: React.RefObject<boolean>,
-) {
+function CustomEnterKeyHandler(formRef: React.RefObject<HTMLFormElement>) {
   return Extension.create({
     addKeyboardShortcuts() {
       return {
@@ -54,7 +52,7 @@ function CustomEnterKeyHandler(
           ]);
         },
         Enter: () => {
-          if (formRef.current && !isLoadingRef.current) {
+          if (formRef.current) {
             formRef.current.requestSubmit();
           }
           return true;
@@ -90,15 +88,6 @@ export function FormEditor({
 }: FormEditorProps) {
   const internalFormRef = useRef<HTMLFormElement>(null);
   const formRef = externalFormRef || internalFormRef;
-  const isLoadingRef = useRef<boolean>(isLoading);
-
-  useEffect(() => {
-    isLoadingRef.current = isLoading;
-  }, [isLoading]);
-
-  const wrappedOnSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    onSubmit(e);
-  };
 
   const activeTabs = useActiveTabs();
   const activeTabsRef = useRef(activeTabs);
@@ -115,7 +104,7 @@ export function FormEditor({
         Placeholder.configure({
           placeholder: "Ask anything ...",
         }),
-        CustomEnterKeyHandler(formRef, isLoadingRef),
+        CustomEnterKeyHandler(formRef),
         PromptFormMentionExtension.configure({
           suggestion: {
             char: "@",
@@ -344,8 +333,13 @@ export function FormEditor({
   return (
     <form
       ref={formRef}
-      onSubmit={wrappedOnSubmit}
-      className="relative rounded-sm border border-[var(--input-border)] bg-input p-1 transition-color duration-300 focus-within:border-ring"
+      onSubmit={onSubmit}
+      className={cn(
+        "relative rounded-sm border border-[var(--input-border)] bg-input p-1 transition-color duration-300 focus-within:border-ring",
+        {
+          "form-editor-loading": isLoading,
+        },
+      )}
       onClick={(e) => {
         e.stopPropagation();
         focusEditor();
