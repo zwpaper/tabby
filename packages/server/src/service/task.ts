@@ -2,6 +2,7 @@ import type { Environment, UserEvent } from "@ragdoll/common";
 import type { Todo } from "@ragdoll/common";
 import { fromUIMessages, toUIMessage, toUIMessages } from "@ragdoll/common";
 import { formatters } from "@ragdoll/common";
+import { parseTitle } from "@ragdoll/common/message-utils";
 import type { DBMessage } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
@@ -22,7 +23,7 @@ import type { ZodChatRequestType } from "../types";
 import { slackService } from "./slack";
 
 const titleSelect =
-  sql<string>`LEFT(SPLIT_PART((conversation #>> '{messages, 0, parts, 0, text}')::text, '\n', 1), 256)`.as(
+  sql<string>`(conversation #>> '{messages, 0, parts, 0, text}')::text`.as(
     "title",
   );
 
@@ -358,7 +359,7 @@ class TaskService {
     const data = items.map((task) => ({
       ...task,
       id: task.taskId, // Map taskId to id
-      title: task.title || "(empty)",
+      title: parseTitle(task.title),
       totalTokens: task.totalTokens || undefined,
       // Ensure all selected fields are correctly mapped if names differ
     }));
@@ -399,6 +400,7 @@ class TaskService {
       id: taskId, // Map taskId to id
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
+      title: parseTitle(task.title),
     };
   }
 

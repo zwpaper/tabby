@@ -2,6 +2,7 @@ import { prompts } from "@ragdoll/common";
 import { isUserInputTool } from "@ragdoll/tools";
 import { type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
+import { KnownTags } from "./constants";
 import { EnvironmentDetailsTag } from "./prompts/environment";
 
 export function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
@@ -47,11 +48,10 @@ export function removeDeprecatedToolInvocations(
 }
 
 export function stripKnownXMLTags(messages: UIMessage[]): UIMessage[] {
-  const knownTags = ["file", "user-reminder", "workflow"];
   return messages.map((message) => {
     const parts = message.parts.map((part) => {
       if (part.type === "text") {
-        const text = knownTags.reduce((acc, tag) => {
+        const text = KnownTags.reduce((acc, tag) => {
           return acc.replace(
             new RegExp(`<${tag}[^>]*>(.*?)<\/${tag}>`, "gs"),
             "$1",

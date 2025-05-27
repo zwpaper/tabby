@@ -4,15 +4,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./message-utils": "./src/message-utils.ts"
   },
   "scripts": {
     "tsc": "tsc"
   },
   "dependencies": {
+    "@ragdoll/db": "workspace:*",
     "ai": "catalog:",
-    "zod": "catalog:",
+    "hast": "^1.0.0",
+    "hast-util-to-text": "^4.0.2",
+    "rehype": "^13.0.2",
     "remeda": "catalog:",
-    "@ragdoll/db": "workspace:*"
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/hast": "^3.0.4"
   }
 }

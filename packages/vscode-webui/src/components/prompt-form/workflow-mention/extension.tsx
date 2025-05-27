@@ -39,8 +39,15 @@ export const PromptFormWorkflowExtension = Mention.extend({
 
   renderText({ node }) {
     const { id, path } = node.attrs;
-    const content = node.attrs.content || "error loading workflow";
+    const workflowTagRegex = /<\/?workflow\b[^>]*>/g;
 
+    let content: string = node.attrs.content || "error loading workflow";
+    // remove extra newlines from the content
+    content = content.replace(/\n+/g, "\n");
+    // escape '<' to avoid </workflow> being interpreted as a closing tag
+    content = content.replace(workflowTagRegex, (match) => {
+      return match.replace("<", "&lt;");
+    });
     return `<workflow id="${id}" path="${path}">${content}</workflow>`;
   },
 

@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/pagination"; // Import pagination components
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/auth-client";
-import { CustomHtmlTags } from "@/lib/constants";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
@@ -24,9 +23,6 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
-import type { Parent, Root, Text } from "mdast";
-import { remark } from "remark";
-import remarkStringify from "remark-stringify";
 import { WorkspaceRequiredPlaceholder } from "../../components/workspace-required-placeholder";
 
 export const Route = createFileRoute("/_auth/tasks")({
@@ -234,7 +230,7 @@ function Tasks({ cwd }: { cwd: string }) {
                     <span className="mr-2 ml-2 inline-block align-sub">
                       <TaskStatusIcon status={task.status} />
                     </span>
-                    {processTitle(task.title, CustomHtmlTags)}
+                    {task.title}
                   </div>
                 </Link>
               ))}
@@ -272,66 +268,6 @@ function EmptyTaskPlaceholder() {
       </Button>
     </div>
   );
-}
-
-function processTitle(title: string, tagNames: string[]) {
-  const ast = remark().parse(title);
-  removePairedHtmlTags(ast, tagNames);
-
-  return remark()
-    .use(remarkStringify, {
-      emphasis: "*",
-      handlers: {
-        text: (node: Text) => node.value,
-      },
-    })
-    .stringify(ast)
-    .trim();
-}
-
-function removePairedHtmlTags(ast: Root, tagnames: string[] = []) {
-  function processNode(node: Parent) {
-    if (node.children) {
-      const stack: { tag: string; index: number }[] = [];
-      const toRemove = new Set();
-
-      node.children.forEach((child, index) => {
-        if (child.type === "html") {
-          const match = child.value.match(/^<\/?([a-zA-Z]+)[^>]*>$/);
-          if (match) {
-            const isClosing = match[0].startsWith("</");
-            const tagName = match[1];
-
-            if (tagnames.includes(tagName)) {
-              if (isClosing) {
-                // match closing tag
-                if (
-                  stack.length > 0 &&
-                  stack[stack.length - 1].tag === tagName
-                ) {
-                  const start = stack.pop();
-                  if (start) {
-                    toRemove.add(start.index);
-                    toRemove.add(index);
-                  }
-                }
-              } else {
-                stack.push({ tag: tagName, index });
-              }
-            }
-          }
-        }
-      });
-
-      node.children = node.children.filter((_, i) => !toRemove.has(i));
-
-      for (const child of node.children) {
-        processNode(child as Parent);
-      }
-    }
-  }
-
-  processNode(ast);
 }
 
 const TaskStatusIcon = ({ status }: { status: string }) => {
