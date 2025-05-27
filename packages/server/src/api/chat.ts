@@ -163,21 +163,25 @@ const chat = new Hono<{ Variables: ContextVariables }>()
                 }
               }
 
+              const isUsageValid = !Number.isNaN(usage.totalTokens);
+
               await taskService.finishStreaming(
                 id,
                 user.id,
                 finalMessages,
                 finishReason,
-                usage.totalTokens,
+                isUsageValid ? usage.totalTokens : undefined,
                 !!req.notify,
               );
 
-              await usageService.trackUsage(user, requestedModelId, usage);
+              if (isUsageValid) {
+                await usageService.trackUsage(user, requestedModelId, usage);
 
-              stream.writeData({
-                type: "update-usage",
-                ...usage,
-              });
+                stream.writeData({
+                  type: "update-usage",
+                  ...usage,
+                });
+              }
             },
             headers:
               requestedModelId.includes("claude-4") && EnableInterleavedThinking
