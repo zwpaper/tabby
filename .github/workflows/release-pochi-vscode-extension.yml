@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'vscode@*'
+      - "vscode@*"
 
 concurrency:
   group: ${{ github.workflow_ref }}-${{ github.head_ref || github.ref_name }}
@@ -23,7 +23,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Bun Install
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Publish
         run: cd packages/vscode && bun run $(bun scripts/publish.cjs)
