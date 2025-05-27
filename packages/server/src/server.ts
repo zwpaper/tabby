@@ -71,7 +71,8 @@ app.use(
         const hostname = requestOriginUrl.hostname;
         if (
           hostname === "vscode-cdn.net" ||
-          hostname.endsWith(".vscode-cdn.net")
+          hostname.endsWith(".vscode-cdn.net") ||
+          hostname === "vscode.ikw.app"
         ) {
           return origin;
         }
