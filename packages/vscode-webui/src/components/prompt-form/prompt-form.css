@@ -81,8 +81,10 @@
 
 /* Solid background for tippy popups (mention list) */
 .tippy-box {
-  background-color: var(--popover) !important;
-  color: var(--popover-foreground) !important;
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
 }
 
 @property --gradient-angle {

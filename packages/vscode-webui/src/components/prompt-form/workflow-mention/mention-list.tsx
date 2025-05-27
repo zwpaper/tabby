@@ -1,3 +1,4 @@
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { vscodeHost } from "@/lib/vscode";
 import { FileIcon } from "lucide-react";
 import { forwardRef, useImperativeHandle, useState } from "react";
@@ -54,8 +55,8 @@ export const WorkflowMentionList = forwardRef<
   useImperativeHandle(ref, () => keyboardNavigation);
 
   return (
-    <div className="relative flex max-h-[300px] w-[80vw] flex-col overflow-hidden rounded-md border bg-popover p-1 sm:w-[600px]">
-      <div className="flex-1 overflow-y-auto">
+    <div className="relative flex w-[80vw] flex-col overflow-hidden py-1 sm:w-[600px]">
+      <ScrollArea viewportClassname="max-h-[300px] px-2">
         {items.length === 0 ? (
           <div className="px-2 py-1.5 text-muted-foreground text-xs">
             {query ? "No workflows found" : "Type to search workflows..."}
@@ -73,7 +74,7 @@ export const WorkflowMentionList = forwardRef<
             ))}
           </div>
         )}
-      </div>
+      </ScrollArea>
     </div>
   );
 });

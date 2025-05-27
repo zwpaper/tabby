@@ -173,6 +173,7 @@ export function FormEditor({
                     interactive: true,
                     trigger: "manual",
                     placement: "top-start",
+                    offset: [0, 6],
                     maxWidth: "none",
                   });
                 },
@@ -256,6 +257,7 @@ export function FormEditor({
                     interactive: true,
                     trigger: "manual",
                     placement: "top-start",
+                    offset: [0, 6],
                     maxWidth: "none",
                   });
                 },
