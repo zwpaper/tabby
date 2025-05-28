@@ -12,6 +12,7 @@ import enhance from "./api/enhance";
 import events, { websocket } from "./api/events";
 import integrations from "./api/integrations";
 import models from "./api/models";
+import runners from "./api/runners";
 import tasks from "./api/tasks";
 import tools from "./api/tools";
 import upload from "./api/upload";
@@ -106,6 +107,7 @@ const route = api
   .route("/upload", upload)
   .route("/enhancePrompt", enhance)
   .route("/tools", tools)
+  .route("/runners", runners)
   .route("/admin", admin);
 
 export type AppType = typeof route;
