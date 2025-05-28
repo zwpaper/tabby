@@ -57,6 +57,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "listWorkflowsInWorkspace",
         "capture",
         "closeCurrentWorkspace",
+        "readMcpStatus",
       ],
       exports: {
         openTask(params) {

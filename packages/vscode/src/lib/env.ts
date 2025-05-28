@@ -6,6 +6,10 @@ import { readDirectoryFiles, readFileContent } from "./fs";
 const WorkspaceRulesFilePath = ["README.pochi.md"];
 const WorkflowsDirPath = [".pochi", "workflows"];
 
+export function getCwd() {
+  return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
+}
+
 /**
  * Gets system information such as current working directory, shell, OS, and home directory.
  * @returns An object containing system information such as cwd, shell, os, and homedir.
@@ -19,8 +23,7 @@ export function getSystemInfo(): {
   const platform = process.platform;
   const homedir = os.homedir();
   const shell = process.env.SHELL || "";
-  const cwd =
-    vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
+  const cwd = getCwd();
 
   return { cwd, shell, os: platform, homedir };
 }

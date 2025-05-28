@@ -231,6 +231,30 @@ export class CommandManager implements vscode.Disposable {
         "ragdoll.outputPanel.focus",
         showOutputPanel,
       ),
+
+      vscode.commands.registerCommand("ragdoll.mcp.addServer", async () => {
+        throw Error("Not implemented yet");
+      }),
+
+      vscode.commands.registerCommand(
+        "ragdoll.mcp.openServerSettings",
+        async () => {
+          vscode.commands.executeCommand("workbench.action.openSettingsJson", {
+            revealSetting: { key: "pochi.mcpServers" },
+          });
+        },
+      ),
+
+      vscode.commands.registerCommand("ragdoll.mcp.serverControl", async () => {
+        throw Error("Not implemented yet");
+      }),
+
+      vscode.commands.registerCommand(
+        "ragdoll.mcp.toogleToolEnabled",
+        async () => {
+          throw Error("Not implemented yet");
+        },
+      ),
     );
   }
 

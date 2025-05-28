@@ -6,6 +6,7 @@ import { container, instanceCachingFactory } from "tsyringe";
 import type * as vscode from "vscode";
 import { CommandManager } from "./integrations/command";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
+import { McpHub } from "./integrations/mcp/mcp-hub";
 import { type AuthClient, createAuthClient } from "./lib/auth-client";
 import { type ApiClient, createApiClient } from "./lib/auth-client";
 
@@ -33,6 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
   container.resolve(RagdollUriHandler);
   container.resolve(CommandManager);
   container.resolve(DiffOriginContentProvider);
+  container.resolve(McpHub);
 }
 
 // This method is called when your extension is deactivated

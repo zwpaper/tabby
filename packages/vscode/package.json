@@ -65,6 +65,26 @@
         "command": "ragdoll.openSettings",
         "title": "Open Settings",
         "category": "Pochi"
+      },
+      {
+        "command": "ragdoll.mcp.addServer",
+        "title": "Add MCP Server",
+        "category": "Pochi"
+      },
+      {
+        "command": "ragdoll.mcp.openServerSettings",
+        "title": "Open MCP Server Settings (JSON)",
+        "category": "Pochi"
+      },
+      {
+        "command": "ragdoll.mcp.serverControl",
+        "title": "MCP Server Control",
+        "category": "Pochi"
+      },
+      {
+        "command": "ragdoll.mcp.toogleToolEnabled",
+        "title": "Toggle MCP Tool Enabled",
+        "category": "Pochi"
       }
     ],
     "menus": {
@@ -87,6 +107,14 @@
         },
         {
           "command": "ragdoll.webui.navigate.settings",
+          "when": "false"
+        },
+        {
+          "command": "ragdoll.mcp.serverControl",
+          "when": "false"
+        },
+        {
+          "command": "ragdoll.mcp.toogleToolEnabled",
           "when": "false"
         }
       ],
@@ -121,6 +149,10 @@
                 "description": "Pochi dev mode"
               }
             }
+          },
+          "pochi.mcpServers": {
+            "default": {},
+            "description": "MCP servers configuration"
           }
         }
       }
@@ -154,6 +186,9 @@
     "@preact/signals-core": "catalog:",
     "@quilted/threads": "catalog:",
     "better-auth": "catalog:",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@xstate/fsm": "^2.1.0",
+    "ai": "catalog:",
     "diff": "^7.0.0",
     "fast-deep-equal": "^3.1.3",
     "file-type": "^20.4.1",

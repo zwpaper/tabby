@@ -93,6 +93,16 @@ export interface VSCodeHostApi {
   capture(e: CaptureEvent): Promise<void>;
 
   closeCurrentWorkspace(): void;
+
+  /**
+   * Get all configured MCP server connection status and tools.
+   * Use {@link executeToolCall} to execute the tool.
+   *
+   * FIXME(zhiming): This method returns a JSON string of {@link McpStatus},
+   * as using object directly causes synchronization issues in the settings page.
+   * This is a temporary solution, prefer to use object directly in the future.
+   */
+  readMcpStatus(): Promise<ThreadSignalSerialization<string>>;
 }
 
 export interface WebviewHostApi {
@@ -168,3 +178,37 @@ export type CaptureEvent =
         status: "success" | "error" | "aborted";
       };
     };
+
+export type McpStatus = {
+  /**
+   * Connection status for each MCP server.
+   */
+  connections: {
+    [serverName: string]: McpConnection;
+  };
+  /**
+   * Reduced available toolset from all MCP servers, disabled tools are excluded.
+   */
+  toolset: {
+    [toolName: string]: McpTool;
+  };
+};
+
+export interface McpConnection {
+  status: "stopped" | "starting" | "ready" | "error";
+  error: string | undefined;
+  tools: {
+    [toolName: string]: McpToolStatus;
+  };
+}
+
+export interface McpTool {
+  description: string | undefined;
+  parameters: {
+    jsonSchema: unknown; // passthrough
+  };
+}
+
+export interface McpToolStatus extends McpTool {
+  disabled: boolean;
+}

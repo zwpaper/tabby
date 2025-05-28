@@ -15,6 +15,7 @@ import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
 import { todoWrite } from "@/tools/todo-write";
 import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
+import { signal } from "@preact/signals-core";
 import {
   ThreadAbortSignal,
   type ThreadAbortSignalSerialization,
@@ -36,25 +37,31 @@ import type {
   SessionState,
   VSCodeHostApi,
 } from "@ragdoll/vscode-webui-bridge";
+import type { Tool } from "ai";
 import * as runExclusive from "run-exclusive";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { type FileSelection, TabState } from "../editor/tab-state";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { McpHub } from "../mcp/mcp-hub";
+import { isExecutable } from "../mcp/types";
 
 const logger = getLogger("VSCodeHostImpl");
 
 @injectable()
 @singleton()
-export class VSCodeHostImpl implements VSCodeHostApi {
+export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   private toolCallGroup = runExclusive.createGroupRef();
   private sessionState: SessionState = {};
+  private disposables: vscode.Disposable[] = [];
 
   constructor(
     private readonly tokenStorage: TokenStorage,
     private readonly tabState: TabState,
     private readonly gitStatus: GitStatus,
     private readonly posthog: PostHog,
+    private readonly mcpHub: McpHub,
   ) {}
 
   listWorkflowsInWorkspace = (): Promise<
@@ -184,15 +191,26 @@ export class VSCodeHostImpl implements VSCodeHostApi {
         return ServerToolApproved;
       }
 
-      const tool = ToolMap[toolName];
+      let tool: ToolFunctionType<Tool> | undefined;
+
+      if (toolName in ToolMap) {
+        tool = ToolMap[toolName];
+      } else if (toolName in this.mcpHub.status.value.toolset) {
+        const mcpTool = this.mcpHub.status.value.toolset[toolName];
+        if (isExecutable(mcpTool)) {
+          tool = (args, options) => {
+            return mcpTool.execute(args, options);
+          };
+        }
+      }
+
       if (!tool) {
         return {
-          error: `Tool ${toolName} is not implemented`,
+          error: `Tool ${toolName} not found.`,
         };
       }
 
       const abortSignal = new ThreadAbortSignal(options.abortSignal);
-
       const toolCallStart = Date.now();
       const result = await safeCall(
         tool(args, {
@@ -280,6 +298,23 @@ export class VSCodeHostImpl implements VSCodeHostApi {
   closeCurrentWorkspace = async () => {
     await vscode.commands.executeCommand("workbench.action.closeWindow");
   };
+
+  readMcpStatus = async (): Promise<ThreadSignalSerialization<string>> => {
+    const convertedSignal = signal(JSON.stringify(this.mcpHub.status.value));
+    this.disposables.push({
+      dispose: this.mcpHub.status.subscribe(() => {
+        convertedSignal.value = JSON.stringify(this.mcpHub.status.value);
+      }),
+    });
+    return ThreadSignal.serialize(convertedSignal);
+  };
+
+  dispose() {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+    this.disposables = [];
+  }
 }
 
 function safeCall<T>(x: Promise<T>) {

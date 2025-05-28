@@ -4,6 +4,7 @@ import type {
   Message,
   ToolInvocation,
 } from "ai";
+import { McpToolCall } from "./mcp-tool-call";
 import { applyDiffTool } from "./tools/apply-diff";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
 import { AttemptCompletionTool } from "./tools/attempt-completion";
@@ -32,6 +33,7 @@ export function ToolInvocationPart({
   isLoading: boolean;
 }) {
   const C = Tools[tool.toolName];
+
   return (
     <div className="flex flex-col gap-1">
       {C ? (
@@ -42,7 +44,10 @@ export function ToolInvocationPart({
           isLoading={isLoading}
         />
       ) : (
-        JSON.stringify(tool, null, 2)
+        <McpToolCall
+          tool={tool}
+          isExecuting={tool.toolCallId === executingToolCallId}
+        />
       )}
     </div>
   );

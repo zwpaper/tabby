@@ -1,3 +1,4 @@
+import { McpSection } from "@/components/settings/mcp-section";
 import { Section } from "@/components/settings/section";
 import { SettingsCheckboxOption } from "@/components/settings/settings-checkbox-option";
 import { ToolsSection } from "@/components/settings/tools-section";
@@ -308,6 +309,7 @@ export function SettingsPage() {
         <WorkspaceRulesSection />
         <WorkflowsSection />
         <ToolsSection />
+        <McpSection />
         <AdvancedSettingsSection />
       </div>
     </div>
