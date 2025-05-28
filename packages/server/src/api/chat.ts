@@ -54,6 +54,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
   .use(requireAuth())
   .post("/stream", zValidator("json", ZodChatRequestType), async (c) => {
     setIdleTimeout(c.req.raw, 120);
+
     const req = await c.req.valid("json");
     const {
       environment,
@@ -269,6 +270,8 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     "/stream",
     zValidator("query", z.object({ chatId: z.string() })),
     async (c) => {
+      setIdleTimeout(c.req.raw, 120);
+
       const query = c.req.valid("query");
       const user = c.get("user");
       const id = Number.parseInt(query.chatId);
