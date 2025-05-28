@@ -1,5 +1,5 @@
 import { CommandExecutionPanel } from "@/components/message/command-execution-panel";
-import { useToolEvents } from "@/lib/contexts/tool-event-context";
+import { useToolEvents } from "@/lib/stores/chat-state";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useCallback } from "react";
 import { HighlightedText } from "../highlight-text";

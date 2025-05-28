@@ -7,7 +7,10 @@ import { apiClient } from "@/lib/auth-client";
 import { useAppendInitMessage } from "@/lib/hooks/use-append-init-message";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
-import { ChatStateProvider, useChatState } from "@/lib/stores/chat-state";
+import {
+  ChatStateProvider,
+  useAutoApproveGuard,
+} from "@/lib/stores/chat-state";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment, Todo } from "@ragdoll/common";
@@ -59,7 +62,6 @@ import {
 import { usePendingApproval } from "@/features/approval/hooks/use-pending-approval";
 import { TodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
-import { ToolEventProvider } from "@/lib/contexts/tool-event-context";
 import { useActiveSelection } from "@/lib/hooks/use-active-selection";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
@@ -148,14 +150,12 @@ function RouteComponent() {
 
   return (
     <ChatStateProvider>
-      <ToolEventProvider>
-        <Chat
-          key={key}
-          loaderData={loaderData || null}
-          isTaskLoading={isTaskLoading}
-          initMessage={initMessage}
-        />
-      </ToolEventProvider>
+      <Chat
+        key={key}
+        loaderData={loaderData || null}
+        isTaskLoading={isTaskLoading}
+        initMessage={initMessage}
+      />
     </ChatStateProvider>
   );
 }
@@ -170,7 +170,7 @@ interface ChatProps {
 
 function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
   const [isDevMode] = useIsDevMode();
-  const { autoApproveGuard } = useChatState();
+  const autoApproveGuard = useAutoApproveGuard();
   const taskId = useRef<number | undefined>(loaderData?.id);
   const [totalTokens, setTotalTokens] = useState<number>(
     loaderData?.totalTokens || 0,

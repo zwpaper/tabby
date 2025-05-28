@@ -1,4 +1,4 @@
-import { useChatState } from "@/lib/stores/chat-state";
+import { useAutoApproveGuard } from "@/lib/stores/chat-state";
 import { useAutoApprove } from "@/lib/stores/settings-store";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -50,7 +50,7 @@ export function usePendingRetryApproval({
   error?: Error;
   status: "submitted" | "streaming" | "ready" | "error";
 }) {
-  const { autoApproveGuard } = useChatState();
+  const autoApproveGuard = useAutoApproveGuard();
   const { autoApproveActive, autoApproveSettings } = useAutoApprove(
     autoApproveGuard.current,
   );

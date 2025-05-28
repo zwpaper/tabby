@@ -7,11 +7,9 @@ import { useCallback, useEffect, useRef, useState } from "react"; // useMemo is 
 
 import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval/hooks/use-pending-tool-call-approval";
-import { useToolEvents } from "@/lib/contexts/tool-event-context";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
-import { useChatState } from "@/lib/stores/chat-state";
+import { useAutoApproveGuard, useToolEvents } from "@/lib/stores/chat-state";
 import { useToolAutoApproval } from "@/lib/stores/settings-store";
-// usePendingToolCallApproval is not directly used here anymore, it's used by usePendingApproval
 
 // Type definitions
 export type AddToolResultFunctionType = ({
@@ -40,7 +38,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   setIsExecuting,
   executingToolCallId,
 }) => {
-  const { autoApproveGuard } = useChatState();
+  const autoApproveGuard = useAutoApproveGuard();
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
     addToolStreamResult,
