@@ -21,12 +21,12 @@
     @apply uppercase;
   }
 
-  h2::before {
-    content: "§ ";
-  }
-
   h3 {
     @apply underline;
+  }
+
+  h4::before {
+    content: "§ ";
   }
 
   h1,
