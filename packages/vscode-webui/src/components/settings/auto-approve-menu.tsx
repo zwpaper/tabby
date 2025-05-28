@@ -80,7 +80,7 @@ export function AutoApproveMenu() {
         <div className="flex w-full overflow-x-hidden">
           <label
             htmlFor="auto-approve"
-            className="flex shrink-0 cursor-pointer pt-1 pr-4"
+            className="flex shrink-0 cursor-pointer pt-0.5 pr-3"
           >
             <Checkbox
               id="auto-approve"
