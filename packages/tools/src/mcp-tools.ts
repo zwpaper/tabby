@@ -18,10 +18,17 @@ export const ZodMcpToolType = z.object({
 
 type McpTool = z.infer<typeof ZodMcpToolType>;
 
-function parseMcpTool(mcpTool: McpTool): Tool {
+function parseMcpTool(name: string, mcpTool: McpTool): Tool {
+  let toToolResultContent: Tool["experimental_toToolResultContent"];
+  if (name === "browser_take_screenshot") {
+    toToolResultContent = (result) => {
+      return result.content;
+    };
+  }
   return tool({
     description: mcpTool.description,
     parameters: jsonSchema(mcpTool.parameters.jsonSchema),
+    experimental_toToolResultContent: toToolResultContent,
   });
 }
 
@@ -32,7 +39,7 @@ export function parseMcpToolSet(
     ? Object.fromEntries(
         Object.entries(mcpToolSet).map(([name, tool]) => [
           name,
-          parseMcpTool(tool),
+          parseMcpTool(name, tool),
         ]),
       )
     : undefined;

@@ -57,12 +57,9 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
           {result && (
             <>
               <b>Output</b>
-              <CodeBlock
-                className="mt-1.5"
-                language={"json"}
-                value={JSON.stringify(result, null, 2)}
-                canWrapLongLines={true}
-              />
+              <div className="mt-1.5">
+                <Result result={result} />
+              </div>
             </>
           )}
         </>
@@ -70,3 +67,45 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
     />
   );
 };
+
+// biome-ignore lint/suspicious/noExplicitAny: unknown output type
+function Result({ result }: { result: any }) {
+  if ("content" in result) {
+    return <ContentResult content={result.content} />;
+  }
+  return (
+    <CodeBlock
+      language={"json"}
+      value={JSON.stringify(result, null, 2)}
+      canWrapLongLines={true}
+    />
+  );
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: external data
+function ContentResult({ content }: { content: any[] }) {
+  return (
+    <div className="flex flex-col gap-1">
+      {content.map((item, index) => {
+        if (item.type === "image") {
+          return <ImageResult key={index} {...item} />;
+        }
+        return (
+          <CodeBlock
+            key={index}
+            language={"json"}
+            value={JSON.stringify(item, null, 2)}
+            canWrapLongLines={true}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function ImageResult({
+  data,
+  mimeType,
+}: { type: "image"; data: string; mimeType: string }) {
+  return <img src={`data:${mimeType};base64,${data}`} alt="snapshot" />;
+}
