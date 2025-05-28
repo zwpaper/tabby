@@ -44,9 +44,18 @@ export function useToolStreamResults() {
     [],
   );
 
+  const findToolStreamResult = useCallback(
+    (toolCallId: string): ToolCallStreamResult | undefined => {
+      return toolCallStreamResults.find(
+        (item) => item.toolCallId === toolCallId,
+      );
+    },
+    [toolCallStreamResults],
+  );
+
   return {
-    toolCallStreamResults,
     addToolStreamResult,
     removeToolStreamResult,
+    findToolStreamResult,
   };
 }

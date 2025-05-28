@@ -1,4 +1,7 @@
-import { useToolEvents } from "@/lib/stores/chat-state";
+import {
+  useStreamToolCallResult,
+  useToolEvents,
+} from "@/lib/stores/chat-state";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useCallback } from "react";
 import { CommandExecutionPanel } from "../command-execution-panel";
@@ -9,7 +12,7 @@ import type { ToolProps } from "../types";
 
 export const executeCommandTool: React.FC<
   ToolProps<ClientToolsType["executeCommand"]>
-> = ({ tool, isExecuting, streamResult }) => {
+> = ({ tool, isExecuting }) => {
   const { emit } = useToolEvents();
   const abortTool = useCallback(() => {
     emit("abortTool", { toolCallId: tool.toolCallId });
@@ -35,6 +38,12 @@ export const executeCommandTool: React.FC<
     </>
   );
 
+  const { findToolStreamResult } = useStreamToolCallResult();
+  const streamResult = findToolStreamResult(tool.toolCallId) as
+    | {
+        result: { output: string };
+      }
+    | undefined;
   let output = streamResult?.result.output || "";
   let completed = false;
   if (

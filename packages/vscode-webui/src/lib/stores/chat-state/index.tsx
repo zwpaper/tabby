@@ -14,9 +14,9 @@ interface ChatState {
   autoApproveGuard: React.MutableRefObject<boolean>;
   toolEvents: ToolEvents;
   toolStreamResults: {
-    value: ToolCallStreamResult[];
     add: (result: ToolCallStreamResult) => void;
     remove: (toolCallId: string) => void;
+    find: (toolCallId: string) => ToolCallStreamResult | undefined;
   };
 }
 
@@ -30,16 +30,16 @@ export function ChatStateProvider({ children }: ChatStateProviderProps) {
   const autoApproveGuard = useRef(false);
   const toolEvents = useRef(new ToolEvents()).current;
 
-  const { toolCallStreamResults, addToolStreamResult, removeToolStreamResult } =
+  const { addToolStreamResult, removeToolStreamResult, findToolStreamResult } =
     useToolStreamResults();
 
   const value: ChatState = {
     autoApproveGuard,
     toolEvents,
     toolStreamResults: {
-      value: toolCallStreamResults,
       add: addToolStreamResult,
       remove: removeToolStreamResult,
+      find: findToolStreamResult,
     },
   };
 
@@ -74,9 +74,9 @@ export function useStreamToolCallResult() {
   const { toolStreamResults } = useChatState();
 
   return {
-    toolCallStreamResults: toolStreamResults.value,
     addToolStreamResult: toolStreamResults.add,
     removeToolStreamResult: toolStreamResults.remove,
+    findToolStreamResult: toolStreamResults.find,
   };
 }
 

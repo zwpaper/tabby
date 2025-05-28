@@ -1,4 +1,3 @@
-import type { ToolCallStreamResult } from "@/lib/stores/chat-state";
 import type {
   ChatRequestOptions,
   CreateMessage,
@@ -24,7 +23,6 @@ export function ToolInvocationPart({
   sendMessage,
   executingToolCallId,
   isLoading,
-  streamResult,
 }: {
   tool: ToolInvocation;
   sendMessage: (
@@ -33,7 +31,6 @@ export function ToolInvocationPart({
   ) => Promise<string | null | undefined>;
   executingToolCallId: string | undefined;
   isLoading: boolean;
-  streamResult?: ToolCallStreamResult;
 }) {
   const C = Tools[tool.toolName];
 
@@ -45,7 +42,6 @@ export function ToolInvocationPart({
           isExecuting={tool.toolCallId === executingToolCallId}
           sendMessage={sendMessage}
           isLoading={isLoading}
-          streamResult={streamResult}
         />
       ) : (
         <McpToolCall
