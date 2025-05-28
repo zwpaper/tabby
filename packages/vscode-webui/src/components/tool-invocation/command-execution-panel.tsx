@@ -130,7 +130,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
         )}
       >
         <div className="flex space-x-3">
-          <TerminalIcon className="mt-1 size-4 flex-shrink-0" />
+          <TerminalIcon className="mt-[3px] size-4 flex-shrink-0" />
           <span className="text-accent-foreground">{command}</span>
         </div>
         <div className="flex space-x-3 self-start">
