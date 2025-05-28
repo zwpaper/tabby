@@ -1,7 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
-import { CheckIcon, CopyIcon, TerminalIcon } from "lucide-react";
-import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  CheckIcon,
+  ChevronsDownUpIcon,
+  ChevronsUpDownIcon,
+  CopyIcon,
+  TerminalIcon,
+} from "lucide-react";
+import {
+  type FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { MdOutlineCancel } from "react-icons/md";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -18,6 +31,7 @@ import { debounceWithCachedValue } from "@/lib/debounce";
 import { useTheme } from "@/lib/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import "./code-block.css";
+import { ScrollArea } from "../ui/scroll-area";
 
 export interface ExecutionPanelProps {
   command: string;
@@ -39,6 +53,8 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   completed,
 }) => {
   const theme = useTheme();
+  const [expanded, setExpanded] = useState<boolean>(true);
+  const toggleExpanded = () => setExpanded((prev) => !prev);
   const { isCopied, copyToClipboard } = useCopyToClipboard({
     timeout: 2000,
   });
@@ -85,6 +101,13 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     }
   }, [autoScrollToBottom, debouncedScrollToBottom, output]);
 
+  // Collapse when execution completes
+  useEffect(() => {
+    if (!isExecuting && completed) {
+      setExpanded(false);
+    }
+  }, [isExecuting, completed]);
+
   // Determine if output is too long for syntax highlighting
   const outputTooLong = useMemo(() => {
     const threshold = 5000; // characters
@@ -98,7 +121,14 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
         className,
       )}
     >
-      <div className="flex w-full items-center justify-between rounded-t-sm border-b bg-[var(--vscode-editor-background)] py-1.5 pr-3 pl-4 text-[var(--vscode-editor-foreground)]">
+      <div
+        className={cn(
+          "flex w-full items-center justify-between rounded-t-sm bg-[var(--vscode-editor-background)] py-1.5 pr-3 pl-4 text-[var(--vscode-editor-foreground)]",
+          {
+            "border-b": output && expanded,
+          },
+        )}
+      >
         <div className="flex space-x-3">
           <TerminalIcon className="size-5 flex-shrink-0" />
           <span className="text-accent-foreground">{command}</span>
@@ -128,6 +158,24 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
                 variant="ghost"
                 size="icon"
                 className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                onClick={toggleExpanded}
+              >
+                {expanded ? <ChevronsDownUpIcon /> : <ChevronsUpDownIcon />}
+                <span className="sr-only">
+                  {expanded ? "Collapse" : "Expand"}
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="m-0">{expanded ? "Collapse" : "Expand"}</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
                 onClick={onCopy}
               >
                 {isCopied ? <CheckIcon /> : <CopyIcon />}
@@ -140,29 +188,16 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
           </Tooltip>
         </div>
       </div>
-      {output && (
-        <div
+      {output && expanded && (
+        <ScrollArea
           ref={containerRef}
-          style={{
-            maxHeight: autoScrollToBottom ? "140px" : "none",
-            overflowY: autoScrollToBottom ? "auto" : "visible",
-          }}
+          className={cn("flex flex-col", {
+            "max-h-[140px]": autoScrollToBottom,
+            "overflow-auto": autoScrollToBottom,
+          })}
         >
           {outputTooLong ? (
-            <pre
-              style={{
-                margin: 0,
-                width: "100%",
-                background: "transparent",
-                borderRadius: "0.25rem",
-                padding: "1rem",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                fontFamily: "var(--vscode-editor-font-family)",
-                fontSize: "var(--vscode-editor-font-size)",
-                color: "var(--vscode-editor-foreground)",
-              }}
-            >
+            <pre className="m-0 w-full whitespace-pre-wrap break-words rounded-sm bg-transparent p-4 font-mono text-[var(--vscode-editor-foreground)] text-sm">
               {output}
             </pre>
           ) : (
@@ -188,7 +223,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
               {output}
             </SyntaxHighlighter>
           )}
-        </div>
+        </ScrollArea>
       )}
     </div>
   );

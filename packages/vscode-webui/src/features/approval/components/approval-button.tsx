@@ -15,6 +15,7 @@ interface ApprovalButtonProps {
   retry: () => void;
   addToolResult: AddToolResultFunctionType;
   addToolStreamResult: AddToolResultFunctionType;
+  removeToolStreamResult: (toolCallId: string) => void;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
 }
@@ -25,6 +26,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   retry,
   addToolResult,
   addToolStreamResult,
+  removeToolStreamResult,
   setIsExecuting,
   executingToolCallId,
 }) => {
@@ -39,6 +41,7 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
           pendingApproval={pendingApproval}
           addToolResult={addToolResult}
           addToolStreamResult={addToolStreamResult}
+          removeToolStreamResult={removeToolStreamResult}
           setIsExecuting={setIsExecuting}
           executingToolCallId={executingToolCallId}
         />

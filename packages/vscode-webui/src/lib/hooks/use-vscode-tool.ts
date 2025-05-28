@@ -12,10 +12,12 @@ import { vscodeHost } from "../vscode";
 export function useVSCodeTool({
   addToolResult,
   addToolStreamResult,
+  removeToolStreamResult,
   setIsExecuting,
 }: {
   addToolResult: ReturnType<typeof useChat>["addToolResult"];
   addToolStreamResult: ReturnType<typeof useChat>["addToolResult"];
+  removeToolStreamResult: (toolCallId: string) => void;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const abort = useRef(new AbortController());
@@ -43,6 +45,7 @@ export function useVSCodeTool({
               aborted: output.aborted,
             },
           });
+          removeToolStreamResult(tool.toolCallId);
           setIsExecuting(false);
         } else {
           addToolStreamResult({
@@ -56,7 +59,12 @@ export function useVSCodeTool({
         }
       });
     },
-    [setIsExecuting, addToolResult, addToolStreamResult],
+    [
+      setIsExecuting,
+      addToolResult,
+      addToolStreamResult,
+      removeToolStreamResult,
+    ],
   );
 
   const executeTool = useCallback(

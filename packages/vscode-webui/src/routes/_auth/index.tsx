@@ -571,7 +571,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     [addToolResult],
   );
 
-  const { toolCallStreamResults, addToolStreamResult } =
+  const { toolCallStreamResults, addToolStreamResult, removeToolStreamResult } =
     useStreamToolCallResult();
 
   const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
@@ -652,6 +652,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               retry={retry}
               addToolResult={addToolResultWithForceUpdate}
               addToolStreamResult={addToolStreamResult}
+              removeToolStreamResult={removeToolStreamResult}
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
             />

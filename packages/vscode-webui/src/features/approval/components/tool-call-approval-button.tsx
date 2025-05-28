@@ -26,6 +26,7 @@ interface ToolCallApprovalButtonProps {
   pendingApproval: PendingToolCallApproval;
   addToolResult: AddToolResultFunctionType;
   addToolStreamResult: AddToolResultFunctionType;
+  removeToolStreamResult: (toolCallId: string) => void;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
 }
@@ -35,6 +36,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
   addToolResult,
   addToolStreamResult,
+  removeToolStreamResult,
   setIsExecuting,
   executingToolCallId,
 }) => {
@@ -42,6 +44,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
     addToolStreamResult,
+    removeToolStreamResult,
     setIsExecuting,
   });
 
