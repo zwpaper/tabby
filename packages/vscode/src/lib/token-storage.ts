@@ -16,6 +16,9 @@ export class TokenStorage implements vscode.Disposable {
     this.token = signal(
       this.context.globalState.get<string>(TokenStorage.BearerTokenKey),
     );
+    if (process.env.POCHI_INIT_AUTH_TOKEN) {
+      this.token.value = process.env.POCHI_INIT_AUTH_TOKEN;
+    }
     this.dispose = this.token.subscribe((token) =>
       this.context.globalState.update(TokenStorage.BearerTokenKey, token),
     );
