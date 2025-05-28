@@ -15,6 +15,7 @@ import {
 } from "ai";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
+import Sqids from "sqids";
 import type { z } from "zod";
 import { db } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
@@ -26,6 +27,16 @@ const titleSelect =
   sql<string>`(conversation #>> '{messages, 0, parts, 0, text}')::text`.as(
     "title",
   );
+
+const { uidEncode, uidDecode } = (() => {
+  const alphabet =
+    "RBgHuE5stw6UbcCoZJiamLkyYnqV1xSO8efMhzXK3vI9F27WPrd0jA4lGTNpQD";
+  const coder = new Sqids({ minLength: 8, alphabet });
+  return {
+    uidEncode: (id: number) => coder.encode([id]),
+    uidDecode: (id: string) => coder.decode(id)[0],
+  };
+})();
 
 class StreamingTask {
   constructor(
@@ -333,6 +344,7 @@ class TaskService {
       .selectFrom("task")
       .where("userId", "=", userId)
       .select([
+        "id",
         "taskId",
         "createdAt",
         "updatedAt",
@@ -354,11 +366,14 @@ class TaskService {
     const items = await query.execute();
     const data = items.map((task) => ({
       ...task,
+      uid: uidEncode(task.id), // Map id to uid
       id: task.taskId, // Map taskId to id
       title: parseTitle(task.title),
       totalTokens: task.totalTokens || undefined,
+      taskId: undefined,
       // Ensure all selected fields are correctly mapped if names differ
     }));
+    console.log(data);
 
     return {
       data,
@@ -371,12 +386,13 @@ class TaskService {
     };
   }
 
-  async get(taskId: number, userId: string) {
-    const task = await db
+  async get(id: number | string, userId: string) {
+    const taskQuery = db
       .selectFrom("task")
-      .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .select([
+        "id",
+        "taskId",
         "createdAt",
         "updatedAt",
         "status",
@@ -385,15 +401,25 @@ class TaskService {
         "event",
         titleSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
-      ])
-      .executeTakeFirst();
+      ]);
+
+    if (typeof id === "string") {
+      taskQuery.where("id", "=", uidDecode(id));
+    } else {
+      taskQuery.where("taskId", "=", id);
+    }
+
+    const task = await taskQuery.executeTakeFirst();
 
     if (!task) {
       return null; // Return null if task not found, let the API layer handle 404
     }
+
     return {
       ...task,
-      id: taskId, // Map taskId to id
+      uid: uidEncode(task.id), // Map id to uid
+      id: task.taskId, // Map taskId to id
+      taskId: undefined,
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
       title: parseTitle(task.title),

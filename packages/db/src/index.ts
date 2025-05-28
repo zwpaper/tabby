@@ -8,10 +8,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
     vendorData: JSONColumnType<ExternalIntegrationVendorData>;
   };
 
-  task: Omit<
-    DbImpl["task"],
-    "event" | "conversation" | "environment" | "id"
-  > & {
+  task: Omit<DbImpl["task"], "event" | "conversation" | "environment"> & {
     event: UserEvent | null;
     conversation: { messages: DBMessage[] } | null;
     environment: Environment | null;
