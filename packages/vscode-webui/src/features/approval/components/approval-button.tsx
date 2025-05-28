@@ -6,16 +6,12 @@ import {
   type AddToolResultFunctionType,
   ToolCallApprovalButton,
 } from "./tool-call-approval-button";
-// usePendingApproval is now imported by routes/_auth/index.tsx directly
-// PendingRetryApproval and PendingToolCallApproval are part of PendingApproval type
 
 interface ApprovalButtonProps {
   isLoading: boolean;
   pendingApproval?: PendingApproval;
   retry: () => void;
   addToolResult: AddToolResultFunctionType;
-  addToolStreamResult: AddToolResultFunctionType;
-  removeToolStreamResult: (toolCallId: string) => void;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
 }
@@ -25,8 +21,6 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
   pendingApproval,
   retry,
   addToolResult,
-  addToolStreamResult,
-  removeToolStreamResult,
   setIsExecuting,
   executingToolCallId,
 }) => {
@@ -40,8 +34,6 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
         <ToolCallApprovalButton
           pendingApproval={pendingApproval}
           addToolResult={addToolResult}
-          addToolStreamResult={addToolStreamResult}
-          removeToolStreamResult={removeToolStreamResult}
           setIsExecuting={setIsExecuting}
           executingToolCallId={executingToolCallId}
         />

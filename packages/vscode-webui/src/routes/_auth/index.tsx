@@ -68,7 +68,7 @@ import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useLatest } from "@/lib/hooks/use-latest";
 import { useMcp } from "@/lib/hooks/use-mcp";
-import { useStreamToolCallResult } from "@/lib/hooks/use-stream-tool-call-result";
+import { useStreamToolCallResult } from "@/lib/stores/chat-state";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import {
@@ -571,8 +571,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     [addToolResult],
   );
 
-  const { toolCallStreamResults, addToolStreamResult, removeToolStreamResult } =
-    useStreamToolCallResult();
+  const { toolCallStreamResults } = useStreamToolCallResult();
 
   const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
 
@@ -651,8 +650,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               pendingApproval={pendingApproval}
               retry={retry}
               addToolResult={addToolResultWithForceUpdate}
-              addToolStreamResult={addToolStreamResult}
-              removeToolStreamResult={removeToolStreamResult}
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
             />

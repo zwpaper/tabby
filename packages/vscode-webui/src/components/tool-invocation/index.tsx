@@ -1,4 +1,4 @@
-import type { ToolCallStreamResult } from "@/lib/hooks/use-stream-tool-call-result";
+import type { ToolCallStreamResult } from "@/lib/stores/chat-state";
 import type {
   ChatRequestOptions,
   CreateMessage,

@@ -5,7 +5,59 @@ import {
   useCallback,
   useContext,
   useRef,
+  useState,
 } from "react";
+import { debounceWithCachedValue } from "../debounce";
+
+export type ToolCallStreamResult = {
+  toolCallId: string;
+  result: unknown;
+};
+
+// Helper hook to manage tool stream results
+function useToolStreamResults() {
+  const [toolCallStreamResults, setStreamResults] = useState<
+    ToolCallStreamResult[]
+  >([]);
+
+  const removeToolStreamResult = useCallback((toolCallId: string): void => {
+    setStreamResults((prev) =>
+      prev.filter((item) => item.toolCallId !== toolCallId),
+    );
+  }, []);
+
+  const addToolStreamResult = useCallback(
+    debounceWithCachedValue(
+      (result: ToolCallStreamResult) => {
+        setStreamResults((prev) => {
+          const hasExisting = prev.some(
+            (item) => item.toolCallId === result.toolCallId,
+          );
+          if (!hasExisting) {
+            return [...prev, result];
+          }
+          return prev.map((item) =>
+            item.toolCallId === result.toolCallId
+              ? {
+                  ...item,
+                  result: result.result,
+                }
+              : item,
+          );
+        });
+      },
+      100,
+      { trailing: true, leading: true },
+    ),
+    [],
+  );
+
+  return {
+    toolCallStreamResults,
+    addToolStreamResult,
+    removeToolStreamResult,
+  };
+}
 
 // Define the event types that can be emitted/listened to
 type ToolEventType = "abortTool"; // Add other event types here, e.g., | "anotherEvent";
@@ -52,6 +104,11 @@ class ToolEvents {
 interface ChatState {
   autoApproveGuard: React.MutableRefObject<boolean>;
   toolEvents: ToolEvents;
+  toolStreamResults: {
+    value: ToolCallStreamResult[];
+    add: (result: ToolCallStreamResult) => void;
+    remove: (toolCallId: string) => void;
+  };
 }
 
 const ChatStateContext = createContext<ChatState | undefined>(undefined);
@@ -64,9 +121,17 @@ export function ChatStateProvider({ children }: ChatStateProviderProps) {
   const autoApproveGuard = useRef(false);
   const toolEvents = useRef(new ToolEvents()).current;
 
+  const { toolCallStreamResults, addToolStreamResult, removeToolStreamResult } =
+    useToolStreamResults();
+
   const value: ChatState = {
     autoApproveGuard,
     toolEvents,
+    toolStreamResults: {
+      value: toolCallStreamResults,
+      add: addToolStreamResult,
+      remove: removeToolStreamResult,
+    },
   };
 
   return (
@@ -111,4 +176,15 @@ export function useToolEvents() {
 export function useAutoApproveGuard() {
   const { autoApproveGuard } = useChatState();
   return autoApproveGuard;
+}
+
+// Hook to use the stream tool call result functionality
+export function useStreamToolCallResult() {
+  const { toolStreamResults } = useChatState();
+
+  return {
+    toolCallStreamResults: toolStreamResults.value,
+    addToolStreamResult: toolStreamResults.add,
+    removeToolStreamResult: toolStreamResults.remove,
+  };
 }

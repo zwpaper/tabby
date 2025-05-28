@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { isAutoInjectTool } from "@ragdoll/tools";
 
-import type { ToolCallStreamResult } from "@/lib/hooks/use-stream-tool-call-result";
+import type { ToolCallStreamResult } from "@/lib/stores/chat-state";
 import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
 

@@ -8,7 +8,11 @@ import { useCallback, useEffect, useRef, useState } from "react"; // useMemo is 
 import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval/hooks/use-pending-tool-call-approval";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
-import { useAutoApproveGuard, useToolEvents } from "@/lib/stores/chat-state";
+import {
+  useAutoApproveGuard,
+  useStreamToolCallResult,
+  useToolEvents,
+} from "@/lib/stores/chat-state";
 import { useToolAutoApproval } from "@/lib/stores/settings-store";
 
 // Type definitions
@@ -23,8 +27,6 @@ export type AddToolResultFunctionType = ({
 interface ToolCallApprovalButtonProps {
   pendingApproval: PendingToolCallApproval;
   addToolResult: AddToolResultFunctionType;
-  addToolStreamResult: AddToolResultFunctionType;
-  removeToolStreamResult: (toolCallId: string) => void;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
 }
@@ -33,12 +35,12 @@ interface ToolCallApprovalButtonProps {
 export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
   addToolResult,
-  addToolStreamResult,
-  removeToolStreamResult,
   setIsExecuting,
   executingToolCallId,
 }) => {
   const autoApproveGuard = useAutoApproveGuard();
+  const { addToolStreamResult, removeToolStreamResult } =
+    useStreamToolCallResult();
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
     addToolStreamResult,
