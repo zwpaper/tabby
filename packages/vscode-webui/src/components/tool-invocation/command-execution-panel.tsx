@@ -30,7 +30,7 @@ import {
 import { debounceWithCachedValue } from "@/lib/debounce";
 import { useTheme } from "@/lib/hooks/use-theme";
 import { cn } from "@/lib/utils";
-import "./code-block.css";
+import "../message/code-block.css";
 import { ScrollArea } from "../ui/scroll-area";
 
 export interface ExecutionPanelProps {
@@ -130,7 +130,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
         )}
       >
         <div className="flex space-x-3">
-          <TerminalIcon className="size-5 flex-shrink-0" />
+          <TerminalIcon className="mt-1 size-4 flex-shrink-0" />
           <span className="text-accent-foreground">{command}</span>
         </div>
         <div className="flex space-x-3 self-start">
