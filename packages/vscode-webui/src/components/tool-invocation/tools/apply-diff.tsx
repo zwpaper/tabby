@@ -29,10 +29,10 @@ export const applyDiffTool: React.FC<
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
-      <span>Applying diff to</span>
-      <span className="ml-2" />
+      {"Applying diff to "}
       {path && (
         <FileBadge
+          className="ml-1"
           path={path}
           startLine={startLine}
           endLine={endLine}

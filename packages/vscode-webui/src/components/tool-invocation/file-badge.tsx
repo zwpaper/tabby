@@ -40,7 +40,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
         onClick ? onClick() : defaultOnClick();
       }}
       className={cn(
-        "cursor-pointer rounded-sm border border-border box-decoration-clone p-0.5 text-sm/6 hover:bg-zinc-200 active:bg-zinc-200 dark:active:bg-zinc-700 dark:hover:bg-zinc-700",
+        "mx-px cursor-pointer rounded-sm border border-border box-decoration-clone p-0.5 text-sm/6 hover:bg-zinc-200 active:bg-zinc-200 dark:active:bg-zinc-700 dark:hover:bg-zinc-700",
         className,
       )}
     >

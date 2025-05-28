@@ -29,10 +29,10 @@ export const writeToFileTool: React.FC<
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
-      Writing
+      {"Writing "}
       {path && (
         <FileBadge
-          className="ml-2"
+          className="ml-1"
           path={path}
           onClick={tool.state !== "result" ? handleClick : undefined}
         />

@@ -13,10 +13,10 @@ export const readFileTool: React.FC<ToolProps<ClientToolsType["readFile"]>> = ({
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
-      Reading
+      {"Reading "}
       {path && (
         <FileBadge
-          className="ml-2"
+          className="ml-1"
           path={path}
           startLine={startLine}
           endLine={endLine}

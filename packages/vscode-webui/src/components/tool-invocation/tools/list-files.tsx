@@ -40,11 +40,12 @@ export const listFilesTool: React.FC<
       <span className="ml-2" />
       {isExecuting || tool.state !== "result" ? (
         <>
-          Reading <FileBadge path={path ?? ""} />
+          Reading <FileBadge className="ml-1" path={path ?? ""} />
         </>
       ) : (
         <>
-          Read <FileBadge path={path ?? ""} />, {files.length} result
+          Read <FileBadge className="ml-1" path={path ?? ""} />, {files.length}{" "}
+          result
           {files.length > 1 ? "s" : ""} {isTruncated && ", results truncated"}
         </>
       )}

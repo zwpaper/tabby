@@ -10,9 +10,9 @@ export const webFetchTool: React.FC<ToolProps> = ({ tool, isExecuting }) => {
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
-      Reading
+      {"Reading "}
       {url && (
-        <a href={url} target="_blank" className="ml-2" rel="noreferrer">
+        <a href={url} target="_blank" className="ml-1" rel="noreferrer">
           {addLineBreak(url)}
         </a>
       )}
