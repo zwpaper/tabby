@@ -59,7 +59,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
     return (
       <div
         className={cn(
-          "code-block relative w-full rounded-sm border bg-[var(--vscode-editor-background)] font-sans",
+          "code-block relative flex max-h-[30vh] w-full flex-col rounded-md border bg-[var(--vscode-editor-background)] font-sans",
           className,
         )}
       >
@@ -101,28 +101,30 @@ const CodeBlock: FC<CodeBlockProps> = memo(
             </Tooltip>
           </div>
         </div>
-        {/* FIXME fix type error */}
-        {/* @ts-ignore */}
-        <SyntaxHighlighter
-          language={languageForSyntax}
-          style={theme === "dark" ? vscDarkPlus : oneLight}
-          PreTag="div"
-          customStyle={{
-            margin: 0,
-            width: "100%",
-            background: "transparent",
-            borderRadius: "0.25rem",
-          }}
-          wrapLongLines={wrapLongLines}
-          codeTagProps={{
-            style: {
-              backgroundColor: "transparent",
-              padding: "0px",
-            },
-          }}
-        >
-          {value}
-        </SyntaxHighlighter>
+        <div className="flex-1 overflow-y-auto rounded-b-sm">
+          {/* FIXME fix type error */}
+          {/* @ts-expect-error */}
+          <SyntaxHighlighter
+            language={languageForSyntax}
+            style={theme === "dark" ? vscDarkPlus : oneLight}
+            PreTag="div"
+            customStyle={{
+              margin: 0,
+              width: "100%",
+              background: "transparent",
+              borderRadius: "0.25rem",
+            }}
+            wrapLongLines={wrapLongLines}
+            codeTagProps={{
+              style: {
+                backgroundColor: "transparent",
+                padding: "0px",
+              },
+            }}
+          >
+            {value}
+          </SyntaxHighlighter>
+        </div>
       </div>
     );
   },

@@ -144,6 +144,7 @@ export function MessageMarkdown({
                 language={match?.[1] || ""}
                 value={String(children).replace(/\n$/, "")}
                 canWrapLongLines={true}
+                className="max-h-none"
               />
             );
           },
