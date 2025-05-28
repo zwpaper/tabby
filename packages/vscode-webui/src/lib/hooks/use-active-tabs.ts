@@ -6,6 +6,7 @@ import { vscodeHost } from "../vscode";
  * Hook to get active editor tabs
  * Uses ThreadSignal for real-time updates
  */
+/** @useSignals */
 export const useActiveTabs = () => {
   const { data: activeTabsSignal } = useQuery({
     queryKey: ["activeTabs"],

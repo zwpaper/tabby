@@ -6,6 +6,7 @@ import { vscodeHost } from "../vscode";
  * Hook to get active editor selection
  * Uses ThreadSignal for real-time updates
  */
+/** @useSignals */
 export const useActiveSelection = () => {
   const { data: activeSelectionSignal } = useQuery({
     queryKey: ["activeSelection"],

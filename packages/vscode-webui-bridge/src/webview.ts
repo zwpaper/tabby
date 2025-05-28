@@ -3,6 +3,7 @@ import type { ThreadSignalSerialization } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/common";
 import type {
   CaptureEvent,
+  McpStatus,
   NewTaskParams,
   ResourceURI,
   SessionState,
@@ -114,12 +115,8 @@ export interface VSCodeHostApi {
   /**
    * Get all configured MCP server connection status and tools.
    * Use {@link executeToolCall} to execute the tool.
-   *
-   * FIXME(zhiming): This method returns a JSON string of {@link McpStatus},
-   * as using object directly causes synchronization issues in the settings page.
-   * This is a temporary solution, prefer to use object directly in the future.
    */
-  readMcpStatus(): Promise<ThreadSignalSerialization<string>>;
+  readMcpStatus(): Promise<ThreadSignalSerialization<McpStatus>>;
 }
 
 export interface WebviewHostApi {

@@ -15,7 +15,6 @@ import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
 import { todoWrite } from "@/tools/todo-write";
 import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
-import { signal } from "@preact/signals-core";
 import {
   ThreadAbortSignal,
   type ThreadAbortSignalSerialization,
@@ -33,6 +32,7 @@ import {
 } from "@ragdoll/tools";
 import type {
   CaptureEvent,
+  McpStatus,
   ResourceURI,
   SessionState,
   VSCodeHostApi,
@@ -299,14 +299,8 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     await vscode.commands.executeCommand("workbench.action.closeWindow");
   };
 
-  readMcpStatus = async (): Promise<ThreadSignalSerialization<string>> => {
-    const convertedSignal = signal(JSON.stringify(this.mcpHub.status.value));
-    this.disposables.push({
-      dispose: this.mcpHub.status.subscribe(() => {
-        convertedSignal.value = JSON.stringify(this.mcpHub.status.value);
-      }),
-    });
-    return ThreadSignal.serialize(convertedSignal);
+  readMcpStatus = async (): Promise<ThreadSignalSerialization<McpStatus>> => {
+    return ThreadSignal.serialize(this.mcpHub.status);
   };
 
   dispose() {
