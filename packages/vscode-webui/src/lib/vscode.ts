@@ -56,6 +56,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "readResourceURI",
         "listWorkflowsInWorkspace",
         "capture",
+        "closeCurrentWorkspace",
       ],
       exports: {
         openTask(params) {

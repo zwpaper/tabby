@@ -91,6 +91,8 @@ export interface VSCodeHostApi {
    * @param properties - The event properties.
    */
   capture(e: CaptureEvent): Promise<void>;
+
+  closeCurrentWorkspace(): void;
 }
 
 export interface WebviewHostApi {

@@ -1,4 +1,5 @@
-import type { AuthClient } from "@/lib/auth-client";
+import { homedir } from "node:os";
+import type { ApiClient, AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
 import { getLogger } from "@/lib/logger";
@@ -35,7 +36,29 @@ export interface NewProjectParams {
   githubTemplateUrl?: string;
 }
 
+interface EvaluationTask {
+  id: number;
+  event: {
+    type: string;
+    data: {
+      batchId: string;
+      githubTemplateUrl: string;
+    };
+  };
+}
+
 const logger = getLogger("RagdollUriHandler");
+
+function getEvaluationProjectUri(batchId: string, taskId: number): vscode.Uri {
+  const homeUri = vscode.Uri.file(homedir());
+  const evaluationBaseUri = vscode.Uri.joinPath(
+    homeUri,
+    "PochiProjects",
+    "evaluation-tests",
+    batchId,
+  );
+  return vscode.Uri.joinPath(evaluationBaseUri, `prompt-${taskId}`);
+}
 
 @injectable()
 @singleton()
@@ -43,6 +66,8 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
   constructor(
     @inject("AuthClient")
     private readonly authClient: AuthClient,
+    @inject("ApiClient")
+    private readonly apiClient: ApiClient,
     private readonly workspaceJobQueue: WorkspaceJobQueue,
     private readonly newProjectRegistry: NewProjectRegistry,
     private readonly authEvents: AuthEvents,
@@ -84,17 +109,37 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
 
     const task = searchParams.get("task");
     if (task) {
-      const taskId = Number.parseInt(task);
-      if (Number.isNaN(taskId)) {
-        vscode.window.showErrorMessage("Invalid task id");
+      const taskIdInt = Number.parseInt(task);
+      if (!Number.isNaN(taskIdInt)) {
+        await this.handleTaskEvent(taskIdInt);
         return;
       }
-
-      await vscode.commands.executeCommand("ragdoll.openTask", taskId);
-      return;
     }
   }
 
+  private async handleTaskEvent(taskId: number) {
+    const taskResponse = await this.apiClient.api.tasks[":id"].$get({
+      param: { id: taskId.toString() },
+    });
+
+    if (!taskResponse.ok) {
+      vscode.window.showErrorMessage(
+        `Failed to get task ${taskId}: ${taskResponse.status}`,
+      );
+      return;
+    }
+
+    const task = await taskResponse.json();
+    switch (task.event?.type) {
+      case "batch:evaluation":
+        await this.handleEvaluationTask(task as EvaluationTask);
+        break;
+      default:
+        // default to open the task
+        await vscode.commands.executeCommand("ragdoll.openTask", taskId);
+        break;
+    }
+  }
   async handleNewProjectRequest(params: NewProjectParams) {
     const { requestId, name } = params;
 
@@ -139,6 +184,36 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     await vscode.commands.executeCommand("vscode.openFolder", newWorkspaceUri, {
       forceReuseWindow: true,
     });
+  }
+
+  private async handleEvaluationTask(task: EvaluationTask) {
+    const batchId = task.event.data.batchId;
+
+    const evaluationProjectDir = getEvaluationProjectUri(batchId, task.id);
+
+    await vscode.workspace.fs.createDirectory(evaluationProjectDir);
+
+    // Push job to prepare the evaluation project and open the existing task
+    await this.workspaceJobQueue.push({
+      workspaceUri: evaluationProjectDir.toString(),
+      command: "ragdoll.prepareEvaluationProject",
+      args: [
+        {
+          taskId: task.id,
+          batchId,
+          githubTemplateUrl: task.event.data.githubTemplateUrl,
+        },
+      ],
+      expiresAt: Date.now() + 1000 * 60,
+    });
+
+    await vscode.commands.executeCommand(
+      "vscode.openFolder",
+      evaluationProjectDir,
+      {
+        forceNewWindow: true,
+      },
+    );
   }
 
   async loginWithDeviceLink(token: string) {

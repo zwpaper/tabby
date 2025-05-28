@@ -10,6 +10,7 @@ import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
+import type { NewTaskParams, TaskIdParams } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -30,6 +31,38 @@ export class CommandManager implements vscode.Disposable {
     private readonly commandPalette: CommandPalette,
   ) {
     this.registerCommands();
+  }
+
+  private async prepareProjectWithProgress(
+    progressMessage: string,
+    workspaceUri: vscode.Uri,
+    githubTemplateUrl: string | undefined,
+    openTaskParams: TaskIdParams | NewTaskParams,
+    requestId?: string,
+  ) {
+    return vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        cancellable: false,
+      },
+      async (progress) => {
+        progress.report({ message: progressMessage });
+
+        await vscode.commands.executeCommand("ragdollWebui.focus");
+
+        if (githubTemplateUrl) {
+          await prepareProject(workspaceUri, githubTemplateUrl, progress);
+        }
+
+        const webviewHost =
+          await this.ragdollWebviewProvider.retrieveWebviewHost();
+        webviewHost.openTask(openTaskParams);
+
+        if (requestId) {
+          await this.newProjectRegistry.set(requestId, workspaceUri);
+        }
+      },
+    );
   }
 
   private registerCommands() {
@@ -88,51 +121,46 @@ export class CommandManager implements vscode.Disposable {
       vscode.commands.registerCommand(
         "ragdoll.createProject",
         async (params: NewProjectParams) => {
-          vscode.window.withProgress(
+          const currentWorkspace = vscode.workspace.workspaceFolders?.[0].uri;
+          if (!currentWorkspace) {
+            return;
+          }
+
+          await this.prepareProjectWithProgress(
+            "Pochi: Creating project...",
+            currentWorkspace,
+            params.githubTemplateUrl,
             {
-              location: vscode.ProgressLocation.Notification,
-              cancellable: false,
+              taskId: "new",
+              prompt: params.prompt,
+              attachments: params.attachments,
             },
-            async (progress) => {
-              try {
-                progress.report({ message: "Pochi: Creating project..." });
+            params.requestId,
+          );
+        },
+      ),
 
-                await vscode.commands.executeCommand("ragdollWebui.focus");
+      vscode.commands.registerCommand(
+        "ragdoll.prepareEvaluationProject",
+        async (params: {
+          taskId: number;
+          batchId: string;
+          githubTemplateUrl: string;
+        }) => {
+          const currentWorkspace = vscode.workspace.workspaceFolders?.[0].uri;
+          if (!currentWorkspace) {
+            vscode.window.showErrorMessage(
+              "No workspace folder found for evaluation project",
+            );
+            return;
+          }
 
-                const currentWorkspace =
-                  vscode.workspace.workspaceFolders?.[0].uri;
-                if (!currentWorkspace) {
-                  return;
-                }
-                if (params.githubTemplateUrl) {
-                  await prepareProject(
-                    currentWorkspace,
-                    params.githubTemplateUrl,
-                    progress,
-                  );
-                }
-
-                const webviewHost =
-                  await this.ragdollWebviewProvider.retrieveWebviewHost();
-                webviewHost.openTask({
-                  taskId: "new",
-                  prompt: params.prompt,
-                  attachments: params.attachments,
-                });
-
-                if (params.requestId) {
-                  await this.newProjectRegistry.set(
-                    params.requestId,
-                    currentWorkspace,
-                  );
-                }
-              } catch (error) {
-                const errorMessage =
-                  error instanceof Error ? error.message : "Unknown error";
-                vscode.window.showErrorMessage(
-                  `Pochi: Failed to create project. ${errorMessage}`,
-                );
-              }
+          await this.prepareProjectWithProgress(
+            "Pochi: Preparing evaluation project...",
+            currentWorkspace,
+            params.githubTemplateUrl,
+            {
+              taskId: params.taskId,
             },
           );
         },

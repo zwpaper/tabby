@@ -1,6 +1,8 @@
 import { deviceLinkClient } from "@ragdoll/server";
+import type { AppType } from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
+import { hc } from "hono/client";
 import type { DependencyContainer } from "tsyringe";
 import { PostHog } from "./posthog";
 import { TokenStorage } from "./token-storage";
@@ -42,4 +44,17 @@ export function createAuthClient(container: DependencyContainer) {
   return authClient;
 }
 
+export function createApiClient(container: DependencyContainer) {
+  const tokenStorage = container.resolve(TokenStorage);
+
+  const app = hc<AppType>(getServerBaseUrl(), {
+    headers: {
+      Authorization: `Bearer ${tokenStorage.token.value}`,
+    },
+  });
+
+  return app;
+}
+
 export type AuthClient = ReturnType<typeof createAuthClient>;
+export type ApiClient = ReturnType<typeof createApiClient>;

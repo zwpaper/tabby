@@ -276,6 +276,10 @@ export class VSCodeHostImpl implements VSCodeHostApi {
   capture = async ({ event, properties }: CaptureEvent) => {
     this.posthog.capture(event, properties);
   };
+
+  closeCurrentWorkspace = async () => {
+    await vscode.commands.executeCommand("workbench.action.closeWindow");
+  };
 }
 
 function safeCall<T>(x: Promise<T>) {

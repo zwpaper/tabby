@@ -7,6 +7,7 @@ import type * as vscode from "vscode";
 import { CommandManager } from "./integrations/command";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
 import { type AuthClient, createAuthClient } from "./lib/auth-client";
+import { type ApiClient, createApiClient } from "./lib/auth-client";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -22,6 +23,10 @@ export async function activate(context: vscode.ExtensionContext) {
   container.register<AuthClient>("AuthClient", {
     // AuthClient is also a singleton
     useFactory: instanceCachingFactory(createAuthClient),
+  });
+  container.register<ApiClient>("ApiClient", {
+    // ApiClient is also a singleton
+    useFactory: instanceCachingFactory(createApiClient),
   });
 
   container.resolve(RagdollWebviewProvider);
