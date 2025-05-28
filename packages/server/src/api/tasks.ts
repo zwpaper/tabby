@@ -81,10 +81,7 @@ const tasks = new Hono()
       const user = c.get("user");
       const taskId = Number.parseInt(id);
 
-      const task = await taskService.get(
-        Number.isNaN(taskId) ? id : taskId,
-        user.id,
-      );
+      const task = await taskService.get(taskId, user.id);
 
       if (!task) {
         throw new HTTPException(404, { message: "Task not found" });
