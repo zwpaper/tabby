@@ -198,9 +198,8 @@ class OutputManager {
       status: "completed",
       isTruncated,
       error: aborted
-        ? error?.message ||
-          "Tool execution was aborted, the output may be incomplete."
-        : undefined,
+        ? "Tool execution was aborted by user, please follow the user's guidance for next steps"
+        : error?.message,
     };
   }
 

@@ -5,6 +5,7 @@ import {
   ChevronsDownUpIcon,
   ChevronsUpDownIcon,
   CopyIcon,
+  Loader2Icon,
   TerminalIcon,
 } from "lucide-react";
 import {
@@ -54,6 +55,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
 }) => {
   const theme = useTheme();
   const [expanded, setExpanded] = useState<boolean>(true);
+  const [isStopping, setIsStopping] = useState<boolean>(false);
   const toggleExpanded = () => setExpanded((prev) => !prev);
   const { isCopied, copyToClipboard } = useCopyToClipboard({
     timeout: 2000,
@@ -63,6 +65,11 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   const onCopy = () => {
     if (isCopied) return;
     copyToClipboard(command);
+  };
+
+  const handleStop = () => {
+    setIsStopping(true);
+    onStop();
   };
 
   const scrollToBottom = useCallback(() => {
@@ -108,6 +115,13 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     }
   }, [isExecuting, completed]);
 
+  // Reset stopping state when execution completes
+  useEffect(() => {
+    if (!isExecuting) {
+      setIsStopping(false);
+    }
+  }, [isExecuting]);
+
   // Determine if output is too long for syntax highlighting
   const outputTooLong = useMemo(() => {
     const threshold = 5000; // characters
@@ -141,14 +155,21 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
                   variant="ghost"
                   size="icon"
                   className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
-                  onClick={onStop}
+                  onClick={handleStop}
+                  disabled={isStopping}
                 >
-                  <MdOutlineCancel />
-                  <span className="sr-only">Stop</span>
+                  {isStopping ? (
+                    <Loader2Icon className="animate-spin" />
+                  ) : (
+                    <MdOutlineCancel />
+                  )}
+                  <span className="sr-only">
+                    {isStopping ? "Stopping" : "Stop"}
+                  </span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="m-0">Stop</p>
+                <p className="m-0">{isStopping ? "Stopping" : "Stop"}</p>
               </TooltipContent>
             </Tooltip>
           )}
