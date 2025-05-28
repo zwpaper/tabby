@@ -117,6 +117,9 @@ function RouteComponent() {
       const batchGroups = new Map<string, Task[]>();
 
       for (const task of data.data) {
+        if (task.event?.type !== "batch:evaluation") {
+          continue;
+        }
         const batchId = task.event?.data?.batchId;
         if (task.event?.type === "batch:evaluation" && batchId) {
           if (!batchGroups.has(batchId)) {

@@ -114,6 +114,7 @@
         "tsyringe": "^4.10.0",
       },
       "devDependencies": {
+        "@ragdoll/db": "workspace:*",
         "@ragdoll/tools": "workspace:*",
         "@ragdoll/vscode-webui-bridge": "workspace:*",
         "@types/diff": "^7.0.2",
@@ -269,7 +270,6 @@
         "cmdk": "^1.1.1",
         "framer-motion": "^12.11.0",
         "hono": "catalog:",
-        "js-base64": "^3.7.7",
         "lucide-react": "^0.487.0",
         "moment": "catalog:",
         "next-themes": "^0.4.6",
@@ -2274,8 +2274,6 @@
     "jose": ["jose@5.10.0", "", {}, "sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg=="],
 
     "joycon": ["joycon@3.1.1", "", {}, "sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw=="],
-
-    "js-base64": ["js-base64@3.7.7", "", {}, "sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw=="],
 
     "js-cookie": ["js-cookie@2.2.1", "", {}, "sha512-HvdH2LzI/EAZcUwA8+0nKNtWHqS+ZmijLA30RwZA0bo7ToCckjK5MkGhjED9KoRcXO6BaGI3I9UIzSA1FKFPOQ=="],
 

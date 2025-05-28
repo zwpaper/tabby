@@ -15,7 +15,7 @@ import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { CommandPalette } from "./command-palette";
-import type { NewProjectParams } from "./uri-handler";
+import type { NewProjectTask } from "./uri-handler";
 
 @injectable()
 @singleton()
@@ -120,7 +120,8 @@ export class CommandManager implements vscode.Disposable {
 
       vscode.commands.registerCommand(
         "ragdoll.createProject",
-        async (params: NewProjectParams) => {
+        async (task: NewProjectTask) => {
+          const params = task.event.data;
           const currentWorkspace = vscode.workspace.workspaceFolders?.[0].uri;
           if (!currentWorkspace) {
             return;

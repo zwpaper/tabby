@@ -7,6 +7,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { UserButton } from "@/components/user-button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { apiClient } from "@/lib/auth-client";
 import { useEnhancingPrompt } from "@/lib/use-enhancing-prompt";
 import { cn } from "@/lib/utils";
 import {
@@ -19,7 +20,6 @@ import { Route } from "@/routes";
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { useRouter } from "@tanstack/react-router";
 import type { Attachment } from "ai";
-import { Base64 } from "js-base64";
 import {
   ArrowUpIcon,
   ImageIcon,
@@ -198,22 +198,36 @@ export function Home() {
           }
         }
 
-        const base64Encoded = Base64.encode(
-          JSON.stringify({
-            requestId: crypto.randomUUID(),
+        const taskResponse = await apiClient.api.tasks.$post({
+          json: {
             prompt: input,
-            name,
-            attachments,
-            githubTemplateUrl:
-              "https://github.com/wsxiaoys/reimagined-octo-funicular",
-          }),
-        );
+            event: {
+              type: "website:new-project",
+              data: {
+                requestId: crypto.randomUUID(),
+                name,
+                prompt: input,
+                attachments,
+                githubTemplateUrl:
+                  "https://github.com/wsxiaoys/reimagined-octo-funicular",
+              },
+            },
+          },
+        });
+
+        if (!taskResponse.ok) {
+          throw new Error("Failed to create task");
+        }
+
+        const { taskId } = await taskResponse.json();
+
         await navigate({
           to: "/redirect-vscode",
           search: {
-            project: base64Encoded,
+            taskId,
           },
         });
+
         return;
       } catch (error) {
         setSubmitError(

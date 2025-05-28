@@ -206,6 +206,7 @@
   "devDependencies": {
     "@ragdoll/tools": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
+    "@ragdoll/db": "workspace:*",
     "@types/diff": "^7.0.2",
     "@types/project-name-generator": "^2.1.3",
     "@types/proxyquire": "^1.3.31",

@@ -7,44 +7,15 @@ import { getLogger } from "@/lib/logger";
 import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorkspaceJobQueue } from "@/lib/workspace-job";
-import type { NewTaskAttachment } from "@ragdoll/vscode-webui-bridge";
+import type { DB } from "@ragdoll/db";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
-
-export interface NewProjectParams {
-  requestId?: string;
-
-  /**
-   * project name
-   */
-  name?: string;
-
-  /**
-   * user input prompt message
-   */
-  prompt: string;
-
-  /**
-   * user attached files
-   */
-  attachments?: NewTaskAttachment[];
-
-  /**
-   * A zip url to download the project template from.
-   * example: https://github.com/wsxiaoys/reimagined-octo-funicular
-   */
-  githubTemplateUrl?: string;
+export interface NewProjectTask {
+  event: Extract<DB["task"]["event"], { type: "website:new-project" }>;
 }
-
 interface EvaluationTask {
   id: number;
-  event: {
-    type: string;
-    data: {
-      batchId: string;
-      githubTemplateUrl: string;
-    };
-  };
+  event: Extract<DB["task"]["event"], { type: "batch:evaluation" }>;
 }
 
 const logger = getLogger("RagdollUriHandler");
@@ -93,20 +64,6 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       return;
     }
 
-    const newProject = searchParams.get("newProject");
-    if (newProject) {
-      try {
-        const decoded = Buffer.from(newProject, "base64").toString("utf-8");
-        const params = JSON.parse(decoded) as NewProjectParams;
-        await this.handleNewProjectRequest(params);
-      } catch (error) {
-        vscode.window.showErrorMessage(
-          `Failed to create new project: ${error}`,
-        );
-      }
-      return;
-    }
-
     const task = searchParams.get("task");
     if (task) {
       const taskIdInt = Number.parseInt(task);
@@ -134,13 +91,17 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       case "batch:evaluation":
         await this.handleEvaluationTask(task as EvaluationTask);
         break;
+      case "website:new-project":
+        await this.handleNewProjectTask(task as NewProjectTask);
+        break;
       default:
         // default to open the task
         await vscode.commands.executeCommand("ragdoll.openTask", taskId);
         break;
     }
   }
-  async handleNewProjectRequest(params: NewProjectParams) {
+  async handleNewProjectTask(task: NewProjectTask) {
+    const { data: params } = task.event;
     const { requestId, name } = params;
 
     if (requestId) {
@@ -176,7 +137,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     await this.workspaceJobQueue.push({
       workspaceUri: newWorkspaceUri.toString(),
       command: "ragdoll.createProject",
-      args: [params],
+      args: [task],
       expiresAt: Date.now() + 1000 * 60,
     });
 

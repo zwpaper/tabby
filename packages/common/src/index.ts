@@ -2,6 +2,20 @@ import type { DB } from "@ragdoll/db";
 
 export type UserEvent =
   | {
+      type: "website:new-project";
+      data: {
+        requestId: string;
+        name?: string;
+        prompt: string;
+        attachments?: {
+          url: string;
+          name?: string;
+          contentType?: string;
+        }[];
+        githubTemplateUrl?: string;
+      };
+    }
+  | {
       type: "batch:evaluation";
       data: {
         batchId: string;

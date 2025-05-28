@@ -6,14 +6,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { apiClient } from "@/lib/auth-client";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Base64 } from "js-base64";
 import { LifeBuoy, Loader2, Puzzle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  project: z.string().optional(),
+  taskId: z.number().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/redirect-vscode")({
@@ -22,25 +23,28 @@ export const Route = createFileRoute("/_authenticated/redirect-vscode")({
 });
 
 function RouteComponent() {
-  const { project } = Route.useSearch();
+  const { taskId } = Route.useSearch();
   const [showManualButton, setShowManualButton] = useState(false);
-  const description = useMemo(() => {
-    try {
-      const { prompt, attachments } = JSON.parse(Base64.decode(project ?? ""));
-      if (prompt) {
-        return prompt.split("\n")[0];
-      }
-      if (attachments?.length) {
-        return "[attachment]";
-      }
-    } catch {
-      return null;
-    }
-  }, [project]);
+  const { data: task } = useQuery({
+    queryKey: ["task", taskId],
+    queryFn: async () => {
+      if (!taskId) return null;
+      // TODO(sma1lboy): should we just passing descrption directly?
+      const resp = await apiClient.api.tasks[":id"].$get({
+        param: { id: taskId.toString() },
+      });
+      return resp.json();
+    },
+    enabled: !!taskId,
+  });
 
-  const vscodeLink = `vscode://TabbyML.pochi/?newProject=${encodeURIComponent(
-    project ?? "",
-  )}`;
+  const description = useMemo(() => {
+    if (task?.event?.type === "website:new-project") {
+      return task.event.data.prompt?.split("\n")[0];
+    }
+    return null;
+  }, [task]);
+  const vscodeLink = `vscode://TabbyML.pochi/?task=${taskId}`;
 
   console.log(vscodeLink);
   const openVSCode = useCallback(() => {
