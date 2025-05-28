@@ -3,7 +3,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DefaultModelId } from "../constants";
 
-export type AutoApprove = Record<keyof typeof ToolsByPermission, boolean> & {
+export type AutoApprove = Record<
+  Exclude<keyof typeof ToolsByPermission, "default">,
+  boolean
+> & {
   retry: number;
 };
 
@@ -26,13 +29,12 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       selectedModelId: DefaultModelId,
-      autoApproveActive: false,
+      autoApproveActive: true,
       autoApproveSettings: {
-        read: false,
-        write: false,
-        execute: false,
+        read: true,
+        write: true,
+        execute: true,
         retry: 0,
-        default: true,
       },
       isDevMode: false,
       enableReasoning: false,
