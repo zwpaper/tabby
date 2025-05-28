@@ -1,5 +1,5 @@
 import { type Signal, signal } from "@preact/signals-core";
-import type { ShellExecutionResult } from "@ragdoll/vscode-webui-bridge";
+import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import { ExecaError, execa } from "execa";
 import type * as vscode from "vscode";
 import { getLogger } from "./logger";
@@ -100,7 +100,7 @@ class OutputTruncator {
  * Manages shell output and state updates
  */
 class OutputManager {
-  public readonly output = signal<ShellExecutionResult>({
+  public readonly output = signal<ExecuteCommandResult>({
     content: "",
     status: "idle",
     isTruncated: false,
@@ -141,7 +141,7 @@ class OutputManager {
   /**
    * Updates the output signal with current content and status
    */
-  private updateOutput(status: ShellExecutionResult["status"]): void {
+  private updateOutput(status: ExecuteCommandResult["status"]): void {
     const { lines: truncatedLines, isTruncated } = this.truncator.truncateLines(
       this.lines,
     );
@@ -244,7 +244,7 @@ class ShellExecution {
   /**
    * Returns the output signal for external consumption
    */
-  get output(): Signal<ShellExecutionResult> {
+  get output(): Signal<ExecuteCommandResult> {
     return this.outputManager.output;
   }
 
@@ -299,7 +299,7 @@ export class Shell {
   executeCommand(
     command: string,
     abortSignal?: AbortSignal,
-  ): Signal<ShellExecutionResult> {
+  ): Signal<ExecuteCommandResult> {
     const abortController = new AbortController();
 
     // Set up abort signal chaining

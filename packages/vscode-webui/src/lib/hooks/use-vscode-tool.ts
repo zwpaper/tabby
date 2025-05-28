@@ -4,7 +4,7 @@ import {
   type ThreadSignalSerialization,
   threadSignal,
 } from "@quilted/threads/signals";
-import type { ShellExecutionResult } from "@ragdoll/vscode-webui-bridge";
+import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import { useCallback, useEffect, useRef } from "react";
 import { vscodeHost } from "../vscode";
@@ -34,7 +34,7 @@ export function useVSCodeTool({
       const signal = threadSignal(
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         (result as any)
-          .output as ThreadSignalSerialization<ShellExecutionResult>,
+          .output as ThreadSignalSerialization<ExecuteCommandResult>,
       );
 
       const unsubscribe = signal.subscribe((output) => {

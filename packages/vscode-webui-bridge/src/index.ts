@@ -34,7 +34,7 @@ export interface VSCodeHostApi {
    * @param options Options for the tool call.
    * @return A promise that resolves to the result of the tool call.
    *         The result can be any type, depending on the tool's implementation.
-   *         for "executeCommand" tool, the result is {@link ShellExecutionResult}.
+   *         for "executeCommand" tool, the result is {@link ExecuteCommandResult}.
    */
   executeToolCall(
     toolName: string,
@@ -222,7 +222,7 @@ export interface McpToolStatus extends McpTool {
   disabled: boolean;
 }
 
-export interface ShellExecutionResult {
+export interface ExecuteCommandResult {
   content: string;
   status: "idle" | "running" | "completed";
   isTruncated: boolean;
