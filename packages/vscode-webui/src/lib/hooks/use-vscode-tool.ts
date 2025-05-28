@@ -31,11 +31,13 @@ export function useVSCodeTool({
 
   const handleStreamResult = useCallback(
     (tool: ToolInvocation, result: unknown) => {
-      threadSignal(
+      const signal = threadSignal(
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         (result as any)
           .output as ThreadSignalSerialization<ShellExecutionResult>,
-      ).subscribe((output) => {
+      );
+
+      const unsubscribe = signal.subscribe((output) => {
         if (output.status === "completed") {
           addToolResult({
             toolCallId: tool.toolCallId,
@@ -47,6 +49,7 @@ export function useVSCodeTool({
           });
           removeToolStreamResult(tool.toolCallId);
           setIsExecuting(false);
+          unsubscribe();
         } else {
           addToolStreamResult({
             toolCallId: tool.toolCallId,

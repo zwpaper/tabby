@@ -26,9 +26,10 @@ export const executeCommand: ToolFunctionType<
   if (!isDevServer) {
     const shell = new Shell("Pochi", vscode.Uri.parse(cwd));
     const execution = shell.executeCommand(command, abortSignal);
-    execution.read();
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    return { output: ThreadSignal.serialize(execution.output) as any };
+
+    // biome-ignore lint/suspicious/noExplicitAny: pass thread signal
+    const output = ThreadSignal.serialize(execution.output) as any;
+    return { output };
   }
 
   const shell = await getPochiShell(cwd, isDevServer);

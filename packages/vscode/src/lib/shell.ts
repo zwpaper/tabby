@@ -1,6 +1,6 @@
 import { signal } from "@preact/signals-core";
 import type { ShellExecutionResult } from "@ragdoll/vscode-webui-bridge";
-import { ExecaError, type ResultPromise, execa } from "execa";
+import { ExecaError, execa } from "execa";
 import type * as vscode from "vscode";
 import { getLogger } from "./logger";
 
@@ -8,8 +8,7 @@ const logger = getLogger("Shell");
 
 const MAX_CONTENT_SIZE = 1_048_576; // 1MB
 
-export class Shell implements vscode.Disposable {
-  private disposables: vscode.Disposable[] = [];
+export class Shell {
   readonly name: string;
   readonly cwd: vscode.Uri;
 
@@ -29,30 +28,12 @@ export class Shell implements vscode.Disposable {
     logger.info(
       `Executing command in shell "${this.name}" at ${this.cwd.fsPath}: ${command}`,
     );
-    const execution = execa(command, {
-      cwd: this.cwd.fsPath,
-      shell: true,
-      all: true,
-      cancelSignal: abortController.signal,
-      cleanup: true,
-    });
 
-    const shellExecution = new ShellExecution(execution, abortController);
-    this.disposables.push(shellExecution);
-    return shellExecution;
-  }
-
-  dispose() {
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables = [];
+    return new ShellExecution(command, this.cwd.fsPath, abortController.signal);
   }
 }
 
-export class ShellExecution implements vscode.Disposable {
-  private isDisposed = false;
-
+export class ShellExecution {
   output = signal<ShellExecutionResult>({
     content: "",
     status: "idle",
@@ -63,16 +44,15 @@ export class ShellExecution implements vscode.Disposable {
   private isTruncated = false;
 
   constructor(
-    private execution: ResultPromise<{
-      cwd: string;
-      shell: true;
-      all: true;
-    }>,
-    private abortController: AbortController,
-  ) {}
+    private command: string,
+    private cwd: string,
+    private abortSignal: AbortSignal,
+  ) {
+    this.read();
+  }
 
   private get aborted() {
-    return this.abortController.signal.aborted;
+    return this.abortSignal.aborted;
   }
 
   private truncateLines(lines: string[]): {
@@ -97,10 +77,21 @@ export class ShellExecution implements vscode.Disposable {
     return { lines: currentLines, isTruncated: true };
   }
 
-  async read() {
+  private async read() {
+    // Sleep for a bit to ensure webview have a chance to subscribe it to avoid it being garbage collected too early.
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    const execution = execa(this.command, {
+      cwd: this.cwd,
+      shell: true,
+      all: true,
+      cancelSignal: this.abortSignal,
+      cleanup: true,
+    });
+
     let errorMessage: string | undefined;
     try {
-      for await (const line of this.execution) {
+      for await (const line of execution) {
         this.lines.push(line);
         if (this.aborted) break;
 
@@ -123,8 +114,6 @@ export class ShellExecution implements vscode.Disposable {
           status: "running",
           isTruncated,
         };
-
-        logger.debug(`Shell output: ${line}`);
       }
     } catch (error) {
       // check if the error is due to execa abortion
@@ -154,11 +143,5 @@ export class ShellExecution implements vscode.Disposable {
         : undefined,
       error: errorMessage,
     };
-  }
-
-  dispose() {
-    if (this.isDisposed) return;
-    this.abortController.abort();
-    this.isDisposed = true;
   }
 }
