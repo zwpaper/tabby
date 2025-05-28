@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import type { PendingRetryApproval } from "@/features/approval/hooks/use-pending-retry-approval";
 import { ReadyForRetryError } from "@/features/approval/hooks/use-ready-for-retry-error";
+import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 // usePendingRetryApproval is not directly used here anymore, it's used by usePendingApproval
 
 interface RetryApprovalButtonProps {
@@ -31,6 +32,13 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
     pendingApproval.error.kind === "no-tool-calls";
   const autoRetryText = isNoToolCalls ? "Continue" : "Auto-retry";
   const retryText = isNoToolCalls ? "Continue" : "Retry";
+
+  const [showRetry, setShowRetry] = useDebounceState(false, 500);
+  useEffect(() => {
+    setShowRetry(true);
+  }, [setShowRetry]);
+
+  if (!showRetry) return null;
 
   return (
     <>

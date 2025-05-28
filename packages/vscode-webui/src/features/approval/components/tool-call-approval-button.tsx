@@ -3,10 +3,11 @@ import {
   isExecuteCommandToolStreamCall,
 } from "@ragdoll/tools"; // isUserInputTool is now in the hook
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react"; // useMemo is now in the hook
+import { useCallback, useEffect, useRef } from "react"; // useMemo is now in the hook
 
 import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval/hooks/use-pending-tool-call-approval";
+import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import {
   useAutoApproveGuard,
@@ -123,21 +124,13 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     }
   }, [isAutoApproved, isAutoRejected, onAccept, onReject]);
 
-  const [showAbort, setShowAbort] = useState(false);
-
+  const [showAbort, setShowAbort] = useDebounceState(false, 3_000); // 3 seconds
   useEffect(() => {
-    setShowAbort(false);
+    setShowAbort(!!executingToolCallId);
+  }, [executingToolCallId, setShowAbort]);
 
-    if (executingToolCallId) {
-      const timer = setTimeout(() => {
-        setShowAbort(true);
-      }, 10_000); // 10 seconds
-
-      return () => clearTimeout(timer);
-    }
-  }, [executingToolCallId]);
-
-  if (!executingToolCallId) {
+  const showAccept = !isAutoApproved && !executingToolCallId;
+  if (showAccept) {
     return (
       <>
         <Button onClick={onAccept}>{acceptText}</Button>
