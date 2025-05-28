@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { isAutoInjectTool } from "@ragdoll/tools";
 
+import type { ToolCallStreamResult } from "@/lib/hooks/use-stream-tool-call-result";
 import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
 
@@ -25,6 +26,7 @@ export const MessageList: React.FC<{
   isLoading: boolean;
   executingToolCallId?: string;
   containerRef?: React.RefObject<HTMLDivElement>;
+  toolCallStreamResults: ToolCallStreamResult[];
 }> = ({
   messages: renderMessages,
   isLoading,
@@ -33,6 +35,7 @@ export const MessageList: React.FC<{
   sendMessage,
   executingToolCallId,
   containerRef,
+  toolCallStreamResults,
 }) => {
   return (
     <ScrollArea className="mb-2 flex-1 overflow-y-auto px-4" ref={containerRef}>
@@ -74,6 +77,7 @@ export const MessageList: React.FC<{
                   isLoading={isLoading}
                   sendMessage={sendMessage}
                   executingToolCallId={executingToolCallId}
+                  toolCallStreamResults={toolCallStreamResults}
                 />
               ))}
             </div>
@@ -105,6 +109,7 @@ function Part({
   sendMessage,
   isLoading,
   isLastPartInMessages,
+  toolCallStreamResults,
 }: {
   message: UIMessage;
   part: NonNullable<UIMessage["parts"]>[number];
@@ -115,6 +120,7 @@ function Part({
   executingToolCallId: string | undefined;
   isLoading: boolean;
   isLastPartInMessages: boolean;
+  toolCallStreamResults: ToolCallStreamResult[];
 }) {
   if (part.type === "text") {
     return <TextPartUI message={message} part={part} />;
@@ -139,6 +145,9 @@ function Part({
         sendMessage={sendMessage}
         executingToolCallId={executingToolCallId}
         isLoading={isLoading}
+        streamResult={toolCallStreamResults.find(
+          (result) => result.toolCallId === part.toolInvocation.toolCallId,
+        )}
       />
     );
   }

@@ -117,6 +117,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
           codeTagProps={{
             style: {
               backgroundColor: "transparent",
+              padding: "0px",
             },
           }}
         >

@@ -13,7 +13,7 @@ import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
 export type { PreviewToolFunctionType, ToolFunctionType } from "./types";
-import type { Tool } from "ai";
+import type { Tool, ToolInvocation } from "ai";
 import { slackReplyThread } from "./slack-reply-thread";
 import { webFetch } from "./web-fetch";
 import { writeToFile } from "./write-to-file";
@@ -24,6 +24,10 @@ export function isUserInputTool(toolName: string): boolean {
     "attemptCompletion",
   ] satisfies ToolName[];
   return userInputTools.includes(toolName);
+}
+
+export function isExecuteCommandToolStreamCall(tool: ToolInvocation): boolean {
+  return tool.toolName === "executeCommand" && !tool.args?.isDevServer;
 }
 
 export function isAutoInjectTool(toolName: string): boolean {

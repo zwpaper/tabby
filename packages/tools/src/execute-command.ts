@@ -25,5 +25,9 @@ export const executeCommand = defineClientTool({
     output: z
       .string()
       .describe("The output of the command (including stdout and stderr)."),
+    isTruncated: z
+      .boolean()
+      .optional()
+      .describe("Whether the output was truncated"),
   }),
 });

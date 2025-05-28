@@ -1,7 +1,9 @@
 import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import { Shell } from "@/lib/shell";
 import { streamWithAbort, streamWithTimeout } from "@/lib/stream-utils";
+import { ThreadSignal } from "@quilted/threads/signals";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import * as vscode from "vscode";
 
@@ -19,6 +21,14 @@ export const executeCommand: ToolFunctionType<
   } else {
     const workspaceRootUri = getWorkspaceFolder().uri;
     cwd = path.normalize(path.join(workspaceRootUri.fsPath, cwd));
+  }
+
+  if (!isDevServer) {
+    const shell = new Shell("Pochi", vscode.Uri.parse(cwd));
+    const execution = shell.executeCommand(command, abortSignal);
+    execution.read();
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    return { output: ThreadSignal.serialize(execution.output) as any };
   }
 
   const shell = await getPochiShell(cwd, isDevServer);

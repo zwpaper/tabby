@@ -28,6 +28,7 @@ export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
     message: Message | CreateMessage,
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
+  streamResult?: { result: Awaited<ReturnType<ToolFunctionType<T>>> };
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: external function def.

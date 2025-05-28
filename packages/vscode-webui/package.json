@@ -58,6 +58,7 @@
     "motion": "^12.12.1",
     "react": "catalog:",
     "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "15.5.0",
     "react-use": "^17.6.0",

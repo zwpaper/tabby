@@ -1,9 +1,13 @@
-import { isAutoInjectTool } from "@ragdoll/tools"; // isUserInputTool is now in the hook
+import {
+  isAutoInjectTool,
+  isExecuteCommandToolStreamCall,
+} from "@ragdoll/tools"; // isUserInputTool is now in the hook
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react"; // useMemo is now in the hook
 
 import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval/hooks/use-pending-tool-call-approval";
+import { useToolEvents } from "@/lib/contexts/tool-event-context";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import { useChatState } from "@/lib/stores/chat-state";
 import { useToolAutoApproval } from "@/lib/stores/settings-store";
@@ -21,6 +25,7 @@ export type AddToolResultFunctionType = ({
 interface ToolCallApprovalButtonProps {
   pendingApproval: PendingToolCallApproval;
   addToolResult: AddToolResultFunctionType;
+  addToolStreamResult: AddToolResultFunctionType;
   setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
   executingToolCallId?: string;
 }
@@ -29,13 +34,25 @@ interface ToolCallApprovalButtonProps {
 export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
   addToolResult,
+  addToolStreamResult,
   setIsExecuting,
   executingToolCallId,
 }) => {
   const { autoApproveGuard } = useChatState();
   const { executeTool, rejectTool, abortTool } = useVSCodeTool({
     addToolResult,
+    addToolStreamResult,
+    setIsExecuting,
   });
+
+  const { listen } = useToolEvents();
+  useEffect(() => {
+    return listen("abortTool", ({ toolCallId }) => {
+      if (toolCallId === executingToolCallId) {
+        abortTool();
+      }
+    });
+  }, [listen, abortTool, executingToolCallId]);
 
   const ToolAcceptText: Record<string, string> = {
     writeToFile: "Save",
@@ -47,9 +64,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     todoWrite: "<disabled>",
   };
 
-  const ToolAbortText: Record<string, string> = {
-    executeCommand: "Complete",
-  };
+  const ToolAbortText: Record<string, string> = {};
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
@@ -73,7 +88,9 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
       setIsExecuting(true);
       await executeTool(pendingApproval.tool);
     } finally {
-      setIsExecuting(false);
+      if (!isExecuteCommandToolStreamCall(pendingApproval.tool)) {
+        setIsExecuting(false);
+      }
     }
   }, [shouldSkipExecute, pendingApproval, executeTool, setIsExecuting]);
 

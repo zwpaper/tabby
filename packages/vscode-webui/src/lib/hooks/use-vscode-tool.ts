@@ -1,13 +1,22 @@
 import type { useChat } from "@ai-sdk/react";
 import { ThreadAbortSignal } from "@quilted/threads";
+import {
+  type ThreadSignalSerialization,
+  threadSignal,
+} from "@quilted/threads/signals";
+import type { ShellExecutionResult } from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import { useCallback, useEffect, useRef } from "react";
 import { vscodeHost } from "../vscode";
 
 export function useVSCodeTool({
   addToolResult,
+  addToolStreamResult,
+  setIsExecuting,
 }: {
   addToolResult: ReturnType<typeof useChat>["addToolResult"];
+  addToolStreamResult: ReturnType<typeof useChat>["addToolResult"];
+  setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const abort = useRef(new AbortController());
   useUnmountOnce(() => {
@@ -17,6 +26,38 @@ export function useVSCodeTool({
   const abortTool = useCallback(() => {
     abort.current.abort();
   }, []);
+
+  const handleStreamResult = useCallback(
+    (tool: ToolInvocation, result: unknown) => {
+      threadSignal(
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        (result as any)
+          .output as ThreadSignalSerialization<ShellExecutionResult>,
+      ).subscribe((output) => {
+        if (output.status === "completed") {
+          addToolResult({
+            toolCallId: tool.toolCallId,
+            result: {
+              output: output.content,
+              isTruncated: output.isTruncated ?? false,
+              aborted: output.aborted,
+            },
+          });
+          setIsExecuting(false);
+        } else {
+          addToolStreamResult({
+            toolCallId: tool.toolCallId,
+            result: {
+              output: output.content,
+              isTruncated: output.isTruncated ?? false,
+            },
+          });
+          setIsExecuting(true);
+        }
+      });
+    },
+    [setIsExecuting, addToolResult, addToolStreamResult],
+  );
 
   const executeTool = useCallback(
     async (tool: ToolInvocation) => {
@@ -36,12 +77,23 @@ export function useVSCodeTool({
         };
       }
 
+      if (
+        tool.toolName === "executeCommand" &&
+        !tool.args?.isDevServer &&
+        typeof result === "object" &&
+        result !== null &&
+        "output" in result
+      ) {
+        handleStreamResult(tool, result);
+        return;
+      }
+
       addToolResult({
         toolCallId: tool.toolCallId,
         result,
       });
     },
-    [addToolResult],
+    [addToolResult, handleStreamResult],
   );
   const rejectTool = useCallback(
     async (tool: ToolInvocation, error: string) => {

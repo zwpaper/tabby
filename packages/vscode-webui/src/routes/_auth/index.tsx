@@ -59,12 +59,14 @@ import {
 import { usePendingApproval } from "@/features/approval/hooks/use-pending-approval";
 import { TodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
+import { ToolEventProvider } from "@/lib/contexts/tool-event-context";
 import { useActiveSelection } from "@/lib/hooks/use-active-selection";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useLatest } from "@/lib/hooks/use-latest";
 import { useMcp } from "@/lib/hooks/use-mcp";
+import { useStreamToolCallResult } from "@/lib/hooks/use-stream-tool-call-result";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import {
@@ -146,12 +148,14 @@ function RouteComponent() {
 
   return (
     <ChatStateProvider>
-      <Chat
-        key={key}
-        loaderData={loaderData || null}
-        isTaskLoading={isTaskLoading}
-        initMessage={initMessage}
-      />
+      <ToolEventProvider>
+        <Chat
+          key={key}
+          loaderData={loaderData || null}
+          isTaskLoading={isTaskLoading}
+          initMessage={initMessage}
+        />
+      </ToolEventProvider>
     </ChatStateProvider>
   );
 }
@@ -567,6 +571,9 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     [addToolResult],
   );
 
+  const { toolCallStreamResults, addToolStreamResult } =
+    useStreamToolCallResult();
+
   const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
 
   // scroll to bottom immediately when a user message is sent
@@ -624,6 +631,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
         isLoading={isLoading || isTaskLoading}
         executingToolCallId={executingToolCallId}
         containerRef={messagesContainerRef}
+        toolCallStreamResults={toolCallStreamResults}
       />
       <div className="flex flex-col px-4">
         <ErrorMessage error={displayError} />
@@ -643,6 +651,7 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
               pendingApproval={pendingApproval}
               retry={retry}
               addToolResult={addToolResultWithForceUpdate}
+              addToolStreamResult={addToolStreamResult}
               executingToolCallId={executingToolCallId}
               setIsExecuting={setIsExecuting}
             />
