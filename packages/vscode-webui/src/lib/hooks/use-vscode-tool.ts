@@ -44,7 +44,7 @@ export function useVSCodeTool({
             result: {
               output: output.content,
               isTruncated: output.isTruncated ?? false,
-              aborted: output.aborted,
+              error: output.error,
             },
           });
           removeToolStreamResult(tool.toolCallId);

@@ -66,8 +66,7 @@ export interface ExecuteCommandResult {
   content: string;
   status: "idle" | "running" | "completed";
   isTruncated: boolean;
-  aborted?: string; // Optional message if the execution was aborted
-  error?: string; // Optional error message if the execution failed
+  error?: string; // Optional error message if the execution aborted / failed
 }
 
 const DevBaseUrl = "http://localhost:4113";

@@ -1,3 +1,5 @@
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
 import { type Signal, signal } from "@preact/signals-core";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import { ExecaError, execa } from "execa";
@@ -5,6 +7,70 @@ import type * as vscode from "vscode";
 import { getLogger } from "./logger";
 
 const logger = getLogger("Shell");
+
+// ========================================
+// Process Group Killing
+// ========================================
+
+const execPromise = promisify(exec);
+const isWin = process.platform === "win32";
+
+interface SubprocessLike {
+  pid?: number;
+  kill: (signal?: NodeJS.Signals | number) => boolean;
+}
+
+interface KillOptions {
+  signal?: NodeJS.Signals | number;
+}
+
+const killWin = async (
+  subprocess: SubprocessLike,
+  { signal = "SIGKILL" }: KillOptions = {},
+) => {
+  try {
+    await execPromise(`taskkill /pid ${subprocess.pid} /T /F`);
+  } catch (_) {
+    // taskkill can fail to kill the process e.g. due to missing permissions.
+    // Let's kill the process via Node API. This delays killing of all child
+    // processes of `this.proc` until the main Node.js process dies.
+    subprocess.kill(signal);
+  }
+};
+
+const killUnix = async (
+  subprocess: SubprocessLike,
+  { signal = "SIGKILL" }: KillOptions = {},
+) => {
+  // on linux the process group can be killed with the group id prefixed with
+  // a minus sign. The process group id is the group leader's pid.
+  const processGroupId = -(subprocess.pid ?? 0);
+  try {
+    process.kill(processGroupId, signal);
+  } catch (_) {
+    // Killing the process group can fail due e.g. to missing permissions.
+    // Let's kill the process via Node API. This delays killing of all child
+    // processes of `this.proc` until the main Node.js process dies.
+    subprocess.kill(signal);
+  }
+};
+
+/**
+ * Kills a process group (the process and all its child processes)
+ * @param subprocess - The subprocess to kill
+ * @param options - Options for killing the process
+ * @param options.signal - The signal to send (default: SIGKILL)
+ */
+export const killProcessGroup = async (
+  subprocess: SubprocessLike,
+  { signal = "SIGKILL" }: KillOptions = {},
+) => {
+  if (isWin) {
+    await killWin(subprocess, { signal });
+  } else {
+    await killUnix(subprocess, { signal });
+  }
+};
 
 // ========================================
 // Constants
@@ -131,10 +197,10 @@ class OutputManager {
       content: this.lines.join("\n"),
       status: "completed",
       isTruncated,
-      aborted: aborted
-        ? "Tool execution was aborted, the output may be incomplete."
+      error: aborted
+        ? error?.message ||
+          "Tool execution was aborted, the output may be incomplete."
         : undefined,
-      error: error?.message,
     };
   }
 
@@ -173,19 +239,50 @@ class CommandExecutor {
       shell: true,
       all: true,
       cancelSignal: this.config.abortSignal,
+      forceKillAfterDelay: false,
       cleanup: true,
     });
+
+    // Set up force kill mechanism for when signal is aborted
+    this.setupForceKillOnAbort(execution);
 
     try {
       for await (const line of execution) {
         if (this.config.abortSignal.aborted) {
           break;
         }
-        yield line;
+        // Ensure line is always a string
+        const lineStr =
+          typeof line === "string" ? line : new TextDecoder().decode(line);
+        yield lineStr;
       }
     } catch (error) {
       throw this.createShellExecutionError(error);
     }
+  }
+
+  /**
+   * Sets up force kill mechanism when abort signal is triggered
+   */
+  private setupForceKillOnAbort(execution: ReturnType<typeof execa>): void {
+    this.config.abortSignal.addEventListener("abort", async () => {
+      // Wait 500ms to see if process terminates gracefully
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check if process is still running (exitCode will be null if still running)
+      if (execution.exitCode === null) {
+        logger.warn(
+          `Process still alive after 100ms, force killing process group (PID: ${execution.pid})`,
+        );
+        try {
+          await killProcessGroup(execution);
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          logger.error(`Failed to force kill process group: ${errorMessage}`);
+        }
+      }
+    });
   }
 
   /**
@@ -263,7 +360,12 @@ class ShellExecution {
         }
       }
     } catch (error) {
-      if (error instanceof Error && "isCanceled" in error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error &&
+        "isCanceled" in error
+      ) {
         executionError = error as ShellExecutionError;
       } else {
         executionError = {
