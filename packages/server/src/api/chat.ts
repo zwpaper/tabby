@@ -3,7 +3,7 @@ import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { isAbortError } from "@ai-sdk/provider-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
-import { type Environment, prompts } from "@ragdoll/common";
+import { type Environment, appendDataPart, prompts } from "@ragdoll/common";
 import { formatters } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import {
@@ -87,7 +87,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     const dataStream = createDataStream({
       execute: async (stream) => {
         if (req.id === undefined) {
-          stream.writeData({ type: "append-id", id });
+          appendDataPart({ type: "append-id", id }, stream);
         }
 
         const preparedMessages = await prepareMessages(
@@ -177,10 +177,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               if (isUsageValid) {
                 await usageService.trackUsage(user, requestedModelId, usage);
 
-                stream.writeData({
-                  type: "update-usage",
-                  ...usage,
-                });
+                appendDataPart(
+                  {
+                    type: "update-usage",
+                    ...usage,
+                  },
+                  stream,
+                );
               }
             },
             headers:
@@ -298,10 +301,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
       const streamWithMessage = createDataStream({
         execute: (buffer) => {
-          buffer.writeData({
-            type: "append-message",
-            message: JSON.stringify(mostRecentMessage),
-          });
+          appendDataPart(
+            {
+              type: "append-message",
+              message: JSON.stringify(mostRecentMessage),
+            },
+            buffer,
+          );
         },
       });
 

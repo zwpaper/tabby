@@ -72,8 +72,8 @@ import {
   processImageFiles,
   validateImages,
 } from "@/lib/utils/image";
-import type { DataPart } from "@/lib/utils/message";
 import { vscodeHost } from "@/lib/vscode";
+import type { DataPart } from "@ragdoll/common";
 import type { ResourceURI } from "@ragdoll/vscode-webui-bridge";
 
 const searchSchema = z.object({

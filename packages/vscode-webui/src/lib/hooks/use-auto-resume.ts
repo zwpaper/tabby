@@ -1,8 +1,8 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
+import type { DataPart } from "@ragdoll/common";
 import { type Message, type UIMessage, appendClientMessage } from "ai";
 import { useEffect, useRef } from "react";
-import type { DataPart } from "../utils/message";
 
 export interface Props {
   autoResume: boolean;

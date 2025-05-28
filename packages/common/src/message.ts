@@ -1,4 +1,4 @@
-import type { Message } from "ai";
+import type { DataStreamWriter, LanguageModelUsage, Message } from "ai";
 
 export type DBMessage = {
   id: string;
@@ -9,6 +9,19 @@ export type DBMessage = {
   >;
   experimental_attachments?: Message["experimental_attachments"];
 };
+
+export type DataPart =
+  | {
+      type: "append-message";
+      message: string;
+    }
+  | {
+      type: "append-id";
+      id: number;
+    }
+  | ({
+      type: "update-usage";
+    } & LanguageModelUsage);
 
 export function toUIMessage(message: DBMessage): Message {
   return {
@@ -33,4 +46,26 @@ export function fromUIMessage(message: Message): DBMessage {
 
 export function fromUIMessages(messages: Message[]): DBMessage[] {
   return messages.map(fromUIMessage);
+}
+
+/**
+ * Utility function for writing DataPart objects to a stream
+ */
+export function appendDataPart(
+  dataPart: DataPart,
+  writer: DataStreamWriter,
+): void {
+  switch (dataPart.type) {
+    case "append-id":
+      writer.writeData(dataPart);
+      break;
+    case "append-message":
+      writer.writeData(dataPart);
+      break;
+    case "update-usage":
+      writer.writeData(dataPart);
+      break;
+    default:
+      throw new Error(`Unknown DataPart type: ${dataPart}`);
+  }
 }
