@@ -84,8 +84,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       req,
     );
 
-    const isGemini = requestedModelId.includes("gemini");
-
     const dataStream = createDataStream({
       execute: async (stream) => {
         if (req.id === undefined) {
@@ -211,8 +209,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             maxRetries: 0,
 
             // 8k tokens.
-            // set to 65k for gemini to reduce the chance of it hitting an internal bug.
-            maxTokens: isGemini ? 65_535 : 1024 * 8,
+            maxTokens: 1024 * 8,
           }),
         );
 
