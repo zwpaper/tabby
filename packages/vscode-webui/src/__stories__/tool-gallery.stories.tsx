@@ -7,9 +7,9 @@ import type {
 } from "@/components/tool-invocation/types";
 import type { ClientToolsType } from "@ragdoll/tools";
 
-export const ToolsGallery: React.FC<{
+const ToolsGallery: React.FC<{
   tools: ToolInvocation<unknown, unknown>[];
-}> = ({ tools }) => {
+}> = ({ tools = [] }) => {
   return (
     <div className="mt-3 ml-1 flex flex-col gap-2">
       {tools.map((tool, index) => (
