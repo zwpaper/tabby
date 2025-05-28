@@ -71,6 +71,10 @@ export class ShellExecution implements vscode.Disposable {
     private abortController: AbortController,
   ) {}
 
+  private get aborted() {
+    return this.abortController.signal.aborted;
+  }
+
   private truncateLines(lines: string[]): {
     lines: string[];
     isTruncated: boolean;
@@ -94,11 +98,11 @@ export class ShellExecution implements vscode.Disposable {
   }
 
   async read() {
-    let isAborted = false;
     let errorMessage: string | undefined;
     try {
       for await (const line of this.execution) {
         this.lines.push(line);
+        if (this.aborted) break;
 
         const { lines: truncatedLines, isTruncated } = this.truncateLines(
           this.lines,
@@ -127,7 +131,6 @@ export class ShellExecution implements vscode.Disposable {
       if (error instanceof ExecaError) {
         if (error.isCanceled) {
           logger.info("Shell execution aborted by user.");
-          isAborted = true;
         } else {
           errorMessage = error.shortMessage;
           logger.error(`Shell execution failed: ${error.message}`);
@@ -146,7 +149,7 @@ export class ShellExecution implements vscode.Disposable {
       content: this.lines.join("\n"),
       status: "completed",
       isTruncated,
-      aborted: isAborted
+      aborted: this.aborted
         ? "Tool execution was aborted, the output may be incomplete."
         : undefined,
       error: errorMessage,
