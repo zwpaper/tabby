@@ -7,31 +7,43 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import type { McpConnection } from "@ragdoll/vscode-webui-bridge";
-import { Blocks, ChevronsUpDown, Dot, Plus, RotateCw } from "lucide-react";
+import { Blocks, ChevronsUpDown, Dot, Github, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../ui/badge";
-import { buttonVariants } from "../ui/button";
+import { Button, buttonVariants } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { Switch } from "../ui/switch";
 import { Section } from "./section";
 
+interface RecommendedMcpServer {
+  id: string;
+  name: string;
+  description: string;
+  githubUrl: string;
+  npmCommand: string;
+}
+
+const recommendedMcpServers: RecommendedMcpServer[] = [
+  {
+    id: "context7",
+    name: "Context7",
+    description:
+      "Context7 pulls up-to-date, version-specific documentation and code examples straight from the source — and places them directly into your prompt, ensuring accurate and current programming assistance.",
+    githubUrl: "https://github.com/upstash/context7",
+    npmCommand: "npx @upstash/context7-mcp",
+  },
+];
+
 export const McpSection: React.FC = () => {
-  const { connections } = useMcp();
-
-  // FIXME(zhiming): Skip if there are no connections for now
-  if (Object.keys(connections).length === 0) {
-    return null;
-  }
-
   const rightElement = (
     <div className="mb-1 flex gap-1">
-      <a
+      {/* <a
         href={commandForMcp("addServer")}
         className={buttonVariants({ variant: "ghost", size: "sm" })}
       >
         <Plus className="size-4" />
         Add
-      </a>
+      </a> */}
       <a
         href={commandForMcp("openServerSettings")}
         className={buttonVariants({ variant: "ghost", size: "sm" })}
@@ -46,6 +58,36 @@ export const McpSection: React.FC = () => {
     <Section title={"MCP Servers"} rightElement={rightElement}>
       <Connections />
     </Section>
+  );
+};
+
+const EmptyPlaceholder: React.FC = () => {
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-center rounded-md border px-2 py-2">
+        <span className="flex items-center font-semibold">
+          No MCP servers added yet.
+        </span>
+      </div>
+      {recommendedMcpServers.length > 0 && (
+        <div>
+          <h4 className="mb-2 font-medium text-muted-foreground text-sm">
+            Recommended MCP Servers
+          </h4>
+          <div className="space-y-2">
+            {recommendedMcpServers.map((server) => (
+              <RecommendedMcpCard
+                key={server.id}
+                name={server.name}
+                description={server.description}
+                githubUrl={server.githubUrl}
+                npmCommand={server.npmCommand}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -76,11 +118,7 @@ const Connections: React.FC = () => {
             );
           })
         ) : (
-          <div className="flex justify-center rounded-md border px-2 py-2">
-            <span className="flex items-center font-semibold">
-              No MCP servers connected
-            </span>
-          </div>
+          <EmptyPlaceholder />
         )}
       </div>
     </div>
@@ -258,4 +296,45 @@ function commandForMcp(
   }
 
   return `command:ragdoll.mcp.${cmd}?${encodeURIComponent(JSON.stringify(args))}`;
+}
+
+interface RecommendedMcpCardProps {
+  name: string;
+  description: string;
+  githubUrl: string;
+  npmCommand: string;
+}
+
+function RecommendedMcpCard({
+  name,
+  description,
+  githubUrl,
+  npmCommand,
+}: RecommendedMcpCardProps) {
+  return (
+    <div className="rounded-lg border bg-card/70 p-6 text-card-foreground shadow-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-lg">{name}</h3>
+        <a href={commandForMcp("addServer")}>
+          <Button size="sm">Add</Button>
+        </a>
+      </div>
+      <a
+        href={githubUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-1 inline-flex items-center text-muted-foreground text-sm hover:text-foreground"
+      >
+        <Github className="mr-1 h-4 w-4" />
+        View on GitHub
+      </a>
+      <p className="mt-4 text-muted-foreground text-sm">{description}</p>
+      <div className="mt-4 flex items-center justify-between">
+        <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
+          {npmCommand}
+        </code>
+        <span className="text-muted-foreground text-xs">Requires: npm</span>
+      </div>
+    </div>
+  );
 }
