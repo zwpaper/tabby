@@ -30,6 +30,11 @@ export type UserEvent =
       data: unknown;
     };
 
+export type UserEventDataHelper<T extends UserEvent["type"]> = Extract<
+  UserEvent,
+  { type: T }
+>["data"];
+
 export type TaskEvent = {
   type: "task:status-changed";
   data: {

@@ -10,7 +10,7 @@ import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
-import type { NewTaskParams, TaskIdParams } from "@ragdoll/vscode-webui-bridge";
+import type { TaskIdParams } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -41,7 +41,7 @@ export class CommandManager implements vscode.Disposable {
     progressMessage: string,
     workspaceUri: vscode.Uri,
     githubTemplateUrl: string | undefined,
-    openTaskParams: TaskIdParams | NewTaskParams,
+    openTaskParams: TaskIdParams,
     requestId?: string,
   ) {
     return vscode.window.withProgress(
@@ -136,9 +136,7 @@ export class CommandManager implements vscode.Disposable {
             currentWorkspace,
             params.githubTemplateUrl,
             {
-              taskId: "new",
-              prompt: params.prompt,
-              attachments: params.attachments,
+              taskId: task.id,
             },
             params.requestId,
           );

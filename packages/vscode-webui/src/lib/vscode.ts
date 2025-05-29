@@ -65,17 +65,6 @@ function createVSCodeHost(): VSCodeHostApi {
             to: "/",
             search: {
               taskId: params.taskId,
-              prompt: params.taskId === "new" ? params.prompt : undefined,
-              attachments:
-                params.taskId === "new"
-                  ? params.attachments?.map((item) => {
-                      return {
-                        url: btoa(item.url),
-                        name: item.name,
-                        contentType: item.contentType,
-                      };
-                    })
-                  : undefined,
               ts: Date.now(),
             },
             replace: true,

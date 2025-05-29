@@ -11,6 +11,7 @@ import type { DB } from "@ragdoll/db";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 export interface NewProjectTask {
+  id: number;
   event: Extract<DB["task"]["event"], { type: "website:new-project" }>;
 }
 interface EvaluationTask {

@@ -1,10 +1,12 @@
 import { ModelSelect } from "@/components/model-select";
 import { FormEditor } from "@/components/prompt-form/form-editor";
 import { Button } from "@/components/ui/button";
-import { useReadyForRetryError } from "@/features/approval/hooks/use-ready-for-retry-error";
+import {
+  ReadyForRetryError,
+  useReadyForRetryError,
+} from "@/features/approval/hooks/use-ready-for-retry-error";
 import { useRetry } from "@/features/approval/hooks/use-retry";
 import { apiClient } from "@/lib/auth-client";
-import { useAppendInitMessage } from "@/lib/hooks/use-append-init-message";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useSelectedModels } from "@/lib/hooks/use-models";
 import {
@@ -19,7 +21,7 @@ import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Editor } from "@tiptap/react";
-import type { Attachment, CreateMessage } from "ai";
+import type { Attachment } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
   Bug,
@@ -85,16 +87,6 @@ const searchSchema = z.object({
     .number()
     .or(z.enum(["new"]))
     .optional(),
-  prompt: z.string().optional(),
-  attachments: z
-    .array(
-      z.object({
-        url: z.string(),
-        name: z.string().optional(),
-        contentType: z.string().optional(),
-      }),
-    )
-    .optional(),
   ts: z.number().optional(),
 });
 
@@ -104,31 +96,11 @@ export const Route = createFileRoute("/_auth/")({
 });
 
 function RouteComponent() {
-  const {
-    taskId: taskIdFromRoute,
-    prompt,
-    attachments,
-    ts = Date.now(),
-  } = Route.useSearch();
+  const { taskId: taskIdFromRoute, ts = Date.now() } = Route.useSearch();
   const key =
     typeof taskIdFromRoute === "number"
       ? `task-${taskIdFromRoute}`
       : `new-${ts}`;
-
-  const initMessage: CreateMessage | undefined =
-    taskIdFromRoute === "new" && prompt !== undefined
-      ? {
-          role: "user",
-          content: prompt,
-          experimental_attachments: attachments?.map((item) => {
-            return {
-              url: atob(item.url),
-              name: item.name,
-              contentType: item.contentType,
-            };
-          }),
-        }
-      : undefined;
 
   const { data: loaderData, isFetching: isTaskLoading } = useQuery({
     queryKey: ["task", taskIdFromRoute],
@@ -153,21 +125,21 @@ function RouteComponent() {
         key={key}
         loaderData={loaderData || null}
         isTaskLoading={isTaskLoading}
-        initMessage={initMessage}
       />
     </ChatStateProvider>
   );
 }
 
+type Task = NonNullable<
+  InferResponseType<(typeof apiClient.api.tasks)[":id"]["$get"]>
+>;
+
 interface ChatProps {
-  loaderData: InferResponseType<
-    (typeof apiClient.api.tasks)[":id"]["$get"]
-  > | null;
+  loaderData: Task | null;
   isTaskLoading: boolean;
-  initMessage: CreateMessage | undefined;
 }
 
-function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
+function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const [isDevMode] = useIsDevMode();
   const autoApproveGuard = useAutoApproveGuard();
   const taskId = useRef<number | undefined>(loaderData?.id);
@@ -385,13 +357,6 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     data,
   });
 
-  useAppendInitMessage({
-    taskId: taskId.current,
-    initMessage,
-    isModelsLoading,
-    append,
-  });
-
   useEffect(() => {
     const handler = setTimeout(() => {
       vscodeHost.setSessionState({
@@ -567,6 +532,12 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     increaseRetryCount();
     retryImpl();
   }, [retryImpl, increaseRetryCount]);
+
+  useEventAutoStart({
+    enabled: error instanceof ReadyForRetryError,
+    task: loaderData,
+    retry,
+  });
 
   // Workaround for https://github.com/vercel/ai/issues/4491#issuecomment-2848999826
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
@@ -837,4 +808,35 @@ const useErrorAndReadyForRetryError = ({
 }: { messages: UIMessage[]; error: Error | undefined }) => {
   const readyForRetryError = useReadyForRetryError(messages);
   return error || readyForRetryError;
+};
+
+interface UseEventAutoStartOptions {
+  task: Task | null;
+  retry: () => void;
+  enabled: boolean;
+}
+
+const useEventAutoStart = ({
+  task,
+  retry,
+  enabled,
+}: UseEventAutoStartOptions) => {
+  const messages = task?.conversation?.messages || [];
+  const init =
+    messages.length === 1 &&
+    messages[0].role === "user" &&
+    task?.status === "pending-input";
+
+  const initStarted = useRef(false);
+  useEffect(() => {
+    if (
+      enabled &&
+      init &&
+      !initStarted.current &&
+      task.event?.type === "website:new-project"
+    ) {
+      initStarted.current = true;
+      retry();
+    }
+  }, [init, retry, task, enabled]);
 };
