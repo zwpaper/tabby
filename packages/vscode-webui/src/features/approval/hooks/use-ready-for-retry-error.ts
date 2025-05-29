@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import {
   isAssistantMessageWithEmptyParts,
   isAssistantMessageWithNoToolCalls,
+  isAssistantMessageWithPartialToolCalls,
 } from "../utils";
 
 type RetryKind = "retry" | "no-tool-calls";
@@ -26,6 +27,10 @@ export function useReadyForRetryError(
     if (lastMessage.role === "user") return new ReadyForRetryError();
 
     if (isAssistantMessageWithEmptyParts(lastMessage)) {
+      return new ReadyForRetryError();
+    }
+
+    if (isAssistantMessageWithPartialToolCalls(lastMessage)) {
       return new ReadyForRetryError();
     }
 

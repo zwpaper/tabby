@@ -21,6 +21,17 @@ export function isAssistantMessageWithEmptyParts(message: UIMessage): boolean {
   return message.role === "assistant" && message.parts.length === 0;
 }
 
+export function isAssistantMessageWithPartialToolCalls(lastMessage: UIMessage) {
+  return (
+    lastMessage.role === "assistant" &&
+    lastMessage.parts.some(
+      (part) =>
+        part.type === "tool-invocation" &&
+        part.toolInvocation.state === "partial-call",
+    )
+  );
+}
+
 export function pendingApprovalKey(
   pendingApproval: PendingApproval | undefined,
 ): string | undefined {
