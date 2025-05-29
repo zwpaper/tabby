@@ -17,6 +17,7 @@ import * as vscode from "vscode";
 import { CommandPalette } from "./command-palette";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "./mcp/mcp-hub";
+import type { McpServerConfig } from "./mcp/types";
 import type { NewProjectTask } from "./uri-handler";
 
 @injectable()
@@ -236,9 +237,15 @@ export class CommandManager implements vscode.Disposable {
         showOutputPanel,
       ),
 
-      vscode.commands.registerCommand("ragdoll.mcp.addServer", async () => {
-        throw Error("Not implemented yet");
-      }),
+      vscode.commands.registerCommand(
+        "ragdoll.mcp.addServer",
+        async (recommendedServer?: McpServerConfig & { name: string }) => {
+          this.mcpHub.addServer(recommendedServer);
+          vscode.commands.executeCommand("workbench.action.openSettingsJson", {
+            revealSetting: { key: "pochi.mcpServers" },
+          });
+        },
+      ),
 
       vscode.commands.registerCommand(
         "ragdoll.mcp.openServerSettings",

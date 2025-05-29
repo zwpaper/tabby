@@ -20,7 +20,8 @@ interface RecommendedMcpServer {
   name: string;
   description: string;
   githubUrl: string;
-  npmCommand: string;
+  command: string;
+  args: string[];
 }
 
 const recommendedMcpServers: RecommendedMcpServer[] = [
@@ -30,7 +31,8 @@ const recommendedMcpServers: RecommendedMcpServer[] = [
     description:
       "Context7 pulls up-to-date, version-specific documentation and code examples straight from the source — and places them directly into your prompt, ensuring accurate and current programming assistance.",
     githubUrl: "https://github.com/upstash/context7",
-    npmCommand: "npx @upstash/context7-mcp",
+    command: "npx",
+    args: ["@upstash/context7-mcp"],
   },
 ];
 
@@ -78,10 +80,12 @@ const EmptyPlaceholder: React.FC = () => {
             {recommendedMcpServers.map((server) => (
               <RecommendedMcpCard
                 key={server.id}
+                id={server.id}
                 name={server.name}
                 description={server.description}
                 githubUrl={server.githubUrl}
-                npmCommand={server.npmCommand}
+                command={server.command}
+                args={server.args}
               />
             ))}
           </div>
@@ -279,6 +283,10 @@ function commandForMcp(
     | "toogleToolEnabled",
   serverName?: string,
   toolName?: string,
+  recommendedServer?: {
+    command: string;
+    args: string[];
+  },
 ): string {
   let cmd: string = command;
   let args: unknown[] = [];
@@ -293,29 +301,39 @@ function commandForMcp(
     args = ["restart", serverName];
   } else if (command === "toogleToolEnabled") {
     args = [serverName, toolName];
+  } else if (command === "addServer" && recommendedServer) {
+    args = [{ ...recommendedServer, name: serverName }];
   }
 
   return `command:ragdoll.mcp.${cmd}?${encodeURIComponent(JSON.stringify(args))}`;
 }
 
 interface RecommendedMcpCardProps {
+  id: string;
   name: string;
   description: string;
   githubUrl: string;
-  npmCommand: string;
+  command: string;
+  args: string[];
 }
 
 function RecommendedMcpCard({
   name,
   description,
   githubUrl,
-  npmCommand,
+  command,
+  args,
 }: RecommendedMcpCardProps) {
   return (
     <div className="rounded-lg border bg-card/70 p-6 text-card-foreground shadow-sm">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-lg">{name}</h3>
-        <a href={commandForMcp("addServer")}>
+        <a
+          href={commandForMcp("addServer", name, undefined, {
+            command,
+            args,
+          })}
+        >
           <Button size="sm">Add</Button>
         </a>
       </div>
@@ -331,7 +349,7 @@ function RecommendedMcpCard({
       <p className="mt-4 text-muted-foreground text-sm">{description}</p>
       <div className="mt-4 flex items-center justify-between">
         <code className="rounded bg-muted px-2 py-1 font-mono text-sm">
-          {npmCommand}
+          {command} {args.join(" ")}
         </code>
         <span className="text-muted-foreground text-xs">Requires: npm</span>
       </div>
