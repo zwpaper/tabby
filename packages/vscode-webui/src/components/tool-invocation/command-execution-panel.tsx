@@ -131,7 +131,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   return (
     <div
       className={cn(
-        "code-block relative w-full rounded-sm border bg-[var(--vscode-editor-background)] font-sans",
+        "code-block relative w-full overflow-hidden rounded-sm border bg-[var(--vscode-editor-background)] font-sans",
         className,
       )}
     >
@@ -211,42 +211,52 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
           </Tooltip>
         </div>
       </div>
-      {output && expanded && (
-        <ScrollArea
-          ref={containerRef}
-          className={cn("flex flex-col", {
-            "max-h-[140px]": autoScrollToBottom,
-            "overflow-auto": autoScrollToBottom,
-          })}
-        >
-          {outputTooLong ? (
-            <pre className="m-0 w-full whitespace-pre-wrap break-words rounded-sm bg-transparent p-4 font-mono text-[var(--vscode-editor-foreground)] text-sm">
-              {output}
-            </pre>
-          ) : (
-            // @ts-ignore - Type issue with SyntaxHighlighter
-            <SyntaxHighlighter
-              language={"log"}
-              style={theme === "dark" ? vscDarkPlus : oneLight}
-              PreTag="div"
-              customStyle={{
-                margin: 0,
-                width: "100%",
-                background: "transparent",
-                borderRadius: "0.25rem",
-              }}
-              wrapLongLines={true}
-              codeTagProps={{
-                style: {
-                  backgroundColor: "transparent",
-                  padding: "0px",
-                },
-              }}
-            >
-              {output}
-            </SyntaxHighlighter>
+      {output && (
+        <div
+          className={cn(
+            "transition-all duration-500 ease-in-out",
+            expanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0",
           )}
-        </ScrollArea>
+          style={{
+            overflow: "hidden",
+          }}
+        >
+          <ScrollArea
+            ref={containerRef}
+            className={cn("flex flex-col", {
+              "max-h-[140px]": autoScrollToBottom,
+              "overflow-auto": autoScrollToBottom,
+            })}
+          >
+            {outputTooLong ? (
+              <pre className="m-0 w-full whitespace-pre-wrap break-words rounded-sm bg-transparent p-4 font-mono text-[var(--vscode-editor-foreground)] text-sm">
+                {output}
+              </pre>
+            ) : (
+              // @ts-ignore - Type issue with SyntaxHighlighter
+              <SyntaxHighlighter
+                language={"log"}
+                style={theme === "dark" ? vscDarkPlus : oneLight}
+                PreTag="div"
+                customStyle={{
+                  margin: 0,
+                  width: "100%",
+                  background: "transparent",
+                  borderRadius: "0.25rem",
+                }}
+                wrapLongLines={true}
+                codeTagProps={{
+                  style: {
+                    backgroundColor: "transparent",
+                    padding: "0px",
+                  },
+                }}
+              >
+                {output}
+              </SyntaxHighlighter>
+            )}
+          </ScrollArea>
+        </div>
       )}
     </div>
   );

@@ -64,7 +64,6 @@ export const MessageList: React.FC<{
               {m.parts.map((part, index) => (
                 <Part
                   key={index}
-                  message={m}
                   isLastPartInMessages={
                     index === m.parts.length - 1 &&
                     messageIndex === renderMessages.length - 1
@@ -98,14 +97,12 @@ export const MessageList: React.FC<{
 };
 
 function Part({
-  message,
   part,
   executingToolCallId,
   sendMessage,
   isLoading,
   isLastPartInMessages,
 }: {
-  message: UIMessage;
   part: NonNullable<UIMessage["parts"]>[number];
   sendMessage: (
     message: Message | CreateMessage,
@@ -116,7 +113,7 @@ function Part({
   isLastPartInMessages: boolean;
 }) {
   if (part.type === "text") {
-    return <TextPartUI message={message} part={part} />;
+    return <TextPartUI part={part} />;
   }
 
   if (part.type === "reasoning") {
@@ -145,12 +142,6 @@ function Part({
   return <div>{JSON.stringify(part)}</div>;
 }
 
-function TextPartUI({ message, part }: { message: UIMessage; part: TextPart }) {
-  return (
-    <MessageMarkdown
-      className={message.role === "user" ? "max-w-[80vw]" : undefined}
-    >
-      {part.text}
-    </MessageMarkdown>
-  );
+function TextPartUI({ part }: { part: TextPart }) {
+  return <MessageMarkdown>{part.text}</MessageMarkdown>;
 }

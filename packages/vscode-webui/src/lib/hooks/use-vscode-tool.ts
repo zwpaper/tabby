@@ -39,13 +39,17 @@ export function useVSCodeTool({
 
       const unsubscribe = signal.subscribe((output) => {
         if (output.status === "completed") {
+          const result: Record<string, unknown> = {
+            output: output.content,
+            isTruncated: output.isTruncated ?? false,
+          };
+          // do not set error property if it is undefined
+          if (output.error) {
+            result.error = output.error;
+          }
           addToolResult({
             toolCallId: tool.toolCallId,
-            result: {
-              output: output.content,
-              isTruncated: output.isTruncated ?? false,
-              error: output.error,
-            },
+            result,
           });
           removeToolStreamResult(tool.toolCallId);
           setIsExecuting(false);
