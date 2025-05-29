@@ -153,9 +153,13 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
           },
         )}
       >
-        <div className="flex space-x-3">
+        <div className="flex min-w-0 flex-1 space-x-3">
           <TerminalIcon className="mt-[3px] size-4 flex-shrink-0" />
-          <span className="text-accent-foreground">{command}</span>
+          <div className="max-h-[80px] min-w-0 flex-1 overflow-y-auto">
+            <span className="whitespace-pre-wrap break-all text-accent-foreground">
+              {command}
+            </span>
+          </div>
         </div>
         <div className="flex space-x-3 self-start">
           {showButton && handleStop && (
