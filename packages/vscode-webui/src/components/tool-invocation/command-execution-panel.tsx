@@ -5,7 +5,6 @@ import {
   ChevronsDownUpIcon,
   ChevronsUpDownIcon,
   CopyIcon,
-  Loader2Icon,
   TerminalIcon,
 } from "lucide-react";
 import {
@@ -16,7 +15,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { MdOutlineCancel } from "react-icons/md";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
   oneLight,
@@ -37,7 +35,8 @@ import { ScrollArea } from "../ui/scroll-area";
 export interface ExecutionPanelProps {
   command: string;
   output: string;
-  onStop: () => void;
+  onStop?: () => void;
+  onDetach?: () => void;
   autoScrollToBottom?: boolean;
   completed: boolean;
   isExecuting: boolean;
@@ -49,6 +48,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   output,
   className,
   onStop,
+  onDetach,
   autoScrollToBottom,
   isExecuting,
   completed,
@@ -67,10 +67,19 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     copyToClipboard(command);
   };
 
-  const handleStop = () => {
-    setIsStopping(true);
-    onStop();
-  };
+  const handleStop = onStop
+    ? () => {
+        setIsStopping(true);
+        onStop();
+      }
+    : undefined;
+
+  const handleDetach = onDetach
+    ? () => {
+        setIsStopping(true);
+        onDetach();
+      }
+    : undefined;
 
   const scrollToBottom = useCallback(() => {
     if (containerRef.current) {
@@ -128,6 +137,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     return output.length > threshold;
   }, [output]);
 
+  const showButton = !completed && isExecuting && !isStopping;
   return (
     <div
       className={cn(
@@ -148,30 +158,15 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
           <span className="text-accent-foreground">{command}</span>
         </div>
         <div className="flex space-x-3 self-start">
-          {!completed && isExecuting && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
-                  onClick={handleStop}
-                  disabled={isStopping}
-                >
-                  {isStopping ? (
-                    <Loader2Icon className="animate-spin" />
-                  ) : (
-                    <MdOutlineCancel />
-                  )}
-                  <span className="sr-only">
-                    {isStopping ? "Stopping" : "Stop"}
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="m-0">{isStopping ? "Stopping" : "Stop"}</p>
-              </TooltipContent>
-            </Tooltip>
+          {showButton && handleStop && (
+            <Button size="xs" variant="ghost" onClick={handleStop}>
+              STOP
+            </Button>
+          )}
+          {showButton && handleDetach && (
+            <Button size="xs" variant="ghost" onClick={handleDetach}>
+              DETACH
+            </Button>
           )}
           {output && (
             <Tooltip>

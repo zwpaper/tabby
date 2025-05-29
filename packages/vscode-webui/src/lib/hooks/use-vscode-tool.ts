@@ -30,12 +30,14 @@ export function useVSCodeTool({
   }, []);
 
   const handleStreamResult = useCallback(
-    (tool: ToolInvocation, result: unknown) => {
-      const signal = threadSignal(
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-        (result as any)
-          .output as ThreadSignalSerialization<ExecuteCommandResult>,
-      );
+    (
+      tool: ToolInvocation,
+      result: {
+        output: ThreadSignalSerialization<ExecuteCommandResult>;
+        detach: () => void;
+      },
+    ) => {
+      const signal = threadSignal(result.output);
 
       const unsubscribe = signal.subscribe((output) => {
         if (output.status === "completed") {
@@ -49,7 +51,12 @@ export function useVSCodeTool({
           }
           addToolResult({
             toolCallId: tool.toolCallId,
-            result,
+            result: {
+              output: output.content,
+              isTruncated: output.isTruncated ?? false,
+              detach: output.detach,
+              error: output.error,
+            },
           });
           removeToolStreamResult(tool.toolCallId);
           setIsExecuting(false);
@@ -60,6 +67,7 @@ export function useVSCodeTool({
             result: {
               output: output.content,
               isTruncated: output.isTruncated ?? false,
+              detach: result.detach,
             },
           });
           setIsExecuting(true);
@@ -99,7 +107,8 @@ export function useVSCodeTool({
         result !== null &&
         "output" in result
       ) {
-        handleStreamResult(tool, result);
+        // biome-ignore lint/suspicious/noExplicitAny: external
+        handleStreamResult(tool, result as any);
         return;
       }
 

@@ -41,7 +41,7 @@ export const executeCommandTool: React.FC<
   const { findToolStreamResult } = useStreamToolCallResult();
   const streamResult = findToolStreamResult(tool.toolCallId) as
     | {
-        result: { output: string };
+        result: { output: string; detach: () => void };
       }
     | undefined;
   let output = streamResult?.result.output || "";
@@ -50,11 +50,16 @@ export const executeCommandTool: React.FC<
     tool.state === "result" &&
     typeof tool.result === "object" &&
     tool.result !== null &&
-    !("error" in tool.result)
+    "output" in tool.result
   ) {
     output = tool.result.output;
     completed = true;
   }
+
+  const onDetach = () => {
+    streamResult?.result.detach();
+    abortTool();
+  };
 
   return (
     <ExpandableToolContainer
@@ -63,7 +68,8 @@ export const executeCommandTool: React.FC<
         <CommandExecutionPanel
           command={command ?? ""}
           output={isDevServer ? "" : output}
-          onStop={abortTool}
+          onStop={isDevServer ? undefined : abortTool}
+          onDetach={isDevServer ? undefined : onDetach}
           completed={completed}
           autoScrollToBottom={true}
           isExecuting={isExecuting}

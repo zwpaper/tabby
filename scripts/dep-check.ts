@@ -205,6 +205,9 @@ const PackageIgnoreList: Record<string, string[]> = {
     // Testing
     "mocha",
     "@vscode/test-electron",
+
+    // Releasing
+    "ovsx",
   ],
 };
 

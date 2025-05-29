@@ -1,7 +1,7 @@
 import * as path from "node:path";
+import { TerminalJob } from "@/integrations/terminal/terminal-job";
 import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { Shell } from "@/lib/shell";
 import { streamWithAbort, streamWithTimeout } from "@/lib/stream-utils";
 import { ThreadSignal } from "@quilted/threads/signals";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
@@ -24,12 +24,16 @@ export const executeCommand: ToolFunctionType<
   }
 
   if (!isDevServer) {
-    const shell = new Shell("Pochi", vscode.Uri.parse(cwd));
-    const signal = shell.executeCommand(command, abortSignal);
+    const job = TerminalJob.create({
+      name: command,
+      command,
+      cwd,
+      abortSignal: abortSignal,
+    });
 
     // biome-ignore lint/suspicious/noExplicitAny: pass thread signal
-    const output = ThreadSignal.serialize(signal) as any;
-    return { output };
+    const output = ThreadSignal.serialize(job.output) as any;
+    return { output, detach: job.detach };
   }
 
   const shell = await getPochiShell(cwd, isDevServer);
