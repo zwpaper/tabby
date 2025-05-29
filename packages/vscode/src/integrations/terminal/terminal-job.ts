@@ -1,5 +1,6 @@
 import { getLogger } from "@/lib/logger";
 import * as vscode from "vscode";
+import { createBackgroundOutputStream } from "./background-stream-utils";
 import { OutputManager } from "./output";
 
 const logger = getLogger("TerminalJob");
@@ -171,74 +172,12 @@ export class TerminalJob implements vscode.Disposable {
   private async processOutputStream(
     outputStream: AsyncIterable<string>,
   ): Promise<void> {
-    if (this.config.background) {
-      await this.processBackgroundOutputStream(outputStream);
-    } else {
-      for await (const line of outputStream) {
-        this.outputManager.addLine(line);
-      }
+    const lineStream = this.config.background
+      ? createBackgroundOutputStream(outputStream)
+      : outputStream;
+    for await (const line of lineStream) {
+      this.outputManager.addLine(line);
     }
-  }
-
-  /**
-   * Processes output stream for background jobs with auto-completion after 5s of no output
-   */
-  private async processBackgroundOutputStream(
-    outputStream: AsyncIterable<string>,
-  ): Promise<void> {
-    const NoOutputTimeoutMs = 5000; // 5 seconds
-
-    return new Promise<void>((resolve, reject) => {
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
-      let isCompleted = false;
-
-      const complete = () => {
-        if (isCompleted) return;
-        isCompleted = true;
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        logger.info(
-          `Background job "${this.config.name}" auto-completed after ${NoOutputTimeoutMs}ms of no output`,
-        );
-        resolve();
-      };
-
-      const resetTimeout = () => {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        timeoutId = setTimeout(complete, NoOutputTimeoutMs);
-      };
-
-      // Start initial timeout
-      resetTimeout();
-
-      // Process the output stream
-      const processOutput = async () => {
-        try {
-          for await (const line of outputStream) {
-            if (isCompleted) break;
-
-            this.outputManager.addLine(line);
-            resetTimeout(); // Reset timeout on each new line
-          }
-
-          // If the stream ends naturally, complete immediately
-          complete();
-        } catch (error) {
-          if (isCompleted) return;
-          isCompleted = true;
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-          reject(error);
-        }
-      };
-
-      // Start processing
-      processOutput();
-    });
   }
 
   /**
