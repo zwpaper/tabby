@@ -15,6 +15,8 @@ import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { CommandPalette } from "./command-palette";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { McpHub } from "./mcp/mcp-hub";
 import type { NewProjectTask } from "./uri-handler";
 
 @injectable()
@@ -29,6 +31,7 @@ export class CommandManager implements vscode.Disposable {
     @inject("AuthClient") private readonly authClient: AuthClient,
     private readonly authEvents: AuthEvents,
     private readonly commandPalette: CommandPalette,
+    private readonly mcpHub: McpHub,
   ) {
     this.registerCommands();
   }
@@ -246,9 +249,26 @@ export class CommandManager implements vscode.Disposable {
         },
       ),
 
-      vscode.commands.registerCommand("ragdoll.mcp.serverControl", async () => {
-        throw Error("Not implemented yet");
-      }),
+      vscode.commands.registerCommand(
+        "ragdoll.mcp.serverControl",
+        async (action: string, serverName: string) => {
+          switch (action) {
+            case "start":
+              this.mcpHub.start(serverName);
+              break;
+            case "stop":
+              this.mcpHub.stop(serverName);
+              break;
+            case "restart":
+              this.mcpHub.restart(serverName);
+              break;
+            default:
+              vscode.window.showErrorMessage(
+                `Unknown MCP server action: ${action}`,
+              );
+          }
+        },
+      ),
 
       vscode.commands.registerCommand(
         "ragdoll.mcp.toogleToolEnabled",

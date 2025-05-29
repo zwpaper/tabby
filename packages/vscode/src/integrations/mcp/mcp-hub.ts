@@ -50,6 +50,34 @@ export class McpHub implements vscode.Disposable {
     }
   }
 
+  start(name: string) {
+    if (this.config?.[name]) {
+      this.updateServerConfig(name, { ...this.config[name], disabled: false });
+    } else {
+      logger.debug(`Tried to start non-existing server: ${name}`);
+    }
+  }
+
+  stop(name: string) {
+    if (this.config?.[name]) {
+      this.updateServerConfig(name, { ...this.config[name], disabled: true });
+    } else {
+      logger.debug(`Tried to stop non-existing server: ${name}`);
+    }
+  }
+
+  private updateServerConfig(name: string, newConfig: McpServerConfig) {
+    if (!this.config) return;
+
+    const updatedConfig = {
+      ...this.config,
+      [name]: newConfig,
+    };
+
+    this.configuration.mcpServers.value = updatedConfig;
+    logger.debug(`Updated configuration for server ${name}:`, newConfig);
+  }
+
   private init() {
     const mcpServersConfig = this.configuration.mcpServers.value;
     this.config = mcpServersConfig;

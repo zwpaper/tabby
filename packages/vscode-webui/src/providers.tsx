@@ -19,7 +19,8 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
               // Only persist tasks query page 1.
               (query.queryKey[0] === "tasks" && query.queryKey[1] === 1) ||
               query.queryKey[0] === "integrations" ||
-              query.queryKey[0] === "tools";
+              query.queryKey[0] === "tools" ||
+              query.queryKey[0] === "mcpConnectTools";
 
             return isSuccess && cacheQuery;
           },

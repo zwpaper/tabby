@@ -7,11 +7,12 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import type { McpConnection } from "@ragdoll/vscode-webui-bridge";
-import { Blocks, ChevronsUpDown, Dot, Plus } from "lucide-react";
+import { Blocks, ChevronsUpDown, Dot, Plus, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../ui/badge";
 import { buttonVariants } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import { Switch } from "../ui/switch";
 import { Section } from "./section";
 
 export const McpSection: React.FC = () => {
@@ -22,8 +23,7 @@ export const McpSection: React.FC = () => {
     return null;
   }
 
-  // FIXME(zhiming): hardcode hide buttons for now
-  const rightElement = false && (
+  const rightElement = (
     <div className="mb-1 flex gap-1">
       <a
         href={commandForMcp("addServer")}
@@ -92,24 +92,17 @@ const Connection: React.FC<{
   connection: McpConnection;
 }> = ({ name, connection }) => {
   const { status, error, tools } = connection;
-
   const [isOpen, setIsOpen] = useState(false);
+
+  const hasTools = tools && Object.keys(tools).length > 0;
 
   return (
     <div className="rounded-md border px-2">
-      <button
-        type="button"
-        className="group relative flex h-10 w-full items-center justify-between focus:outline-none"
-        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-          if ((e.target as HTMLElement).closest("a")) {
-            // If the click was a command link, do nothing in this handler.
-            return;
-          }
-          // Otherwise, toggle the isOpen state.
-          setIsOpen(!isOpen);
-        }}
-      >
-        <span className="flex items-center font-semibold">
+      <div className="group relative flex h-10 w-full items-center justify-between">
+        <div
+          className="flex flex-1 cursor-pointer items-center"
+          onClick={() => setIsOpen(!isOpen)}
+        >
           <Dot
             className={cn("size-6", {
               "text-muted-foreground": status === "stopped",
@@ -118,42 +111,40 @@ const Connection: React.FC<{
               "text-red-400": status === "error",
             })}
           />
-          {name}
-        </span>
-        <span className="flex items-center">
-          {false && ( // FIXME(zhiming): hardcode hide buttons for now
-            <span className="opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100">
-              {status === "stopped" && (
-                <a
-                  href={commandForMcp("startServer", name)}
-                  className={buttonVariants({ variant: "ghost", size: "sm" })}
-                >
-                  Start
-                </a>
+          <span className="font-semibold">{name}</span>
+          {status === "error" && (
+            <a
+              href={commandForMcp("restartServer", name)}
+              className={cn(
+                "ml-2 rounded-md p-1 hover:bg-muted",
+                "!ring-0 outline-none !focus:ring-0 focus:outline-none",
               )}
-
-              {status === "error" && (
-                <a
-                  href={commandForMcp("restartServer", name)}
-                  className={buttonVariants({ variant: "ghost", size: "sm" })}
-                >
-                  Restart
-                </a>
-              )}
-
-              {status === "ready" && (
-                <a
-                  href={commandForMcp("stopServer", name)}
-                  className={buttonVariants({ variant: "ghost", size: "sm" })}
-                >
-                  Stop
-                </a>
-              )}
-            </span>
+              draggable="false"
+            >
+              <RotateCw className="size-4 text-muted-foreground" />
+            </a>
           )}
-          <ChevronsUpDown className="size-5" />
-        </span>
-      </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <a
+            href={commandForMcp(
+              status === "stopped" ? "startServer" : "stopServer",
+              name,
+            )}
+            className="flex items-center outline-none ring-0 ring-offset-0 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            draggable="false"
+          >
+            <Switch
+              checked={status !== "stopped"}
+              disabled={status === "starting"}
+            />
+          </a>
+          <ChevronsUpDown
+            className={cn("size-5 cursor-pointer", isOpen && "rotate-180")}
+            onClick={() => setIsOpen(!isOpen)}
+          />
+        </div>
+      </div>
       <div
         className={cn(
           "origin-top overflow-hidden transition-all duration-100 ease-in-out",
@@ -168,10 +159,12 @@ const Connection: React.FC<{
             </div>
           </>
         )}
-        <>
-          <hr className="border-muted" />
-          <McpToolBadgeList serverName={name} tools={tools} />
-        </>
+        {hasTools && (
+          <>
+            <hr className="border-muted" />
+            <McpToolBadgeList serverName={name} tools={tools} />
+          </>
+        )}
       </div>
     </div>
   );
@@ -264,10 +257,5 @@ function commandForMcp(
     args = [serverName, toolName];
   }
 
-  // @ts-ignore TS6133: 'link' not used
-  const link = `command:ragdoll.mcp.${cmd}?${encodeURIComponent(JSON.stringify(args))}`;
-
-  // FIXME(zhiming): hardcode return no command link for now
-  // return link;
-  return "";
+  return `command:ragdoll.mcp.${cmd}?${encodeURIComponent(JSON.stringify(args))}`;
 }
