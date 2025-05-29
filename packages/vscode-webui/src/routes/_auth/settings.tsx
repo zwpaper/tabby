@@ -53,7 +53,7 @@ const AccordionSection: React.FC<AccordionSectionProps> = ({
         className="mb-4 flex w-full items-center justify-between text-left focus:outline-none"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="ml-1 font-bold text-base">{title}</span>
+        <span className="ml-1 select-none font-bold text-base">{title}</span>
         <ChevronLeft
           className={cn(
             "size-5 shrink-0 text-muted-foreground transition-transform duration-200 ease-in-out",
@@ -158,45 +158,45 @@ const WorkflowsSection: React.FC = () => {
 
   return (
     <Section title="Workflows">
-      <div className="space-y-3">
-        {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full bg-secondary" />
-            ))}
-          </div>
-        ) : workflows && workflows.length > 0 ? (
-          <ScrollArea className="max-h-30 select-none overflow-y-auto">
-            <div className="flex flex-col gap-1">
-              {workflows.map(
-                (workflow: { id: string; path: string; content: string }) => (
-                  <div
-                    key={workflow.id}
-                    className="flex items-center gap-3 rounded-md border border-border px-2"
-                  >
-                    <Workflow className="size-4 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-sm">{workflow.id}</div>
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full bg-secondary" />
+          ))}
+        </div>
+      ) : workflows && workflows.length > 0 ? (
+        <>
+          {workflows.map(
+            (workflow: { id: string; path: string; content: string }) => (
+              <div key={workflow.id} className={cn("rounded-md border p-2")}>
+                <div className="flex justify-between">
+                  <div className="flex flex-1 items-center overflow-x-hidden">
+                    <div className="flex size-6 shrink-0 items-center justify-center">
+                      {<Workflow className="size-4 text-muted-foreground" />}
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditWorkflow(workflow.id)}
-                    >
-                      <Edit className="size-4" />
-                    </Button>
+                    <span className="truncate font-semibold">
+                      {workflow.id}
+                    </span>
                   </div>
-                ),
-              )}
-            </div>
-          </ScrollArea>
-        ) : (
-          <div className="text-muted-foreground text-sm">
-            No workflows found in this workspace.
-          </div>
-        )}
-      </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6"
+                    onClick={() => handleEditWorkflow(workflow.id)}
+                  >
+                    <Edit className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ),
+          )}
+        </>
+      ) : (
+        <div className="text-muted-foreground text-sm">
+          No workflows found in this workspace.
+        </div>
+      )}
     </Section>
   );
 };
@@ -303,15 +303,17 @@ const Quota: React.FC = () => {
 
 export function SettingsPage() {
   return (
-    <div className="container mx-auto max-w-6xl p-4">
-      <div className="space-y-1">
-        <AccountSection />
-        <WorkspaceRulesSection />
-        <WorkflowsSection />
-        <ToolsSection />
-        <McpSection />
-        <AdvancedSettingsSection />
-      </div>
+    <div className="container mx-auto h-screen max-w-6xl">
+      <ScrollArea className="h-full p-4">
+        <div className="space-y-1">
+          <AccountSection />
+          <WorkspaceRulesSection />
+          <WorkflowsSection />
+          <ToolsSection />
+          <McpSection />
+          <AdvancedSettingsSection />
+        </div>
+      </ScrollArea>
     </div>
   );
 }

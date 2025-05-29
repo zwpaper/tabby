@@ -19,7 +19,7 @@ export const Section: React.FC<SectionProps> = ({
   return (
     <div className={cn("pt-6", className)} {...props}>
       {(title || rightElement) && (
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex select-none items-center justify-between">
           {title && <h2 className="ml-1 font-bold text-base">{title}</h2>}
           {rightElement && <div>{rightElement}</div>}
         </div>

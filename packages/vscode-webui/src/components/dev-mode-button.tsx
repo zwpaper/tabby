@@ -32,7 +32,7 @@ function CopyMenuItem({ fetchContent, text }: UpdatedCopyMenuItemProps) {
   return (
     <DropdownMenuItem onClick={handleClick} className="cursor-pointer">
       {isCopied ? (
-        <CheckIcon className="inline text-green-700 dark:text-green-500" />
+        <CheckIcon className="inline text-success" />
       ) : (
         <CopyIcon className="inline" />
       )}

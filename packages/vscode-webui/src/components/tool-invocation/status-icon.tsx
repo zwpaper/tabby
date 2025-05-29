@@ -43,10 +43,7 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
       className="my-1 flex cursor-pointer items-center rounded px-2 py-1 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
     >
       {isCopied ? (
-        <CheckIcon
-          size={12}
-          className="inline text-green-700 text-sm dark:text-green-500"
-        />
+        <CheckIcon size={12} className="inline text-sm text-success" />
       ) : (
         <FilesIcon className="inline" size={12} />
       )}
@@ -64,9 +61,7 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
     <Pause className="size-4 text-zinc-500 dark:text-zinc-400" />
   );
   if (error) {
-    statusIcon = (
-      <X className="size-4 cursor-help text-red-500 dark:text-red-400" />
-    );
+    statusIcon = <X className="size-4 cursor-help text-error" />;
     tooltipContent.push(<p>{error}</p>);
   } else if (tool.state === "result") {
     statusIcon = (

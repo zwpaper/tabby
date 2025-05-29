@@ -205,3 +205,11 @@ code {
   background-clip: text;
   animation: gradient-animation 1.4s linear infinite;
 }
+
+/* common classes */
+.text-success {
+  @apply text-green-500 dark:text-green-700;
+}
+.text-error {
+  @apply text-red-500 dark:text-red-400;
+}

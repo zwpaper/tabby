@@ -137,15 +137,15 @@ const Connections: React.FC<{
             >
               <span className="flex items-center font-semibold">
                 <Dot
-                  className={cn("size-6", {
-                    "text-green-400": isConnected,
+                  className={cn("size-6 shrink-0", {
+                    "text-success": isConnected,
                     "text-muted-foreground": !isConnected,
                   })}
                 />
                 {config.displayName}
               </span>
               {config.capabilities.length > 0 && (
-                <span className="space-x-2">
+                <span className="flex flex-nowrap items-center gap-2 truncate">
                   {config.capabilities.map((capability) => (
                     <Badge key={capability} className="bg-accent">
                       {capability}

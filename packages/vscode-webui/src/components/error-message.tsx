@@ -10,7 +10,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({ error }) => {
   return (
     error && (
       <div
-        className={cn("mb-2 text-center text-red-500 dark:text-red-400", {
+        className={cn("mb-2 text-center text-error", {
           "cursor-help": isDevMode,
         })}
         onClick={isDevMode ? () => console.error(error) : undefined}

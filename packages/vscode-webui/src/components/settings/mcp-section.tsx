@@ -100,18 +100,18 @@ const Connection: React.FC<{
     <div className="rounded-md border px-2">
       <div className="group relative flex h-10 w-full items-center justify-between">
         <div
-          className="flex flex-1 cursor-pointer items-center"
+          className="flex flex-1 cursor-pointer items-center overflow-x-hidden"
           onClick={() => setIsOpen(!isOpen)}
         >
           <Dot
-            className={cn("size-6", {
+            className={cn("size-6 shrink-0", {
               "text-muted-foreground": status === "stopped",
-              "animate-pulse text-green-400": status === "starting",
-              "text-green-400": status === "ready",
-              "text-red-400": status === "error",
+              "animate-pulse text-success": status === "starting",
+              "text-success": status === "ready",
+              "text-error": status === "error",
             })}
           />
-          <span className="font-semibold">{name}</span>
+          <span className="truncate font-semibold">{name}</span>
           {status === "error" && (
             <a
               href={commandForMcp("restartServer", name)}
@@ -154,7 +154,7 @@ const Connection: React.FC<{
         {status === "error" && (
           <>
             <hr className="border-muted" />
-            <div className="flex w-full justify-center py-2 text-red-400">
+            <div className="flex w-full justify-center py-2 text-error">
               <p className="text-wrap">{error}</p>
             </div>
           </>
