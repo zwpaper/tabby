@@ -30,6 +30,8 @@ export interface TerminalJobConfig {
   cwd: string;
   /** AbortSignal to cancel the terminal job */
   abortSignal?: AbortSignal;
+  /** Background job configuration - detached by default and auto-completes after 5s of no output */
+  background?: boolean;
 }
 
 /**
@@ -52,6 +54,11 @@ export class TerminalJob implements vscode.Disposable {
   };
 
   private constructor(private readonly config: TerminalJobConfig) {
+    // For background jobs, detach by default
+    if (config.background) {
+      this.detached = true;
+    }
+
     // Create the terminal with the provided configuration
     this.terminal = vscode.window.createTerminal({
       name: config.name,
@@ -70,7 +77,7 @@ export class TerminalJob implements vscode.Disposable {
     this.execute();
 
     logger.info(
-      `Created terminal job "${config.name}" with command: ${config.command}`,
+      `Created ${config.background ? "background " : ""}terminal job "${config.name}" with command: ${config.command}`,
     );
   }
 
@@ -168,9 +175,74 @@ export class TerminalJob implements vscode.Disposable {
   private async processOutputStream(
     outputStream: AsyncIterable<string>,
   ): Promise<void> {
-    for await (const line of outputStream) {
-      this.outputManager.addLine(line);
+    if (this.config.background) {
+      await this.processBackgroundOutputStream(outputStream);
+    } else {
+      for await (const line of outputStream) {
+        this.outputManager.addLine(line);
+      }
     }
+  }
+
+  /**
+   * Processes output stream for background jobs with auto-completion after 5s of no output
+   */
+  private async processBackgroundOutputStream(
+    outputStream: AsyncIterable<string>,
+  ): Promise<void> {
+    const NoOutputTimeoutMs = 5000; // 5 seconds
+
+    return new Promise<void>((resolve, reject) => {
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      let isCompleted = false;
+
+      const complete = () => {
+        if (isCompleted) return;
+        isCompleted = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        logger.info(
+          `Background job "${this.config.name}" auto-completed after ${NoOutputTimeoutMs}ms of no output`,
+        );
+        resolve();
+      };
+
+      const resetTimeout = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(complete, NoOutputTimeoutMs);
+      };
+
+      // Start initial timeout
+      resetTimeout();
+
+      // Process the output stream
+      const processOutput = async () => {
+        try {
+          for await (const line of outputStream) {
+            if (isCompleted) break;
+
+            this.outputManager.addLine(line);
+            resetTimeout(); // Reset timeout on each new line
+          }
+
+          // If the stream ends naturally, complete immediately
+          complete();
+        } catch (error) {
+          if (isCompleted) return;
+          isCompleted = true;
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          reject(error);
+        }
+      };
+
+      // Start processing
+      processOutput();
+    });
   }
 
   /**

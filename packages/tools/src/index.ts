@@ -27,7 +27,7 @@ export function isUserInputTool(toolName: string): boolean {
 }
 
 export function isExecuteCommandToolStreamCall(tool: ToolInvocation): boolean {
-  return tool.toolName === "executeCommand" && !tool.args?.isDevServer;
+  return tool.toolName === "executeCommand";
 }
 
 export function isAutoInjectTool(toolName: string): boolean {

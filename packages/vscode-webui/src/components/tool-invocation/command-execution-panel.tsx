@@ -35,8 +35,8 @@ import { ScrollArea } from "../ui/scroll-area";
 export interface ExecutionPanelProps {
   command: string;
   output: string;
-  onStop?: () => void;
-  onDetach?: () => void;
+  onStop: () => void;
+  onDetach: () => void;
   autoScrollToBottom?: boolean;
   completed: boolean;
   isExecuting: boolean;
@@ -67,19 +67,15 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     copyToClipboard(command);
   };
 
-  const handleStop = onStop
-    ? () => {
-        setIsStopping(true);
-        onStop();
-      }
-    : undefined;
+  const handleStop = () => {
+    setIsStopping(true);
+    onStop();
+  };
 
-  const handleDetach = onDetach
-    ? () => {
-        setIsStopping(true);
-        onDetach();
-      }
-    : undefined;
+  const handleDetach = () => {
+    setIsStopping(true);
+    onDetach();
+  };
 
   const scrollToBottom = useCallback(() => {
     if (containerRef.current) {
@@ -162,12 +158,12 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
           </div>
         </div>
         <div className="flex space-x-3 self-start">
-          {showButton && handleStop && (
+          {showButton && (
             <Button size="xs" variant="ghost" onClick={handleStop}>
               STOP
             </Button>
           )}
-          {showButton && handleDetach && (
+          {showButton && (
             <Button size="xs" variant="ghost" onClick={handleDetach}>
               DETACH
             </Button>

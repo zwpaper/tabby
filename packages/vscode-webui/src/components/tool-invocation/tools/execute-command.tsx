@@ -67,9 +67,9 @@ export const executeCommandTool: React.FC<
       detail={
         <CommandExecutionPanel
           command={command ?? ""}
-          output={isDevServer ? "" : output}
-          onStop={isDevServer ? undefined : abortTool}
-          onDetach={isDevServer ? undefined : onDetach}
+          output={output}
+          onStop={abortTool}
+          onDetach={onDetach}
           completed={completed}
           autoScrollToBottom={true}
           isExecuting={isExecuting}

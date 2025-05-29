@@ -102,7 +102,6 @@ export function useVSCodeTool({
 
       if (
         tool.toolName === "executeCommand" &&
-        !tool.args?.isDevServer &&
         typeof result === "object" &&
         result !== null &&
         "output" in result
