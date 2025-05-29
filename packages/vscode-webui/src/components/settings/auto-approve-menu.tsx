@@ -5,7 +5,14 @@ import {
   useSettingsStore,
 } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, Eye, FileEdit, Play, RotateCcw } from "lucide-react";
+import {
+  Blocks,
+  ChevronLeft,
+  Eye,
+  FileEdit,
+  Play,
+  RotateCcw,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 
@@ -40,6 +47,7 @@ export function AutoApproveMenu() {
     { key: "write", label: "Write", icon: <FileEdit /> },
     { key: "execute", label: "Execute", icon: <Play /> },
     { key: "retry", label: "Retry", icon: <RotateCcw /> },
+    { key: "mcp", label: "MCP", icon: <Blocks /> },
   ];
 
   const enabledOptions = orderedToggleButtons

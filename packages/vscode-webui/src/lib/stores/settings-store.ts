@@ -2,12 +2,14 @@ import { ToolsByPermission } from "@ragdoll/tools";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { DefaultModelId } from "../constants";
+import { useMcp } from "../hooks/use-mcp";
 
 export type AutoApprove = Record<
   Exclude<keyof typeof ToolsByPermission, "default">,
   boolean
 > & {
   retry: number;
+  mcp: boolean;
 };
 
 export interface SettingsState {
@@ -35,6 +37,7 @@ export const useSettingsStore = create<SettingsState>()(
         write: true,
         execute: true,
         retry: 0,
+        mcp: false,
       },
       isDevMode: false,
       enableReasoning: false,
@@ -78,6 +81,7 @@ export function useToolAutoApproval(
 ): boolean {
   const { autoApproveActive, autoApproveSettings } =
     useAutoApprove(autoApproveGuard);
+  const { toolset } = useMcp();
 
   if (ToolsByPermission.default.includes(toolName)) {
     return true;
@@ -98,6 +102,13 @@ export function useToolAutoApproval(
   if (
     autoApproveSettings.execute &&
     ToolsByPermission.execute.includes(toolName)
+  ) {
+    return true;
+  }
+
+  if (
+    autoApproveSettings.mcp &&
+    Object.keys(toolset).some((name) => name === toolName)
   ) {
     return true;
   }
