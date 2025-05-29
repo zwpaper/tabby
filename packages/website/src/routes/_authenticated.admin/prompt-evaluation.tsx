@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/auth-client";
 import { useEvaluationRunner } from "@/lib/use-evaluation-runner";
+import type { DB } from "@ragdoll/db";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -77,7 +78,7 @@ function RouteComponent() {
           eventFilter: JSON.stringify({
             type: "batch:evaluation",
             data: { batchId: currentBatchId },
-          }),
+          } satisfies DB["task"]["event"]),
         },
       });
 
@@ -108,7 +109,8 @@ function RouteComponent() {
         query: {
           eventFilter: JSON.stringify({
             type: "batch:evaluation",
-          }),
+            data: {},
+          } satisfies DB["task"]["event"]),
         },
       });
       const data = await response.json();

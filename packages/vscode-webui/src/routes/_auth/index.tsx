@@ -175,12 +175,20 @@ function Chat({ loaderData, isTaskLoading, initMessage }: ChatProps) {
     loaderData?.totalTokens || 0,
   );
 
+  const isBatchEvaluationTask = loaderData?.event?.type === "batch:evaluation";
+
   useEffect(() => {
     taskId.current = loaderData?.id;
     if (loaderData) {
       setTotalTokens(loaderData.totalTokens || 0);
     }
   }, [loaderData]);
+
+  useEffect(() => {
+    if (isBatchEvaluationTask) {
+      autoApproveGuard.current = true;
+    }
+  }, [isBatchEvaluationTask, autoApproveGuard]);
 
   const { data: currentWorkspace, isFetching } = useCurrentWorkspace();
   const isWorkspaceActive = !!currentWorkspace;

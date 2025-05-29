@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/auth-client";
+import type { DB } from "@ragdoll/db";
 import { useMemo, useRef, useState } from "react";
 
 export interface EvaluationConfig {
@@ -73,15 +74,15 @@ export function useEvaluationRunner(
       const response = await apiClient.api.tasks.$get({
         query: {
           eventFilter: JSON.stringify({
-            type: "evaluation:batch",
+            type: "batch:evaluation",
             data: { batchId },
-          }),
+          } satisfies DB["task"]["event"]),
         },
       });
       const data = await response.json();
 
       const promptTasks = data.data
-        .filter((task) => task.event?.type === "evaluation:batch")
+        .filter((task) => task.event?.type === "batch:evaluation")
         .sort(
           (a, b) =>
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
@@ -134,9 +135,25 @@ export function useEvaluationRunner(
           promptIndex,
           totalPrompts: prompts.length,
         };
+        const taskResponse = await apiClient.api.tasks.$post({
+          json: {
+            prompt,
+            event: {
+              type: "batch:evaluation",
+              data: evaluationParams,
+            },
+          },
+        });
 
-        const encodedParams = btoa(JSON.stringify(evaluationParams));
-        const vscodeUri = `vscode://TabbyML.pochi/?startEvaluation=${encodedParams}`;
+        if (!taskResponse.ok) {
+          resetEvaluation();
+          console.error("Failed to start evaluation");
+          return;
+        }
+
+        const taskId = (await taskResponse.json()).taskId;
+
+        const vscodeUri = `vscode://TabbyML.pochi/?task=${taskId}`;
         window.open(vscodeUri, "_blank");
 
         await new Promise((resolve) => setTimeout(resolve, 2000));
