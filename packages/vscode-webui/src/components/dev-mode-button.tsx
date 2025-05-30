@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { createCoreMessagesForCopy } from "@/lib/utils/message";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Todo } from "@ragdoll/common";
@@ -52,6 +53,8 @@ export function DevModeButton({
   buildEnvironment,
   todos,
 }: DevModeButtonProps) {
+  const [isDevMode] = useIsDevMode();
+  if (!isDevMode) return null;
   const getMessagesContent = () => {
     const x = messages.map((x) => {
       return {

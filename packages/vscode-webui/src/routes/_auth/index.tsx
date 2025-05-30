@@ -24,7 +24,6 @@ import type { Editor } from "@tiptap/react";
 import type { Attachment } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
-  Bug,
   ImageIcon,
   Loader2,
   SendHorizonal,
@@ -44,6 +43,7 @@ import {
 import { z } from "zod";
 
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
+import { DevRetryCountdown } from "@/components/dev-retry-countdown";
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ErrorMessage } from "@/components/error-message";
 import { ImagePreviewList } from "@/components/image-preview-list";
@@ -65,7 +65,6 @@ import { TodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
-import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useLatest } from "@/lib/hooks/use-latest";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
@@ -137,7 +136,6 @@ interface ChatProps {
 }
 
 function Chat({ loaderData, isTaskLoading }: ChatProps) {
-  const [isDevMode] = useIsDevMode();
   const autoApproveGuard = useAutoApproveGuard();
   const taskId = useRef<number | undefined>(loaderData?.id);
   const [totalTokens, setTotalTokens] = useState<number>(
@@ -651,21 +649,10 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                   editorRef.current?.commands.insertContent(" @");
                 }}
               />
-              {isDevMode && (
-                <span className="absolute top-1 right-2 text-foreground/80 text-xs">
-                  <span className="flex items-center gap-1">
-                    <Bug className="inline size-3" />
-                    <span>{status}</span>
-                    {pendingApproval?.name === "retry" ? (
-                      <div>
-                        <span>Attempts: {pendingApproval.attempts}</span> /{" "}
-                        <span>Countdown: {pendingApproval.countdown}</span> /{" "}
-                        <span>Delay: {pendingApproval.delay}</span>
-                      </div>
-                    ) : undefined}
-                  </span>
-                </span>
-              )}
+              <DevRetryCountdown
+                pendingApproval={pendingApproval}
+                status={status}
+              />
             </FormEditor>
 
             {/* Hidden file input for image uploads */}
@@ -696,13 +683,11 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                     className="mr-5"
                   />
                 )}
-                {isDevMode && (
-                  <DevModeButton
-                    messages={messages}
-                    buildEnvironment={buildEnvironment}
-                    todos={todos}
-                  />
-                )}
+                <DevModeButton
+                  messages={messages}
+                  buildEnvironment={buildEnvironment}
+                  todos={todos}
+                />
                 <Button
                   variant="ghost"
                   size="icon"
