@@ -12,6 +12,7 @@ import { useSelectedModels } from "@/lib/hooks/use-models";
 import {
   ChatStateProvider,
   useAutoApproveGuard,
+  useToolEvents,
 } from "@/lib/stores/chat-state";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
@@ -573,6 +574,13 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     const frameId = requestAnimationFrame(() => scrollToBottom(false)); // Using false to disable smooth scrolling during streaming
     return () => cancelAnimationFrame(frameId);
   }, [isLoading, isAtBottom, messages, scrollToBottom]);
+
+  const { listen } = useToolEvents();
+  useLayoutEffect(() => {
+    return listen("resizeTerminal", () => {
+      requestAnimationFrame(() => scrollToBottom(false));
+    });
+  }, [listen, scrollToBottom]);
 
   // Ensure users can always see the executing approval or the pause approval that require their input
   useLayoutEffect(() => {

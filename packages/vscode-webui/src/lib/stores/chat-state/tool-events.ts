@@ -1,9 +1,10 @@
 // Define the event types that can be emitted/listened to
-export type ToolEventType = "abortTool"; // Add other event types here, e.g., | "anotherEvent";
+export type ToolEventType = "abortTool" | "resizeTerminal"; // Add other event types here, e.g., | "anotherEvent";
 
 // Define the payload shapes for each event type
 export interface ToolEventPayloads {
   abortTool: { toolCallId: string };
+  resizeTerminal: { height: number };
 }
 
 // ToolEvents class to encapsulate event management functionality

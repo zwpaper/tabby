@@ -5,6 +5,7 @@ import {
   Terminal,
 } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
+import { useToolEvents } from "@/lib/stores/chat-state";
 import { FitAddon } from "@xterm/addon-fit";
 import {
   type ComponentPropsWithoutRef,
@@ -145,6 +146,8 @@ export function XTerm({
     listeners,
   });
 
+  const { emit } = useToolEvents();
+
   const writtenLength = useRef(0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -165,12 +168,18 @@ export function XTerm({
     const lineCount = content.split("\n").length;
     const rows = Math.max(Math.min(lineCount, maxRow), minRow);
     const height = rows * 14;
-    containerRef.current?.style.setProperty("height", `${height}px`);
-    setOptions((prev) => ({
-      ...prev,
-      rows,
-    }));
-  }, [content, containerRef]);
+    setOptions((prev) => {
+      if (prev.rows === rows) return prev;
+      containerRef.current?.style.setProperty("height", `${height}px`);
+      emit("resizeTerminal", {
+        height,
+      });
+      return {
+        ...prev,
+        rows,
+      };
+    });
+  }, [content, containerRef, emit]);
 
   return <div className={className} ref={ref} {...props} />;
 }
