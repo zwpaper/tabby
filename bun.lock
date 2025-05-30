@@ -89,12 +89,14 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.2.30",
+      "version": "0.2.33",
       "dependencies": {
+        "@ai-sdk/ui-utils": "catalog:",
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@preact/signals-core": "catalog:",
         "@quilted/threads": "catalog:",
         "@ragdoll/common": "workspace:*",
+        "@ragdoll/db": "workspace:*",
         "@ragdoll/server": "workspace:*",
         "@vscode-logging/logger": "^2.0.0",
         "@xstate/fsm": "^2.1.0",
