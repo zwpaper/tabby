@@ -95,6 +95,12 @@ if (rootElement && !rootElement.innerHTML) {
   );
 }
 
+// Remove VSCode's default styles, if present.
+const defaultStyles = document.getElementById("_defaultStyles");
+if (defaultStyles) {
+  defaultStyles.remove();
+}
+
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
