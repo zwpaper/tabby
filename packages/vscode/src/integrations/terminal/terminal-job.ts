@@ -42,6 +42,7 @@ export class TerminalJob implements vscode.Disposable {
   private readonly terminal: vscode.Terminal;
   private disposables: vscode.Disposable[] = [];
   private shellIntegration: vscode.TerminalShellIntegration | undefined;
+  private execution: vscode.TerminalShellExecution | undefined;
   private outputManager = new OutputManager();
   private detached = false;
 
@@ -120,7 +121,7 @@ export class TerminalJob implements vscode.Disposable {
     // Wait for shell integration if not available
     const shellIntegration = await this.waitForShellIntegration();
 
-    const execution = shellIntegration.executeCommand(this.config.command);
+    this.execution = shellIntegration.executeCommand(this.config.command);
     logger.debug(
       `Executed command in terminal "${this.config.name}": ${this.config.command}`,
     );
@@ -128,7 +129,7 @@ export class TerminalJob implements vscode.Disposable {
     try {
       // Use Promise.race to handle abort signal alongside stream processing
       await Promise.race([
-        this.processOutputStream(execution.read()),
+        this.processOutputStream(this.execution.read()),
         this.createAbortPromise(),
       ]);
     } catch (error) {
@@ -229,10 +230,28 @@ export class TerminalJob implements vscode.Disposable {
       vscode.window.onDidChangeTerminalShellIntegration(
         ({ terminal, shellIntegration }) => {
           if (terminal === this.terminal) {
+            if (this.shellIntegration !== undefined) {
+              if (this.shellIntegration === shellIntegration) {
+                logger.debug("Terminal shell integration unchanged");
+              } else {
+                logger.debug("Terminal shell integration changed");
+              }
+            } else {
+              logger.debug("Terminal shell integration acquired");
+            }
             this.shellIntegration = shellIntegration;
           }
         },
       ),
+    );
+
+    // Listen for shell execution success.
+    this.disposables.push(
+      vscode.window.onDidEndTerminalShellExecution((event) => {
+        if (event.execution === this.execution) {
+          logger.debug("Terminal shell execution ended", event.exitCode);
+        }
+      }),
     );
   }
 
