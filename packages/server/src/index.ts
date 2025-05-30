@@ -1,14 +1,13 @@
-import type { UserEvent } from "@ragdoll/common";
+export type { TaskEvent, UserEvent } from "@ragdoll/common";
 import { WebSocket } from "ws";
 export type * from "./types";
 export type { AppType } from "./server";
 export { deviceLinkClient } from "./lib/device-link/client";
 
-export type { UserEvent };
 export type { DBMessage } from "@ragdoll/common";
 export type { auth } from "./auth";
 
-export class UserEventSource {
+export class PochiEventSource {
   private ws: WebSocket;
 
   constructor(baseUrl?: string, token?: string) {
@@ -29,7 +28,7 @@ export class UserEventSource {
     type: string,
     listener: (data: T) => void,
   ) {
-    this.ws.addEventListener("message", (message) => {
+    const callback = (message: WebSocket.MessageEvent) => {
       try {
         if (typeof message.data !== "string") return;
         const data = JSON.parse(message.data) as T;
@@ -44,7 +43,13 @@ export class UserEventSource {
       } catch (error) {
         console.error(`Error processing ${type} event:`, error);
       }
-    });
+    };
+
+    this.ws.addEventListener("message", callback);
+
+    return () => {
+      this.ws.removeEventListener("message", callback);
+    };
   }
 
   dispose() {

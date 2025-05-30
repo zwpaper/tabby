@@ -1,13 +1,11 @@
-import type { DataStreamWriter, LanguageModelUsage, Message } from "ai";
+import type { DataStreamWriter, LanguageModelUsage, UIMessage } from "ai";
 
 export type DBMessage = {
   id: string;
   createdAt: string;
-  role: Message["role"];
-  parts: Array<
-    Exclude<NonNullable<Message["parts"]>[number], { type: "source" }>
-  >;
-  experimental_attachments?: Message["experimental_attachments"];
+  role: UIMessage["role"];
+  parts: Array<Exclude<UIMessage["parts"][number], { type: "source" }>>;
+  experimental_attachments?: UIMessage["experimental_attachments"];
 };
 
 export type DataPart =
@@ -23,7 +21,7 @@ export type DataPart =
       type: "update-usage";
     } & LanguageModelUsage);
 
-export function toUIMessage(message: DBMessage): Message {
+export function toUIMessage(message: DBMessage): UIMessage {
   return {
     ...message,
     content: "",
@@ -31,11 +29,11 @@ export function toUIMessage(message: DBMessage): Message {
   };
 }
 
-export function toUIMessages(messages: DBMessage[]): Message[] {
+export function toUIMessages(messages: DBMessage[]): UIMessage[] {
   return messages.map(toUIMessage);
 }
 
-export function fromUIMessage(message: Message): DBMessage {
+export function fromUIMessage(message: UIMessage): DBMessage {
   const parts = (message.parts || []).filter((x) => x.type !== "source");
   return {
     ...message,
@@ -44,7 +42,7 @@ export function fromUIMessage(message: Message): DBMessage {
   };
 }
 
-export function fromUIMessages(messages: Message[]): DBMessage[] {
+export function fromUIMessages(messages: UIMessage[]): DBMessage[] {
   return messages.map(fromUIMessage);
 }
 

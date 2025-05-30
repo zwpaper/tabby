@@ -4,10 +4,10 @@ check_git_clean() {
 }
 
 main() {
+    bun dep-check
     bun fix
     check_git_clean
     bun tsc
-    bun dep-check
     bun run test 
     cd packages/vscode && bun run test
 }

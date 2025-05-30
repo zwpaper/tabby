@@ -30,7 +30,7 @@ export const ZodChatRequestType = z.object({
     })
     .optional()
     .describe("Reasoning configuration"),
-  environment: ZodEnvironment,
+  environment: ZodEnvironment.optional(),
   notify: z.boolean().optional(),
 });
 

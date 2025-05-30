@@ -185,10 +185,12 @@
     "release": "bunx bumpp --tag=vscode@%s"
   },
   "dependencies": {
+    "@ai-sdk/ui-utils": "catalog:",
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@preact/signals-core": "catalog:",
     "@quilted/threads": "catalog:",
     "@ragdoll/common": "workspace:*",
+    "@ragdoll/db": "workspace:*",
     "@ragdoll/server": "workspace:*",
     "@xstate/fsm": "^2.1.0",
     "ai": "catalog:",
