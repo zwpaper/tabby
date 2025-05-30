@@ -766,7 +766,9 @@ const useEventAutoStart = ({
       enabled &&
       init &&
       !initStarted.current &&
-      task.event?.type === "website:new-project"
+      // TODO(sma1lboy): consider using a constant for maintain auto-start event typesAdd commentMore actions
+      (task.event?.type === "website:new-project" ||
+        task.event?.type === "batch:evaluation")
     ) {
       initStarted.current = true;
       retry();
