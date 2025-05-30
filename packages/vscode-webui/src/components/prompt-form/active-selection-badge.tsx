@@ -31,13 +31,14 @@ export const ActiveSelectionBadge: React.FC<ActiveSelectionBadgeProps> = ({
             label={activeSelection.filepath.split("/").pop()}
             path={activeSelection.filepath}
             startLine={
+              // display as 1-based
               activeSelection.content.length > 0
-                ? activeSelection.range.start.line
+                ? activeSelection.range.start.line + 1
                 : undefined
             }
             endLine={
               activeSelection.content.length > 0
-                ? activeSelection.range.end.line
+                ? activeSelection.range.end.line + 1
                 : undefined
             }
           />
