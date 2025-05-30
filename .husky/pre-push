@@ -8,6 +8,7 @@ main() {
     bun fix
     check_git_clean
     bun tsc
+    bun install --frozen-lockfile
     bun run test 
     cd packages/vscode && bun run test
 }
