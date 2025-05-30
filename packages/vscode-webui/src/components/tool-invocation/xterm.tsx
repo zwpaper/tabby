@@ -140,6 +140,8 @@ export function XTerm({
     ITerminalOptions & ITerminalInitOnlyOptions
   >({ ...defaultTerminalOptions, ...options });
 
+  const [currentRows, setCurrentRows] = useState<number>(minRow);
+
   const { ref, instance } = useXTerm({
     options: xtermOptions,
     addons,
@@ -166,20 +168,32 @@ export function XTerm({
 
   useEffect(() => {
     const lineCount = content.split("\n").length;
-    const rows = Math.max(Math.min(lineCount, maxRow), minRow);
-    const height = rows * 14;
+
+    // Always grow rows to +3 of line content, only if lineCount <= current rows
+    let rows = currentRows;
+    if (lineCount >= currentRows) {
+      rows = Math.max(Math.min(lineCount + 3, maxRow), minRow);
+    }
+
+    if (rows !== currentRows) {
+      setCurrentRows(rows);
+    }
+  }, [content, currentRows]);
+
+  useEffect(() => {
+    const height = currentRows * 14;
     setOptions((prev) => {
-      if (prev.rows === rows) return prev;
+      if (prev.rows === currentRows) return prev;
       containerRef.current?.style.setProperty("height", `${height}px`);
       emit("resizeTerminal", {
         height,
       });
       return {
         ...prev,
-        rows,
+        rows: currentRows,
       };
     });
-  }, [content, containerRef, emit]);
+  }, [currentRows, containerRef, emit]);
 
   return <div className={className} ref={ref} {...props} />;
 }
