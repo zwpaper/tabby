@@ -27,9 +27,19 @@ export const webFetchImpl = defineServerTool({
             `Jina Reader API error: ${readerResponse.status} ${readerResponse.statusText}`,
           );
         }
-        const result = await readerResponse.text();
+        let result = await readerResponse.text();
+
+        // Check if content is greater than 256K
+        const MaxLength = 256 * 1024;
+        let isTruncated = false;
+        if (Buffer.byteLength(result, "utf-8") > MaxLength) {
+          result = result.slice(0, MaxLength);
+          isTruncated = true;
+        }
+
         return {
           result,
+          isTruncated,
         };
       } catch (error: unknown) {
         const errorMessage =

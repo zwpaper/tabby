@@ -9,5 +9,8 @@ export const webFetch = declareServerTool({
   }),
   outputSchema: z.object({
     result: z.string().describe("The AI model's response about the content"),
+    isTruncated: z
+      .boolean()
+      .describe("Whether the content was truncated due to size limitations"),
   }),
 });
