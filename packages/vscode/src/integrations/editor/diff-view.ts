@@ -19,7 +19,6 @@ import { DiffOriginContentProvider } from "./diff-origin-content-provider";
 
 const logger = getLogger("diffView");
 const ShouldAutoScroll = true;
-const ReuseDiffView = true;
 
 export class DiffView implements vscode.Disposable {
   private isFinalized = false;
@@ -34,7 +33,7 @@ export class DiffView implements vscode.Disposable {
   private disposables: vscode.Disposable[] = [];
 
   private constructor(
-    private readonly fileUri: vscode.Uri,
+    public readonly fileUri: vscode.Uri,
     private readonly fileExists: boolean,
     private readonly originalContent: string,
     private readonly activeDiffEditor: vscode.TextEditor,
@@ -311,49 +310,8 @@ export class DiffView implements vscode.Disposable {
       // Install hook for first diff view
       if (DiffViewMap.size === 0 && !DiffViewDisposable) {
         logger.info("Installing diff view hook");
-        DiffViewDisposable = vscode.window.tabGroups.onDidChangeTabs((e) => {
-          // Only handle close events
-          if (e.closed.length === 0) return;
-
-          const visibleDiffViewIds = new Set<string>();
-          for (const group of vscode.window.tabGroups.all) {
-            for (const tab of group.tabs) {
-              if (
-                tab.input instanceof vscode.TabInputTextDiff &&
-                tab.input.original.scheme === DiffOriginContentProvider.scheme
-              ) {
-                // id is stored in path
-                visibleDiffViewIds.add(tab.input.original.path);
-              }
-            }
-          }
-
-          for (const [id, diffView] of DiffViewMap) {
-            if (!visibleDiffViewIds.has(id)) {
-              diffView.dispose();
-              DiffViewMap.delete(id);
-              logger.debug(`Closed diff view for ${id}`);
-            }
-
-            if (ReuseDiffView) {
-              // As we reuse the diff view in openDiffEditor, we need to close all diff views for the same file.
-              for (const [id, value] of DiffViewMap) {
-                if (value.fileUri.fsPath === diffView.fileUri.fsPath) {
-                  value.dispose();
-                  DiffViewMap.delete(id);
-                  logger.debug(`Closed diff view for ${id}`);
-                }
-              }
-            }
-          }
-
-          logger.debug(`Remaining diff views: ${DiffViewMap.size}`);
-          if (DiffViewMap.size === 0 && DiffViewDisposable) {
-            logger.debug("Disposing diff view hook");
-            DiffViewDisposable.dispose();
-            DiffViewDisposable = undefined;
-          }
-        });
+        DiffViewDisposable =
+          vscode.window.tabGroups.onDidChangeTabs(handleTabChanges);
       }
 
       let diffView = DiffViewMap.get(id);
@@ -378,18 +336,16 @@ async function openDiffEditor(
   fileExists: boolean,
   originalContent: string | undefined,
 ): Promise<vscode.TextEditor> {
-  if (ReuseDiffView) {
-    for (const group of vscode.window.tabGroups.all) {
-      for (const tab of group.tabs) {
-        if (
-          tab.input instanceof vscode.TabInputTextDiff &&
-          tab.input?.original?.scheme === DiffOriginContentProvider.scheme &&
-          tab.input.modified.fsPath === fileUri.fsPath
-        ) {
-          for (const textEditor of vscode.window.visibleTextEditors) {
-            if (textEditor.document.uri.fsPath === fileUri.fsPath) {
-              return textEditor;
-            }
+  for (const group of vscode.window.tabGroups.all) {
+    for (const tab of group.tabs) {
+      if (
+        tab.input instanceof vscode.TabInputTextDiff &&
+        tab.input?.original?.scheme === DiffOriginContentProvider.scheme &&
+        tab.input.modified.fsPath === fileUri.fsPath
+      ) {
+        for (const textEditor of vscode.window.visibleTextEditors) {
+          if (textEditor.document.uri.fsPath === fileUri.fsPath) {
+            return textEditor;
           }
         }
       }
@@ -440,5 +396,59 @@ async function closeAllNonDirtyDiffViews() {
     if (!tab.isDirty) {
       await vscode.window.tabGroups.close(tab);
     }
+  }
+}
+
+function handleTabChanges(e: vscode.TabChangeEvent) {
+  // Only handle close events
+  if (e.closed.length === 0) return;
+
+  const visibleDiffViewIds = new Set<string>();
+  for (const group of vscode.window.tabGroups.all) {
+    for (const tab of group.tabs) {
+      if (
+        tab.input instanceof vscode.TabInputTextDiff &&
+        tab.input.original.scheme === DiffOriginContentProvider.scheme
+      ) {
+        // id is stored in path
+        visibleDiffViewIds.add(tab.input.original.path);
+      }
+    }
+  }
+
+  // Collect IDs to remove to avoid deleting during iteration
+  const idsToRemove = new Set<string>();
+  const filePathsToClose = new Set<string>();
+
+  // Find diff views that are no longer visible and collect their file paths
+  for (const [id, diffView] of DiffViewMap) {
+    if (!visibleDiffViewIds.has(id)) {
+      idsToRemove.add(id);
+      filePathsToClose.add(diffView.fileUri.fsPath);
+    }
+  }
+
+  // Add all diff views for the same file paths to removal list (for reuse cleanup)
+  for (const [id, diffView] of DiffViewMap) {
+    if (filePathsToClose.has(diffView.fileUri.fsPath)) {
+      idsToRemove.add(id);
+    }
+  }
+
+  // Now safely dispose and remove all marked diff views
+  for (const id of idsToRemove) {
+    const diffView = DiffViewMap.get(id);
+    if (diffView) {
+      diffView.dispose();
+      DiffViewMap.delete(id);
+      logger.debug(`Closed diff view for ${id}`);
+    }
+  }
+
+  logger.debug(`Remaining diff views: ${DiffViewMap.size}`);
+  if (DiffViewMap.size === 0 && DiffViewDisposable) {
+    logger.debug("Disposing diff view hook");
+    DiffViewDisposable.dispose();
+    DiffViewDisposable = undefined;
   }
 }
