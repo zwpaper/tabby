@@ -185,7 +185,6 @@
     "release": "bunx bumpp --tag=vscode@%s"
   },
   "dependencies": {
-    "@ai-sdk/ui-utils": "catalog:",
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@preact/signals-core": "catalog:",
     "@quilted/threads": "catalog:",

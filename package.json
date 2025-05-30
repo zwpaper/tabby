@@ -11,7 +11,8 @@
     "build": "bun --filter '*' build",
     "dev:server": "bun --filter '*' dev:server",
     "dep-check": "bun scripts/dep-check.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "pre-push": "bash ./.husky/pre-push"
   },
   "workspaces": {
     "packages": ["packages/*"],

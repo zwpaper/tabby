@@ -1,5 +1,3 @@
-import type { ApiClient } from "@/lib/auth-client";
-import type { PochiEvents } from "@/lib/pochi-events";
 import {
   isAssistantMessageWithCompletedToolCalls,
   updateToolCallResult,
@@ -7,15 +5,12 @@ import {
 import { type TaskEvent, fromUIMessage, toUIMessages } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import type { ToolInvocation, UIMessage } from "ai";
+import { apiClient, pochiEvents } from "./lib/api-client";
 
 type TaskStatus = DB["task"]["status"]["__select__"];
 
 export class TaskRunner {
-  constructor(
-    private readonly apiClient: ApiClient,
-    private readonly pochiEvents: PochiEvents,
-    private readonly taskId: number,
-  ) {}
+  constructor(private readonly taskId: number) {}
 
   private async step(): Promise<TaskStatus> {
     const task = await this.loadTask();
@@ -64,7 +59,7 @@ export class TaskRunner {
     const abortController = new AbortController();
     const streamDone = new Promise<TaskStatus>((resolve) => {
       let streamingStarted = false;
-      const unsubscribe = this.pochiEvents.subscribe<TaskEvent>(
+      const unsubscribe = pochiEvents.subscribe<TaskEvent>(
         "task:status-changed",
         ({ data }) => {
           if (data.taskId !== this.taskId) {
@@ -88,7 +83,7 @@ export class TaskRunner {
     });
 
     // Start streaming
-    this.apiClient.api.chat.stream.$post(
+    apiClient.api.chat.stream.$post(
       {
         json: {
           id: this.taskId.toString(),
@@ -117,7 +112,7 @@ export class TaskRunner {
   }
 
   async loadTask() {
-    const resp = await this.apiClient.api.tasks[":id"].$get({
+    const resp = await apiClient.api.tasks[":id"].$get({
       param: {
         id: this.taskId.toString(),
       },

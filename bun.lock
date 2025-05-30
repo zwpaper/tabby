@@ -42,6 +42,16 @@
         "kysely-codegen": "^0.18.3",
       },
     },
+    "packages/runner": {
+      "name": "@ragdoll/runner",
+      "dependencies": {
+        "@ai-sdk/ui-utils": "catalog:",
+        "@ragdoll/common": "workspace:*",
+        "@ragdoll/server": "workspace:*",
+        "@ragdoll/vscode-webui-bridge": "workspace:*",
+        "ai": "catalog:",
+      },
+    },
     "packages/server": {
       "name": "@ragdoll/server",
       "dependencies": {
@@ -89,7 +99,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.2.33",
+      "version": "0.2.35",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
         "@modelcontextprotocol/sdk": "^1.12.0",
@@ -838,6 +848,8 @@
     "@ragdoll/common": ["@ragdoll/common@workspace:packages/common"],
 
     "@ragdoll/db": ["@ragdoll/db@workspace:packages/db"],
+
+    "@ragdoll/runner": ["@ragdoll/runner@workspace:packages/runner"],
 
     "@ragdoll/server": ["@ragdoll/server@workspace:packages/server"],
 

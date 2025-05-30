@@ -1,0 +1,16 @@
+{
+  "name": "@ragdoll/runner",
+  "bin": "src/cli.ts",
+  "scripts": {
+    "start": "bun run src/cli.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/ui-utils": "catalog:",
+    "@ragdoll/common": "workspace:*",
+    "@ragdoll/db": "workspace:*",
+    "@ragdoll/server": "workspace:*",
+    "@ragdoll/vscode-webui-bridge": "workspace:*",
+    "ai": "catalog:",
+    "hono": "catalog:"
+  }
+}
