@@ -11,42 +11,6 @@ Only a single operation is allowed per tool use.
 The SEARCH section must exactly match existing content including whitespace and indentation.
 If you're not confident in the exact content to search for, use the readFile tool first to get the exact content.
 When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
-
-Diff format:
-\`\`\`
-<<<<<<< SEARCH
-[exact content to find including whitespace]
-=======
-[new content to replace with]
->>>>>>> REPLACE
-\`\`\`
-
-Example:
-
-Original file:
-\`\`\`
-1 | def calculate_total(items):
-2 |     total = 0
-3 |     for item in items:
-4 |         total += item
-5 |     return total
-\`\`\`
-
-Search/Replace content:
-\`\`\`
-<<<<<<< SEARCH
-def calculate_total(items):
-    total = 0
-    for item in items:
-        total += item
-    return total
-=======
-def calculate_total(items):
-    \"\"\"Calculate total with 10% markup\"\"\"
-    return sum(item * 1.1 for item in items)
->>>>>>> REPLACE
-\`\`\`
-
 ${EditFileResultPrompt}`.trim(),
   inputSchema: z.object({
     path: z
@@ -54,7 +18,8 @@ ${EditFileResultPrompt}`.trim(),
       .describe(
         "The path of the file to modify (relative to the current working directory).",
       ),
-    diff: z.string().describe("The search/replace block defining the changes."),
+    searchContent: z.string().describe("The text to replace."),
+    replaceContent: z.string().describe("The text to replace it with."),
     startLine: z
       .number()
       .describe("The line number where the search block starts."),

@@ -14,23 +14,14 @@ export class DiffError extends Error {
  * Parse a diff and apply it to file content
  */
 export async function parseDiffAndApply(
-  diff: string,
+  fileContent: string,
   startLine: number,
   endLine: number,
-  fileContent: string,
+  searchContent: string,
+  replaceContent: string,
 ): Promise<string> {
   const lines = fileContent.split("\n");
   logger.trace(`Read file with ${lines.length} lines`);
-
-  const diffBlocks = diff.trim().split("\n=======\n");
-  if (diffBlocks.length !== 2) {
-    throw new DiffError("Invalid diff format");
-  }
-  logger.trace("Parsed diff blocks");
-
-  const searchContent = removeSearchPrefix(diffBlocks[0]);
-  const replaceContent = removeReplaceSuffix(diffBlocks[1]);
-  logger.trace("Extracted search and replace content");
 
   // Adjust search window based on start/endLine and WindowToExpandForSearch
   // Note: startLine/endLine are 1-based, array indices are 0-based.
@@ -115,36 +106,4 @@ function fuzzyMatch(extractLines: string[], searchLines: string[]): number {
   }
 
   return -1; // No match found
-}
-
-/**
- * Remove the search prefix from the diff content
- */
-function removeSearchPrefix(content: string): string {
-  const prefix = "<<<<<<< SEARCH\n";
-  if (content.startsWith(prefix)) {
-    return content.slice(prefix.length);
-  }
-  throw new DiffError(
-    `Diff format is incorrect. Expected '${prefix.trim()}' prefix.`,
-  );
-}
-
-/**
- * Remove the replace suffix from the diff content
- */
-function removeReplaceSuffix(content: string): string {
-  const suffixWithNewline = "\n>>>>>>> REPLACE";
-  const suffixWithoutNewline = ">>>>>>> REPLACE";
-
-  if (content.endsWith(suffixWithNewline)) {
-    return content.slice(0, -suffixWithNewline.length);
-  }
-  // Handle case where replace content is empty
-  if (content === suffixWithoutNewline) {
-    return "";
-  }
-  throw new DiffError(
-    `Diff format is incorrect. Expected '${suffixWithoutNewline}' suffix.`,
-  );
 }

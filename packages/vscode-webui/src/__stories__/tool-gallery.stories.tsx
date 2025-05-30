@@ -35,7 +35,6 @@ export default meta;
 type Story = StoryObj<typeof ToolsGallery>;
 type SearchFilesProp = ToolProps<ClientToolsType["searchFiles"]>;
 type ReadFileProp = ToolProps<ClientToolsType["readFile"]>;
-type ApplyDiffProp = ToolProps<ClientToolsType["applyDiff"]>;
 type ExecuteCommandProp = ToolProps<ClientToolsType["executeCommand"]>;
 type ListFilesProp = ToolProps<ClientToolsType["listFiles"]>;
 type GlobFilesProp = ToolProps<ClientToolsType["globFiles"]>;
@@ -116,78 +115,6 @@ const readProps: ReadFileProp["tool"] = {
   result: {
     content: " **04/17/2024** CodeGemma and CodeQwen mode",
     isTruncated: true,
-  },
-};
-
-const applyDiffProps: ApplyDiffProp["tool"] = {
-  state: "result",
-  step: 0,
-  toolCallId: "tool_apply_diff_1",
-  toolName: "applyDiff",
-  args: {
-    path: "src/components/Button.tsx",
-    diff: `--- a/src/components/Button.tsx
-+++ b/src/components/Button.tsx
-@@ -1,5 +1,5 @@
- interface ButtonProps {
--  text: string;
-+  label: string;
-   onClick: () => void;
- }`,
-    startLine: 1,
-    endLine: 5,
-  },
-  result: {
-    success: true,
-  },
-};
-
-const applyDiffProps2: ApplyDiffProp["tool"] = {
-  state: "result",
-  step: 0,
-  toolCallId: "tool_apply_diff_2",
-  toolName: "applyDiff",
-  args: {
-    path: "src/components/Button.tsx",
-    diff: `--- a/src/components/Button.tsx
-+++ b/src/components/Button.tsx
-@@ -1,5 +1,5 @@
- interface ButtonProps {
--  text: string;
-+  label: string;
-   onClick: () => void;
- }`,
-    startLine: 1,
-    endLine: 5,
-  },
-  result: {
-    error:
-      "Search content does not match the original file content within the search window. Try to reread the file for the latest content.",
-  },
-};
-
-const applyDiffProps3: ApplyDiffProp["tool"] = {
-  state: "result",
-  step: 0,
-  toolCallId: "tool_apply_diff_3",
-  toolName: "applyDiff",
-  args: {
-    path: "src/components/Button.tsx",
-    diff: `--- a/src/components/Button.tsx
-+++ b/src/components/Button.tsx
-@@ -1,5 +1,5 @@
- interface ButtonProps {
--  text: string;
-+  label: string;
-   onClick: () => void;
- }`,
-    startLine: 1,
-    endLine: 5,
-  },
-  result: {
-    success: true,
-    newProblems:
-      "clients/vscode/src/inline-edit/quickPick.ts\n- [ts Error] Line 536: Type '{ line: number; character: number; }' is missing the following properties from type 'Position': isBefore, isBeforeOrEqual, isAfter, isAfterOrEqual, and 4 more.\n- [ts Error] Line 540: Type '{ line: number; character: number; }' is missing the following properties from type 'Position': isBefore, isBeforeOrEqual, isAfter, isAfterOrEqual, and 4 more.",
   },
 };
 
@@ -384,9 +311,6 @@ export const Tools: Story = {
       searchProps,
       searchProps2,
       readProps,
-      applyDiffProps,
-      applyDiffProps2,
-      applyDiffProps3,
       executeCommandProps,
       listFilesProps,
       globFilesProps,

@@ -16,12 +16,18 @@ const logger = getLogger("applyDiffTool");
 export const previewApplyDiff: PreviewToolFunctionType<
   ClientToolsType["applyDiff"]
 > = async (args, { toolCallId, state }) => {
-  const { path, diff, startLine, endLine } = args || {};
-  if (!args || !path || !diff || !startLine || !endLine) {
+  const { path, searchContent, replaceContent, startLine, endLine } =
+    args || {};
+  if (
+    !args ||
+    !path ||
+    searchContent === undefined ||
+    replaceContent === undefined ||
+    !startLine ||
+    !endLine
+  ) {
     return;
   }
-
-  const processedDiff = fixCodeGenerationOutput(diff);
 
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
@@ -30,10 +36,11 @@ export const previewApplyDiff: PreviewToolFunctionType<
   const fileContent = fileBuffer.toString();
 
   const updatedContent = await parseDiffAndApply(
-    processedDiff,
+    fileContent,
     startLine,
     endLine,
-    fileContent,
+    fixCodeGenerationOutput(searchContent),
+    fixCodeGenerationOutput(replaceContent),
   );
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
@@ -44,11 +51,9 @@ export const previewApplyDiff: PreviewToolFunctionType<
  * Apply a diff to a file using DiffView
  */
 export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
-  { path, diff, startLine, endLine },
+  { path, searchContent, replaceContent, startLine, endLine },
   { toolCallId },
 ) => {
-  const processedDiff = fixCodeGenerationOutput(diff);
-
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
   await ensureFileDirectoryExists(fileUri);
@@ -57,10 +62,11 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   const fileContent = fileBuffer.toString();
 
   const updatedContent = await parseDiffAndApply(
-    processedDiff,
+    fileContent,
     startLine,
     endLine,
-    fileContent,
+    fixCodeGenerationOutput(searchContent),
+    fixCodeGenerationOutput(replaceContent),
   );
 
   const type = await fileTypeFromBuffer(fileBuffer);
