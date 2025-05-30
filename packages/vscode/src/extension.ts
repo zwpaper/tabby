@@ -9,6 +9,7 @@ import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-con
 import { McpHub } from "./integrations/mcp/mcp-hub";
 import { type AuthClient, createAuthClient } from "./lib/auth-client";
 import { type ApiClient, createApiClient } from "./lib/auth-client";
+import { FileLogger } from "./lib/file-logger";
 import { PostInstallActions } from "./lib/post-install-actions";
 
 // This method is called when your extension is activated
@@ -37,6 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
   container.resolve(DiffOriginContentProvider);
   container.resolve(McpHub);
   container.resolve(PostInstallActions);
+  container.resolve(FileLogger);
 }
 
 // This method is called when your extension is deactivated
