@@ -102,12 +102,12 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
         </div>
         <div className="ml-2 flex space-x-3 self-start">
           {showButton && (
-            <Button size="xs" variant="secondary" onClick={handleStop}>
+            <Button size="xs" variant="ghost" onClick={handleStop}>
               STOP
             </Button>
           )}
           {showButton && (
-            <Button size="xs" variant="secondary" onClick={handleDetach}>
+            <Button size="xs" variant="ghost" onClick={handleDetach}>
               DETACH
             </Button>
           )}
