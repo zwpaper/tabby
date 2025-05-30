@@ -538,7 +538,14 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     retry,
   });
 
-  // Workaround for https://github.com/vercel/ai/issues/4491#issuecomment-2848999826
+  /*
+  Workaround for https://github.com/vercel/ai/issues/4491#issuecomment-2848999826
+  Reproduce steps:
+  1. Use a model that supports parallel tool calls (e.g., gpt-4o-mini).
+  2. Ask the model to write two files, fib.rs and fib.py, concurrently.
+  3. Reject the first call and accept the second call.
+  Without forceUpdate, the first rejection will not be reflected in the UI.
+  */
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const addToolResultWithForceUpdate: typeof addToolResult = useCallback(
     (arg) => {
@@ -816,9 +823,7 @@ const useEventAutoStart = ({
       enabled &&
       init &&
       !initStarted.current &&
-      // TODO(sma1lboy): consider using a constant for maintain auto-start event types
-      (task.event?.type === "website:new-project" ||
-        task.event?.type === "batch:evaluation")
+      task.event?.type === "website:new-project"
     ) {
       initStarted.current = true;
       retry();
