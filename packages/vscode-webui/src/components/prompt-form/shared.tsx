@@ -21,10 +21,10 @@ export function useMentionKeyboardNavigation<T>(
 
       switch (event.key) {
         case "ArrowUp":
-          newIndex = Math.max(0, selectedIndex - 1);
+          newIndex = selectedIndex === 0 ? lastIndex : selectedIndex - 1;
           break;
         case "ArrowDown":
-          newIndex = Math.min(lastIndex, selectedIndex + 1);
+          newIndex = selectedIndex === lastIndex ? 0 : selectedIndex + 1;
           break;
         case "Enter":
           if (items[selectedIndex]) {
