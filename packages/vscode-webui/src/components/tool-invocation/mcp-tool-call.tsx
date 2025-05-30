@@ -1,5 +1,6 @@
-import { CodeBlock } from "@/components/message";
+import { CodeBlock, MessageMarkdown } from "@/components/message";
 import { useMcp } from "@/lib/hooks/use-mcp";
+import { ScrollArea } from "../ui/scroll-area";
 import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";
 import { ExpandableToolContainer } from "./tool-container";
@@ -89,6 +90,16 @@ function ContentResult({ content }: { content: any[] }) {
       {content.map((item, index) => {
         if (item.type === "image") {
           return <ImageResult key={index} {...item} />;
+        }
+        if (item.type === "text") {
+          return (
+            <ScrollArea
+              className="rounded-md border bg-[var(--vscode-editor-background)] p-4"
+              viewportClassname="max-h-52"
+            >
+              <MessageMarkdown isMinimalView>{item.text}</MessageMarkdown>
+            </ScrollArea>
+          );
         }
         return (
           <CodeBlock

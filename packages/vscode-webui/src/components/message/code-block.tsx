@@ -28,6 +28,8 @@ export interface CodeBlockProps {
   onCopyContent?: (value: string) => void;
   canWrapLongLines?: boolean;
   className?: string;
+  hidenLanguage?: boolean;
+  isMinimalView?: boolean;
 }
 
 export const generateRandomString = (length: number, lowercase = false) => {
@@ -40,7 +42,14 @@ export const generateRandomString = (length: number, lowercase = false) => {
 };
 
 const CodeBlock: FC<CodeBlockProps> = memo(
-  ({ language, value, canWrapLongLines, className }) => {
+  ({
+    language,
+    value,
+    canWrapLongLines,
+    className,
+    hidenLanguage,
+    isMinimalView,
+  }) => {
     const [wrapLongLines, setWrapLongLines] = useState(canWrapLongLines);
     const theme = useTheme();
     const { isCopied, copyToClipboard } = useCopyToClipboard({
@@ -63,44 +72,48 @@ const CodeBlock: FC<CodeBlockProps> = memo(
           className,
         )}
       >
-        <div className="flex w-full items-center justify-between rounded-t-sm border-b bg-[var(--vscode-editor-background)] py-1.5 pr-3 pl-4 text-[var(--vscode-editor-foreground)]">
-          <span className="text-xs lowercase">{language}</span>
-          <div className="flex items-center space-x-3">
-            {canWrapLongLines && (
+        {!isMinimalView && (
+          <div className="flex w-full items-center justify-between rounded-t-sm border-b bg-[var(--vscode-editor-background)] py-1.5 pr-3 pl-4 text-[var(--vscode-editor-foreground)]">
+            <span className="text-xs lowercase">
+              {!hidenLanguage ? language : ""}
+            </span>
+            <div className="flex items-center space-x-3">
+              {canWrapLongLines && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                      onClick={() => setWrapLongLines(!wrapLongLines)}
+                    >
+                      {wrapLongLines ? <AlignJustifyIcon /> : <WrapTextIcon />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="m-0">Toggle word wrap</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    size="icon"
                     variant="ghost"
+                    size="icon"
                     className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
-                    onClick={() => setWrapLongLines(!wrapLongLines)}
+                    onClick={onCopy}
                   >
-                    {wrapLongLines ? <AlignJustifyIcon /> : <WrapTextIcon />}
+                    {isCopied ? <CheckIcon /> : <CopyIcon />}
+                    <span className="sr-only">Copy</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="m-0">Toggle word wrap</p>
+                  <p className="m-0">Copy</p>
                 </TooltipContent>
               </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
-                  onClick={onCopy}
-                >
-                  {isCopied ? <CheckIcon /> : <CopyIcon />}
-                  <span className="sr-only">Copy</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="m-0">Copy</p>
-              </TooltipContent>
-            </Tooltip>
+            </div>
           </div>
-        </div>
+        )}
         <div className="flex-1 overflow-y-auto rounded-b-sm">
           {/* FIXME fix type error */}
           {/* @ts-expect-error */}

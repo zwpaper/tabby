@@ -23,6 +23,7 @@ type ExtendedMarkdownOptions = Omit<Options, "components"> & {
 interface MessageMarkdownProps {
   children: string;
   className?: string;
+  isMinimalView?: boolean;
 }
 
 interface FileComponentProps {
@@ -60,6 +61,7 @@ const MemoizedReactMarkdown: FC<ExtendedMarkdownOptions> = memo(
 export function MessageMarkdown({
   children,
   className,
+  isMinimalView,
 }: MessageMarkdownProps): JSX.Element {
   const processedChildren = useMemo(() => {
     let result = children;
@@ -79,26 +81,33 @@ export function MessageMarkdown({
     >
       <MemoizedReactMarkdown
         remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[
-          [
-            customStripTagsPlugin,
-            {
-              tagNames: CustomHtmlTags,
-            },
-          ],
-          rehypeRaw,
-          [
-            rehypeSanitize,
-            {
-              ...defaultSchema,
-              tagNames: [...(defaultSchema.tagNames || []), ...CustomHtmlTags],
-              attributes: {
-                ...defaultSchema.attributes,
-                workflow: ["path", "id"],
-              },
-            },
-          ],
-        ]}
+        rehypePlugins={
+          isMinimalView
+            ? undefined
+            : [
+                [
+                  customStripTagsPlugin,
+                  {
+                    tagNames: CustomHtmlTags,
+                  },
+                ],
+                rehypeRaw,
+                [
+                  rehypeSanitize,
+                  {
+                    ...defaultSchema,
+                    tagNames: [
+                      ...(defaultSchema.tagNames || []),
+                      ...CustomHtmlTags,
+                    ],
+                    attributes: {
+                      ...defaultSchema.attributes,
+                      workflow: ["path", "id"],
+                    },
+                  },
+                ],
+              ]
+        }
         components={{
           file: (props: FileComponentProps) => {
             const { children } = props;
@@ -145,6 +154,7 @@ export function MessageMarkdown({
                 value={String(children).replace(/\n$/, "")}
                 canWrapLongLines={true}
                 className="max-h-none"
+                isMinimalView={isMinimalView}
               />
             );
           },
