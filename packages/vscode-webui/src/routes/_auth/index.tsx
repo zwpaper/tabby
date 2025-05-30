@@ -27,7 +27,6 @@ import {
   Bug,
   ImageIcon,
   Loader2,
-  Plus,
   SendHorizonal,
   StopCircleIcon,
 } from "lucide-react";
@@ -51,10 +50,10 @@ import { ImagePreviewList } from "@/components/image-preview-list";
 import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageList } from "@/components/message/message-list";
 import { PreviewTool } from "@/components/preview-tool";
+import { ActiveSelectionBadge } from "@/components/prompt-form/active-selection-badge";
 import "@/components/prompt-form/prompt-form.css";
 import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
 import { TokenUsage } from "@/components/token-usage";
-import { FileBadge } from "@/components/tool-invocation/file-badge";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import {
   ApprovalButton,
@@ -64,7 +63,6 @@ import {
 import { usePendingApproval } from "@/features/approval/hooks/use-pending-approval";
 import { TodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
-import { useActiveSelection } from "@/lib/hooks/use-active-selection";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
@@ -72,7 +70,6 @@ import { useLatest } from "@/lib/hooks/use-latest";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { useSettingsStore } from "@/lib/stores/settings-store";
-import { cn } from "@/lib/utils";
 import {
   createImageFileName,
   isDuplicateFile,
@@ -515,8 +512,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     status,
   });
 
-  const activeSelection = useActiveSelection();
-
   const retryImpl = useRetry({
     error,
     messages,
@@ -651,63 +646,26 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
               editorRef={editorRef}
               onPaste={handlePasteImage}
             >
-              <div className="mt-1 select-none pl-2">
-                <div
-                  className={cn(
-                    "inline-flex h-[1.7rem] max-w-full items-center gap-1 overflow-hidden truncate rounded-sm border border-[var(--vscode-chat-requestBorder)]",
-                    {
-                      "border-dashed": !activeSelection,
-                    },
-                  )}
-                >
-                  {activeSelection ? (
-                    <FileBadge
-                      className="hover:!bg-transparent !py-0 m-0 cursor-default truncate rounded-sm border-none pr-1"
-                      labelClassName="whitespace-nowrap"
-                      label={activeSelection.filepath.split("/").pop()}
-                      path={activeSelection.filepath}
-                      startLine={
-                        activeSelection.content.length > 0
-                          ? activeSelection.range.start.line
-                          : undefined
-                      }
-                      endLine={
-                        activeSelection.content.length > 0
-                          ? activeSelection.range.end.line
-                          : undefined
-                      }
-                      onClick={() => {
-                        editorRef.current?.commands.focus();
-                      }}
-                    />
-                  ) : (
-                    <p
-                      className="flex items-center gap-1 px-2 text-muted-foreground text-sm"
-                      onClick={() =>
-                        editorRef.current?.commands.insertContent(" @")
-                      }
-                    >
-                      <Plus className="size-3" />
-                      Add Context
-                    </p>
-                  )}
-                </div>
-                {isDevMode && (
-                  <span className="absolute top-1 right-2 text-foreground/80 text-xs">
-                    <span className="flex items-center gap-1">
-                      <Bug className="inline size-3" />
-                      <span>{status}</span>
-                      {pendingApproval?.name === "retry" ? (
-                        <div>
-                          <span>Attempts: {pendingApproval.attempts}</span> /{" "}
-                          <span>Countdown: {pendingApproval.countdown}</span> /{" "}
-                          <span>Delay: {pendingApproval.delay}</span>
-                        </div>
-                      ) : undefined}
-                    </span>
+              <ActiveSelectionBadge
+                onClick={() => {
+                  editorRef.current?.commands.insertContent(" @");
+                }}
+              />
+              {isDevMode && (
+                <span className="absolute top-1 right-2 text-foreground/80 text-xs">
+                  <span className="flex items-center gap-1">
+                    <Bug className="inline size-3" />
+                    <span>{status}</span>
+                    {pendingApproval?.name === "retry" ? (
+                      <div>
+                        <span>Attempts: {pendingApproval.attempts}</span> /{" "}
+                        <span>Countdown: {pendingApproval.countdown}</span> /{" "}
+                        <span>Delay: {pendingApproval.delay}</span>
+                      </div>
+                    ) : undefined}
                   </span>
-                )}
-              </div>
+                </span>
+              )}
             </FormEditor>
 
             {/* Hidden file input for image uploads */}
