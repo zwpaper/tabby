@@ -95,19 +95,19 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
         <div className="flex min-w-0 flex-1 space-x-3">
           <TerminalIcon className="mt-[2px] size-4 flex-shrink-0" />
           <ScrollArea className="max-h-[80px] min-w-0 flex-1 overflow-y-auto">
-            <span className="whitespace-pre-wrap break-all text-accent-foreground">
+            <span className="whitespace-pre-wrap text-balance break-all">
               {command}
             </span>
           </ScrollArea>
         </div>
         <div className="ml-2 flex space-x-3 self-start">
           {showButton && (
-            <Button size="xs" variant="secondary" onClick={handleStop}>
+            <Button size="xs" variant="outline" onClick={handleStop}>
               STOP
             </Button>
           )}
           {showButton && (
-            <Button size="xs" variant="secondary" onClick={handleDetach}>
+            <Button size="xs" variant="outline" onClick={handleDetach}>
               DETACH
             </Button>
           )}
@@ -160,7 +160,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
           )}
         >
           <XTerm
-            className="h-full w-full"
+            className="h-full w-full pt-2"
             content={output}
             containerRef={containerRef}
           />

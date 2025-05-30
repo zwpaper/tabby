@@ -2,9 +2,11 @@ import {
   type ITerminalAddon,
   type ITerminalInitOnlyOptions,
   type ITerminalOptions,
+  type ITheme,
   Terminal,
 } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
+import { useTheme } from "@/lib/hooks/use-theme";
 import { useToolEvents } from "@/lib/stores/chat-state";
 import { FitAddon } from "@xterm/addon-fit";
 import {
@@ -15,6 +17,96 @@ import {
   useRef,
   useState,
 } from "react";
+
+const useXtermTheme = (): ITheme => {
+  const theme = useTheme();
+  const [background, setBackground] = useState<string>("");
+  const [foreground, setForeground] = useState<string>("");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const xtermTheme = useMemo(() => {
+    const style = window.getComputedStyle(document.body);
+    return {
+      background: background,
+      foreground: foreground,
+      black: style.getPropertyValue("--vscode-terminal-ansiBlack"),
+      red: style.getPropertyValue("--vscode-terminal-ansiRed"),
+      green: style.getPropertyValue("--vscode-terminal-ansiGreen"),
+      yellow: style.getPropertyValue("--vscode-terminal-ansiYellow"),
+      blue: style.getPropertyValue("--vscode-terminal-ansiBlue"),
+      magenta: style.getPropertyValue("--vscode-terminal-ansiMagenta"),
+      cyan: style.getPropertyValue("--vscode-terminal-ansiCyan"),
+      white: style.getPropertyValue("--vscode-terminal-ansiWhite"),
+      brightBlack: style.getPropertyValue("--vscode-terminal-ansiBrightBlack"),
+      brightRed: style.getPropertyValue("--vscode-terminal-ansiBrightRed"),
+      brightGreen: style.getPropertyValue("--vscode-terminal-ansiBrightGreen"),
+      brightYellow: style.getPropertyValue(
+        "--vscode-terminal-ansiBrightYellow",
+      ),
+      brightBlue: style.getPropertyValue("--vscode-terminal-ansiBrightBlue"),
+      brightMagenta: style.getPropertyValue(
+        "--vscode-terminal-ansiBrightMagenta",
+      ),
+      brightCyan: style.getPropertyValue("--vscode-terminal-ansiBrightCyan"),
+      brightWhite: style.getPropertyValue("--vscode-terminal-ansiBrightWhite"),
+    };
+  }, [theme, background, foreground]);
+
+  useEffect(() => {
+    // Function to update theme colors
+    const updateThemeColors = () => {
+      const style = window.getComputedStyle(document.body);
+      const currentBackground = style.getPropertyValue(
+        "--vscode-editor-background",
+      );
+      const currentForeground = style.getPropertyValue(
+        "--vscode-terminal-foreground",
+      );
+
+      setBackground(currentBackground);
+      setForeground(currentForeground);
+    };
+
+    // Initial update
+    updateThemeColors();
+
+    // Create observer for class changes (theme changes often update classes)
+    const styleObserver = new MutationObserver((mutations) => {
+      let shouldUpdate = false;
+
+      for (const mutation of mutations) {
+        if (mutation.type === "attributes") {
+          if (
+            mutation.attributeName === "class" ||
+            mutation.attributeName === "style"
+          ) {
+            shouldUpdate = true;
+          }
+        }
+      }
+
+      if (shouldUpdate) {
+        updateThemeColors();
+      }
+    });
+
+    // Observe both class and style changes on document.body and document.documentElement
+    styleObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    });
+
+    styleObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    });
+
+    return () => {
+      styleObserver.disconnect();
+    };
+  }, []);
+
+  return xtermTheme;
+};
 
 export interface UseXTermProps {
   addons?: ITerminalAddon[];
@@ -63,11 +155,6 @@ function useXTerm({ options, addons, listeners }: UseXTermProps = {}) {
       fontFamily:
         "operator mono,SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace",
       fontSize: 12,
-      theme: {
-        background: window
-          .getComputedStyle(document.body)
-          .getPropertyValue("--vscode-editor-background"),
-      },
       cursorStyle: "underline",
       cursorBlink: false,
       cursorInactiveStyle: "none",
@@ -136,9 +223,11 @@ export function XTerm({
     rows: minRow,
   };
 
+  const theme = useXtermTheme();
+
   const [xtermOptions, setOptions] = useState<
     ITerminalOptions & ITerminalInitOnlyOptions
-  >({ ...defaultTerminalOptions, ...options });
+  >({ ...defaultTerminalOptions, theme, ...options });
 
   const [currentRows, setCurrentRows] = useState<number>(minRow);
 
@@ -194,6 +283,13 @@ export function XTerm({
       };
     });
   }, [currentRows, containerRef, emit]);
+
+  useEffect(() => {
+    setOptions((prev) => ({
+      ...prev,
+      theme,
+    }));
+  }, [theme]);
 
   return <div className={className} ref={ref} {...props} />;
 }

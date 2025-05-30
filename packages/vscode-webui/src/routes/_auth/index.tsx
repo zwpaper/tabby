@@ -578,9 +578,10 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const { listen } = useToolEvents();
   useLayoutEffect(() => {
     return listen("resizeTerminal", () => {
+      if (!executingToolCallId || !isAtBottom) return;
       requestAnimationFrame(() => scrollToBottom(false));
     });
-  }, [listen, scrollToBottom]);
+  }, [listen, scrollToBottom, executingToolCallId, isAtBottom]);
 
   // Ensure users can always see the executing approval or the pause approval that require their input
   useLayoutEffect(() => {
