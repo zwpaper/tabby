@@ -70,6 +70,7 @@ import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { useLatest } from "@/lib/hooks/use-latest";
 import { useMcp } from "@/lib/hooks/use-mcp";
+import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import {
@@ -80,7 +81,6 @@ import {
 } from "@/lib/utils/image";
 import { vscodeHost } from "@/lib/vscode";
 import type { DataPart } from "@ragdoll/common";
-import type { ResourceURI } from "@ragdoll/vscode-webui-bridge";
 
 const searchSchema = z.object({
   taskId: z
@@ -334,10 +334,9 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
       Authorization: `Bearer ${authData.session.token}`,
     },
   });
-  const error = useErrorAndReadyForRetryError({
-    messages,
-    error: chatError,
-  });
+
+  const readyForRetryError = useReadyForRetryError(messages);
+  const error = chatError || readyForRetryError;
 
   const { todos } = useTodos({
     initialTodos: loaderData?.todos,
@@ -793,22 +792,6 @@ function prepareRequestBody(
     message: fromUIMessage(message),
   };
 }
-
-const useResourceURI = () => {
-  const [resourceURI, setResourceURI] = useState<ResourceURI>();
-  useEffect(() => {
-    vscodeHost.readResourceURI().then(setResourceURI);
-  }, []);
-  return resourceURI;
-};
-
-const useErrorAndReadyForRetryError = ({
-  messages,
-  error,
-}: { messages: UIMessage[]; error: Error | undefined }) => {
-  const readyForRetryError = useReadyForRetryError(messages);
-  return error || readyForRetryError;
-};
 
 interface UseEventAutoStartOptions {
   task: Task | null;
