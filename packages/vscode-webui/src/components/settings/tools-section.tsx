@@ -147,7 +147,10 @@ const Connections: React.FC<{
               {config.capabilities.length > 0 && (
                 <span className="flex flex-nowrap items-center gap-2 truncate">
                   {config.capabilities.map((capability) => (
-                    <Badge key={capability} className="bg-accent">
+                    <Badge
+                      key={capability}
+                      className="bg-accent text-accent-foreground"
+                    >
                       {capability}
                     </Badge>
                   ))}
