@@ -489,18 +489,13 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     }
   }, [data, queryClient]);
 
-  const isLoading = status === "streaming" || status === "submitted";
-  const isSubmitDisabled =
-    isTaskLoading ||
-    isModelsLoading ||
-    (!isLoading && !input && files.length === 0);
-
   const editorRef = useRef<Editor | null>(null);
 
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
 
   const {
     pendingApproval,
+    isExecuting,
     setIsExecuting,
     executingToolCallId,
     increaseRetryCount,
@@ -509,6 +504,13 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     messages: renderMessages,
     status,
   });
+
+  const isLoading = status === "streaming" || status === "submitted";
+  const isSubmitDisabled =
+    isTaskLoading ||
+    isModelsLoading ||
+    isExecuting ||
+    (!isLoading && !input && files.length === 0);
 
   const retryImpl = useRetry({
     error,
@@ -639,7 +641,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
               input={input}
               setInput={setInput}
               onSubmit={wrappedHandleSubmit}
-              isLoading={isLoading}
+              isLoading={isLoading || isExecuting}
               formRef={formRef}
               editorRef={editorRef}
               onPaste={handlePasteImage}

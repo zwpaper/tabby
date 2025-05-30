@@ -53,5 +53,5 @@ export function usePendingToolCallApproval({
     }
   }, [pendingApproval]);
 
-  return { pendingApproval, setIsExecuting, executingToolCallId };
+  return { pendingApproval, isExecuting, setIsExecuting, executingToolCallId };
 }
