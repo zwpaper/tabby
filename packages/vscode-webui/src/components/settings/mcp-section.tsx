@@ -302,7 +302,7 @@ function commandForMcp(
   } else if (command === "toogleToolEnabled") {
     args = [serverName, toolName];
   } else if (command === "addServer" && recommendedServer) {
-    args = [{ ...recommendedServer, name: serverName }];
+    args = [recommendedServer];
   }
 
   return `command:ragdoll.mcp.${cmd}?${encodeURIComponent(JSON.stringify(args))}`;
@@ -318,6 +318,7 @@ interface RecommendedMcpCardProps {
 }
 
 function RecommendedMcpCard({
+  id,
   name,
   description,
   githubUrl,
@@ -329,7 +330,7 @@ function RecommendedMcpCard({
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-lg">{name}</h3>
         <a
-          href={commandForMcp("addServer", name, undefined, {
+          href={commandForMcp("addServer", id, undefined, {
             command,
             args,
           })}
