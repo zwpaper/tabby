@@ -101,7 +101,7 @@ export class OutputManager {
     }
 
     this.output.value = {
-      content: this.lines.join("\n"),
+      content: this.lines.join(""),
       status: "completed",
       isTruncated,
       detach: detached
@@ -121,7 +121,7 @@ export class OutputManager {
     this.lines = truncatedLines;
 
     this.output.value = {
-      content: this.lines.join("\n"),
+      content: this.lines.join(""),
       status,
       isTruncated,
     };
