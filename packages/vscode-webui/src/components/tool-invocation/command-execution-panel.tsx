@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { cn } from "@/lib/utils";
 import {
   CheckIcon,
   ChevronsDownUpIcon,
@@ -7,37 +13,15 @@ import {
   CopyIcon,
   TerminalIcon,
 } from "lucide-react";
-import {
-  type FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  oneLight,
-  vscDarkPlus,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { debounceWithCachedValue } from "@/lib/debounce";
-import { useTheme } from "@/lib/hooks/use-theme";
-import { cn } from "@/lib/utils";
-import "../message/code-block.css";
+import { type FC, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
+import { XTerm } from "./xterm";
 
 export interface ExecutionPanelProps {
   command: string;
   output: string;
   onStop: () => void;
   onDetach: () => void;
-  autoScrollToBottom?: boolean;
   completed: boolean;
   isExecuting: boolean;
   className?: string;
@@ -49,18 +33,17 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   className,
   onStop,
   onDetach,
-  autoScrollToBottom,
   isExecuting,
   completed,
 }) => {
-  const theme = useTheme();
   const [expanded, setExpanded] = useState<boolean>(true);
   const [isStopping, setIsStopping] = useState<boolean>(false);
   const toggleExpanded = () => setExpanded((prev) => !prev);
   const { isCopied, copyToClipboard } = useCopyToClipboard({
     timeout: 2000,
   });
-  const containerRef = useRef<HTMLDivElement>(null);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const onCopy = () => {
     if (isCopied) return;
@@ -72,46 +55,12 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     onStop();
   };
 
-  const handleDetach = () => {
-    setIsStopping(true);
-    onDetach();
-  };
-
-  const scrollToBottom = useCallback(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, []);
-
-  // Check if user is near the bottom of the scroll (within 30px threshold)
-  const isNearBottom = useCallback(() => {
-    if (!containerRef.current) return true; // If no container, assume we should scroll
-
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    const threshold = 30; // pixels from bottom
-    return scrollHeight - scrollTop - clientHeight <= threshold;
-  }, []);
-
-  // Auto scroll only if user is near bottom
-  const conditionalScrollToBottom = useCallback(() => {
-    if (isNearBottom()) {
-      scrollToBottom();
-    }
-  }, [isNearBottom, scrollToBottom]);
-
-  // Create debounced version of conditionalScrollToBottom to prevent excessive scrolling
-  const debouncedScrollToBottom = useMemo(
-    () => debounceWithCachedValue(conditionalScrollToBottom, 100),
-    [conditionalScrollToBottom],
-  );
-
-  // Auto scroll to bottom when value changes if autoScrollToBottom is enabled and user is near bottom
-  // biome-ignore lint/correctness/useExhaustiveDependencies: value is needed to trigger scroll on content changes
-  useEffect(() => {
-    if (autoScrollToBottom) {
-      debouncedScrollToBottom();
-    }
-  }, [autoScrollToBottom, debouncedScrollToBottom, output]);
+  const handleDetach = onDetach
+    ? () => {
+        setIsStopping(true);
+        onDetach();
+      }
+    : undefined;
 
   // Collapse when execution completes
   useEffect(() => {
@@ -127,12 +76,6 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     }
   }, [isExecuting]);
 
-  // Determine if output is too long for syntax highlighting
-  const outputTooLong = useMemo(() => {
-    const threshold = 5000; // characters
-    return output.length > threshold;
-  }, [output]);
-
   const showButton = !completed && isExecuting && !isStopping;
   return (
     <div
@@ -143,28 +86,28 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     >
       <div
         className={cn(
-          "flex w-full items-center justify-between rounded-t-sm bg-[var(--vscode-editor-background)] py-1.5 pr-3 pl-4 text-[var(--vscode-editor-foreground)]",
+          "flex w-full items-center justify-between rounded-t-sm bg-[var(--vscode-editor-background)] px-3 py-1.5 text-[var(--vscode-editor-foreground)]",
           {
             "border-b": output && expanded,
           },
         )}
       >
         <div className="flex min-w-0 flex-1 space-x-3">
-          <TerminalIcon className="mt-[3px] size-4 flex-shrink-0" />
-          <div className="max-h-[80px] min-w-0 flex-1 overflow-y-auto">
+          <TerminalIcon className="mt-[2px] size-4 flex-shrink-0" />
+          <ScrollArea className="max-h-[80px] min-w-0 flex-1 overflow-y-auto">
             <span className="whitespace-pre-wrap break-all text-accent-foreground">
               {command}
             </span>
-          </div>
+          </ScrollArea>
         </div>
-        <div className="flex space-x-3 self-start">
+        <div className="ml-2 flex space-x-3 self-start">
           {showButton && (
-            <Button size="xs" variant="ghost" onClick={handleStop}>
+            <Button size="xs" variant="secondary" onClick={handleStop}>
               STOP
             </Button>
           )}
           {showButton && (
-            <Button size="xs" variant="ghost" onClick={handleDetach}>
+            <Button size="xs" variant="secondary" onClick={handleDetach}>
               DETACH
             </Button>
           )}
@@ -206,51 +149,21 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
           </Tooltip>
         </div>
       </div>
-      {output && (
+      {output && expanded && (
         <div
+          ref={containerRef}
           className={cn(
-            "transition-all duration-500 ease-in-out",
-            expanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0",
+            "w-full overflow-hidden pl-3 transition-all duration-500 ease-in-out",
+            expanded
+              ? "h-[42px] max-h-[500px] opacity-100"
+              : "h-0 max-h-0 opacity-0",
           )}
-          style={{
-            overflow: "hidden",
-          }}
         >
-          <ScrollArea
-            ref={containerRef}
-            className={cn("flex flex-col", {
-              "max-h-[140px]": autoScrollToBottom,
-              "overflow-auto": autoScrollToBottom,
-            })}
-          >
-            {outputTooLong ? (
-              <pre className="m-0 w-full whitespace-pre-wrap break-words rounded-sm bg-transparent p-4 font-mono text-[var(--vscode-editor-foreground)] text-sm">
-                {output}
-              </pre>
-            ) : (
-              // @ts-ignore - Type issue with SyntaxHighlighter
-              <SyntaxHighlighter
-                language={"log"}
-                style={theme === "dark" ? vscDarkPlus : oneLight}
-                PreTag="div"
-                customStyle={{
-                  margin: 0,
-                  width: "100%",
-                  background: "transparent",
-                  borderRadius: "0.25rem",
-                }}
-                wrapLongLines={true}
-                codeTagProps={{
-                  style: {
-                    backgroundColor: "transparent",
-                    padding: "0px",
-                  },
-                }}
-              >
-                {output}
-              </SyntaxHighlighter>
-            )}
-          </ScrollArea>
+          <XTerm
+            className="h-full w-full"
+            content={output}
+            containerRef={containerRef}
+          />
         </div>
       )}
     </div>

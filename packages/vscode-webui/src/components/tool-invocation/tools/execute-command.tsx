@@ -71,7 +71,6 @@ export const executeCommandTool: React.FC<
           onStop={abortTool}
           onDetach={onDetach}
           completed={completed}
-          autoScrollToBottom={true}
           isExecuting={isExecuting}
         />
       }
