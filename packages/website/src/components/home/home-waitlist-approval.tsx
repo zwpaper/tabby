@@ -64,7 +64,7 @@ export function HomeWaitlistApproval() {
                 <span>Follow on X</span>
               </a>
               <a
-                href="https://discord.gg/J3bhtn4H"
+                href="https://discord.gg/ExHmgTuE"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-700"
