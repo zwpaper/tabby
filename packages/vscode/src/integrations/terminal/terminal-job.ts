@@ -204,12 +204,28 @@ export class TerminalJob implements vscode.Disposable {
       return this.shellIntegration;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, timeoutMs));
-    if (!this.shellIntegration) {
-      throw new Error("Timeout waiting for shell integration");
-    }
+    return new Promise<vscode.TerminalShellIntegration>((resolve, reject) => {
+      // Set up timeout
+      const timeout = setTimeout(() => {
+        listener.dispose();
+        reject(new Error("Timeout waiting for shell integration"));
+      }, timeoutMs);
 
-    return this.shellIntegration;
+      // Set up event listener for shell integration
+      const listener = vscode.window.onDidChangeTerminalShellIntegration(
+        ({ terminal, shellIntegration }) => {
+          if (terminal === this.terminal) {
+            logger.debug("Terminal shell integration acquired");
+            this.shellIntegration = shellIntegration;
+
+            // Clean up and resolve
+            clearTimeout(timeout);
+            listener.dispose();
+            resolve(shellIntegration);
+          }
+        },
+      );
+    });
   }
 
   /**
@@ -223,26 +239,6 @@ export class TerminalJob implements vscode.Disposable {
           this.dispose();
         }
       }),
-    );
-
-    // Listen for shell integration changes
-    this.disposables.push(
-      vscode.window.onDidChangeTerminalShellIntegration(
-        ({ terminal, shellIntegration }) => {
-          if (terminal === this.terminal) {
-            if (this.shellIntegration !== undefined) {
-              if (this.shellIntegration === shellIntegration) {
-                logger.debug("Terminal shell integration unchanged");
-              } else {
-                logger.debug("Terminal shell integration changed");
-              }
-            } else {
-              logger.debug("Terminal shell integration acquired");
-            }
-            this.shellIntegration = shellIntegration;
-          }
-        },
-      ),
     );
 
     // Listen for shell execution success.
