@@ -2,6 +2,7 @@ import { McpSection } from "@/components/settings/mcp-section";
 import { Section } from "@/components/settings/section";
 import { SettingsCheckboxOption } from "@/components/settings/settings-checkbox-option";
 import { ToolsSection } from "@/components/settings/tools-section";
+import { FileList } from "@/components/tool-invocation/file-list";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
 import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
+import { useThirdPartyRules } from "@/lib/hooks/use-third-party-rules";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { vscodeHost } from "@/lib/vscode";
@@ -23,7 +25,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   ChevronLeft,
   ChevronsUpDown,
+  Download,
   Edit,
+  Loader2,
   LogOut,
   Workflow,
 } from "lucide-react";
@@ -123,20 +127,81 @@ const AccountSection: React.FC = () => {
 };
 
 const WorkspaceRulesSection: React.FC = () => {
+  const { rulePaths, importThirdPartyRules, isImporting, workspaceRuleExists } =
+    useThirdPartyRules();
+
+  const hasThirdPartyRules = rulePaths.length > 0;
+
+  const importRules = async () => {
+    await importThirdPartyRules();
+    vscodeHost.capture({
+      event: "importThirdPartyRules",
+      properties: {
+        rulePaths,
+      },
+    });
+  };
+
   return (
     <Section title="Rules">
-      <div className="flex items-center gap-3">
-        <a
-          href="command:ragdoll.editWorkspaceRules"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={buttonVariants({ variant: "secondary" })}
-        >
-          Edit Rules
-        </a>
-        <span className="text-muted-foreground text-sm">
-          Customize rules for Pochi in this workspace.
-        </span>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <a
+            href="command:ragdoll.editWorkspaceRules"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "secondary" })}
+          >
+            Edit Rules
+          </a>
+          <span className="text-muted-foreground text-sm">
+            Customize rules for Pochi in this workspace.
+          </span>
+        </div>
+
+        {/* Cursor Rules Status Section - Only show if detecting or rules found */}
+        {!workspaceRuleExists && hasThirdPartyRules && (
+          <div className="rounded-md border p-3">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="font-medium text-sm">Import Rules</span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Found {rulePaths.length} rules
+                  {rulePaths.length === 1 ? "" : "s"}
+                </span>
+                <Button
+                  onClick={importRules}
+                  disabled={isImporting}
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                >
+                  {(() => {
+                    if (isImporting) {
+                      return (
+                        <>
+                          <Loader2 className="size-3 animate-spin" />
+                          Importing...
+                        </>
+                      );
+                    }
+
+                    return (
+                      <>
+                        <Download className="mr-1 size-3" />
+                        Import
+                      </>
+                    );
+                  })()}
+                </Button>
+              </div>
+              <FileList matches={rulePaths.map((path) => ({ file: path }))} />
+            </div>
+          </div>
+        )}
       </div>
     </Section>
   );

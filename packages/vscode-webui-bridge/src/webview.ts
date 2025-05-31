@@ -117,6 +117,16 @@ export interface VSCodeHostApi {
    * Use {@link executeToolCall} to execute the tool.
    */
   readMcpStatus(): Promise<ThreadSignalSerialization<McpStatus>>;
+
+  /**
+   * get external rules like cursor rules.
+   * @returns Array of external rule file paths
+   */
+  fetchThirdPartyRules(): Promise<{
+    rulePaths: string[];
+    workspaceRuleExists: boolean;
+    copyRules: () => Promise<void>;
+  }>;
 }
 
 export interface WebviewHostApi {

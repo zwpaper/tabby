@@ -1,7 +1,14 @@
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { GitStatus } from "@/integrations/git/git-status";
-import { collectCustomRules, collectWorkflows, getSystemInfo } from "@/lib/env";
-import { ignoreWalk, isBinaryFile } from "@/lib/fs";
+import {
+  collectCustomRules,
+  collectWorkflows,
+  copyThirdPartyRules,
+  detectThirdPartyRules,
+  getSystemInfo,
+  getWorkspaceRulesFileUri,
+} from "@/lib/env";
+import { ignoreWalk, isBinaryFile, isFileExists } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PostHog } from "@/lib/posthog";
@@ -305,6 +312,16 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   readMcpStatus = async (): Promise<ThreadSignalSerialization<McpStatus>> => {
     return ThreadSignal.serialize(this.mcpHub.status);
+  };
+
+  fetchThirdPartyRules = async () => {
+    const rulePaths = await detectThirdPartyRules();
+    const workspaceRuleExists = await isFileExists(getWorkspaceRulesFileUri());
+    const copyRules = async () => {
+      await copyThirdPartyRules();
+      await vscode.commands.executeCommand("ragdoll.editWorkspaceRules");
+    };
+    return { rulePaths, workspaceRuleExists, copyRules };
   };
 
   dispose() {

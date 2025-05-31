@@ -10,6 +10,8 @@ export type {
   McpToolStatus,
 } from "./mcp";
 
+export type { CaptureEvent } from "./capture-event";
+
 export interface ResourceURI {
   logo128: string;
 }
@@ -26,33 +28,6 @@ export interface TaskIdParams {
 export interface NewTaskParams {
   taskId: "new";
 }
-
-export type CaptureEvent =
-  | {
-      event: "newTask";
-      properties?: undefined;
-    }
-  | {
-      event: "chatFinish";
-      properties: {
-        modelId: string | undefined;
-        finishReason: string;
-      };
-    }
-  | {
-      event: "selectWorkflow";
-      properties: {
-        workflowId: string;
-      };
-    }
-  | {
-      event: "executeToolCall";
-      properties: {
-        toolName: string;
-        durationMs: number;
-        status: "success" | "error" | "aborted";
-      };
-    };
 
 export interface ExecuteCommandResult {
   content: string;
