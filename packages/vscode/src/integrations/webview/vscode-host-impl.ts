@@ -11,6 +11,10 @@ import { applyDiff, previewApplyDiff } from "@/tools/apply-diff";
 import { executeCommand } from "@/tools/execute-command";
 import { globFiles } from "@/tools/glob-files";
 import { listFiles as listFilesTool } from "@/tools/list-files";
+import {
+  multiApplyDiff,
+  previewMultiApplyDiff,
+} from "@/tools/multi-apply-diff";
 import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
 import { todoWrite } from "@/tools/todo-write";
@@ -332,6 +336,7 @@ const ToolMap: Record<
   writeToFile,
   applyDiff,
   todoWrite,
+  multiApplyDiff,
 };
 
 const ToolPreviewMap: Record<
@@ -341,4 +346,5 @@ const ToolPreviewMap: Record<
 > = {
   writeToFile: previewWriteToFile,
   applyDiff: previewApplyDiff,
+  multiApplyDiff: previewMultiApplyDiff,
 };

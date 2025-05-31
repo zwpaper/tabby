@@ -17,7 +17,7 @@ export async function readActiveSubscriptionLimits(user: User, r: HonoRequest) {
   if (user.email.endsWith("@tabbyml.com")) {
     limits = {
       basic: 100_000,
-      premium: 10_000,
+      premium: 15_000,
     };
   } else if (user.isWaitlistApproved) {
     limits =

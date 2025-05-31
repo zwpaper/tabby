@@ -8,7 +8,7 @@ Request to replace existing code using a search and replace block.
 This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with.
 The tool will maintain proper indentation and formatting while making changes.
 Only a single operation is allowed per tool use.
-The SEARCH section must exactly match existing content including whitespace and indentation.
+The searchContent section must exactly match existing content including whitespace and indentation.
 If you're not confident in the exact content to search for, use the readFile tool first to get the exact content.
 When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
 ${EditFileResultPrompt}`.trim(),

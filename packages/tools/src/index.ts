@@ -9,6 +9,7 @@ import { attemptCompletion } from "./attempt-completion";
 import { executeCommand } from "./execute-command";
 import { globFiles } from "./glob-files";
 import { listFiles } from "./list-files";
+import { multiApplyDiff } from "./multi-apply-diff";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
@@ -46,6 +47,7 @@ export const ClientTools = {
   searchFiles,
   writeToFile,
   todoWrite,
+  multiApplyDiff,
 };
 
 export type ClientToolsType = typeof ClientTools;
@@ -65,7 +67,11 @@ export const ToolsByPermission = {
     "searchFiles",
     "webFetch",
   ] satisfies ToolName[] as string[],
-  write: ["writeToFile", "applyDiff"] satisfies ToolName[] as string[],
+  write: [
+    "writeToFile",
+    "applyDiff",
+    "multiApplyDiff",
+  ] satisfies ToolName[] as string[],
   execute: ["executeCommand"] satisfies ToolName[] as string[],
   default: ["todoWrite"] satisfies ToolName[] as string[],
 };

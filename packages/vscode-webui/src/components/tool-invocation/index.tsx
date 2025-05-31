@@ -11,6 +11,7 @@ import { AttemptCompletionTool } from "./tools/attempt-completion";
 import { executeCommandTool } from "./tools/execute-command";
 import { globFilesTool } from "./tools/glob-files";
 import { listFilesTool } from "./tools/list-files";
+import { multiApplyDiffTool } from "./tools/multi-apply-diff";
 import { readFileTool } from "./tools/read-file";
 import { searchFilesTool } from "./tools/search-files";
 import { todoWriteTool } from "./tools/todo-write";
@@ -58,6 +59,7 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   readFile: readFileTool,
   writeToFile: writeToFileTool,
   applyDiff: applyDiffTool,
+  multiApplyDiff: multiApplyDiffTool,
   askFollowupQuestion: AskFollowupQuestionTool,
   executeCommand: executeCommandTool,
   searchFiles: searchFilesTool,
