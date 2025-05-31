@@ -27,11 +27,11 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
     retry();
   }, [retry, pendingApproval]);
 
-  const isNoToolCalls =
+  const isReadyToolCalls =
     pendingApproval.error instanceof ReadyForRetryError &&
-    pendingApproval.error.kind === "no-tool-calls";
-  const autoRetryText = isNoToolCalls ? "Continue" : "Auto-retry";
-  const retryText = isNoToolCalls ? "Continue" : "Retry";
+    pendingApproval.error.kind === "tool-calls";
+  const autoRetryText = isReadyToolCalls ? "Auto-retry" : "Continue";
+  const retryText = isReadyToolCalls ? "Retry" : "Continue";
 
   const [showRetry, setShowRetry] = useDebounceState(false, 500);
   useEffect(() => {

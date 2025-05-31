@@ -7,12 +7,12 @@ import {
   isAssistantMessageWithPartialToolCalls,
 } from "../utils";
 
-type RetryKind = "retry" | "no-tool-calls";
+type RetryKind = "ready" | "tool-calls" | "no-tool-calls";
 
 export class ReadyForRetryError extends Error {
   kind: RetryKind;
 
-  constructor(kind: RetryKind = "retry") {
+  constructor(kind: RetryKind = "ready") {
     super();
     this.kind = kind;
   }
@@ -35,7 +35,7 @@ export function useReadyForRetryError(
     }
 
     if (isAssistantMessageWithCompletedToolCalls(lastMessage)) {
-      return new ReadyForRetryError();
+      return new ReadyForRetryError("tool-calls");
     }
 
     if (isAssistantMessageWithNoToolCalls(lastMessage)) {
