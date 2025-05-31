@@ -270,9 +270,9 @@ export function XTerm({
   }, [content, currentRows]);
 
   useEffect(() => {
-    const height = currentRows * 14;
     setOptions((prev) => {
       if (prev.rows === currentRows) return prev;
+      const height = (currentRows + 1) * 14;
       containerRef.current?.style.setProperty("height", `${height}px`);
       emit("resizeTerminal", {
         height,
