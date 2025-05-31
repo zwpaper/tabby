@@ -16,8 +16,7 @@ test("snapshot", () => {
 
 test("environment", () => {
   expect(
-    getReadEnvironmentResult(
-      {
+    getReadEnvironmentResult({
         currentTime: "2021-01-01T00:00:00.000Z",
         workspace: {
           files: ["index.ts", "package.json", "tsconfig.json", "README.md"],
@@ -38,6 +37,15 @@ test("environment", () => {
             content:
               "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.\n\nCurrently, two official plugins are available:",
           },
+          gitStatus: {
+            currentBranch: 'add-environment-to-chat-request-body',
+            mainBranch: 'main',
+            status: 'M packages/vscode-webui-bridge/src/index.ts\nA packages/vscode-webui/src/lib/use-environment.ts\nM packages/vscode-webui/src/lib/vscode.ts\nM packages/vscode-webui/src/routes/chat.tsx\n?? src/fib.test.ts\n?? vitest.config.ts',
+            recentCommits: [
+              '02b50f727 feat(chat): add environment property to prepareRequestBody',
+              '962185adb feat(webui): add new task link and pending component',
+            ],
+          },
         },
         todos: [
           {
@@ -52,22 +60,7 @@ test("environment", () => {
           os: "linux",
           homedir: "/home/user",
           shell: "bash",
-          gitStatus: `Current branch: add-environment-to-chat-request-body
-Main branch (you will usually use this for PRs): main
-
-Status:
-M packages/vscode-webui-bridge/src/index.ts
-A packages/vscode-webui/src/lib/use-environment.ts
-M packages/vscode-webui/src/lib/vscode.ts
-M packages/vscode-webui/src/routes/chat.tsx
-?? src/fib.test.ts
-?? vitest.config.ts
-
-Recent commits:
-02b50f727 feat(chat): add environment property to prepareRequestBody
-962185adb feat(webui): add new task link and pending component`,
-        },
-      },
+      }},
       {
         type: "slack:message",
         data: {
@@ -85,3 +78,4 @@ Recent commits:
     ),
   ).toMatchSnapshot();
 });
+

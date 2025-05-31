@@ -45,7 +45,11 @@ export type TaskEvent = {
 
 export type { Todo } from "./todo";
 export { ZodTodo } from "./todo";
-export { ZodEnvironment, type Environment } from "./environment";
+export {
+  ZodEnvironment,
+  type Environment,
+  type GitStatus,
+} from "./environment";
 export {
   type DBMessage,
   type DataPart,

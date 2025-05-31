@@ -25,7 +25,6 @@ Currently, two official plugins are available:
 
 
 # GIT STATUS
-this git status will keep latest changes in the repository.
 Current branch: add-environment-to-chat-request-body
 Main branch (you will usually use this for PRs): main
 

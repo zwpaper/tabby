@@ -1,5 +1,5 @@
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { GitStatus } from "@/integrations/git/git-status";
+import { GitStatusReader } from "@/integrations/git/git-status";
 import {
   collectCustomRules,
   collectWorkflows,
@@ -70,7 +70,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   constructor(
     private readonly tokenStorage: TokenStorage,
     private readonly tabState: TabState,
-    private readonly gitStatus: GitStatus,
+    private readonly gitStatusReader: GitStatusReader,
     private readonly posthog: PostHog,
     private readonly mcpHub: McpHub,
   ) {}
@@ -131,20 +131,20 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
     const systemInfo = await getSystemInfo();
 
-    const gitStatus = await this.gitStatus.readGitStatus();
+    const gitStatus = await this.gitStatusReader.readGitStatus();
 
     const environment: Environment = {
       currentTime: new Date().toString(),
       workspace: {
         files,
         isTruncated,
+        gitStatus,
         activeTabs: this.tabState.activeTabs.value.map((tab) => tab.filepath),
         activeSelection: this.tabState.activeSelection.value,
       },
       info: {
         ...systemInfo,
         customRules,
-        gitStatus,
       },
     };
 

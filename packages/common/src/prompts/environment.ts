@@ -1,6 +1,6 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { UserEvent } from "..";
-import type { Environment } from "../environment";
+import type { Environment, GitStatus } from "../environment";
 
 export function getReadEnvironmentResult(
   environment: Environment,
@@ -11,7 +11,7 @@ export function getReadEnvironmentResult(
     getWorkspaceFiles(environment.workspace, environment.info),
     getCurrentOpenedFiles(environment.workspace),
     getCurrentWorkingFile(environment.workspace),
-    getGitStatus(environment.info.gitStatus),
+    getGitStatus(environment.workspace.gitStatus),
     getEvent(event),
     getTodos(environment.todos),
   ]
@@ -66,9 +66,25 @@ function getEvent(event: UserEvent | null) {
   return "";
 }
 
-function getGitStatus(gitStatus: string | undefined) {
-  if (!gitStatus) return "";
-  return `# GIT STATUS\nthis git status will keep latest changes in the repository.\n${gitStatus}`;
+function getGitStatus(gitStatus: GitStatus | undefined) {
+  if (!gitStatus) return "# GIT STATUS\nThis workspace is not managed by git";
+
+  const { currentBranch, mainBranch, status, recentCommits } = gitStatus;
+
+  let result = "# GIT STATUS\n";
+
+  result += `Current branch: ${currentBranch}\n`;
+  result += `Main branch (you will usually use this for PRs): ${mainBranch}\n\n`;
+
+  if (status) {
+    result += `Status:\n${status}\n\n`;
+  }
+
+  if (recentCommits.length > 0) {
+    result += `Recent commits:\n${recentCommits.join("\n")}`;
+  }
+
+  return result;
 }
 
 export function stripEnvironmentDetails(messages: UIMessage[]) {

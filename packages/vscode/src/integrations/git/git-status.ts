@@ -1,5 +1,6 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import type { GitStatus } from "@ragdoll/common";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 import { getLogger } from "../../lib/logger";
@@ -8,7 +9,7 @@ const logger = getLogger("GitStatus");
 
 @injectable()
 @singleton()
-export class GitStatus {
+export class GitStatusReader {
   private readonly execPromise = promisify(exec);
   private rootPath: string | undefined = undefined;
 
@@ -71,69 +72,31 @@ export class GitStatus {
    * Implementation of git status collection
    * Collects all git data and returns it as structured data
    */
-  private async readGitStatusImpl(): Promise<{
-    currentBranch: string;
-    mainBranch: string;
-    statusOutput: string;
-    logOutput: string;
-  }> {
-    const results = await Promise.allSettled([
-      this.execGit("rev-parse --abbrev-ref HEAD"),
-      this.detectMainBranch(),
-      this.execGit("status --porcelain"),
-      this.execGit('log -n 5 --pretty=format:"%h %s"'),
-    ]);
+  private async readGitStatusImpl(): Promise<GitStatus> {
+    const [origin, currentBranch, mainBranch, status, recentCommits] =
+      await Promise.all([
+        this.execGit("remote get-url origin").catch(() => undefined),
+        this.execGit("rev-parse --abbrev-ref HEAD").catch(() => "unknown"),
+        this.detectMainBranch().catch(() => "unknown"),
+        this.execGit("status --porcelain").catch(() => ""),
+        this.execGit('log -n 5 --pretty=format:"%h %s"')
+          .then((x) => x.split("\n"))
+          .catch(() => []),
+      ]);
 
     return {
-      currentBranch:
-        results[0].status === "fulfilled" ? results[0].value : "unknown",
-      mainBranch:
-        results[1].status === "fulfilled" ? results[1].value : "unknown",
-      statusOutput: results[2].status === "fulfilled" ? results[2].value : "",
-      logOutput: results[3].status === "fulfilled" ? results[3].value : "",
+      origin,
+      currentBranch,
+      mainBranch,
+      status,
+      recentCommits,
     };
-  }
-
-  /**
-   * Format git status data into a readable string
-   */
-  private formatGitStatus(data: {
-    currentBranch: string;
-    mainBranch: string;
-    statusOutput: string;
-    logOutput: string;
-  }): string {
-    const { currentBranch, mainBranch, statusOutput, logOutput } = data;
-
-    // Format the output as a string
-    let result = `Current branch: ${currentBranch}\n`;
-    result += `Main branch (you will usually use this for PRs): ${mainBranch}\n\n`;
-
-    if (statusOutput) {
-      result += "Status:\n";
-      const lines = statusOutput.split("\n");
-      for (const line of lines) {
-        if (line.trim()) {
-          result += `${line}\n`;
-        }
-      }
-    }
-    if (logOutput) {
-      result += "\nRecent commits:\n";
-      const commits = logOutput.split("\n");
-      for (const commit of commits) {
-        if (commit.trim()) {
-          result += `${commit}\n`;
-        }
-      }
-    }
-    return result;
   }
 
   /**
    * Get Git status information for the current repository as a formatted string
    */
-  public async readGitStatus(): Promise<string | undefined> {
+  public async readGitStatus(): Promise<GitStatus | undefined> {
     if (!this.rootPath) {
       logger.warn("No Git repository found");
       return undefined;
@@ -144,15 +107,7 @@ export class GitStatus {
         path: this.rootPath,
       });
 
-      const gitData = await this.readGitStatusImpl();
-
-      logger.debug("Git status read completed", {
-        currentBranch: gitData.currentBranch,
-        mainBranch: gitData.mainBranch,
-        hasChanges: gitData.statusOutput.length > 0,
-      });
-
-      return this.formatGitStatus(gitData);
+      return await this.readGitStatusImpl();
     } catch (error) {
       logger.error("Error reading Git status", error);
     }
