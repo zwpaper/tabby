@@ -19,6 +19,7 @@ import type { InferResponseType } from "hono/client";
 import {
   CheckCircle2,
   Edit3,
+  GitBranch,
   HelpCircle,
   Loader2,
   TerminalIcon,
@@ -224,7 +225,7 @@ function Tasks({ cwd }: { cwd: string }) {
                     className="animate-pulse rounded-lg border border-border/50 border-l-4 border-l-muted-foreground/50 bg-card"
                   >
                     <div className="px-4 py-3">
-                      <div className="mb-2 flex items-start justify-between">
+                      <div className="mb-1 flex items-start justify-between">
                         <div className="h-3 w-32 rounded bg-card/70" />
                         <div className="h-5 w-5 rounded bg-card/70" />
                       </div>
@@ -336,7 +337,7 @@ function TaskRow({ task }: { task: Task }) {
             <div className="min-w-0 flex-1">
               {task.git ? (
                 <>
-                  <div className="mb-2 flex items-start justify-between">
+                  <div className="mb-1 flex items-start justify-between">
                     <GitBadge
                       git={task.git}
                       className="text-muted-foreground/80 text-xs"
@@ -369,71 +370,13 @@ function GitBadge({
 }: { git: Task["git"]; className?: string }) {
   if (!git) return null;
 
-  const repoName = formatGitOrigin(git.origin);
-
   return (
     <Badge
       variant="outline"
-      className={cn("gap-0 border-none p-0 text-foreground", className)}
+      className={cn("border-none p-0 text-foreground", className)}
     >
-      {repoName}
-      <span className="text-foreground/80">@{git.branch}</span>
+      <GitBranch />
+      {git.branch}
     </Badge>
   );
-}
-
-// Format git origin to display the repository name for various hosting providers
-function formatGitOrigin(origin: string): string {
-  if (!origin) return "";
-
-  // Handle SSH format: git@hostname:owner/repo.git
-  const sshMatch = origin.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
-  if (sshMatch) {
-    const [, , repoPath] = sshMatch;
-
-    // Extract owner/repo from the path
-    const pathParts = repoPath.split("/");
-    if (pathParts.length >= 2) {
-      return pathParts.slice(-2).join("/");
-    }
-    return repoPath;
-  }
-
-  // Handle HTTPS format: https://hostname/owner/repo.git
-  try {
-    const url = new URL(origin);
-    const pathParts = url.pathname.split("/").filter((part) => part.length > 0);
-
-    // Remove .git suffix if present
-    if (pathParts.length > 0) {
-      const lastPart = pathParts[pathParts.length - 1];
-      if (lastPart.endsWith(".git")) {
-        pathParts[pathParts.length - 1] = lastPart.slice(0, -4);
-      }
-    }
-
-    // Return owner/repo if we have at least 2 path parts
-    if (pathParts.length >= 2) {
-      return pathParts.slice(-2).join("/");
-    }
-
-    // Fallback to the last part of the path
-    return pathParts[pathParts.length - 1] || url.hostname;
-  } catch {
-    // If URL parsing fails, fallback to simple parsing
-    const parts = origin.split("/");
-    if (parts.length >= 2) {
-      let repoName = parts[parts.length - 1];
-      const ownerName = parts[parts.length - 2];
-
-      // Remove .git suffix if present
-      if (repoName.endsWith(".git")) {
-        repoName = repoName.slice(0, -4);
-      }
-
-      return `${ownerName}/${repoName}`;
-    }
-
-    return origin;
-  }
 }
