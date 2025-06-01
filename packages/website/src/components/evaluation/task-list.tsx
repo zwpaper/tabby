@@ -1,4 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 import type { Task } from "../tasks/types";
 import { getStatusIcon } from "./utils";
 
@@ -21,12 +23,27 @@ export function TaskList({ tasks }: TaskListProps) {
                 <span className="truncate font-medium text-sm">
                   {task.title}
                 </span>
-                <Badge
-                  variant="outline"
-                  className="ml-2 shrink-0 font-mono text-xs"
-                >
-                  #{task.id}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const vscodeLink = `vscode://TabbyML.pochi/?task=${task.taskId}`;
+                      window.open(vscodeLink);
+                    }}
+                    className="h-6 px-2 text-xs"
+                    title="Open in VSCode"
+                  >
+                    <ExternalLink className="mr-1 h-3 w-3" />
+                    VSCode
+                  </Button>
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 font-mono text-xs"
+                  >
+                    #{task.id}
+                  </Badge>
+                </div>
               </div>
               {task.event && (
                 <div className="text-muted-foreground text-xs">
