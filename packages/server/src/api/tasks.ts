@@ -1,6 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import type { DBMessage, UserEvent } from "@ragdoll/common";
-import { generateId } from "ai";
+import type { UserEvent } from "@ragdoll/common";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -35,19 +34,11 @@ const tasks = new Hono()
     const { prompt, event } = c.req.valid("json");
     const user = c.get("user");
 
-    const message: DBMessage = {
-      id: generateId(),
-      createdAt: new Date().toISOString(),
-      role: "user",
-      parts: [
-        {
-          type: "text",
-          text: prompt,
-        },
-      ],
-    };
-
-    const taskId = await taskService.createWithMessage(user.id, message, event);
+    const taskId = await taskService.createWithUserMessage(
+      user.id,
+      prompt,
+      event,
+    );
 
     return c.json({
       success: true,

@@ -227,16 +227,29 @@ class TaskService {
     });
   }
 
-  async createWithMessage(
+  async createWithUserMessage(
     userId: string,
-    message: DBMessage,
+    prompt: string,
     event?: UserEvent,
   ): Promise<number> {
+    const message: DBMessage = {
+      id: generateId(),
+      createdAt: new Date().toISOString(),
+      role: "user",
+      parts: [
+        {
+          type: "text",
+          text: prompt,
+        },
+      ],
+    };
+
     return await this.createTaskImpl(userId, {
       event: event || null,
       conversation: {
         messages: [message],
       },
+      status: "pending-model",
     });
   }
 
@@ -245,6 +258,7 @@ class TaskService {
     taskData: Partial<{
       event: UserEvent | null;
       conversation: { messages: DBMessage[] } | null;
+      status: DB["task"]["status"]["__insert__"];
     }>,
   ): Promise<number> {
     const { taskId } = await db.transaction().execute(async (trx) => {

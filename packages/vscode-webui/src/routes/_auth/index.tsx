@@ -765,24 +765,13 @@ const useEventAutoStart = ({
   retry,
   enabled,
 }: UseEventAutoStartOptions) => {
-  const messages = task?.conversation?.messages || [];
-  const init =
-    messages.length === 1 &&
-    messages[0].role === "user" &&
-    task?.status === "pending-input";
+  const init = task?.status === "pending-model";
 
   const initStarted = useRef(false);
   useEffect(() => {
-    if (
-      enabled &&
-      init &&
-      !initStarted.current &&
-      // TODO(sma1lboy): consider using a constant for maintain auto-start event typesAdd commentMore actions
-      (task.event?.type === "website:new-project" ||
-        task.event?.type === "batch:evaluation")
-    ) {
+    if (enabled && init && !initStarted.current) {
       initStarted.current = true;
       retry();
     }
-  }, [init, retry, task, enabled]);
+  }, [init, retry, enabled]);
 };
