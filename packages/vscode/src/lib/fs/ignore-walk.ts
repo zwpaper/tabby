@@ -99,7 +99,7 @@ export async function ignoreWalk({
   const queue: Array<IgnoreInfo> = [{ uri: dir, ignore: ignore().add(".git") }];
   const rootDir = dir.fsPath;
 
-  logger.debug(
+  logger.trace(
     `Starting traversal from ${rootDir} with limit ${MaxScanItems}, recursive: ${recursive}`,
   );
 
@@ -170,7 +170,7 @@ export async function ignoreWalk({
     }
   }
 
-  logger.debug(
+  logger.trace(
     `Completed traversal. Found ${scannedFileResults.length} items. Processed approximately ${fileScannedCount} entries.`,
   );
   return scannedFileResults;

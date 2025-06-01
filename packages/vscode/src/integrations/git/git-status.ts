@@ -103,7 +103,7 @@ export class GitStatusReader {
     }
 
     try {
-      logger.debug("Reading Git status for repository", {
+      logger.trace("Reading Git status for repository", {
         path: this.rootPath,
       });
 
