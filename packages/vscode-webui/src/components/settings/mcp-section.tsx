@@ -211,11 +211,11 @@ const McpToolBadgeList: React.FC<{
       <div className="flex w-full flex-wrap gap-2 py-2 ">
         {keys.length > 0 ? (
           keys.map((name) => (
-            <McpToolBadge
+            <ToolBadge
               key={name}
-              name={name}
-              serverName={serverName}
+              id={name}
               disabled={tools[name].disabled}
+              href={commandForMcp("toogleToolEnabled", serverName, name)}
               description={tools[name].description}
             />
           ))
@@ -226,22 +226,6 @@ const McpToolBadgeList: React.FC<{
         )}
       </div>
     </TooltipProvider>
-  );
-};
-
-const McpToolBadge: React.FC<{
-  name: string;
-  serverName: string;
-  disabled?: boolean;
-  description?: string;
-}> = ({ name, serverName, description, disabled }) => {
-  return (
-    <ToolBadge
-      id={name}
-      disabled={disabled}
-      href={commandForMcp("toogleToolEnabled", serverName, name)}
-      description={description}
-    />
   );
 };
 

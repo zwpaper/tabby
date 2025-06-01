@@ -53,7 +53,7 @@ import { MessageList } from "@/components/message/message-list";
 import { PreviewTool } from "@/components/preview-tool";
 import { ActiveSelectionBadge } from "@/components/prompt-form/active-selection-badge";
 import "@/components/prompt-form/prompt-form.css";
-import { AutoApproveMenu } from "@/components/settings/auto-approve-menu";
+import { AutoApproveMenu } from "@/components/settings";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import {

@@ -34,6 +34,7 @@ function createAuthClient() {
 }
 
 export const authClient = createAuthClient();
+export type User = (typeof authClient.$Infer.Session)["user"];
 
 export const authHooks = createAuthHooks(authClient);
 
