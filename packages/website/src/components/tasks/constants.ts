@@ -20,6 +20,11 @@ export const statuses = [
     icon: Wrench,
   },
   {
+    value: "pending-model",
+    label: "Invoking model",
+    icon: Brain,
+  },
+  {
     value: "pending-input",
     label: "Pending",
     icon: Keyboard,

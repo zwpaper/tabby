@@ -17,6 +17,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
 import {
+  Brain,
   CheckCircle2,
   Edit3,
   GitBranch,
@@ -290,6 +291,8 @@ const TaskStatusIcon = ({ status }: { status: string }) => {
       return <CheckCircle2 {...iconProps} aria-label="Completed" />;
     case "failed":
       return <XCircle {...iconProps} aria-label="Failed" />;
+    case "pending-model":
+      return <Brain {...iconProps} aria-label="Pending Model" />;
     default:
       return (
         <HelpCircle {...iconProps} aria-label={`Unknown Status: ${status}`} />
