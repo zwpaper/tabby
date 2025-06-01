@@ -98,6 +98,7 @@ export interface Task {
   event: Json | null;
   id: Generated<number>;
   status: Generated<TaskStatus>;
+  statusMigrate: Generated<string>;
   streamIds: string[] | null;
   taskId: number;
   totalTokens: number | null;

@@ -39,7 +39,7 @@ export type TaskEvent = {
   type: "task:status-changed";
   data: {
     taskId: number;
-    status: DB["task"]["status"]["__select__"];
+    status: DB["task"]["statusMigrate"]["__select__"];
   };
 };
 

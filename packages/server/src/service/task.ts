@@ -60,7 +60,7 @@ class TaskService {
     await db
       .updateTable("task")
       .set({
-        status: "streaming",
+        statusMigrate: "streaming",
         conversation: {
           messages: fromUIMessages(messagesToSave),
         },
@@ -103,7 +103,7 @@ class TaskService {
     await db
       .updateTable("task")
       .set({
-        status,
+        statusMigrate: status,
         conversation: {
           messages: fromUIMessages(messagesToSave),
         },
@@ -132,7 +132,7 @@ class TaskService {
   async failStreaming(taskId: number, userId: string) {
     await db
       .updateTable("task")
-      .set({ status: "failed", updatedAt: sql`CURRENT_TIMESTAMP` })
+      .set({ statusMigrate: "failed", updatedAt: sql`CURRENT_TIMESTAMP` })
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .execute();
@@ -151,7 +151,7 @@ class TaskService {
   private async sendTaskCompletionNotification(
     userId: string,
     taskId: number,
-    status: DB["task"]["status"]["__select__"],
+    status: DB["task"]["statusMigrate"]["__select__"],
   ) {
     if (status === "pending-tool") {
       return;
@@ -200,7 +200,12 @@ class TaskService {
 
     const data = await db
       .selectFrom("task")
-      .select(["conversation", "event", "environment", "status"])
+      .select([
+        "conversation",
+        "event",
+        "environment",
+        sql<DB["task"]["statusMigrate"]>`statusMigrate`.as("status"),
+      ])
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
@@ -331,7 +336,7 @@ class TaskService {
         "taskId",
         "createdAt",
         "updatedAt",
-        "status",
+        sql<DB["task"]["statusMigrate"]>`statusMigrate`.as("status"),
         "totalTokens",
         "event",
         titleSelect,
@@ -375,10 +380,10 @@ class TaskService {
       .select([
         "createdAt",
         "updatedAt",
-        "status",
         "conversation",
         "totalTokens",
         "event",
+        sql<DB["task"]["statusMigrate"]>`statusMigrate`.as("status"),
         titleSelect,
         gitSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
@@ -388,6 +393,7 @@ class TaskService {
     if (!task) {
       return null; // Return null if task not found, let the API layer handle 404
     }
+
     return {
       ...task,
       id: taskId, // Map taskId to id
@@ -459,7 +465,7 @@ export const taskService = new TaskService();
 export function getTaskStatus(
   messages: Message[],
   finishReason: FinishReason,
-): DB["task"]["status"]["__select__"] {
+): DB["task"]["statusMigrate"]["__select__"] {
   const lastMessage = messages[messages.length - 1];
 
   if (finishReason === "tool-calls") {

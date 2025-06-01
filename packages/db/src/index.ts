@@ -1,5 +1,5 @@
 import type { DBMessage, Environment, UserEvent } from "@ragdoll/common";
-import type { JSONColumnType } from "kysely";
+import type { Generated, JSONColumnType } from "kysely";
 import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";
 
@@ -10,10 +10,18 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
 
   task: Omit<
     DbImpl["task"],
-    "event" | "conversation" | "environment" | "id"
+    "event" | "conversation" | "environment" | "id" | "statusMigrate" | "status"
   > & {
     event: UserEvent | null;
     conversation: { messages: DBMessage[] } | null;
     environment: Environment | null;
+    statusMigrate: Generated<
+      | "completed"
+      | "failed"
+      | "streaming"
+      | "pending-input"
+      | "pending-tool"
+      | "pending-model"
+    >;
   };
 };
