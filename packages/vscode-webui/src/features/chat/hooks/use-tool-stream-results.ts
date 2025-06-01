@@ -1,5 +1,5 @@
+import { debounceWithCachedValue } from "@/lib/debounce";
 import { useCallback, useState } from "react";
-import { debounceWithCachedValue } from "../../debounce";
 
 export type ToolCallStreamResult = {
   toolCallId: string;

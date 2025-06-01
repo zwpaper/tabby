@@ -1,5 +1,5 @@
+import { useAutoApproveGuard } from "@/features/chat";
 import { useAutoApprove } from "@/features/settings";
-import { useAutoApproveGuard } from "@/lib/stores/chat-state";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // fibonacci sequence starting from 1, 2, 3, 5, 8...

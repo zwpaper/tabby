@@ -1,4 +1,4 @@
-import { useExecutingToolCallIds } from "@/lib/stores/chat-state";
+import { useExecutingToolCallIds } from "@/features/chat";
 import { vscodeHost } from "@/lib/vscode";
 import type { ToolInvocation } from "ai";
 import { useCallback, useState } from "react";

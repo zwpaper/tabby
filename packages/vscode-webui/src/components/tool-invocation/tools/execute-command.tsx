@@ -1,7 +1,4 @@
-import {
-  useStreamToolCallResult,
-  useToolEvents,
-} from "@/lib/stores/chat-state";
+import { useStreamToolCallResult, useToolEvents } from "@/features/chat";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useCallback } from "react";
 import { CommandExecutionPanel } from "../command-execution-panel";

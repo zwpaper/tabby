@@ -6,8 +6,8 @@ import {
   Terminal,
 } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
+import { useToolEvents } from "@/features/chat";
 import { useTheme } from "@/lib/hooks/use-theme";
-import { useToolEvents } from "@/lib/stores/chat-state";
 import { FitAddon } from "@xterm/addon-fit";
 import {
   type ComponentPropsWithoutRef,

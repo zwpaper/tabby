@@ -16,11 +16,17 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
     conversation: { messages: DBMessage[] } | null;
     environment: Environment | null;
     status: Generated<
+      // Task has finished and ends with attemptCompletion tool call.
       | "completed"
-      | "failed"
-      | "streaming"
+      // Task has finished.
       | "pending-input"
+      // Task has failed.
+      | "failed"
+      // Task is running model.
+      | "streaming"
+      // Task is waiting for a tool to run.
       | "pending-tool"
+      // Task is waiting for a model to run.
       | "pending-model"
     >;
   };

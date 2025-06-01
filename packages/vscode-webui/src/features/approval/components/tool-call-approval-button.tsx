@@ -4,15 +4,15 @@ import { useCallback, useEffect, useRef } from "react"; // useMemo is now in the
 
 import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval";
-import { useToolAutoApproval } from "@/features/settings";
-import { useDebounceState } from "@/lib/hooks/use-debounce-state";
-import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import {
   useAutoApproveGuard,
   useExecutingToolCallIds,
   useStreamToolCallResult,
   useToolEvents,
-} from "@/lib/stores/chat-state";
+} from "@/features/chat";
+import { useToolAutoApproval } from "@/features/settings";
+import { useDebounceState } from "@/lib/hooks/use-debounce-state";
+import { useVSCodeTool } from "../hooks/use-vscode-tool";
 
 // Type definitions
 export type AddToolResultFunctionType = ({

@@ -1,15 +1,15 @@
 import { ModelSelect } from "@/components/model-select";
 import { FormEditor } from "@/components/prompt-form/form-editor";
 import { Button } from "@/components/ui/button";
-import { useEnableReasoning, useSelectedModels } from "@/features/settings";
-import { apiClient } from "@/lib/auth-client";
-import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import {
-  ChatStateProvider,
+  ChatContextProvider,
   useAutoApproveGuard,
   useExecutingToolCallIds,
   useToolEvents,
-} from "@/lib/stores/chat-state";
+} from "@/features/chat";
+import { useEnableReasoning, useSelectedModels } from "@/features/settings";
+import { apiClient } from "@/lib/auth-client";
+import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment, Todo } from "@ragdoll/common";
@@ -114,13 +114,13 @@ function RouteComponent() {
   });
 
   return (
-    <ChatStateProvider>
+    <ChatContextProvider>
       <Chat
         key={key}
         loaderData={loaderData || null}
         isTaskLoading={isTaskLoading}
       />
-    </ChatStateProvider>
+    </ChatContextProvider>
   );
 }
 

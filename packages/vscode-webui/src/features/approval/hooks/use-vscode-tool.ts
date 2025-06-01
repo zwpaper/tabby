@@ -1,3 +1,5 @@
+import { useExecutingToolCallIds } from "@/features/chat";
+import { vscodeHost } from "@/lib/vscode";
 import type { useChat } from "@ai-sdk/react";
 import { ThreadAbortSignal } from "@quilted/threads";
 import {
@@ -7,8 +9,6 @@ import {
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import { useCallback, useEffect, useRef } from "react";
-import { useExecutingToolCallIds } from "../stores/chat-state";
-import { vscodeHost } from "../vscode";
 
 export function useVSCodeTool({
   addToolResult,

@@ -26,7 +26,8 @@
       "@/lib/*": ["./src/lib/*"],
       "@/features/approval": ["./src/features/approval"],
       "@/features/settings": ["./src/features/settings"],
-      "@/features/todo": ["./src/features/todo"]
+      "@/features/todo": ["./src/features/todo"],
+      "@/features/chat": ["./src/features/chat"]
     }
   }
 }

@@ -1,4 +1,4 @@
-import { useExecutingToolCallIds } from "@/lib/stores/chat-state";
+import { useExecutingToolCallIds } from "@/features/chat";
 import type {
   ChatRequestOptions,
   CreateMessage,
