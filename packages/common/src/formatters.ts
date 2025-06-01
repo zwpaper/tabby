@@ -101,6 +101,13 @@ export function combineConsecutiveAssistantMessages(
   return messages;
 }
 
+function removeContentInMessages(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => {
+    message.content = "";
+    return message;
+  });
+}
+
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
 const LLMFormatOps: FormatOp[] = [resolvePendingToolCalls, stripKnownXMLTags];
 const UIFormatOps = [
@@ -108,10 +115,12 @@ const UIFormatOps = [
   resolvePendingToolCalls,
   removeUserReminderMessage,
   combineConsecutiveAssistantMessages,
+  removeContentInMessages,
 ];
 const StorageFormatOps = [
   prompts.stripEnvironmentDetails,
   removeDeprecatedToolInvocations,
+  removeContentInMessages,
 ];
 
 function formatMessages(messages: UIMessage[], ops: FormatOp[]): UIMessage[] {
