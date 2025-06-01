@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -11,8 +12,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/auth-client";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
+import { cn } from "@/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import type { InferResponseType } from "hono/client";
 import {
   CheckCircle2,
   Edit3,
@@ -219,21 +222,7 @@ function Tasks({ cwd }: { cwd: string }) {
                   <div className="h-6 w-3/4 rounded bg-card/70" />
                 </div>
               ))
-            : tasks.map((task) => (
-                <Link
-                  to={"/"}
-                  search={{ taskId: task.id }}
-                  className="cursor-pointer"
-                  key={task.id}
-                >
-                  <div className="rounded-md bg-card px-2 py-3 hover:bg-card/70">
-                    <span className="mr-2 ml-2 inline-block align-sub">
-                      <TaskStatusIcon status={task.status} />
-                    </span>
-                    {task.title}
-                  </div>
-                </Link>
-              ))}
+            : tasks.map((task) => <TaskRow key={task.id} task={task} />)}
         </div>
       </ScrollArea>
       {meta?.totalPages && meta.totalPages > 1 && (
@@ -271,7 +260,7 @@ function EmptyTaskPlaceholder() {
 }
 
 const TaskStatusIcon = ({ status }: { status: string }) => {
-  const iconProps = { className: "size-4" };
+  const iconProps = { className: "size-4 text-muted-foreground" };
   switch (status) {
     case "streaming":
       return <Zap {...iconProps} aria-label="Streaming" />;
@@ -289,3 +278,109 @@ const TaskStatusIcon = ({ status }: { status: string }) => {
       );
   }
 };
+
+type Task = NonNullable<
+  InferResponseType<(typeof apiClient.api.tasks)["$get"]>
+>["data"][number];
+
+function TaskRow({ task }: { task: Task }) {
+  return (
+    <Link
+      to={"/"}
+      search={{ taskId: task.id }}
+      className="group cursor-pointer"
+    >
+      <div className="rounded-lg border border-border/50 bg-card px-3 py-1 transition-all duration-200 hover:border-border hover:bg-card/80 hover:shadow-md">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <GitBadge git={task.git} />
+            <h3 className="mt-1 line-clamp-2 flex items-center gap-2 font-medium text-foreground transition-colors duration-200 group-hover:text-foreground/60">
+              <span className="inline-block">
+                <TaskStatusIcon status={task.status} />
+              </span>
+              {task.title}
+            </h3>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function GitBadge({
+  className,
+  git,
+}: { git: Task["git"]; className?: string }) {
+  if (!git) return null;
+
+  const repoName = formatGitOrigin(git.origin);
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "gap-0 border-none p-0 text-foreground hover:text-foreground/80",
+        className,
+      )}
+    >
+      {repoName}
+      <span className="text-foreground/80">@{git.branch}</span>
+    </Badge>
+  );
+}
+
+// Format git origin to display the repository name for various hosting providers
+function formatGitOrigin(origin: string): string {
+  if (!origin) return "";
+
+  // Handle SSH format: git@hostname:owner/repo.git
+  const sshMatch = origin.match(/^git@([^:]+):(.+?)(?:\.git)?$/);
+  if (sshMatch) {
+    const [, , repoPath] = sshMatch;
+
+    // Extract owner/repo from the path
+    const pathParts = repoPath.split("/");
+    if (pathParts.length >= 2) {
+      return pathParts.slice(-2).join("/");
+    }
+    return repoPath;
+  }
+
+  // Handle HTTPS format: https://hostname/owner/repo.git
+  try {
+    const url = new URL(origin);
+    const pathParts = url.pathname.split("/").filter((part) => part.length > 0);
+
+    // Remove .git suffix if present
+    if (pathParts.length > 0) {
+      const lastPart = pathParts[pathParts.length - 1];
+      if (lastPart.endsWith(".git")) {
+        pathParts[pathParts.length - 1] = lastPart.slice(0, -4);
+      }
+    }
+
+    // Return owner/repo if we have at least 2 path parts
+    if (pathParts.length >= 2) {
+      return pathParts.slice(-2).join("/");
+    }
+
+    // Fallback to the last part of the path
+    return pathParts[pathParts.length - 1] || url.hostname;
+  } catch {
+    // If URL parsing fails, fallback to simple parsing
+    const parts = origin.split("/");
+    if (parts.length >= 2) {
+      let repoName = parts[parts.length - 1];
+      const ownerName = parts[parts.length - 2];
+
+      // Remove .git suffix if present
+      if (repoName.endsWith(".git")) {
+        repoName = repoName.slice(0, -4);
+      }
+
+      return `${ownerName}/${repoName}`;
+    }
+
+    return origin;
+  }
+}

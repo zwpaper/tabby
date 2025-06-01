@@ -22,11 +22,6 @@ import { publishTaskEvent } from "../server";
 import type { ZodChatRequestType } from "../types";
 import { slackService } from "./slack";
 
-const titleSelect =
-  sql<string>`(conversation #>> '{messages, 0, parts, 0, text}')::text`.as(
-    "title",
-  );
-
 class StreamingTask {
   constructor(
     readonly streamId: string,
@@ -340,6 +335,7 @@ class TaskService {
         "totalTokens",
         "event",
         titleSelect,
+        gitSelect,
       ])
       .orderBy("taskId", "desc")
       .limit(limit)
@@ -384,6 +380,7 @@ class TaskService {
         "totalTokens",
         "event",
         titleSelect,
+        gitSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
       ])
       .executeTakeFirst();
@@ -505,3 +502,18 @@ function hasUserInputTool(message: Message): boolean {
       isUserInputTool(part.toolInvocation.toolName),
   );
 }
+
+const titleSelect = sql<
+  string | null
+>`(conversation #>> '{messages,0,parts,0,text}')::text`.as("title");
+
+// Build git object with origin and branch from environment
+const gitSelect = sql<{ origin: string; branch: string } | null>`
+  CASE 
+    WHEN environment #>> '{workspace,gitStatus,origin}' IS NULL THEN NULL
+    ELSE json_build_object(
+      'origin', environment #>> '{workspace,gitStatus,origin}',
+      'branch', environment #>> '{workspace,gitStatus,currentBranch}'
+    )
+  END
+`.as("git");

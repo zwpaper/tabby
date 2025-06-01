@@ -14,7 +14,7 @@ function escapeUnknownXMLTags(message: string): string {
   });
 }
 
-export function parseTitle(title: string) {
+export function parseTitle(title: string | null) {
   if (!title) return "(empty)";
 
   const formatXMLTags = (ast: Root) => {
