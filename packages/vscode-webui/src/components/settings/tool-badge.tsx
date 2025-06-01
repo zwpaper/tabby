@@ -5,24 +5,49 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { WrenchIcon } from "lucide-react";
 import type React from "react";
+import { ScrollArea } from "../ui/scroll-area";
 
 export interface ToolBadgeProps {
   id: string;
-  description: string;
+  href?: string;
+  disabled?: boolean;
+  description?: string;
 }
 
-export const ToolBadge: React.FC<ToolBadgeProps> = ({ id, description }) => {
+export const ToolBadge: React.FC<ToolBadgeProps> = ({
+  id,
+  href,
+  disabled,
+  description,
+}) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="secondary" className="cursor-pointer">
-          {id}
-        </Badge>
+        <a href={href} rel="noopener noreferrer" className="cursor-pointer">
+          <Badge
+            variant="secondary"
+            className={cn({
+              "line-through opacity-60": !!disabled,
+            })}
+          >
+            {id}
+          </Badge>
+        </a>
       </TooltipTrigger>
-      <TooltipContent className="max-w-80 text-xs">
-        <pre className="text-wrap">{description}</pre>
-      </TooltipContent>
+      {description && (
+        <TooltipContent className="max-w-80 text-sm">
+          <h3 className="mb-1 flex items-center gap-2 font-semibold">
+            <WrenchIcon className="size-4" />
+            {id}
+          </h3>
+          <ScrollArea className="max-h-40 overflow-y-auto">
+            {description}
+          </ScrollArea>
+        </TooltipContent>
+      )}
     </Tooltip>
   );
 };
@@ -32,7 +57,10 @@ export const ToolBadgeList: React.FC<{
 }> = ({ tools }) => {
   return (
     <TooltipProvider>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-semibold text-foreground/60 text-sm">
+          BUILT-IN:{" "}
+        </span>
         {tools.map((tool) => (
           <ToolBadge
             key={tool.id}

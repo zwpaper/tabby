@@ -1,19 +1,14 @@
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@radix-ui/react-tooltip";
 import type { McpConnection } from "@ragdoll/vscode-webui-bridge";
-import { Blocks, ChevronsUpDown, Dot, Github, RotateCw } from "lucide-react";
+import { ChevronsUpDown, Dot, Github, RotateCw } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button, buttonVariants } from "../ui/button";
+import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { Switch } from "../ui/switch";
-import { Section } from "./section";
+import { SubSection } from "./section";
+import { ToolBadge } from "./tool-badge";
 
 interface RecommendedMcpServer {
   id: string;
@@ -37,8 +32,8 @@ const recommendedMcpServers: RecommendedMcpServer[] = [
 ];
 
 export const McpSection: React.FC = () => {
-  const rightElement = (
-    <div className="mb-1 flex gap-1">
+  const titleElement = (
+    <div className="flex gap-1">
       {/* <a
         href={commandForMcp("addServer")}
         className={buttonVariants({ variant: "ghost", size: "sm" })}
@@ -46,20 +41,14 @@ export const McpSection: React.FC = () => {
         <Plus className="size-4" />
         Add
       </a> */}
-      <a
-        href={commandForMcp("openServerSettings")}
-        className={buttonVariants({ variant: "ghost", size: "sm" })}
-      >
-        <Blocks className="size-4" />
-        Manage
-      </a>
+      <a href={commandForMcp("openServerSettings")}>MCP Servers</a>
     </div>
   );
 
   return (
-    <Section title={"MCP Servers"} rightElement={rightElement}>
+    <SubSection title={titleElement}>
       <Connections />
-    </Section>
+    </SubSection>
   );
 };
 
@@ -247,29 +236,12 @@ const McpToolBadge: React.FC<{
   description?: string;
 }> = ({ name, serverName, description, disabled }) => {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <a
-          href={commandForMcp("toogleToolEnabled", serverName, name)}
-          rel="noopener noreferrer"
-          className="cursor-pointer"
-        >
-          <Badge
-            variant="secondary"
-            className={cn({
-              "line-through opacity-60": !!disabled,
-            })}
-          >
-            {name}
-          </Badge>
-        </a>
-      </TooltipTrigger>
-      {description && (
-        <TooltipContent className="max-w-80 bg-muted text-xs">
-          <pre className={"text-wrap px-2 py-2"}>{description}</pre>
-        </TooltipContent>
-      )}
-    </Tooltip>
+    <ToolBadge
+      id={name}
+      disabled={disabled}
+      href={commandForMcp("toogleToolEnabled", serverName, name)}
+      description={description}
+    />
   );
 };
 
@@ -302,7 +274,7 @@ function commandForMcp(
   } else if (command === "toogleToolEnabled") {
     args = [serverName, toolName];
   } else if (command === "addServer" && recommendedServer) {
-    args = [recommendedServer];
+    args = [serverName, recommendedServer];
   }
 
   return `command:ragdoll.mcp.${cmd}?${encodeURIComponent(JSON.stringify(args))}`;
@@ -326,7 +298,7 @@ function RecommendedMcpCard({
   args,
 }: RecommendedMcpCardProps) {
   return (
-    <div className="rounded-lg border bg-card/70 p-6 text-card-foreground shadow-sm">
+    <div className="rounded-lg border bg-card/70 p-4 text-card-foreground shadow-sm">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-lg">{name}</h3>
         <a

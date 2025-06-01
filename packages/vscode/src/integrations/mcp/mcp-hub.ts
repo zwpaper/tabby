@@ -66,16 +66,18 @@ export class McpHub implements vscode.Disposable {
     }
   }
 
-  addServer(serverConfig?: McpServerConfig & { name: string }): string {
-    const { name, config } = serverConfig
-      ? { name: serverConfig.name, config: serverConfig }
-      : {
-          name: "replace-your-mcp-name-here",
-          config: { command: "npx", args: ["@your-package/mcp-server"] },
-        };
+  addServer(name?: string, serverConfig?: McpServerConfig): string {
+    const uniqueName = this.generateUniqueName(
+      name || "replace-your-mcp-name-here",
+    );
 
-    const uniqueName = this.generateUniqueName(name);
-    this.updateServerConfig(uniqueName, config);
+    this.updateServerConfig(
+      uniqueName,
+      serverConfig || {
+        command: "npx",
+        args: ["@your-package/mcp-server"],
+      },
+    );
 
     logger.debug(`Added MCP server: ${uniqueName}`);
     return uniqueName;

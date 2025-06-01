@@ -237,8 +237,8 @@ export class CommandManager implements vscode.Disposable {
 
       vscode.commands.registerCommand(
         "ragdoll.mcp.addServer",
-        async (recommendedServer?: McpServerConfig & { name: string }) => {
-          this.mcpHub.addServer(recommendedServer);
+        async (name?: string, recommendedServer?: McpServerConfig) => {
+          this.mcpHub.addServer(name, recommendedServer);
           vscode.commands.executeCommand("workbench.action.openSettingsJson", {
             revealSetting: { key: "pochi.mcpServers" },
           });
