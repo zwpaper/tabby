@@ -11,4 +11,5 @@ if (Number.isNaN(taskId)) {
 
 const runner = new TaskRunner(taskId);
 
-runner.start();
+const status = await runner.start();
+console.log("status", status);

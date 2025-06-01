@@ -292,9 +292,7 @@ class TaskService {
   ) {
     if (expectedEnvironment === null) return;
     if (environment === undefined) {
-      throw new HTTPException(400, {
-        message: "Environment is required",
-      });
+      return;
     }
 
     if (environment.info.os !== expectedEnvironment.info.os) {

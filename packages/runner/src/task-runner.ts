@@ -14,6 +14,7 @@ export class TaskRunner {
 
   private async step(): Promise<TaskStatus> {
     const task = await this.loadTask();
+    console.log("step start", task.status);
     if (task.status === "streaming") {
       throw new Error("Task is already running");
     }
@@ -34,7 +35,10 @@ export class TaskRunner {
       throw new Error("No messages found");
     }
 
-    while (!isAssistantMessageWithCompletedToolCalls(lastMessage)) {
+    while (
+      lastMessage.role === "assistant" &&
+      !isAssistantMessageWithCompletedToolCalls(lastMessage)
+    ) {
       const nextToolCall = findNextToolCall(lastMessage);
       if (!nextToolCall) {
         throw new Error("No tool call found");
@@ -68,11 +72,13 @@ export class TaskRunner {
 
           if (data.status === "streaming" && !streamingStarted) {
             streamingStarted = true;
+            return;
           }
 
           if (data.status !== "streaming" && streamingStarted) {
             unsubscribe();
             resolve(data.status);
+            return;
           }
 
           throw new Error(
@@ -83,7 +89,7 @@ export class TaskRunner {
     });
 
     // Start streaming
-    apiClient.api.chat.stream.$post(
+    const resp = await apiClient.api.chat.stream.$post(
       {
         json: {
           id: this.taskId.toString(),
@@ -98,6 +104,11 @@ export class TaskRunner {
         },
       },
     );
+
+    if (!resp.ok) {
+      const error = await resp.text();
+      throw new Error(`Failed to start streaming ${resp.statusText}: ${error}`);
+    }
 
     return streamDone;
   }
@@ -119,7 +130,7 @@ export class TaskRunner {
     });
 
     if (!resp.ok) {
-      throw new Error("Failed to fetch task");
+      throw new Error(`Failed to fetch task: ${resp.statusText}`);
     }
 
     return await resp.json();
