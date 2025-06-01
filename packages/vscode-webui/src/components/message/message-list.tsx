@@ -22,7 +22,6 @@ export const MessageList: React.FC<{
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
   isLoading: boolean;
-  executingToolCallId?: string;
   containerRef?: React.RefObject<HTMLDivElement>;
 }> = ({
   messages: renderMessages,
@@ -30,7 +29,6 @@ export const MessageList: React.FC<{
   user,
   logo,
   sendMessage,
-  executingToolCallId,
   containerRef,
 }) => {
   return (
@@ -71,7 +69,6 @@ export const MessageList: React.FC<{
                   part={part}
                   isLoading={isLoading}
                   sendMessage={sendMessage}
-                  executingToolCallId={executingToolCallId}
                 />
               ))}
             </div>
@@ -98,7 +95,6 @@ export const MessageList: React.FC<{
 
 function Part({
   part,
-  executingToolCallId,
   sendMessage,
   isLoading,
   isLastPartInMessages,
@@ -108,7 +104,6 @@ function Part({
     message: Message | CreateMessage,
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
-  executingToolCallId: string | undefined;
   isLoading: boolean;
   isLastPartInMessages: boolean;
 }) {
@@ -133,7 +128,6 @@ function Part({
       <ToolInvocationPart
         tool={part.toolInvocation}
         sendMessage={sendMessage}
-        executingToolCallId={executingToolCallId}
         isLoading={isLoading}
       />
     );

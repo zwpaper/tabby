@@ -17,7 +17,6 @@ const ToolsGallery: React.FC<{
           key={tool.toolCallId + index}
           tool={tool}
           sendMessage={() => Promise.resolve(undefined)}
-          executingToolCallId={undefined}
           isLoading={false}
         />
       ))}

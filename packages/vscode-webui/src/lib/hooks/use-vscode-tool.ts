@@ -7,20 +7,22 @@ import {
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import { useCallback, useEffect, useRef } from "react";
+import { useExecutingToolCallIds } from "../stores/chat-state";
 import { vscodeHost } from "../vscode";
 
 export function useVSCodeTool({
   addToolResult,
   addToolStreamResult,
   removeToolStreamResult,
-  setIsExecuting,
 }: {
   addToolResult: ReturnType<typeof useChat>["addToolResult"];
   addToolStreamResult: ReturnType<typeof useChat>["addToolResult"];
   removeToolStreamResult: (toolCallId: string) => void;
-  setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const abort = useRef(new AbortController());
+  const { addExecutingToolCall, removeExecutingToolCall } =
+    useExecutingToolCallIds();
+
   useUnmountOnce(() => {
     abort.current.abort();
   });
@@ -59,7 +61,7 @@ export function useVSCodeTool({
             },
           });
           removeToolStreamResult(tool.toolCallId);
-          setIsExecuting(false);
+          removeExecutingToolCall(tool.toolCallId);
           unsubscribe();
         } else {
           addToolStreamResult({
@@ -70,20 +72,20 @@ export function useVSCodeTool({
               detach: result.detach,
             },
           });
-          setIsExecuting(true);
         }
       });
     },
     [
-      setIsExecuting,
       addToolResult,
       addToolStreamResult,
       removeToolStreamResult,
+      removeExecutingToolCall,
     ],
   );
 
   const executeTool = useCallback(
     async (tool: ToolInvocation) => {
+      addExecutingToolCall(tool.toolCallId);
       let result = await vscodeHost
         .executeToolCall(tool.toolName, tool.args, {
           toolCallId: tool.toolCallId,
@@ -108,6 +110,8 @@ export function useVSCodeTool({
       ) {
         // biome-ignore lint/suspicious/noExplicitAny: external
         handleStreamResult(tool, result as any);
+
+        // For streaming tools, addToolResult / removeExecutingToolCall is called in handleStreamResult
         return;
       }
 
@@ -115,8 +119,14 @@ export function useVSCodeTool({
         toolCallId: tool.toolCallId,
         result,
       });
+      removeExecutingToolCall(tool.toolCallId);
     },
-    [addToolResult, handleStreamResult],
+    [
+      addToolResult,
+      handleStreamResult,
+      addExecutingToolCall,
+      removeExecutingToolCall,
+    ],
   );
   const rejectTool = useCallback(
     async (tool: ToolInvocation, error: string) => {

@@ -24,18 +24,11 @@ export function usePendingApproval({
       error,
       status,
     });
-  const {
-    pendingApproval: pendingToolCallApproval,
-    setIsExecuting,
-    isExecuting,
-    executingToolCallId,
-  } = usePendingToolCallApproval({ error, messages });
+  const { pendingApproval: pendingToolCallApproval } =
+    usePendingToolCallApproval({ error, messages });
 
   return {
     pendingApproval: pendingRetryApproval ?? pendingToolCallApproval,
-    isExecuting,
-    setIsExecuting,
-    executingToolCallId,
     increaseRetryCount,
   };
 }

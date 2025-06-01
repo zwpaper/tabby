@@ -1,3 +1,4 @@
+import { useExecutingToolCallIds } from "@/lib/stores/chat-state";
 import type {
   ChatRequestOptions,
   CreateMessage,
@@ -22,7 +23,6 @@ import type { ToolProps } from "./types";
 export function ToolInvocationPart({
   tool,
   sendMessage,
-  executingToolCallId,
   isLoading,
 }: {
   tool: ToolInvocation;
@@ -30,9 +30,9 @@ export function ToolInvocationPart({
     message: Message | CreateMessage,
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
-  executingToolCallId: string | undefined;
   isLoading: boolean;
 }) {
+  const isExecuting = useExecutingToolCallIds().isExecuting(tool.toolCallId);
   const C = Tools[tool.toolName];
 
   return (
@@ -40,15 +40,12 @@ export function ToolInvocationPart({
       {C ? (
         <C
           tool={tool}
-          isExecuting={tool.toolCallId === executingToolCallId}
+          isExecuting={isExecuting}
           sendMessage={sendMessage}
           isLoading={isLoading}
         />
       ) : (
-        <McpToolCall
-          tool={tool}
-          isExecuting={tool.toolCallId === executingToolCallId}
-        />
+        <McpToolCall tool={tool} isExecuting={isExecuting} />
       )}
     </div>
   );

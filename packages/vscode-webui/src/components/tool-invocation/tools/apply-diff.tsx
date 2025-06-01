@@ -1,4 +1,4 @@
-import { vscodeHost } from "@/lib/vscode";
+import { usePreviewToolCall } from "@/lib/hooks/use-preview-tool-call";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
@@ -12,13 +12,10 @@ export const applyDiffTool: React.FC<
   ToolProps<ClientToolsType["applyDiff"]>
 > = ({ tool, isExecuting }) => {
   const { path, startLine, endLine } = tool.args || {};
-
+  const { previewToolCall } = usePreviewToolCall();
   const handleClick = useCallback(() => {
-    vscodeHost.previewToolCall(tool.toolName, tool.args, {
-      toolCallId: tool.toolCallId,
-      state: tool.state,
-    });
-  }, [tool.args, tool.toolCallId, tool.toolName, tool.state]);
+    previewToolCall(tool);
+  }, [tool, previewToolCall]);
 
   const result =
     tool.state === "result" && !("error" in tool.result)

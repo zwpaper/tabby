@@ -1,4 +1,4 @@
-import { vscodeHost } from "@/lib/vscode";
+import { usePreviewToolCall } from "@/lib/hooks/use-preview-tool-call";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
@@ -11,12 +11,10 @@ import { UserEdits } from "../user-edits";
 export const writeToFileTool: React.FC<
   ToolProps<ClientToolsType["writeToFile"]>
 > = ({ tool, isExecuting }) => {
+  const { previewToolCall } = usePreviewToolCall();
   const handleClick = useCallback(() => {
-    vscodeHost.previewToolCall(tool.toolName, tool.args, {
-      toolCallId: tool.toolCallId,
-      state: tool.state,
-    });
-  }, [tool.args, tool.toolCallId, tool.toolName, tool.state]);
+    previewToolCall(tool);
+  }, [tool, previewToolCall]);
 
   const { path } = tool.args || {};
 

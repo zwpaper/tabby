@@ -1,7 +1,4 @@
-import {
-  isAutoInjectTool,
-  isExecuteCommandToolStreamCall,
-} from "@ragdoll/tools"; // isUserInputTool is now in the hook
+import { isAutoInjectTool } from "@ragdoll/tools"; // isUserInputTool is now in the hook
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react"; // useMemo is now in the hook
 
@@ -11,6 +8,7 @@ import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import {
   useAutoApproveGuard,
+  useExecutingToolCallIds,
   useStreamToolCallResult,
   useToolEvents,
 } from "@/lib/stores/chat-state";
@@ -28,16 +26,12 @@ export type AddToolResultFunctionType = ({
 interface ToolCallApprovalButtonProps {
   pendingApproval: PendingToolCallApproval;
   addToolResult: AddToolResultFunctionType;
-  setIsExecuting: React.Dispatch<React.SetStateAction<boolean>>;
-  executingToolCallId?: string;
 }
 
 // Component
 export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
   addToolResult,
-  setIsExecuting,
-  executingToolCallId,
 }) => {
   const autoApproveGuard = useAutoApproveGuard();
   const { addToolStreamResult, removeToolStreamResult } =
@@ -46,13 +40,18 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     addToolResult,
     addToolStreamResult,
     removeToolStreamResult,
-    setIsExecuting,
   });
+
+  const { toolCallId: pendingToolCallId } = pendingApproval.tool;
+  const { isExecuting } = useExecutingToolCallIds();
+  const executingToolCallId = isExecuting(pendingToolCallId)
+    ? pendingToolCallId
+    : undefined;
 
   const { listen } = useToolEvents();
   useEffect(() => {
     return listen("abortTool", ({ toolCallId }) => {
-      if (toolCallId === executingToolCallId) {
+      if (executingToolCallId === toolCallId) {
         abortTool();
       }
     });
@@ -88,15 +87,8 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
       return;
     }
 
-    try {
-      setIsExecuting(true);
-      await executeTool(pendingApproval.tool);
-    } finally {
-      if (!isExecuteCommandToolStreamCall(pendingApproval.tool)) {
-        setIsExecuting(false);
-      }
-    }
-  }, [shouldSkipExecute, pendingApproval, executeTool, setIsExecuting]);
+    await executeTool(pendingApproval.tool);
+  }, [shouldSkipExecute, pendingApproval, executeTool]);
 
   const onReject = useCallback(
     (errorText = "User rejected tool call") => {

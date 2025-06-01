@@ -5,6 +5,7 @@ import {
   type ToolEventType,
   ToolEvents,
 } from "./tool-events";
+import { useExecutingToolCalls } from "./use-executing-tool-calls";
 import {
   type ToolCallStreamResult,
   useToolStreamResults,
@@ -17,6 +18,11 @@ interface ChatState {
     add: (result: ToolCallStreamResult) => void;
     remove: (toolCallId: string) => void;
     find: (toolCallId: string) => ToolCallStreamResult | undefined;
+  };
+  executingToolCalls: {
+    add: (toolCallId: string) => void;
+    remove: (toolCallId: string) => void;
+    isExecuting: (toolCallId?: string) => boolean;
   };
 }
 
@@ -33,6 +39,9 @@ export function ChatStateProvider({ children }: ChatStateProviderProps) {
   const { addToolStreamResult, removeToolStreamResult, findToolStreamResult } =
     useToolStreamResults();
 
+  const { addExecutingToolCall, removeExecutingToolCall, isExecuting } =
+    useExecutingToolCalls();
+
   const value: ChatState = {
     autoApproveGuard,
     toolEvents,
@@ -40,6 +49,11 @@ export function ChatStateProvider({ children }: ChatStateProviderProps) {
       add: addToolStreamResult,
       remove: removeToolStreamResult,
       find: findToolStreamResult,
+    },
+    executingToolCalls: {
+      add: addExecutingToolCall,
+      remove: removeExecutingToolCall,
+      isExecuting,
     },
   };
 
@@ -77,6 +91,17 @@ export function useStreamToolCallResult() {
     addToolStreamResult: toolStreamResults.add,
     removeToolStreamResult: toolStreamResults.remove,
     findToolStreamResult: toolStreamResults.find,
+  };
+}
+
+// Hook to use the executing tool calls functionality
+export function useExecutingToolCallIds() {
+  const { executingToolCalls } = useChatState();
+
+  return {
+    addExecutingToolCall: executingToolCalls.add,
+    removeExecutingToolCall: executingToolCalls.remove,
+    isExecuting: executingToolCalls.isExecuting,
   };
 }
 

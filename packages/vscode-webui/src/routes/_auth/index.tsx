@@ -12,6 +12,7 @@ import { useSelectedModels } from "@/lib/hooks/use-models";
 import {
   ChatStateProvider,
   useAutoApproveGuard,
+  useExecutingToolCallIds,
   useToolEvents,
 } from "@/lib/stores/chat-state";
 import { useChat } from "@ai-sdk/react";
@@ -494,18 +495,13 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
 
-  const {
-    pendingApproval,
-    isExecuting,
-    setIsExecuting,
-    executingToolCallId,
-    increaseRetryCount,
-  } = usePendingApproval({
+  const { pendingApproval, increaseRetryCount } = usePendingApproval({
     error,
     messages: renderMessages,
     status,
   });
 
+  const isExecuting = useExecutingToolCallIds().isExecuting();
   const isLoading = status === "streaming" || status === "submitted";
   const isSubmitDisabled =
     isTaskLoading ||
@@ -578,10 +574,10 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const { listen } = useToolEvents();
   useLayoutEffect(() => {
     return listen("resizeTerminal", () => {
-      if (!executingToolCallId || !isAtBottom) return;
+      if (!isExecuting || !isAtBottom) return;
       requestAnimationFrame(() => scrollToBottom(false));
     });
-  }, [listen, scrollToBottom, executingToolCallId, isAtBottom]);
+  }, [listen, scrollToBottom, isExecuting, isAtBottom]);
 
   // Ensure users can always see the executing approval or the pause approval that require their input
   useLayoutEffect(() => {
@@ -614,7 +610,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
         logo={resourceUri?.logo128}
         sendMessage={append}
         isLoading={isLoading || isTaskLoading}
-        executingToolCallId={executingToolCallId}
         containerRef={messagesContainerRef}
       />
       <div className="flex flex-col px-4">
@@ -635,8 +630,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
               pendingApproval={pendingApproval}
               retry={retry}
               addToolResult={addToolResultWithForceUpdate}
-              executingToolCallId={executingToolCallId}
-              setIsExecuting={setIsExecuting}
             />
             <AutoApproveMenu />
             {files.length > 0 && (

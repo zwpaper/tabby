@@ -5,9 +5,11 @@ import { attachTransport } from "@ragdoll/common";
 const outputChannel = window.createOutputChannel("Pochi", { log: true });
 
 attachTransport((args, meta) => {
-  const message =
-    typeof args[0] === "string" ? args[0] : JSON.stringify(args[0]);
+  let message = typeof args[0] === "string" ? args[0] : JSON.stringify(args[0]);
   const remainArgs = args.slice(1);
+  if (meta.name) {
+    message = `[${meta.name}] ${message}`;
+  }
 
   switch (meta.logLevelName) {
     case "SILLY":

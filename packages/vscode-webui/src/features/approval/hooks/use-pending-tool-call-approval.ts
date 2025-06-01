@@ -1,7 +1,7 @@
 import type { ClientToolsType } from "@ragdoll/tools";
 import { isUserInputTool } from "@ragdoll/tools";
 import type { ToolInvocation, UIMessage } from "ai";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 export interface PendingToolCallApproval {
   name: keyof ClientToolsType;
@@ -12,8 +12,6 @@ export function usePendingToolCallApproval({
   error,
   messages,
 }: { error?: Error; messages: UIMessage[] }) {
-  const [isExecuting, setIsExecuting] = useState(false);
-
   const pendingApproval = useMemo((): PendingToolCallApproval | undefined => {
     if (error) {
       return undefined;
@@ -39,19 +37,5 @@ export function usePendingToolCallApproval({
     return undefined;
   }, [error, messages]);
 
-  const executingToolCallId = useMemo(() => {
-    if (pendingApproval && isExecuting) {
-      return pendingApproval.tool.toolCallId;
-    }
-    return undefined;
-  }, [pendingApproval, isExecuting]);
-
-  // Reset isExecuting when pendingApproval changes or disappears
-  useEffect(() => {
-    if (!pendingApproval) {
-      setIsExecuting(false);
-    }
-  }, [pendingApproval]);
-
-  return { pendingApproval, isExecuting, setIsExecuting, executingToolCallId };
+  return { pendingApproval };
 }

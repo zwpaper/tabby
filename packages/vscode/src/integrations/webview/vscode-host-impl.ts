@@ -263,6 +263,12 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         return;
       }
 
+      if (options.state === "call") {
+        logger.debug(
+          `previewToolCall(call): ${toolName}(${options.toolCallId})`,
+        );
+      }
+
       // biome-ignore lint/suspicious/noExplicitAny: external call without type information
       return await safeCall<undefined>(tool(args as any, options));
     },
