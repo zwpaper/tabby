@@ -5,7 +5,7 @@ import { vscodeHost } from "@/lib/vscode";
 import { getWorkflowPath } from "@/lib/workflow";
 import { useQuery } from "@tanstack/react-query";
 import { Edit, Workflow } from "lucide-react";
-import { Section } from "./section";
+import { Section } from "../ui/section";
 
 export const WorkflowsSection: React.FC = () => {
   const { data: workflows, isLoading } = useQuery({

@@ -22,7 +22,11 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/features/approval": ["./src/features/approval"],
+      "@/features/settings": ["./src/features/settings"],
+      "@/features/todo": ["./src/features/todo"]
     }
   }
 }

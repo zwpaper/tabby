@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +9,6 @@ import {
 import { cn } from "@/lib/utils";
 import { WrenchIcon } from "lucide-react";
 import type React from "react";
-import { ScrollArea } from "../ui/scroll-area";
 
 export interface ToolBadgeProps {
   id: string;

@@ -1,11 +1,10 @@
-import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
-import { useSettingsStore } from "@/lib/stores/settings-store";
-import { AccordionSection } from "./accordion-section";
-import { SettingsCheckboxOption } from "./settings-checkbox-option";
+import { useSettingsStore } from "../../store";
+import { AccordionSection } from "../ui/accordion-section";
+import { SettingsCheckboxOption } from "../ui/settings-checkbox-option";
 
 export const AdvancedSettingsSection: React.FC = () => {
-  const [isDevMode, setIsDevMode] = useIsDevMode();
-  const { enableReasoning, updateEnableReasoning } = useSettingsStore();
+  const { enableReasoning, updateEnableReasoning, isDevMode, updateIsDevMode } =
+    useSettingsStore();
 
   return (
     <AccordionSection title="Advanced Settings">
@@ -16,7 +15,7 @@ export const AdvancedSettingsSection: React.FC = () => {
             label="Developer Mode"
             checked={isDevMode}
             onCheckedChange={(checked) => {
-              setIsDevMode(!!checked);
+              updateIsDevMode(!!checked);
             }}
           />
         )}

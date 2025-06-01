@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useSettingsStore } from "../stores/settings-store";
+import { useSettingsStore } from "../store";
 
 export type Models = ReturnType<typeof useModels>["data"];
 
@@ -36,6 +36,7 @@ export function useSelectedModels() {
     isLoading,
     models: data,
     selectedModel,
+    updateSelectedModelId,
   };
 }
 

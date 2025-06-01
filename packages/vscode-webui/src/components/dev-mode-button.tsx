@@ -6,8 +6,8 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
-import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { createCoreMessagesForCopy } from "@/lib/utils/message";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Todo } from "@ragdoll/common";

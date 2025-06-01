@@ -1,4 +1,4 @@
-import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
+import { useIsDevMode } from "@/features/settings";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { Bug } from "lucide-react";
 import { StatusIcon } from "../status-icon";

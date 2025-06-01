@@ -1,5 +1,5 @@
-import type { PendingApproval } from "@/features/approval/hooks/use-pending-approval";
-import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
+import type { PendingApproval } from "@/features/approval";
+import { useIsDevMode } from "@/features/settings";
 import { Bug } from "lucide-react";
 
 interface DevRetryCountdownProps {

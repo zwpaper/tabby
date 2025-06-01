@@ -1,9 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  type AutoApprove,
-  useSettingsStore,
-} from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 import {
   Blocks,
@@ -15,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { type AutoApprove, useSettingsStore } from "../store";
 
 const collapsibleSectionVariants = {
   open: {

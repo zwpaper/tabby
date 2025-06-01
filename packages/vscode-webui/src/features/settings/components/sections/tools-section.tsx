@@ -1,14 +1,14 @@
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { Dot } from "lucide-react";
-import { Badge } from "../ui/badge";
-import { Skeleton } from "../ui/skeleton";
+import { Section, SubSection } from "../ui/section";
+import { ToolBadgeList } from "../ui/tool-badge";
 import { McpSection } from "./mcp-section";
-import { Section, SubSection } from "./section";
-import { ToolBadgeList } from "./tool-badge";
 
 interface Tool {
   id: string;

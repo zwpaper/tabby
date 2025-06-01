@@ -1,4 +1,4 @@
-import type { PendingApproval } from "@/features/approval/hooks/use-pending-approval";
+import type { PendingApproval } from "@/features/approval";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 
 export function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {

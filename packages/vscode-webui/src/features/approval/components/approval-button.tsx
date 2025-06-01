@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { PendingApproval } from "@/features/approval/hooks/use-pending-approval";
+import type { PendingApproval } from "@/features/approval";
 import { RetryApprovalButton } from "./retry-approval-button";
 import {
   type AddToolResultFunctionType,

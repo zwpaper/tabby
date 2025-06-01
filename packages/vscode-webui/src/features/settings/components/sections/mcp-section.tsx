@@ -1,14 +1,14 @@
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { cn } from "@/lib/utils";
 import type { McpConnection } from "@ragdoll/vscode-webui-bridge";
 import { ChevronsUpDown, Dot, Github, RotateCw } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
-import { Switch } from "../ui/switch";
-import { SubSection } from "./section";
-import { ToolBadge } from "./tool-badge";
+import { SubSection } from "../ui/section";
+import { ToolBadge } from "../ui/tool-badge";
 
 interface RecommendedMcpServer {
   id: string;

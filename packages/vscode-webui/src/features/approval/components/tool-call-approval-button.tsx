@@ -3,7 +3,8 @@ import type React from "react";
 import { useCallback, useEffect, useRef } from "react"; // useMemo is now in the hook
 
 import { Button } from "@/components/ui/button";
-import type { PendingToolCallApproval } from "@/features/approval/hooks/use-pending-tool-call-approval";
+import type { PendingToolCallApproval } from "@/features/approval";
+import { useToolAutoApproval } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { useVSCodeTool } from "@/lib/hooks/use-vscode-tool";
 import {
@@ -12,7 +13,6 @@ import {
   useStreamToolCallResult,
   useToolEvents,
 } from "@/lib/stores/chat-state";
-import { useToolAutoApproval } from "@/lib/stores/settings-store";
 
 // Type definitions
 export type AddToolResultFunctionType = ({

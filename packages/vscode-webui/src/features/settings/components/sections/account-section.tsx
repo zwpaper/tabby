@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { User } from "@/lib/auth-client";
 import { ChevronsUpDown, LogOut } from "lucide-react";
-import { Quota } from "./quota";
-import { Section } from "./section";
+import { Quota } from "../ui/quota";
+import { Section } from "../ui/section";
 
 interface AccountSectionProps {
   user: User;
@@ -16,7 +16,7 @@ interface AccountSectionProps {
 
 export const AccountSection: React.FC<AccountSectionProps> = ({ user }) => {
   return (
-    <Section className="pt-0">
+    <Section title="" className="pt-0">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <div className="flex flex-grow cursor-pointer items-center justify-between gap-3 rounded-md p-2 hover:bg-secondary">

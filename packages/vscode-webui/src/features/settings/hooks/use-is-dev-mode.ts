@@ -1,4 +1,4 @@
-import { useSettingsStore } from "../stores/settings-store";
+import { useSettingsStore } from "../store";
 
 export const useIsDevMode = () => {
   const { isDevMode, updateIsDevMode } = useSettingsStore();

@@ -1,14 +1,9 @@
 import { ModelSelect } from "@/components/model-select";
 import { FormEditor } from "@/components/prompt-form/form-editor";
 import { Button } from "@/components/ui/button";
-import {
-  ReadyForRetryError,
-  useReadyForRetryError,
-} from "@/features/approval/hooks/use-ready-for-retry-error";
-import { useRetry } from "@/features/approval/hooks/use-retry";
+import { useEnableReasoning, useSelectedModels } from "@/features/settings";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
-import { useSelectedModels } from "@/lib/hooks/use-models";
 import {
   ChatStateProvider,
   useAutoApproveGuard,
@@ -54,23 +49,24 @@ import { MessageList } from "@/components/message/message-list";
 import { PreviewTool } from "@/components/preview-tool";
 import { ActiveSelectionBadge } from "@/components/prompt-form/active-selection-badge";
 import "@/components/prompt-form/prompt-form.css";
-import { AutoApproveMenu } from "@/components/settings";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import {
   ApprovalButton,
+  ReadyForRetryError,
   getDisplayError,
   pendingApprovalKey,
+  usePendingApproval,
+  useReadyForRetryError,
+  useRetry,
 } from "@/features/approval";
-import { usePendingApproval } from "@/features/approval/hooks/use-pending-approval";
+import { AutoApproveMenu } from "@/features/settings";
 import { TodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
-import { useLatest } from "@/lib/hooks/use-latest";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
-import { useSettingsStore } from "@/lib/stores/settings-store";
 import {
   createImageFileName,
   isDuplicateFile,
@@ -167,6 +163,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     models,
     selectedModel,
     isLoading: isModelsLoading,
+    updateSelectedModelId,
   } = useSelectedModels();
   const initialMessages = toUIMessages(
     loaderData?.conversation?.messages || [],
@@ -317,9 +314,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
             // Inject the environment variables into the request body
             environment: await buildEnvironment(),
             // Inject reasoning configuration
-            reasoning: enableReasoningRef.current
-              ? { enabled: true }
-              : undefined,
+            reasoning: enableReasoning.current ? { enabled: true } : undefined,
             mcpToolSet,
           }),
       });
@@ -426,11 +421,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     }
   };
 
-  const updateSelectedModelId = useSettingsStore(
-    (x) => x.updateSelectedModelId,
-  );
-  const enableReasoning = useSettingsStore((x) => x.enableReasoning);
-  const enableReasoningRef = useLatest(enableReasoning);
+  const enableReasoning = useEnableReasoning();
 
   const handleSelectModel = (v: string) => {
     updateSelectedModelId(v);

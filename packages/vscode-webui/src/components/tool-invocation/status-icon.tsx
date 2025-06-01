@@ -4,8 +4,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
-import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
 import { cn } from "@/lib/utils";
 import type { ToolInvocation } from "ai";
 import {

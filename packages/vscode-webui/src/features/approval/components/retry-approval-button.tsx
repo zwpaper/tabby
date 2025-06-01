@@ -2,8 +2,10 @@ import type React from "react";
 import { useCallback, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { PendingRetryApproval } from "@/features/approval/hooks/use-pending-retry-approval";
-import { ReadyForRetryError } from "@/features/approval/hooks/use-ready-for-retry-error";
+import {
+  type PendingRetryApproval,
+  ReadyForRetryError,
+} from "@/features/approval";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 // usePendingRetryApproval is not directly used here anymore, it's used by usePendingApproval
 

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import LoadingWrapper from "@/components/loading-wrapper";
-import type { Models } from "@/lib/hooks/use-models";
+import type { Models } from "@/features/settings";
 import { DropdownMenuPortal } from "@radix-ui/react-dropdown-menu";
 
 interface ModelSelectProps {

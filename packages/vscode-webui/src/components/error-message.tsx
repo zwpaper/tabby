@@ -1,4 +1,4 @@
-import { useIsDevMode } from "@/lib/hooks/use-is-dev-mode";
+import { useIsDevMode } from "@/features/settings";
 import { cn } from "@/lib/utils";
 
 interface ErrorMessageProps {

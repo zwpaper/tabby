@@ -3,7 +3,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { useThirdPartyRules } from "@/lib/hooks/use-third-party-rules";
 import { vscodeHost } from "@/lib/vscode";
 import { Download, Loader2 } from "lucide-react";
-import { Section } from "./section";
+import { Section } from "../ui/section";
 
 export const WorkspaceRulesSection: React.FC = () => {
   const { rulePaths, importThirdPartyRules, isImporting, workspaceRuleExists } =
