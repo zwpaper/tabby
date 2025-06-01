@@ -53,6 +53,7 @@ const getPaginationItems = (
         onClick={() => onPageChange(currentPage - 1)}
         // @ts-expect-error todo: fix type
         disabled={currentPage <= 1}
+        className="px-2 sm:px-2.5"
       />
     </PaginationItem>,
   );
@@ -140,6 +141,7 @@ const getPaginationItems = (
         onClick={() => onPageChange(currentPage + 1)}
         // @ts-expect-error todo: fix type
         disabled={currentPage >= totalPages}
+        className="px-2 sm:px-2.5"
       />
     </PaginationItem>,
   );
@@ -206,31 +208,46 @@ function Tasks({ cwd }: { cwd: string }) {
 
   return (
     <div className="flex h-screen w-full flex-col">
-      <ScrollArea className="h-full max-h-screen overflow-y-auto">
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          {isRefetchingFirstPage && (
-            <div className="flex justify-center">
-              <Loader2 className="size-6 animate-spin" />
-            </div>
-          )}
-          {isPlaceholderData || isLoading
-            ? [...Array(limit)].map((_, i) => (
-                <div
-                  key={i}
-                  className="animate-pulse rounded-md bg-card px-2 py-3"
-                >
-                  <div className="h-6 w-3/4 rounded bg-card/70" />
-                </div>
-              ))
-            : tasks.map((task) => <TaskRow key={task.id} task={task} />)}
-        </div>
-      </ScrollArea>
+      {/* Main content area with scroll */}
+      <div className="min-h-0 flex-1">
+        <ScrollArea className="h-full">
+          <div className="flex flex-col gap-4 p-4 pb-6">
+            {isRefetchingFirstPage && (
+              <div className="flex justify-center">
+                <Loader2 className="size-6 animate-spin" />
+              </div>
+            )}
+            {isPlaceholderData || isLoading
+              ? [...Array(limit)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse rounded-lg border border-border/50 border-l-4 border-l-muted-foreground/50 bg-card"
+                  >
+                    <div className="px-4 py-3">
+                      <div className="mb-2 flex items-start justify-between">
+                        <div className="h-3 w-32 rounded bg-card/70" />
+                        <div className="h-5 w-5 rounded bg-card/70" />
+                      </div>
+                      <div className="h-5 w-3/4 rounded bg-card/70" />
+                    </div>
+                  </div>
+                ))
+              : tasks.map((task) => <TaskRow key={task.id} task={task} />)}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Pagination footer */}
       {meta?.totalPages && meta.totalPages > 1 && (
-        <Pagination className="mt-6 mb-4">
-          <PaginationContent>
-            {getPaginationItems(page, meta.totalPages, handlePageChange)}
-          </PaginationContent>
-        </Pagination>
+        <div className="flex-shrink-0 border-border/50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="px-3 py-2.5 sm:px-4 sm:py-3">
+            <Pagination>
+              <PaginationContent className="gap-0.5 sm:gap-1">
+                {getPaginationItems(page, meta.totalPages, handlePageChange)}
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -260,7 +277,7 @@ function EmptyTaskPlaceholder() {
 }
 
 const TaskStatusIcon = ({ status }: { status: string }) => {
-  const iconProps = { className: "size-4 text-muted-foreground" };
+  const iconProps = { className: "size-5 text-muted-foreground" };
   switch (status) {
     case "streaming":
       return <Zap {...iconProps} aria-label="Streaming" />;
@@ -279,6 +296,23 @@ const TaskStatusIcon = ({ status }: { status: string }) => {
   }
 };
 
+const getStatusBorderColor = (status: string): string => {
+  switch (status) {
+    case "streaming":
+      return "border-l-muted-foreground/60";
+    case "pending-tool":
+      return "border-l-muted-foreground/60";
+    case "pending-input":
+      return "border-l-muted-foreground/60";
+    case "completed":
+      return "border-l-muted-foreground/30";
+    case "failed":
+      return "border-l-muted-foreground/80";
+    default:
+      return "border-l-muted-foreground/50";
+  }
+};
+
 type Task = NonNullable<
   InferResponseType<(typeof apiClient.api.tasks)["$get"]>
 >["data"][number];
@@ -290,16 +324,38 @@ function TaskRow({ task }: { task: Task }) {
       search={{ taskId: task.id }}
       className="group cursor-pointer"
     >
-      <div className="rounded-lg border border-border/50 bg-card px-3 py-1 transition-all duration-200 hover:border-border hover:bg-card/80 hover:shadow-md">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <GitBadge git={task.git} />
-            <h3 className="mt-1 line-clamp-2 flex items-center gap-2 font-medium text-foreground transition-colors duration-200 group-hover:text-foreground/60">
-              <span className="inline-block">
-                <TaskStatusIcon status={task.status} />
-              </span>
-              {task.title}
-            </h3>
+      <div
+        className={cn(
+          "cursor-pointer rounded-lg border border-border/50 bg-card transition-all duration-200 hover:border-border hover:bg-card/90 hover:shadow-md",
+          "border-l-4",
+          getStatusBorderColor(task.status),
+        )}
+      >
+        <div className="px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              {task.git ? (
+                <>
+                  <div className="mb-2 flex items-start justify-between">
+                    <GitBadge
+                      git={task.git}
+                      className="text-muted-foreground/80 text-xs"
+                    />
+                    <TaskStatusIcon status={task.status} />
+                  </div>
+                  <h3 className="line-clamp-2 font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
+                    {task.title}
+                  </h3>
+                </>
+              ) : (
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="line-clamp-2 flex-1 font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
+                    {task.title}
+                  </h3>
+                  <TaskStatusIcon status={task.status} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -318,10 +374,7 @@ function GitBadge({
   return (
     <Badge
       variant="outline"
-      className={cn(
-        "gap-0 border-none p-0 text-foreground hover:text-foreground/80",
-        className,
-      )}
+      className={cn("gap-0 border-none p-0 text-foreground", className)}
     >
       {repoName}
       <span className="text-foreground/80">@{git.branch}</span>
