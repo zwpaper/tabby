@@ -1,6 +1,5 @@
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { isAbortError } from "@ai-sdk/provider-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { type Environment, appendDataPart, prompts } from "@ragdoll/common";
@@ -12,12 +11,9 @@ import {
   selectServerTools,
 } from "@ragdoll/tools";
 import {
-  APICallError,
   type CoreMessage,
   type DataStreamWriter,
-  InvalidToolArgumentsError,
   type LanguageModel,
-  NoSuchToolError,
   type UIMessage,
   appendResponseMessages,
   createDataStream,
@@ -220,37 +216,18 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       },
       onError(error) {
         // Failed to stream the response.
-        taskService.failStreaming(id, user.id);
+        const taskError = taskService.toTaskError(error);
+        taskService.failStreaming(id, user.id, taskError);
 
-        const logApiCallError = (error: APICallError) => {
-          console.log("API call error", error.message, error.requestBodyValues);
-        };
-
-        if (APICallError.isInstance(error)) {
-          logApiCallError(error);
-          return error.message;
+        if (taskError.kind === "APICallError") {
+          console.log(
+            "API call error",
+            taskError.message,
+            taskError.requestBodyValues,
+          );
         }
 
-        if (InvalidToolArgumentsError.isInstance(error)) {
-          return `Invalid arguments provided to tool "${error.toolName}". Please try again.`;
-        }
-
-        if (NoSuchToolError.isInstance(error)) {
-          return `${error.toolName} is not a valid tool.`;
-        }
-
-        if (isAbortError(error)) {
-          console.log("Request Aborted");
-          return "Request was aborted.";
-        }
-
-        if (!(error instanceof Error)) {
-          console.error("Unknown error", error);
-          return "Something went wrong. Please try again.";
-        }
-
-        console.log("Misc error", error);
-        return error.message;
+        return taskError.message;
       },
     });
 

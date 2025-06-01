@@ -1,4 +1,5 @@
-import type { Environment, UserEvent } from "@ragdoll/common";
+import { isAbortError } from "@ai-sdk/provider-utils";
+import type { Environment, TaskError, UserEvent } from "@ragdoll/common";
 import type { Todo } from "@ragdoll/common";
 import { fromUIMessages, toUIMessage, toUIMessages } from "@ragdoll/common";
 import { formatters } from "@ragdoll/common";
@@ -7,8 +8,11 @@ import { parseTitle } from "@ragdoll/common/message-utils";
 import type { DB } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
 import {
+  APICallError,
   type FinishReason,
+  InvalidToolArgumentsError,
   type Message,
+  NoSuchToolError,
   type UIMessage,
   appendClientMessage,
   generateId,
@@ -109,6 +113,8 @@ class TaskService {
         },
         totalTokens,
         updatedAt: sql`CURRENT_TIMESTAMP`,
+        // Clear error on successful completion
+        error: null,
       })
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
@@ -129,10 +135,14 @@ class TaskService {
     }
   }
 
-  async failStreaming(taskId: number, userId: string) {
+  async failStreaming(taskId: number, userId: string, error: TaskError) {
     await db
       .updateTable("task")
-      .set({ status: "failed", updatedAt: sql`CURRENT_TIMESTAMP` })
+      .set({
+        status: "failed",
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+        error,
+      })
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .execute();
@@ -460,10 +470,56 @@ class TaskService {
 
     const promises = [];
     for (const task of streamingTasksToFail) {
-      promises.push(this.failStreaming(task.taskId, task.userId));
+      promises.push(
+        this.failStreaming(task.taskId, task.userId, {
+          kind: "AbortError",
+          message: "Server is shutting down, task was aborted",
+        }),
+      );
     }
 
     await Promise.all(promises);
+  }
+
+  toTaskError(error: unknown): TaskError {
+    if (APICallError.isInstance(error)) {
+      return {
+        kind: "APICallError",
+        message: error.message,
+        requestBodyValues: error.requestBodyValues,
+      };
+    }
+
+    const internalError = (message: string): TaskError => {
+      return {
+        kind: "InternalError",
+        message,
+      };
+    };
+
+    if (InvalidToolArgumentsError.isInstance(error)) {
+      return internalError(
+        `Invalid arguments provided to tool "${error.toolName}". Please try again.`,
+      );
+    }
+
+    if (NoSuchToolError.isInstance(error)) {
+      return internalError(`${error.toolName} is not a valid tool.`);
+    }
+
+    if (isAbortError(error)) {
+      return {
+        kind: "AbortError",
+        message: error.message,
+      };
+    }
+
+    if (!(error instanceof Error)) {
+      console.error("Unknown error", error);
+      return internalError("Something went wrong. Please try again.");
+    }
+
+    return internalError(error.message);
   }
 }
 

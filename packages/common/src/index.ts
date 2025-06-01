@@ -63,3 +63,18 @@ export {
 export { prompts } from "./prompts";
 export { formatters } from "./formatters";
 export { getLogger, attachTransport } from "./logger";
+
+export type TaskError = {
+  message: string;
+} & (
+  | {
+      kind: "InternalError";
+    }
+  | {
+      kind: "APICallError";
+      requestBodyValues: unknown;
+    }
+  | {
+      kind: "AbortError";
+    }
+);

@@ -93,6 +93,7 @@ export interface Task {
   conversation: Json | null;
   createdAt: Generated<Timestamp>;
   environment: Json | null;
+  error: Json | null;
   event: Json | null;
   id: Generated<number>;
   status: Generated<string>;
