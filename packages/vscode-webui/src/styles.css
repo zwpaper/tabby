@@ -210,3 +210,16 @@ code {
 .text-error {
   @apply text-red-500 dark:text-red-400;
 }
+
+#app {
+  a,
+  a:hover {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+
+  a:focus {
+    outline: inherit;
+  }
+}
