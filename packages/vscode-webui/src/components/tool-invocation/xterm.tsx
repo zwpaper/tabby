@@ -258,10 +258,10 @@ export function XTerm({
   useEffect(() => {
     const lineCount = content.split("\n").length;
 
-    // Always grow rows to +3 of line content, only if lineCount <= current rows
+    // Always grow rows to +1 of line content, only if lineCount <= current rows
     let rows = currentRows;
     if (lineCount >= currentRows) {
-      rows = Math.max(Math.min(lineCount + 3, maxRow), minRow);
+      rows = Math.max(Math.min(lineCount + 1, maxRow), minRow);
     }
 
     if (rows !== currentRows) {
