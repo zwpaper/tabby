@@ -25,6 +25,7 @@
         "hast-util-to-text": "^4.0.2",
         "rehype": "^13.0.2",
         "remeda": "catalog:",
+        "tslog": "^4.9.3",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -44,12 +45,17 @@
     },
     "packages/runner": {
       "name": "@ragdoll/runner",
+      "bin": "src/cli.ts",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
         "@ragdoll/common": "workspace:*",
         "@ragdoll/server": "workspace:*",
         "@ragdoll/vscode-webui-bridge": "workspace:*",
         "ai": "catalog:",
+        "hono": "catalog:",
+      },
+      "devDependencies": {
+        "@ragdoll/db": "workspace:*",
       },
     },
     "packages/server": {
@@ -99,9 +105,8 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.2.35",
+      "version": "0.2.42",
       "dependencies": {
-        "@ai-sdk/ui-utils": "catalog:",
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@preact/signals-core": "catalog:",
         "@quilted/threads": "catalog:",
@@ -3314,6 +3319,8 @@
     "tsconfig-paths": ["tsconfig-paths@4.2.0", "", { "dependencies": { "json5": "^2.2.2", "minimist": "^1.2.6", "strip-bom": "^3.0.0" } }, "sha512-NoZ4roiN7LnbKn9QqE1amc9DJfzvZXxF4xDavcOWt1BPkdx+m+0gJuPM+S0vCe7zTJMYUP0R8pO2XMr+Y8oLIg=="],
 
     "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+
+    "tslog": ["tslog@4.9.3", "", {}, "sha512-oDWuGVONxhVEBtschLf2cs/Jy8i7h1T+CpdkTNWQgdAF7DhRo2G8vMCgILKe7ojdEkLhICWgI1LYSSKaJsRgcw=="],
 
     "tsscmp": ["tsscmp@1.0.6", "", {}, "sha512-LxhtAkPDTkVCMQjt2h6eBVY28KCjikZqZfMcC15YBeNjkgUpdCfBu5HoiOTDu86v6smE8yOjyEktJ8hlbANHQA=="],
 

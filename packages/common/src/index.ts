@@ -62,3 +62,4 @@ export {
 
 export { prompts } from "./prompts";
 export { formatters } from "./formatters";
+export { getLogger, attachTransport } from "./logger";

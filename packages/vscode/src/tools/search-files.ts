@@ -179,7 +179,7 @@ export const searchFiles: ToolFunctionType<
       }
     } else if (!error.code && !error.stdout && !error.stderr) {
       // Exit code 0, no output - could happen if search path is empty or matches no files
-      logger.log(
+      logger.debug(
         "rg command finished with exit code 0 (no matches found or no files searched).",
       );
     } else {
