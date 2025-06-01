@@ -21,8 +21,6 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type TaskStatus = "completed" | "failed" | "pending-input" | "pending-tool" | "streaming";
-
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface Account {
@@ -97,8 +95,7 @@ export interface Task {
   environment: Json | null;
   event: Json | null;
   id: Generated<number>;
-  status: Generated<TaskStatus>;
-  statusMigrate: Generated<string>;
+  status: Generated<string>;
   streamIds: string[] | null;
   taskId: number;
   totalTokens: number | null;

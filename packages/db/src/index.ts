@@ -10,12 +10,12 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
 
   task: Omit<
     DbImpl["task"],
-    "event" | "conversation" | "environment" | "id" | "statusMigrate" | "status"
+    "event" | "conversation" | "environment" | "id" | "status"
   > & {
     event: UserEvent | null;
     conversation: { messages: DBMessage[] } | null;
     environment: Environment | null;
-    statusMigrate: Generated<
+    status: Generated<
       | "completed"
       | "failed"
       | "streaming"

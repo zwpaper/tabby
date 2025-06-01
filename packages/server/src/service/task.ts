@@ -60,7 +60,7 @@ class TaskService {
     await db
       .updateTable("task")
       .set({
-        statusMigrate: "streaming",
+        status: "streaming",
         conversation: {
           messages: fromUIMessages(messagesToSave),
         },
@@ -103,7 +103,7 @@ class TaskService {
     await db
       .updateTable("task")
       .set({
-        statusMigrate: status,
+        status,
         conversation: {
           messages: fromUIMessages(messagesToSave),
         },
@@ -132,7 +132,7 @@ class TaskService {
   async failStreaming(taskId: number, userId: string) {
     await db
       .updateTable("task")
-      .set({ statusMigrate: "failed", updatedAt: sql`CURRENT_TIMESTAMP` })
+      .set({ status: "failed", updatedAt: sql`CURRENT_TIMESTAMP` })
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .execute();
@@ -151,7 +151,7 @@ class TaskService {
   private async sendTaskCompletionNotification(
     userId: string,
     taskId: number,
-    status: DB["task"]["statusMigrate"]["__select__"],
+    status: DB["task"]["status"]["__select__"],
   ) {
     if (status === "pending-tool") {
       return;
@@ -200,12 +200,7 @@ class TaskService {
 
     const data = await db
       .selectFrom("task")
-      .select([
-        "conversation",
-        "event",
-        "environment",
-        sql<DB["task"]["statusMigrate"]>`statusMigrate`.as("status"),
-      ])
+      .select(["conversation", "event", "environment", "status"])
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
@@ -336,7 +331,7 @@ class TaskService {
         "taskId",
         "createdAt",
         "updatedAt",
-        sql<DB["task"]["statusMigrate"]>`statusMigrate`.as("status"),
+        "status",
         "totalTokens",
         "event",
         titleSelect,
@@ -383,7 +378,7 @@ class TaskService {
         "conversation",
         "totalTokens",
         "event",
-        sql<DB["task"]["statusMigrate"]>`statusMigrate`.as("status"),
+        "status",
         titleSelect,
         gitSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
@@ -465,7 +460,7 @@ export const taskService = new TaskService();
 export function getTaskStatus(
   messages: Message[],
   finishReason: FinishReason,
-): DB["task"]["statusMigrate"]["__select__"] {
+): DB["task"]["status"]["__select__"] {
   const lastMessage = messages[messages.length - 1];
 
   if (finishReason === "tool-calls") {
