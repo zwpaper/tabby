@@ -43,9 +43,7 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
             <WrenchIcon className="size-4" />
             {id}
           </h3>
-          <ScrollArea className="max-h-40 overflow-y-auto">
-            {description}
-          </ScrollArea>
+          <ScrollArea viewportClassname="max-h-40 ">{description}</ScrollArea>
         </TooltipContent>
       )}
     </Tooltip>
