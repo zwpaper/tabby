@@ -1,7 +1,6 @@
 import { CodeBlock, MessageMarkdown } from "@/components/message";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { ScrollArea } from "../ui/scroll-area";
-import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";
 import { ExpandableToolContainer } from "./tool-container";
 import type { ToolProps } from "./types";
@@ -26,15 +25,13 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2">
-        {"Invoke tool "}
-        <span>
-          <HighlightedText>{toolName}</HighlightedText>
-        </span>
+        Calling
+        <span className="mx-1 font-semibold text-foreground">{toolName}</span>
         {serverName && (
           <>
-            {" from MCP server "}
-            <span>
-              <HighlightedText>{serverName}</HighlightedText>
+            from
+            <span className="ml-1 font-semibold text-foreground">
+              {serverName}
             </span>
           </>
         )}
@@ -47,7 +44,7 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
       expandableDetail={
         <>
           <>
-            <b>Input</b>
+            <b>Request</b>
             <CodeBlock
               className="mt-1.5"
               language={"json"}
@@ -57,7 +54,7 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
           </>
           {result && (
             <>
-              <b>Output</b>
+              <b>Response</b>
               <div className="mt-1.5">
                 <Result result={result} />
               </div>
