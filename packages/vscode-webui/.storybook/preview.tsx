@@ -1,7 +1,7 @@
 import { withThemeByClassName } from "@storybook/addon-themes";
 import { MINIMAL_VIEWPORTS } from "@storybook/addon-viewport";
 import type { Preview } from "@storybook/react";
-import { ChatContextProvider } from "../src/lib/stores/chat-state";
+import { ChatContextProvider } from "../src/features/chat";
 import { Providers } from "../src/providers";
 import "./background.css";
 import "./vscode-modern-dark.css";

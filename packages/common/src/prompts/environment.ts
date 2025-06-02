@@ -164,7 +164,11 @@ function getTodos(todos: Environment["todos"]) {
     return "# TODOs\nNo TODOs yet, if you are working on tasks that would benefit from a todo list please use the todoWrite tool to create one.";
   }
 
-  return `# TODOs\n${JSON.stringify(todos, null, 2)}`;
+  return `# TODOs
+Here's todo list for current task. If a task is marked as cancelled or completed, it no longer needs your attention, NEVER ATTEMPT TO COMPLETE IT AGAIN, this is SUPER IMPORTANT!!!.
+Otherwise, please follow the todo list to complete the task.
+
+${JSON.stringify(todos, null, 2)}`;
 }
 
 export const EnvironmentDetailsTag = "environment-details";

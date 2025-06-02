@@ -330,11 +330,29 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const readyForRetryError = useReadyForRetryError(messages);
   const error = chatError || readyForRetryError;
 
-  const { todos } = useTodos({
+  const {
+    todos,
+    isEditMode,
+    draftTodos,
+    hasDirtyChanges,
+    enterEditMode,
+    exitEditMode,
+    saveTodos,
+    updateTodoStatus,
+  } = useTodos({
     initialTodos: loaderData?.todos,
     messages,
     todosRef,
   });
+
+  const wrappedSaveTodos = useCallback(() => {
+    saveTodos();
+    append({
+      role: "user",
+      content:
+        "<user-reminder>I have updated the to-do list and provided it within environment details. Please review them and adjust the plan accordingly. NEVER WORK ON TASKS THAT HAS BEEN MARKED AS COMPLETED OR CANCELLED.</user-reminder>",
+    });
+  }, [saveTodos, append]);
 
   useAutoResume({
     autoResume:
@@ -494,10 +512,18 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   const isExecuting = useExecutingToolCallIds().isExecuting();
   const isLoading = status === "streaming" || status === "submitted";
+  const allowEditTodos = !(
+    isTaskLoading ||
+    isModelsLoading ||
+    isExecuting ||
+    isLoading
+  );
+
   const isSubmitDisabled =
     isTaskLoading ||
     isModelsLoading ||
     isExecuting ||
+    isEditMode ||
     (!isLoading && !input && files.length === 0);
 
   const retryImpl = useRetry({
@@ -612,16 +638,28 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
           />
         ) : (
           <>
-            {todos && todos.length > 0 && (
-              <TodoList todos={todos} status={status} />
-            )}
             <ApprovalButton
               key={pendingApprovalKey(pendingApproval)}
-              isLoading={isLoading || isTaskLoading}
+              isLoading={isLoading || isTaskLoading || isEditMode}
               pendingApproval={pendingApproval}
               retry={retry}
               addToolResult={addToolResultWithForceUpdate}
             />
+            {todos && todos.length > 0 && (
+              <TodoList
+                className="mt-2"
+                todos={todos}
+                status={status}
+                isEditMode={isEditMode}
+                draftTodos={draftTodos}
+                hasDirtyChanges={hasDirtyChanges}
+                enterEditMode={enterEditMode}
+                exitEditMode={exitEditMode}
+                saveTodos={wrappedSaveTodos}
+                updateTodoStatus={updateTodoStatus}
+                allowEdit={allowEditTodos}
+              />
+            )}
             <AutoApproveMenu />
             {files.length > 0 && (
               <ImagePreviewList

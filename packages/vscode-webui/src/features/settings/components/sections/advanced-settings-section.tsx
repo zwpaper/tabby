@@ -3,8 +3,14 @@ import { AccordionSection } from "../ui/accordion-section";
 import { SettingsCheckboxOption } from "../ui/settings-checkbox-option";
 
 export const AdvancedSettingsSection: React.FC = () => {
-  const { enableReasoning, updateEnableReasoning, isDevMode, updateIsDevMode } =
-    useSettingsStore();
+  const {
+    enableReasoning,
+    updateEnableReasoning,
+    isDevMode,
+    updateIsDevMode,
+    allowEditTodos,
+    updateAllowEditTodos,
+  } = useSettingsStore();
 
   return (
     <AccordionSection title="Advanced Settings">
@@ -25,6 +31,14 @@ export const AdvancedSettingsSection: React.FC = () => {
           checked={enableReasoning}
           onCheckedChange={(checked) => {
             updateEnableReasoning(!!checked);
+          }}
+        />
+        <SettingsCheckboxOption
+          id="allow-edit-todos"
+          label="Allow Edit Todos"
+          checked={allowEditTodos}
+          onCheckedChange={(checked) => {
+            updateAllowEditTodos(!!checked);
           }}
         />
       </div>
