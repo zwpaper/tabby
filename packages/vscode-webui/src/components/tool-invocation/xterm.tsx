@@ -6,7 +6,6 @@ import {
   Terminal,
 } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
-import { useToolEvents } from "@/features/chat";
 import { useTheme } from "@/lib/hooks/use-theme";
 import { FitAddon } from "@xterm/addon-fit";
 import {
@@ -237,8 +236,6 @@ export function XTerm({
     listeners,
   });
 
-  const { emit } = useToolEvents();
-
   const writtenLength = useRef(0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -274,15 +271,12 @@ export function XTerm({
       if (prev.rows === currentRows) return prev;
       const height = (currentRows + 1) * 14;
       containerRef.current?.style.setProperty("height", `${height}px`);
-      emit("resizeTerminal", {
-        height,
-      });
       return {
         ...prev,
         rows: currentRows,
       };
     });
-  }, [currentRows, containerRef, emit]);
+  }, [currentRows, containerRef]);
 
   useEffect(() => {
     setOptions((prev) => ({

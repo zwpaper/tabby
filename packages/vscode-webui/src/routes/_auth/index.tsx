@@ -566,6 +566,16 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
 
+  // Scroll to bottom when the message list height changes
+  useEffect(() => {
+    if (!messagesContainerRef.current) return;
+    const resizeObserver = new ResizeObserver(() => {
+      if (isAtBottom) requestAnimationFrame(() => scrollToBottom());
+    });
+    resizeObserver.observe(messagesContainerRef.current.children[0]);
+    return () => resizeObserver.disconnect(); // clean up
+  }, [isAtBottom, scrollToBottom]);
+
   // scroll to bottom immediately when a user message is sent
   useLayoutEffect(() => {
     if (isLoading) {
@@ -580,21 +590,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     }
   }, [scrollToBottom]);
 
-  // Handle scrolling during streaming if at bottom
-  useLayoutEffect(() => {
-    if (!messages.length || !isLoading || !isAtBottom) return;
-
-    const frameId = requestAnimationFrame(() => scrollToBottom(false)); // Using false to disable smooth scrolling during streaming
-    return () => cancelAnimationFrame(frameId);
-  }, [isLoading, isAtBottom, messages, scrollToBottom]);
-
   const { listen } = useToolEvents();
-  useLayoutEffect(() => {
-    return listen("resizeTerminal", () => {
-      if (!isExecuting || !isAtBottom) return;
-      requestAnimationFrame(() => scrollToBottom(false));
-    });
-  }, [listen, scrollToBottom, isExecuting, isAtBottom]);
 
   // Listen for sendMessage events and handle them
   useEffect(() => {
