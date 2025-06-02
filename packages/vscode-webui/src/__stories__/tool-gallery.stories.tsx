@@ -53,6 +53,14 @@ type WebFetchProp = ToolProps<{
   };
 }>;
 
+// MCP tool type - using generic structure since MCP tools can have any schema
+type McpToolProp = ToolProps<{
+  parameters: {
+    properties: Record<string, unknown>;
+    required: string[];
+  };
+}>;
+
 const searchProps: SearchFilesProp["tool"] = {
   args: {
     path: ".",
@@ -304,6 +312,64 @@ const webFetchProps2: WebFetchProp["tool"] = {
   },
 };
 
+const mcpToolProps: McpToolProp["tool"] = {
+  state: "result",
+  step: 0,
+  toolCallId: "tool_mcp_screenshot_1",
+  toolName: "browser_take_screenshot",
+  args: {
+    url: "https://example.com",
+    width: 1920,
+    height: 1080,
+  },
+  result: {
+    content: [
+      {
+        type: "image",
+        data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+        mimeType: "image/png",
+      },
+    ],
+  },
+};
+
+const mcpToolProps2: McpToolProp["tool"] = {
+  state: "result",
+  step: 0,
+  toolCallId: "tool_mcp_filesystem_1",
+  toolName: "read_file",
+  args: {
+    path: "/home/user/documents/config.json",
+  },
+  result: {
+    content: [
+      {
+        type: "text",
+        text: "## Title\nthis is *markdown*",
+      },
+    ],
+  },
+};
+
+const mcpToolProps3: McpToolProp["tool"] = {
+  state: "result",
+  step: 0,
+  toolCallId: "tool_mcp_database_1",
+  toolName: "query_database",
+  args: {
+    query: "SELECT * FROM users WHERE active = true LIMIT 10",
+    database: "production",
+  },
+  result: {
+    users: [
+      { id: 1, name: "John Doe", email: "john@example.com", active: true },
+      { id: 2, name: "Jane Smith", email: "jane@example.com", active: true },
+      { id: 3, name: "Bob Johnson", email: "bob@example.com", active: true },
+    ],
+    total: 3,
+  },
+};
+
 export const Tools: Story = {
   args: {
     tools: [
@@ -320,6 +386,9 @@ export const Tools: Story = {
       askFollowupQuestionProps,
       askFollowupQuestionProps2,
       attemptCompletionProps,
+      mcpToolProps,
+      mcpToolProps2,
+      mcpToolProps3,
       webFetchProps,
       webFetchProps2,
     ],
