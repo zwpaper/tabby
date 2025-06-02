@@ -10,7 +10,7 @@ The tool will maintain proper indentation and formatting while making changes.
 Each searchContent section must exactly match existing content including whitespace and indentation.
 If you're not confident in the exact content to search for, use the readFile tool first to get the exact content.
 When applying the diffs, be extra careful to remember to change any closing brackets or other syntax that may be affected by the diff farther down in the file.
-Only use this tool if there are multiple diffs to apply to the same file. Otherwise, use the applyDiff tool instead.
+Prefer this tool over the applyDiff when you need to make multiple edits to the same file.
 
 ${EditFileResultPrompt}`.trim(),
   inputSchema: z.object({
