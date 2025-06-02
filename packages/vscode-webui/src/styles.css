@@ -211,7 +211,8 @@ code {
   @apply text-red-500 dark:text-red-400;
 }
 
-#app {
+/* revert vscode default styles for anchor tags */
+html {
   a,
   a:hover {
     color: inherit;
