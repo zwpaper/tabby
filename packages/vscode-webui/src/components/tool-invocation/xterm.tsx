@@ -6,7 +6,6 @@ import {
   Terminal,
 } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
-import { useTheme } from "@/lib/hooks/use-theme";
 import { FitAddon } from "@xterm/addon-fit";
 import {
   type ComponentPropsWithoutRef,
@@ -16,12 +15,13 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTheme } from "../theme-provider";
 
 const useXtermTheme = (): ITheme => {
   const theme = useTheme();
   const [background, setBackground] = useState<string>("");
   const [foreground, setForeground] = useState<string>("");
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies(theme): need to re-run on theme change
   const xtermTheme = useMemo(() => {
     const style = window.getComputedStyle(document.body);
     return {

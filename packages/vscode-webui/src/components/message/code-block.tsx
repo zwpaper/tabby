@@ -18,9 +18,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useTheme } from "@/lib/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import "./code-block.css";
+import { useTheme } from "../theme-provider";
 
 export interface CodeBlockProps {
   language: string;
@@ -51,7 +51,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
     isMinimalView,
   }) => {
     const [wrapLongLines, setWrapLongLines] = useState(canWrapLongLines);
-    const theme = useTheme();
+    const { theme } = useTheme();
     const { isCopied, copyToClipboard } = useCopyToClipboard({
       timeout: 2000,
     });

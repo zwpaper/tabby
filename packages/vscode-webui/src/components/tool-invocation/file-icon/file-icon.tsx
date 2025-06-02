@@ -3,7 +3,7 @@ import { isFolder } from "@/lib/utils/file";
 import { Folder } from "lucide-react";
 import iconTheme from "./vs-seti-icon-theme.json";
 import "./seti-icons.css";
-import { type ThemeType, useTheme } from "@/lib/hooks/use-theme";
+import { type Theme, useTheme } from "@/components/theme-provider";
 
 interface IconData {
   file: string;
@@ -108,7 +108,7 @@ const getFileName = (path: string): string => {
   return path.split("/").pop() || "";
 };
 
-const getIconForFile = (path: string, theme: ThemeType = "dark"): string => {
+const getIconForFile = (path: string, theme: Theme = "dark"): string => {
   const fileName = getFileName(path);
   const extension = getFileExtension(path);
   const isLightTheme = theme === "light";
@@ -145,7 +145,7 @@ export const FileIcon: React.FC<{ path: string; className?: string }> = ({
   path,
   className,
 }) => {
-  const theme = useTheme();
+  const { theme } = useTheme();
   return isFolder(path) ? (
     <Folder
       className={cn(
@@ -160,7 +160,7 @@ export const FileIcon: React.FC<{ path: string; className?: string }> = ({
 
 export const File: React.FC<{
   path: string;
-  theme: ThemeType;
+  theme: Theme;
   className?: string;
 }> = ({ className, path, theme }) => {
   const iconId = getIconForFile(path, theme);

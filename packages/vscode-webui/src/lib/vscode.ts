@@ -23,6 +23,10 @@ function getVSCodeApi() {
   return vscodeApi;
 }
 
+export function isVSCodeEnvironment() {
+  return !!getVSCodeApi();
+}
+
 function createVSCodeHost(): VSCodeHostApi {
   const vscode = getVSCodeApi();
   const thread = new Thread<VSCodeHostApi, WebviewHostApi>(
