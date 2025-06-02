@@ -596,6 +596,16 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     });
   }, [listen, scrollToBottom, isExecuting, isAtBottom]);
 
+  // Listen for sendMessage events and handle them
+  useEffect(() => {
+    return listen("sendMessage", ({ prompt }) => {
+      append({
+        content: prompt,
+        role: "user",
+      });
+    });
+  }, [listen, append]);
+
   // Ensure users can always see the executing approval or the pause approval that require their input
   useLayoutEffect(() => {
     if (!isLoading && !!pendingApproval?.name) {
@@ -625,7 +635,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
         messages={renderMessages}
         user={authData.user}
         logo={resourceUri?.logo128}
-        sendMessage={append}
         isLoading={isLoading || isTaskLoading}
         containerRef={messagesContainerRef}
       />

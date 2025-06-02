@@ -1,5 +1,5 @@
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import type { ChatRequestOptions, CreateMessage, Message, TextPart } from "ai";
+import type { TextPart } from "ai";
 import { Loader2, UserIcon } from "lucide-react";
 import type React from "react";
 
@@ -17,20 +17,9 @@ export const MessageList: React.FC<{
   messages: UIMessage[];
   user: { name: string; image?: string | null };
   logo?: string;
-  sendMessage: (
-    message: Message | CreateMessage,
-    chatRequestOptions?: ChatRequestOptions,
-  ) => Promise<string | null | undefined>;
   isLoading: boolean;
   containerRef?: React.RefObject<HTMLDivElement>;
-}> = ({
-  messages: renderMessages,
-  isLoading,
-  user,
-  logo,
-  sendMessage,
-  containerRef,
-}) => {
+}> = ({ messages: renderMessages, isLoading, user, logo, containerRef }) => {
   return (
     <ScrollArea className="mb-2 flex-1 overflow-y-auto px-4" ref={containerRef}>
       {renderMessages.map((m, messageIndex) => (
@@ -68,7 +57,6 @@ export const MessageList: React.FC<{
                   }
                   part={part}
                   isLoading={isLoading}
-                  sendMessage={sendMessage}
                 />
               ))}
             </div>
@@ -95,15 +83,10 @@ export const MessageList: React.FC<{
 
 function Part({
   part,
-  sendMessage,
   isLoading,
   isLastPartInMessages,
 }: {
   part: NonNullable<UIMessage["parts"]>[number];
-  sendMessage: (
-    message: Message | CreateMessage,
-    chatRequestOptions?: ChatRequestOptions,
-  ) => Promise<string | null | undefined>;
   isLoading: boolean;
   isLastPartInMessages: boolean;
 }) {
@@ -125,11 +108,7 @@ function Part({
     }
 
     return (
-      <ToolInvocationPart
-        tool={part.toolInvocation}
-        sendMessage={sendMessage}
-        isLoading={isLoading}
-      />
+      <ToolInvocationPart tool={part.toolInvocation} isLoading={isLoading} />
     );
   }
 

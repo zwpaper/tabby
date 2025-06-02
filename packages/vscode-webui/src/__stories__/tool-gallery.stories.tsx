@@ -16,7 +16,6 @@ const ToolsGallery: React.FC<{
         <ToolInvocationPart
           key={tool.toolCallId + index}
           tool={tool}
-          sendMessage={() => Promise.resolve(undefined)}
           isLoading={false}
         />
       ))}

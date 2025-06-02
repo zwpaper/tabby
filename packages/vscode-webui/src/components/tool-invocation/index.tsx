@@ -1,10 +1,5 @@
 import { useExecutingToolCallIds } from "@/features/chat";
-import type {
-  ChatRequestOptions,
-  CreateMessage,
-  Message,
-  ToolInvocation,
-} from "ai";
+import type { ToolInvocation } from "ai";
 import { McpToolCall } from "./mcp-tool-call";
 import { applyDiffTool } from "./tools/apply-diff";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
@@ -22,14 +17,9 @@ import type { ToolProps } from "./types";
 
 export function ToolInvocationPart({
   tool,
-  sendMessage,
   isLoading,
 }: {
   tool: ToolInvocation;
-  sendMessage: (
-    message: Message | CreateMessage,
-    chatRequestOptions?: ChatRequestOptions,
-  ) => Promise<string | null | undefined>;
   isLoading: boolean;
 }) {
   const isExecuting = useExecutingToolCallIds().isExecuting(tool.toolCallId);
@@ -38,12 +28,7 @@ export function ToolInvocationPart({
   return (
     <div className="flex flex-col gap-1">
       {C ? (
-        <C
-          tool={tool}
-          isExecuting={isExecuting}
-          sendMessage={sendMessage}
-          isLoading={isLoading}
-        />
+        <C tool={tool} isExecuting={isExecuting} isLoading={isLoading} />
       ) : (
         <McpToolCall tool={tool} isExecuting={isExecuting} />
       )}

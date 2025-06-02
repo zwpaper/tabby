@@ -1,9 +1,11 @@
+import { useToolEvents } from "@/features/chat";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { ToolProps } from "../types";
 
 export const AskFollowupQuestionTool: React.FC<
   ToolProps<ClientToolsType["askFollowupQuestion"]>
-> = ({ tool: toolCall, sendMessage, isLoading }) => {
+> = ({ tool: toolCall, isLoading }) => {
+  const { emit } = useToolEvents();
   const { question, followUp } = toolCall.args || {};
 
   return (
@@ -27,9 +29,8 @@ export const AskFollowupQuestionTool: React.FC<
                   disabled={isLoading}
                   onClick={() =>
                     !isLoading &&
-                    sendMessage({
-                      content: followUpText,
-                      role: "user",
+                    emit("sendMessage", {
+                      prompt: followUpText,
                     })
                   }
                 >
