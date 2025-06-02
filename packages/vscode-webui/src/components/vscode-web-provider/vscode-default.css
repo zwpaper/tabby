@@ -5,7 +5,7 @@ html {
 
 body {
   overscroll-behavior-x: none;
-  background-color: transparent;
+  /* background-color: transparent; */
   color: var(--vscode-editor-foreground);
   font-family: var(--vscode-font-family);
   font-weight: var(--vscode-font-weight);

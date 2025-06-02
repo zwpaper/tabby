@@ -15,11 +15,17 @@ import { MessageMarkdown } from "./markdown";
 
 export const MessageList: React.FC<{
   messages: UIMessage[];
-  user: { name: string; image?: string | null };
+  user?: { name: string; image?: string | null };
   logo?: string;
   isLoading: boolean;
   containerRef?: React.RefObject<HTMLDivElement>;
-}> = ({ messages: renderMessages, isLoading, user, logo, containerRef }) => {
+}> = ({
+  messages: renderMessages,
+  isLoading,
+  user = { name: "You" },
+  logo,
+  containerRef,
+}) => {
   return (
     <ScrollArea className="mb-2 flex-1 overflow-y-auto px-4" ref={containerRef}>
       {renderMessages.map((m, messageIndex) => (
@@ -28,13 +34,13 @@ export const MessageList: React.FC<{
             <div className="flex items-center gap-2">
               {m.role === "user" ? (
                 <Avatar className="size-7">
-                  <AvatarImage src={user.image ?? undefined} />
+                  <AvatarImage src={user?.image ?? undefined} />
                   <AvatarFallback
                     className={cn(
                       "bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)] text-xs uppercase",
                     )}
                   >
-                    {user.name.slice(0, 2) || (
+                    {user?.name.slice(0, 2) || (
                       <UserIcon className={cn("size-[50%]")} />
                     )}
                   </AvatarFallback>
@@ -45,7 +51,7 @@ export const MessageList: React.FC<{
                   <AvatarFallback className="bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)]" />
                 </Avatar>
               )}
-              <strong>{m.role === "user" ? user.name : "Pochi"}</strong>
+              <strong>{m.role === "user" ? user?.name : "Pochi"}</strong>
             </div>
             <div className="mt-3 ml-1 flex flex-col gap-2">
               {m.parts.map((part, index) => (

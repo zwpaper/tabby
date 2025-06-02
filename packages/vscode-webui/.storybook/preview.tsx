@@ -1,12 +1,9 @@
 import { withThemeByClassName } from "@storybook/addon-themes";
 import { MINIMAL_VIEWPORTS } from "@storybook/addon-viewport";
 import type { Preview } from "@storybook/react";
+import { VSCodeWebProvider } from "../src/components/vscode-web-provider";
 import { ChatContextProvider } from "../src/features/chat";
 import { Providers } from "../src/providers";
-import "./background.css";
-import "./vscode-modern-dark.css";
-import "./vscode-modern-light.css";
-import "./vscode-default.css";
 import "../src/styles.css";
 import "./font.css";
 
@@ -54,26 +51,17 @@ const preview: Preview = {
 export const decorators = [
   withThemeByClassName({
     themes: {
-      light: "light vscode-light vscode-modern-light",
-      dark: "dark vscode-dark vscode-modern-dark",
+      light: "light",
+      dark: "dark",
     },
     defaultTheme: "dark",
   }),
-  (story, context) => {
-    const className = document.querySelector("html")?.className;
-    if (className?.includes("dark")) {
-      document.body.classList.remove("vscode-dark");
-      document.body.classList.add("vscode-light");
-    } else {
-      document.body.classList.remove("vscode-light");
-      document.body.classList.add("vscode-dark");
-    }
-    return story();
-  },
   (Story) => {
     return (
       <Providers>
-        <ChatContextProvider>{Story()}</ChatContextProvider>
+        <VSCodeWebProvider>
+          <ChatContextProvider>{Story()}</ChatContextProvider>
+        </VSCodeWebProvider>
       </Providers>
     );
   },

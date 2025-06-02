@@ -25,9 +25,10 @@
       "@/components/*": ["./src/components/*"],
       "@/lib/*": ["./src/lib/*"],
       "@/features/approval": ["./src/features/approval"],
+      "@/features/chat": ["./src/features/chat"],
       "@/features/settings": ["./src/features/settings"],
-      "@/features/todo": ["./src/features/todo"],
-      "@/features/chat": ["./src/features/chat"]
+      "@/features/share": ["./src/features/share"],
+      "@/features/todo": ["./src/features/todo"]
     }
   }
 }
