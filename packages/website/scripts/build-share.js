@@ -79,9 +79,9 @@ function ensureDir(dir) {
 
 console.log("🏗️  Building share.html for website...");
 
-// Step 1: Build the vscode-webui share target
+// Step 1: Build the vscode-wnode ebui share target
 console.log("\n📦 Building vscode-webui share target...");
-execCommand("npm run build:share", vsCodeWebuiRoot);
+execCommand("bun run build:share", vsCodeWebuiRoot);
 
 // Step 2: Ensure website dist directories exist
 console.log("\n📁 Creating website dist directories...");
