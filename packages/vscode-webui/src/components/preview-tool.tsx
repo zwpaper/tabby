@@ -1,6 +1,7 @@
+import { useToolCallState } from "@/features/chat";
 import { usePreviewToolCall } from "@/lib/hooks/use-preview-tool-call";
 import type { ToolInvocation, UIMessage } from "ai";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 type AddToolResultFunctionType = ({
   toolCallId,
@@ -36,7 +37,7 @@ function PreviewOneTool({
   tool,
   addToolResult,
 }: { tool: ToolInvocation; addToolResult: AddToolResultFunctionType }) {
-  const executed = useRef(false);
+  const { getToolCallState, setToolCallState } = useToolCallState();
   const { previewToolCall, error: previewToolCallError } = usePreviewToolCall();
 
   useEffect(() => {
@@ -44,14 +45,17 @@ function PreviewOneTool({
   }, [tool, previewToolCall]);
 
   useEffect(() => {
-    if (previewToolCallError && !executed.current) {
-      executed.current = true;
+    if (
+      previewToolCallError &&
+      getToolCallState(tool.toolCallId) === undefined
+    ) {
       addToolResult({
         toolCallId: tool.toolCallId,
         result: {
           error: previewToolCallError,
         },
       });
+      setToolCallState(tool.toolCallId, "rejected");
     }
   });
   return null;

@@ -1,6 +1,6 @@
 import { isAutoInjectTool } from "@ragdoll/tools"; // isUserInputTool is now in the hook
 import type React from "react";
-import { useCallback, useEffect, useRef } from "react"; // useMemo is now in the hook
+import { useCallback, useEffect } from "react"; // useMemo is now in the hook
 
 import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval";
@@ -42,20 +42,16 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     removeToolStreamResult,
   });
 
-  const { toolCallId: pendingToolCallId } = pendingApproval.tool;
   const { getToolCallState } = useToolCallState();
-  const toolCallState = getToolCallState(pendingToolCallId);
-  const executingToolCallId =
-    toolCallState === "executing" ? pendingToolCallId : undefined;
 
   const { listen } = useToolEvents();
   useEffect(() => {
     return listen("abortTool", ({ toolCallId }) => {
-      if (executingToolCallId === toolCallId) {
+      if (getToolCallState(toolCallId) === "executing") {
         abortTool();
       }
     });
-  }, [listen, abortTool, executingToolCallId]);
+  }, [listen, abortTool, getToolCallState]);
 
   const ToolAcceptText: Record<string, string> = {
     writeToFile: "Save",
@@ -73,32 +69,23 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
   const abortText = ToolAbortText[pendingApproval.name] || null;
 
-  const executed = useRef(false);
-  const shouldSkipExecute = useCallback(() => {
-    if (executed.current) {
-      return true;
-    }
-    executed.current = true;
-    return false;
-  }, []);
-
   const onAccept = useCallback(async () => {
-    if (shouldSkipExecute()) {
+    if (getToolCallState(pendingApproval.tool.toolCallId) !== undefined) {
       return;
     }
 
     await executeTool(pendingApproval.tool);
-  }, [shouldSkipExecute, pendingApproval, executeTool]);
+  }, [getToolCallState, pendingApproval, executeTool]);
 
   const onReject = useCallback(
     (errorText = "User rejected tool call") => {
-      // Renamed 'error' to 'errorText' to avoid conflict
-      if (shouldSkipExecute()) {
+      if (getToolCallState(pendingApproval.tool.toolCallId) !== undefined) {
         return;
       }
+
       rejectTool(pendingApproval.tool, errorText);
     },
-    [shouldSkipExecute, pendingApproval, rejectTool],
+    [getToolCallState, pendingApproval, rejectTool],
   );
   const onRejectByUser = useCallback(() => onReject(), [onReject]);
 
@@ -118,10 +105,15 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
 
   const [showAbort, setShowAbort] = useDebounceState(false, 3_000); // 3 seconds
   useEffect(() => {
-    setShowAbort(!!executingToolCallId);
-  }, [executingToolCallId, setShowAbort]);
+    if (getToolCallState(pendingApproval.tool.toolCallId) === "executing") {
+      setShowAbort(true);
+      return;
+    }
+  }, [getToolCallState, setShowAbort, pendingApproval.tool.toolCallId]);
 
-  const showAccept = !isAutoApproved && !executingToolCallId;
+  const showAccept =
+    !isAutoApproved &&
+    getToolCallState(pendingApproval.tool.toolCallId) === undefined;
   if (showAccept) {
     return (
       <>
@@ -135,7 +127,11 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     );
   }
 
-  if (showAbort && abortText && executingToolCallId) {
+  if (
+    showAbort &&
+    abortText &&
+    getToolCallState(pendingApproval.tool.toolCallId) === "executing"
+  ) {
     /*
     Only display the abort button if:
     1. There's executing tool call

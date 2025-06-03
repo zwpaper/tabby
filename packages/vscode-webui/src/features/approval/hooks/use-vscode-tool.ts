@@ -124,6 +124,7 @@ export function useVSCodeTool({
   );
   const rejectTool = useCallback(
     async (tool: ToolInvocation, error: string) => {
+      setToolCallState(tool.toolCallId, "rejected");
       addToolResult({
         toolCallId: tool.toolCallId,
         result: {
@@ -131,7 +132,7 @@ export function useVSCodeTool({
         },
       });
     },
-    [addToolResult],
+    [setToolCallState, addToolResult],
   );
   return { executeTool, rejectTool, abortTool };
 }

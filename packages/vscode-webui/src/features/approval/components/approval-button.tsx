@@ -28,7 +28,6 @@ export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
         <RetryApprovalButton pendingApproval={pendingApproval} retry={retry} />
       ) : (
         <ToolCallApprovalButton
-          key={pendingApproval.tool.toolCallId}
           pendingApproval={pendingApproval}
           addToolResult={addToolResult}
         />
