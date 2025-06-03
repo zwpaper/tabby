@@ -15,7 +15,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
 
   task: Omit<
     DbImpl["task"],
-    "event" | "conversation" | "environment" | "id" | "status" | "error"
+    "event" | "conversation" | "environment" | "status" | "error"
   > & {
     event: UserEvent | null;
     conversation: { messages: DBMessage[] } | null;

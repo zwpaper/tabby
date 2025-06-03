@@ -28,7 +28,7 @@ export function TaskList({ tasks }: TaskListProps) {
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      const vscodeLink = `vscode://TabbyML.pochi/?task=${task.taskId}`;
+                      const vscodeLink = `vscode://TabbyML.pochi/?task=${task.id}`;
                       window.open(vscodeLink);
                     }}
                     className="h-6 px-2 text-xs"

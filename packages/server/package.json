@@ -28,6 +28,7 @@
     "redis": "^5.0.1",
     "resend": "^4.2.0",
     "resumable-stream": "^2.1.0",
+    "sqids": "^0.3.0",
     "stripe": "17",
     "ws": "^8.18.1",
     "zod": "catalog:"
