@@ -1,19 +1,9 @@
-import styleDefault from "./style.css?inline";
+import "./style.css";
 
-import styleVscodeDark from "./vscode-dark.css?inline";
-import styleVscodeDefault from "./vscode-default.css?inline";
-import styleVscodeLight from "./vscode-light.css?inline";
+import "./vscode-default.css";
+import "./vscode-dark.css";
+import "./vscode-light.css";
 
 export function VSCodeWebProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <div>
-      <style>
-        {styleDefault}
-        {styleVscodeDefault}
-        {styleVscodeDark}
-        {styleVscodeLight}
-      </style>
-      {children}
-    </div>
-  );
+  return children;
 }

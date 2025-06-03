@@ -1,40 +1,6 @@
-import { type Theme, useTheme } from "@/components/theme-provider";
-import { SharePage } from "@/features/share";
-import { createFileRoute } from "@tanstack/react-router";
 import type { UIMessage } from "ai";
-import { useEffect, useState } from "react";
-import { z } from "zod";
 
-const searchSchema = z.object({
-  theme: z.string().optional(),
-});
-
-export const Route = createFileRoute("/share")({
-  validateSearch: (search) => searchSchema.parse(search),
-  component: RouteComponent,
-});
-
-function RouteComponent() {
-  const { setTheme } = useTheme();
-  const search = Route.useSearch();
-  useEffect(() => {
-    if (search.theme) {
-      setTheme(search.theme as Theme);
-    }
-  }, [search.theme, setTheme]);
-
-  const [messages, setMessages] = useState(placeholder);
-  useEffect(() => {
-    window.addEventListener("message", (event: MessageEvent) => {
-      if (typeof event.data === "object" && event.data?.type === "share") {
-        setMessages(event.data.messages);
-      }
-    });
-  }, []);
-  return <SharePage messages={messages} />;
-}
-
-const placeholder: UIMessage[] = [
+export const Placeholder: UIMessage[] = [
   {
     id: "phtMaNplr0NDM3wE",
     role: "user",

@@ -1,9 +1,12 @@
+import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import EnvironmentPlugin from "vite-plugin-environment";
 import tsconfigPaths from "vite-tsconfig-paths";
+
+const BuildTarget = process.env.POCHI_BUILD_TARGET || "index";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -22,7 +25,11 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
+      input: {
+        [BuildTarget]: resolve(__dirname, `${BuildTarget}.html`),
+      },
       output: {
+        dir: resolve(__dirname, "dist", BuildTarget),
         manualChunks: false,
         inlineDynamicImports: true,
         entryFileNames: "[name].js",

@@ -1,1 +1,1 @@
-export { SharePage } from "./page";
+export { Placeholder } from "./placeholder";

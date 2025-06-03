@@ -5,6 +5,8 @@ import { VSCodeWebProvider } from "../src/components/vscode-web-provider";
 import { ChatContextProvider } from "../src/features/chat";
 import { Providers } from "../src/providers";
 import "../src/styles.css";
+import { useEffect } from "react";
+import { useTheme } from "../src/components/theme-provider";
 
 const vscodeViewports = {
   vscodeSmall: {
@@ -59,11 +61,43 @@ export const decorators = [
     return (
       <Providers>
         <VSCodeWebProvider>
-          <ChatContextProvider>{Story()}</ChatContextProvider>
+          <ChatContextProvider>
+            <StoryWrapper>{Story()}</StoryWrapper>
+          </ChatContextProvider>
         </VSCodeWebProvider>
       </Providers>
     );
   },
 ];
+
+function StoryWrapper({ children }: { children: React.ReactNode }) {
+  const { setTheme } = useTheme();
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+
+    const updateThemeFromRoot = () => {
+      if (root.classList.contains("light")) {
+        setTheme("light");
+      } else if (root.classList.contains("dark")) {
+        setTheme("dark");
+      }
+    };
+
+    // Set initial theme
+    updateThemeFromRoot();
+
+    // Observe changes to theme classes
+    const observer = new MutationObserver(updateThemeFromRoot);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, [setTheme]);
+
+  return children;
+}
 
 export default preview;

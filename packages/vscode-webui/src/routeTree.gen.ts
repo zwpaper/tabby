@@ -12,7 +12,6 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as SignInImport } from './routes/sign-in'
-import { Route as ShareImport } from './routes/share'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as AuthIndexImport } from './routes/_auth/index'
 import { Route as AuthTasksImport } from './routes/_auth/tasks'
@@ -23,12 +22,6 @@ import { Route as AuthSettingsImport } from './routes/_auth/settings'
 const SignInRoute = SignInImport.update({
   id: '/sign-in',
   path: '/sign-in',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const ShareRoute = ShareImport.update({
-  id: '/share',
-  path: '/share',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -64,13 +57,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthImport
-      parentRoute: typeof rootRoute
-    }
-    '/share': {
-      id: '/share'
-      path: '/share'
-      fullPath: '/share'
-      preLoaderRoute: typeof ShareImport
       parentRoute: typeof rootRoute
     }
     '/sign-in': {
@@ -122,7 +108,6 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 export interface FileRoutesByFullPath {
   '': typeof AuthRouteWithChildren
-  '/share': typeof ShareRoute
   '/sign-in': typeof SignInRoute
   '/settings': typeof AuthSettingsRoute
   '/tasks': typeof AuthTasksRoute
@@ -130,7 +115,6 @@ export interface FileRoutesByFullPath {
 }
 
 export interface FileRoutesByTo {
-  '/share': typeof ShareRoute
   '/sign-in': typeof SignInRoute
   '/settings': typeof AuthSettingsRoute
   '/tasks': typeof AuthTasksRoute
@@ -140,7 +124,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/_auth': typeof AuthRouteWithChildren
-  '/share': typeof ShareRoute
   '/sign-in': typeof SignInRoute
   '/_auth/settings': typeof AuthSettingsRoute
   '/_auth/tasks': typeof AuthTasksRoute
@@ -149,13 +132,12 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '' | '/share' | '/sign-in' | '/settings' | '/tasks' | '/'
+  fullPaths: '' | '/sign-in' | '/settings' | '/tasks' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/share' | '/sign-in' | '/settings' | '/tasks' | '/'
+  to: '/sign-in' | '/settings' | '/tasks' | '/'
   id:
     | '__root__'
     | '/_auth'
-    | '/share'
     | '/sign-in'
     | '/_auth/settings'
     | '/_auth/tasks'
@@ -165,13 +147,11 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
-  ShareRoute: typeof ShareRoute
   SignInRoute: typeof SignInRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
-  ShareRoute: ShareRoute,
   SignInRoute: SignInRoute,
 }
 
@@ -186,7 +166,6 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/_auth",
-        "/share",
         "/sign-in"
       ]
     },
@@ -197,9 +176,6 @@ export const routeTree = rootRoute
         "/_auth/tasks",
         "/_auth/"
       ]
-    },
-    "/share": {
-      "filePath": "share.tsx"
     },
     "/sign-in": {
       "filePath": "sign-in.tsx"

@@ -163,7 +163,7 @@
   },
   "private": true,
   "scripts": {
-    "build:webui": "cd ../vscode-webui && bun run build && cpy ./dist/index.js ./dist/index.css ../vscode/assets/webview-ui",
+    "build:webui": "cd ../vscode-webui && bun run build:index && cpy ./dist/index/index.js ./dist/index/index.css ../vscode/assets/webview-ui/dist --flat",
     "build:vscode": "bun build ./src/extension.ts --outdir ./dist --external vscode --format cjs --target node",
     "build": "npm-run-all --parallel build:vscode build:webui",
     "vscode:prepublish": "bun run build",

@@ -6,12 +6,17 @@ import type {
 import type { WebviewApi } from "vscode-webview";
 import { queryClient } from "./query-client";
 
-let vscodeApi: WebviewApi<unknown> | undefined = undefined;
+let vscodeApi: WebviewApi<unknown> | undefined | null = undefined;
 
 function getVSCodeApi() {
   if (vscodeApi) {
     return vscodeApi;
   }
+
+  if (vscodeApi === null) {
+    return null;
+  }
+
   try {
     vscodeApi = acquireVsCodeApi();
   } catch (error) {
@@ -19,6 +24,7 @@ function getVSCodeApi() {
       "Failed to acquire VSCode API. This is likely due to running in a non-VSCode environment.",
       error,
     );
+    vscodeApi = null;
   }
   return vscodeApi;
 }
