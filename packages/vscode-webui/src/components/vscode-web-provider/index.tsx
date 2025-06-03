@@ -7,7 +7,7 @@ import styleVscodeLight from "./vscode-light.css?inline";
 export function VSCodeWebProvider({ children }: { children: React.ReactNode }) {
   return (
     <div>
-      <style scoped>
+      <style>
         {styleDefault}
         {styleVscodeDefault}
         {styleVscodeDark}
