@@ -66,9 +66,6 @@ export function AutoApproveMenu() {
     } else {
       updateAutoApproveSettings({ [id]: checked });
     }
-    if (checked && !autoApproveActive) {
-      updateAutoApproveActive(true);
-    }
   };
 
   const getCoreActionCheckedState = (
@@ -131,10 +128,9 @@ export function AutoApproveMenu() {
           <div key={setting.id} className="flex items-center">
             <label
               htmlFor={`core-action-dialog-${setting.id}`}
-              className={cn(
-                "flex flex-1 cursor-pointer select-none items-center text-foreground text-sm",
-                !autoApproveActive && "cursor-not-allowed opacity-60",
-              )}
+              className={
+                "flex flex-1 cursor-pointer select-none items-center text-foreground text-sm"
+              }
             >
               <Checkbox
                 id={`core-action-dialog-${setting.id}`}
@@ -142,7 +138,6 @@ export function AutoApproveMenu() {
                 onCheckedChange={(checked) =>
                   handleCoreActionToggle(setting.id, !!checked)
                 }
-                disabled={!autoApproveActive}
               />
               <span className="ml-4 flex items-center gap-2 font-semibold">
                 <setting.iconClass className="size-4 shrink-0" />
