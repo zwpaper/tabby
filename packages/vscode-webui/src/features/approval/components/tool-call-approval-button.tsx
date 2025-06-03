@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval";
 import {
   useAutoApproveGuard,
-  useExecutingToolCallIds,
   useStreamToolCallResult,
+  useToolCallState,
   useToolEvents,
 } from "@/features/chat";
 import { useToolAutoApproval } from "@/features/settings";
@@ -43,10 +43,10 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   });
 
   const { toolCallId: pendingToolCallId } = pendingApproval.tool;
-  const { isExecuting } = useExecutingToolCallIds();
-  const executingToolCallId = isExecuting(pendingToolCallId)
-    ? pendingToolCallId
-    : undefined;
+  const { getToolCallState } = useToolCallState();
+  const toolCallState = getToolCallState(pendingToolCallId);
+  const executingToolCallId =
+    toolCallState === "executing" ? pendingToolCallId : undefined;
 
   const { listen } = useToolEvents();
   useEffect(() => {

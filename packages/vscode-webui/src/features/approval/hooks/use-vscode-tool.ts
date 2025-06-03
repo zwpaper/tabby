@@ -1,4 +1,4 @@
-import { useExecutingToolCallIds } from "@/features/chat";
+import { useToolCallState } from "@/features/chat";
 import { vscodeHost } from "@/lib/vscode";
 import type { useChat } from "@ai-sdk/react";
 import { ThreadAbortSignal } from "@quilted/threads";
@@ -20,8 +20,7 @@ export function useVSCodeTool({
   removeToolStreamResult: (toolCallId: string) => void;
 }) {
   const abort = useRef(new AbortController());
-  const { addExecutingToolCall, removeExecutingToolCall } =
-    useExecutingToolCallIds();
+  const { setToolCallState } = useToolCallState();
 
   useUnmountOnce(() => {
     abort.current.abort();
@@ -61,7 +60,7 @@ export function useVSCodeTool({
             },
           });
           removeToolStreamResult(tool.toolCallId);
-          removeExecutingToolCall(tool.toolCallId);
+          setToolCallState(tool.toolCallId, "completed");
           unsubscribe();
         } else {
           addToolStreamResult({
@@ -79,13 +78,13 @@ export function useVSCodeTool({
       addToolResult,
       addToolStreamResult,
       removeToolStreamResult,
-      removeExecutingToolCall,
+      setToolCallState,
     ],
   );
 
   const executeTool = useCallback(
     async (tool: ToolInvocation) => {
-      addExecutingToolCall(tool.toolCallId);
+      setToolCallState(tool.toolCallId, "executing");
       let result = await vscodeHost
         .executeToolCall(tool.toolName, tool.args, {
           toolCallId: tool.toolCallId,
@@ -119,14 +118,9 @@ export function useVSCodeTool({
         toolCallId: tool.toolCallId,
         result,
       });
-      removeExecutingToolCall(tool.toolCallId);
+      setToolCallState(tool.toolCallId, "completed");
     },
-    [
-      addToolResult,
-      handleStreamResult,
-      addExecutingToolCall,
-      removeExecutingToolCall,
-    ],
+    [addToolResult, handleStreamResult, setToolCallState],
   );
   const rejectTool = useCallback(
     async (tool: ToolInvocation, error: string) => {

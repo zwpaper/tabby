@@ -1,8 +1,11 @@
 // Export the main context and provider
-export { ChatContextProvider } from "./context";
+export {
+  ChatContextProvider,
+  useToolCallState,
+  useToolEvents,
+  useAutoApproveGuard,
+  useStreamToolCallResult,
+} from "./context";
 
-// Export hooks from their dedicated files
-export { useToolEvents } from "./hooks/use-tool-events";
-export { useAutoApproveGuard } from "./hooks/use-auto-approve-guard";
-export { useStreamToolCallResult } from "./hooks/use-stream-tool-call-result";
-export { useExecutingToolCallIds } from "./hooks/use-executing-tool-call-ids";
+// Export new tool call state management hooks
+export type { ToolCallState } from "./hooks/use-tool-call-states";

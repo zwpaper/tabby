@@ -1,4 +1,4 @@
-import { useExecutingToolCallIds } from "@/features/chat";
+import { useToolCallState } from "@/features/chat";
 import type { ToolInvocation } from "ai";
 import { McpToolCall } from "./mcp-tool-call";
 import { applyDiffTool } from "./tools/apply-diff";
@@ -22,7 +22,9 @@ export function ToolInvocationPart({
   tool: ToolInvocation;
   isLoading: boolean;
 }) {
-  const isExecuting = useExecutingToolCallIds().isExecuting(tool.toolCallId);
+  const { getToolCallState } = useToolCallState();
+  const toolCallState = getToolCallState(tool.toolCallId);
+  const isExecuting = toolCallState === "executing";
   const C = Tools[tool.toolName];
 
   return (

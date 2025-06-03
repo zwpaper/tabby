@@ -1,6 +1,9 @@
 import type React from "react";
 import { type ReactNode, createContext, useContext, useRef } from "react";
-import { useExecutingToolCalls } from "./hooks/use-executing-tool-calls";
+import {
+  type ToolCallState,
+  useToolCallStates,
+} from "./hooks/use-tool-call-states";
 import {
   type ToolCallStreamResult,
   useToolStreamResults,
@@ -9,17 +12,15 @@ import { ToolEvents } from "./lib/tool-events";
 
 interface ChatState {
   autoApproveGuard: React.MutableRefObject<boolean>;
-  toolEvents: ToolEvents;
-  toolStreamResults: {
-    add: (result: ToolCallStreamResult) => void;
-    remove: (toolCallId: string) => void;
-    find: (toolCallId: string) => ToolCallStreamResult | undefined;
-  };
-  executingToolCalls: {
-    add: (toolCallId: string) => void;
-    remove: (toolCallId: string) => void;
-    isExecuting: (toolCallId?: string) => boolean;
-  };
+  toolEvents: React.RefObject<ToolEvents>;
+  addToolStreamResult: (result: ToolCallStreamResult) => void;
+  removeToolStreamResult: (toolCallId: string) => void;
+  findToolStreamResult: (
+    toolCallId: string,
+  ) => ToolCallStreamResult | undefined;
+  setToolCallState: (toolCallId: string, state: ToolCallState) => void;
+  getToolCallState: (toolCallId: string) => ToolCallState | undefined;
+  hasToolCallState: (state: ToolCallState) => boolean;
 }
 
 const ChatContext = createContext<ChatState | undefined>(undefined);
@@ -30,36 +31,61 @@ interface ChatContextProviderProps {
 
 export function ChatContextProvider({ children }: ChatContextProviderProps) {
   const autoApproveGuard = useRef(false);
-  const toolEvents = useRef(new ToolEvents()).current;
+  const toolEvents = useRef(new ToolEvents());
 
   const { addToolStreamResult, removeToolStreamResult, findToolStreamResult } =
     useToolStreamResults();
 
-  const { addExecutingToolCall, removeExecutingToolCall, isExecuting } =
-    useExecutingToolCalls();
+  const { getToolCallState, setToolCallState, hasToolCallState } =
+    useToolCallStates();
 
   const value: ChatState = {
     autoApproveGuard,
     toolEvents,
-    toolStreamResults: {
-      add: addToolStreamResult,
-      remove: removeToolStreamResult,
-      find: findToolStreamResult,
-    },
-    executingToolCalls: {
-      add: addExecutingToolCall,
-      remove: removeExecutingToolCall,
-      isExecuting,
-    },
+    addToolStreamResult,
+    removeToolStreamResult,
+    findToolStreamResult,
+    getToolCallState,
+    setToolCallState,
+    hasToolCallState,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
 
-export function useChatState(): ChatState {
+function useChatState(): ChatState {
   const context = useContext(ChatContext);
   if (context === undefined) {
     throw new Error("useChatState must be used within a ChatContextProvider");
   }
   return context;
+}
+
+export function useToolEvents() {
+  const toolEvents = useChatState().toolEvents.current;
+  if (!toolEvents) {
+    throw new Error("ToolEvents is not initialized");
+  }
+
+  return toolEvents;
+}
+
+export function useAutoApproveGuard() {
+  return useChatState().autoApproveGuard;
+}
+
+export function useToolCallState() {
+  const { setToolCallState, getToolCallState, hasToolCallState } =
+    useChatState();
+  return { setToolCallState, getToolCallState, hasToolCallState };
+}
+
+export function useStreamToolCallResult() {
+  const { addToolStreamResult, removeToolStreamResult, findToolStreamResult } =
+    useChatState();
+  return {
+    addToolStreamResult,
+    removeToolStreamResult,
+    findToolStreamResult,
+  };
 }

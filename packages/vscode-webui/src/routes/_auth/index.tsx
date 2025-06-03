@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   ChatContextProvider,
   useAutoApproveGuard,
-  useExecutingToolCallIds,
+  useToolCallState,
   useToolEvents,
 } from "@/features/chat";
 import { useEnableReasoning, useSelectedModels } from "@/features/settings";
@@ -509,7 +509,8 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     status,
   });
 
-  const isExecuting = useExecutingToolCallIds().isExecuting();
+  const { hasToolCallState } = useToolCallState();
+  const isExecuting = hasToolCallState("executing");
   const isLoading = status === "streaming" || status === "submitted";
   const allowEditTodos = !(
     isTaskLoading ||
