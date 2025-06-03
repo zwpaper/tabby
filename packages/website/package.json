@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "start": "vite --port 4111",
-    "build": "vite build && tsc",
+    "build:website": "vite build && tsc",
+    "build:webui": "cd ../vscode-webui && npm run build:share && cp ./dist/share/share.html ../website/dist && cp ./dist/share/assets/* ../website/dist/assets",
+    "build": "npm-run-all --parallel build:website build:webui",
     "serve": "vite preview",
     "test": "vitest run",
     "tsc": "tsc --noEmit",

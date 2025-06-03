@@ -7,6 +7,24 @@ import EnvironmentPlugin from "vite-plugin-environment";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const BuildTarget = process.env.POCHI_BUILD_TARGET || "index";
+const BuildSingleFile = BuildTarget === "index";
+
+const CommonOutputOptions = {
+  dir: resolve(__dirname, "dist", BuildTarget),
+};
+
+const OutputOptions = {
+  index: {
+    ...CommonOutputOptions,
+    manualChunks: false,
+    inlineDynamicImports: true,
+    entryFileNames: "[name].js",
+    assetFileNames: "[name].[ext]",
+  },
+  share: {
+    ...CommonOutputOptions,
+  },
+};
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -28,13 +46,7 @@ export default defineConfig({
       input: {
         [BuildTarget]: resolve(__dirname, `${BuildTarget}.html`),
       },
-      output: {
-        dir: resolve(__dirname, "dist", BuildTarget),
-        manualChunks: false,
-        inlineDynamicImports: true,
-        entryFileNames: "[name].js",
-        assetFileNames: "[name].[ext]",
-      },
+      output: OutputOptions[BuildTarget],
     },
   },
   test: {

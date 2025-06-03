@@ -5,8 +5,7 @@
   "scripts": {
     "start": "vite --port 4112",
     "build:share": "POCHI_BUILD_TARGET=share vite build",
-    "build:index": "vite build",
-    "build": "npm-run-all build:share build:index",
+    "build": "vite build",
     "serve": "vite preview",
     "test": "vitest run",
     "tsc": "tsc --noEmit",

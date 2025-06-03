@@ -22,6 +22,8 @@ export default defineConfig({
   ],
   build: {
     chunkSizeWarningLimit: 1000,
+    // Allow multiple builds to be run in parallel
+    emptyOutDir: false,
   },
   test: {
     globals: true,
