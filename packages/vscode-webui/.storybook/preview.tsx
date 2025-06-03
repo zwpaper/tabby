@@ -5,7 +5,6 @@ import { VSCodeWebProvider } from "../src/components/vscode-web-provider";
 import { ChatContextProvider } from "../src/features/chat";
 import { Providers } from "../src/providers";
 import "../src/styles.css";
-import "./font.css";
 
 const vscodeViewports = {
   vscodeSmall: {
