@@ -1,5 +1,5 @@
 [build]
-buildCommand = "bun run build"
+buildCommand = "bun run build:server"
 
 [deploy]
 startCommand = "cd packages/server && bun start"

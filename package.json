@@ -8,7 +8,7 @@
     "check:test": "biome check --config-path=./biome.test.json .",
     "test": "vitest --run --exclude packages/vscode",
     "tsc": "bun --filter '*' tsc",
-    "build": "bun --filter '*' build",
+    "build:server": "bun --filter @ragdoll/server --filter @ragdoll/website build",
     "dev:server": "bun --filter '*' dev:server",
     "dep-check": "bun scripts/dep-check.ts",
     "prepare": "husky",
