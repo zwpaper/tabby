@@ -10,4 +10,4 @@ export {
   useReadyForRetryError,
 } from "./hooks/use-ready-for-retry-error";
 export { useRetry } from "./hooks/use-retry";
-export { getDisplayError, pendingApprovalKey } from "./utils";
+export { getDisplayError } from "./utils";

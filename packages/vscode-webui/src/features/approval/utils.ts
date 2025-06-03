@@ -32,18 +32,6 @@ export function isAssistantMessageWithPartialToolCalls(lastMessage: UIMessage) {
   );
 }
 
-export function pendingApprovalKey(
-  pendingApproval: PendingApproval | undefined,
-): string | undefined {
-  if (!pendingApproval) {
-    return;
-  }
-  if (pendingApproval.name === "retry") {
-    return "retry";
-  }
-  return pendingApproval.tool.toolCallId;
-}
-
 export function getDisplayError(
   pendingApproval: PendingApproval | undefined,
 ): Error | undefined {

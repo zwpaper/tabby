@@ -55,7 +55,6 @@ import {
   ApprovalButton,
   ReadyForRetryError,
   getDisplayError,
-  pendingApprovalKey,
   usePendingApproval,
   useReadyForRetryError,
   useRetry,
@@ -644,7 +643,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
         ) : (
           <>
             <ApprovalButton
-              key={pendingApprovalKey(pendingApproval)}
               isLoading={isLoading || isTaskLoading || isEditMode}
               pendingApproval={pendingApproval}
               retry={retry}
