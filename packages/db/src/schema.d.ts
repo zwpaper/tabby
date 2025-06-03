@@ -96,6 +96,7 @@ export interface Task {
   error: Json | null;
   event: Json | null;
   id: Generated<number>;
+  isPublicShared: Generated<boolean>;
   status: Generated<string>;
   streamIds: string[] | null;
   taskId: number;

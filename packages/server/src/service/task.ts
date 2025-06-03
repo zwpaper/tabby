@@ -421,6 +421,7 @@ class TaskService {
         "totalTokens",
         "event",
         "status",
+        "isPublicShared",
         titleSelect,
         gitSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
@@ -447,6 +448,55 @@ class TaskService {
       todos: task.todos || undefined,
       title: parseTitle(task.title),
     };
+  }
+
+  async getPublic(uid: string) {
+    const taskQuery = db
+      .selectFrom("task")
+      .where("id", "=", uidDecode(uid))
+      .where("isPublicShared", "=", true)
+      .select([
+        "createdAt",
+        "updatedAt",
+        "conversation",
+        "totalTokens",
+        "status",
+        titleSelect,
+        gitSelect,
+        sql<Todo[] | null>`environment->'todos'`.as("todos"),
+      ]);
+
+    const task = await taskQuery.executeTakeFirst();
+
+    if (!task) {
+      return null;
+    }
+
+    return {
+      ...task,
+      uid,
+      totalTokens: task.totalTokens || undefined,
+      todos: task.todos || undefined,
+      title: parseTitle(task.title),
+    };
+  }
+
+  async updateIsPublicShared(
+    taskId: number,
+    userId: string,
+    isPublicShared: boolean,
+  ): Promise<boolean> {
+    const result = await db
+      .updateTable("task")
+      .set({
+        isPublicShared,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("taskId", "=", taskId)
+      .where("userId", "=", userId)
+      .executeTakeFirst();
+
+    return result.numUpdatedRows > 0;
   }
 
   async delete(taskId: number, userId: string): Promise<boolean> {

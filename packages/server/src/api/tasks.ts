@@ -22,10 +22,18 @@ const TaskParamsSchema = z.object({
   id: z.string(),
 });
 
+const TaskUidParamsSchema = z.object({
+  uid: z.string(),
+});
+
 const ZodUserEvent: z.ZodType<UserEvent> = z.any();
 const TaskCreateSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
   event: ZodUserEvent.optional(),
+});
+
+const TaskShareSchema = z.object({
+  isPublicShared: z.boolean(),
 });
 
 // Create a tasks router with authentication
@@ -103,6 +111,48 @@ const tasks = new Hono()
 
       return c.json({ success: true });
     },
-  );
+  )
+
+  // Share/unshare a task by ID
+  .post(
+    "/:id/share",
+    zValidator("param", TaskParamsSchema),
+    zValidator("json", TaskShareSchema),
+    requireAuth(),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { isPublicShared } = c.req.valid("json");
+      const user = c.get("user");
+      const taskId = Number.parseInt(id);
+      if (Number.isNaN(taskId)) {
+        throw new HTTPException(400, { message: "Invalid task ID" });
+      }
+
+      const updated = await taskService.updateIsPublicShared(
+        taskId,
+        user.id,
+        isPublicShared,
+      );
+
+      if (!updated) {
+        throw new HTTPException(404, { message: "Task not found" });
+      }
+
+      return c.json({ success: true });
+    },
+  )
+
+  // Get a public task by UID
+  .get("/:uid/public", zValidator("param", TaskUidParamsSchema), async (c) => {
+    const { uid } = c.req.valid("param");
+
+    const task = await taskService.getPublic(uid);
+
+    if (!task) {
+      throw new HTTPException(404, { message: "Task not found" });
+    }
+
+    return c.json(task);
+  });
 
 export default tasks;
