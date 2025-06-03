@@ -33,7 +33,6 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
-  useReducer,
   useRef,
   useState,
 } from "react";
@@ -547,23 +546,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     retry,
   });
 
-  /*
-  Workaround for https://github.com/vercel/ai/issues/4491#issuecomment-2848999826
-  Reproduce steps:
-  1. Use a model that supports parallel tool calls (e.g., gpt-4o-mini).
-  2. Ask the model to write two files, fib.rs and fib.py, concurrently.
-  3. Reject the first call and accept the second call.
-  Without forceUpdate, the first rejection will not be reflected in the UI.
-  */
-  const [, forceUpdate] = useReducer((x) => x + 1, 0);
-  const addToolResultWithForceUpdate: typeof addToolResult = useCallback(
-    (arg) => {
-      addToolResult(arg);
-      forceUpdate();
-    },
-    [addToolResult],
-  );
-
   const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
 
   // Scroll to bottom when the message list height changes
@@ -614,9 +596,18 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error pending retry approval
   const displayError =
     imageSelectionError || uploadImageError || getDisplayError(pendingApproval);
+
+  // Only allow adding tool results when not loading
+  const allowAddToolResult = !(isLoading || isTaskLoading || isEditMode);
+  const validAddToolResult = allowAddToolResult ? addToolResult : undefined;
+
   return (
     <div className="flex h-screen flex-col">
-      <PreviewTool messages={renderMessages} addToolResult={addToolResult} />
+      <PreviewTool
+        messages={renderMessages}
+        // Only allow adding tool results when not loading
+        addToolResult={validAddToolResult}
+      />
 
       {renderMessages.length === 0 &&
         (isTaskLoading ? (
@@ -644,10 +635,9 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
         ) : (
           <>
             <ApprovalButton
-              isLoading={isLoading || isTaskLoading || isEditMode}
+              addToolResult={validAddToolResult}
               pendingApproval={pendingApproval}
               retry={retry}
-              addToolResult={addToolResultWithForceUpdate}
             />
             {todos && todos.length > 0 && (
               <TodoList

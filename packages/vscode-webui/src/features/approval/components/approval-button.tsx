@@ -8,19 +8,17 @@ import {
 } from "./tool-call-approval-button";
 
 interface ApprovalButtonProps {
-  isLoading: boolean;
   pendingApproval?: PendingApproval;
   retry: () => void;
-  addToolResult: AddToolResultFunctionType;
+  addToolResult?: AddToolResultFunctionType;
 }
 
 export const ApprovalButton: React.FC<ApprovalButtonProps> = ({
-  isLoading,
   pendingApproval,
   retry,
   addToolResult,
 }) => {
-  if (isLoading || !pendingApproval) return null;
+  if (!addToolResult || !pendingApproval) return null;
 
   return (
     <div className="flex gap-3 [&>button]:flex-1 [&>button]:rounded-sm">

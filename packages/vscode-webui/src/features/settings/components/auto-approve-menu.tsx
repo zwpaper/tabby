@@ -39,7 +39,7 @@ export function AutoApproveMenu() {
     {
       id: "write",
       summary: "Write",
-      label: "Edit files",
+      label: "Write files",
       iconClass: FileEdit,
     },
     {

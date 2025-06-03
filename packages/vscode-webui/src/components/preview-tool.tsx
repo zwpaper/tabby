@@ -14,7 +14,7 @@ type AddToolResultFunctionType = ({
 export function PreviewTool({
   messages,
   addToolResult,
-}: { messages: UIMessage[]; addToolResult: AddToolResultFunctionType }) {
+}: { messages: UIMessage[]; addToolResult?: AddToolResultFunctionType }) {
   const lastMessage = messages.at(-1);
   const components = lastMessage?.parts?.map((part) => {
     if (
@@ -36,18 +36,20 @@ export function PreviewTool({
 function PreviewOneTool({
   tool,
   addToolResult,
-}: { tool: ToolInvocation; addToolResult: AddToolResultFunctionType }) {
+}: { tool: ToolInvocation; addToolResult?: AddToolResultFunctionType }) {
   const { getToolCallState, setToolCallState } = useToolCallState();
   const { previewToolCall, error: previewToolCallError } = usePreviewToolCall();
 
   useEffect(() => {
+    if (getToolCallState(tool.toolCallId) !== undefined) return;
     previewToolCall(tool);
-  }, [tool, previewToolCall]);
+  }, [tool, previewToolCall, getToolCallState]);
 
   useEffect(() => {
     if (
       previewToolCallError &&
-      getToolCallState(tool.toolCallId) === undefined
+      getToolCallState(tool.toolCallId) === undefined &&
+      addToolResult
     ) {
       addToolResult({
         toolCallId: tool.toolCallId,
@@ -57,6 +59,12 @@ function PreviewOneTool({
       });
       setToolCallState(tool.toolCallId, "rejected");
     }
-  });
+  }, [
+    previewToolCallError,
+    addToolResult,
+    getToolCallState,
+    setToolCallState,
+    tool.toolCallId,
+  ]);
   return null;
 }
