@@ -150,6 +150,7 @@ code {
 /* css variable overwrite */
 .vscode-dark,
 .vscode-light {
+  --background: var(--vscode-editor-background);
   --foreground: var(--vscode-foreground);
 
   --muted-foreground: var(--vscode-descriptionForeground);
