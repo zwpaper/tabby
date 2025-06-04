@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./message-utils": "./src/message-utils.ts"
+    "./message-utils": "./src/message-utils.ts",
+    "./git-utils": "./src/git-utils.ts"
   },
   "scripts": {
     "tsc": "tsc"

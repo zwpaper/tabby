@@ -453,17 +453,20 @@ class TaskService {
   async getPublic(uid: string) {
     const taskQuery = db
       .selectFrom("task")
-      .where("id", "=", uidDecode(uid))
-      .where("isPublicShared", "=", true)
+      .innerJoin("user", "task.userId", "user.id")
+      .where("task.id", "=", uidDecode(uid))
+      .where("task.isPublicShared", "=", true)
       .select([
-        "createdAt",
-        "updatedAt",
-        "conversation",
-        "totalTokens",
-        "status",
+        "task.createdAt",
+        "task.updatedAt",
+        "task.conversation",
+        "task.totalTokens",
+        "task.status",
+        "user.name as userName",
+        "user.image as userImage",
         titleSelect,
         gitSelect,
-        sql<Todo[] | null>`environment->'todos'`.as("todos"),
+        sql<Todo[] | null>`task.environment->'todos'`.as("todos"),
       ]);
 
     const task = await taskQuery.executeTakeFirst();
@@ -474,6 +477,12 @@ class TaskService {
 
     return {
       ...task,
+      user: {
+        name: task.userName,
+        image: task.userImage,
+      },
+      userName: undefined,
+      userImage: undefined,
       uid,
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,

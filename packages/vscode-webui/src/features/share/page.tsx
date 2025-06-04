@@ -4,13 +4,15 @@ import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
 import { formatters } from "@ragdoll/common";
 import type { UIMessage } from "ai";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export function SharePage() {
   const { setTheme } = useTheme();
   const searchParams = new URLSearchParams(location.search);
   const theme = searchParams.get("theme") || "light";
   const logo = searchParams.get("logo") ?? undefined;
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setTheme(theme as Theme);
   }, [theme, setTheme]);
@@ -32,17 +34,46 @@ export function SharePage() {
     };
   }, []);
 
+  // Set up ResizeObserver to monitor content height and send updates to parent
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (!containerRef.current) return;
+
+      // Send height update to parent window
+      window.parent.postMessage(
+        {
+          type: "resize",
+          height: containerRef.current?.clientHeight + 20, // Add some padding
+        },
+        "*",
+      );
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    // Also observe document.body for better coverage
+    if (document.body) {
+      resizeObserver.observe(document.body);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
 
   return (
     <VSCodeWebProvider>
       <ChatContextProvider>
-        <MessageList
-          logo={logo}
-          user={user}
-          messages={renderMessages}
-          isLoading={false}
-        />
+        <div ref={containerRef}>
+          <MessageList
+            logo={logo}
+            user={user}
+            messages={renderMessages}
+            isLoading={false}
+          />
+        </div>
       </ChatContextProvider>
     </VSCodeWebProvider>
   );

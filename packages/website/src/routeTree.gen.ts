@@ -14,6 +14,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as WaitlistImport } from './routes/waitlist'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
+import { Route as ShareUidImport } from './routes/share.$uid'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authenticated.stop-impersonating'
 import { Route as AuthenticatedRedirectVscodeImport } from './routes/_authenticated.redirect-vscode'
@@ -47,6 +48,12 @@ const AuthenticatedRoute = AuthenticatedImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ShareUidRoute = ShareUidImport.update({
+  id: '/share/$uid',
+  path: '/share/$uid',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -219,6 +226,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathnameImport
       parentRoute: typeof rootRoute
     }
+    '/share/$uid': {
+      id: '/share/$uid'
+      path: '/share/$uid'
+      fullPath: '/share/$uid'
+      preLoaderRoute: typeof ShareUidImport
+      parentRoute: typeof rootRoute
+    }
     '/_authenticated/_settings/account': {
       id: '/_authenticated/_settings/account'
       path: '/account'
@@ -375,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/share/$uid': typeof ShareUidRoute
   '/account': typeof AuthenticatedSettingsAccountRoute
   '/billing': typeof AuthenticatedSettingsBillingRoute
   '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -396,6 +411,7 @@ export interface FileRoutesByTo {
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/share/$uid': typeof ShareUidRoute
   '/account': typeof AuthenticatedSettingsAccountRoute
   '/billing': typeof AuthenticatedSettingsBillingRoute
   '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -419,6 +435,7 @@ export interface FileRoutesById {
   '/_authenticated/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/_authenticated/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
+  '/share/$uid': typeof ShareUidRoute
   '/_authenticated/_settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/_settings/billing': typeof AuthenticatedSettingsBillingRoute
   '/_authenticated/_settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
@@ -442,6 +459,7 @@ export interface FileRouteTypes {
     | '/redirect-vscode'
     | '/stop-impersonating'
     | '/auth/$pathname'
+    | '/share/$uid'
     | '/account'
     | '/billing'
     | '/integrations'
@@ -462,6 +480,7 @@ export interface FileRouteTypes {
     | '/redirect-vscode'
     | '/stop-impersonating'
     | '/auth/$pathname'
+    | '/share/$uid'
     | '/account'
     | '/billing'
     | '/integrations'
@@ -483,6 +502,7 @@ export interface FileRouteTypes {
     | '/_authenticated/redirect-vscode'
     | '/_authenticated/stop-impersonating'
     | '/auth/$pathname'
+    | '/share/$uid'
     | '/_authenticated/_settings/account'
     | '/_authenticated/_settings/billing'
     | '/_authenticated/_settings/integrations'
@@ -502,6 +522,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   WaitlistRoute: typeof WaitlistRoute
   AuthPathnameRoute: typeof AuthPathnameRoute
+  ShareUidRoute: typeof ShareUidRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -509,6 +530,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   WaitlistRoute: WaitlistRoute,
   AuthPathnameRoute: AuthPathnameRoute,
+  ShareUidRoute: ShareUidRoute,
 }
 
 export const routeTree = rootRoute
@@ -524,7 +546,8 @@ export const routeTree = rootRoute
         "/",
         "/_authenticated",
         "/waitlist",
-        "/auth/$pathname"
+        "/auth/$pathname",
+        "/share/$uid"
       ]
     },
     "/": {
@@ -575,6 +598,9 @@ export const routeTree = rootRoute
     },
     "/auth/$pathname": {
       "filePath": "auth/$pathname.tsx"
+    },
+    "/share/$uid": {
+      "filePath": "share.$uid.tsx"
     },
     "/_authenticated/_settings/account": {
       "filePath": "_authenticated._settings/account.tsx",
