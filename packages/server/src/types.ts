@@ -31,7 +31,6 @@ export const ZodChatRequestType = z.object({
     .optional()
     .describe("Reasoning configuration"),
   environment: ZodEnvironment.optional(),
-  notify: z.boolean().optional(),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;

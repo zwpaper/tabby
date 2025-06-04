@@ -1,9 +1,17 @@
 import { isAbortError } from "@ai-sdk/provider-utils";
-import type { Environment, TaskError, UserEvent } from "@ragdoll/common";
-import type { Todo } from "@ragdoll/common";
-import { fromUIMessages, toUIMessage, toUIMessages } from "@ragdoll/common";
-import { formatters } from "@ragdoll/common";
-import type { DBMessage } from "@ragdoll/common";
+import type {
+  DBMessage,
+  Environment,
+  TaskError,
+  Todo,
+  UserEvent,
+} from "@ragdoll/common";
+import {
+  formatters,
+  fromUIMessages,
+  toUIMessage,
+  toUIMessages,
+} from "@ragdoll/common";
 import { parseTitle } from "@ragdoll/common/message-utils";
 import type { DB } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
@@ -25,7 +33,6 @@ import { db } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
 import { publishTaskEvent } from "../server";
 import type { ZodChatRequestType } from "../types";
-import { slackService } from "./slack";
 
 const titleSelect =
   sql<string>`(conversation #>> '{messages, 0, parts, 0, text}')::text`.as(
@@ -116,7 +123,6 @@ class TaskService {
     messages: UIMessage[],
     finishReason: FinishReason,
     totalTokens: number | undefined,
-    notify: boolean,
   ) {
     const status = getTaskStatus(messages, finishReason);
     const messagesToSave = formatters.storage(messages);
@@ -145,10 +151,6 @@ class TaskService {
     });
 
     this.streamingTasks.delete(StreamingTask.key(userId, taskId));
-
-    if (notify) {
-      this.sendTaskCompletionNotification(userId, taskId, status);
-    }
   }
 
   async failStreaming(taskId: number, userId: string, error: TaskError) {
@@ -172,46 +174,6 @@ class TaskService {
     });
 
     this.streamingTasks.delete(StreamingTask.key(userId, taskId));
-  }
-
-  private async sendTaskCompletionNotification(
-    userId: string,
-    taskId: number,
-    status: DB["task"]["status"]["__select__"],
-  ) {
-    if (status === "pending-tool") {
-      return;
-    }
-
-    try {
-      const slackIntegration = await slackService.getIntegration(userId);
-      if (slackIntegration) {
-        const { webClient, slackUserId } = slackIntegration;
-        // Open a conversation with the user
-        const openConversation = await webClient.conversations.open({
-          users: slackUserId,
-        });
-
-        if (openConversation.ok && openConversation.channel?.id) {
-          const channelId = openConversation.channel.id;
-          await webClient.chat.postMessage({
-            channel: channelId,
-            text: `Task ${taskId} finished with status: ${status}`,
-          });
-        } else {
-          console.error(
-            `Failed to open conversation with user ${slackUserId}: ${openConversation.error}`,
-          );
-        }
-      } else {
-        console.warn(`Slack client not found for user ${userId}`);
-      }
-    } catch (error) {
-      console.error(
-        `Error sending Slack notification for task ${taskId}:`,
-        error,
-      );
-    }
   }
 
   private async prepareTask(

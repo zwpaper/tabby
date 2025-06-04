@@ -2,8 +2,12 @@ import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
-import { type Environment, appendDataPart, prompts } from "@ragdoll/common";
-import { formatters } from "@ragdoll/common";
+import {
+  type Environment,
+  appendDataPart,
+  formatters,
+  prompts,
+} from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import {
   ClientTools,
@@ -168,7 +172,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
                 finalMessages,
                 finishReason,
                 isUsageValid ? usage.totalTokens : undefined,
-                !!req.notify,
               );
 
               if (isUsageValid) {
