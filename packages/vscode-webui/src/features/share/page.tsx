@@ -1,5 +1,4 @@
 import { MessageList } from "@/components/message/message-list";
-import { type Theme, useTheme } from "@/components/theme-provider";
 import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
 import { cn } from "@/lib/utils";
@@ -10,15 +9,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { TodoList } from "../todo";
 
 export function SharePage() {
-  const { setTheme } = useTheme();
   const searchParams = new URLSearchParams(location.search);
-  const theme = searchParams.get("theme") || "light";
   const logo = searchParams.get("logo") ?? undefined;
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setTheme(theme as Theme);
-  }, [theme, setTheme]);
 
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [user, setUser] = useState<{ name: string; image?: string | null }>();

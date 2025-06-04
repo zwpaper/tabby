@@ -1,3 +1,5 @@
+import { ThemeProvider, useTheme } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { apiClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
@@ -16,7 +18,7 @@ import moment from "moment";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export const Route = createFileRoute("/share/$uid")({
-  component: RouteComponent,
+  component: ThemeWrapped,
   loader: async ({ params }) => {
     const { uid } = params;
 
@@ -54,24 +56,38 @@ export const Route = createFileRoute("/share/$uid")({
 const isDEV = import.meta.env.DEV;
 const webviewOrigin = "http://localhost:4112";
 
+function ThemeWrapped() {
+  return (
+    <ThemeProvider storageKey="pochi-share-theme" defaultTheme="light">
+      <RouteComponent />
+    </ThemeProvider>
+  );
+}
+
 function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loaded, setLoaded] = useState(false);
   const [iframeError, setIframeError] = useState<Error | undefined>(undefined);
   const [iframeHeight, setIframeHeight] = useState<number>(600); // Default height
+  const { theme } = useTheme();
 
   const displayError = iframeError;
 
   const iframeUrl = useMemo(() => {
     const hostOrigin = window.location.origin;
     const search = new URLSearchParams({
-      theme: "light",
       logo: `${hostOrigin}/logo192.png`,
     }).toString();
 
-    return isDEV ? `${webviewOrigin}/share?${search}` : `/share.html?${search}`;
-  }, []);
+    const hash = new URLSearchParams({
+      theme: theme || "light",
+    }).toString();
+
+    return isDEV
+      ? `${webviewOrigin}/share?${search}#${hash}`
+      : `/share.html?${search}#${hash}`;
+  }, [theme]);
 
   const handleIframeError = useCallback(
     (event: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
@@ -134,9 +150,12 @@ function RouteComponent() {
       <div className="space-y-4 px-4 pt-2">
         <div className="flex items-start gap-3">
           <div className="flex flex-1 flex-col space-y-3 overflow-hidden pr-8">
-            <h1 className="truncate whitespace-nowrap font-bold text-2xl">
-              {loaderData?.title || "Task"}
-            </h1>
+            <span className="flex gap-1">
+              <h1 className="truncate whitespace-nowrap font-bold text-2xl">
+                {loaderData?.title || "Task"}
+              </h1>
+              <ThemeToggle />
+            </span>
 
             <div className="flex min-h-4 flex-col gap-3 text-muted-foreground text-sm md:flex-row">
               {loaderData?.updatedAt && (
