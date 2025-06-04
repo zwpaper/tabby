@@ -421,6 +421,7 @@ class TaskService {
         "totalTokens",
         "event",
         "status",
+        "error",
         "isPublicShared",
         titleSelect,
         gitSelect,

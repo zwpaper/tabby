@@ -26,6 +26,7 @@ class SlackService {
         "app_mentions:read",
         "channels:read",
         "users:read",
+        "im:read",
 
         // sendMessage / reaction.
         "chat:write",
