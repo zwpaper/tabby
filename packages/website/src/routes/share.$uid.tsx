@@ -270,7 +270,7 @@ function GitBadge({
     : `${git.origin}/${git.branch}`;
 
   const badgeContent = (
-    <div className={cn("flex items-center gap-0", className)}>
+    <div className={cn("flex flex-col md:flex-row", className)}>
       <span className="flex items-center">
         <IconComponent className="h-4 w-4" />
         <span>{displayText}</span>
