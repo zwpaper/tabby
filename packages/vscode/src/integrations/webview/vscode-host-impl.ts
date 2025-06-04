@@ -8,7 +8,7 @@ import {
   getSystemInfo,
   getWorkspaceRulesFileUri,
 } from "@/lib/env";
-import { ignoreWalk, isBinaryFile, isFileExists } from "@/lib/fs";
+import { isBinaryFile, isFileExists } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PostHog } from "@/lib/posthog";
@@ -35,6 +35,7 @@ import {
   type ThreadSignalSerialization,
 } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/common";
+import { ignoreWalk } from "@ragdoll/common/node";
 import {
   type PreviewToolFunctionType,
   ServerToolApproved,
@@ -121,8 +122,11 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     const MaxFileItems = 500;
     let files = workspaceFolders?.length
       ? (
-          await ignoreWalk({ dir: workspaceFolders[0].uri, recursive: true })
-        ).map((res) => vscode.workspace.asRelativePath(res.uri))
+          await ignoreWalk({
+            dir: workspaceFolders[0].uri.fsPath,
+            recursive: true,
+          })
+        ).map((res) => vscode.workspace.asRelativePath(res.filepath))
       : [];
     const isTruncated = files.length > MaxFileItems;
     files = files.slice(0, MaxFileItems);
@@ -179,11 +183,11 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     }
 
     const results = await ignoreWalk({
-      dir: workspaceFolders[0].uri,
+      dir: workspaceFolders[0].uri.fsPath,
       recursive: true,
     });
     return results.map((item) => ({
-      filepath: vscode.workspace.asRelativePath(item.uri),
+      filepath: vscode.workspace.asRelativePath(item.filepath),
       isDir: item.isDir,
     }));
   };

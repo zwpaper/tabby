@@ -5,8 +5,11 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./node": "./src/node/index.ts",
     "./message-utils": "./src/message-utils.ts",
-    "./git-utils": "./src/git-utils.ts"
+    "./git-utils": "./src/git-utils.ts",
+    "./output-utils": "./src/output-utils.ts",
+    "./diff-utils": "./src/diff-utils.ts"
   },
   "scripts": {
     "tsc": "tsc"
@@ -21,7 +24,8 @@
     "rehype": "^13.0.2",
     "remeda": "catalog:",
     "zod": "catalog:",
-    "tslog": "^4.9.3"
+    "tslog": "^4.9.3",
+    "ignore": "^7.0.5"
   },
   "devDependencies": {
     "@types/hast": "^3.0.4"

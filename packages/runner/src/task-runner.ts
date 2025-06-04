@@ -2,19 +2,60 @@ import {
   isAssistantMessageWithCompletedToolCalls,
   updateToolCallResult,
 } from "@ai-sdk/ui-utils";
-import { type TaskEvent, fromUIMessage, toUIMessages } from "@ragdoll/common";
+import {
+  type TaskEvent,
+  fromUIMessage,
+  getLogger,
+  toUIMessages,
+} from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
+import type { ToolFunctionType } from "@ragdoll/tools";
 import type { ToolInvocation, UIMessage } from "ai";
 import { apiClient, pochiEvents } from "./lib/api-client";
+import { applyDiff } from "./tools/apply-diff";
+import { executeCommand } from "./tools/execute-command";
+import { globFiles } from "./tools/glob-files";
+import { listFiles } from "./tools/list-files";
+import { multiApplyDiff } from "./tools/multi-apply-diff";
+import { readFile } from "./tools/read-file";
+import { searchFiles } from "./tools/search-files";
+import { todoWrite } from "./tools/todo-write";
+import { writeToFile } from "./tools/write-to-file";
 
 type TaskStatus = DB["task"]["status"]["__select__"];
+
+const ToolMap: Record<
+  string,
+  // biome-ignore lint/suspicious/noExplicitAny: external call without type information
+  ToolFunctionType<any>
+> = {
+  readFile,
+  applyDiff,
+  globFiles,
+  listFiles,
+  multiApplyDiff,
+  todoWrite,
+  writeToFile,
+  searchFiles,
+  executeCommand,
+};
+
+const logger = getLogger("TaskRunner");
+
+function safeCall<T>(x: Promise<T>) {
+  return x.catch((e) => {
+    return {
+      error: e.message as string,
+    };
+  });
+}
 
 export class TaskRunner {
   constructor(private readonly taskId: number) {}
 
   private async step(): Promise<TaskStatus> {
     const task = await this.loadTask();
-    console.log("step start", task.status);
+    logger.info("step start", task.status);
     if (task.status === "streaming") {
       throw new Error("Task is already running");
     }
@@ -44,13 +85,7 @@ export class TaskRunner {
         throw new Error("No tool call found");
       }
 
-      // FIXME: actually execute tool call.
-      const toolResult = await (async () => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return {
-          success: true,
-        };
-      })();
+      const toolResult = await this.executeToolCall(nextToolCall);
 
       updateToolCallResult({
         messages,
@@ -111,6 +146,26 @@ export class TaskRunner {
     }
 
     return streamDone;
+  }
+
+  private async executeToolCall(tool: ToolInvocation) {
+    if (tool.state !== "call") {
+      throw new Error(`Tool invocation is not in call state: ${tool.state}`);
+    }
+    const toolFunction = ToolMap[tool.toolName];
+    if (!toolFunction) {
+      return {
+        error: `Tool ${tool.toolName} not found.`,
+      };
+    }
+
+    logger.info("Executing tool", tool.toolName, "with args", tool.args);
+    return await safeCall(
+      toolFunction(tool.args, {
+        messages: [],
+        toolCallId: tool.toolCallId,
+      }),
+    );
   }
 
   async start() {

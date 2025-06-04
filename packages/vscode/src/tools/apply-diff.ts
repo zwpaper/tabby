@@ -1,7 +1,7 @@
 import { DiffView } from "@/integrations/editor/diff-view";
-import { parseDiffAndApplyV2 } from "@/lib/diff"; // Import the new function that matches tools definition
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import { parseDiffAndApplyV2 } from "@ragdoll/common/diff-utils"; // Import the new function that matches tools definition
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
 import { fileTypeFromBuffer } from "file-type";

@@ -13,3 +13,4 @@ const runner = new TaskRunner(taskId);
 
 const status = await runner.start();
 console.log("status", status);
+process.exit(0);

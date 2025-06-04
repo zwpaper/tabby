@@ -1,10 +1,9 @@
 import * as path from "node:path";
-import { getWorkspaceFolder } from "@/lib/fs";
-import { getLogger } from "@/lib/logger";
+import { getLogger } from "@ragdoll/common";
 import { ignoreWalk } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { minimatch } from "minimatch";
-import * as vscode from "vscode";
+import { getWorkspacePath } from "../lib/fs";
 
 const logger = getLogger("globFilesTool");
 const MaxGlobFileItems = 500;
@@ -33,12 +32,10 @@ export const globFiles: ToolFunctionType<ClientToolsType["globFiles"]> = async (
   let isTruncated = false;
 
   try {
-    const workspaceFolder = getWorkspaceFolder();
-
-    const dir = vscode.Uri.joinPath(workspaceFolder.uri, searchPath);
+    const dir = path.join(getWorkspacePath(), searchPath);
 
     const allFiles = await ignoreWalk({
-      dir: dir.fsPath,
+      dir,
       recursive: true,
       abortSignal,
     });

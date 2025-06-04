@@ -2,7 +2,8 @@
   "name": "@ragdoll/runner",
   "bin": "src/cli.ts",
   "scripts": {
-    "start": "bun run src/cli.ts"
+    "start": "bun run src/cli.ts",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",
@@ -10,9 +11,13 @@
     "@ragdoll/server": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
     "ai": "catalog:",
-    "hono": "catalog:"
+    "file-type": "^21.0.0",
+    "hono": "catalog:",
+    "minimatch": "^10.0.1",
+    "vscode-ripgrep": "^1.13.2"
   },
   "devDependencies": {
-    "@ragdoll/db": "workspace:*"
+    "@ragdoll/db": "workspace:*",
+    "@ragdoll/tools": "workspace:*"
   }
 }

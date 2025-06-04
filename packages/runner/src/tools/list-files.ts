@@ -1,9 +1,8 @@
 import * as path from "node:path";
-import { getWorkspaceFolder } from "@/lib/fs";
-import { getLogger } from "@/lib/logger";
+import { getLogger } from "@ragdoll/common";
 import { ignoreWalk } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import * as vscode from "vscode";
+import { asRelativePath, getWorkspacePath } from "../lib/fs";
 
 const logger = getLogger("listFilesTool");
 
@@ -31,11 +30,11 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
   }
 
   try {
-    const workspaceFolder = getWorkspaceFolder();
+    const workspaceFolder = getWorkspacePath();
 
-    const dir = vscode.Uri.joinPath(workspaceFolder.uri, dirPath);
+    const dir = path.join(workspaceFolder, dirPath);
     const fileResults = await ignoreWalk({
-      dir: dir.fsPath,
+      dir,
       recursive: !!recursive,
       abortSignal,
     });
@@ -43,7 +42,7 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
     const isTruncated = fileResults.length > MaxListFileItems;
     const files = fileResults
       .slice(0, MaxListFileItems)
-      .map((x) => vscode.workspace.asRelativePath(x.filepath));
+      .map((x) => asRelativePath(x.filepath));
 
     return { files, isTruncated };
   } catch (error) {

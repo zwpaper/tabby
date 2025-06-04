@@ -2,8 +2,6 @@ import * as diff from "diff";
 import { fileTypeFromBuffer } from "file-type";
 import * as vscode from "vscode";
 
-export { ignoreWalk } from "./ignore-walk";
-
 /**
  * Get the workspace folder or throw an error if none exists
  */

@@ -1,31 +1,29 @@
-import * as assert from "assert";
-import { describe, it } from "mocha";
+import { describe, it, expect } from "vitest";
 import { fixCodeGenerationOutput } from "../output-utils";
 
 describe('fixCodeGenerationOutput', () => {
   it('should handle empty string', () => {
-    assert.strictEqual(fixCodeGenerationOutput(''), '');
+    expect(fixCodeGenerationOutput('')).toBe('');
   });
 
   it('should remove leading backslash', () => {
-    assert.strictEqual(fixCodeGenerationOutput('\\Hello'), 'Hello');
+    expect(fixCodeGenerationOutput('\\Hello')).toBe('Hello');
   });
 
   it('should remove leading backslash and new line', () => {
-    assert.strictEqual(fixCodeGenerationOutput('\\\nHello'), 'Hello');
+    expect(fixCodeGenerationOutput('\\\nHello')).toBe('Hello');
   });
 
   it('should remove leading backticks', () => {
-    assert.strictEqual(fixCodeGenerationOutput('```Hello'), 'Hello');
+    expect(fixCodeGenerationOutput('```Hello')).toBe('Hello');
   });
 
   it('should remove trailing backticks', () => {
-    assert.strictEqual(fixCodeGenerationOutput('Hello```'), 'Hello');
+    expect(fixCodeGenerationOutput('Hello```')).toBe('Hello');
   });
-
 
   it('should not modify text without issues', () => {
     const input = 'Normal text without issues';
-    assert.strictEqual(fixCodeGenerationOutput(input), input);
+    expect(fixCodeGenerationOutput(input)).toBe(input);
   });
-}); 
+});
