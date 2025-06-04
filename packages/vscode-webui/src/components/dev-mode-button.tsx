@@ -9,11 +9,14 @@ import {
 import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { createCoreMessagesForCopy } from "@/lib/utils/message";
+import { vscodeHost } from "@/lib/vscode";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Todo } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/common";
-import { CheckIcon, CopyIcon, SettingsIcon } from "lucide-react"; // Removed FilesIcon
+import { useRouter } from "@tanstack/react-router";
+import { Bot, CheckIcon, CopyIcon, SettingsIcon } from "lucide-react"; // Removed FilesIcon
 import type React from "react";
+import { useCallback } from "react";
 
 interface UpdatedCopyMenuItemProps {
   fetchContent: () => Promise<string> | string; // Can be sync or async
@@ -46,12 +49,14 @@ interface DevModeButtonProps {
   messages: UIMessage[];
   todos: Todo[] | undefined;
   buildEnvironment: () => Promise<Environment>;
+  taskId: number | undefined;
 }
 
 export function DevModeButton({
   messages,
   buildEnvironment,
   todos,
+  taskId,
 }: DevModeButtonProps) {
   const [isDevMode] = useIsDevMode();
   if (!isDevMode) return null;
@@ -77,6 +82,16 @@ export function DevModeButton({
   const getTodosContent = () => {
     return JSON.stringify(todos, null, 2);
   };
+
+  const { navigate } = useRouter();
+
+  const handleRunInBackground = useCallback(() => {
+    if (!taskId) {
+      return;
+    }
+    vscodeHost.runTask(taskId);
+    navigate({ to: "/runner", replace: true, search: { taskId } });
+  }, [taskId, navigate]);
 
   return (
     <DropdownMenu>
@@ -109,6 +124,15 @@ export function DevModeButton({
             text="Copy Environment"
           />
           <CopyMenuItem fetchContent={getTodosContent} text="Copy TODOs" />
+          {taskId && (
+            <DropdownMenuItem
+              onClick={handleRunInBackground}
+              className="cursor-pointer"
+            >
+              <Bot className="inline" />
+              <span className="ml-2">Run in Background</span>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>

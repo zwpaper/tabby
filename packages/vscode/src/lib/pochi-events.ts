@@ -2,7 +2,8 @@ import { type PochiEventSource, createPochiEventSource } from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
-import type { TokenStorage } from "./token-storage";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { TokenStorage } from "./token-storage";
 
 @injectable()
 @singleton()

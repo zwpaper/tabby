@@ -13,6 +13,8 @@ import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PostHog } from "@/lib/posthog";
 // biome-ignore lint/style/useImportType: needed for dependency injection
+import { TaskRunnerManager } from "@/lib/task-runner-manager";
+// biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
 import { applyDiff, previewApplyDiff } from "@/tools/apply-diff";
 import { executeCommand } from "@/tools/execute-command";
@@ -47,6 +49,7 @@ import type {
   McpStatus,
   ResourceURI,
   SessionState,
+  TaskRunner,
   VSCodeHostApi,
 } from "@ragdoll/vscode-webui-bridge";
 import type { Tool } from "ai";
@@ -74,6 +77,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly gitStatusReader: GitStatusReader,
     private readonly posthog: PostHog,
     private readonly mcpHub: McpHub,
+    private readonly taskRunnerManager: TaskRunnerManager,
   ) {}
 
   listWorkflowsInWorkspace = (): Promise<
@@ -337,6 +341,16 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   async openExternal(uri: string): Promise<void> {
     await vscode.env.openExternal(vscode.Uri.parse(uri));
   }
+
+  runTask = async (taskId: number) => {
+    this.taskRunnerManager.runTask(taskId);
+  };
+
+  readTaskRunners = async (): Promise<
+    ThreadSignalSerialization<TaskRunner[]>
+  > => {
+    return ThreadSignal.serialize(this.taskRunnerManager.status);
+  };
 
   dispose() {
     for (const disposable of this.disposables) {

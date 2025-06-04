@@ -8,6 +8,7 @@ import type {
   ResourceURI,
   SessionState,
   TaskIdParams,
+  TaskRunner,
 } from "./index"; // Adjusted to import from index.ts
 
 export interface VSCodeHostApi {
@@ -133,6 +134,16 @@ export interface VSCodeHostApi {
    * @param uri - The URI to open in an external application.
    */
   openExternal(uri: string): Promise<void>;
+
+  /**
+   * Start running a task in the background.
+   */
+  runTask(taskId: number): Promise<void>;
+
+  /**
+   * Reads the current task runners.
+   */
+  readTaskRunners(): Promise<ThreadSignalSerialization<TaskRunner[]>>;
 }
 
 export interface WebviewHostApi {

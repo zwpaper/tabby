@@ -12,11 +12,13 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/auth-client";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
+import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
 import {
+  Bot,
   Brain,
   CheckCircle2,
   Edit3,
@@ -188,6 +190,8 @@ function Tasks({ cwd }: { cwd: string }) {
     placeholderData: keepPreviousData,
   });
 
+  const taskRunners = useTaskRunners();
+
   const tasks = data?.data || [];
   const meta = data?.pagination; // Adjusted to use 'pagination' from API response
   const isRefetchingFirstPage = !isLoading && isRefetching && page === 1;
@@ -234,7 +238,19 @@ function Tasks({ cwd }: { cwd: string }) {
                     </div>
                   </div>
                 ))
-              : tasks.map((task) => <TaskRow key={task.id} task={task} />)}
+              : tasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    runningInBackground={
+                      taskRunners.find(
+                        (runner) =>
+                          runner.taskId === task.id &&
+                          runner.status === "running",
+                      ) !== undefined
+                    }
+                  />
+                ))}
           </div>
         </ScrollArea>
       </div>
@@ -278,8 +294,19 @@ function EmptyTaskPlaceholder() {
   );
 }
 
-const TaskStatusIcon = ({ status }: { status: string }) => {
+const TaskStatusIcon = ({
+  status,
+  runningInBackground,
+}: { status: string; runningInBackground: boolean | undefined }) => {
   const iconProps = { className: "size-5 text-muted-foreground" };
+  if (runningInBackground) {
+    return (
+      <Bot
+        className={cn(iconProps.className, "animate-bounce")}
+        aria-label="Running in Background"
+      />
+    );
+  }
   switch (status) {
     case "streaming":
       return <Zap {...iconProps} aria-label="Streaming" />;
@@ -321,10 +348,13 @@ type Task = NonNullable<
   InferResponseType<(typeof apiClient.api.tasks)["$get"]>
 >["data"][number];
 
-function TaskRow({ task }: { task: Task }) {
+function TaskRow({
+  task,
+  runningInBackground,
+}: { task: Task; runningInBackground: boolean | undefined }) {
   return (
     <Link
-      to={"/"}
+      to={runningInBackground ? "/runner" : "/"}
       search={{ taskId: task.id }}
       className="group cursor-pointer"
     >
@@ -345,7 +375,10 @@ function TaskRow({ task }: { task: Task }) {
                       git={task.git}
                       className="text-muted-foreground/80 text-xs"
                     />
-                    <TaskStatusIcon status={task.status} />
+                    <TaskStatusIcon
+                      status={task.status}
+                      runningInBackground={runningInBackground}
+                    />
                   </div>
                   <h3 className="line-clamp-2 font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
                     {task.title}
@@ -356,7 +389,10 @@ function TaskRow({ task }: { task: Task }) {
                   <h3 className="line-clamp-2 flex-1 font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
                     {task.title}
                   </h3>
-                  <TaskStatusIcon status={task.status} />
+                  <TaskStatusIcon
+                    status={task.status}
+                    runningInBackground={runningInBackground}
+                  />
                 </div>
               )}
             </div>

@@ -724,6 +724,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                   messages={messages}
                   buildEnvironment={buildEnvironment}
                   todos={todos}
+                  taskId={taskId.current}
                 />
                 {taskId.current && uid.current && (
                   <PublicShareButton

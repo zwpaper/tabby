@@ -16,6 +16,7 @@ import { Route as AuthImport } from './routes/_auth'
 import { Route as AuthIndexImport } from './routes/_auth/index'
 import { Route as AuthTasksImport } from './routes/_auth/tasks'
 import { Route as AuthSettingsImport } from './routes/_auth/settings'
+import { Route as AuthRunnerImport } from './routes/_auth/runner'
 
 // Create/Update Routes
 
@@ -48,6 +49,12 @@ const AuthSettingsRoute = AuthSettingsImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 
+const AuthRunnerRoute = AuthRunnerImport.update({
+  id: '/runner',
+  path: '/runner',
+  getParentRoute: () => AuthRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -65,6 +72,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInImport
       parentRoute: typeof rootRoute
+    }
+    '/_auth/runner': {
+      id: '/_auth/runner'
+      path: '/runner'
+      fullPath: '/runner'
+      preLoaderRoute: typeof AuthRunnerImport
+      parentRoute: typeof AuthImport
     }
     '/_auth/settings': {
       id: '/_auth/settings'
@@ -93,12 +107,14 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface AuthRouteChildren {
+  AuthRunnerRoute: typeof AuthRunnerRoute
   AuthSettingsRoute: typeof AuthSettingsRoute
   AuthTasksRoute: typeof AuthTasksRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthRunnerRoute: AuthRunnerRoute,
   AuthSettingsRoute: AuthSettingsRoute,
   AuthTasksRoute: AuthTasksRoute,
   AuthIndexRoute: AuthIndexRoute,
@@ -109,6 +125,7 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 export interface FileRoutesByFullPath {
   '': typeof AuthRouteWithChildren
   '/sign-in': typeof SignInRoute
+  '/runner': typeof AuthRunnerRoute
   '/settings': typeof AuthSettingsRoute
   '/tasks': typeof AuthTasksRoute
   '/': typeof AuthIndexRoute
@@ -116,6 +133,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
+  '/runner': typeof AuthRunnerRoute
   '/settings': typeof AuthSettingsRoute
   '/tasks': typeof AuthTasksRoute
   '/': typeof AuthIndexRoute
@@ -125,6 +143,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/_auth': typeof AuthRouteWithChildren
   '/sign-in': typeof SignInRoute
+  '/_auth/runner': typeof AuthRunnerRoute
   '/_auth/settings': typeof AuthSettingsRoute
   '/_auth/tasks': typeof AuthTasksRoute
   '/_auth/': typeof AuthIndexRoute
@@ -132,13 +151,14 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '' | '/sign-in' | '/settings' | '/tasks' | '/'
+  fullPaths: '' | '/sign-in' | '/runner' | '/settings' | '/tasks' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/sign-in' | '/settings' | '/tasks' | '/'
+  to: '/sign-in' | '/runner' | '/settings' | '/tasks' | '/'
   id:
     | '__root__'
     | '/_auth'
     | '/sign-in'
+    | '/_auth/runner'
     | '/_auth/settings'
     | '/_auth/tasks'
     | '/_auth/'
@@ -172,6 +192,7 @@ export const routeTree = rootRoute
     "/_auth": {
       "filePath": "_auth.tsx",
       "children": [
+        "/_auth/runner",
         "/_auth/settings",
         "/_auth/tasks",
         "/_auth/"
@@ -179,6 +200,10 @@ export const routeTree = rootRoute
     },
     "/sign-in": {
       "filePath": "sign-in.tsx"
+    },
+    "/_auth/runner": {
+      "filePath": "_auth/runner.tsx",
+      "parent": "/_auth"
     },
     "/_auth/settings": {
       "filePath": "_auth/settings.tsx",

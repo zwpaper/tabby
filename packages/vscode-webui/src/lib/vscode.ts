@@ -70,6 +70,8 @@ function createVSCodeHost(): VSCodeHostApi {
         "readMcpStatus",
         "fetchThirdPartyRules",
         "openExternal",
+        "runTask",
+        "readTaskRunners",
       ],
       exports: {
         openTask(params) {

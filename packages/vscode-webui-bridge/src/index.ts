@@ -37,6 +37,12 @@ export interface ExecuteCommandResult {
   error?: string; // Optional error message if the execution aborted / failed
 }
 
+export interface TaskRunner {
+  taskId: number;
+  status: "running" | "completed" | "error";
+  error?: string;
+}
+
 const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";
 
