@@ -1,4 +1,6 @@
+import { isFolder } from "@/lib/utils/file";
 import type { ClientToolsType } from "@ragdoll/tools";
+import { useMemo } from "react";
 import { FileBadge } from "../file-badge";
 import { FileList } from "../file-list";
 import { StatusIcon } from "../status-icon";
@@ -9,6 +11,9 @@ export const listFilesTool: React.FC<
   ToolProps<ClientToolsType["listFiles"]>
 > = ({ tool, isExecuting }) => {
   const { path } = tool.args || {};
+  const isDirectory = useMemo(() => {
+    return isFolder(path ?? "");
+  }, [path]);
 
   let resultEl: React.ReactNode | null = null;
   let files: string[] = [];
@@ -40,12 +45,22 @@ export const listFilesTool: React.FC<
       <span className="ml-2" />
       {isExecuting || tool.state !== "result" ? (
         <>
-          Reading <FileBadge className="ml-1" path={path ?? ""} />
+          Reading{" "}
+          <FileBadge
+            className="ml-1"
+            path={path ?? ""}
+            isDirectory={isDirectory}
+          />
         </>
       ) : (
         <>
-          Read <FileBadge className="ml-1" path={path ?? ""} />, {files.length}{" "}
-          result
+          Read{" "}
+          <FileBadge
+            className="ml-1"
+            path={path ?? ""}
+            isDirectory={isDirectory}
+          />
+          , {files.length} result
           {files.length > 1 ? "s" : ""} {isTruncated && ", results truncated"}
         </>
       )}

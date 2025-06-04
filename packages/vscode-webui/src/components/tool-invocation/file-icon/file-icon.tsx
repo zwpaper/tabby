@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { isFolder } from "@/lib/utils/file";
 import { Folder } from "lucide-react";
 import iconTheme from "./vs-seti-icon-theme.json";
 import "./seti-icons.css";
@@ -141,35 +140,45 @@ const getIconForFile = (path: string, theme: Theme = "dark"): string => {
   return typedIconTheme.file || "_default";
 };
 
-export const FileIcon: React.FC<{ path: string; className?: string }> = ({
-  path,
-  className,
-}) => {
-  const { theme } = useTheme();
-  return isFolder(path) ? (
-    <Folder
-      className={cn(
-        "mx-0.5 inline size-3 text-blue-600 dark:text-blue-400",
-        className,
-      )}
-    />
-  ) : (
-    <File className={className} path={path} theme={theme} />
-  );
-};
-
-export const File: React.FC<{
+const File: React.FC<{
   path: string;
   theme: Theme;
   className?: string;
-}> = ({ className, path, theme }) => {
+  defaultIconClassName?: string;
+}> = ({ className, path, theme, defaultIconClassName }) => {
   const iconId = getIconForFile(path, theme);
 
   return (
     <span
-      className={cn("icon", `icon${iconId}`, "text-lg/4", className)}
+      className={cn(className, "icon", `icon${iconId}`, "text-lg/4", {
+        [defaultIconClassName ?? ""]: iconId === "_default",
+      })}
       title={path}
       aria-label={`File: ${path}`}
+    />
+  );
+};
+
+export const FileIcon: React.FC<{
+  path: string;
+  className?: string;
+  isDirectory?: boolean;
+  defaultIconClassName?: string;
+}> = ({ path, className, isDirectory = false, defaultIconClassName }) => {
+  const { theme } = useTheme();
+  return isDirectory ? (
+    <Folder
+      className={cn(
+        "mx-0.5 inline size-3 w-[15px] text-blue-600 dark:text-blue-400",
+        className,
+      )}
+    />
+  ) : (
+    <File
+      className={className}
+      path={path}
+      theme={theme}
+      defaultIconClassName={defaultIconClassName}
     />
   );
 };

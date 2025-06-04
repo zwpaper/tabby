@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getFileName } from "@/lib/utils/file";
+import { getFileName, isFolder } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
 import { useState } from "react";
 import { FileIcon } from "./file-icon/file-icon";
@@ -41,7 +41,12 @@ export const FileList: React.FC<{
           <span
             className={`truncate px-1 font-semibold ${activeIndex === index ? "text-secondary-foreground" : "text-foreground"}`}
           >
-            <FileIcon path={match.file} className="mr-1 ml-0.5 w-5 text-xl/4" />
+            <FileIcon
+              path={match.file}
+              className="mr-1 ml-0.5 text-xl/4"
+              defaultIconClassName="ml-0 mr-0.5" // Default icon is larger than others
+              isDirectory={isFolder(match.file)}
+            />
             {getFileName(match.file)}
             {match.line && (
               <span

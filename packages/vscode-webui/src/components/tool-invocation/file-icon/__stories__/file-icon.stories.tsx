@@ -155,5 +155,6 @@ export const Svelte: Story = {
 export const Folder: Story = {
   args: {
     path: "src/components/",
+    isDirectory: true,
   },
 };
