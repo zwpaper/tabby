@@ -1,9 +1,9 @@
-import { TodoList } from "@/features/todo";
+import { LegacyTodoList } from "@/features/todo";
 import type { Todo } from "@ragdoll/common";
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 
-const meta: Meta<typeof TodoList> = {
+const meta: Meta<typeof LegacyTodoList> = {
   title: "Pochi/TODO",
   component: Page,
 };
@@ -43,7 +43,7 @@ function Page(props: any) {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <div style={{ flex: 1 }} />
-      <TodoList
+      <LegacyTodoList
         {...props}
         isEditMode={isEditMode}
         draftTodos={draftTodos}

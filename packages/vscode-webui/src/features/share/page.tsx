@@ -2,10 +2,12 @@ import { MessageList } from "@/components/message/message-list";
 import { type Theme, useTheme } from "@/components/theme-provider";
 import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
-import { formatters } from "@ragdoll/common";
+import { cn } from "@/lib/utils";
+import { type Todo, formatters } from "@ragdoll/common";
 import type { UIMessage } from "ai";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { TodoList } from "../todo";
 
 export function SharePage() {
   const { setTheme } = useTheme();
@@ -20,6 +22,7 @@ export function SharePage() {
 
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [user, setUser] = useState<{ name: string; image?: string | null }>();
+  const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -27,6 +30,7 @@ export function SharePage() {
         const shareMessage = event.data as ShareMessage;
         setMessages(shareMessage.messages);
         setUser(shareMessage.user);
+        setTodos(shareMessage.todos);
       }
     };
     window.addEventListener("message", handler);
@@ -68,17 +72,43 @@ export function SharePage() {
     <VSCodeWebProvider>
       <ChatContextProvider>
         <div ref={containerRef}>
+          {/* todo skeleton outside? */}
           {messages.length === 0 ? (
             <div className="flex min-h-screen items-center justify-center">
               <Loader2 className="size-6 animate-spin" />
             </div>
           ) : (
-            <MessageList
-              logo={logo}
-              user={user}
-              messages={renderMessages}
-              isLoading={false}
-            />
+            <div
+              className={cn(
+                "grid gap-3",
+                todos.length > 0 ? "md:grid-cols-4" : "md:grid-cols-1",
+              )}
+            >
+              <div
+                className={cn(
+                  "order-1 md:order-1",
+                  todos.length > 0 ? "md:col-span-3" : "md:col-span-1",
+                )}
+              >
+                <MessageList
+                  logo={logo}
+                  user={user}
+                  messages={renderMessages}
+                  isLoading={false}
+                />
+              </div>
+              {todos.length > 0 && (
+                <div className="order-2 md:order-2 md:col-span-1">
+                  <TodoList
+                    todos={todos}
+                    className="[&>.todo-border]:!hidden px-4 md:px-0"
+                  >
+                    <TodoList.Header disableCollapse={true} />
+                    <TodoList.Items />
+                  </TodoList>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </ChatContextProvider>
@@ -93,4 +123,5 @@ type ShareMessage = {
     name: string;
     image?: string | null;
   };
+  todos: Todo[];
 };

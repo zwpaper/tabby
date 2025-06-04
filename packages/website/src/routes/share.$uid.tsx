@@ -119,7 +119,7 @@ function RouteComponent() {
           type: "share",
           messages: loaderData.conversation?.messages,
           user: loaderData.user,
-          // FIXME: todo should be the task owner
+          todos: loaderData.todos,
         },
         {
           targetOrigin: isDEV ? webviewOrigin : "/",

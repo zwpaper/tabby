@@ -60,7 +60,7 @@ import {
   useRetry,
 } from "@/features/approval";
 import { AutoApproveMenu } from "@/features/settings";
-import { TodoList, useTodos } from "@/features/todo";
+import { LegacyTodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
@@ -650,7 +650,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
               retry={retry}
             />
             {todos && todos.length > 0 && (
-              <TodoList
+              <LegacyTodoList
                 className="mt-2"
                 todos={todos}
                 status={status}

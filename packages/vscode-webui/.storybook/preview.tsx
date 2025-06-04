@@ -75,6 +75,8 @@ function StoryWrapper({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = window.document.documentElement;
+    const body = window.document.body;
+    body.style.backgroundColor = "var(--background)";
 
     const updateThemeFromRoot = () => {
       if (root.classList.contains("light")) {
