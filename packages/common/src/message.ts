@@ -16,6 +16,7 @@ export type DataPart =
   | {
       type: "append-id";
       id: number;
+      uid: string;
     }
   | ({
       type: "update-usage";

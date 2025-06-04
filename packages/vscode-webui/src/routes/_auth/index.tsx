@@ -47,6 +47,7 @@ import { useUploadImage } from "@/components/image-preview-list/use-upload-image
 import { MessageList } from "@/components/message/message-list";
 import { PreviewTool } from "@/components/preview-tool";
 import { ActiveSelectionBadge } from "@/components/prompt-form/active-selection-badge";
+import { PublicShareButton } from "@/components/public-share-button";
 import "@/components/prompt-form/prompt-form.css";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
@@ -132,8 +133,19 @@ interface ChatProps {
 }
 
 function Chat({ loaderData, isTaskLoading }: ChatProps) {
+  const [isPublicShared, setIsPublicShared] = useState<boolean>(
+    loaderData?.isPublicShared === true,
+  );
+
+  useEffect(() => {
+    if (loaderData) {
+      setIsPublicShared(loaderData.isPublicShared === true);
+    }
+  }, [loaderData]);
+
   const autoApproveGuard = useAutoApproveGuard();
   const taskId = useRef<number | undefined>(loaderData?.id);
+  const uid = useRef<string | undefined>(loaderData?.uid);
   const [totalTokens, setTotalTokens] = useState<number>(
     loaderData?.totalTokens || 0,
   );
@@ -142,6 +154,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   useEffect(() => {
     taskId.current = loaderData?.id;
+    uid.current = loaderData?.uid;
     if (loaderData) {
       setTotalTokens(loaderData.totalTokens || 0);
     }
@@ -171,20 +184,20 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
-  // Error specific to image selection that will auto-dismiss after a few seconds
-  const [imageSelectionError, setImageSelectionError] = useState<
-    Error | undefined
-  >(undefined);
+  // Error that will auto-dismiss after a few seconds
+  const [autoDismissError, setAutoDismissError] = useState<Error | undefined>(
+    undefined,
+  );
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
-    if (imageSelectionError) {
+    if (autoDismissError) {
       const timer = setTimeout(() => {
-        setImageSelectionError(undefined);
+        setAutoDismissError(undefined);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [imageSelectionError]);
+  }, [autoDismissError]);
 
   const handleRemoveImage = (index: number) => {
     setFiles((prev) => {
@@ -195,7 +208,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   };
 
   const showImageError = (message: string) => {
-    setImageSelectionError(new Error(message));
+    setAutoDismissError(new Error(message));
   };
 
   const validateAndAddImages = (
@@ -210,7 +223,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
     if (result.success) {
       setFiles((prevFiles) => [...prevFiles, ...result.validatedImages]);
-      setImageSelectionError(undefined);
+      setAutoDismissError(undefined);
     }
 
     return {
@@ -486,6 +499,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
           event: "newTask",
         });
         taskId.current = part.id;
+        uid.current = part.uid;
 
         queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
@@ -591,7 +605,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error pending retry approval
   const displayError =
-    imageSelectionError || uploadImageError || getDisplayError(pendingApproval);
+    autoDismissError || uploadImageError || getDisplayError(pendingApproval);
 
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading || isEditMode);
@@ -710,6 +724,20 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                   messages={messages}
                   buildEnvironment={buildEnvironment}
                   todos={todos}
+                />
+                <PublicShareButton
+                  isPublicShared={isPublicShared}
+                  disabled={
+                    !taskId.current ||
+                    !uid.current ||
+                    isTaskLoading ||
+                    isModelsLoading
+                  }
+                  taskId={taskId.current}
+                  uid={uid.current}
+                  onError={(error) => {
+                    setAutoDismissError(error);
+                  }}
                 />
                 <Button
                   variant="ghost"

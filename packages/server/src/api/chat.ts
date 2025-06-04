@@ -80,15 +80,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       ["webFetch"].concat(req.tools || []),
     );
 
-    const { id, streamId, messages, event } = await taskService.startStreaming(
-      user.id,
-      req,
-    );
+    const { id, streamId, messages, event, uid } =
+      await taskService.startStreaming(user.id, req);
 
     const dataStream = createDataStream({
       execute: async (stream) => {
         if (req.id === undefined) {
-          appendDataPart({ type: "append-id", id }, stream);
+          appendDataPart({ type: "append-id", id, uid }, stream);
         }
 
         const preparedMessages = await prepareMessages(

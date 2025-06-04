@@ -73,7 +73,10 @@ class TaskService {
     request: z.infer<typeof ZodChatRequestType>,
   ) {
     const streamId = generateId();
-    const { id, conversation, event } = await this.prepareTask(userId, request);
+    const { id, conversation, event, uid } = await this.prepareTask(
+      userId,
+      request,
+    );
     const streamingTask = new StreamingTask(streamId, userId, id);
     this.streamingTasks.set(streamingTask.key, streamingTask);
 
@@ -114,6 +117,7 @@ class TaskService {
       streamId,
       event,
       messages,
+      uid,
     };
   }
 
@@ -188,7 +192,7 @@ class TaskService {
 
     const data = await db
       .selectFrom("task")
-      .select(["conversation", "event", "environment", "status"])
+      .select(["conversation", "event", "environment", "status", "id"])
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
@@ -206,6 +210,7 @@ class TaskService {
       environment: undefined,
       status: undefined,
       id: taskId,
+      uid: uidEncode(data.id),
     };
   }
 
@@ -467,7 +472,6 @@ class TaskService {
       .where("taskId", "=", taskId)
       .where("userId", "=", userId)
       .executeTakeFirst();
-
     return result.numUpdatedRows > 0;
   }
 
