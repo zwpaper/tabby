@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiClient } from "@/lib/auth-client";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { useMutation } from "@tanstack/react-query";
 import { CheckIcon, CopyIcon, Loader2, Share2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -27,7 +28,6 @@ export function PublicShareButton({
   onError,
 }: PublicShareButtonProps) {
   const [isPublicShared, setIsPublicShared] = useState(initialIsPublicShared);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
 
@@ -43,49 +43,56 @@ export function PublicShareButton({
     setIsPublicShared(initialIsPublicShared);
   }, [initialIsPublicShared]);
 
-  const onShareToPublic = async () => {
-    if (!taskId) return;
-    try {
-      setIsSubmitting(true);
+  const shareToggleMutation = useMutation({
+    mutationFn: async (newIsPublicShared: boolean) => {
+      if (!taskId) {
+        throw new Error("Task ID is required");
+      }
+
       const resp = await apiClient.api.tasks[":id"].share.$post({
         param: {
           id: taskId.toString(),
         },
         json: {
-          isPublicShared: true,
+          isPublicShared: newIsPublicShared,
         },
       });
-      if (!resp.ok) {
-        throw new Error(resp.statusText || "Failed to share task");
-      }
-      const data = await resp.json();
-      if (data.success) {
-        setIsSubmitting(false);
-        copyShareLink();
-        setTimeout(() => {
-          setIsPublicShared(true);
-        }, 1200);
-      } else {
-        throw new Error("Failed to share task");
-      }
-    } catch (e) {
-      const error = e instanceof Error ? e : new Error("Failed to share task");
-      onError?.(error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
-  const handleShareToPublicClick: React.MouseEventHandler<HTMLDivElement> = (
-    e,
+      if (!resp.ok) {
+        throw new Error(resp.statusText || "Failed to update share status");
+      }
+
+      const data = await resp.json();
+      if (!data.success) {
+        throw new Error("Failed to update share status");
+      }
+
+      return data;
+    },
+    onSuccess: (_, newIsPublicShared) => {
+      setIsPublicShared(newIsPublicShared);
+    },
+    onError: (error) => {
+      const err =
+        error instanceof Error
+          ? error
+          : new Error("Failed to update share status");
+      onError?.(err);
+    },
+  });
+
+  const handleToggleShare = (
+    e: React.MouseEvent,
+    newIsPublicShared: boolean,
   ) => {
     e.preventDefault();
-    onShareToPublic();
+    e.stopPropagation();
+    if (shareToggleMutation.isPending || !taskId) return;
+    shareToggleMutation.mutate(newIsPublicShared);
   };
 
   const handleCopyLink: React.MouseEventHandler<HTMLDivElement> = (e) => {
     if (!uid) return;
-
     e.preventDefault();
     copyShareLink();
   };
@@ -98,64 +105,77 @@ export function PublicShareButton({
           variant="ghost"
           size="icon"
           className="h-6 w-6 rounded-md p-0 transition-opacity"
-          disabled={disabled || isSubmitting}
+          disabled={disabled || shareToggleMutation.isPending}
         >
           <Share2Icon className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          {isPublicShared ? (
-            <CheckIcon className="mr-2 size-4" />
-          ) : (
-            <div className="mr-2 w-4" /> // Placeholder for alignment
-          )}
-          Public
-          <span className="truncate font-normal text-muted-foreground">
-            {" "}
-            (anyone with the link)
-          </span>
-        </div>
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          {!isPublicShared ? (
-            <CheckIcon className="mr-2 size-4" />
-          ) : (
-            <div className="mr-2 w-4" /> // Placeholder for alignment
-          )}
-          Private
-          <span className="truncate font-normal text-muted-foreground">
-            {" "}
-            (visible only to you)
-          </span>
-        </div>
+        <DropdownMenuItem
+          onClick={(e) => handleToggleShare(e, true)}
+          disabled={shareToggleMutation.isPending}
+          className="cursor-pointer"
+        >
+          <div className="flex items-center">
+            <div className="mr-2 flex w-4 justify-center">
+              {shareToggleMutation.isPending &&
+              shareToggleMutation.variables === true ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : isPublicShared ? (
+                <CheckIcon className="size-4" />
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2 px-1.5 py-1">
+              <span>Public</span>
+              <span className="text-muted-foreground text-xs">
+                Anyone with the link
+              </span>
+            </div>
+          </div>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={(e) => handleToggleShare(e, false)}
+          disabled={shareToggleMutation.isPending}
+          className="cursor-pointer"
+        >
+          <div className="flex items-center">
+            <div className="mr-2 flex w-4 justify-center">
+              {shareToggleMutation.isPending &&
+              shareToggleMutation.variables === false ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : !isPublicShared ? (
+                <CheckIcon className="size-4" />
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2 px-1.5 py-1">
+              <span>Private</span>
+              <span className="text-muted-foreground text-xs">
+                Visible only to you
+              </span>
+            </div>
+          </div>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        {isPublicShared && uid && (
-          <DropdownMenuItem onClick={handleCopyLink} disabled={isSubmitting}>
-            {isCopied ? (
-              <CheckIcon className="mr-2 size-4 text-success" />
-            ) : (
-              <CopyIcon className="mr-2 size-4" />
-            )}
-            Copy link
-          </DropdownMenuItem>
-        )}
-        {!isPublicShared && (
-          <DropdownMenuItem
-            onClick={handleShareToPublicClick}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            ) : isCopied ? (
-              <CheckIcon className="mr-2 size-4 text-success" />
-            ) : (
-              <Share2Icon className="mr-2 size-4" />
-            )}
-            Share to public
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          onClick={handleCopyLink}
+          disabled={shareToggleMutation.isPending || !uid}
+          className="cursor-pointer"
+        >
+          {isCopied ? (
+            <CheckIcon className="mr-2 size-4 text-success" />
+          ) : (
+            <CopyIcon className="mr-2 size-4" />
+          )}
+          Copy link
+          {!uid && (
+            <span className="ml-2 text-muted-foreground text-xs">
+              (Share first)
+            </span>
+          )}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

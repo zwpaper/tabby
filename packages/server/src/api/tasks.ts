@@ -3,7 +3,7 @@ import type { UserEvent } from "@ragdoll/common";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { requireAuth } from "../auth";
+import { optionalAuth, requireAuth } from "../auth";
 import { parseEventFilter } from "../lib/event-filter";
 import { taskService } from "../service/task"; // Added import
 
@@ -143,19 +143,25 @@ const tasks = new Hono()
   )
 
   // Get a public task by UID
-  .get("/:uid/public", zValidator("param", TaskUidParamsSchema), async (c) => {
-    const { uid } = c.req.valid("param");
+  .get(
+    "/:uid/public",
+    zValidator("param", TaskUidParamsSchema),
+    optionalAuth,
+    async (c) => {
+      const { uid } = c.req.valid("param");
+      const user = c.get("user");
 
-    const task = await taskService.getPublic(uid);
+      const task = await taskService.getPublic(uid, user?.id);
 
-    if (!task) {
-      throw new HTTPException(404, { message: "Task not found" });
-    }
+      if (!task) {
+        throw new HTTPException(404, { message: "Task not found" });
+      }
 
-    // Add 5-minute cache headers
-    c.header("Cache-Control", "public, max-age=300, s-maxage=300");
+      // Add 5-minute cache headers
+      c.header("Cache-Control", "public, max-age=300, s-maxage=300");
 
-    return c.json(task);
-  });
+      return c.json(task);
+    },
+  );
 
 export default tasks;

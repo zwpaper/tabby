@@ -725,20 +725,17 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                   buildEnvironment={buildEnvironment}
                   todos={todos}
                 />
-                <PublicShareButton
-                  isPublicShared={isPublicShared}
-                  disabled={
-                    !taskId.current ||
-                    !uid.current ||
-                    isTaskLoading ||
-                    isModelsLoading
-                  }
-                  taskId={taskId.current}
-                  uid={uid.current}
-                  onError={(error) => {
-                    setAutoDismissError(error);
-                  }}
-                />
+                {taskId.current && uid.current && (
+                  <PublicShareButton
+                    isPublicShared={isPublicShared}
+                    disabled={isTaskLoading || isModelsLoading}
+                    taskId={taskId.current}
+                    uid={uid.current}
+                    onError={(error) => {
+                      setAutoDismissError(error);
+                    }}
+                  />
+                )}
                 <Button
                   variant="ghost"
                   size="icon"

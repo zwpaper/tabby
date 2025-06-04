@@ -148,6 +148,12 @@ export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
   })(),
 );
 
+export const optionalAuth = createMiddleware<{ Variables: { user?: User } }>(
+  async (_c, next) => {
+    await next();
+  },
+);
+
 export const requireAuth = (role?: string) =>
   createMiddleware<{ Variables: { user: User } }>(async (c, next) => {
     const user = c.get("user");

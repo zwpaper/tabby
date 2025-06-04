@@ -418,12 +418,20 @@ class TaskService {
     };
   }
 
-  async getPublic(uid: string) {
+  async getPublic(uid: string, userId?: string) {
     const taskQuery = db
       .selectFrom("task")
       .innerJoin("user", "task.userId", "user.id")
       .where("task.id", "=", uidDecode(uid))
-      .where("task.isPublicShared", "=", true)
+      .where((eb) => {
+        if (userId !== undefined) {
+          return eb.or([
+            eb("task.isPublicShared", "=", true),
+            eb("task.userId", "=", userId),
+          ]);
+        }
+        return eb("task.isPublicShared", "=", true);
+      })
       .select([
         "task.createdAt",
         "task.updatedAt",
