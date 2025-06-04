@@ -4,7 +4,7 @@ import { getLogger } from "@ragdoll/common";
 import { searchFilesWithRipgrep } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { rgPath as rg } from "vscode-ripgrep";
-import { asRelativePath, getWorkspacePath } from "../lib/fs";
+import { getWorkspacePath } from "../lib/fs";
 
 /**
  * Synchronously check if a command exists in the system PATH
@@ -50,7 +50,6 @@ export const searchFiles: ToolFunctionType<
     regex,
     rgPath,
     getWorkspacePath(),
-    asRelativePath,
     filePattern,
     abortSignal,
   );

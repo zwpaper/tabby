@@ -1,9 +1,9 @@
 import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
 import { getLogger } from "@ragdoll/common";
-import { parseDiffAndApplyV2 } from "@ragdoll/common/diff-utils";
+import { processMultipleDiffs } from "@ragdoll/common/diff-utils";
+import { validateTextFile } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import { fileTypeFromBuffer } from "file-type";
 import { ensureFileDirectoryExists, getWorkspacePath } from "../lib/fs";
 
 const logger = getLogger("multiApplyDiffTool");
@@ -19,24 +19,10 @@ export const multiApplyDiff: ToolFunctionType<
   await ensureFileDirectoryExists(fileUri);
 
   const fileBuffer = await fs.readFile(fileUri);
-  let updatedContent = fileBuffer.toString();
+  await validateTextFile(fileBuffer);
 
-  for (const edit of edits) {
-    updatedContent = await parseDiffAndApplyV2(
-      updatedContent,
-      edit.searchContent,
-      edit.replaceContent,
-      edit.expectedReplacements,
-    );
-  }
-
-  const type = await fileTypeFromBuffer(fileBuffer);
-
-  if (type && !type.mime.startsWith("text/")) {
-    throw new Error(
-      `The file is binary or not plain text (detected type: ${type.mime}).`,
-    );
-  }
+  const fileContent = fileBuffer.toString();
+  const updatedContent = await processMultipleDiffs(fileContent, edits);
 
   await fs.writeFile(fileUri, updatedContent);
 

@@ -1,10 +1,10 @@
 import { DiffView } from "@/integrations/editor/diff-view";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { parseDiffAndApplyV2 } from "@ragdoll/common/diff-utils"; // Import the new function that matches tools definition
+import { parseDiffAndApplyV2 } from "@ragdoll/common/diff-utils";
+import { validateTextFile } from "@ragdoll/common/node";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
-import { fileTypeFromBuffer } from "file-type";
 import * as vscode from "vscode";
 
 const logger = getLogger("applyDiffTool");
@@ -30,6 +30,8 @@ export const previewApplyDiff: PreviewToolFunctionType<
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
 
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
+  await validateTextFile(fileBuffer);
+
   const fileContent = fileBuffer.toString();
 
   const updatedContent = await parseDiffAndApplyV2(
@@ -55,6 +57,8 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   await ensureFileDirectoryExists(fileUri);
 
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
+  await validateTextFile(fileBuffer);
+
   const fileContent = fileBuffer.toString();
 
   const updatedContent = await parseDiffAndApplyV2(
@@ -63,14 +67,6 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
     replaceContent,
     expectedReplacements,
   );
-
-  const type = await fileTypeFromBuffer(fileBuffer);
-
-  if (type && !type.mime.startsWith("text/")) {
-    throw new Error(
-      `The file is binary or not plain text (detected type: ${type.mime}).`,
-    );
-  }
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
   await diffView.update(updatedContent, true);

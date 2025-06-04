@@ -1,10 +1,10 @@
 import { DiffView } from "@/integrations/editor/diff-view";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { parseDiffAndApplyV2 } from "@ragdoll/common/diff-utils";
+import { processMultipleDiffs } from "@ragdoll/common/diff-utils";
+import { validateTextFile } from "@ragdoll/common/node";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
-import { fileTypeFromBuffer } from "file-type";
 import * as vscode from "vscode";
 
 const logger = getLogger("multiApplyDiffTool");
@@ -24,17 +24,9 @@ export const previewMultiApplyDiff: PreviewToolFunctionType<
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
 
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
-  let updatedContent = fileBuffer.toString();
-
-  // Apply edits sequentially
-  for (const edit of edits) {
-    updatedContent = await parseDiffAndApplyV2(
-      updatedContent,
-      edit.searchContent,
-      edit.replaceContent,
-      edit.expectedReplacements,
-    );
-  }
+  await validateTextFile(fileBuffer);
+  const fileContent = fileBuffer.toString();
+  const updatedContent = await processMultipleDiffs(fileContent, edits);
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
   await diffView.update(updatedContent, state !== "partial-call");
@@ -51,25 +43,10 @@ export const multiApplyDiff: ToolFunctionType<
   await ensureFileDirectoryExists(fileUri);
 
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
-  let updatedContent = fileBuffer.toString();
+  await validateTextFile(fileBuffer);
 
-  // Apply edits sequentially
-  for (const edit of edits) {
-    updatedContent = await parseDiffAndApplyV2(
-      updatedContent,
-      edit.searchContent,
-      edit.replaceContent,
-      edit.expectedReplacements,
-    );
-  }
-
-  const type = await fileTypeFromBuffer(fileBuffer);
-
-  if (type && !type.mime.startsWith("text/")) {
-    throw new Error(
-      `The file is binary or not plain text (detected type: ${type.mime}).`,
-    );
-  }
+  const fileContent = fileBuffer.toString();
+  const updatedContent = await processMultipleDiffs(fileContent, edits);
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
   await diffView.update(updatedContent, true);

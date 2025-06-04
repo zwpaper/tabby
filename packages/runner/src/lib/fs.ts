@@ -5,14 +5,6 @@ export function getWorkspacePath(): string {
   return process.cwd();
 }
 
-export function asRelativePath(pathname: string): string {
-  const workspacePath = getWorkspacePath();
-  if (path.isAbsolute(pathname)) {
-    return path.relative(workspacePath, pathname);
-  }
-  return pathname;
-}
-
 /**
  * Ensure a directory exists by creating it if needed
  */

@@ -11,9 +11,7 @@
     "@ragdoll/server": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
     "ai": "catalog:",
-    "file-type": "^21.0.0",
     "hono": "catalog:",
-    "minimatch": "^10.0.1",
     "vscode-ripgrep": "^1.13.2"
   },
   "devDependencies": {

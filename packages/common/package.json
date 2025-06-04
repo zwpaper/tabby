@@ -25,7 +25,9 @@
     "remeda": "catalog:",
     "zod": "catalog:",
     "tslog": "^4.9.3",
-    "ignore": "^7.0.5"
+    "ignore": "^7.0.5",
+    "file-type": "catalog:",
+    "minimatch": "^10.0.1"
   },
   "devDependencies": {
     "@types/hast": "^3.0.4"

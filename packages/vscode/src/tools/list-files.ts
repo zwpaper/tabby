@@ -1,13 +1,6 @@
-import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
-import { getLogger } from "@/lib/logger";
-import { ignoreWalk } from "@ragdoll/common/node";
+import { listFiles as listFilesImpl } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import * as vscode from "vscode";
-
-const logger = getLogger("listFilesTool");
-
-const MaxListFileItems = 500;
 
 /**
  * Lists files and directories within the specified path
@@ -16,39 +9,10 @@ export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
   { path: dirPath, recursive },
   { abortSignal },
 ) => {
-  logger.debug(
-    "handling listFile with dirPath",
-    dirPath,
-    "and recursive",
+  return await listFilesImpl({
+    cwd: getWorkspaceFolder().uri.fsPath,
+    path: dirPath,
     recursive,
-  );
-
-  if (path.isAbsolute(dirPath)) {
-    logger.error(`Absolute paths are not supported: ${dirPath}`);
-    throw new Error(
-      `Absolute paths are not supported: ${dirPath}. Please use a relative path.`,
-    );
-  }
-
-  try {
-    const workspaceFolder = getWorkspaceFolder();
-
-    const dir = vscode.Uri.joinPath(workspaceFolder.uri, dirPath);
-    const fileResults = await ignoreWalk({
-      dir: dir.fsPath,
-      recursive: !!recursive,
-      abortSignal,
-    });
-
-    const isTruncated = fileResults.length > MaxListFileItems;
-    const files = fileResults
-      .slice(0, MaxListFileItems)
-      .map((x) => vscode.workspace.asRelativePath(x.filepath));
-
-    return { files, isTruncated };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error("Error listing files:", errorMessage);
-    throw new Error(`Failed to list files: ${errorMessage}`);
-  }
+    abortSignal,
+  });
 };

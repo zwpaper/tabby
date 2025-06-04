@@ -1,5 +1,5 @@
 import { exec } from "node:child_process";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { promisify } from "node:util";
 import { getLogger } from "../logger";
 
@@ -66,7 +66,6 @@ export async function searchFilesWithRipgrep(
   regex: string,
   rgPath: string,
   workspacePath: string,
-  asRelativePath: (filePath: string) => string,
   filePattern?: string,
   abortSignal?: AbortSignal,
 ): Promise<{
@@ -126,7 +125,7 @@ export async function searchFilesWithRipgrep(
         if (output.type === "match") {
           const matchData = output.data as RipgrepMatchData;
           matches.push({
-            file: asRelativePath(matchData.path.text),
+            file: relative(workspacePath, matchData.path.text),
             line: matchData.line_number,
             // rg includes the newline in lines.text, trim it
             context: matchData.lines.text.replace(/\r?\n$/, ""),

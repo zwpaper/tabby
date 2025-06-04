@@ -60,6 +60,31 @@ export async function parseDiffAndApplyV2(
 }
 
 /**
+ * Process multiple diff operations sequentially
+ */
+export async function processMultipleDiffs(
+  fileContent: string,
+  edits: Array<{
+    searchContent: string;
+    replaceContent: string;
+    expectedReplacements?: number;
+  }>,
+): Promise<string> {
+  let updatedContent = fileContent;
+
+  for (const edit of edits) {
+    updatedContent = await parseDiffAndApplyV2(
+      updatedContent,
+      edit.searchContent,
+      edit.replaceContent,
+      edit.expectedReplacements,
+    );
+  }
+
+  return updatedContent;
+}
+
+/**
  * Count occurrences of searchContent in text
  */
 function countOccurrences(text: string, searchContent: string): number {

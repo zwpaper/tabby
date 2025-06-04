@@ -3,7 +3,7 @@ import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import { searchFilesWithRipgrep } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import { env, workspace } from "vscode";
+import { env } from "vscode";
 
 const logger = getLogger("searchFiles");
 
@@ -31,7 +31,6 @@ export const searchFiles: ToolFunctionType<
     regex,
     rgPath,
     getWorkspaceFolder().uri.fsPath ?? "",
-    (filePath: string) => workspace.asRelativePath(filePath),
     filePattern,
     abortSignal,
   );
