@@ -400,7 +400,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isSubmitDisabled) return;
+    if (!allowSendMessage) return;
 
     if (files.length > 0) {
       const uploadedImages: Attachment[] = await uploadImages();
@@ -511,19 +511,15 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const { hasToolCallState } = useToolCallState();
   const isExecuting = hasToolCallState("executing");
   const isLoading = status === "streaming" || status === "submitted";
-  const allowEditTodos = !(
-    isTaskLoading ||
-    isModelsLoading ||
-    isExecuting ||
-    isLoading
-  );
 
+  // Base busy state used by multiple conditions (excluding isLoading for submit logic)
+  const isBusyCore = isTaskLoading || isModelsLoading || isExecuting;
+  const isBusy = isBusyCore || isLoading;
+
+  const allowSendMessage = !(isBusy || isEditMode);
+  const showEditTodos = !isBusy;
   const isSubmitDisabled =
-    isTaskLoading ||
-    isModelsLoading ||
-    isExecuting ||
-    isEditMode ||
-    (!isLoading && !input && files.length === 0);
+    isBusyCore || isEditMode || (!isLoading && !input && files.length === 0);
 
   const retryImpl = useRetry({
     error,
@@ -651,7 +647,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                 exitEditMode={exitEditMode}
                 saveTodos={wrappedSaveTodos}
                 updateTodoStatus={updateTodoStatus}
-                allowEdit={allowEditTodos}
+                showEdit={showEditTodos}
               />
             )}
             <AutoApproveMenu />

@@ -128,7 +128,7 @@ export interface TodoListProps {
   exitEditMode: () => void;
   saveTodos: () => void;
   updateTodoStatus: (todoId: string, newStatus: Todo["status"]) => void;
-  allowEdit: boolean;
+  showEdit: boolean;
   className?: string;
 }
 
@@ -142,11 +142,11 @@ export function TodoList({
   exitEditMode,
   saveTodos,
   updateTodoStatus,
-  allowEdit,
+  showEdit,
   className,
 }: TodoListProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const allowEditTodos = useAllowEditTodos() && allowEdit;
+  const showEditTodos = useAllowEditTodos() && showEdit;
 
   // Use draftTodos when in edit mode, otherwise use todos
   const displayTodos = isEditMode
@@ -203,7 +203,7 @@ export function TodoList({
         </button>
         <div className="flex justify-end gap-1 pr-2">
           {!isCollapsed &&
-            allowEditTodos &&
+            showEditTodos &&
             (isEditMode ? (
               <>
                 {hasDirtyChanges && (
