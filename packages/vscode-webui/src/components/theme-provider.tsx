@@ -68,20 +68,12 @@ function useThemeApplication(theme: Theme) {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-  }, [theme]);
 
-  // Apply VSCode theme classes to body in non-VSCode environment
-  useEffect(() => {
-    if (isVSCodeEnvironment()) return;
-
-    const body = document.body;
-
-    // Remove existing VSCode theme classes
-    body.classList.remove("vscode-light", "vscode-dark");
-
-    // Add appropriate VSCode theme class
-    const vscodeClass = theme === "light" ? "vscode-light" : "vscode-dark";
-    body.classList.add(vscodeClass);
+    // Apply VSCode theme classes to body in non-VSCode environment
+    if (!isVSCodeEnvironment()) {
+      root.classList.remove("vscode-light", "vscode-dark");
+      root.classList.add(`vscode-${theme}`);
+    }
   }, [theme]);
 }
 
