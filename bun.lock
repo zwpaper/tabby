@@ -21,6 +21,7 @@
         "@ai-sdk/ui-utils": "catalog:",
         "@ragdoll/db": "workspace:*",
         "@ragdoll/tools": "workspace:*",
+        "@slack/bolt": "catalog:",
         "ai": "catalog:",
         "hast-util-to-text": "^4.0.2",
         "rehype": "^13.0.2",
@@ -106,7 +107,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.2.50",
+      "version": "0.2.51",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@preact/signals-core": "catalog:",

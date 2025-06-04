@@ -35,6 +35,16 @@ export const Route = createFileRoute("/_authenticated/admin/prompt-evaluation")(
   },
 );
 
+function getGithubTemplateUrlFromTasks(tasks: Task[]): string | undefined {
+  const evaluationTask = tasks.find(
+    (task) => task.event?.type === "batch:evaluation",
+  );
+  if (evaluationTask?.event?.type === "batch:evaluation") {
+    return evaluationTask.event.data.githubTemplateUrl;
+  }
+  return undefined;
+}
+
 function calculateBatchStatus(
   tasks: Task[],
 ): "running" | "completed" | "failed" {
@@ -156,7 +166,7 @@ function RouteComponent() {
                 new Date(b.createdAt).getTime(),
             ),
             createdAt: tasks[0]?.createdAt || new Date().toISOString(),
-            githubTemplateUrl: tasks[0]?.event?.data?.githubTemplateUrl,
+            githubTemplateUrl: getGithubTemplateUrlFromTasks(tasks),
           };
         })
         .sort(

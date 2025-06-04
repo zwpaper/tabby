@@ -1,6 +1,11 @@
 import type { DB } from "@ragdoll/db";
+import type { KnownEventFromType } from "@slack/bolt";
 
 export type UserEvent =
+  | {
+      type: "slack:new-task";
+      data: KnownEventFromType<"message">;
+    }
   | {
       type: "website:new-project";
       data: {
@@ -43,26 +48,26 @@ export type TaskEvent = {
   };
 };
 
-export type { Todo } from "./todo";
-export { ZodTodo } from "./todo";
 export {
   ZodEnvironment,
   type Environment,
   type GitStatus,
 } from "./environment";
 export {
-  type DBMessage,
-  type DataPart,
   appendDataPart,
-  toUIMessage,
-  toUIMessages,
   fromUIMessage,
   fromUIMessages,
+  toUIMessage,
+  toUIMessages,
+  type DataPart,
+  type DBMessage,
 } from "./message";
+export { ZodTodo } from "./todo";
+export type { Todo } from "./todo";
 
-export { prompts } from "./prompts";
 export { formatters } from "./formatters";
-export { getLogger, attachTransport } from "./logger";
+export { attachTransport, getLogger } from "./logger";
+export { prompts } from "./prompts";
 
 export type TaskError = {
   message: string;
