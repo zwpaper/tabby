@@ -9,9 +9,10 @@ import {
   toUIMessages,
 } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
+import type { AppType, PochiEventSource } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { ToolInvocation, UIMessage } from "ai";
-import { apiClient, pochiEvents } from "./lib/api-client";
+import type { hc } from "hono/client";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
 import { globFiles } from "./tools/glob-files";
@@ -50,8 +51,14 @@ function safeCall<T>(x: Promise<T>) {
   });
 }
 
+type ApiClient = ReturnType<typeof hc<AppType>>;
+
 export class TaskRunner {
-  constructor(private readonly taskId: number) {}
+  constructor(
+    private readonly apiClient: ApiClient,
+    private readonly pochiEvents: PochiEventSource,
+    private readonly taskId: number,
+  ) {}
 
   private async step(): Promise<TaskStatus> {
     const task = await this.loadTask();
@@ -98,7 +105,7 @@ export class TaskRunner {
     const abortController = new AbortController();
     const streamDone = new Promise<TaskStatus>((resolve) => {
       let streamingStarted = false;
-      const unsubscribe = pochiEvents.subscribe<TaskEvent>(
+      const unsubscribe = this.pochiEvents.subscribe<TaskEvent>(
         "task:status-changed",
         ({ data }) => {
           if (data.taskId !== this.taskId) {
@@ -124,7 +131,7 @@ export class TaskRunner {
     });
 
     // Start streaming
-    const resp = await apiClient.api.chat.stream.$post(
+    const resp = await this.apiClient.api.chat.stream.$post(
       {
         json: {
           id: this.taskId.toString(),
@@ -178,7 +185,7 @@ export class TaskRunner {
   }
 
   async loadTask() {
-    const resp = await apiClient.api.tasks[":id"].$get({
+    const resp = await this.apiClient.api.tasks[":id"].$get({
       param: {
         id: this.taskId.toString(),
       },

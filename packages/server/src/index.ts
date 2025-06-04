@@ -7,7 +7,20 @@ export { deviceLinkClient } from "./lib/device-link/client";
 export type { DBMessage } from "@ragdoll/common";
 export type { auth } from "./auth";
 
-export class PochiEventSource {
+export interface PochiEventSource {
+  /* Subscribe to events, returns a function to unsubscribe */
+  subscribe<T extends { type: string }>(
+    type: string,
+    listener: (data: T) => void,
+  ): () => void;
+  dispose(): void;
+}
+
+export function createPochiEventSource(baseUrl?: string, token?: string) {
+  return new PochiEventSourceImpl(baseUrl, token);
+}
+
+class PochiEventSourceImpl implements PochiEventSource {
   private ws: WebSocket;
 
   constructor(baseUrl?: string, token?: string) {
