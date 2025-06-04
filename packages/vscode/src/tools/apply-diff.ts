@@ -1,8 +1,7 @@
 import { DiffView } from "@/integrations/editor/diff-view";
-import { parseDiffAndApply } from "@/lib/diff"; // Import the extracted function
+import { parseDiffAndApplyV2 } from "@/lib/diff"; // Import the new function that matches tools definition
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { fixCodeGenerationOutput } from "@/tools/output-utils";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
 import { fileTypeFromBuffer } from "file-type";
@@ -16,15 +15,13 @@ const logger = getLogger("applyDiffTool");
 export const previewApplyDiff: PreviewToolFunctionType<
   ClientToolsType["applyDiff"]
 > = async (args, { toolCallId, state }) => {
-  const { path, searchContent, replaceContent, startLine, endLine } =
+  const { path, searchContent, replaceContent, expectedReplacements } =
     args || {};
   if (
     !args ||
     !path ||
     searchContent === undefined ||
-    replaceContent === undefined ||
-    !startLine ||
-    !endLine
+    replaceContent === undefined
   ) {
     return;
   }
@@ -35,12 +32,11 @@ export const previewApplyDiff: PreviewToolFunctionType<
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
   const fileContent = fileBuffer.toString();
 
-  const updatedContent = await parseDiffAndApply(
+  const updatedContent = await parseDiffAndApplyV2(
     fileContent,
-    startLine,
-    endLine,
-    fixCodeGenerationOutput(searchContent),
-    fixCodeGenerationOutput(replaceContent),
+    searchContent,
+    replaceContent,
+    expectedReplacements,
   );
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
@@ -51,7 +47,7 @@ export const previewApplyDiff: PreviewToolFunctionType<
  * Apply a diff to a file using DiffView
  */
 export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
-  { path, searchContent, replaceContent, startLine, endLine },
+  { path, searchContent, replaceContent, expectedReplacements },
   { toolCallId },
 ) => {
   const workspaceFolder = getWorkspaceFolder();
@@ -61,12 +57,11 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
   const fileContent = fileBuffer.toString();
 
-  const updatedContent = await parseDiffAndApply(
+  const updatedContent = await parseDiffAndApplyV2(
     fileContent,
-    startLine,
-    endLine,
-    fixCodeGenerationOutput(searchContent),
-    fixCodeGenerationOutput(replaceContent),
+    searchContent,
+    replaceContent,
+    expectedReplacements,
   );
 
   const type = await fileTypeFromBuffer(fileBuffer);

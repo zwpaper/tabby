@@ -1,8 +1,7 @@
 import { DiffView } from "@/integrations/editor/diff-view";
-import { parseDiffAndApply } from "@/lib/diff";
+import { parseDiffAndApplyV2 } from "@/lib/diff";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { fixCodeGenerationOutput } from "@/tools/output-utils";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
 import { fileTypeFromBuffer } from "file-type";
@@ -16,8 +15,8 @@ const logger = getLogger("multiApplyDiffTool");
 export const previewMultiApplyDiff: PreviewToolFunctionType<
   ClientToolsType["multiApplyDiff"]
 > = async (args, { toolCallId, state }) => {
-  const { path, operations } = args || {};
-  if (!args || !path || !operations || operations.length === 0) {
+  const { path, edits } = args || {};
+  if (!args || !path || !edits || edits.length === 0) {
     return;
   }
 
@@ -27,16 +26,13 @@ export const previewMultiApplyDiff: PreviewToolFunctionType<
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
   let updatedContent = fileBuffer.toString();
 
-  // Sort operations by startLine in descending order
-  const sortedOperations = operations.sort((a, b) => b.startLine - a.startLine);
-
-  for (const operation of sortedOperations) {
-    updatedContent = await parseDiffAndApply(
+  // Apply edits sequentially
+  for (const edit of edits) {
+    updatedContent = await parseDiffAndApplyV2(
       updatedContent,
-      operation.startLine,
-      operation.endLine,
-      fixCodeGenerationOutput(operation.searchContent),
-      fixCodeGenerationOutput(operation.replaceContent),
+      edit.searchContent,
+      edit.replaceContent,
+      edit.expectedReplacements,
     );
   }
 
@@ -49,7 +45,7 @@ export const previewMultiApplyDiff: PreviewToolFunctionType<
  */
 export const multiApplyDiff: ToolFunctionType<
   ClientToolsType["multiApplyDiff"]
-> = async ({ path, operations }, { toolCallId }) => {
+> = async ({ path, edits }, { toolCallId }) => {
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
   await ensureFileDirectoryExists(fileUri);
@@ -57,16 +53,13 @@ export const multiApplyDiff: ToolFunctionType<
   const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
   let updatedContent = fileBuffer.toString();
 
-  // Sort operations by startLine in descending order
-  const sortedOperations = operations.sort((a, b) => b.startLine - a.startLine);
-
-  for (const operation of sortedOperations) {
-    updatedContent = await parseDiffAndApply(
+  // Apply edits sequentially
+  for (const edit of edits) {
+    updatedContent = await parseDiffAndApplyV2(
       updatedContent,
-      operation.startLine,
-      operation.endLine,
-      fixCodeGenerationOutput(operation.searchContent),
-      fixCodeGenerationOutput(operation.replaceContent),
+      edit.searchContent,
+      edit.replaceContent,
+      edit.expectedReplacements,
     );
   }
 
@@ -80,8 +73,8 @@ export const multiApplyDiff: ToolFunctionType<
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
   await diffView.update(updatedContent, true);
-  const edits = await diffView.saveChanges(path, updatedContent);
+  const editsResult = await diffView.saveChanges(path, updatedContent);
 
   logger.info(`Successfully applied multiple diffs to ${path}`);
-  return { success: true, ...edits };
+  return { success: true, ...editsResult };
 };

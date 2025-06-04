@@ -11,7 +11,7 @@ import { UserEdits } from "../user-edits";
 export const applyDiffTool: React.FC<
   ToolProps<ClientToolsType["applyDiff"]>
 > = ({ tool, isExecuting }) => {
-  const { path, startLine, endLine } = tool.args || {};
+  const { path } = tool.args || {};
   const { previewToolCall } = usePreviewToolCall();
   const handleClick = useCallback(() => {
     previewToolCall(tool);
@@ -31,8 +31,6 @@ export const applyDiffTool: React.FC<
         <FileBadge
           className="ml-1"
           path={path}
-          startLine={startLine}
-          endLine={endLine}
           onClick={tool.state !== "result" ? handleClick : undefined}
         />
       )}
