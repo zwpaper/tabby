@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 export function getWorkspacePath(): string {
-  return process.env.POCHI_TASK_RUNNER_WORKSPACE || process.cwd();
+  return process.cwd();
 }
 
 export function asRelativePath(pathname: string): string {

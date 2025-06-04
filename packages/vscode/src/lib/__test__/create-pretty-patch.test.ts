@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { createPrettyPatch } from "..";
+import { createPrettyPatch } from "../fs";
 import { suite, test } from "mocha";
 
 suite("diff-utils", () => {
