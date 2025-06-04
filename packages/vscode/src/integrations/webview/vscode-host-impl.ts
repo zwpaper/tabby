@@ -330,6 +330,10 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return { rulePaths, workspaceRuleExists, copyRules };
   };
 
+  async openExternal(uri: string): Promise<void> {
+    await vscode.env.openExternal(vscode.Uri.parse(uri));
+  }
+
   dispose() {
     for (const disposable of this.disposables) {
       disposable.dispose();

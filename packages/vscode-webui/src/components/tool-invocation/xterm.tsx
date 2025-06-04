@@ -6,7 +6,9 @@ import {
   Terminal,
 } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
+import { isVSCodeEnvironment, vscodeHost } from "@/lib/vscode";
 import { FitAddon } from "@xterm/addon-fit";
+import { WebLinksAddon } from "@xterm/addon-web-links";
 import {
   type ComponentPropsWithoutRef,
   useCallback,
@@ -125,6 +127,16 @@ export interface UseXTermProps {
   };
 }
 
+class WebViewLinksAddon extends WebLinksAddon {
+  constructor() {
+    super((_event: MouseEvent, uri: string) => {
+      vscodeHost.openExternal(uri).catch((error) => {
+        console.error("Failed to open link:", uri, error);
+      });
+    });
+  }
+}
+
 function useXTerm({ options, addons, listeners }: UseXTermProps = {}) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const listenersRef = useRef<UseXTermProps["listeners"]>(listeners);
@@ -133,8 +145,12 @@ function useXTerm({ options, addons, listeners }: UseXTermProps = {}) {
   );
 
   const addonFit = useRef(new FitAddon());
+  const addonWebLinks = useRef(
+    isVSCodeEnvironment() ? new WebViewLinksAddon() : new WebLinksAddon(),
+  );
+
   const addonList = useMemo(
-    () => [addonFit.current, ...(addons ?? [])],
+    () => [addonFit.current, addonWebLinks.current, ...(addons ?? [])],
     [addons],
   );
 

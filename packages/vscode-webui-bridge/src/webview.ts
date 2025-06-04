@@ -127,6 +127,12 @@ export interface VSCodeHostApi {
     workspaceRuleExists: boolean;
     copyRules: () => Promise<void>;
   }>;
+
+  /**
+   * Opens the specified URI in the user's default web browser or external application.
+   * @param uri - The URI to open in an external application.
+   */
+  openExternal(uri: string): Promise<void>;
 }
 
 export interface WebviewHostApi {

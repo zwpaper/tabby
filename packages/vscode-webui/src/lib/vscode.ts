@@ -69,6 +69,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "closeCurrentWorkspace",
         "readMcpStatus",
         "fetchThirdPartyRules",
+        "openExternal",
       ],
       exports: {
         openTask(params) {
