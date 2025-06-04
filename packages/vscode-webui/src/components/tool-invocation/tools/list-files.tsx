@@ -43,23 +43,10 @@ export const listFilesTool: React.FC<
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
-      {isExecuting || tool.state !== "result" ? (
+      Reading{" "}
+      <FileBadge className="ml-1" path={path ?? ""} isDirectory={isDirectory} />
+      {tool.state === "result" && (
         <>
-          Reading{" "}
-          <FileBadge
-            className="ml-1"
-            path={path ?? ""}
-            isDirectory={isDirectory}
-          />
-        </>
-      ) : (
-        <>
-          Read{" "}
-          <FileBadge
-            className="ml-1"
-            path={path ?? ""}
-            isDirectory={isDirectory}
-          />
           , {files.length} result
           {files.length > 1 ? "s" : ""} {isTruncated && ", results truncated"}
         </>
