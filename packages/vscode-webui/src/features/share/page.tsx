@@ -103,7 +103,10 @@ export function SharePage() {
                     todos={todos}
                     className="[&>.todo-border]:!hidden px-4 md:px-0"
                   >
-                    <TodoList.Header disableCollapse={true} title="TODOs" />
+                    <TodoList.Header
+                      disableCollapse={true}
+                      disableInProgressTodoTitle={true}
+                    />
                     <TodoList.Items />
                   </TodoList>
                 </div>

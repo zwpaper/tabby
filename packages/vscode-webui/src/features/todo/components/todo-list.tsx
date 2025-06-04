@@ -110,12 +110,12 @@ function TodoListRoot({ todos, className, children }: TodoListRootProps) {
 interface TodoListHeaderProps {
   children?: ReactNode;
   disableCollapse?: boolean;
-  title?: string;
+  disableInProgressTodoTitle?: boolean;
 }
 
 function TodoListHeader({
   disableCollapse,
-  title,
+  disableInProgressTodoTitle,
   children,
 }: TodoListHeaderProps) {
   const { todos, isCollapsed, setIsCollapsed, status, isEditMode, draftTodos } =
@@ -156,17 +156,19 @@ function TodoListHeader({
         )}
       >
         <span className="h-6 truncate font-semibold">
-          {title ? (
-            <span>{title}</span>
-          ) : inProgressTodo ? (
-            <span
-              className={cn({
-                "animated-gradient-text":
-                  status === "submitted" || status === "streaming",
-              })}
-            >
-              {inProgressTodo.content}
-            </span>
+          {inProgressTodo ? (
+            disableInProgressTodoTitle ? (
+              <span>TODOs</span>
+            ) : (
+              <span
+                className={cn({
+                  "animated-gradient-text":
+                    status === "submitted" || status === "streaming",
+                })}
+              >
+                {inProgressTodo.content}
+              </span>
+            )
           ) : (
             <span>{pendingTodosNum > 0 ? "TODOs" : "🎉 All done!"}</span>
           )}
