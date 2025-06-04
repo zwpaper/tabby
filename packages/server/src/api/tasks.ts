@@ -152,6 +152,9 @@ const tasks = new Hono()
       throw new HTTPException(404, { message: "Task not found" });
     }
 
+    // Add 5-minute cache headers
+    c.header("Cache-Control", "public, max-age=300, s-maxage=300");
+
     return c.json(task);
   });
 
