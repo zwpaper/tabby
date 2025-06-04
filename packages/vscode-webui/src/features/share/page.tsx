@@ -4,6 +4,7 @@ import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
 import { formatters } from "@ragdoll/common";
 import type { UIMessage } from "ai";
+import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export function SharePage() {
@@ -67,12 +68,18 @@ export function SharePage() {
     <VSCodeWebProvider>
       <ChatContextProvider>
         <div ref={containerRef}>
-          <MessageList
-            logo={logo}
-            user={user}
-            messages={renderMessages}
-            isLoading={false}
-          />
+          {messages.length === 0 ? (
+            <div className="flex min-h-screen items-center justify-center">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          ) : (
+            <MessageList
+              logo={logo}
+              user={user}
+              messages={renderMessages}
+              isLoading={false}
+            />
+          )}
         </div>
       </ChatContextProvider>
     </VSCodeWebProvider>
