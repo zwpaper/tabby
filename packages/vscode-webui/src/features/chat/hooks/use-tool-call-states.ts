@@ -20,21 +20,20 @@ export function useToolCallStates() {
 
   const setToolCallState = useCallback(
     (toolCallId: string, state: ToolCallState): void => {
-      setToolCallStates((prev) => {
-        const prevState = prev.get(toolCallId);
-        const allowedTransitions = AllowedTransition.get(prevState);
-        if (!allowedTransitions || !allowedTransitions.includes(state)) {
-          throw new Error(
-            `Invalid state transition from ${prevState} to ${state}`,
-          );
-        }
+      const prevState = toolCallStatesRef.current.get(toolCallId);
+      const allowedTransitions = AllowedTransition.get(prevState);
+      if (!allowedTransitions || !allowedTransitions.includes(state)) {
+        const error = new Error(
+          `Invalid state transition from ${prevState} to ${state}`,
+        );
+        console.error(error.message);
+        throw error;
+      }
 
-        const newMap = new Map(prev);
-        newMap.set(toolCallId, state);
-        // Update ref with latest state
-        toolCallStatesRef.current = newMap;
-        return newMap;
-      });
+      const newMap = new Map(toolCallStatesRef.current);
+      newMap.set(toolCallId, state);
+      toolCallStatesRef.current = newMap;
+      setToolCallStates(newMap);
     },
     [],
   );
