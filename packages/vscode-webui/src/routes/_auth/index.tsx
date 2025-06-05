@@ -377,28 +377,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     data,
   });
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      vscodeHost.setSessionState({
-        input: input,
-      });
-    }, 300);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [input]);
-
-  useEffect(() => {
-    const fetchSessionState = async () => {
-      const sessionState = await vscodeHost.getSessionState(["input"]);
-      if (sessionState.input) {
-        setInput(sessionState.input);
-      }
-    };
-    fetchSessionState();
-  }, [setInput]);
-
   const {
     uploadImages,
     uploadingFilesMap,

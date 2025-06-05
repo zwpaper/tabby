@@ -14,7 +14,7 @@ import {
   ReactRenderer,
   useEditor,
 } from "@tiptap/react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import tippy from "tippy.js";
 import {
   PromptFormMentionExtension,
@@ -295,6 +295,13 @@ export function FormEditor({
           blockSeparator: newLineCharacter,
         });
         setInput(text);
+
+        // Save content when changes
+        debouncedSaveEditorState();
+      },
+      onDestroy() {
+        // Save content when editor is destroyed
+        saveEdtiorState();
       },
       onPaste: (e) => {
         onPaste?.(e);
@@ -308,6 +315,40 @@ export function FormEditor({
       editorRef.current = editor;
     }
   }, [editor, editorRef]);
+
+  // For saving the editor content to the session state
+  const saveEdtiorState = useCallback(async () => {
+    if (editor && !editor.isDestroyed) {
+      await vscodeHost.setSessionState({
+        input: JSON.stringify(editor.getJSON()),
+      });
+    }
+    return null;
+  }, [editor]);
+
+  const debouncedSaveEditorState = useCallback(
+    debounceWithCachedValue(saveEdtiorState, 500, { trailing: true }),
+    [],
+  );
+
+  // Load session state when the editor is initialized
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+    const loadSessionState = async () => {
+      const sessionState = await vscodeHost.getSessionState(["input"]);
+      if (sessionState.input) {
+        try {
+          const content = JSON.parse(sessionState.input);
+          editor.commands.setContent(content, true);
+        } catch (error) {
+          // ignore JSON parse errors
+        }
+      }
+    };
+    loadSessionState();
+  }, [editor]);
 
   // Update editor content when input changes
   useEffect(() => {
