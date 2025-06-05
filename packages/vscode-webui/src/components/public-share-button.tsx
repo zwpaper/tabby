@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { apiClient } from "@/lib/auth-client";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { vscodeHost } from "@/lib/vscode";
 import { useMutation } from "@tanstack/react-query";
 import { CheckIcon, CopyIcon, Loader2, Share2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -71,6 +72,13 @@ export function PublicShareButton({
     },
     onSuccess: (_, newIsPublicShared) => {
       setIsPublicShared(newIsPublicShared);
+
+      // Capture sharePublic event when user shares a thread publicly
+      if (newIsPublicShared) {
+        vscodeHost.capture({
+          event: "sharePublic",
+        });
+      }
     },
     onError: (error) => {
       const err =

@@ -29,4 +29,8 @@ export type CaptureEvent =
       properties: {
         rulePaths: string[];
       };
+    }
+  | {
+      event: "sharePublic";
+      properties?: undefined;
     };
