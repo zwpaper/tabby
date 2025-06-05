@@ -1,5 +1,6 @@
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
@@ -51,6 +52,7 @@ export const Route = createFileRoute("/share/$uid")({
       },
     ],
   }),
+  pendingComponent: SharePageSkeleton,
 });
 
 const isDEV = import.meta.env.DEV;
@@ -70,6 +72,7 @@ function RouteComponent() {
   const [loaded, setLoaded] = useState(false);
   const [iframeError, setIframeError] = useState<Error | undefined>(undefined);
   const [iframeHeight, setIframeHeight] = useState<number>(600); // Default height
+  const [isMessageReady, setIsMessageReady] = useState(false);
   const { theme } = useTheme();
 
   const displayError = iframeError;
@@ -141,6 +144,9 @@ function RouteComponent() {
           targetOrigin: isDEV ? webviewOrigin : "/",
         },
       );
+      setTimeout(() => {
+        setIsMessageReady(true);
+      }, 50);
     }
   }, [loaderData, loaded]);
 
@@ -173,15 +179,18 @@ function RouteComponent() {
       </div>
 
       <div className="flex flex-1 flex-col">
+        {/* Skeleton Loader */}
+        {!isMessageReady && !displayError && <MessageContentSkeleton />}
         {/* Error states */}
         {!!displayError && <ErrorDisplay taskError={null} className="h-full" />}
         <iframe
           ref={iframeRef}
           className={cn("w-full", {
-            "hidden h-0": !loaded || displayError,
+            "hidden h-0": !isMessageReady || displayError,
           })}
           style={{
-            height: loaded && !displayError ? `${iframeHeight}px` : "100%",
+            height:
+              isMessageReady && !displayError ? `${iframeHeight}px` : "100%",
           }}
           title="task"
           src={iframeUrl}
@@ -330,4 +339,62 @@ function formatTime(time: string, prefix: string) {
   }
 
   return `${prefix} ${targetTime.fromNow()}`;
+}
+
+function MessageContentSkeleton() {
+  return (
+    <div className="animate-pulse space-y-2 p-4">
+      {/* Avatar and Name */}
+      <div className="flex items-center space-x-3">
+        <Skeleton className="size-6 rounded-full" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      {/* Simplified text lines for main content */}
+      <div className="space-y-2 pt-1">
+        <Skeleton className="h-4 w-[80%]" />
+        <Skeleton className="h-4 w-[50%]" />
+      </div>
+      {/* Avatar and Name */}
+      <div className="mt-8 flex items-center space-x-3">
+        <div className="flex items-center space-x-3">
+          <Skeleton className="size-6 rounded-full" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+      </div>
+      <div className="space-y-2 pt-1">
+        <Skeleton className="h-4 w-[80%]" />
+        <Skeleton className="h-4 w-[80%]" />
+        <Skeleton className="h-4 w-[50%]" />
+      </div>
+    </div>
+  );
+}
+
+function SharePageSkeleton() {
+  return (
+    <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8">
+      {/* Task header Skeleton */}
+      <div className="animate-pulse space-y-4 px-4 pt-2">
+        <div className="mt-2 flex items-start gap-3">
+          <div className="flex flex-1 flex-col space-y-3 overflow-hidden pr-8">
+            <span className="flex items-center gap-2">
+              <Skeleton className="h-8 w-3/5 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </span>
+            <div className="flex min-h-4 flex-col gap-3 text-sm md:flex-row">
+              <div className="flex items-center gap-1.5">
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 w-28 rounded-md" />
+              </div>
+              <div className="items-center gap-4">
+                <Skeleton className="h-4 w-36 rounded-md" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <MessageContentSkeleton />
+    </div>
+  );
 }
