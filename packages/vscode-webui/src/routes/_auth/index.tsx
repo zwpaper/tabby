@@ -589,10 +589,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const allowAddToolResult = !(isLoading || isTaskLoading || isEditMode);
   const validAddToolResult = allowAddToolResult ? addToolResult : undefined;
 
-  useEffect(() => {
-    document.getElementById("script-loader")?.remove();
-  }, []);
-
   return (
     <div className="flex h-screen flex-col">
       <PreviewTool

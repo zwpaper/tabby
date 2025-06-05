@@ -12,7 +12,7 @@ import { routeTree } from "./routeTree.gen";
 import "./styles.css";
 import { Loader2 } from "lucide-react";
 import { authHooks } from "./lib/auth-client.ts";
-import { vscodeHost } from "./lib/vscode";
+import { isVSCodeEnvironment, vscodeHost } from "./lib/vscode";
 import { Providers } from "./providers.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
 
@@ -60,7 +60,8 @@ declare module "@tanstack/react-router" {
 
 function InnerApp() {
   const { data: auth, isPending } = authHooks.useSession();
-  if (isPending) {
+
+  if (isPending && isVSCodeEnvironment()) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Loader2 className="animate-spin" />
