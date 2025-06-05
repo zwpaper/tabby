@@ -1,10 +1,13 @@
 import type { DB } from "@ragdoll/db";
-import type { KnownEventFromType } from "@slack/bolt";
 
 export type UserEvent =
   | {
       type: "slack:new-task";
-      data: KnownEventFromType<"message">;
+      data: {
+        channel: string;
+        ts: string;
+        prompt: string;
+      };
     }
   | {
       type: "website:new-project";

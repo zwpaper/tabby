@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",
-    "@slack/bolt": "catalog:",
     "@ragdoll/db": "workspace:*",
     "@ragdoll/tools": "workspace:*",
     "ai": "catalog:",

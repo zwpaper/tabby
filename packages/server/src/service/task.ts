@@ -33,6 +33,7 @@ import { db } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
 import { publishTaskEvent } from "../server";
 import type { ZodChatRequestType } from "../types";
+import { slackTaskService } from "./slack-task";
 
 const titleSelect =
   sql<string>`(conversation #>> '{messages, 0, parts, 0, text}')::text`.as(
@@ -155,6 +156,7 @@ class TaskService {
     });
 
     this.streamingTasks.delete(StreamingTask.key(userId, taskId));
+    slackTaskService.notifyTaskStatusUpdate(userId, taskId);
   }
 
   async failStreaming(taskId: number, userId: string, error: TaskError) {
@@ -178,6 +180,7 @@ class TaskService {
     });
 
     this.streamingTasks.delete(StreamingTask.key(userId, taskId));
+    slackTaskService.notifyTaskStatusUpdate(userId, taskId);
   }
 
   private async prepareTask(

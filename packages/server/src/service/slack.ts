@@ -6,7 +6,7 @@ import { sql } from "kysely";
 import { auth } from "../auth";
 import { db } from "../db";
 import { connectToWeb } from "../lib/connect";
-import { publishUserEvent } from "../server";
+import { slackTaskService } from "./slack-task";
 
 class SlackService {
   private app: App;
@@ -146,21 +146,44 @@ class SlackService {
   }
 
   private registerEvents() {
-    this.app.message(/.*/, async ({ context, message }) => {
+    // Handle slash commands for task creation
+    this.app.command("/newtask", async ({ command, ack, respond, context }) => {
+      // Acknowledge the command request
+      await ack();
+
+      // Check if command is used in DM
+      const isDM =
+        command.channel_name === "directmessage" ||
+        command.channel_id.startsWith("D");
+
+      if (!isDM) {
+        await respond({
+          text: "❌ The `/newtask` command can only be used in direct messages. Please send me a DM to create tasks.",
+          response_type: "ephemeral",
+        });
+        return;
+      }
+
       const vendorIntegrationId = context.teamId || context.enterpriseId;
       if (!vendorIntegrationId) return;
+
       const integration = await db
         .selectFrom("externalIntegration")
         .select("userId")
         .where(sql`"vendorData"->>'provider'`, "=", "slack")
         .where(sql`"vendorData"->>'integrationId'`, "=", vendorIntegrationId)
         .executeTakeFirst();
+
       if (!integration) return;
 
-      publishUserEvent(integration.userId, {
-        type: "slack:message",
-        data: message,
-      });
+      const taskText = command.text?.trim();
+      if (!taskText) return;
+
+      await slackTaskService.createTaskFromSlashCommand(
+        integration.userId,
+        command,
+        taskText,
+      );
     });
   }
 
