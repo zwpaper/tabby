@@ -1,12 +1,20 @@
 import { useCallback, useRef, useState } from "react";
 
-export type ToolCallState = "executing" | "rejected" | "completed";
+export type ToolCallState =
+  | "preview"
+  | "ready"
+  | "executing"
+  | "rejected"
+  | "completed";
 
 const AllowedTransition: Map<ToolCallState | undefined, ToolCallState[]> =
   new Map([
-    [undefined, ["executing", "rejected"]],
+    [undefined, ["preview"]],
+    ["preview", ["ready", "rejected"]],
+    ["ready", ["executing", "rejected"]],
     ["executing", ["completed"]],
     ["completed", []],
+    ["rejected", []],
   ]);
 
 // Hook to manage tool call states

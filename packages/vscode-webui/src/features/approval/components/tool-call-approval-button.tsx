@@ -70,7 +70,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const abortText = ToolAbortText[pendingApproval.name] || null;
 
   const onAccept = useCallback(async () => {
-    if (getToolCallState(pendingApproval.tool.toolCallId) !== undefined) {
+    if (getToolCallState(pendingApproval.tool.toolCallId) !== "ready") {
       return;
     }
 
@@ -79,7 +79,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
 
   const onReject = useCallback(
     (errorText = "User rejected tool call") => {
-      if (getToolCallState(pendingApproval.tool.toolCallId) !== undefined) {
+      if (getToolCallState(pendingApproval.tool.toolCallId) !== "ready") {
         return;
       }
 
@@ -113,7 +113,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
 
   const showAccept =
     !isAutoApproved &&
-    getToolCallState(pendingApproval.tool.toolCallId) === undefined;
+    getToolCallState(pendingApproval.tool.toolCallId) === "ready";
   if (showAccept) {
     return (
       <>

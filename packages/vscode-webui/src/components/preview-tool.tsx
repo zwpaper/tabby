@@ -38,33 +38,45 @@ function PreviewOneTool({
   addToolResult,
 }: { tool: ToolInvocation; addToolResult?: AddToolResultFunctionType }) {
   const { getToolCallState, setToolCallState } = useToolCallState();
-  const { previewToolCall, error: previewToolCallError } = usePreviewToolCall();
+  const {
+    previewToolCall,
+    error: previewToolCallError,
+    done: previewDone,
+  } = usePreviewToolCall();
 
   useEffect(() => {
-    if (getToolCallState(tool.toolCallId) !== undefined) return;
-    previewToolCall(tool);
-  }, [tool, previewToolCall, getToolCallState]);
+    if (getToolCallState(tool.toolCallId) === undefined) {
+      setToolCallState(tool.toolCallId, "preview");
+    }
+
+    if (getToolCallState(tool.toolCallId) === "preview") {
+      previewToolCall(tool);
+    }
+  }, [tool, previewToolCall, getToolCallState, setToolCallState]);
 
   useEffect(() => {
-    if (
-      previewToolCallError &&
-      getToolCallState(tool.toolCallId) === undefined &&
-      addToolResult
-    ) {
-      addToolResult({
-        toolCallId: tool.toolCallId,
-        result: {
-          error: previewToolCallError,
-        },
-      });
-      setToolCallState(tool.toolCallId, "rejected");
+    if (addToolResult && getToolCallState(tool.toolCallId) === "preview") {
+      if (previewToolCallError) {
+        setToolCallState(tool.toolCallId, "rejected");
+        addToolResult({
+          toolCallId: tool.toolCallId,
+          result: {
+            error: previewToolCallError,
+          },
+        });
+      }
+
+      if (previewDone) {
+        setToolCallState(tool.toolCallId, "ready");
+      }
     }
   }, [
     previewToolCallError,
     addToolResult,
-    getToolCallState,
     setToolCallState,
     tool.toolCallId,
+    getToolCallState,
+    previewDone,
   ]);
   return null;
 }
