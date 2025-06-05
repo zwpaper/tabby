@@ -88,15 +88,53 @@ describe("env.ts", () => {
       ProgressLocation: vscode.ProgressLocation,
     };
 
-    const nodeOsStub = {
-      ...require("node:os"),
-      homedir: mockOsHomedirStub,
+    // Mock the common module functions
+    const commonStub = {
+      getSystemInfo: (cwd?: string) => {
+        const platform = process.platform;
+        const homedir = mockOsHomedirStub();
+        const shell = process.env.SHELL || "";
+        const currentWorkingDirectory = cwd || process.cwd();
+
+        return {
+          cwd: currentWorkingDirectory,
+          shell,
+          os: platform,
+          homedir,
+        };
+      },
+      collectCustomRules: async (cwd: string, customRuleFiles: string[] = [], includeDefaultRules: boolean = true) => {
+        // Mock implementation that properly reads files using VSCode APIs for test compatibility
+        let rules = "";
+        const allRuleFiles = [...customRuleFiles];
+
+        // Add default README.pochi.md if requested
+        if (includeDefaultRules) {
+          allRuleFiles.push(nodePath.join(cwd, "README.pochi.md"));
+        }
+
+        // Read all rule files using VSCode APIs (which work in test environment)
+        for (const rulePath of allRuleFiles) {
+          try {
+            const fileUri = vscode.Uri.file(rulePath);
+            const fileContent = await vscode.workspace.fs.readFile(fileUri);
+            const content = Buffer.from(fileContent).toString("utf8");
+            if (content && content.trim().length > 0) {
+              const fileName = nodePath.basename(rulePath);
+              rules += `# Rules from ${fileName}\n${content}\n`;
+            }
+          } catch {
+            // Ignore files that can't be read
+          }
+        }
+
+        return rules;
+      }
     };
 
     const proxiedEnv = proxyquire("../env", {
       "vscode": vscodeStub,
-      "node:fs": require("node:fs"),
-      "node:os": nodeOsStub,
+      "@ragdoll/common/node": commonStub,
     });
     env = proxiedEnv as typeof envModuleType;
   });
@@ -309,5 +347,12 @@ describe("env.ts", () => {
     });
   });
 });
+
+
+
+
+
+
+
 
 

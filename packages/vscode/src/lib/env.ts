@@ -1,5 +1,8 @@
-import os from "node:os";
 import path from "node:path";
+import {
+  collectCustomRules as collectCustomRulesImpl,
+  getSystemInfo as getSystemInfoImpl,
+} from "@ragdoll/common/node";
 import * as vscode from "vscode";
 import { getWorkspaceFolder, readDirectoryFiles, readFileContent } from "./fs";
 
@@ -22,12 +25,8 @@ export function getSystemInfo(): {
   os: string;
   homedir: string;
 } {
-  const platform = process.platform;
-  const homedir = os.homedir();
-  const shell = process.env.SHELL || "";
   const cwd = getCwd();
-
-  return { cwd, shell, os: platform, homedir };
+  return getSystemInfoImpl(cwd);
 }
 
 /**
@@ -64,26 +63,11 @@ function getWorkflowsDirectoryUri() {
 export async function collectCustomRules(
   customRuleFiles: string[] = [],
 ): Promise<string> {
-  let rules = "";
+  const cwd = getCwd();
 
-  // Add workspace rules file if workspace exists
-  if (
-    vscode.workspace.workspaceFolders &&
-    vscode.workspace.workspaceFolders.length > 0
-  ) {
-    customRuleFiles.push(getWorkspaceRulesFileUri().fsPath);
-  }
-
-  // Read all rule files
-  for (const rulePath of customRuleFiles) {
-    const content = await readFileContent(rulePath);
-    if (content !== null) {
-      const relativePath = vscode.workspace.asRelativePath(rulePath);
-      rules += `# Rules from ${relativePath}\n${content}\n`;
-    }
-  }
-
-  return rules;
+  // Use the shared implementation with default rules enabled
+  // The common function will handle adding README.pochi.md from cwd
+  return await collectCustomRulesImpl(cwd, customRuleFiles, true);
 }
 
 /**

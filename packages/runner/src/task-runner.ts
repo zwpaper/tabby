@@ -3,9 +3,13 @@ import {
   updateToolCallResult,
 } from "@ai-sdk/ui-utils";
 import {
+  type Environment,
   type TaskEvent,
+  type Todo,
+  findTodos,
   fromUIMessage,
   getLogger,
+  mergeTodos,
   toUIMessages,
 } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
@@ -13,6 +17,7 @@ import type { AppType, PochiEventSource } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
+import { readEnvironment } from "./lib/read-environment";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
 import { globFiles } from "./tools/glob-files";
@@ -61,6 +66,7 @@ type ApiClient = ReturnType<typeof hc<AppType>>;
 
 export class TaskRunner {
   private readonly context: RunnerContext;
+  private todos: Todo[] = [];
 
   constructor(
     private readonly apiClient: ApiClient,
@@ -69,6 +75,19 @@ export class TaskRunner {
     context?: RunnerContext,
   ) {
     this.context = context || { cwd: process.cwd() };
+  }
+
+  private async buildEnvironment(): Promise<Environment> {
+    const environment = await readEnvironment(this.context);
+    return {
+      ...environment,
+      todos: this.todos,
+    };
+  }
+
+  private updateTodos(todos: Todo[] = []) {
+    // Update the context todos with the new todos
+    this.todos = todos.length ? todos : mergeTodos(this.todos, todos);
   }
 
   private async step(): Promise<TaskStatus> {
@@ -92,6 +111,11 @@ export class TaskRunner {
     const lastMessage = messages.at(-1);
     if (!lastMessage) {
       throw new Error("No messages found");
+    }
+
+    if (lastMessage.parts !== undefined) {
+      const todos = findTodos(lastMessage);
+      this.updateTodos(todos);
     }
 
     while (
@@ -141,14 +165,19 @@ export class TaskRunner {
       );
     });
 
-    // Start streaming
+    const environment = await this.buildEnvironment();
+    logger.info(
+      "Starting streaming for task",
+      this.taskId,
+      "with environment",
+      environment,
+    );
     const resp = await this.apiClient.api.chat.stream.$post(
       {
         json: {
           id: this.taskId.toString(),
           message: fromUIMessage(lastMessage),
-          // FIXME: fill environment
-          environment: undefined,
+          environment,
         },
       },
       {

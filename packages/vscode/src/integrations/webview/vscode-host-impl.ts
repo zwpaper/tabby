@@ -1,5 +1,3 @@
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { GitStatusReader } from "@/integrations/git/git-status";
 import {
   collectCustomRules,
   collectWorkflows,
@@ -8,7 +6,8 @@ import {
   getSystemInfo,
   getWorkspaceRulesFileUri,
 } from "@/lib/env";
-import { isBinaryFile, isFileExists } from "@/lib/fs";
+import { getWorkspaceFolder, isBinaryFile, isFileExists } from "@/lib/fs";
+
 import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PostHog } from "@/lib/posthog";
@@ -37,7 +36,11 @@ import {
   type ThreadSignalSerialization,
 } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/common";
-import { ignoreWalk } from "@ragdoll/common/node";
+import {
+  GitStatusReader,
+  ignoreWalk,
+  listWorkspaceFiles,
+} from "@ragdoll/common/node";
 import {
   type PreviewToolFunctionType,
   ServerToolApproved,
@@ -74,7 +77,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   constructor(
     private readonly tokenStorage: TokenStorage,
     private readonly tabState: TabState,
-    private readonly gitStatusReader: GitStatusReader,
     private readonly posthog: PostHog,
     private readonly mcpHub: McpHub,
     private readonly taskRunnerManager: TaskRunnerManager,
@@ -123,23 +125,22 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   readEnvironment = async (): Promise<Environment> => {
     const workspaceFolders = vscode.workspace.workspaceFolders;
 
-    const MaxFileItems = 500;
-    let files = workspaceFolders?.length
-      ? (
-          await ignoreWalk({
-            dir: workspaceFolders[0].uri.fsPath,
-            recursive: true,
-          })
-        ).map((res) => vscode.workspace.asRelativePath(res.filepath))
-      : [];
-    const isTruncated = files.length > MaxFileItems;
-    files = files.slice(0, MaxFileItems);
+    const { files, isTruncated } = workspaceFolders?.length
+      ? await listWorkspaceFiles({
+          cwd: workspaceFolders[0].uri.fsPath,
+          recursive: true,
+          maxItems: 500,
+        })
+      : { files: [], isTruncated: false };
 
     const customRules = await collectCustomRules();
 
-    const systemInfo = await getSystemInfo();
+    const systemInfo = getSystemInfo();
 
-    const gitStatus = await this.gitStatusReader.readGitStatus();
+    const gitStatusReader = new GitStatusReader({
+      cwd: getWorkspaceFolder().uri.fsPath,
+    });
+    const gitStatus = await gitStatusReader.readGitStatus();
 
     const environment: Environment = {
       currentTime: new Date().toString(),

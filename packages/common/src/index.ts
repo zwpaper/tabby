@@ -66,7 +66,7 @@ export {
   type DBMessage,
 } from "./message";
 export { ZodTodo } from "./todo";
-export type { Todo } from "./todo";
+export { type Todo, mergeTodos, findTodos } from "./todo";
 
 export { formatters } from "./formatters";
 export { attachTransport, getLogger } from "./logger";

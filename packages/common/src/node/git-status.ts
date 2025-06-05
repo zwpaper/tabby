@@ -1,21 +1,20 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { GitStatus } from "@ragdoll/common";
-import { injectable, singleton } from "tsyringe";
-import * as vscode from "vscode";
-import { getLogger } from "../../lib/logger";
+import type { GitStatus } from "../environment";
+import { getLogger } from "../logger";
+
+export interface GitStatusReaderOptions {
+  cwd: string;
+}
 
 const logger = getLogger("GitStatus");
 
-@injectable()
-@singleton()
 export class GitStatusReader {
   private readonly execPromise = promisify(exec);
-  private rootPath: string | undefined = undefined;
+  private readonly cwd: string;
 
-  constructor() {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    this.rootPath = workspaceFolders?.[0]?.uri.fsPath;
+  constructor(options: GitStatusReaderOptions) {
+    this.cwd = options.cwd;
   }
 
   /**
@@ -23,14 +22,18 @@ export class GitStatusReader {
    * Returns empty string if command fails or repository not found
    */
   private async execGit(command: string): Promise<string> {
-    if (!this.rootPath) {
-      throw new Error("No workspace folder found");
+    if (!this.cwd) {
+      throw new Error("No working directory specified");
     }
 
-    const { stdout } = await this.execPromise(`git ${command}`, {
-      cwd: this.rootPath,
-    });
-    return stdout.trim();
+    try {
+      const { stdout } = await this.execPromise(`git ${command}`, {
+        cwd: this.cwd,
+      });
+      return stdout.trim();
+    } catch {
+      return "";
+    }
   }
 
   /**
@@ -61,7 +64,7 @@ export class GitStatusReader {
         if (result) {
           return result.replace("refs/remotes/origin/", "").trim();
         }
-      } catch (error) {
+      } catch {
         // skip to the next strategy
       }
     }
@@ -97,19 +100,20 @@ export class GitStatusReader {
    * Get Git status information for the current repository as a formatted string
    */
   public async readGitStatus(): Promise<GitStatus | undefined> {
-    if (!this.rootPath) {
-      logger.warn("No Git repository found");
+    if (!this.cwd) {
+      logger.warn("No Git repository path specified");
       return undefined;
     }
 
     try {
       logger.trace("Reading Git status for repository", {
-        path: this.rootPath,
+        path: this.cwd,
       });
 
       return await this.readGitStatusImpl();
     } catch (error) {
       logger.error("Error reading Git status", error);
+      return undefined;
     }
   }
 }
