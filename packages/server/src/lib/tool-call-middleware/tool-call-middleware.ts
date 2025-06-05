@@ -7,15 +7,6 @@ import {
 import * as RJSON from "./relaxed-json";
 import { getPotentialStartIndex } from "./utils";
 
-// Type definitions for better type safety
-interface ToolCallMiddlewareConfig {
-  toolCallTag?: string;
-  toolCallEndTag?: string;
-  toolResponseTag?: string;
-  toolResponseEndTag?: string;
-  toolSystemPromptTemplate?: (tools: string) => string;
-}
-
 interface ParsedToolCall {
   name: string;
   arguments: unknown;
@@ -47,16 +38,19 @@ class ToolCallValidationError extends Error {
 }
 
 const defaultTemplate = (tools: string) =>
-  `You are a function calling AI model.
+  `====
+
+TOOL CALLING
+
 You are provided with function signatures within <tools></tools> XML tags.
 You may call one or more functions to assist with the user query.
 Don't make assumptions about what values to plug into functions.
 Here are the available tools: <tools>${tools}</tools>
 Use the following pydantic model json schema for each tool call you will make: {'title': 'FunctionCall', 'type': 'object', 'properties': {'arguments': {'title': 'Arguments', 'type': 'object'}, 'name': {'title': 'Name', 'type': 'string'}}, 'required': ['arguments', 'name']}
 For each function call return a json object with function name and arguments within <tool_call></tool_call> XML tags as follows:
-<tool_call>
+<tool-call>
 {'arguments': <args-dict>, 'name': <function-name>}
-</tool_call>`;
+</tool-call>`;
 
 // Constants for performance and memory management
 const MaxBufferSize = 4 * 1024 * 1024; // 4MB limit
@@ -65,30 +59,6 @@ const MaxToolCall = 100; // Reasonable limit for tool calls
 // Utility functions
 function escapeRegex(string: string): string {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function validateConfig(config: ToolCallMiddlewareConfig): void {
-  if (config.toolCallTag !== undefined && config.toolCallTag.length === 0) {
-    throw new Error("toolCallTag cannot be empty string");
-  }
-  if (
-    config.toolCallEndTag !== undefined &&
-    config.toolCallEndTag.length === 0
-  ) {
-    throw new Error("toolCallEndTag cannot be empty string");
-  }
-  if (
-    config.toolResponseTag !== undefined &&
-    config.toolResponseTag.length === 0
-  ) {
-    throw new Error("toolResponseTag cannot be empty string");
-  }
-  if (
-    config.toolResponseEndTag !== undefined &&
-    config.toolResponseEndTag.length === 0
-  ) {
-    throw new Error("toolResponseEndTag cannot be empty string");
-  }
 }
 
 function validateParsedToolCall(toolCall: ParsedToolCall): void {
@@ -202,8 +172,8 @@ function createToolCallTransformStream(
       if (buffer.length > MaxBufferSize) {
         console.warn("Buffer size exceeded, truncating content");
         controller.enqueue({
-          type: "text-delta",
-          textDelta: "⚠️ Content truncated due to size limit",
+          type: "error",
+          error: new Error("ToolCall buffer size exceeded"),
         });
         buffer = buffer.slice(-MaxBufferSize / 2); // Keep last half
       }
@@ -261,8 +231,8 @@ function createToolCallTransformStream(
           if (toolCallIndex >= MaxToolCall) {
             console.warn("Maximum tool calls limit reached");
             controller.enqueue({
-              type: "text-delta",
-              textDelta: "⚠️ Maximum tool calls limit reached",
+              type: "error",
+              error: new Error(" Maximum tool calls limit reached"),
             });
             break;
           }
@@ -279,20 +249,13 @@ function createToolCallTransformStream(
   });
 }
 
-export function createToolMiddleware(
-  config: ToolCallMiddlewareConfig = {},
-): LanguageModelV1Middleware {
-  // Validate configuration
-  validateConfig(config);
-
+export function createToolMiddleware(): LanguageModelV1Middleware {
   // Set defaults with validated config
-  const {
-    toolCallTag = "<tool_call>",
-    toolCallEndTag = "</tool_call>",
-    toolResponseTag = "<tool_response>",
-    toolResponseEndTag = "</tool_response>",
-    toolSystemPromptTemplate = defaultTemplate,
-  } = config;
+  const toolCallTag = "<tool-call>";
+  const toolCallEndTag = "</tool-call>";
+  const toolResponseTag = "<tool-response>";
+  const toolResponseEndTag = "</tool-response>";
+  const toolSystemPromptTemplate = defaultTemplate;
 
   // Pre-compile regex for better performance
   const toolCallRegex = new RegExp(
