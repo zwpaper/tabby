@@ -37,36 +37,25 @@ export class CommandManager implements vscode.Disposable {
     this.registerCommands();
   }
 
-  private async prepareProjectWithProgress(
-    progressMessage: string,
+  private async prepareProjectAndOpenTask(
+    progress: vscode.Progress<{ message?: string; increment?: number }>,
     workspaceUri: vscode.Uri,
     githubTemplateUrl: string | undefined,
     openTaskParams: TaskIdParams,
     requestId?: string,
   ) {
-    return vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        cancellable: false,
-      },
-      async (progress) => {
-        progress.report({ message: progressMessage });
+    await vscode.commands.executeCommand("ragdollWebui.focus");
 
-        await vscode.commands.executeCommand("ragdollWebui.focus");
+    if (githubTemplateUrl) {
+      await prepareProject(workspaceUri, githubTemplateUrl, progress);
+    }
 
-        if (githubTemplateUrl) {
-          await prepareProject(workspaceUri, githubTemplateUrl, progress);
-        }
+    const webviewHost = await this.ragdollWebviewProvider.retrieveWebviewHost();
+    webviewHost.openTask(openTaskParams);
 
-        const webviewHost =
-          await this.ragdollWebviewProvider.retrieveWebviewHost();
-        webviewHost.openTask(openTaskParams);
-
-        if (requestId) {
-          await this.newProjectRegistry.set(requestId, workspaceUri);
-        }
-      },
-    );
+    if (requestId) {
+      await this.newProjectRegistry.set(requestId, workspaceUri);
+    }
   }
 
   private registerCommands() {
@@ -131,14 +120,31 @@ export class CommandManager implements vscode.Disposable {
             return;
           }
 
-          await this.prepareProjectWithProgress(
-            "Pochi: Creating project...",
-            currentWorkspace,
-            params.githubTemplateUrl,
+          return vscode.window.withProgress(
             {
-              taskId: task.id,
+              location: vscode.ProgressLocation.Notification,
+              cancellable: false,
             },
-            params.requestId,
+            async (progress) => {
+              try {
+                progress.report({ message: "Pochi: Creating project..." });
+                await this.prepareProjectAndOpenTask(
+                  progress,
+                  currentWorkspace,
+                  params.githubTemplateUrl,
+                  {
+                    taskId: task.id,
+                  },
+                  params.requestId,
+                );
+              } catch (error) {
+                const errorMessage =
+                  error instanceof Error ? error.message : "Unknown error";
+                vscode.window.showErrorMessage(
+                  `Pochi: Failed to create project. ${errorMessage}`,
+                );
+              }
+            },
           );
         },
       ),
@@ -158,12 +164,31 @@ export class CommandManager implements vscode.Disposable {
             return;
           }
 
-          await this.prepareProjectWithProgress(
-            "Pochi: Preparing evaluation project...",
-            currentWorkspace,
-            params.githubTemplateUrl,
+          return vscode.window.withProgress(
             {
-              taskId: params.taskId,
+              location: vscode.ProgressLocation.Notification,
+              cancellable: false,
+            },
+            async (progress) => {
+              try {
+                progress.report({
+                  message: "Pochi: Preparing evaluation project...",
+                });
+                await this.prepareProjectAndOpenTask(
+                  progress,
+                  currentWorkspace,
+                  params.githubTemplateUrl,
+                  {
+                    taskId: params.taskId,
+                  },
+                );
+              } catch (error) {
+                const errorMessage =
+                  error instanceof Error ? error.message : "Unknown error";
+                vscode.window.showErrorMessage(
+                  `Pochi: Failed to prepare evaluation project. ${errorMessage}`,
+                );
+              }
             },
           );
         },

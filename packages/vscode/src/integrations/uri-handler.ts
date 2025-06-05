@@ -55,7 +55,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     this.handleUriImpl(uri);
   }
 
-  async handleUriImpl(uri: vscode.Uri) {
+  private async handleUriImpl(uri: vscode.Uri) {
     await vscode.commands.executeCommand("ragdollWebui.focus");
 
     const searchParams = new URLSearchParams(uri.query);
@@ -76,32 +76,34 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
   }
 
   private async handleTaskEvent(taskId: number) {
-    const taskResponse = await this.apiClient.api.tasks[":id"].$get({
-      param: { id: taskId.toString() },
-    });
+    try {
+      const taskResponse = await this.apiClient.api.tasks[":id"].$get({
+        param: { id: taskId.toString() },
+      });
+      if (!taskResponse.ok) {
+        throw new Error(`Failed to get task: ${taskResponse.status}`);
+      }
 
-    if (!taskResponse.ok) {
-      vscode.window.showErrorMessage(
-        `Failed to get task ${taskId}: ${taskResponse.status}`,
-      );
-      return;
-    }
-
-    const task = await taskResponse.json();
-    switch (task.event?.type) {
-      case "batch:evaluation":
-        await this.handleEvaluationTask(task as EvaluationTask);
-        break;
-      case "website:new-project":
-        await this.handleNewProjectTask(task as NewProjectTask);
-        break;
-      default:
-        // default to open the task
-        await vscode.commands.executeCommand("ragdoll.openTask", taskId);
-        break;
+      const task = await taskResponse.json();
+      switch (task?.event?.type) {
+        case "batch:evaluation":
+          await this.handleEvaluationTask(task as EvaluationTask);
+          break;
+        case "website:new-project":
+          await this.handleNewProjectTask(task as NewProjectTask);
+          break;
+        default:
+          // default to open the task
+          await vscode.commands.executeCommand("ragdoll.openTask", taskId);
+          break;
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      vscode.window.showErrorMessage(`Task ${taskId} failed: ${message}`);
     }
   }
-  async handleNewProjectTask(task: NewProjectTask) {
+
+  private async handleNewProjectTask(task: NewProjectTask) {
     const { data: params } = task.event;
     const { requestId, name } = params;
 
@@ -178,7 +180,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     );
   }
 
-  async loginWithDeviceLink(token: string) {
+  private async loginWithDeviceLink(token: string) {
     vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
