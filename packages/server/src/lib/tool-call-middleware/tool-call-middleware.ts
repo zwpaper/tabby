@@ -46,10 +46,10 @@ You are provided with function signatures within <tools></tools> XML tags.
 You may call one or more functions to assist with the user query.
 Don't make assumptions about what values to plug into functions.
 Here are the available tools: <tools>${tools}</tools>
-Use the following pydantic model json schema for each tool call you will make: {'title': 'FunctionCall', 'type': 'object', 'properties': {'arguments': {'title': 'Arguments', 'type': 'object'}, 'name': {'title': 'Name', 'type': 'string'}}, 'required': ['arguments', 'name']}
-For each function call return a json object with function name and arguments within <tool_call></tool_call> XML tags as follows:
+Use the following pydantic model json schema for each tool call you will make: {'title': 'FunctionCall', 'type': 'object', 'properties': {'name': {'title': 'Name', 'type': 'string'}, 'arguments': {'title': 'Arguments', 'type': 'object'}}, 'required': ['name', 'arguments']}
+For each function call return a json object with function name and arguments within <tool-call></tool-call> XML tags as follows:
 <tool-call>
-{'arguments': <args-dict>, 'name': <function-name>}
+{'name': <function-name>, 'arguments': <args-dict>}
 </tool-call>`;
 
 // Constants for performance and memory management
@@ -206,6 +206,14 @@ function createToolCallTransformStream(
           }
         }
       }
+
+      controller.enqueue({
+        type: "tool-call-delta",
+        toolCallType: "function",
+        toolName: "",
+        toolCallId: "",
+        argsTextDelta: "",
+      });
 
       do {
         const nextTag = isToolCall ? toolCallEndTag : toolCallTag;
