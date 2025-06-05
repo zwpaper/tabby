@@ -23,6 +23,7 @@
     "kysely": "catalog:",
     "moment": "catalog:",
     "moment-timezone": "^0.5.48",
+    "node-cron": "^4.1.0",
     "pg": "^8.14.1",
     "pg-connection-string": "^2.7.0",
     "redis": "^5.0.1",

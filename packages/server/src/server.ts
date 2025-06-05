@@ -18,6 +18,7 @@ import tools from "./api/tools";
 import upload from "./api/upload";
 import usages from "./api/usages";
 import { auth, authRequest } from "./auth";
+import { startServerCronJobs } from "./lib/cron";
 import { slackService } from "./service/slack";
 import { taskService } from "./service/task";
 
@@ -26,6 +27,10 @@ export const app = new Hono().use(authRequest);
 // Only use logger in development / testing.
 if (process.env.NODE_ENV !== "production") {
   app.use(logger());
+}
+
+if (process.env.NODE_ENV !== "test") {
+  startServerCronJobs();
 }
 
 // Static file serving with dynamic import
