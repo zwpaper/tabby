@@ -1,5 +1,4 @@
 import { CodeBlock, MessageMarkdown } from "@/components/message";
-import { useMcp } from "@/lib/hooks/use-mcp";
 import { ScrollArea } from "../ui/scroll-area";
 import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";
@@ -12,11 +11,6 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
 }) => {
   const { toolName, args } = tool;
 
-  const { connections } = useMcp();
-  const serverName = Object.entries(connections).find(([, connection]) =>
-    Object.keys(connection.tools).includes(tool.toolName),
-  )?.[0];
-
   let result = undefined;
   if (tool.state === "result") {
     result = tool.result ?? "No output";
@@ -28,14 +22,6 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
       <span className="ml-2">
         Calling
         <HighlightedText>{toolName}</HighlightedText>
-        {serverName && (
-          <>
-            from
-            <HighlightedText className="mx-0 ml-1">
-              {serverName}
-            </HighlightedText>
-          </>
-        )}
       </span>
     </>
   );

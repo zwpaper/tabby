@@ -1,7 +1,15 @@
 import { type ILogObjMeta, type IMeta, Logger } from "tslog";
 
+const isVSCodeEnvironment = () => {
+  if (typeof process !== "undefined") {
+    return !!process.env.VSCODE_PID;
+  }
+
+  return false;
+};
+
 const mainLogger = new Logger({
-  type: process.env.VSCODE_PID ? "hidden" : "pretty",
+  type: isVSCodeEnvironment() ? "hidden" : "pretty",
 });
 
 export function getLogger(name: string) {

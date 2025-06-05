@@ -38,13 +38,14 @@ export const applyDiffTool: React.FC<
   );
 
   const detials = [];
-
   if (result?.newProblems) {
-    detials.push(<NewProblems newProblems={result?.newProblems} />);
+    detials.push(
+      <NewProblems key="new-problems" newProblems={result?.newProblems} />,
+    );
   }
 
   if (result?.userEdits) {
-    detials.push(<UserEdits userEdits={result?.userEdits} />);
+    detials.push(<UserEdits key="user-edits" userEdits={result?.userEdits} />);
   }
 
   const detail = detials.length > 0 ? <>{detials}</> : undefined;
