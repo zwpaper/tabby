@@ -59,7 +59,6 @@ export function ThemeProvider({
       setTheme(theme);
     },
   };
-  console.log("theme", value);
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
