@@ -1,7 +1,7 @@
 import { type ILogObjMeta, type IMeta, Logger } from "tslog";
 
 const mainLogger = new Logger({
-  type: "hidden",
+  type: process.env.VSCODE_PID ? "hidden" : "pretty",
 });
 
 export function getLogger(name: string) {
