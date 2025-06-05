@@ -1,6 +1,5 @@
 import { MessageList } from "@/components/message/message-list";
 import { buttonVariants } from "@/components/ui/button";
-import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
 import { apiClient } from "@/lib/auth-client";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
@@ -82,48 +81,36 @@ function RunnerComponent() {
   const messages = toUIMessages(taskData.conversation?.messages || []);
 
   return (
-    <VSCodeWebProvider>
-      <ChatContextProvider>
-        <div className="flex h-screen flex-col">
-          <MessageList
-            messages={messages}
-            user={authData?.user}
-            logo={resourceUri?.logo128}
-            isLoading={false}
-          />
-          {!isLoading && (
-            <div className="flex items-center justify-between border-t p-4">
-              {status === "running" && (
-                <Bot className="h-5 w-5 animate-bounce" />
-              )}
-              {status === "completed" && (
-                <>
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <Link
-                    to={"/"}
-                    search={{ taskId }}
-                    className={buttonVariants()}
-                  >
-                    Continue in Chat
-                  </Link>
-                </>
-              )}
-              {status === "error" && (
-                <>
-                  {error && <div>{error}</div>}
-                  <Link
-                    to={"/"}
-                    search={{ taskId }}
-                    className={buttonVariants()}
-                  >
-                    Continue in Chat
-                  </Link>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </ChatContextProvider>
-    </VSCodeWebProvider>
+    <ChatContextProvider>
+      <div className="flex h-screen flex-col">
+        <MessageList
+          messages={messages}
+          user={authData?.user}
+          logo={resourceUri?.logo128}
+          isLoading={false}
+        />
+        {!isLoading && (
+          <div className="flex items-center justify-between border-t p-4">
+            {status === "running" && <Bot className="h-5 w-5 animate-bounce" />}
+            {status === "completed" && (
+              <>
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <Link to={"/"} search={{ taskId }} className={buttonVariants()}>
+                  Continue in Chat
+                </Link>
+              </>
+            )}
+            {status === "error" && (
+              <>
+                {error && <div>{error}</div>}
+                <Link to={"/"} search={{ taskId }} className={buttonVariants()}>
+                  Continue in Chat
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </ChatContextProvider>
   );
 }
