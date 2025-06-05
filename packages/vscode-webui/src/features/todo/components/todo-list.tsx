@@ -30,6 +30,7 @@ import {
   type ReactNode,
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -56,14 +57,18 @@ interface TodoListContextValue {
   todos: Todo[];
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
-  status?: UseChatHelpers["status"];
-  isEditMode?: boolean;
-  draftTodos?: Todo[];
-  hasDirtyChanges?: boolean;
-  enterEditMode?: () => void;
-  exitEditMode?: () => void;
-  saveTodos?: () => void;
-  updateTodoStatus?: (todoId: string, newStatus: Todo["status"]) => void;
+  // Edit mode state
+  editState?: {
+    status: UseChatHelpers["status"];
+    isEditMode: boolean;
+    draftTodos: Todo[];
+    hasDirtyChanges: boolean;
+    enterEditMode: () => void;
+    exitEditMode: () => void;
+    saveTodos: () => void;
+    updateTodoStatus: (todoId: string, newStatus: Todo["status"]) => void;
+  };
+  setEditState?: (editState: TodoListContextValue["editState"]) => void;
 }
 
 const TodoListContext = createContext<TodoListContextValue | undefined>(
@@ -89,11 +94,15 @@ interface TodoListRootProps {
 
 function TodoListRoot({ todos, className, children }: TodoListRootProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [editState, setEditState] =
+    useState<TodoListContextValue["editState"]>();
 
   const contextValue: TodoListContextValue = {
     todos,
     isCollapsed,
     setIsCollapsed,
+    editState,
+    setEditState,
   };
 
   return (
@@ -118,12 +127,12 @@ function TodoListHeader({
   disableInProgressTodoTitle,
   children,
 }: TodoListHeaderProps) {
-  const { todos, isCollapsed, setIsCollapsed, status, isEditMode, draftTodos } =
+  const { todos, isCollapsed, setIsCollapsed, editState } =
     useTodoListContext();
 
   // Use draftTodos when in edit mode, otherwise use todos
-  const displayTodos = isEditMode
-    ? draftTodos || []
+  const displayTodos = editState?.isEditMode
+    ? editState.draftTodos || []
     : todos.filter((todo) => todo.status !== "cancelled");
 
   const inProgressTodo = useMemo(
@@ -138,7 +147,7 @@ function TodoListHeader({
 
   const toggleCollapse = () => {
     if (disableCollapse) return;
-    if (isEditMode) return;
+    if (editState?.isEditMode) return;
     setIsCollapsed(!isCollapsed);
   };
 
@@ -163,7 +172,8 @@ function TodoListHeader({
               <span
                 className={cn({
                   "animated-gradient-text":
-                    status === "submitted" || status === "streaming",
+                    editState?.status === "submitted" ||
+                    editState?.status === "streaming",
                 })}
               >
                 {inProgressTodo.content}
@@ -204,10 +214,22 @@ function TodoListEditActions({
   updateTodoStatus,
 }: TodoListEditActionsProps) {
   const context = useTodoListContext();
-  const { isCollapsed } = context;
+  const { isCollapsed, setEditState } = context;
 
-  // Update context with edit actions
-  Object.assign(context, {
+  useEffect(() => {
+    if (!setEditState) return;
+    setEditState({
+      status,
+      isEditMode,
+      draftTodos,
+      hasDirtyChanges,
+      enterEditMode,
+      exitEditMode,
+      saveTodos,
+      updateTodoStatus,
+    });
+  }, [
+    setEditState,
     status,
     isEditMode,
     draftTodos,
@@ -216,7 +238,7 @@ function TodoListEditActions({
     exitEditMode,
     saveTodos,
     updateTodoStatus,
-  });
+  ]);
 
   const showEditTodos = useAllowEditTodos() && showEdit;
 
@@ -291,9 +313,9 @@ interface TodoIconProps {
 }
 
 function TodoIcon({ todo }: TodoIconProps) {
-  const { isEditMode, updateTodoStatus } = useTodoListContext();
+  const { editState } = useTodoListContext();
 
-  if (!isEditMode || !updateTodoStatus) {
+  if (!editState?.isEditMode || !editState.updateTodoStatus) {
     // Normal mode - just show status icon
     return (
       <div className="flex h-6 shrink-0 items-center">
@@ -345,7 +367,10 @@ function TodoIcon({ todo }: TodoIconProps) {
             <DropdownMenuItem
               key={option.value}
               onClick={() =>
-                updateTodoStatus(todo.id, option.value as Todo["status"])
+                editState.updateTodoStatus(
+                  todo.id,
+                  option.value as Todo["status"],
+                )
               }
               className="flex items-center gap-2"
             >
@@ -361,11 +386,11 @@ function TodoIcon({ todo }: TodoIconProps) {
 
 // Items component for displaying the todo list
 function TodoListItems({ className }: { className?: string }) {
-  const { todos, isCollapsed, isEditMode, draftTodos } = useTodoListContext();
+  const { todos, isCollapsed, editState } = useTodoListContext();
 
   // Use draftTodos when in edit mode, otherwise use todos
-  const displayTodos = isEditMode
-    ? draftTodos || []
+  const displayTodos = editState?.isEditMode
+    ? editState.draftTodos || []
     : todos.filter((todo) => todo.status !== "cancelled");
 
   return (
@@ -384,7 +409,7 @@ function TodoListItems({ className }: { className?: string }) {
                 key={todo.id}
                 className={cn(
                   "flex items-start space-x-2.5 rounded-sm p-1 transition-colors",
-                  !isEditMode && "hover:bg-accent/5",
+                  !editState?.isEditMode && "hover:bg-accent/5",
                 )}
                 variants={todoItemVariants}
                 initial="initial"
