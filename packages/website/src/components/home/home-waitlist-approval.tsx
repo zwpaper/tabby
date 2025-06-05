@@ -1,5 +1,6 @@
 import { UserButton } from "@/components/user-button";
 import { cn } from "@/lib/utils";
+import { SocialLinks } from "@ragdoll/common";
 import { HomeBackgroundGradient } from "./constants";
 export function HomeWaitlistApproval() {
   return (
@@ -45,7 +46,7 @@ export function HomeWaitlistApproval() {
             <p className="mb-4 text-gray-600">Connect with our community</p>
             <div className="flex justify-center gap-4">
               <a
-                href="https://x.com/GetPochi"
+                href={SocialLinks.X}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-white transition-colors hover:bg-gray-800"
@@ -64,7 +65,7 @@ export function HomeWaitlistApproval() {
                 <span>Follow on X</span>
               </a>
               <a
-                href="https://discord.gg/ExHmgTuE"
+                href={SocialLinks.Discord}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-white transition-colors hover:bg-indigo-700"

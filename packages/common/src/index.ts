@@ -83,3 +83,5 @@ export type TaskError = {
       kind: "AbortError";
     }
 );
+
+export { SocialLinks } from "./social";
