@@ -74,13 +74,13 @@ export function SharePage() {
             <div
               className={cn(
                 "grid gap-3",
-                todos.length > 0 ? "md:grid-cols-4" : "md:grid-cols-1",
+                todos && todos.length > 0 ? "md:grid-cols-4" : "md:grid-cols-1",
               )}
             >
               <div
                 className={cn(
                   "order-1 md:order-1",
-                  todos.length > 0 ? "md:col-span-3" : "md:col-span-1",
+                  todos && todos.length > 0 ? "md:col-span-3" : "md:col-span-1",
                 )}
               >
                 <MessageList
@@ -90,7 +90,7 @@ export function SharePage() {
                   isLoading={false}
                 />
               </div>
-              {todos.length > 0 && (
+              {todos && todos.length > 0 && (
                 <div className="order-2 md:order-2 md:col-span-1">
                   <TodoList
                     todos={todos}

@@ -2,6 +2,7 @@ import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-hooks";
 import { cn } from "@/lib/utils";
 import {
   getGitPlatformIcon,
@@ -12,7 +13,7 @@ import {
   IconBrandGithub,
   IconBrandGitlab,
 } from "@tabler/icons-react";
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
 import { Calendar, FolderGitIcon } from "lucide-react";
 import moment from "moment";
@@ -154,16 +155,27 @@ function RouteComponent() {
     <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8">
       {/* Task header */}
       <div className="space-y-4 px-4 pt-2">
-        <div className="flex items-start gap-3">
-          <div className="flex flex-1 flex-col space-y-3 overflow-hidden pr-8">
-            <span className="flex gap-1">
-              <h1 className="truncate whitespace-nowrap font-bold text-2xl">
-                {loaderData?.title || "Task"}
-              </h1>
-              <ThemeToggle />
-            </span>
+        <div
+          className={cn(
+            "grid gap-3",
+            loaderData.todos && loaderData.todos.length > 0
+              ? "md:grid-cols-4"
+              : "md:grid-cols-1",
+          )}
+        >
+          <div
+            className={cn("col-span-4 flex flex-col space-y-3 overflow-hidden")}
+          >
+            <div className="flex flex-col">
+              <span className="flex items-center gap-1">
+                <h1 className="truncate whitespace-nowrap font-bold text-2xl">
+                  {loaderData?.title || "Task"}
+                </h1>
+                <ThemeToggle />
+              </span>
+            </div>
 
-            <div className="flex min-h-4 flex-col gap-3 text-muted-foreground text-sm md:flex-row">
+            <div className="flex min-h-4 flex-col gap-3 text-muted-foreground text-sm md:flex-row md:items-center">
               {loaderData?.updatedAt && (
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
@@ -173,6 +185,8 @@ function RouteComponent() {
               <div className="items-center gap-4">
                 {loaderData?.git && <GitBadge git={loaderData.git} />}
               </div>
+
+              <WaitlistButton />
             </div>
           </div>
         </div>
@@ -396,5 +410,37 @@ function SharePageSkeleton() {
 
       <MessageContentSkeleton />
     </div>
+  );
+}
+
+function WaitlistButton() {
+  const { data: auth } = useSession();
+  const [showButton, setShowButton] = useState(false);
+  const isAuthenticated = !!auth?.user;
+
+  useEffect(() => {
+    if (isAuthenticated) return;
+
+    const timer = setTimeout(() => {
+      setShowButton(true);
+    }, 2_000); // 2 seconds
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
+
+  if (isAuthenticated || !showButton) return;
+
+  return (
+    <Link
+      to="/"
+      className={cn(
+        "font-medium text-xs",
+        "transition-all duration-500 ease-out",
+        "slide-in-from-bottom-2 fade-in-0 animate-in",
+        "opacity-80 hover:opacity-100",
+      )}
+    >
+      ✨ Get Pochi!
+    </Link>
   );
 }
