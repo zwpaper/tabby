@@ -4,7 +4,7 @@ import cron from "node-cron";
 import { db } from "../../db";
 const ExpirationDays = 14;
 
-const logger = getLogger("InactivityScheduler");
+const logger = getLogger("InactiveUserDisapproval");
 
 interface InactiveUser {
   id: string;
@@ -41,16 +41,7 @@ export async function disapproveInactiveUsers() {
       `.execute(trx);
 
       logger.info(
-        `Expired waitlist approval for ${result.rows.length} inactive users (${ExpirationDays} days):`,
-        result.rows.map((user) => ({
-          id: user.id,
-          email: user.email,
-          lastActivity: user.lastActivity,
-        })),
-      );
-    } else {
-      logger.info(
-        `No inactive users found to expire (${ExpirationDays} days threshold)`,
+        `Expired waitlist approval for ${userIds.length} inactive users:`,
       );
     }
 
@@ -61,7 +52,7 @@ export async function disapproveInactiveUsers() {
 // Start the scheduler - runs every 15 minutes
 export function startDisapproveInactiveUsersScheduler() {
   cron.schedule("*/15 * * * *", async () => {
-    logger.info("Running 15-minute inactive user disapproval check...");
+    logger.debug("Running 15-minute inactive user disapproval check...");
     try {
       await disapproveInactiveUsers();
     } catch (error) {
