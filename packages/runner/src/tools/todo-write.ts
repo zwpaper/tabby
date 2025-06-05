@@ -1,13 +1,14 @@
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
+import type { RunnerContext } from "../task-runner";
 
 /**
- * Implements the writeToFile tool for VSCode extension.
- * Writes content to a specified file, creating directories if needed.
+ * Implements the todoWrite tool for runner.
+ * Currently a no-op implementation that just returns success.
  */
-export const todoWrite: ToolFunctionType<
-  ClientToolsType["todoWrite"]
-> = async () => {
-  return {
-    success: true,
+export const todoWrite =
+  (_context: RunnerContext): ToolFunctionType<ClientToolsType["todoWrite"]> =>
+  async () => {
+    return {
+      success: true,
+    };
   };
-};

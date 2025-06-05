@@ -3,6 +3,7 @@ import { TaskRunner } from "@ragdoll/runner";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import type { ApiClient } from "./auth-client";
+import { getWorkspaceFolder } from "./fs";
 import { getLogger } from "./logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PochiEvents } from "./pochi-events";
@@ -45,6 +46,7 @@ export class TaskRunnerManager implements vscode.Disposable {
         this.apiClient,
         this.pochiEvents,
         taskId,
+        { cwd: getWorkspaceFolder().uri.fsPath },
       );
       const taskState: TaskRunnerState = {
         runner: taskRunner.start(),

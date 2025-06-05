@@ -24,7 +24,9 @@ if (Number.isNaN(taskId)) {
   throw new Error("POCHI_TASK_ID is not a number").toString();
 }
 
-const runner = new TaskRunner(apiClient, pochiEvents, taskId);
+const cwd = process.env.POCHI_CWD;
+const context = cwd ? { cwd } : undefined;
+const runner = new TaskRunner(apiClient, pochiEvents, taskId, context);
 
 const status = await runner.start();
 console.log("status", status);

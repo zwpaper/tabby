@@ -2,18 +2,17 @@ import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
 import { fixCodeGenerationOutput } from "@ragdoll/common/output-utils";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import { getWorkspacePath } from "../lib/fs";
+import type { RunnerContext } from "../task-runner";
 
 /**
- * Implements the writeToFile tool for VSCode extension.
+ * Implements the writeToFile tool for runner.
  * Writes content to a specified file, creating directories if needed.
  */
-export const writeToFile: ToolFunctionType<
-  ClientToolsType["writeToFile"]
-> = async ({ path, content }) => {
-  const workspaceFolder = getWorkspacePath();
-  const fileUri = nodePath.join(workspaceFolder, path);
-  const processedContent = fixCodeGenerationOutput(content);
-  await fs.writeFile(fileUri, processedContent);
-  return { success: true };
-};
+export const writeToFile =
+  (context: RunnerContext): ToolFunctionType<ClientToolsType["writeToFile"]> =>
+  async ({ path, content }) => {
+    const fileUri = nodePath.join(context.cwd, path);
+    const processedContent = fixCodeGenerationOutput(content);
+    await fs.writeFile(fileUri, processedContent);
+    return { success: true };
+  };

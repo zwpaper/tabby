@@ -1,18 +1,17 @@
 import { listFiles as listFilesImpl } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import { getWorkspacePath } from "../lib/fs";
+import type { RunnerContext } from "../task-runner";
 
 /**
  * Lists files and directories within the specified path
  */
-export const listFiles: ToolFunctionType<ClientToolsType["listFiles"]> = async (
-  { path: dirPath, recursive },
-  { abortSignal },
-) => {
-  return listFilesImpl({
-    cwd: getWorkspacePath(),
-    path: dirPath,
-    recursive,
-    abortSignal,
-  });
-};
+export const listFiles =
+  (context: RunnerContext): ToolFunctionType<ClientToolsType["listFiles"]> =>
+  async ({ path: dirPath, recursive }, { abortSignal }) => {
+    return listFilesImpl({
+      cwd: context.cwd,
+      path: dirPath,
+      recursive,
+      abortSignal,
+    });
+  };

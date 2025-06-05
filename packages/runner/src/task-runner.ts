@@ -25,10 +25,16 @@ import { writeToFile } from "./tools/write-to-file";
 
 type TaskStatus = DB["task"]["status"]["__select__"];
 
+export interface RunnerContext {
+  cwd: string;
+  // Add more context properties here as needed in the future
+  // e.g., environment variables, workspace settings, etc.
+}
+
 const ToolMap: Record<
   string,
-  // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-  ToolFunctionType<any>
+  // biome-ignore lint/suspicious/noExplicitAny: ToolFunctionType requires any for generic tool parameters
+  (context: RunnerContext) => ToolFunctionType<any>
 > = {
   readFile,
   applyDiff,
@@ -54,11 +60,16 @@ function safeCall<T>(x: Promise<T>) {
 type ApiClient = ReturnType<typeof hc<AppType>>;
 
 export class TaskRunner {
+  private readonly context: RunnerContext;
+
   constructor(
     private readonly apiClient: ApiClient,
     private readonly pochiEvents: PochiEventSource,
     private readonly taskId: number,
-  ) {}
+    context?: RunnerContext,
+  ) {
+    this.context = context || { cwd: process.cwd() };
+  }
 
   private async step(): Promise<TaskStatus> {
     const task = await this.loadTask();
@@ -166,9 +177,17 @@ export class TaskRunner {
       };
     }
 
-    logger.info("Executing tool", tool.toolName, "with args", tool.args);
+    logger.info(
+      "Executing tool",
+      tool.toolName,
+      "with args",
+      tool.args,
+      "in cwd",
+      this.context.cwd,
+    );
+
     return await safeCall(
-      toolFunction(tool.args, {
+      toolFunction(this.context)(tool.args, {
         messages: [],
         toolCallId: tool.toolCallId,
       }),

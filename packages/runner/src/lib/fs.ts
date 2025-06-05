@@ -1,10 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
-export function getWorkspacePath(): string {
-  return process.cwd();
-}
-
 /**
  * Ensure a directory exists by creating it if needed
  */
