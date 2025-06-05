@@ -3,7 +3,8 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import type { LanguageModelV1 } from "ai";
+import { type LanguageModelV1, wrapLanguageModel } from "ai";
+import { defaultToolMiddleware } from "./tool-call-middleware";
 
 // Define available models
 export const AvailableModels: {
@@ -62,9 +63,15 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
     case "openai/gpt-4o-mini":
       return openai("gpt-4o-mini");
     case "google/gemini-2.5-pro":
-      return google("gemini-2.5-pro-preview-05-06");
+      return wrapLanguageModel({
+        model: google("gemini-2.5-pro-preview-05-06"),
+        middleware: defaultToolMiddleware,
+      });
     case "google/gemini-2.5-flash":
-      return google("gemini-2.5-flash-preview-04-17");
+      return wrapLanguageModel({
+        model: google("gemini-2.5-flash-preview-04-17"),
+        middleware: defaultToolMiddleware,
+      });
     default:
       return null;
   }
