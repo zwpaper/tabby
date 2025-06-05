@@ -2,7 +2,7 @@ import { ImageIcon, TerminalIcon } from "lucide-react";
 
 export function EmptyChatPlaceholder() {
   return (
-    <div className="flex h-full select-none flex-col items-center justify-center p-5 text-center text-gray-500 dark:text-gray-300">
+    <div className="flex h-[80vh] select-none flex-col items-center justify-center p-5 text-center text-gray-500 dark:text-gray-300">
       <div className="mb-4">{/* Adjusted icon color for visibility */}</div>
       <h2 className="mb-2 flex items-center gap-3 font-semibold text-2xl text-gray-700 dark:text-gray-100">
         <TerminalIcon className="animate-[spin_6s_linear_infinite]" />

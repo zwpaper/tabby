@@ -175,7 +175,7 @@ export class RagdollWebviewProvider
       ];
       const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
-      return this.buildHtml([cspHeader, style, setiFontStyle], [script]);
+      return this.buildHtml([cspHeader, style], [script, setiFontStyle]);
     }
 
     const devWebUIPort = "4112";
@@ -224,6 +224,43 @@ export class RagdollWebviewProvider
         ${headElements.join("\n")}
       </head>
       <body>
+        <div id="script-loader">
+          <style>
+            /* Script Loader Spinner */
+            #script-loader {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              z-index: 9999;
+            }
+            
+            .loader {
+              width: 32px;
+              height: 32px;
+              border: 3px solid #FFF;
+              border-bottom-color: transparent;
+              border-radius: 50%;
+              display: inline-block;
+              box-sizing: border-box;
+              animation: rotation 1s linear infinite;
+              }
+
+              @keyframes rotation {
+              0% {
+                  transform: rotate(0deg);
+              }
+              100% {
+                  transform: rotate(360deg);
+              }
+            } 
+          </style>
+          <div class="loader"></div>
+        </div>
         <div id="app"></div>
         ${bodyElements.join("\n")}
       </body>
