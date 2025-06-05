@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { analyzer } from "vite-bundle-analyzer";
 import EnvironmentPlugin from "vite-plugin-environment";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -23,6 +24,46 @@ const OutputOptions = {
   },
   share: {
     ...CommonOutputOptions,
+    manualChunks(id) {
+      if (!id.includes("node_modules")) {
+        return;
+      }
+
+      if (id.includes("@xterm")) {
+        return "xterm";
+      }
+
+      if (id.includes("refractor")) {
+        if (id.includes("/lang/")) {
+          return "refractor-lang";
+        }
+        return "refractor";
+      }
+
+      if (id.includes("react-syntax-highlighter")) {
+        return "react-syntax-highlighter";
+      }
+
+      if (id.includes("better-auth")) {
+        return "better-auth";
+      }
+
+      if (
+        id.includes("react-markdown") ||
+        id.includes("remark") ||
+        id.includes("rehype")
+      ) {
+        return "markdown";
+      }
+
+      if (id.includes("/ai/") || id.includes("@ai-sdk")) {
+        return "ai";
+      }
+
+      if (id.includes("motion")) {
+        return "motion";
+      }
+    },
   },
 };
 
@@ -40,6 +81,9 @@ export default defineConfig({
       },
     }),
     tailwindcss(),
+    analyzer({
+      enabled: !!process.env.VITE_BUNDLE_ANALYZER,
+    }),
   ],
   build: {
     rollupOptions: {
