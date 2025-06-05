@@ -7,7 +7,7 @@ import { slackRichTextRenderer } from "./slack-rich-text";
 // Generic type for Slack messages that covers both GenericMessageEvent and AppMentionEvent
 
 // Type alias for validated Slack task
-type Task = Awaited<ReturnType<typeof getValidatedSlackTask>>;
+type Task = Awaited<ReturnType<(typeof taskService)["get"]>>;
 
 // Interface for extracted task data used in notifications
 interface TaskNotificationData {
@@ -19,8 +19,10 @@ interface TaskNotificationData {
 
 class SlackTaskService {
   async notifyTaskStatusUpdate(userId: string, taskId: number) {
-    const task = await getValidatedSlackTask(userId, taskId);
-    if (!task) return;
+    const task = await taskService.get(taskId, userId);
+    if (!task || !isSlackTask(task)) {
+      return;
+    }
 
     switch (task.status) {
       case "completed":
@@ -445,16 +447,6 @@ class SlackTaskService {
 export const slackTaskService = new SlackTaskService();
 
 // Utility functions for Slack task operations
-
-// Get and validate a Slack task
-async function getValidatedSlackTask(userId: string, taskId: number) {
-  const task = await taskService.get(taskId, userId);
-  if (!task || !isSlackTask(task)) {
-    console.error(`Task ${taskId} is not a valid Slack task`);
-    return null;
-  }
-  return task;
-}
 
 // Extract task notification data
 function extractTaskNotificationData(task: Task): TaskNotificationData {
