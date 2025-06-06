@@ -4,12 +4,11 @@ import {
   type LanguageModelV1StreamPart,
   generateId,
 } from "ai";
-import * as RJSON from "./relaxed-json";
 import { getPotentialStartIndex } from "./utils";
 
 interface ParsedToolCall {
   name: string;
-  arguments: unknown;
+  arguments: string;
 }
 
 // Type to track streaming tool calls
@@ -19,21 +18,6 @@ type StreamingToolCall = {
   argTextBuffer: string;
   finalized: boolean;
 };
-
-// Custom error classes for structured error handling
-class ToolCallParseError extends Error {
-  public readonly cause?: Error;
-
-  constructor(
-    message: string,
-    public readonly toolCall: string,
-    cause?: Error,
-  ) {
-    super(message);
-    this.name = "ToolCallParseError";
-    this.cause = cause;
-  }
-}
 
 const defaultTemplate = (tools: string) =>
   `====
@@ -65,16 +49,7 @@ function extractToolCallsFromText(
     const toolName = match[1];
     const argsText = match[2];
 
-    try {
-      const args = RJSON.parse(argsText);
-      return { name: toolName, arguments: args };
-    } catch (e) {
-      throw new ToolCallParseError(
-        `Failed to parse tool call arguments: ${e instanceof Error ? e.message : String(e)}`,
-        `${toolName}: ${argsText}`,
-        e instanceof Error ? e : undefined,
-      );
-    }
+    return { name: toolName, arguments: argsText };
   });
 }
 
@@ -241,7 +216,7 @@ function createToolCallTransformStream(
             break;
           }
         }
-        // biome-ignore lint/correctness/noConstantCondition: <explanation>
+        // biome-ignore lint/correctness/noConstantCondition: This loop intentionally runs indefinitely, processing the buffer in chunks until no more complete tags can be found. The loop breaks internally based on buffer content and parsing progress.
       } while (true);
     },
   });
@@ -298,7 +273,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
             toolCallType: "function" as const,
             toolCallId: generateId(),
             toolName: parsedToolCall.name,
-            args: RJSON.stringify(parsedToolCall.arguments),
+            args: parsedToolCall.arguments,
           })),
         };
       } catch (e) {
@@ -353,7 +328,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
           ? params.mode.tools
           : {};
 
-      const HermesPrompt = toolSystemPromptTemplate(
+      const systemPrompt = toolSystemPromptTemplate(
         JSON.stringify(originalToolDefinitions, null, 2),
       );
 
@@ -362,14 +337,14 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
           ? [
               {
                 role: "system",
-                content: `${HermesPrompt}\n\n${processedPrompt[0].content}`,
+                content: `${systemPrompt}\n\n${processedPrompt[0].content}`,
               },
               ...processedPrompt.slice(1),
             ]
           : [
               {
                 role: "system",
-                content: HermesPrompt,
+                content: systemPrompt,
               },
               ...processedPrompt,
             ];

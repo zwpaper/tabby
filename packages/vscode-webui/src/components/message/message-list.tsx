@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { isAutoInjectTool } from "@ragdoll/tools";
 import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
 
@@ -109,10 +108,6 @@ function Part({
   }
 
   if (part.type === "tool-invocation") {
-    if (isAutoInjectTool(part.toolInvocation.toolName)) {
-      return null;
-    }
-
     return (
       <ToolInvocationPart tool={part.toolInvocation} isLoading={isLoading} />
     );

@@ -1,4 +1,4 @@
-import { isUserInputTool } from "@ragdoll/tools";
+import { isAutoApproveTool, isUserInputTool } from "@ragdoll/tools";
 import { type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
@@ -19,9 +19,11 @@ export function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
               ...part.toolInvocation,
               state: "result",
               result: {
-                error: isUserInputTool(part.toolInvocation.toolName)
-                  ? { success: true }
-                  : "User cancelled the tool call.",
+                error:
+                  isUserInputTool(part.toolInvocation.toolName) ||
+                  isAutoApproveTool(part.toolInvocation.toolName)
+                    ? { success: true }
+                    : "User cancelled the tool call.",
               },
             },
           } satisfies UIMessage["parts"][number];

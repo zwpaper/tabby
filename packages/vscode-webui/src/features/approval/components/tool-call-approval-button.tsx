@@ -1,4 +1,3 @@
-import { isAutoInjectTool } from "@ragdoll/tools"; // isUserInputTool is now in the hook
 import type React from "react";
 import { useCallback, useEffect } from "react"; // useMemo is now in the hook
 
@@ -93,15 +92,12 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     pendingApproval.name,
     autoApproveGuard.current,
   );
-  const isAutoRejected = isAutoInjectTool(pendingApproval.name);
 
   useEffect(() => {
     if (isAutoApproved) {
       onAccept();
-    } else if (isAutoRejected) {
-      onReject();
     }
-  }, [isAutoApproved, isAutoRejected, onAccept, onReject]);
+  }, [isAutoApproved, onAccept]);
 
   const [showAbort, setShowAbort] = useDebounceState(false, 3_000); // 3 seconds
   useEffect(() => {

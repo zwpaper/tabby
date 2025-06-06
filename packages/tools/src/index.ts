@@ -27,9 +27,8 @@ export function isUserInputTool(toolName: string): boolean {
   return userInputTools.includes(toolName);
 }
 
-export function isAutoInjectTool(toolName: string): boolean {
-  const autoInjectTools: string[] = [] satisfies ToolName[];
-  return autoInjectTools.includes(toolName);
+export function isAutoApproveTool(toolName: string): boolean {
+  return ToolsByPermission.default.includes(toolName);
 }
 
 export const ClientTools = {
