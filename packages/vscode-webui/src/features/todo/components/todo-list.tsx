@@ -394,13 +394,13 @@ function TodoListItems({ className }: { className?: string }) {
     : todos.filter((todo) => todo.status !== "cancelled");
 
   return (
-    <motion.div
-      initial={false}
-      animate={isCollapsed ? "collapsed" : "open"}
-      variants={collapsibleSectionVariants}
-      className="overflow-hidden"
-    >
-      <ScrollArea className="px-1 pt-1 pb-2" viewportClassname={className}>
+    <ScrollArea className="px-1 pt-1 pb-2" viewportClassname={className}>
+      <motion.div
+        initial={false}
+        animate={isCollapsed ? "collapsed" : "open"}
+        variants={collapsibleSectionVariants}
+        className="overflow-hidden"
+      >
         <div className="flex flex-col gap-1">
           <AnimatePresence mode="popLayout">
             {displayTodos.map((todo, idx) => (
@@ -437,8 +437,8 @@ function TodoListItems({ className }: { className?: string }) {
             ))}
           </AnimatePresence>
         </div>
-      </ScrollArea>
-    </motion.div>
+      </motion.div>
+    </ScrollArea>
   );
 }
 

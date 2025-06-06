@@ -200,11 +200,10 @@ function RouteComponent() {
         <iframe
           ref={iframeRef}
           className={cn("w-full", {
-            "hidden h-0": !isMessageReady || displayError,
+            hidden: !isMessageReady || displayError,
           })}
           style={{
-            height:
-              isMessageReady && !displayError ? `${iframeHeight}px` : "100%",
+            height: isMessageReady && !displayError ? `${iframeHeight}px` : 0,
           }}
           title="task"
           src={iframeUrl}
