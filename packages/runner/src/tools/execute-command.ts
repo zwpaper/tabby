@@ -31,8 +31,11 @@ export const executeCommand =
           command,
           { cwd: resolvedCwd, signal: abortSignal },
           (error: Error | null, stdout: string, stderr: string) => {
-            const output =
-              stdout + stderr + (error ? `\nError: ${error.message}` : "");
+            const output = (
+              stdout +
+              stderr +
+              (error ? `\nError: ${error.message}` : "")
+            ).replace(/(?<!\r)\n/g, "\r\n"); // need CRLF ('\r\n') as line separator, '\n' only moves the cursor one line down but not to the beginning
             if (error || stderr) {
               resolve({ success: false, output });
             } else {
