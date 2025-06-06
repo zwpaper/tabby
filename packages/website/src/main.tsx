@@ -7,6 +7,8 @@ import { routeTree } from "./routeTree.gen";
 
 import "./styles.css";
 import { Loader2 } from "lucide-react";
+import posthog from "posthog-js";
+import { ErrorComponent, NotFoundComponent } from "./components/error-view.tsx";
 import { useSession } from "./lib/auth-hooks.ts";
 import { Providers } from "./providers.tsx";
 import reportWebVitals from "./reportWebVitals.ts";
@@ -22,6 +24,8 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
+  defaultNotFoundComponent: NotFoundComponent,
+  defaultErrorComponent: ErrorComponent,
 });
 
 export type Router = typeof router;
@@ -68,8 +72,6 @@ if (rootElement && !rootElement.innerHTML) {
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
-
-import posthog from "posthog-js";
 
 // Initialize PostHog
 posthog.init("phc_yAshPRA7kVY4GKm30kh4TSdyKwlbw0PGD2r5T5Tzv5U", {
