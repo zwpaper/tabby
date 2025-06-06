@@ -338,7 +338,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
                         content.result,
                       )}${toolResponseEndTag}`,
                   )
-                  .join("\\n"),
+                  .join("\n"),
               },
             ],
           };
