@@ -12,6 +12,14 @@ interface ParsedToolCall {
   arguments: unknown;
 }
 
+// Type to track streaming tool calls
+type StreamingToolCall = {
+  toolCallId: string;
+  toolName: string;
+  argTextBuffer: string;
+  finalized: boolean;
+};
+
 // Custom error classes for structured error handling
 class ToolCallParseError extends Error {
   public readonly cause?: Error;
@@ -27,72 +35,25 @@ class ToolCallParseError extends Error {
   }
 }
 
-class ToolCallValidationError extends Error {
-  constructor(
-    message: string,
-    public readonly toolCall: ParsedToolCall,
-  ) {
-    super(message);
-    this.name = "ToolCallValidationError";
-  }
-}
-
 const defaultTemplate = (tools: string) =>
   `====
 
 TOOL CALLING
 
-You are provided with function signatures within <tools></tools> XML tags.
+You are provided with function signatures within <tools></tools> XML tags in JSON schema format.
 You may call one or more functions to assist with the user query.
-Don't make assumptions about what values to plug into functions.
-Here are the available tools: <tools>${tools}</tools>
-Use the following pydantic model json schema for each tool call you will make: {'title': 'FunctionCall', 'type': 'object', 'properties': {'name': {'title': 'Name', 'type': 'string'}, 'arguments': {'title': 'Arguments', 'type': 'object'}}, 'required': ['name', 'arguments']}
-For each function call return a json object with function name and arguments within <tool-call></tool-call> XML tags as follows:
-<tool-call>
-{'name': <function-name>, 'arguments': <args-dict>}
-</tool-call>`;
+Do not make assumptions about what values to plug into functions; you must follow the function signature strictly to call functions.
+Here are the available tools:
+<tools>
+${tools}
+</tools>
 
-// Constants for performance and memory management
-const MaxBufferSize = 4 * 1024 * 1024; // 4MB limit
-const MaxToolCall = 100; // Reasonable limit for tool calls
+For each function call return the arguments in JSON text format within tool-call XML tags:
 
-// Utility functions
-function escapeRegex(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function validateParsedToolCall(toolCall: ParsedToolCall): void {
-  if (!toolCall.name || typeof toolCall.name !== "string") {
-    throw new ToolCallValidationError(
-      "Invalid tool call: missing or invalid name",
-      toolCall,
-    );
-  }
-  if (toolCall.name.length === 0) {
-    throw new ToolCallValidationError(
-      "Invalid tool call: empty tool name",
-      toolCall,
-    );
-  }
-}
-
-// Extract tool call parsing logic for better maintainability
-function parseToolCallSafely(toolCall: string): ParsedToolCall {
-  try {
-    const parsedToolCall = RJSON.parse(toolCall) as ParsedToolCall;
-    validateParsedToolCall(parsedToolCall);
-    return parsedToolCall;
-  } catch (e) {
-    if (e instanceof ToolCallValidationError) {
-      throw e;
-    }
-    throw new ToolCallParseError(
-      `Failed to parse tool call: ${e instanceof Error ? e.message : String(e)}`,
-      toolCall,
-      e instanceof Error ? e : undefined,
-    );
-  }
-}
+<tool-call name="{arg-name}">
+{argument-dict}
+</tool-call>
+`;
 
 // Extract tool call processing logic for wrapGenerate
 function extractToolCallsFromText(
@@ -100,14 +61,27 @@ function extractToolCallsFromText(
   toolCallRegex: RegExp,
 ): ParsedToolCall[] {
   const matches = [...text.matchAll(toolCallRegex)];
-  const toolCallTexts = matches.map((match) => match[1] || match[2]);
+  return matches.map((match) => {
+    const toolName = match[1];
+    const argsText = match[2];
 
-  return toolCallTexts.map(parseToolCallSafely);
+    try {
+      const args = RJSON.parse(argsText);
+      return { name: toolName, arguments: args };
+    } catch (e) {
+      throw new ToolCallParseError(
+        `Failed to parse tool call arguments: ${e instanceof Error ? e.message : String(e)}`,
+        `${toolName}: ${argsText}`,
+        e instanceof Error ? e : undefined,
+      );
+    }
+  });
 }
 
 // Extract stream transform logic for better organization
 function createToolCallTransformStream(
-  toolCallTag: string,
+  toolCallStartRegex: RegExp,
+  toolCallStartPrefix: string,
   toolCallEndTag: string,
 ): TransformStream<LanguageModelV1StreamPart, LanguageModelV1StreamPart> {
   let isFirstToolCall = true;
@@ -116,7 +90,7 @@ function createToolCallTransformStream(
   let isToolCall = false;
   let buffer = "";
   let toolCallIndex = -1;
-  const toolCallBuffer: string[] = [];
+  const streamingToolCalls: StreamingToolCall[] = [];
 
   return new TransformStream<
     LanguageModelV1StreamPart,
@@ -125,36 +99,15 @@ function createToolCallTransformStream(
     transform(chunk, controller) {
       if (chunk.type === "finish") {
         // Process all collected tool calls
-        for (const toolCallText of toolCallBuffer) {
-          if (!toolCallText) continue;
-
-          try {
-            const parsedToolCall = parseToolCallSafely(toolCallText);
-
-            controller.enqueue({
-              type: "tool-call",
-              toolCallType: "function",
-              toolCallId: generateId(),
-              toolName: parsedToolCall.name,
-              args: JSON.stringify(parsedToolCall.arguments),
-            });
-          } catch (e) {
-            const error =
-              e instanceof ToolCallParseError ||
-              e instanceof ToolCallValidationError
-                ? e
-                : new ToolCallParseError(
-                    `Unexpected error: ${e instanceof Error ? e.message : String(e)}`,
-                    toolCallText,
-                    e instanceof Error ? e : undefined,
-                  );
-
-            // Provide helpful error message to user
-            controller.enqueue({
-              type: "error",
-              error,
-            });
-          }
+        for (const toolCall of streamingToolCalls) {
+          if (toolCall.finalized) continue;
+          controller.enqueue({
+            type: "tool-call",
+            toolCallType: "function",
+            toolCallId: toolCall.toolCallId,
+            toolName: toolCall.toolName,
+            args: toolCall.argTextBuffer,
+          });
         }
 
         controller.enqueue(chunk);
@@ -169,15 +122,6 @@ function createToolCallTransformStream(
       buffer += chunk.textDelta;
 
       // Check for buffer size limit
-      if (buffer.length > MaxBufferSize) {
-        console.warn("Buffer size exceeded, truncating content");
-        controller.enqueue({
-          type: "error",
-          error: new Error("ToolCall buffer size exceeded"),
-        });
-        buffer = buffer.slice(-MaxBufferSize / 2); // Keep last half
-      }
-
       function publish(text: string) {
         if (text.length > 0) {
           const prefix =
@@ -186,10 +130,17 @@ function createToolCallTransformStream(
               : "";
 
           if (isToolCall) {
-            if (!toolCallBuffer[toolCallIndex]) {
-              toolCallBuffer[toolCallIndex] = "";
+            const streamingToolCall = streamingToolCalls[toolCallIndex];
+            if (streamingToolCall) {
+              controller.enqueue({
+                type: "tool-call-delta",
+                toolCallType: "function",
+                toolCallId: streamingToolCall.toolCallId,
+                toolName: streamingToolCall.toolName,
+                argsTextDelta: text,
+              });
+              streamingToolCall.argTextBuffer += text;
             }
-            toolCallBuffer[toolCallIndex] += text;
           } else {
             controller.enqueue({
               type: "text-delta",
@@ -207,49 +158,88 @@ function createToolCallTransformStream(
         }
       }
 
-      controller.enqueue({
-        type: "tool-call-delta",
-        toolCallType: "function",
-        toolName: "",
-        toolCallId: "",
-        argsTextDelta: "",
-      });
-
       do {
-        const nextTag = isToolCall ? toolCallEndTag : toolCallTag;
-        const startIndex = getPotentialStartIndex(buffer, nextTag);
+        if (isToolCall) {
+          // Look for closing tag
+          const endIndex = getPotentialStartIndex(buffer, toolCallEndTag);
 
-        // no opening or closing tag found, publish the buffer
-        if (startIndex == null) {
-          publish(buffer);
-          buffer = "";
-          break;
-        }
-
-        // publish text before the tag
-        publish(buffer.slice(0, startIndex));
-
-        const foundFullMatch = startIndex + nextTag.length <= buffer.length;
-
-        if (foundFullMatch) {
-          buffer = buffer.slice(startIndex + nextTag.length);
-          toolCallIndex++;
-
-          // Check for too many tool calls
-          if (toolCallIndex >= MaxToolCall) {
-            console.warn("Maximum tool calls limit reached");
-            controller.enqueue({
-              type: "error",
-              error: new Error(" Maximum tool calls limit reached"),
-            });
+          if (endIndex == null) {
+            publish(buffer);
+            buffer = "";
             break;
           }
 
-          isToolCall = !isToolCall;
-          afterSwitch = true;
+          // publish text before the end tag
+          publish(buffer.slice(0, endIndex));
+
+          const foundFullEndMatch =
+            endIndex + toolCallEndTag.length <= buffer.length;
+
+          if (foundFullEndMatch) {
+            buffer = buffer.slice(endIndex + toolCallEndTag.length);
+            isToolCall = false;
+            afterSwitch = true;
+          } else {
+            buffer = buffer.slice(endIndex);
+            break;
+          }
         } else {
-          buffer = buffer.slice(startIndex);
-          break;
+          // Look for opening tag with name attribute
+          const match = buffer.match(toolCallStartRegex);
+
+          if (!match) {
+            const startIndex = getPotentialStartIndex(
+              buffer,
+              toolCallStartPrefix,
+            );
+            if (startIndex === null || startIndex < 0) {
+              publish(buffer);
+              buffer = "";
+            }
+            break;
+          }
+
+          const startIndex = match.index ?? 0;
+          const fullMatch = match[0];
+          const toolName = match[1];
+
+          // publish text before the tag
+          publish(buffer.slice(0, startIndex));
+
+          const foundFullStartMatch =
+            startIndex + fullMatch.length <= buffer.length;
+
+          if (foundFullStartMatch) {
+            buffer = buffer.slice(startIndex + fullMatch.length);
+            // Finalizing the previous tool call
+            if (toolCallIndex >= 0) {
+              const toolCall = streamingToolCalls[toolCallIndex];
+              toolCall.finalized = true;
+              controller.enqueue({
+                type: "tool-call",
+                toolCallType: "function",
+                toolCallId: toolCall.toolCallId,
+                toolName: toolCall.toolName,
+                args: toolCall.argTextBuffer,
+              });
+            }
+            toolCallIndex++;
+
+            // Create new streaming tool call
+            const toolCallId = generateId();
+            streamingToolCalls[toolCallIndex] = {
+              toolCallId,
+              toolName,
+              argTextBuffer: "",
+              finalized: false,
+            };
+
+            isToolCall = true;
+            afterSwitch = true;
+          } else {
+            buffer = buffer.slice(startIndex);
+            break;
+          }
         }
         // biome-ignore lint/correctness/noConstantCondition: <explanation>
       } while (true);
@@ -259,24 +249,25 @@ function createToolCallTransformStream(
 
 export function createToolMiddleware(): LanguageModelV1Middleware {
   // Set defaults with validated config
-  const toolCallTag = "<tool-call>";
   const toolCallEndTag = "</tool-call>";
-  const toolResponseTag = "<tool-response>";
+  const toolResponseTagTemplate = (name: string) =>
+    `<tool-response name="${name}">`;
   const toolResponseEndTag = "</tool-response>";
   const toolSystemPromptTemplate = defaultTemplate;
 
-  // Pre-compile regex for better performance
-  const toolCallRegex = new RegExp(
-    `${escapeRegex(toolCallTag)}(.*?)(?:${escapeRegex(toolCallEndTag)}|$)`,
-    "gs",
-  );
+  // Pre-compile regex for better performance - new format with name attribute
+  const toolCallStartRegex = /<tool-call\s+name="([^"]+)">/;
+  const toolCallStartPrefix = "<tool-call";
+  const toolCallRegex =
+    /<tool-call\s+name="([^"]+)">(.*?)(?:<\/tool-call>|$)/gs;
 
   return {
     middlewareVersion: "v1",
     wrapStream: async ({ doStream }) => {
       const { stream, ...rest } = await doStream();
       const transformStream = createToolCallTransformStream(
-        toolCallTag,
+        toolCallStartRegex,
+        toolCallStartPrefix,
         toolCallEndTag,
       );
 
@@ -289,7 +280,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
     wrapGenerate: async ({ doGenerate }) => {
       const result = await doGenerate();
 
-      if (!result.text?.includes(toolCallTag)) {
+      if (!result.text?.includes("<tool-call")) {
         return result;
       }
 
@@ -326,10 +317,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
               if (content.type === "tool-call") {
                 return {
                   type: "text",
-                  text: `${toolCallTag}${JSON.stringify({
-                    arguments: content.args,
-                    name: content.toolName,
-                  })}${toolCallEndTag}`,
+                  text: `<tool-call name="${content.toolName}">${JSON.stringify(content.args)}</tool-call>`,
                 };
               }
 
@@ -346,12 +334,11 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
                 text: message.content
                   .map(
                     (content) =>
-                      `${toolResponseTag}${JSON.stringify({
-                        toolName: content.toolName,
-                        result: content.result,
-                      })}${toolResponseEndTag}`,
+                      `${toolResponseTagTemplate(content.toolName)}${JSON.stringify(
+                        content.result,
+                      )}${toolResponseEndTag}`,
                   )
-                  .join("\n"),
+                  .join("\\n"),
               },
             ],
           };
@@ -367,7 +354,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
           : {};
 
       const HermesPrompt = toolSystemPromptTemplate(
-        JSON.stringify(Object.entries(originalToolDefinitions)),
+        JSON.stringify(originalToolDefinitions, null, 2),
       );
 
       const toolSystemPrompt: LanguageModelV1Prompt =

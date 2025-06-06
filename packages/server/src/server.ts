@@ -29,7 +29,7 @@ if (process.env.NODE_ENV !== "production") {
   app.use(logger());
 }
 
-if (process.env.NODE_ENV !== "test") {
+if (process.env.NODE_ENV === "production") {
   startServerCronJobs();
 }
 
