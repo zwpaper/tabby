@@ -206,8 +206,8 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             // Disable retries as we handle them ourselves.
             maxRetries: 0,
 
-            // 8k tokens.
-            maxTokens: 1024 * 8,
+            // 16k tokens.
+            maxTokens: 1024 * 16,
           }),
         );
 
