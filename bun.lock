@@ -179,6 +179,7 @@
         "@radix-ui/react-switch": "^1.2.5",
         "@radix-ui/react-tooltip": "^1.2.4",
         "@ragdoll/common": "workspace:*",
+        "@ragdoll/runner": "workspace:*",
         "@ragdoll/server": "workspace:*",
         "@tailwindcss/vite": "^4.0.6",
         "@tanstack/query-sync-storage-persister": "^5.75.0",
@@ -260,6 +261,7 @@
       "devDependencies": {
         "@quilted/threads": "catalog:",
         "@ragdoll/common": "workspace:*",
+        "@ragdoll/runner": "workspace:*",
       },
     },
     "packages/website": {

@@ -1,3 +1,5 @@
+import type { TaskRunnerProgress } from "@ragdoll/runner";
+
 export type {
   VSCodeHostApi,
   WebviewHostApi,
@@ -37,9 +39,9 @@ export interface ExecuteCommandResult {
   error?: string; // Optional error message if the execution aborted / failed
 }
 
-export interface TaskRunner {
-  taskId: number;
-  status: "running" | "completed" | "error";
+export interface TaskRunnerState {
+  status: "running" | "stopped";
+  progress?: TaskRunnerProgress;
   error?: string;
 }
 

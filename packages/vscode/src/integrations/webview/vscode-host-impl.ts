@@ -52,7 +52,7 @@ import type {
   McpStatus,
   ResourceURI,
   SessionState,
-  TaskRunner,
+  TaskRunnerState,
   VSCodeHostApi,
 } from "@ragdoll/vscode-webui-bridge";
 import type { Tool } from "ai";
@@ -348,7 +348,9 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   };
 
   readTaskRunners = async (): Promise<
-    ThreadSignalSerialization<TaskRunner[]>
+    ThreadSignalSerialization<{
+      [taskId: number]: TaskRunnerState;
+    }>
   > => {
     return ThreadSignal.serialize(this.taskRunnerManager.status);
   };

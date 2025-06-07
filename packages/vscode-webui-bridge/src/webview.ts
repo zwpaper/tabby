@@ -8,7 +8,7 @@ import type {
   ResourceURI,
   SessionState,
   TaskIdParams,
-  TaskRunner,
+  TaskRunnerState,
 } from "./index"; // Adjusted to import from index.ts
 
 export interface VSCodeHostApi {
@@ -143,7 +143,11 @@ export interface VSCodeHostApi {
   /**
    * Reads the current task runners.
    */
-  readTaskRunners(): Promise<ThreadSignalSerialization<TaskRunner[]>>;
+  readTaskRunners(): Promise<
+    ThreadSignalSerialization<{
+      [taskId: number]: TaskRunnerState;
+    }>
+  >;
 }
 
 export interface WebviewHostApi {

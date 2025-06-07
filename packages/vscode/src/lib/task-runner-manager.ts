@@ -1,5 +1,6 @@
 import { type Signal, signal } from "@preact/signals-core";
 import { TaskRunner } from "@ragdoll/runner";
+import type { TaskRunnerState } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import type { ApiClient } from "./auth-client";
@@ -9,12 +10,6 @@ import { getLogger } from "./logger";
 import { PochiEvents } from "./pochi-events";
 
 const logger = getLogger("TaskRunnerManager");
-
-interface TaskRunnerState {
-  runner: Promise<unknown>;
-  status: "running" | "completed" | "error";
-  error?: string;
-}
 
 @injectable()
 @singleton()
@@ -40,6 +35,9 @@ export class TaskRunnerManager implements vscode.Disposable {
       }
     }
 
+    const taskState: TaskRunnerState = {
+      status: "running",
+    };
     try {
       logger.debug(`Starting task ${taskId}`);
       const taskRunner = new TaskRunner(
@@ -48,26 +46,23 @@ export class TaskRunnerManager implements vscode.Disposable {
         taskId,
         { cwd: getWorkspaceFolder().uri.fsPath },
       );
-      const taskState: TaskRunnerState = {
-        runner: taskRunner.start(),
-        status: "running",
-      };
       this.taskRunners.set(taskId, taskState);
       this.updateStatus();
 
-      await taskState.runner;
-      logger.debug(`Task ${taskId} completed successfully.`);
-      taskState.status = "completed";
-      this.updateStatus();
-    } catch (error) {
-      const state = this.taskRunners.get(taskId);
-      if (state) {
-        logger.debug(`Task ${taskId} failed:`, error);
-        state.status = "error";
-        state.error =
-          error instanceof Error ? error.message : JSON.stringify(error);
+      for await (const progress of taskRunner.start()) {
+        logger.trace(`Task ${taskId} progress:`, progress);
+        // FIXME(zhiming): If progress is trying to run a toolcall which is not auto-approved, throw an error.
+        taskState.progress = progress;
         this.updateStatus();
       }
+      logger.debug(`Task ${taskId} completed successfully.`);
+    } catch (error) {
+      logger.debug(`Task ${taskId} failed:`, error);
+      taskState.error =
+        error instanceof Error ? error.message : JSON.stringify(error);
+    } finally {
+      taskState.status = "stopped";
+      this.updateStatus();
     }
   }
 
@@ -76,11 +71,7 @@ export class TaskRunnerManager implements vscode.Disposable {
   }
 
   private buildStatus() {
-    return Array.from(this.taskRunners.entries()).map(([taskId, state]) => ({
-      taskId,
-      status: state.status,
-      error: state.error,
-    }));
+    return Object.fromEntries(this.taskRunners.entries());
   }
 
   dispose() {

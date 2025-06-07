@@ -243,11 +243,7 @@ function Tasks({ cwd }: { cwd: string }) {
                     key={task.id}
                     task={task}
                     runningInBackground={
-                      taskRunners.find(
-                        (runner) =>
-                          runner.taskId === task.id &&
-                          runner.status === "running",
-                      ) !== undefined
+                      taskRunners[task.id]?.status === "running"
                     }
                   />
                 ))}

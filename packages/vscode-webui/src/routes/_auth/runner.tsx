@@ -4,12 +4,14 @@ import { ChatContextProvider } from "@/features/chat";
 import { apiClient } from "@/lib/auth-client";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
+import { cn } from "@/lib/utils";
+import { type UIMessage, updateToolCallResult } from "@ai-sdk/ui-utils";
 import { toUIMessages } from "@ragdoll/common";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { asReadableMessage } from "@ragdoll/runner/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Bot, CheckCircle, Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { Bot } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -21,7 +23,13 @@ const searchSchema = z.object({
  */
 export const Route = createFileRoute("/_auth/runner")({
   validateSearch: (search) => searchSchema.parse(search),
-  component: RunnerComponent,
+  component: () => {
+    return (
+      <ChatContextProvider>
+        <RunnerComponent />
+      </ChatContextProvider>
+    );
+  },
 });
 
 function RunnerComponent() {
@@ -29,30 +37,65 @@ function RunnerComponent() {
   const resourceUri = useResourceURI();
   const { auth: authData } = Route.useRouteContext();
   const taskRunners = useTaskRunners();
-  const taskRunner = taskRunners.find((runner) => runner.taskId === taskId);
+  const taskRunner = taskRunners[taskId];
 
-  const queryClient = useQueryClient();
-  const { data: taskData, isLoading } = useQuery({
-    queryKey: ["task", taskId],
-    queryFn: async () => {
-      const resp = await apiClient.api.tasks[":id"].$get({
-        param: {
-          id: taskId.toString(),
-        },
-      });
-      return resp.json();
-    },
-    refetchOnWindowFocus: false,
-  });
+  const { status, progress, error } = taskRunner ?? {
+    status: null,
+    progress: null,
+    error: null,
+  };
 
-  const { status, error } = taskRunner ?? { status: null, error: null };
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
+
+  const refreshTask = useCallback(async () => {
+    setIsLoading(true);
+    const resp = await apiClient.api.tasks[":id"].$get({
+      param: {
+        id: taskId.toString(),
+      },
+    });
+    const task = await resp.json();
+    setIsLoading(false);
+    setMessages(toUIMessages(task.conversation?.messages ?? []));
+  }, [taskId]);
 
   useEffect(() => {
-    // reload task
-    if (status === "completed" || status === "error") {
-      queryClient.invalidateQueries({ queryKey: ["task", taskId] });
+    if (progress?.type === "loading-task") {
+      if (progress.phase === "begin") {
+        setIsLoading(true);
+      } else if (progress.phase === "end") {
+        setIsLoading(false);
+        setMessages(toUIMessages(progress.task.conversation?.messages ?? []));
+      }
+    } else if (progress?.type === "executing-tool-call") {
+      if (progress.phase === "begin") {
+        // FIXME(zhiming): update UI toolcall status icon: isExecuting = true
+      } else if (progress.phase === "end") {
+        // FIXME(zhiming): update UI toolcall status icon: isExecuting = false
+        setMessages((prevMessages) => {
+          updateToolCallResult({
+            messages: prevMessages,
+            toolCallId: progress.toolCallId,
+            toolResult: progress.toolResult,
+          });
+          return prevMessages;
+        });
+      }
+    } else if (progress?.type === "sending-result") {
+      if (progress.phase === "begin") {
+        setIsLoading(true);
+      } else if (progress.phase === "end") {
+        // skip
+      }
+    } else if (progress?.type === "step-completed") {
+      setIsLoading(false);
+    } else if (progress?.type === "runner-stopped") {
+      refreshTask().catch(() => {
+        // ignore error
+      });
     }
-  }, [status, taskId, queryClient]);
+  }, [progress, refreshTask]);
 
   if (!taskRunner) {
     return (
@@ -62,55 +105,33 @@ function RunnerComponent() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="animate-spin" />
-      </div>
-    );
-  }
-
-  if (!taskData) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <p>Task not found</p>
-      </div>
-    );
-  }
-
-  const messages = toUIMessages(taskData.conversation?.messages || []);
-
   return (
-    <ChatContextProvider>
-      <div className="flex h-screen flex-col">
-        <MessageList
-          messages={messages}
-          user={authData?.user}
-          logo={resourceUri?.logo128}
-          isLoading={false}
-        />
-        {!isLoading && (
-          <div className="flex items-center justify-between border-t p-4">
-            {status === "running" && <Bot className="h-5 w-5 animate-bounce" />}
-            {status === "completed" && (
-              <>
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <Link to={"/"} search={{ taskId }} className={buttonVariants()}>
-                  Continue in Chat
-                </Link>
-              </>
-            )}
-            {status === "error" && (
-              <>
-                {error && <div>{error}</div>}
-                <Link to={"/"} search={{ taskId }} className={buttonVariants()}>
-                  Continue in Chat
-                </Link>
-              </>
-            )}
-          </div>
-        )}
+    <div className="flex h-screen flex-col">
+      <MessageList
+        messages={messages}
+        user={authData?.user}
+        logo={resourceUri?.logo128}
+        isLoading={isLoading}
+      />
+      <div className="flex items-center justify-between border-t p-4">
+        <div className="flex">
+          <Bot
+            className={cn("h-5 w-5", {
+              "animate-bounce": status === "running",
+            })}
+          />
+          {error ? (
+            <div className="px-2 text-error">{error}</div>
+          ) : (
+            <div className="px-2">
+              {progress ? asReadableMessage(progress) : ""}
+            </div>
+          )}
+        </div>
+        <Link to={"/"} search={{ taskId }} className={buttonVariants()}>
+          Continue in Chat
+        </Link>
       </div>
-    </ChatContextProvider>
+    </div>
   );
 }

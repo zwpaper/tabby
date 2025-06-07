@@ -3,6 +3,7 @@
   "main": "src/index.ts",
   "devDependencies": {
     "@ragdoll/common": "workspace:*",
+    "@ragdoll/runner": "workspace:*",
     "@quilted/threads": "catalog:"
   },
   "private": true

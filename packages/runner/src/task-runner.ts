@@ -64,6 +64,51 @@ function safeCall<T>(x: Promise<T>) {
 
 type ApiClient = ReturnType<typeof hc<AppType>>;
 
+type TaskStepProgress =
+  | {
+      type: "loading-task";
+      phase: "begin";
+    }
+  | {
+      type: "loading-task";
+      phase: "end";
+      task: Awaited<ReturnType<TaskRunner["loadTask"]>>;
+    }
+  | {
+      type: "executing-tool-call";
+      phase: "begin";
+      toolName: string;
+      toolCallId: string;
+      toolArgs: unknown;
+    }
+  | {
+      type: "executing-tool-call";
+      phase: "end";
+      toolName: string;
+      toolCallId: string;
+      toolResult: unknown;
+    }
+  | {
+      type: "sending-result";
+      phase: "begin";
+      message: UIMessage;
+    }
+  | {
+      type: "sending-result";
+      phase: "end";
+    }
+  | {
+      type: "step-completed";
+      status: TaskStatus;
+    };
+
+export type TaskRunnerProgress =
+  | (TaskStepProgress & { step: number })
+  | {
+      type: "runner-stopped";
+      status: TaskStatus | undefined;
+    };
+
 export class TaskRunner {
   private readonly context: RunnerContext;
   private todos: Todo[] = [];
@@ -90,8 +135,15 @@ export class TaskRunner {
     this.todos = todos.length ? todos : mergeTodos(this.todos, todos);
   }
 
-  private async step(): Promise<TaskStatus> {
+  /**
+   * @yields {@link TaskStepProgress} - Progress updates
+   * @throws {@link Error} if the task is in an invalid state, or any error occurs during execution
+   */
+  private async *step(): AsyncGenerator<TaskStepProgress> {
+    yield { type: "loading-task", phase: "begin" };
     const task = await this.loadTask();
+    yield { type: "loading-task", phase: "end", task };
+
     logger.info("step start", task.status);
     if (task.status === "streaming") {
       throw new Error("Task is already running");
@@ -127,8 +179,22 @@ export class TaskRunner {
         throw new Error("No tool call found");
       }
 
+      yield {
+        type: "executing-tool-call",
+        phase: "begin",
+        toolName: nextToolCall.toolName,
+        toolCallId: nextToolCall.toolCallId,
+        toolArgs: nextToolCall.args,
+      };
       const toolResult = await this.executeToolCall(nextToolCall);
 
+      yield {
+        type: "executing-tool-call",
+        phase: "end",
+        toolName: nextToolCall.toolName,
+        toolCallId: nextToolCall.toolCallId,
+        toolResult,
+      };
       updateToolCallResult({
         messages,
         toolCallId: nextToolCall.toolCallId,
@@ -172,6 +238,8 @@ export class TaskRunner {
       "with environment",
       environment,
     );
+
+    yield { type: "sending-result", phase: "begin", message: lastMessage };
     const resp = await this.apiClient.api.chat.stream.$post(
       {
         json: {
@@ -191,8 +259,13 @@ export class TaskRunner {
       const error = await resp.text();
       throw new Error(`Failed to start streaming ${resp.statusText}: ${error}`);
     }
+    yield { type: "sending-result", phase: "end" };
 
-    return streamDone;
+    const status = await streamDone;
+    yield {
+      type: "step-completed",
+      status,
+    };
   }
 
   private async executeToolCall(tool: ToolInvocation) {
@@ -223,12 +296,28 @@ export class TaskRunner {
     );
   }
 
-  async start() {
+  /**
+   * Start the task runner and yield progress updates
+   * @yields {@link TaskRunnerProgress} - Progress updates throughout task execution
+   */
+  async *start(): AsyncGenerator<TaskRunnerProgress> {
+    let step = 0;
     while (true) {
-      const status = await this.step();
-      if (status !== "pending-tool") {
-        return status;
+      let status: TaskStatus | undefined = undefined;
+      for await (const progress of this.step()) {
+        yield { ...progress, step };
+        if (progress.type === "step-completed") {
+          status = progress.status;
+        }
       }
+      if (status !== "pending-tool") {
+        yield {
+          type: "runner-stopped",
+          status,
+        };
+        return;
+      }
+      step++;
     }
   }
 

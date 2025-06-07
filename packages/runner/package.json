@@ -2,7 +2,8 @@
   "name": "@ragdoll/runner",
   "bin": "src/cli.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./utils": "./src/utils.ts"
   },
   "scripts": {
     "start": "bun run src/cli.ts",
