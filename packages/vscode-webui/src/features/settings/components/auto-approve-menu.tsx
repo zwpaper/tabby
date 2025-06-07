@@ -92,7 +92,7 @@ export function AutoApproveMenu() {
       .filter((setting) => getCoreActionCheckedState(setting.id))
       .map((setting) => setting.summary),
     ...(autoApproveSettings.retry
-      ? [`Retry(${autoApproveSettings.maxRetryLimit})`]
+      ? [`Retry (${autoApproveSettings.maxRetryLimit})`]
       : []),
   ];
 
@@ -174,7 +174,7 @@ export function AutoApproveMenu() {
             <span className="ml-1.5 flex items-center gap-2 font-semibold">
               <RotateCcw className="size-4 shrink-0" />
               <span className="whitespace-nowrap text-foreground text-sm">
-                {autoApproveSettings.retry ? "Max Attempts:" : "Retry actions"}
+                {autoApproveSettings.retry ? "Max attempts:" : "Retry actions"}
               </span>
             </span>
             {autoApproveSettings.retry && (

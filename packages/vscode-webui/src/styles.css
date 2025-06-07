@@ -219,7 +219,10 @@ html {
     text-decoration: inherit;
   }
 
-  a:focus {
+  a:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
     outline: inherit;
   }
 }
