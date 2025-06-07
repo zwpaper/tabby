@@ -7,7 +7,8 @@ export type AutoApprove = Record<
   Exclude<keyof typeof ToolsByPermission, "default">,
   boolean
 > & {
-  retry: number;
+  retry: boolean;
+  maxRetryLimit: number;
   mcp: boolean;
 };
 
@@ -37,7 +38,8 @@ export const useSettingsStore = create<SettingsState>()(
         read: true,
         write: true,
         execute: true,
-        retry: 0,
+        retry: false,
+        maxRetryLimit: 3,
         mcp: false,
       },
       isDevMode: false,

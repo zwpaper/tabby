@@ -61,8 +61,14 @@ export function usePendingRetryApproval({
 
   // allowed retry times
   const limit = useMemo(() => {
-    return autoApproveActive ? autoApproveSettings.retry : 0;
-  }, [autoApproveActive, autoApproveSettings]);
+    return autoApproveActive && autoApproveSettings.retry
+      ? autoApproveSettings.maxRetryLimit
+      : 0;
+  }, [
+    autoApproveActive,
+    autoApproveSettings.retry,
+    autoApproveSettings.maxRetryLimit,
+  ]);
 
   const increaseRetryCount = useCallback(() => {
     if (error === undefined) {

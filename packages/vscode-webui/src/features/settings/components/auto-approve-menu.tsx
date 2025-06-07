@@ -1,4 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -13,6 +14,7 @@ import {
   RotateCcw,
   Terminal,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { type AutoApprove, useSettingsStore } from "../store";
 
 interface CoreActionSetting {
@@ -29,6 +31,15 @@ export function AutoApproveMenu() {
     autoApproveSettings,
     updateAutoApproveSettings,
   } = useSettingsStore();
+
+  const [currentMaxRetry, setCurrentMaxRetry] = useState(
+    autoApproveSettings.maxRetryLimit.toString(),
+  );
+
+  useEffect(() => {
+    setCurrentMaxRetry(autoApproveSettings.maxRetryLimit.toString());
+  }, [autoApproveSettings.maxRetryLimit]);
+
   const coreActionSettings: CoreActionSetting[] = [
     {
       id: "read",
@@ -48,12 +59,6 @@ export function AutoApproveMenu() {
       label: "Execute commands",
       iconClass: Terminal,
     },
-    {
-      id: "retry",
-      summary: "Retry",
-      label: "Retry actions",
-      iconClass: RotateCcw,
-    },
     { id: "mcp", summary: "MCP", label: "Use MCP servers", iconClass: Blocks },
   ];
 
@@ -61,25 +66,35 @@ export function AutoApproveMenu() {
     id: keyof Omit<AutoApprove, "default">,
     checked: boolean,
   ) => {
-    if (id === "retry") {
-      updateAutoApproveSettings({ retry: checked ? 5 : 0 });
-    } else {
-      updateAutoApproveSettings({ [id]: checked });
+    updateAutoApproveSettings({ [id]: checked });
+  };
+
+  const handleRetryLimitChange = (value: string) => {
+    setCurrentMaxRetry(value);
+    const numValue = Number.parseInt(value, 10);
+    if (!Number.isNaN(numValue) && numValue >= 1 && numValue <= 10) {
+      updateAutoApproveSettings({ maxRetryLimit: numValue });
     }
+  };
+
+  const handleRetryLimitBlur = () => {
+    setCurrentMaxRetry(autoApproveSettings.maxRetryLimit.toString());
   };
 
   const getCoreActionCheckedState = (
     id: keyof Omit<AutoApprove, "default">,
   ): boolean => {
-    if (id === "retry") {
-      return autoApproveSettings.retry > 0;
-    }
     return !!autoApproveSettings[id];
   };
 
-  const enabledOptionsSummary = coreActionSettings
-    .filter((setting) => getCoreActionCheckedState(setting.id))
-    .map((setting) => setting.summary);
+  const enabledOptionsSummary = [
+    ...coreActionSettings
+      .filter((setting) => getCoreActionCheckedState(setting.id))
+      .map((setting) => setting.summary),
+    ...(autoApproveSettings.retry
+      ? [`Retry(${autoApproveSettings.maxRetryLimit})`]
+      : []),
+  ];
 
   return (
     <Popover>
@@ -146,6 +161,36 @@ export function AutoApproveMenu() {
             </label>
           </div>
         ))}
+
+        {/* Max Attempts Section - Always visible */}
+        <div className="mt-1 border-gray-200/30 border-t pt-2 [@media(min-width:400px)]:col-span-2">
+          <div className="flex items-center gap-3">
+            <Checkbox
+              checked={autoApproveSettings.retry}
+              onCheckedChange={(checked) =>
+                handleCoreActionToggle("retry", !!checked)
+              }
+            />
+            <span className="ml-1.5 flex items-center gap-2 font-semibold">
+              <RotateCcw className="size-4 shrink-0" />
+              <span className="whitespace-nowrap text-foreground text-sm">
+                {autoApproveSettings.retry ? "Max Attempts:" : "Retry actions"}
+              </span>
+            </span>
+            {autoApproveSettings.retry && (
+              <Input
+                type="number"
+                min="1"
+                max="10"
+                value={currentMaxRetry}
+                onChange={(e) => handleRetryLimitChange(e.target.value)}
+                onBlur={handleRetryLimitBlur}
+                className="h-7 w-full text-xs [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   );
