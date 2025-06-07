@@ -5,8 +5,8 @@ import {
   ChatContextProvider,
   useAutoApproveGuard,
   useToolCallLifeCycle,
-  useToolEvents,
 } from "@/features/chat";
+import { ChatEventProvider } from "@/features/chat";
 import { useEnableReasoning, useSelectedModels } from "@/features/settings";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
@@ -558,17 +558,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     }
   }, [scrollToBottom]);
 
-  const { listen } = useToolEvents();
-
-  // Listen for sendMessage events and handle them
-  useEffect(() => {
-    return listen("sendMessage", ({ prompt }) => {
-      append({
-        content: prompt,
-        role: "user",
-      });
-    });
-  }, [listen, append]);
+  // The sendMessage functionality is now handled by ChatEventProvider
 
   // Ensure users can always see the executing approval or the pause approval that require their input
   useLayoutEffect(() => {
@@ -636,160 +626,162 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   ]);
 
   return (
-    <div className="flex h-screen flex-col">
-      <PreviewTool
-        messages={renderMessages}
-        // Only allow adding tool results when not loading
-      />
+    <ChatEventProvider append={append}>
+      <div className="flex h-screen flex-col">
+        <PreviewTool
+          messages={renderMessages}
+          // Only allow adding tool results when not loading
+        />
 
-      {renderMessages.length === 0 &&
-        (isTaskLoading ? (
-          <div className="flex h-full w-full items-center justify-center">
-            <Loader2 className="animate-spin" />
-          </div>
-        ) : (
-          <EmptyChatPlaceholder />
-        ))}
-      {renderMessages.length > 0 && <div className="h-4" />}
-      <MessageList
-        messages={renderMessages}
-        user={authData.user}
-        logo={resourceUri?.logo128}
-        isLoading={isLoading || isTaskLoading}
-        containerRef={messagesContainerRef}
-      />
-      <div className="flex flex-col px-4">
-        <ErrorMessage error={displayError} />
-        {!isWorkspaceActive ? (
-          <WorkspaceRequiredPlaceholder
-            isFetching={isFetching}
-            className="mb-12"
-          />
-        ) : (
-          <>
-            <ApprovalButton pendingApproval={pendingApproval} retry={retry} />
-            {todos && todos.length > 0 && (
-              <LegacyTodoList
-                className="mt-2"
-                todos={todos}
-                status={status}
-                isEditMode={isEditMode}
-                draftTodos={draftTodos}
-                hasDirtyChanges={hasDirtyChanges}
-                enterEditMode={enterEditMode}
-                exitEditMode={exitEditMode}
-                saveTodos={wrappedSaveTodos}
-                updateTodoStatus={updateTodoStatus}
-                showEdit={showEditTodos}
-              />
-            )}
-            <AutoApproveMenu />
-            {files.length > 0 && (
-              <ImagePreviewList
-                files={files}
-                onRemove={handleRemoveImage}
-                uploadingFiles={uploadingFilesMap}
-              />
-            )}
-            <FormEditor
-              input={input}
-              setInput={setInput}
-              onSubmit={wrappedHandleSubmit}
-              isLoading={isLoading || isExecuting}
-              formRef={formRef}
-              editorRef={editorRef}
-              onPaste={handlePasteImage}
-            >
-              <ActiveSelectionBadge
-                onClick={() => {
-                  editorRef.current?.commands.insertContent(" @");
-                }}
-              />
-              <DevRetryCountdown
-                pendingApproval={pendingApproval}
-                status={status}
-              />
-            </FormEditor>
-
-            {/* Hidden file input for image uploads */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept="image/*"
-              multiple
-              className="hidden"
-            />
-
-            <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
-              <div className="flex items-center gap-2 overflow-x-hidden truncate">
-                <ModelSelect
-                  value={selectedModel?.id}
-                  models={models}
-                  isLoading={isModelsLoading}
-                  onChange={handleSelectModel}
-                />
-              </div>
-
-              <div className="flex shrink-0 items-center gap-1">
-                {!!selectedModel && (
-                  <TokenUsage
-                    contextWindow={selectedModel.contextWindow}
-                    totalTokens={totalTokens}
-                    className="mr-5"
-                  />
-                )}
-                <DevModeButton
-                  messages={messages}
-                  buildEnvironment={buildEnvironment}
-                  todos={todos}
-                  taskId={taskId.current}
-                />
-                {taskId.current && uid.current && (
-                  <PublicShareButton
-                    isPublicShared={isPublicShared}
-                    disabled={isTaskLoading || isModelsLoading}
-                    taskId={taskId.current}
-                    uid={uid.current}
-                    onError={(error) => {
-                      setAutoDismissError(error);
-                    }}
-                  />
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-6 w-6 rounded-md p-0"
-                >
-                  <ImageIcon className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={isSubmitDisabled}
-                  className="h-6 w-6 rounded-md p-0 transition-opacity"
-                  onClick={() => {
-                    if (isLoading || isUploadingImages) {
-                      handleStop();
-                    } else {
-                      formRef.current?.requestSubmit();
-                    }
-                  }}
-                >
-                  {isLoading || isUploadingImages ? (
-                    <StopCircleIcon className="size-4" />
-                  ) : (
-                    <SendHorizonal className="size-4" />
-                  )}
-                </Button>
-              </div>
+        {renderMessages.length === 0 &&
+          (isTaskLoading ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <Loader2 className="animate-spin" />
             </div>
-          </>
-        )}
+          ) : (
+            <EmptyChatPlaceholder />
+          ))}
+        {renderMessages.length > 0 && <div className="h-4" />}
+        <MessageList
+          messages={renderMessages}
+          user={authData.user}
+          logo={resourceUri?.logo128}
+          isLoading={isLoading || isTaskLoading}
+          containerRef={messagesContainerRef}
+        />
+        <div className="flex flex-col px-4">
+          <ErrorMessage error={displayError} />
+          {!isWorkspaceActive ? (
+            <WorkspaceRequiredPlaceholder
+              isFetching={isFetching}
+              className="mb-12"
+            />
+          ) : (
+            <>
+              <ApprovalButton pendingApproval={pendingApproval} retry={retry} />
+              {todos && todos.length > 0 && (
+                <LegacyTodoList
+                  className="mt-2"
+                  todos={todos}
+                  status={status}
+                  isEditMode={isEditMode}
+                  draftTodos={draftTodos}
+                  hasDirtyChanges={hasDirtyChanges}
+                  enterEditMode={enterEditMode}
+                  exitEditMode={exitEditMode}
+                  saveTodos={wrappedSaveTodos}
+                  updateTodoStatus={updateTodoStatus}
+                  showEdit={showEditTodos}
+                />
+              )}
+              <AutoApproveMenu />
+              {files.length > 0 && (
+                <ImagePreviewList
+                  files={files}
+                  onRemove={handleRemoveImage}
+                  uploadingFiles={uploadingFilesMap}
+                />
+              )}
+              <FormEditor
+                input={input}
+                setInput={setInput}
+                onSubmit={wrappedHandleSubmit}
+                isLoading={isLoading || isExecuting}
+                formRef={formRef}
+                editorRef={editorRef}
+                onPaste={handlePasteImage}
+              >
+                <ActiveSelectionBadge
+                  onClick={() => {
+                    editorRef.current?.commands.insertContent(" @");
+                  }}
+                />
+                <DevRetryCountdown
+                  pendingApproval={pendingApproval}
+                  status={status}
+                />
+              </FormEditor>
+
+              {/* Hidden file input for image uploads */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*"
+                multiple
+                className="hidden"
+              />
+
+              <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
+                <div className="flex items-center gap-2 overflow-x-hidden truncate">
+                  <ModelSelect
+                    value={selectedModel?.id}
+                    models={models}
+                    isLoading={isModelsLoading}
+                    onChange={handleSelectModel}
+                  />
+                </div>
+
+                <div className="flex shrink-0 items-center gap-1">
+                  {!!selectedModel && (
+                    <TokenUsage
+                      contextWindow={selectedModel.contextWindow}
+                      totalTokens={totalTokens}
+                      className="mr-5"
+                    />
+                  )}
+                  <DevModeButton
+                    messages={messages}
+                    buildEnvironment={buildEnvironment}
+                    todos={todos}
+                    taskId={taskId.current}
+                  />
+                  {taskId.current && uid.current && (
+                    <PublicShareButton
+                      isPublicShared={isPublicShared}
+                      disabled={isTaskLoading || isModelsLoading}
+                      taskId={taskId.current}
+                      uid={uid.current}
+                      onError={(error) => {
+                        setAutoDismissError(error);
+                      }}
+                    />
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-6 w-6 rounded-md p-0"
+                  >
+                    <ImageIcon className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={isSubmitDisabled}
+                    className="h-6 w-6 rounded-md p-0 transition-opacity"
+                    onClick={() => {
+                      if (isLoading || isUploadingImages) {
+                        handleStop();
+                      } else {
+                        formRef.current?.requestSubmit();
+                      }
+                    }}
+                  >
+                    {isLoading || isUploadingImages ? (
+                      <StopCircleIcon className="size-4" />
+                    ) : (
+                      <SendHorizonal className="size-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </ChatEventProvider>
   );
 }
 

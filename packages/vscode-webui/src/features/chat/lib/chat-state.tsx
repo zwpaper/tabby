@@ -1,14 +1,13 @@
 import type React from "react";
 import { type ReactNode, createContext, useContext, useRef } from "react";
+import { ChatEventProvider } from "./chat-events";
 import {
   type ToolCallLifeCycle,
   useToolCallLifeCycles,
-} from "./internal/use-tool-call-life-cycles";
-import { ToolEvents } from "./lib/tool-events";
+} from "./use-tool-call-life-cycles";
 
 interface ChatState {
   autoApproveGuard: React.MutableRefObject<boolean>;
-  toolEvents: React.RefObject<ToolEvents>;
   getToolCallLifeCycle: (
     toolName: string,
     toolCallId: string,
@@ -25,20 +24,22 @@ interface ChatContextProviderProps {
 
 export function ChatContextProvider({ children }: ChatContextProviderProps) {
   const autoApproveGuard = useRef(false);
-  const toolEvents = useRef(new ToolEvents());
 
   const { hasExecutingToolCall, getToolCallLifeCycle, completeToolCalls } =
     useToolCallLifeCycles();
 
   const value: ChatState = {
     autoApproveGuard,
-    toolEvents,
     getToolCallLifeCycle,
     hasExecutingToolCall,
     completeToolCalls,
   };
 
-  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+  return (
+    <ChatContext.Provider value={value}>
+      <ChatEventProvider append={() => {}}>{children}</ChatEventProvider>
+    </ChatContext.Provider>
+  );
 }
 
 function useChatState(): ChatState {
@@ -47,15 +48,6 @@ function useChatState(): ChatState {
     throw new Error("useChatState must be used within a ChatContextProvider");
   }
   return context;
-}
-
-export function useToolEvents() {
-  const toolEvents = useChatState().toolEvents.current;
-  if (!toolEvents) {
-    throw new Error("ToolEvents is not initialized");
-  }
-
-  return toolEvents;
 }
 
 export function useAutoApproveGuard() {

@@ -1,10 +1,11 @@
 // Export the main context and provider
 export {
   ChatContextProvider,
-  useToolEvents,
   useAutoApproveGuard,
   useToolCallLifeCycle,
-} from "./context";
+} from "./lib/chat-state";
+
+export { ChatEventProvider, useSendMessage } from "./lib/chat-events";
 
 // Export new tool call state management hooks
-export type { ToolCallLifeCycle } from "./internal/tool-call-life-cycle";
+export type { ToolCallLifeCycle } from "./lib/tool-call-life-cycle";
