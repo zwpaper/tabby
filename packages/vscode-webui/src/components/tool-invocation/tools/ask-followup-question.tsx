@@ -4,7 +4,7 @@ import type { ToolProps } from "../types";
 
 export const AskFollowupQuestionTool: React.FC<
   ToolProps<ClientToolsType["askFollowupQuestion"]>
-> = ({ tool: toolCall, isLoading }) => {
+> = ({ tool: toolCall }) => {
   const sendMessage = useSendMessage();
   const { question, followUp } = toolCall.args || {};
 
@@ -17,18 +17,12 @@ export const AskFollowupQuestionTool: React.FC<
             {followUp.map((followUpText, index) => (
               <li
                 key={index}
-                className={`cursor-pointer text-muted-foreground ${
-                  isLoading
-                    ? "pointer-events-none opacity-50"
-                    : "hover:text-foreground"
-                }`}
+                className="cursor-pointer text-muted-foreground hover:text-foreground"
               >
                 <button
                   type="button"
                   className="inline-flex text-left"
-                  disabled={isLoading}
                   onClick={() =>
-                    !isLoading &&
                     sendMessage({
                       prompt: followUpText,
                     })

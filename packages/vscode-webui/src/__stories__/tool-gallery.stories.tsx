@@ -13,11 +13,7 @@ const ToolsGallery: React.FC<{
   return (
     <div className="mt-3 ml-1 flex flex-col gap-2">
       {tools.map((tool, index) => (
-        <ToolInvocationPart
-          key={tool.toolCallId + index}
-          tool={tool}
-          isLoading={false}
-        />
+        <ToolInvocationPart key={tool.toolCallId + index} tool={tool} />
       ))}
     </div>
   );

@@ -626,7 +626,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   ]);
 
   return (
-    <ChatEventProvider append={append}>
+    <ChatEventProvider append={isLoading ? () => {} : append}>
       <div className="flex h-screen flex-col">
         <PreviewTool
           messages={renderMessages}

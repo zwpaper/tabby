@@ -61,7 +61,6 @@ export const MessageList: React.FC<{
                     messageIndex === renderMessages.length - 1
                   }
                   part={part}
-                  isLoading={isLoading}
                 />
               ))}
             </div>
@@ -88,11 +87,9 @@ export const MessageList: React.FC<{
 
 function Part({
   part,
-  isLoading,
   isLastPartInMessages,
 }: {
   part: NonNullable<UIMessage["parts"]>[number];
-  isLoading: boolean;
   isLastPartInMessages: boolean;
 }) {
   if (part.type === "text") {
@@ -108,9 +105,7 @@ function Part({
   }
 
   if (part.type === "tool-invocation") {
-    return (
-      <ToolInvocationPart tool={part.toolInvocation} isLoading={isLoading} />
-    );
+    return <ToolInvocationPart tool={part.toolInvocation} />;
   }
 
   return <div>{JSON.stringify(part)}</div>;

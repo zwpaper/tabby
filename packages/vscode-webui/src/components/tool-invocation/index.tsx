@@ -17,10 +17,8 @@ import type { ToolProps } from "./types";
 
 export function ToolInvocationPart({
   tool,
-  isLoading,
 }: {
   tool: ToolInvocation;
-  isLoading: boolean;
 }) {
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle(
     tool.toolName,
@@ -32,7 +30,7 @@ export function ToolInvocationPart({
   return (
     <div className="flex flex-col gap-1">
       {C ? (
-        <C tool={tool} isExecuting={isExecuting} isLoading={isLoading} />
+        <C tool={tool} isExecuting={isExecuting} />
       ) : (
         <McpToolCall tool={tool} isExecuting={isExecuting} />
       )}
