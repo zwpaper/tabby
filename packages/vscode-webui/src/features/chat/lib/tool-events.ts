@@ -1,9 +1,8 @@
 // Define the event types that can be emitted/listened to
-export type ToolEventType = "abortTool" | "sendMessage"; // Add other event types here, e.g., | "anotherEvent";
+export type ToolEventType = "sendMessage"; // Add other event types here, e.g., | "anotherEvent";
 
 // Define the payload shapes for each event type
 export interface ToolEventPayloads {
-  abortTool: { toolCallId: string };
   sendMessage: {
     prompt: string;
   };

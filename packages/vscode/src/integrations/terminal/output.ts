@@ -104,7 +104,7 @@ export class OutputManager {
       content: this.lines.join(""),
       status: "completed",
       isTruncated,
-      detach: detached
+      info: detached
         ? "User has detached the terminal, the job will continue running in the background."
         : undefined,
       error: errorText,

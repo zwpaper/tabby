@@ -3,54 +3,24 @@ import { useCallback, useEffect } from "react"; // useMemo is now in the hook
 
 import { Button } from "@/components/ui/button";
 import type { PendingToolCallApproval } from "@/features/approval";
-import {
-  useAutoApproveGuard,
-  useStreamToolCallResult,
-  useToolCallState,
-  useToolEvents,
-} from "@/features/chat";
+import { useAutoApproveGuard, useToolCallLifeCycle } from "@/features/chat";
 import { useToolAutoApproval } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
-import { useVSCodeTool } from "../hooks/use-vscode-tool";
-
-// Type definitions
-export type AddToolResultFunctionType = ({
-  toolCallId,
-  result,
-}: {
-  toolCallId: string;
-  result: unknown;
-}) => void;
 
 interface ToolCallApprovalButtonProps {
   pendingApproval: PendingToolCallApproval;
-  addToolResult: AddToolResultFunctionType;
 }
 
 // Component
 export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
-  addToolResult,
 }) => {
   const autoApproveGuard = useAutoApproveGuard();
-  const { addToolStreamResult, removeToolStreamResult } =
-    useStreamToolCallResult();
-  const { executeTool, rejectTool, abortTool } = useVSCodeTool({
-    addToolResult,
-    addToolStreamResult,
-    removeToolStreamResult,
-  });
 
-  const { getToolCallState } = useToolCallState();
-
-  const { listen } = useToolEvents();
-  useEffect(() => {
-    return listen("abortTool", ({ toolCallId }) => {
-      if (getToolCallState(toolCallId) === "executing") {
-        abortTool();
-      }
-    });
-  }, [listen, abortTool, getToolCallState]);
+  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle(
+    pendingApproval.tool.toolName,
+    pendingApproval.tool.toolCallId,
+  );
 
   const ToolAcceptText: Record<string, string> = {
     writeToFile: "Save",
@@ -69,22 +39,22 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const abortText = ToolAbortText[pendingApproval.name] || null;
 
   const onAccept = useCallback(async () => {
-    if (getToolCallState(pendingApproval.tool.toolCallId) !== "ready") {
+    if (lifecycle.status !== "ready") {
       return;
     }
 
-    await executeTool(pendingApproval.tool);
-  }, [getToolCallState, pendingApproval, executeTool]);
+    lifecycle.execute(pendingApproval.tool.args);
+  }, [pendingApproval.tool, lifecycle.status, lifecycle.execute]);
 
   const onReject = useCallback(
-    (errorText = "User rejected tool call") => {
-      if (getToolCallState(pendingApproval.tool.toolCallId) !== "ready") {
+    (errorText?: string) => {
+      if (lifecycle.status !== "ready") {
         return;
       }
 
-      rejectTool(pendingApproval.tool, errorText);
+      lifecycle.reject(errorText);
     },
-    [getToolCallState, pendingApproval, rejectTool],
+    [lifecycle.status, lifecycle.reject],
   );
   const onRejectByUser = useCallback(() => onReject(), [onReject]);
 
@@ -101,15 +71,13 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
 
   const [showAbort, setShowAbort] = useDebounceState(false, 3_000); // 3 seconds
   useEffect(() => {
-    if (getToolCallState(pendingApproval.tool.toolCallId) === "executing") {
+    if (lifecycle.status === "execute") {
       setShowAbort(true);
       return;
     }
-  }, [getToolCallState, setShowAbort, pendingApproval.tool.toolCallId]);
+  }, [setShowAbort, lifecycle]);
 
-  const showAccept =
-    !isAutoApproved &&
-    getToolCallState(pendingApproval.tool.toolCallId) === "ready";
+  const showAccept = !isAutoApproved && lifecycle.status === "ready";
   if (showAccept) {
     return (
       <>
@@ -123,11 +91,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     );
   }
 
-  if (
-    showAbort &&
-    abortText &&
-    getToolCallState(pendingApproval.tool.toolCallId) === "executing"
-  ) {
+  if (showAbort && abortText && lifecycle.status.startsWith("execute")) {
     /*
     Only display the abort button if:
     1. There's executing tool call
@@ -135,7 +99,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     3. The showAbort flag is true (delayed for a bit to avoid flashing)
     */
     return (
-      <Button onClick={abortTool} variant="secondary">
+      <Button onClick={() => lifecycle.abort()} variant="secondary">
         {abortText}
       </Button>
     );

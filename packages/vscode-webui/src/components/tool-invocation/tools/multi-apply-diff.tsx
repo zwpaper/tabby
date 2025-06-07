@@ -1,4 +1,4 @@
-import { usePreviewToolCall } from "@/lib/hooks/use-preview-tool-call";
+import { useToolCallLifeCycle } from "@/features/chat";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
@@ -13,10 +13,13 @@ export const multiApplyDiffTool: React.FC<
 > = ({ tool, isExecuting }) => {
   const { path } = tool.args || {};
 
-  const { previewToolCall } = usePreviewToolCall();
+  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle(
+    tool.toolName,
+    tool.toolCallId,
+  );
   const handleClick = useCallback(() => {
-    previewToolCall(tool);
-  }, [tool, previewToolCall]);
+    lifecycle.preview(tool.args, tool.state);
+  }, [tool, lifecycle]);
 
   const result =
     tool.state === "result" && !("error" in tool.result)

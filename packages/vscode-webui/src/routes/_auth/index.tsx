@@ -4,14 +4,18 @@ import { Button } from "@/components/ui/button";
 import {
   ChatContextProvider,
   useAutoApproveGuard,
-  useToolCallState,
+  useToolCallLifeCycle,
   useToolEvents,
 } from "@/features/chat";
 import { useEnableReasoning, useSelectedModels } from "@/features/settings";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useChat } from "@ai-sdk/react";
-import type { UIMessage } from "@ai-sdk/ui-utils";
+import {
+  type UIMessage,
+  isAssistantMessageWithCompletedToolCalls,
+  updateToolCallResult,
+} from "@ai-sdk/ui-utils";
 import type { Environment, Todo } from "@ragdoll/common";
 import { formatters, fromUIMessage, toUIMessages } from "@ragdoll/common";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
@@ -113,12 +117,8 @@ function RouteComponent() {
   });
 
   return (
-    <ChatContextProvider>
-      <Chat
-        key={key}
-        loaderData={loaderData || null}
-        isTaskLoading={isTaskLoading}
-      />
+    <ChatContextProvider key={key}>
+      <Chat loaderData={loaderData || null} isTaskLoading={isTaskLoading} />
     </ChatContextProvider>
   );
 }
@@ -493,15 +493,13 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const editorRef = useRef<Editor | null>(null);
 
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
-
   const { pendingApproval, increaseRetryCount } = usePendingApproval({
     error,
     messages: renderMessages,
     status,
   });
 
-  const { hasToolCallState } = useToolCallState();
-  const isExecuting = hasToolCallState("executing");
+  const { hasExecutingToolCall: isExecuting } = useToolCallLifeCycle();
   const isLoading = status === "streaming" || status === "submitted";
 
   // Base busy state used by multiple conditions (excluding isLoading for submit logic)
@@ -587,14 +585,61 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading || isEditMode);
-  const validAddToolResult = allowAddToolResult ? addToolResult : undefined;
+  const { completeToolCalls } = useToolCallLifeCycle();
+
+  /*
+   * WORK AROUND addToolResult racing.
+   *
+   * Vercel AI's addToolResult / setMessages implementation is problematic
+   * In many cases, addToolResult refreshed underlying messages but it doesn't trigger a re-render.
+   * Here we managed our own implementation to simply reset message state to trigger a re-render when `isDirty`.
+   */
+  const addToolCallExecuted = useRef(true);
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage || !allowAddToolResult) return;
+
+    let isDirty = false;
+    for (const toolCall of completeToolCalls) {
+      if (
+        isToolStateCall(lastMessage, toolCall.toolCallId) &&
+        toolCall.status === "complete"
+      ) {
+        isDirty = true;
+        updateToolCallResult({
+          messages,
+          toolCallId: toolCall.toolCallId,
+          toolResult: toolCall.result,
+        });
+      }
+    }
+    if (isDirty) {
+      addToolCallExecuted.current = false;
+      setMessages([]);
+      setMessages(messages);
+    } else if (
+      !addToolCallExecuted.current &&
+      isAssistantMessageWithCompletedToolCalls(lastMessage)
+    ) {
+      addToolCallExecuted.current = true;
+      addToolResult({
+        toolCallId: "not-exist-tool-call-to-trigger-submission",
+        result: undefined,
+      });
+    }
+  }, [
+    allowAddToolResult,
+    completeToolCalls,
+    setMessages,
+    messages,
+    addToolResult,
+  ]);
 
   return (
     <div className="flex h-screen flex-col">
       <PreviewTool
         messages={renderMessages}
         // Only allow adding tool results when not loading
-        addToolResult={validAddToolResult}
       />
 
       {renderMessages.length === 0 &&
@@ -622,11 +667,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
           />
         ) : (
           <>
-            <ApprovalButton
-              addToolResult={validAddToolResult}
-              pendingApproval={pendingApproval}
-              retry={retry}
-            />
+            <ApprovalButton pendingApproval={pendingApproval} retry={retry} />
             {todos && todos.length > 0 && (
               <LegacyTodoList
                 className="mt-2"
@@ -791,3 +832,20 @@ const useEventAutoStart = ({
     }
   }, [init, retry, enabled]);
 };
+
+function isToolStateCall(message: UIMessage, toolCallId: string) {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  for (const part of message.parts) {
+    if (
+      part.type === "tool-invocation" &&
+      part.toolInvocation.toolCallId === toolCallId
+    ) {
+      return part.toolInvocation.state === "call";
+    }
+  }
+
+  return false;
+}

@@ -1,26 +1,20 @@
 import type React from "react";
 import { type ReactNode, createContext, useContext, useRef } from "react";
 import {
-  type ToolCallState,
-  useToolCallStates,
-} from "./hooks/use-tool-call-states";
-import {
-  type ToolCallStreamResult,
-  useToolStreamResults,
-} from "./hooks/use-tool-stream-results";
+  type ToolCallLifeCycle,
+  useToolCallLifeCycles,
+} from "./internal/use-tool-call-life-cycles";
 import { ToolEvents } from "./lib/tool-events";
 
 interface ChatState {
   autoApproveGuard: React.MutableRefObject<boolean>;
   toolEvents: React.RefObject<ToolEvents>;
-  addToolStreamResult: (result: ToolCallStreamResult) => void;
-  removeToolStreamResult: (toolCallId: string) => void;
-  findToolStreamResult: (
+  getToolCallLifeCycle: (
+    toolName: string,
     toolCallId: string,
-  ) => ToolCallStreamResult | undefined;
-  setToolCallState: (toolCallId: string, state: ToolCallState) => void;
-  getToolCallState: (toolCallId: string) => ToolCallState | undefined;
-  hasToolCallState: (state: ToolCallState) => boolean;
+  ) => ToolCallLifeCycle;
+  hasExecutingToolCall: boolean;
+  completeToolCalls: ToolCallLifeCycle[];
 }
 
 const ChatContext = createContext<ChatState | undefined>(undefined);
@@ -33,21 +27,15 @@ export function ChatContextProvider({ children }: ChatContextProviderProps) {
   const autoApproveGuard = useRef(false);
   const toolEvents = useRef(new ToolEvents());
 
-  const { addToolStreamResult, removeToolStreamResult, findToolStreamResult } =
-    useToolStreamResults();
-
-  const { getToolCallState, setToolCallState, hasToolCallState } =
-    useToolCallStates();
+  const { hasExecutingToolCall, getToolCallLifeCycle, completeToolCalls } =
+    useToolCallLifeCycles();
 
   const value: ChatState = {
     autoApproveGuard,
     toolEvents,
-    addToolStreamResult,
-    removeToolStreamResult,
-    findToolStreamResult,
-    getToolCallState,
-    setToolCallState,
-    hasToolCallState,
+    getToolCallLifeCycle,
+    hasExecutingToolCall,
+    completeToolCalls,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
@@ -74,18 +62,8 @@ export function useAutoApproveGuard() {
   return useChatState().autoApproveGuard;
 }
 
-export function useToolCallState() {
-  const { setToolCallState, getToolCallState, hasToolCallState } =
+export function useToolCallLifeCycle() {
+  const { getToolCallLifeCycle, hasExecutingToolCall, completeToolCalls } =
     useChatState();
-  return { setToolCallState, getToolCallState, hasToolCallState };
-}
-
-export function useStreamToolCallResult() {
-  const { addToolStreamResult, removeToolStreamResult, findToolStreamResult } =
-    useChatState();
-  return {
-    addToolStreamResult,
-    removeToolStreamResult,
-    findToolStreamResult,
-  };
+  return { getToolCallLifeCycle, hasExecutingToolCall, completeToolCalls };
 }

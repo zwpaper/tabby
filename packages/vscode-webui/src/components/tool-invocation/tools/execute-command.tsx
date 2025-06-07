@@ -1,4 +1,4 @@
-import { useStreamToolCallResult, useToolEvents } from "@/features/chat";
+import { useToolCallLifeCycle } from "@/features/chat";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useCallback } from "react";
 import { CommandExecutionPanel } from "../command-execution-panel";
@@ -10,10 +10,13 @@ import type { ToolProps } from "../types";
 export const executeCommandTool: React.FC<
   ToolProps<ClientToolsType["executeCommand"]>
 > = ({ tool, isExecuting }) => {
-  const { emit } = useToolEvents();
+  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle(
+    tool.toolName,
+    tool.toolCallId,
+  );
   const abortTool = useCallback(() => {
-    emit("abortTool", { toolCallId: tool.toolCallId });
-  }, [emit, tool.toolCallId]);
+    lifecycle.abort();
+  }, [lifecycle.abort]);
 
   const { cwd, command, isDevServer } = tool.args || {};
   const cwdNode = cwd ? (
@@ -35,13 +38,9 @@ export const executeCommandTool: React.FC<
     </>
   );
 
-  const { findToolStreamResult } = useStreamToolCallResult();
-  const streamResult = findToolStreamResult(tool.toolCallId) as
-    | {
-        result: { output: string; detach: () => void };
-      }
-    | undefined;
-  let output = streamResult?.result.output || "";
+  const { streamingResult } = lifecycle;
+
+  let output = streamingResult?.output.content || "";
   let completed = false;
   if (
     tool.state === "result" &&
@@ -54,7 +53,7 @@ export const executeCommandTool: React.FC<
   }
 
   const onDetach = () => {
-    streamResult?.result.detach();
+    streamingResult?.detach();
     abortTool();
   };
 

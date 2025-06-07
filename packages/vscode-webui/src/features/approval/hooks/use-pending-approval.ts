@@ -27,6 +27,13 @@ export function usePendingApproval({
   const { pendingApproval: pendingToolCallApproval } =
     usePendingToolCallApproval({ error, messages });
 
+  if (status === "streaming" || status === "submitted") {
+    return {
+      pendingApproval: undefined,
+      increaseRetryCount: () => {},
+    };
+  }
+
   return {
     pendingApproval: pendingRetryApproval ?? pendingToolCallApproval,
     increaseRetryCount,

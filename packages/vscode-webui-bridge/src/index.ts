@@ -33,7 +33,7 @@ export interface ExecuteCommandResult {
   content: string;
   status: "idle" | "running" | "completed";
   isTruncated: boolean;
-  detach?: string;
+  info?: string;
   error?: string; // Optional error message if the execution aborted / failed
 }
 
