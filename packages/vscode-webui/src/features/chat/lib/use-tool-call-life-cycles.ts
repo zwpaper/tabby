@@ -62,10 +62,16 @@ export function useToolCallLifeCycles() {
     [reloadToolCallLifeCycles],
   );
 
+  const clearToolCalls = useCallback(() => {
+    toolCallLifeCyclesRef.current = new Map();
+    setToolCallLifeCycles(new Map());
+  }, []);
+
   return {
     getToolCallLifeCycle,
     hasExecutingToolCall,
     completeToolCalls,
+    clearToolCalls,
   };
 }
 
