@@ -48,7 +48,7 @@ export function useToolCallLifeCycles() {
           reloadToolCallLifeCycles();
 
           // Clean up listeners when the tool call is completed
-          if (name === "complete") {
+          if (name === "dispose") {
             unsubscribe();
           }
         });
@@ -62,16 +62,10 @@ export function useToolCallLifeCycles() {
     [reloadToolCallLifeCycles],
   );
 
-  const clearToolCalls = useCallback(() => {
-    toolCallLifeCyclesRef.current = new Map();
-    setToolCallLifeCycles(new Map());
-  }, []);
-
   return {
     getToolCallLifeCycle,
     hasExecutingToolCall,
     completeToolCalls,
-    clearToolCalls,
   };
 }
 

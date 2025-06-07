@@ -62,11 +62,11 @@ import {
 import { AutoApproveMenu } from "@/features/settings";
 import { LegacyTodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
+import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
-import { useVercelAiToolResultWorkaround } from "@/lib/hooks/use-vercel-ai-tool-result-workaround";
 import {
   createImageFileName,
   isDuplicateFile,
@@ -290,7 +290,10 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     addToolResult,
     experimental_resume,
   } = useChat({
-    experimental_throttle: 100,
+    /*
+     * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
+     */
+    // experimental_throttle: 100,
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
     onFinish: (_, { finishReason }) => {
@@ -573,9 +576,8 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading || isEditMode);
 
-  useVercelAiToolResultWorkaround({
+  useAddCompleteToolCalls({
     messages,
-    setMessages,
     addToolResult: allowAddToolResult ? addToolResult : undefined,
   });
 

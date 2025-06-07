@@ -39,6 +39,9 @@ type ToolCallState =
   | {
       type: "complete";
       result: unknown;
+    }
+  | {
+      type: "dispose";
     };
 
 type ToolCallLifeCycleEvents = {
@@ -70,6 +73,10 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
 
   get result() {
     return this.state.type === "complete" ? this.state.result : undefined;
+  }
+
+  dispose() {
+    this.transitTo("complete", { type: "dispose" });
   }
 
   // FIXME: throttle if state is partial-call

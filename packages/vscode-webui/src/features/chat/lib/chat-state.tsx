@@ -14,7 +14,6 @@ interface ChatState {
   ) => ToolCallLifeCycle;
   hasExecutingToolCall: boolean;
   completeToolCalls: ToolCallLifeCycle[];
-  clearToolCalls: () => void;
 }
 
 const ChatContext = createContext<ChatState | undefined>(undefined);
@@ -26,19 +25,14 @@ interface ChatContextProviderProps {
 export function ChatContextProvider({ children }: ChatContextProviderProps) {
   const autoApproveGuard = useRef(false);
 
-  const {
-    hasExecutingToolCall,
-    getToolCallLifeCycle,
-    completeToolCalls,
-    clearToolCalls,
-  } = useToolCallLifeCycles();
+  const { hasExecutingToolCall, getToolCallLifeCycle, completeToolCalls } =
+    useToolCallLifeCycles();
 
   const value: ChatState = {
     autoApproveGuard,
     getToolCallLifeCycle,
     hasExecutingToolCall,
     completeToolCalls,
-    clearToolCalls,
   };
 
   return (
@@ -61,16 +55,11 @@ export function useAutoApproveGuard() {
 }
 
 export function useToolCallLifeCycle() {
-  const {
-    getToolCallLifeCycle,
-    hasExecutingToolCall,
-    completeToolCalls,
-    clearToolCalls,
-  } = useChatState();
+  const { getToolCallLifeCycle, hasExecutingToolCall, completeToolCalls } =
+    useChatState();
   return {
     getToolCallLifeCycle,
     hasExecutingToolCall,
     completeToolCalls,
-    clearToolCalls,
   };
 }
