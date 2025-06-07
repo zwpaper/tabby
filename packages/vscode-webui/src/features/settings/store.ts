@@ -69,6 +69,44 @@ export const useSettingsStore = create<SettingsState>()(
         Object.fromEntries(
           Object.entries(state).filter(([_, v]) => typeof v !== "function"),
         ),
+      version: 1,
+      migrate: (persistedState: unknown) => {
+        if (
+          persistedState &&
+          typeof persistedState === "object" &&
+          persistedState !== null
+        ) {
+          const state = persistedState as {
+            autoApproveSettings?: {
+              retry?: number | boolean;
+              maxRetryLimit?: number;
+              [key: string]: unknown;
+            };
+            [key: string]: unknown;
+          };
+
+          // Migration: convert old retry (number) to new retry (boolean) + maxRetryLimit (number)
+          if (
+            state.autoApproveSettings &&
+            typeof state.autoApproveSettings.retry === "number"
+          ) {
+            const oldRetryCount = state.autoApproveSettings.retry;
+            state.autoApproveSettings.retry = oldRetryCount > 0;
+            state.autoApproveSettings.maxRetryLimit =
+              oldRetryCount > 0 ? oldRetryCount : 3;
+          }
+
+          // Ensure maxRetryLimit exists (required for type safety)
+          if (
+            state.autoApproveSettings &&
+            state.autoApproveSettings.maxRetryLimit === undefined
+          ) {
+            state.autoApproveSettings.maxRetryLimit = 3;
+          }
+        }
+
+        return persistedState;
+      },
     },
   ),
 );
