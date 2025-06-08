@@ -7,7 +7,9 @@
   },
   "scripts": {
     "start": "bun run src/cli.ts",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "build": "bun build src/cli.ts --compile --outfile ./dist/pochi-runner",
+    "release": "./scripts/build-platform-binary.sh"
   },
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",

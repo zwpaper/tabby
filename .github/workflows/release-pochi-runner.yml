@@ -1,0 +1,32 @@
+name: Release Pochi Runner Binary
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: cd packages/runner && bun run release && ls -R dist
+
+      - uses: ncipollo/release-action@v1
+        if: github.event_name == 'push'
+        with:
+          allowUpdates: true
+          prerelease: true
+          makeLatest: false
+          artifacts: "packages/runner/dist/*"
+          tag: latest
+          removeArtifacts: true
+          owner: getpochi
+          repo: code
+          token: ${{ secrets.POCHI_GITHUB_TOKEN }}
