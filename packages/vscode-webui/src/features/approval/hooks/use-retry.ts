@@ -6,7 +6,6 @@ import { isAssistantMessageWithNoToolCalls } from "../utils";
 import { ReadyForRetryError } from "./use-ready-for-retry-error";
 
 export function useRetry({
-  error,
   messages,
   setMessages,
   append,
@@ -14,7 +13,6 @@ export function useRetry({
   experimental_resume,
   latestHttpCode,
 }: {
-  error: Error | undefined;
   messages: UIMessage[];
   append: UseChatHelpers["append"];
   setMessages: UseChatHelpers["setMessages"];
@@ -23,41 +21,47 @@ export function useRetry({
   latestHttpCode: React.RefObject<number | undefined>;
 }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies(latestHttpCode.current): is ref.
-  const retryRequest = useCallback(async () => {
-    if (error === undefined) {
-      return;
-    }
+  const retryRequest = useCallback(
+    async (error?: Error) => {
+      if (error === undefined) {
+        return;
+      }
 
-    if (messages.length === 0) {
-      return;
-    }
+      if (messages.length === 0) {
+        return;
+      }
 
-    if (latestHttpCode.current === 409) {
-      experimental_resume();
-      return;
-    }
+      if (latestHttpCode.current === 409) {
+        experimental_resume();
+        return;
+      }
 
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage.role !== "assistant") {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role !== "assistant") {
+        return await reload();
+      }
+
+      if (
+        error instanceof ReadyForRetryError &&
+        error.kind === "no-tool-calls"
+      ) {
+        return await append({
+          role: "user",
+          content:
+            "<user-reminder>You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.</user-reminder>",
+        });
+      }
+
+      setMessages(messages.slice(0, -1));
+      const lastMessageForRetry = prepareLastMessageForRetry(lastMessage);
+      if (lastMessageForRetry != null) {
+        return await append(lastMessageForRetry);
+      }
+
       return await reload();
-    }
-
-    if (error instanceof ReadyForRetryError && error.kind === "no-tool-calls") {
-      return await append({
-        role: "user",
-        content:
-          "<user-reminder>You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.</user-reminder>",
-      });
-    }
-
-    setMessages(messages.slice(0, -1));
-    const lastMessageForRetry = prepareLastMessageForRetry(lastMessage);
-    if (lastMessageForRetry != null) {
-      return await append(lastMessageForRetry);
-    }
-
-    return await reload();
-  }, [error, messages, setMessages, append, reload, experimental_resume]);
+    },
+    [messages, setMessages, append, reload, experimental_resume],
+  );
 
   return retryRequest;
 }

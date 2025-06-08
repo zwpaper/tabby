@@ -2,10 +2,10 @@ import type React from "react";
 import { useCallback, useEffect } from "react"; // useMemo is now in the hook
 
 import { Button } from "@/components/ui/button";
-import type { PendingToolCallApproval } from "@/features/approval";
 import { useAutoApproveGuard, useToolCallLifeCycle } from "@/features/chat";
 import { useToolAutoApproval } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
+import type { PendingToolCallApproval } from "../hooks/use-pending-tool-call-approval";
 
 interface ToolCallApprovalButtonProps {
   pendingApproval: PendingToolCallApproval;

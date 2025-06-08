@@ -2,16 +2,13 @@ import type React from "react";
 import { useCallback, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  type PendingRetryApproval,
-  ReadyForRetryError,
-} from "@/features/approval";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
-// usePendingRetryApproval is not directly used here anymore, it's used by usePendingApproval
+import type { PendingRetryApproval } from "../hooks/use-pending-retry-approval";
+import { ReadyForRetryError } from "../hooks/use-ready-for-retry-error";
 
 interface RetryApprovalButtonProps {
   pendingApproval: PendingRetryApproval;
-  retry: () => void;
+  retry: (error?: Error) => void;
 }
 
 export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
@@ -26,7 +23,7 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
 
   const doRetry = useCallback(() => {
     pendingApproval.stopCountdown();
-    retry();
+    retry(pendingApproval.error);
   }, [retry, pendingApproval]);
 
   const isReadyToolCalls =

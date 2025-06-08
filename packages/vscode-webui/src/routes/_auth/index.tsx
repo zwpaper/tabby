@@ -53,11 +53,8 @@ import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import {
   ApprovalButton,
-  ReadyForRetryError,
   getDisplayError,
-  usePendingApproval,
-  useReadyForRetryError,
-  useRetry,
+  useApprovalAndRetry,
 } from "@/features/approval";
 import { AutoApproveMenu } from "@/features/settings";
 import { LegacyTodoList, useTodos } from "@/features/todo";
@@ -278,7 +275,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const {
     data,
     setData,
-    error: chatError,
+    error,
     messages,
     setMessages,
     reload,
@@ -337,9 +334,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
       Authorization: `Bearer ${authData.session.token}`,
     },
   });
-
-  const readyForRetryError = useReadyForRetryError(messages);
-  const error = chatError || readyForRetryError;
 
   const {
     todos,
@@ -493,10 +487,22 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const editorRef = useRef<Editor | null>(null);
 
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
-  const { pendingApproval, increaseRetryCount } = usePendingApproval({
+
+  const { pendingApproval, retry } = useApprovalAndRetry({
     error,
-    messages: renderMessages,
+    messages,
     status,
+    append,
+    setMessages,
+    reload,
+    experimental_resume,
+    latestHttpCode,
+  });
+
+  usePendingModelAutoStart({
+    enabled: status === "ready" && messages.length === 1,
+    task: loaderData,
+    retry,
   });
 
   const { hasExecutingToolCall: isExecuting } = useToolCallLifeCycle();
@@ -510,27 +516,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
   const showEditTodos = !isBusy;
   const isSubmitDisabled =
     isBusyCore || isEditMode || (!isLoading && !input && files.length === 0);
-
-  const retryImpl = useRetry({
-    error,
-    messages,
-    append,
-    setMessages,
-    reload,
-    experimental_resume,
-    latestHttpCode,
-  });
-
-  const retry = useCallback(() => {
-    increaseRetryCount();
-    retryImpl();
-  }, [retryImpl, increaseRetryCount]);
-
-  useEventAutoStart({
-    enabled: error instanceof ReadyForRetryError,
-    task: loaderData,
-    retry,
-  });
 
   const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
 
@@ -765,7 +750,7 @@ interface UseEventAutoStartOptions {
   enabled: boolean;
 }
 
-const useEventAutoStart = ({
+const usePendingModelAutoStart = ({
   task,
   retry,
   enabled,

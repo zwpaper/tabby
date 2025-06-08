@@ -18,10 +18,11 @@ export class ReadyForRetryError extends Error {
   }
 }
 
-export function useReadyForRetryError(
+export function useMixinReadyForRetryError(
   messages: UIMessage[],
-): ReadyForRetryError | undefined {
-  return useMemo(() => {
+  error?: Error,
+): Error | undefined {
+  const readyForRetryError = useMemo(() => {
     const lastMessage = messages.at(-1);
     if (!lastMessage) return;
     if (lastMessage.role === "user") return new ReadyForRetryError();
@@ -42,4 +43,6 @@ export function useReadyForRetryError(
       return new ReadyForRetryError("no-tool-calls");
     }
   }, [messages]);
+
+  return error || readyForRetryError;
 }

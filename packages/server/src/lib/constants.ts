@@ -64,7 +64,7 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
       return openai("gpt-4o-mini");
     case "google/gemini-2.5-pro":
       return wrapLanguageModel({
-        model: google("gemini-2.5-pro-preview-05-06"),
+        model: google("gemini-2.5-pro-preview-06-05"),
         middleware: defaultToolMiddleware,
       });
     case "google/gemini-2.5-flash":
