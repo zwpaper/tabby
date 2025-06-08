@@ -63,7 +63,7 @@ const admin = new Hono().post(
         await resend.emails.send({
           from: "Pochi <noreply@getpochi.com>",
           to: user.email,
-          subject: "Welcome to Pochi - Your waitlist approval is confirmed!",
+          subject: "🎉 You are approved for Pochi's research preview!",
           html: emailHtml,
         });
       } catch (emailError) {

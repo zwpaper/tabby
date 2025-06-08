@@ -63,34 +63,64 @@ export function HomeWaitlist() {
           variants={itemVariants}
           className="mb-6 font-bold text-4xl text-gray-800 md:text-5xl lg:text-6xl"
         >
-          <span className="block">Supercharge your development</span>
-          <span className="flex items-center justify-center gap-2">
-            with AI{" "}
-            <motion.span
-              animate={{
-                y: [0, -8, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeInOut",
-              }}
-              className="inline-block"
-            >
-              ✨
-            </motion.span>
-          </span>
+          🤖 Your AI Teammate That Actually Gets It
         </motion.h1>
 
-        {/* Description */}
+        {/* Subheading */}
+        <motion.h2
+          variants={itemVariants}
+          className="mb-8 font-semibold text-2xl text-gray-700 md:text-3xl"
+        >
+          Pochi works like your best full-stack engineering buddy{" "}
+          <motion.span
+            animate={{
+              y: [0, -8, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+            className="inline-block"
+          >
+            ✨
+          </motion.span>
+          :
+        </motion.h2>
+
+        {/* Features List */}
+        <motion.div
+          variants={itemVariants}
+          className="mb-8 max-w-2xl space-y-4 text-left"
+        >
+          <div className="flex items-start gap-3 text-gray-700 text-lg">
+            <span className="text-2xl">🔧</span>
+            <span>Reads your full codebase and remembers your patterns</span>
+          </div>
+          <div className="flex items-start gap-3 text-gray-700 text-lg">
+            <span className="text-2xl">🎨</span>
+            <span>Turns Figma screenshots into real React components</span>
+          </div>
+          <div className="flex items-start gap-3 text-gray-700 text-lg">
+            <span className="text-2xl">🐛</span>
+            <span>Traces bugs with full project context</span>
+          </div>
+          <div className="flex items-start gap-3 text-gray-700 text-lg">
+            <span className="text-2xl">📱</span>
+            <span>
+              Builds full features so you can focus on the core architecture
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Call to Action */}
         <motion.p
           variants={itemVariants}
-          className="mb-10 max-w-2xl text-gray-600 text-lg md:text-xl"
+          className="mb-10 max-w-2xl text-center font-medium text-gray-700 text-xl"
         >
-          We're building a revolutionary AI-powered development tool that will
-          transform how you code. If you're interested in being among the first
-          to experience it, join our exclusive waitlist now.
+          Upgrade from AI assistant to a real teammate. Start building with
+          Pochi!
         </motion.p>
 
         {/* Waitlist Button */}
@@ -117,7 +147,7 @@ export function HomeWaitlist() {
               size="lg"
               className="w-full bg-amber-600 px-8 py-6 font-medium text-lg text-white transition-all hover:bg-amber-700"
             >
-              I'm Interested
+              Join the Waitlist 🚀
             </Button>
           </motion.div>
         </motion.div>
