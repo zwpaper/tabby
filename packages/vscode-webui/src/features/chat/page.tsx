@@ -1,5 +1,4 @@
 import { ModelSelect } from "@/components/model-select";
-import { FormEditor } from "@/components/prompt-form/form-editor";
 import { Button } from "@/components/ui/button";
 import {
   ChatContextProvider,
@@ -11,7 +10,6 @@ import { apiClient, type authClient } from "@/lib/auth-client";
 import { useChat } from "@ai-sdk/react";
 import type { Environment, Todo } from "@ragdoll/common";
 import { formatters, fromUIMessages, toUIMessages } from "@ragdoll/common";
-import type { Editor } from "@tiptap/react";
 import type { Attachment } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
@@ -24,13 +22,11 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
-import { DevRetryCountdown } from "@/components/dev-retry-countdown";
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ErrorMessage } from "@/components/error-message";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { MessageList } from "@/components/message/message-list";
 import { PreviewTool } from "@/components/preview-tool";
-import { ActiveSelectionBadge } from "@/components/prompt-form/active-selection-badge";
 import { PublicShareButton } from "@/components/public-share-button";
 import "@/components/prompt-form/prompt-form.css";
 import { TokenUsage } from "@/components/token-usage";
@@ -47,6 +43,7 @@ import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { vscodeHost } from "@/lib/vscode";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 
+import { ChatInputForm } from "./components/chat-input-form";
 import { useNewTaskHandler } from "./hooks/use-new-task-handler";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
@@ -116,7 +113,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const initialMessages = toUIMessages(task?.conversation?.messages || []);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
   const { error: autoDismissError, setError: setAutoDismissError } =
     useAutoDismissError();
 
@@ -240,8 +236,10 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     data,
   });
 
-  const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  // This function handles both form submissions (with an event) and programmatic invocations (without an event).
+  const wrappedHandleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
+    autoApproveGuard.current = true;
+    e?.preventDefault();
 
     if (isSubmitDisabled) {
       return;
@@ -308,8 +306,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     data,
     setTotalTokens,
   });
-
-  const editorRef = useRef<Editor | null>(null);
 
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
 
@@ -428,25 +424,15 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                   isUploading={isUploadingImages}
                 />
               )}
-              <FormEditor
+              <ChatInputForm
                 input={input}
                 setInput={setInput}
                 onSubmit={wrappedHandleSubmit}
                 isLoading={isLoading || isExecuting}
-                formRef={formRef}
-                editorRef={editorRef}
                 onPaste={handlePasteImage}
-              >
-                <ActiveSelectionBadge
-                  onClick={() => {
-                    editorRef.current?.commands.insertContent(" @");
-                  }}
-                />
-                <DevRetryCountdown
-                  pendingApproval={pendingApproval}
-                  status={status}
-                />
-              </FormEditor>
+                pendingApproval={pendingApproval}
+                status={status}
+              />
 
               {/* Hidden file input for image uploads */}
               <input
@@ -509,7 +495,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                       if (showStopButton) {
                         handleStop();
                       } else {
-                        formRef.current?.requestSubmit();
+                        wrappedHandleSubmit();
                       }
                     }}
                   >
