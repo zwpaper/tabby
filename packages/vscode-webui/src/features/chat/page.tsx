@@ -8,18 +8,9 @@ import {
 } from "@/features/chat";
 import { useEnableReasoning, useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
-import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useChat } from "@ai-sdk/react";
-import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment, Todo } from "@ragdoll/common";
-import {
-  formatters,
-  fromUIMessage,
-  fromUIMessages,
-  toUIMessages,
-} from "@ragdoll/common";
-import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
-import { useQueryClient } from "@tanstack/react-query";
+import { formatters, fromUIMessages, toUIMessages } from "@ragdoll/common";
 import type { Editor } from "@tiptap/react";
 import type { Attachment } from "ai";
 import type { InferResponseType } from "hono/client";
@@ -30,15 +21,7 @@ import {
   StopCircleIcon,
 } from "lucide-react";
 import type React from "react";
-import {
-  type MutableRefObject,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { DevRetryCountdown } from "@/components/dev-retry-countdown";
@@ -52,24 +35,24 @@ import { PublicShareButton } from "@/components/public-share-button";
 import "@/components/prompt-form/prompt-form.css";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
-import {
-  ApprovalButton,
-  ReadyForRetryError,
-  useApprovalAndRetry,
-} from "@/features/approval";
+import { ApprovalButton, useApprovalAndRetry } from "@/features/approval";
 import { AutoApproveMenu } from "@/features/settings";
 import { LegacyTodoList, useTodos } from "@/features/todo";
-import { DefaultModelId } from "@/lib/constants";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
-
 import { vscodeHost } from "@/lib/vscode";
-import type { DataPart } from "@ragdoll/common";
+import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
+
+import { useNewTaskHandler } from "./hooks/use-new-task-handler";
+import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
+import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
+import { useTokenUsageUpdater } from "./hooks/use-token-usage-updater";
 import { ChatEventProvider } from "./lib/chat-events";
+import { prepareRequestBody } from "./lib/prepare-request-body";
 
 export function ChatPage({
   task,
@@ -128,26 +111,14 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     models,
     selectedModel,
     isLoading: isModelsLoading,
-    updateSelectedModelId,
+    updateSelectedModelId: handleSelectModel,
   } = useSelectedModels();
   const initialMessages = toUIMessages(task?.conversation?.messages || []);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  // Error that will auto-dismiss after a few seconds
-  const [autoDismissError, setAutoDismissError] = useState<Error | undefined>(
-    undefined,
-  );
-
-  // Auto-dismiss error after 5 seconds
-  useEffect(() => {
-    if (autoDismissError) {
-      const timer = setTimeout(() => {
-        setAutoDismissError(undefined);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [autoDismissError]);
+  const { error: autoDismissError, setError: setAutoDismissError } =
+    useAutoDismissError();
 
   // Use the unified image upload hook
   const {
@@ -338,10 +309,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   };
 
   const enableReasoning = useEnableReasoning();
-
-  const handleSelectModel = (v: string) => {
-    updateSelectedModelId(v);
-  };
 
   useNewTaskHandler({ data, taskId, uid });
 
@@ -563,148 +530,4 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       </div>
     </ChatEventProvider>
   );
-}
-
-function useNewTaskHandler({
-  data,
-  taskId,
-  uid,
-}: {
-  data: unknown[] | undefined;
-  taskId: React.MutableRefObject<number | undefined>;
-  uid: React.MutableRefObject<string | undefined>;
-}) {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (!data || data.length === 0) return;
-
-    const dataParts = data as DataPart[];
-    for (const part of dataParts) {
-      if (taskId.current === undefined && part.type === "append-id") {
-        vscodeHost.capture({
-          event: "newTask",
-        });
-        taskId.current = part.id;
-        uid.current = part.uid;
-
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
-
-        vscodeHost.setSessionState({
-          lastVisitedRoute: `/?taskId=${taskId.current}`,
-        });
-      }
-    }
-  }, [data, queryClient, taskId, uid]);
-}
-
-function useTokenUsageUpdater({
-  data,
-  setTotalTokens,
-}: {
-  data: unknown[] | undefined;
-  setTotalTokens: React.Dispatch<React.SetStateAction<number>>;
-}) {
-  useEffect(() => {
-    if (!data || data.length === 0) return;
-
-    const dataParts = data as DataPart[];
-    for (const part of dataParts) {
-      if (part.type === "update-usage") {
-        setTotalTokens(part.totalTokens);
-      }
-    }
-  }, [data, setTotalTokens]);
-}
-
-function prepareRequestBody(
-  taskId: MutableRefObject<number | undefined>,
-  request: {
-    messages: UIMessage[];
-  },
-  model: string | undefined,
-): Omit<RagdollChatRequest, "environment"> {
-  const message = request.messages[request.messages.length - 1];
-  const triggerError =
-    message.parts[0].type === "text" &&
-    message.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
-  return {
-    id: taskId.current?.toString(),
-    model: triggerError ? "fake-model" : (model ?? DefaultModelId),
-    message: fromUIMessage(message),
-  };
-}
-
-interface UseEventAutoStartOptions {
-  task: Task | null;
-  retry: (error: Error) => void;
-  enabled: boolean;
-}
-
-const usePendingModelAutoStart = ({
-  task,
-  retry,
-  enabled,
-}: UseEventAutoStartOptions) => {
-  const init = task?.status === "pending-model";
-
-  const initStarted = useRef(false);
-  useEffect(() => {
-    if (enabled && init && !initStarted.current) {
-      initStarted.current = true;
-      retry(new ReadyForRetryError("ready"));
-    }
-  }, [init, retry, enabled]);
-};
-
-interface UseScrollToBottomProps {
-  messagesContainerRef: React.RefObject<HTMLDivElement>;
-  isLoading: boolean;
-  hasPendingApproval: boolean;
-}
-
-function useScrollToBottom({
-  messagesContainerRef,
-  isLoading,
-  hasPendingApproval,
-}: UseScrollToBottomProps) {
-  const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
-
-  // Scroll to bottom when the message list height changes
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container?.children[0]) {
-      return;
-    }
-    const resizeObserver = new ResizeObserver(() => {
-      if (isAtBottom) {
-        requestAnimationFrame(() => scrollToBottom());
-      }
-    });
-    resizeObserver.observe(container.children[0]);
-    return () => {
-      resizeObserver.disconnect();
-    }; // clean up
-  }, [isAtBottom, scrollToBottom, messagesContainerRef]);
-
-  // scroll to bottom immediately when a user message is sent
-  useLayoutEffect(() => {
-    if (isLoading) {
-      scrollToBottom();
-    }
-  }, [isLoading, scrollToBottom]);
-
-  // Initial scroll to bottom once when component mounts (without smooth behavior)
-  useLayoutEffect(() => {
-    if (messagesContainerRef.current) {
-      scrollToBottom(false); // false = not smooth
-    }
-  }, [scrollToBottom, messagesContainerRef]);
-
-  // Ensure users can always see the executing approval or the pause approval that require their input
-  useLayoutEffect(() => {
-    if (!isLoading && hasPendingApproval) {
-      scrollToBottom(false);
-    }
-  }, [hasPendingApproval, isLoading, scrollToBottom]);
 }
