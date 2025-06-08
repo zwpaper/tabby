@@ -1,0 +1,123 @@
+import type { ThreadAbortSignalSerialization } from "@quilted/threads";
+import type { ThreadSignalSerialization } from "@quilted/threads/signals";
+import type { Environment } from "@ragdoll/common";
+import type {
+  CaptureEvent,
+  McpStatus,
+  ResourceURI,
+  SessionState,
+  TaskRunnerState,
+  VSCodeHostApi,
+} from "./index";
+
+const VSCodeHostStub = {
+  readCurrentWorkspace: async () => {
+    return Promise.resolve(undefined);
+  },
+  readResourceURI: (): Promise<ResourceURI> => {
+    return Promise.resolve({} as ResourceURI);
+  },
+  readToken: (): Promise<ThreadSignalSerialization<string | undefined>> => {
+    return Promise.resolve({} as ThreadSignalSerialization<string | undefined>);
+  },
+  getSessionState: <K extends keyof SessionState>(
+    _keys?: K[],
+  ): Promise<Pick<SessionState, K>> => {
+    return Promise.resolve({} as Pick<SessionState, K>);
+  },
+  setSessionState: (_state: Partial<SessionState>): Promise<void> => {
+    return Promise.resolve();
+  },
+  readEnvironment: (): Promise<Environment> => {
+    return Promise.resolve({} as Environment);
+  },
+  previewToolCall: (
+    _toolName: string,
+    _args: unknown,
+    _options: {
+      toolCallId: string;
+      state: "partial-call" | "call" | "result";
+    },
+  ): Promise<{ error: string } | undefined> => {
+    return Promise.resolve(undefined);
+  },
+  executeToolCall: (
+    _toolName: string,
+    _args: unknown,
+    _options: {
+      toolCallId: string;
+      abortSignal: ThreadAbortSignalSerialization;
+    },
+  ): Promise<unknown> => {
+    return Promise.resolve(undefined);
+  },
+  listFilesInWorkspace: (): Promise<{ filepath: string; isDir: boolean }[]> => {
+    return Promise.resolve([{ filepath: "test", isDir: false }]);
+  },
+  listWorkflowsInWorkspace: (): Promise<
+    { id: string; path: string; content: string }[]
+  > => {
+    return Promise.resolve([]);
+  },
+  readActiveTabs: (): Promise<
+    ThreadSignalSerialization<Array<{ filepath: string; isDir: boolean }>>
+  > => {
+    return Promise.resolve(
+      {} as ThreadSignalSerialization<
+        Array<{ filepath: string; isDir: boolean }>
+      >,
+    );
+  },
+  readActiveSelection: (): Promise<
+    ThreadSignalSerialization<
+      Environment["workspace"]["activeSelection"] | undefined
+    >
+  > => {
+    return Promise.resolve(
+      {} as ThreadSignalSerialization<
+        Environment["workspace"]["activeSelection"] | undefined
+      >,
+    );
+  },
+  openFile: (
+    _filePath: string,
+    _options?: { start?: number; end?: number; preserveFocus?: boolean },
+  ): void => {},
+  capture: (_e: CaptureEvent): Promise<void> => {
+    return Promise.resolve();
+  },
+  closeCurrentWorkspace: (): void => {},
+  readMcpStatus: (): Promise<ThreadSignalSerialization<McpStatus>> => {
+    return Promise.resolve({} as ThreadSignalSerialization<McpStatus>);
+  },
+  fetchThirdPartyRules: (): Promise<{
+    rulePaths: string[];
+    workspaceRuleExists: boolean;
+    copyRules: () => Promise<void>;
+  }> => {
+    return Promise.resolve({
+      rulePaths: [],
+      workspaceRuleExists: false,
+      copyRules: () => Promise.resolve(),
+    });
+  },
+  openExternal: (_uri: string): Promise<void> => {
+    return Promise.resolve();
+  },
+  runTask: (_taskId: number): Promise<void> => {
+    return Promise.resolve();
+  },
+  readTaskRunners: (): Promise<
+    ThreadSignalSerialization<{ [taskId: number]: TaskRunnerState }>
+  > => {
+    return Promise.resolve(
+      {} as ThreadSignalSerialization<{
+        [taskId: number]: TaskRunnerState;
+      }>,
+    );
+  },
+} satisfies VSCodeHostApi;
+
+export function createVscodeHostStub(overrides?: Partial<VSCodeHostApi>) {
+  return { ...VSCodeHostStub, ...overrides };
+}

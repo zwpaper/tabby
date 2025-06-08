@@ -5,6 +5,8 @@ export type {
   WebviewHostApi,
 } from "./webview";
 
+export { createVscodeHostStub } from "./webview-stub";
+
 export type {
   McpStatus,
   McpConnection,
