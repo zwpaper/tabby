@@ -6,7 +6,7 @@ import { ToolCallApprovalButton } from "./tool-call-approval-button";
 
 interface ApprovalButtonProps {
   pendingApproval?: PendingApproval;
-  retry: (error?: Error) => void;
+  retry: (error: Error) => void;
 }
 
 export const ApprovalButton: React.FC<ApprovalButtonProps> = ({

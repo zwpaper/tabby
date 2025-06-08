@@ -41,7 +41,7 @@ export function useApprovalAndRetry({
   });
 
   const retry = useCallback(
-    (error?: Error) => {
+    (error: Error) => {
       increaseRetryCount();
       retryImpl(error);
     },

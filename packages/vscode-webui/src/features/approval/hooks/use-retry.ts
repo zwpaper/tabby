@@ -22,11 +22,7 @@ export function useRetry({
 }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies(latestHttpCode.current): is ref.
   const retryRequest = useCallback(
-    async (error?: Error) => {
-      if (error === undefined) {
-        return;
-      }
-
+    async (error: Error) => {
       if (messages.length === 0) {
         return;
       }

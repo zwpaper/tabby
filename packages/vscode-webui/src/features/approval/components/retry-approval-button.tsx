@@ -8,7 +8,7 @@ import { ReadyForRetryError } from "../hooks/use-ready-for-retry-error";
 
 interface RetryApprovalButtonProps {
   pendingApproval: PendingRetryApproval;
-  retry: (error?: Error) => void;
+  retry: (error: Error) => void;
 }
 
 export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({

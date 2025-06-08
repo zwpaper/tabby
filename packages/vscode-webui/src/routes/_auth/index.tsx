@@ -51,7 +51,11 @@ import { PublicShareButton } from "@/components/public-share-button";
 import "@/components/prompt-form/prompt-form.css";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
-import { ApprovalButton, useApprovalAndRetry } from "@/features/approval";
+import {
+  ApprovalButton,
+  ReadyForRetryError,
+  useApprovalAndRetry,
+} from "@/features/approval";
 import { AutoApproveMenu } from "@/features/settings";
 import { LegacyTodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
@@ -734,7 +738,7 @@ function prepareRequestBody(
 
 interface UseEventAutoStartOptions {
   task: Task | null;
-  retry: () => void;
+  retry: (error: Error) => void;
   enabled: boolean;
 }
 
@@ -749,7 +753,7 @@ const usePendingModelAutoStart = ({
   useEffect(() => {
     if (enabled && init && !initStarted.current) {
       initStarted.current = true;
-      retry();
+      retry(new ReadyForRetryError("ready"));
     }
   }, [init, retry, enabled]);
 };
