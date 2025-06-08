@@ -79,8 +79,18 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
     this.transitTo("complete", { type: "dispose" });
   }
 
-  // FIXME: throttle if state is partial-call
   preview(args: unknown, state: ToolInvocation["state"]) {
+    if (this.status === "ready") {
+      vscodeHost.previewToolCall(this.toolName, args, {
+        state,
+        toolCallId: this.toolCallId,
+      });
+    } else {
+      this.previewInit(args, state);
+    }
+  }
+
+  private previewInit(args: unknown, state: ToolInvocation["state"]) {
     let { previewJob } = this.checkState("Preview", "init");
     previewJob = previewJob.then(() =>
       vscodeHost.previewToolCall(this.toolName, args, {
