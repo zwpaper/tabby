@@ -166,8 +166,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
   // Error that will auto-dismiss after a few seconds
   const [autoDismissError, setAutoDismissError] = useState<Error | undefined>(
     undefined,
@@ -183,73 +181,15 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     }
   }, [autoDismissError]);
 
-  const handleRemoveImage = (index: number) => {
-    setFiles((prev) => {
-      const newFiles = [...prev];
-      newFiles.splice(index, 1);
-      return newFiles;
-    });
-  };
-
-  const showImageError = (message: string) => {
-    setAutoDismissError(new Error(message));
-  };
-
-  const validateAndAddImages = (
-    newImages: File[],
-    fromClipboard = false,
-  ): { success: boolean; error?: string } => {
-    const result = validateImages(
-      files,
-      processImageFiles(newImages, fromClipboard),
-      MaxImages,
-    );
-
-    if (result.success) {
-      setFiles((prevFiles) => [...prevFiles, ...result.validatedImages]);
-      setAutoDismissError(undefined);
-    }
-
-    return {
-      success: result.success,
-      error: result.error,
-    };
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const selectedFiles = Array.from(event.target.files);
-
-      // Deduplication check for device uploads
-      const nonDuplicateFiles = selectedFiles.filter(
-        (file) => !isDuplicateFile(file, files),
-      );
-
-      // Show message if any duplicates were found
-      if (nonDuplicateFiles.length < selectedFiles.length) {
-        showImageError(
-          `${selectedFiles.length - nonDuplicateFiles.length} duplicate image(s) were skipped.`,
-        );
-        // If all files were duplicates, stop here
-        if (nonDuplicateFiles.length === 0) {
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-          }
-          return;
-        }
-      }
-
-      const result = validateAndAddImages(nonDuplicateFiles);
-
-      if (!result.success) {
-        showImageError(result.error || "Error adding images");
-      }
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
+  // Use the custom image uploader hook
+  const {
+    files,
+    fileInputRef,
+    handleRemoveImage,
+    handleFileSelect,
+    handlePasteImage,
+    clearFiles,
+  } = useImageUploader({ setAutoDismissError });
 
   const todosRef = useRef<Todo[] | undefined>(undefined);
   const buildEnvironment = useCallback(async () => {
@@ -387,7 +327,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
       });
 
       setInput("");
-      setFiles([]);
+      clearFiles();
     } else if (input.trim()) {
       // Text-only submissions
       clearUploadImageError();
@@ -416,37 +356,6 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   const handleSelectModel = (v: string) => {
     updateSelectedModelId(v);
-  };
-
-  const handlePasteImage = (event: ClipboardEvent) => {
-    const images = Array.from(event.clipboardData?.items || [])
-      .filter((item) => item.type.startsWith("image/"))
-      .map((item) => {
-        const file = item.getAsFile();
-        if (file) {
-          return new File([file], createImageFileName(file.type), {
-            type: file.type,
-          });
-        }
-        return null;
-      })
-      .filter(Boolean) as File[];
-
-    if (images.length > 0) {
-      // Use fromClipboard=true to indicate these are clipboard images
-      const result = validateAndAddImages(images, true);
-
-      if (!result.success) {
-        showImageError(result.error || "Error adding images");
-        event.preventDefault();
-        return true;
-      }
-
-      event.preventDefault();
-      return true;
-    }
-
-    return false;
   };
 
   useNewTaskHandler({ data, taskId, uid });
@@ -628,9 +537,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                       disabled={isTaskLoading || isModelsLoading}
                       taskId={taskId.current}
                       uid={uid.current}
-                      onError={(error) => {
-                        setAutoDismissError(error);
-                      }}
+                      onError={setAutoDismissError}
                     />
                   )}
                   <Button
@@ -813,4 +720,127 @@ function useScrollToBottom({
       scrollToBottom(false);
     }
   }, [hasPendingApproval, isLoading, scrollToBottom]);
+}
+
+// Custom hook for image uploading functionality
+function useImageUploader({
+  setAutoDismissError,
+}: { setAutoDismissError: (error?: Error) => void }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<File[]>([]);
+
+  const handleRemoveImage = (index: number) => {
+    setFiles((prev) => {
+      const newFiles = [...prev];
+      newFiles.splice(index, 1);
+      return newFiles;
+    });
+  };
+
+  const showImageError = (message: string) => {
+    setAutoDismissError(new Error(message));
+  };
+
+  const validateAndAddImages = (
+    newImages: File[],
+    fromClipboard = false,
+  ): { success: boolean; error?: string } => {
+    const result = validateImages(
+      files,
+      processImageFiles(newImages, fromClipboard),
+      MaxImages,
+    );
+
+    if (result.success) {
+      setFiles((prevFiles) => [...prevFiles, ...result.validatedImages]);
+      setAutoDismissError(undefined);
+    }
+
+    return {
+      success: result.success,
+      error: result.error,
+    };
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const selectedFiles = Array.from(event.target.files);
+
+      // Deduplication check for device uploads
+      const nonDuplicateFiles = selectedFiles.filter(
+        (file) => !isDuplicateFile(file, files),
+      );
+
+      // Show message if any duplicates were found
+      if (nonDuplicateFiles.length < selectedFiles.length) {
+        showImageError(
+          `${selectedFiles.length - nonDuplicateFiles.length} duplicate image(s) were skipped.`,
+        );
+        // If all files were duplicates, stop here
+        if (nonDuplicateFiles.length === 0) {
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          return;
+        }
+      }
+
+      const result = validateAndAddImages(nonDuplicateFiles);
+
+      if (!result.success) {
+        showImageError(result.error || "Error adding images");
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handlePasteImage = (event: ClipboardEvent) => {
+    const images = Array.from(event.clipboardData?.items || [])
+      .filter((item) => item.type.startsWith("image/"))
+      .map((item) => {
+        const file = item.getAsFile();
+        if (file) {
+          return new File([file], createImageFileName(file.type), {
+            type: file.type,
+          });
+        }
+        return null;
+      })
+      .filter(Boolean) as File[];
+
+    if (images.length > 0) {
+      // Use fromClipboard=true to indicate these are clipboard images
+      const result = validateAndAddImages(images, true);
+
+      if (!result.success) {
+        showImageError(result.error || "Error adding images");
+        event.preventDefault();
+        return true;
+      }
+
+      event.preventDefault();
+      return true;
+    }
+
+    return false;
+  };
+
+  const clearFiles = () => {
+    setFiles([]);
+  };
+
+  return {
+    files,
+    setFiles,
+    fileInputRef,
+    handleRemoveImage,
+    showImageError,
+    validateAndAddImages,
+    handleFileSelect,
+    handlePasteImage,
+    clearFiles,
+  };
 }
