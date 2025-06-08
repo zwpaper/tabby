@@ -12,7 +12,12 @@ import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment, Todo } from "@ragdoll/common";
-import { formatters, fromUIMessage, toUIMessages } from "@ragdoll/common";
+import {
+  formatters,
+  fromUIMessage,
+  fromUIMessages,
+  toUIMessages,
+} from "@ragdoll/common";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Editor } from "@tiptap/react";
@@ -300,7 +305,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     }
   };
 
-  const handleStop = () => {
+  const handleStop = async () => {
     // If user abort anything, we should disable auto-approval
     autoApproveGuard.current = false;
 
@@ -308,6 +313,19 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       cancelUpload();
     } else if (isLoading) {
       stopChat();
+      if (taskId.current) {
+        const lastMessage = messages.at(-1);
+        if (lastMessage) {
+          await apiClient.api.tasks[":id"].messages.$patch({
+            param: {
+              id: taskId.current.toString(),
+            },
+            json: {
+              messages: fromUIMessages([lastMessage]),
+            },
+          });
+        }
+      }
     } else if (pendingApproval?.name === "retry") {
       pendingApproval.stopCountdown();
     }

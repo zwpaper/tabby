@@ -6,6 +6,7 @@ import { z } from "zod";
 import { optionalAuth, requireAuth } from "../auth";
 import { parseEventFilter } from "../lib/event-filter";
 import { taskService } from "../service/task"; // Added import
+import { ZodMessageType } from "../types";
 
 // Define validation schemas
 const PaginationSchema = z.object({
@@ -34,6 +35,10 @@ const TaskCreateSchema = z.object({
 
 const TaskShareSchema = z.object({
   isPublicShared: z.boolean(),
+});
+
+const TaskPatchSchema = z.object({
+  messages: z.array(ZodMessageType),
 });
 
 // Create a tasks router with authentication
@@ -161,6 +166,30 @@ const tasks = new Hono()
       c.header("Cache-Control", "public, max-age=300, s-maxage=300");
 
       return c.json(task);
+    },
+  )
+  .patch(
+    "/:id/messages",
+    zValidator("param", TaskParamsSchema),
+    zValidator("json", TaskPatchSchema),
+    requireAuth(),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { messages } = c.req.valid("json");
+      const user = c.get("user");
+      const taskId = Number.parseInt(id);
+      if (Number.isNaN(taskId)) {
+        throw new HTTPException(400, { message: "Invalid task ID" });
+      }
+      const updated = await taskService.appendMessages(
+        taskId,
+        user.id,
+        messages,
+      );
+      if (!updated) {
+        throw new HTTPException(404, { message: "Task not found" });
+      }
+      return c.json({ success: true });
     },
   );
 

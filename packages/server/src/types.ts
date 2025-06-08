@@ -3,7 +3,7 @@ import { ZodEnvironment } from "@ragdoll/common";
 import { ZodMcpToolType } from "@ragdoll/tools";
 import { z } from "zod";
 
-const ZodMessageType: z.ZodType<DBMessage> = z.any();
+export const ZodMessageType: z.ZodType<DBMessage> = z.any();
 const ZodEventType: z.ZodType<UserEvent> = z.any();
 
 export const ZodChatRequestType = z.object({

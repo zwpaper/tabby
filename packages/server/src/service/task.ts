@@ -486,6 +486,49 @@ class TaskService {
     return result.numUpdatedRows > 0;
   }
 
+  async appendMessages(
+    taskId: number,
+    userId: string,
+    messages: DBMessage[],
+  ): Promise<boolean> {
+    const task = await db
+      .selectFrom("task")
+      .where("taskId", "=", taskId)
+      .where("userId", "=", userId)
+      .select(["conversation"])
+      .executeTakeFirst();
+
+    if (!task) {
+      return false;
+    }
+
+    const existingMessages = toUIMessages(task.conversation?.messages ?? []);
+    const existingMessageIds = new Set(existingMessages.map((m) => m.id));
+    const newMessages = toUIMessages(
+      messages.filter((m) => !existingMessageIds.has(m.id)),
+    );
+
+    if (newMessages.length === 0) {
+      return true;
+    }
+
+    const allMessages = [...existingMessages, ...newMessages];
+    const messagesToSave = formatters.storage(allMessages);
+
+    const result = await db
+      .updateTable("task")
+      .set({
+        conversation: {
+          messages: fromUIMessages(messagesToSave),
+        },
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("taskId", "=", taskId)
+      .where("userId", "=", userId)
+      .executeTakeFirst();
+    return result.numUpdatedRows > 0;
+  }
+
   async delete(taskId: number, userId: string): Promise<boolean> {
     const task = await db
       .selectFrom("task")
