@@ -43,7 +43,6 @@ import { DevRetryCountdown } from "@/components/dev-retry-countdown";
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ErrorMessage } from "@/components/error-message";
 import { ImagePreviewList } from "@/components/image-preview-list";
-import { useUploadImage } from "@/components/image-preview-list/use-upload-image";
 import { MessageList } from "@/components/message/message-list";
 import { PreviewTool } from "@/components/preview-tool";
 import { ActiveSelectionBadge } from "@/components/prompt-form/active-selection-badge";
@@ -58,18 +57,14 @@ import {
 } from "@/features/approval";
 import { AutoApproveMenu } from "@/features/settings";
 import { LegacyTodoList, useTodos } from "@/features/todo";
-import { DefaultModelId, MaxImages } from "@/lib/constants";
+import { DefaultModelId } from "@/lib/constants";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
-import {
-  createImageFileName,
-  isDuplicateFile,
-  processImageFiles,
-  validateImages,
-} from "@/lib/utils/image";
+
 import { vscodeHost } from "@/lib/vscode";
 import type { DataPart } from "@ragdoll/common";
 
@@ -181,15 +176,21 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     }
   }, [autoDismissError]);
 
-  // Use the custom image uploader hook
+  // Use the unified image upload hook
   const {
     files,
+    isUploading: isUploadingImages,
+    error: uploadImageError,
     fileInputRef,
-    handleRemoveImage,
+    removeFile: handleRemoveImage,
+    clearError: clearUploadImageError,
+    upload,
+    cancelUpload,
     handleFileSelect,
-    handlePasteImage,
-    clearFiles,
-  } = useImageUploader({ setAutoDismissError });
+    handlePaste: handlePasteImage,
+  } = useImageUpload({
+    token: authData.session.token,
+  });
 
   const todosRef = useRef<Todo[] | undefined>(undefined);
   const buildEnvironment = useCallback(async () => {
@@ -301,33 +302,25 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     data,
   });
 
-  const {
-    uploadImages,
-    uploadingFilesMap,
-    isUploadingImages,
-    stop: stopUpload,
-    error: uploadImageError,
-    clearError: clearUploadImageError,
-  } = useUploadImage({
-    token: authData.session.token,
-    files,
-  });
-
   const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!allowSendMessage) return;
 
     if (files.length > 0) {
-      const uploadedImages: Attachment[] = await uploadImages();
+      try {
+        const uploadedImages: Attachment[] = await upload();
 
-      append({
-        role: "user",
-        content: !input.trim() ? " " : input, // use space to keep parts not empty
-        experimental_attachments: uploadedImages,
-      });
+        append({
+          role: "user",
+          content: !input.trim() ? " " : input, // use space to keep parts not empty
+          experimental_attachments: uploadedImages,
+        });
 
-      setInput("");
-      clearFiles();
+        setInput("");
+      } catch (error) {
+        // Error is already handled by the hook
+        return;
+      }
     } else if (input.trim()) {
       // Text-only submissions
       clearUploadImageError();
@@ -344,7 +337,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     autoApproveGuard.current = false;
 
     if (isUploadingImages) {
-      stopUpload();
+      cancelUpload();
     } else if (isLoading) {
       stopChat();
     } else if (pendingApproval?.name === "retry") {
@@ -406,7 +399,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   const resourceUri = useResourceURI();
 
-  // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error pending retry approval
+  // Display errors with priority: 1. autoDismissError, 2. uploadImageError, 3. error pending retry approval
   const displayError =
     autoDismissError ||
     uploadImageError ||
@@ -474,7 +467,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                 <ImagePreviewList
                   files={files}
                   onRemove={handleRemoveImage}
-                  uploadingFiles={uploadingFilesMap}
+                  isUploading={isUploadingImages}
                 />
               )}
               <FormEditor
@@ -720,127 +713,4 @@ function useScrollToBottom({
       scrollToBottom(false);
     }
   }, [hasPendingApproval, isLoading, scrollToBottom]);
-}
-
-// Custom hook for image uploading functionality
-function useImageUploader({
-  setAutoDismissError,
-}: { setAutoDismissError: (error?: Error) => void }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
-
-  const handleRemoveImage = (index: number) => {
-    setFiles((prev) => {
-      const newFiles = [...prev];
-      newFiles.splice(index, 1);
-      return newFiles;
-    });
-  };
-
-  const showImageError = (message: string) => {
-    setAutoDismissError(new Error(message));
-  };
-
-  const validateAndAddImages = (
-    newImages: File[],
-    fromClipboard = false,
-  ): { success: boolean; error?: string } => {
-    const result = validateImages(
-      files,
-      processImageFiles(newImages, fromClipboard),
-      MaxImages,
-    );
-
-    if (result.success) {
-      setFiles((prevFiles) => [...prevFiles, ...result.validatedImages]);
-      setAutoDismissError(undefined);
-    }
-
-    return {
-      success: result.success,
-      error: result.error,
-    };
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const selectedFiles = Array.from(event.target.files);
-
-      // Deduplication check for device uploads
-      const nonDuplicateFiles = selectedFiles.filter(
-        (file) => !isDuplicateFile(file, files),
-      );
-
-      // Show message if any duplicates were found
-      if (nonDuplicateFiles.length < selectedFiles.length) {
-        showImageError(
-          `${selectedFiles.length - nonDuplicateFiles.length} duplicate image(s) were skipped.`,
-        );
-        // If all files were duplicates, stop here
-        if (nonDuplicateFiles.length === 0) {
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-          }
-          return;
-        }
-      }
-
-      const result = validateAndAddImages(nonDuplicateFiles);
-
-      if (!result.success) {
-        showImageError(result.error || "Error adding images");
-      }
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
-  const handlePasteImage = (event: ClipboardEvent) => {
-    const images = Array.from(event.clipboardData?.items || [])
-      .filter((item) => item.type.startsWith("image/"))
-      .map((item) => {
-        const file = item.getAsFile();
-        if (file) {
-          return new File([file], createImageFileName(file.type), {
-            type: file.type,
-          });
-        }
-        return null;
-      })
-      .filter(Boolean) as File[];
-
-    if (images.length > 0) {
-      // Use fromClipboard=true to indicate these are clipboard images
-      const result = validateAndAddImages(images, true);
-
-      if (!result.success) {
-        showImageError(result.error || "Error adding images");
-        event.preventDefault();
-        return true;
-      }
-
-      event.preventDefault();
-      return true;
-    }
-
-    return false;
-  };
-
-  const clearFiles = () => {
-    setFiles([]);
-  };
-
-  return {
-    files,
-    setFiles,
-    fileInputRef,
-    handleRemoveImage,
-    showImageError,
-    validateAndAddImages,
-    handleFileSelect,
-    handlePasteImage,
-    clearFiles,
-  };
 }

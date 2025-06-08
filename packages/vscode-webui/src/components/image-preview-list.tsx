@@ -4,20 +4,19 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-import { generateFileId } from "@/lib/utils/image";
 import { Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface ImagePreviewListProps {
   files: File[];
   onRemove: (index: number) => void;
-  uploadingFiles?: Record<string, boolean>;
+  isUploading: boolean;
 }
 
 export function ImagePreviewList({
   files,
   onRemove,
-  uploadingFiles = {},
+  isUploading,
 }: ImagePreviewListProps) {
   const [previews, setPreviews] = useState<string[]>([]);
 
@@ -42,9 +41,6 @@ export function ImagePreviewList({
   return (
     <div className="mt-2 mb-3 flex flex-wrap gap-2">
       {files.map((file, index) => {
-        const fileId = generateFileId(file);
-        const isUploading = uploadingFiles[fileId];
-
         return (
           <HoverCard key={index} openDelay={300} closeDelay={200}>
             <div className="group relative">
@@ -96,6 +92,7 @@ export function ImagePreviewList({
                   {isUploading && (
                     <div className="flex items-center gap-1 text-xs">
                       <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>Uploading...</span>
                     </div>
                   )}
                 </div>
