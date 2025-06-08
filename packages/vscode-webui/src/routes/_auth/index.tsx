@@ -123,16 +123,6 @@ interface ChatProps {
 }
 
 function Chat({ loaderData, isTaskLoading }: ChatProps) {
-  const [isPublicShared, setIsPublicShared] = useState<boolean>(
-    loaderData?.isPublicShared === true,
-  );
-
-  useEffect(() => {
-    if (loaderData) {
-      setIsPublicShared(loaderData.isPublicShared === true);
-    }
-  }, [loaderData]);
-
   const autoApproveGuard = useAutoApproveGuard();
   const taskId = useRef<number | undefined>(loaderData?.id);
   const uid = useRef<string | undefined>(loaderData?.uid);
@@ -677,7 +667,7 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
                   />
                   {taskId.current && uid.current && (
                     <PublicShareButton
-                      isPublicShared={isPublicShared}
+                      isPublicShared={loaderData?.isPublicShared === true}
                       disabled={isTaskLoading || isModelsLoading}
                       taskId={taskId.current}
                       uid={uid.current}
