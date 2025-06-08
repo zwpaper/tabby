@@ -12,7 +12,7 @@ interface ChatState {
     toolName: string,
     toolCallId: string,
   ) => ToolCallLifeCycle;
-  hasExecutingToolCall: boolean;
+  executingToolCalls: ToolCallLifeCycle[];
   completeToolCalls: ToolCallLifeCycle[];
 }
 
@@ -25,13 +25,13 @@ interface ChatContextProviderProps {
 export function ChatContextProvider({ children }: ChatContextProviderProps) {
   const autoApproveGuard = useRef(false);
 
-  const { hasExecutingToolCall, getToolCallLifeCycle, completeToolCalls } =
+  const { executingToolCalls, getToolCallLifeCycle, completeToolCalls } =
     useToolCallLifeCycles();
 
   const value: ChatState = {
     autoApproveGuard,
     getToolCallLifeCycle,
-    hasExecutingToolCall,
+    executingToolCalls,
     completeToolCalls,
   };
 
@@ -55,11 +55,11 @@ export function useAutoApproveGuard() {
 }
 
 export function useToolCallLifeCycle() {
-  const { getToolCallLifeCycle, hasExecutingToolCall, completeToolCalls } =
+  const { getToolCallLifeCycle, executingToolCalls, completeToolCalls } =
     useChatState();
   return {
     getToolCallLifeCycle,
-    hasExecutingToolCall,
+    executingToolCalls,
     completeToolCalls,
   };
 }

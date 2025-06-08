@@ -32,9 +32,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     todoWrite: "<disabled>",
   };
 
-  const ToolAbortText: Record<string, string> = {
-    executeCommand: "Stop",
-  };
+  const ToolAbortText: Record<string, string> = {};
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";

@@ -21,13 +21,14 @@ export function useToolCallLifeCycles() {
     return complete;
   }, [toolCallLifeCycles]);
 
-  const hasExecutingToolCall = useMemo(() => {
+  const executingToolCalls = useMemo(() => {
+    const executing = [];
     for (const lifecycle of toolCallLifeCycles.values()) {
       if (lifecycle.status.startsWith("execute")) {
-        return true;
+        executing.push(lifecycle);
       }
     }
-    return false;
+    return executing;
   }, [toolCallLifeCycles]);
 
   const reloadToolCallLifeCycles = useCallback(() => {
@@ -64,7 +65,7 @@ export function useToolCallLifeCycles() {
 
   return {
     getToolCallLifeCycle,
-    hasExecutingToolCall,
+    executingToolCalls,
     completeToolCalls,
   };
 }

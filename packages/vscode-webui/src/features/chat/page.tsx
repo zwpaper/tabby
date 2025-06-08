@@ -205,12 +205,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
           finishReason,
         },
       });
-
-      // Allow auto approve once user has submitted a message
-      autoApproveGuard.current = true;
-    },
-    onError: () => {
-      autoApproveGuard.current = true;
     },
     experimental_prepareRequestBody: (req) =>
       prepareRequestBody(taskId, req, selectedModel?.id),
@@ -276,8 +270,20 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   });
 
   const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    autoApproveGuard.current = true;
+
     e.preventDefault();
-    if (!allowSendMessage) return;
+    if (isSubmitDisabled) {
+      return;
+    }
+
+    if (isLoading || isUploadingImages) {
+      await handleStop();
+    }
+
+    if (isExecuting) {
+      abortToolCalls();
+    }
 
     if (files.length > 0) {
       try {
@@ -365,17 +371,23 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     retry,
   });
 
-  const { hasExecutingToolCall: isExecuting } = useToolCallLifeCycle();
+  const { executingToolCalls } = useToolCallLifeCycle();
+  const abortToolCalls = useCallback(() => {
+    for (const toolCall of executingToolCalls) {
+      toolCall.abort();
+    }
+  }, [executingToolCalls]);
+  const isExecuting = executingToolCalls.length > 0;
   const isLoading = status === "streaming" || status === "submitted";
 
-  // Base busy state used by multiple conditions (excluding isLoading for submit logic)
-  const isBusyCore = isTaskLoading || isModelsLoading || isExecuting;
-  const isBusy = isBusyCore || isLoading;
-
-  const allowSendMessage = !(isBusy || isEditMode);
+  const isBusyCore = isTaskLoading || isModelsLoading;
+  const isBusy = isBusyCore || isExecuting || isLoading;
   const showEditTodos = !isBusy;
+
   const isSubmitDisabled =
-    isBusyCore || isEditMode || (!isLoading && !input && files.length === 0);
+    isBusyCore ||
+    isEditMode ||
+    (!isLoading && !input && files.length === 0 && !isExecuting);
 
   useScrollToBottom({
     messagesContainerRef,
@@ -534,14 +546,10 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                     disabled={isSubmitDisabled}
                     className="h-6 w-6 rounded-md p-0 transition-opacity"
                     onClick={() => {
-                      if (isLoading || isUploadingImages) {
-                        handleStop();
-                      } else {
-                        formRef.current?.requestSubmit();
-                      }
+                      formRef.current?.requestSubmit();
                     }}
                   >
-                    {isLoading || isUploadingImages ? (
+                    {isExecuting || isLoading || isUploadingImages ? (
                       <StopCircleIcon className="size-4" />
                     ) : (
                       <SendHorizonal className="size-4" />
