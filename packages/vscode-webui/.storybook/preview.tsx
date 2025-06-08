@@ -1,3 +1,5 @@
+import "./fake-vscode-api";
+
 import { withThemeByClassName } from "@storybook/addon-themes";
 import { MINIMAL_VIEWPORTS } from "@storybook/addon-viewport";
 import type { Preview } from "@storybook/react";

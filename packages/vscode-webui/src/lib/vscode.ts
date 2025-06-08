@@ -30,7 +30,8 @@ function getVSCodeApi() {
 }
 
 export function isVSCodeEnvironment() {
-  return !!getVSCodeApi();
+  const vscodeApi = getVSCodeApi();
+  return !!vscodeApi?.getState;
 }
 
 function createVSCodeHost(): VSCodeHostApi {

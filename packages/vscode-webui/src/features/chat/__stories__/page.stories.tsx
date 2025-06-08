@@ -39,11 +39,3 @@ export const Default: Story = {
     task: null,
   },
 };
-
-export const TaskLoading: Story = {
-  args: {
-    auth,
-    isTaskLoading: true,
-    task: null,
-  },
-};
