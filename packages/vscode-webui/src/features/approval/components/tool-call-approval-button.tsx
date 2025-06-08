@@ -32,7 +32,9 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     todoWrite: "<disabled>",
   };
 
-  const ToolAbortText: Record<string, string> = {};
+  const ToolAbortText: Record<string, string> = {
+    executeCommand: "Stop",
+  };
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
@@ -69,13 +71,13 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     }
   }, [isAutoApproved, onAccept]);
 
-  const [showAbort, setShowAbort] = useDebounceState(false, 3_000); // 3 seconds
+  const [showAbort, setShowAbort] = useDebounceState(false, 1_000); // 3 seconds
   useEffect(() => {
-    if (lifecycle.status === "execute") {
+    if (lifecycle.status.startsWith("execute")) {
       setShowAbort(true);
       return;
     }
-  }, [setShowAbort, lifecycle]);
+  }, [setShowAbort, lifecycle.status]);
 
   const showAccept = !isAutoApproved && lifecycle.status === "ready";
   if (showAccept) {

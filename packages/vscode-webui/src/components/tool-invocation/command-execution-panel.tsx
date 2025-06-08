@@ -101,7 +101,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
           </ScrollArea>
         </div>
         <div className="ml-2 flex space-x-3 self-start">
-          {showButton && (
+          {false && showButton && (
             <Button size="xs" variant="ghost" onClick={handleStop}>
               STOP
             </Button>
