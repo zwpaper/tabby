@@ -192,6 +192,9 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
         if (output.error) {
           result.error = output.error;
         }
+        if (output.info) {
+          result.info = output.info;
+        }
         this.transitTo("execute:streaming", {
           type: "complete",
           result,
