@@ -110,8 +110,16 @@ function removeContentInMessages(messages: UIMessage[]): UIMessage[] {
   });
 }
 
+function removeEmptyMessages(messages: UIMessage[]): UIMessage[] {
+  return messages.filter((message) => message.parts.length > 0);
+}
+
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
-const LLMFormatOps: FormatOp[] = [resolvePendingToolCalls, stripKnownXMLTags];
+const LLMFormatOps: FormatOp[] = [
+  resolvePendingToolCalls,
+  removeEmptyMessages,
+  stripKnownXMLTags,
+];
 const UIFormatOps = [
   prompts.stripEnvironmentDetails,
   resolvePendingToolCalls,
@@ -123,6 +131,7 @@ const StorageFormatOps = [
   prompts.stripEnvironmentDetails,
   removeDeprecatedToolInvocations,
   removeContentInMessages,
+  removeEmptyMessages,
 ];
 
 function formatMessages(messages: UIMessage[], ops: FormatOp[]): UIMessage[] {

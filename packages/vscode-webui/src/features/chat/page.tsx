@@ -241,20 +241,13 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   });
 
   const wrappedHandleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    autoApproveGuard.current = true;
-
     e.preventDefault();
+
     if (isSubmitDisabled) {
       return;
     }
 
-    if (isLoading || isUploadingImages) {
-      await handleStop();
-    }
-
-    if (isExecuting) {
-      abortToolCalls();
-    }
+    await handleStop();
 
     if (files.length > 0) {
       try {
@@ -283,10 +276,9 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   };
 
   const handleStop = async () => {
-    // If user abort anything, we should disable auto-approval
-    autoApproveGuard.current = false;
-
-    if (isUploadingImages) {
+    if (isExecuting) {
+      abortToolCalls();
+    } else if (isUploadingImages) {
       cancelUpload();
     } else if (isLoading) {
       stopChat();
@@ -355,6 +347,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     isBusyCore ||
     isEditMode ||
     (!isLoading && !input && files.length === 0 && !isExecuting);
+  const showStopButton = isExecuting || isLoading || isUploadingImages;
 
   useScrollToBottom({
     messagesContainerRef,
@@ -513,10 +506,14 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                     disabled={isSubmitDisabled}
                     className="h-6 w-6 rounded-md p-0 transition-opacity"
                     onClick={() => {
-                      formRef.current?.requestSubmit();
+                      if (showStopButton) {
+                        handleStop();
+                      } else {
+                        formRef.current?.requestSubmit();
+                      }
                     }}
                   >
-                    {isExecuting || isLoading || isUploadingImages ? (
+                    {showStopButton ? (
                       <StopCircleIcon className="size-4" />
                     ) : (
                       <SendHorizonal className="size-4" />
