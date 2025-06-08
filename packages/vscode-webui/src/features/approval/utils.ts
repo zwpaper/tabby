@@ -1,4 +1,3 @@
-import type { PendingApproval } from "@/features/approval";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 
 export function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {
@@ -30,13 +29,4 @@ export function isAssistantMessageWithPartialToolCalls(lastMessage: UIMessage) {
         part.toolInvocation.state === "partial-call",
     )
   );
-}
-
-export function getDisplayError(
-  pendingApproval: PendingApproval | undefined,
-): Error | undefined {
-  if (pendingApproval?.name === "retry") {
-    return pendingApproval.error;
-  }
-  return undefined;
 }

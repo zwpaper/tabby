@@ -51,11 +51,7 @@ import { PublicShareButton } from "@/components/public-share-button";
 import "@/components/prompt-form/prompt-form.css";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
-import {
-  ApprovalButton,
-  getDisplayError,
-  useApprovalAndRetry,
-} from "@/features/approval";
+import { ApprovalButton, useApprovalAndRetry } from "@/features/approval";
 import { AutoApproveMenu } from "@/features/settings";
 import { LegacyTodoList, useTodos } from "@/features/todo";
 import { DefaultModelId, MaxImages } from "@/lib/constants";
@@ -556,7 +552,9 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
 
   // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. error pending retry approval
   const displayError =
-    autoDismissError || uploadImageError || getDisplayError(pendingApproval);
+    autoDismissError ||
+    uploadImageError ||
+    (pendingApproval?.name === "retry" ? pendingApproval.error : undefined);
 
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading || isEditMode);
