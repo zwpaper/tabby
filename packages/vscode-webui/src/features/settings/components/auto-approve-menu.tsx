@@ -91,9 +91,7 @@ export function AutoApproveMenu() {
     ...coreActionSettings
       .filter((setting) => getCoreActionCheckedState(setting.id))
       .map((setting) => setting.summary),
-    ...(autoApproveSettings.retry
-      ? [`Retry (${autoApproveSettings.maxRetryLimit})`]
-      : []),
+    ...(autoApproveSettings.retry ? ["Retry"] : []),
   ];
 
   return (
