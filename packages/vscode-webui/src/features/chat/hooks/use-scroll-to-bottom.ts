@@ -5,13 +5,13 @@ import { useEffect, useLayoutEffect } from "react";
 interface UseScrollToBottomProps {
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   isLoading: boolean;
-  hasPendingApproval: boolean;
+  pendingApprovalName?: string;
 }
 
 export function useScrollToBottom({
   messagesContainerRef,
   isLoading,
-  hasPendingApproval,
+  pendingApprovalName,
 }: UseScrollToBottomProps) {
   const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
 
@@ -47,9 +47,10 @@ export function useScrollToBottom({
   }, [scrollToBottom, messagesContainerRef]);
 
   // Ensure users can always see the executing approval or the pause approval that require their input
+  // IMPORTANT: we use pendingApprovalName to ensure that we scroll to the bottom when the approval name changes
   useLayoutEffect(() => {
-    if (!isLoading && hasPendingApproval) {
+    if (!isLoading && !!pendingApprovalName) {
       scrollToBottom(false);
     }
-  }, [hasPendingApproval, isLoading, scrollToBottom]);
+  }, [pendingApprovalName, isLoading, scrollToBottom]);
 }

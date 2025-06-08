@@ -348,7 +348,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   useScrollToBottom({
     messagesContainerRef,
     isLoading,
-    hasPendingApproval: !!pendingApproval,
+    pendingApprovalName: pendingApproval?.name,
   });
 
   const resourceUri = useResourceURI();
