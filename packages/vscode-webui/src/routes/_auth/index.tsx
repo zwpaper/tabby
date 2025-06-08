@@ -449,30 +449,12 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
     return false;
   };
 
-  const queryClient = useQueryClient();
+  useNewTaskHandler({ data, taskId, uid });
 
-  useEffect(() => {
-    if (!data || data.length === 0) return;
-
-    const dataParts = data as DataPart[];
-    for (const part of dataParts) {
-      if (taskId.current === undefined && part.type === "append-id") {
-        vscodeHost.capture({
-          event: "newTask",
-        });
-        taskId.current = part.id;
-        uid.current = part.uid;
-
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
-
-        vscodeHost.setSessionState({
-          lastVisitedRoute: `/?taskId=${taskId.current}`,
-        });
-      } else if (part.type === "update-usage") {
-        setTotalTokens(part.totalTokens);
-      }
-    }
-  }, [data, queryClient]);
+  useTokenUsageUpdater({
+    data,
+    setTotalTokens,
+  });
 
   const editorRef = useRef<Editor | null>(null);
 
@@ -687,6 +669,58 @@ function Chat({ loaderData, isTaskLoading }: ChatProps) {
       </div>
     </ChatEventProvider>
   );
+}
+
+function useNewTaskHandler({
+  data,
+  taskId,
+  uid,
+}: {
+  data: unknown[] | undefined;
+  taskId: React.MutableRefObject<number | undefined>;
+  uid: React.MutableRefObject<string | undefined>;
+}) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+
+    const dataParts = data as DataPart[];
+    for (const part of dataParts) {
+      if (taskId.current === undefined && part.type === "append-id") {
+        vscodeHost.capture({
+          event: "newTask",
+        });
+        taskId.current = part.id;
+        uid.current = part.uid;
+
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+
+        vscodeHost.setSessionState({
+          lastVisitedRoute: `/?taskId=${taskId.current}`,
+        });
+      }
+    }
+  }, [data, queryClient, taskId, uid]);
+}
+
+function useTokenUsageUpdater({
+  data,
+  setTotalTokens,
+}: {
+  data: unknown[] | undefined;
+  setTotalTokens: React.Dispatch<React.SetStateAction<number>>;
+}) {
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+
+    const dataParts = data as DataPart[];
+    for (const part of dataParts) {
+      if (part.type === "update-usage") {
+        setTotalTokens(part.totalTokens);
+      }
+    }
+  }, [data, setTotalTokens]);
 }
 
 function prepareRequestBody(
