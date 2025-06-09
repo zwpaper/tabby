@@ -1,31 +1,19 @@
 import { ModelSelect } from "@/components/model-select";
 import { Button } from "@/components/ui/button";
-import {
-  ChatContextProvider,
-  useAutoApproveGuard,
-  useToolCallLifeCycle,
-} from "@/features/chat";
+import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
 import { useEnableReasoning, useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { useChat } from "@ai-sdk/react";
-import { formatters, fromUIMessages, toUIMessages } from "@ragdoll/common";
+import { formatters, toUIMessages } from "@ragdoll/common";
 import type { Environment, Todo } from "@ragdoll/db";
-import type { Attachment, UIMessage } from "ai";
+import type { UIMessage } from "ai";
 import type { InferResponseType } from "hono/client";
-import {
-  ImageIcon,
-  Loader2,
-  SendHorizonal,
-  StopCircleIcon,
-} from "lucide-react";
-import type React from "react";
+import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
-import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { ErrorMessage } from "@/components/error-message";
 import { ImagePreviewList } from "@/components/image-preview-list";
-import { MessageList } from "@/components/message/message-list";
 import { PreviewTool } from "@/components/preview-tool";
 import { PublicShareButton } from "@/components/public-share-button";
 import "@/components/prompt-form/prompt-form.css";
@@ -39,12 +27,14 @@ import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { useMcp } from "@/lib/hooks/use-mcp";
-import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { vscodeHost } from "@/lib/vscode";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 
 import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
+import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
+import { useChatStatus } from "./hooks/use-chat-status";
+import { useChatSubmit } from "./hooks/use-chat-submit";
 import { useNewTaskHandler } from "./hooks/use-new-task-handler";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
@@ -71,7 +61,6 @@ export function ChatPage({
 type Task = NonNullable<
   InferResponseType<(typeof apiClient.api.tasks)[":id"]["$get"]>
 >;
-
 interface ChatProps {
   task: Task | null;
   isTaskLoading: boolean;
@@ -118,20 +107,18 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     useAutoDismissError();
 
   // Use the unified image upload hook
+  const imageUpload = useImageUpload({
+    token: auth.session.token,
+  });
   const {
     files,
     isUploading: isUploadingImages,
     error: uploadImageError,
     fileInputRef,
     removeFile: handleRemoveImage,
-    clearError: clearUploadImageError,
-    upload,
-    cancelUpload,
     handleFileSelect,
     handlePaste: handlePasteImage,
-  } = useImageUpload({
-    token: auth.session.token,
-  });
+  } = imageUpload;
 
   const todosRef = useRef<Todo[] | undefined>(undefined);
   const buildEnvironment = useCallback(async () => {
@@ -144,21 +131,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const { toolset: mcpToolSet } = useMcp();
 
   const latestHttpCode = useRef<number | undefined>(undefined);
-  const {
-    data,
-    setData,
-    error,
-    messages,
-    setMessages,
-    reload,
-    setInput,
-    append,
-    input,
-    status,
-    stop: stopChat,
-    addToolResult,
-    experimental_resume,
-  } = useChat({
+  const chat = useChat({
     /*
      * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
      */
@@ -212,6 +185,21 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   });
 
   const {
+    data,
+    setData,
+    error,
+    messages,
+    setMessages,
+    reload,
+    setInput,
+    append,
+    input,
+    status,
+    addToolResult,
+    experimental_resume,
+  } = chat;
+
+  const {
     todos,
     isEditMode,
     draftTodos,
@@ -238,68 +226,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     setMessages,
     data,
   });
-
-  // This function handles both form submissions (with an event) and programmatic invocations (without an event).
-  const wrappedHandleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
-    autoApproveGuard.current = true;
-    e?.preventDefault();
-
-    if (isSubmitDisabled) {
-      return;
-    }
-
-    await handleStop();
-
-    if (files.length > 0) {
-      try {
-        const uploadedImages: Attachment[] = await upload();
-
-        append({
-          role: "user",
-          content: !input.trim() ? " " : input, // use space to keep parts not empty
-          experimental_attachments: uploadedImages,
-        });
-
-        setInput("");
-      } catch (error) {
-        // Error is already handled by the hook
-        return;
-      }
-    } else if (input.trim()) {
-      // Text-only submissions
-      clearUploadImageError();
-      append({
-        role: "user",
-        content: input,
-      });
-      setInput("");
-    }
-  };
-
-  const handleStop = async () => {
-    if (isExecuting) {
-      abortToolCalls();
-    } else if (isUploadingImages) {
-      cancelUpload();
-    } else if (isLoading) {
-      stopChat();
-      if (taskId.current) {
-        const lastMessage = messages.at(-1);
-        if (lastMessage) {
-          await apiClient.api.tasks[":id"].messages.$patch({
-            param: {
-              id: taskId.current.toString(),
-            },
-            json: {
-              messages: fromUIMessages([lastMessage]),
-            },
-          });
-        }
-      }
-    } else if (pendingApproval?.name === "retry") {
-      pendingApproval.stopCountdown();
-    }
-  };
 
   const enableReasoning = useEnableReasoning();
 
@@ -329,32 +255,33 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     retry,
   });
 
-  const { executingToolCalls } = useToolCallLifeCycle();
-  const abortToolCalls = useCallback(() => {
-    for (const toolCall of executingToolCalls) {
-      toolCall.abort();
-    }
-  }, [executingToolCalls]);
-  const isExecuting = executingToolCalls.length > 0;
   const isLoading = status === "streaming" || status === "submitted";
 
-  const isBusyCore = isTaskLoading || isModelsLoading;
-  const isBusy = isBusyCore || isExecuting || isLoading;
-  const showEditTodos = !isBusy;
+  const { isExecuting, isSubmitDisabled, showStopButton, showEditTodos } =
+    useChatStatus({
+      isTaskLoading,
+      isModelsLoading,
+      isLoading,
+      isEditMode,
+      isInputEmpty: !input.trim(),
+      isFilesEmpty: files.length === 0,
+      isUploadingImages,
+    });
 
-  const isSubmitDisabled =
-    isBusyCore ||
-    isEditMode ||
-    (!isLoading && !input && files.length === 0 && !isExecuting);
-  const showStopButton = isExecuting || isLoading || isUploadingImages;
+  const { handleSubmit, handleStop } = useChatSubmit({
+    chat,
+    imageUpload,
+    isSubmitDisabled,
+    isLoading,
+    taskId,
+    pendingApproval,
+  });
 
   useScrollToBottom({
     messagesContainerRef,
     isLoading,
     pendingApprovalName: pendingApproval?.name,
   });
-
-  const resourceUri = useResourceURI();
 
   // Display errors with priority: 1. autoDismissError, 2. uploadImageError, 3. error pending retry approval
   const displayError =
@@ -378,22 +305,12 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         messages={renderMessages}
         // Only allow adding tool results when not loading
       />
-
-      {renderMessages.length === 0 &&
-        (isTaskLoading ? (
-          <div className="flex h-full w-full items-center justify-center">
-            <Loader2 className="animate-spin" />
-          </div>
-        ) : (
-          <EmptyChatPlaceholder />
-        ))}
-      {renderMessages.length > 0 && <div className="h-4" />}
-      <MessageList
+      <ChatArea
         messages={renderMessages}
+        isTaskLoading={isTaskLoading}
+        isLoading={isLoading}
         user={auth.user}
-        logo={resourceUri?.logo128}
-        isLoading={isLoading || isTaskLoading}
-        containerRef={messagesContainerRef}
+        messagesContainerRef={messagesContainerRef}
       />
       <div className="flex flex-col px-4">
         <ErrorMessage error={displayError} />
@@ -431,7 +348,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
             <ChatInputForm
               input={input}
               setInput={setInput}
-              onSubmit={wrappedHandleSubmit}
+              onSubmit={handleSubmit}
               isLoading={isLoading || isExecuting}
               onPaste={handlePasteImage}
               pendingApproval={pendingApproval}
@@ -499,7 +416,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                     if (showStopButton) {
                       handleStop();
                     } else {
-                      wrappedHandleSubmit();
+                      handleSubmit();
                     }
                   }}
                 >

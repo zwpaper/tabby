@@ -1,0 +1,44 @@
+import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
+import { MessageList } from "@/components/message/message-list";
+import { useResourceURI } from "@/lib/hooks/use-resource-uri";
+import type { UIMessage } from "ai";
+import { Loader2 } from "lucide-react";
+import type React from "react";
+
+interface ChatAreaProps {
+  messages: UIMessage[];
+  isTaskLoading: boolean;
+  isLoading: boolean;
+  user: { name: string; image?: string | null };
+  messagesContainerRef: React.RefObject<HTMLDivElement>;
+}
+
+export function ChatArea({
+  messages,
+  isTaskLoading,
+  isLoading,
+  user,
+  messagesContainerRef,
+}: ChatAreaProps) {
+  const resourceUri = useResourceURI();
+  return (
+    <>
+      {messages.length === 0 &&
+        (isTaskLoading ? (
+          <div className="flex h-full w-full items-center justify-center">
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : (
+          <EmptyChatPlaceholder />
+        ))}
+      {messages.length > 0 && <div className="h-4" />}
+      <MessageList
+        messages={messages}
+        user={user}
+        logo={resourceUri?.logo128}
+        isLoading={isLoading || isTaskLoading}
+        containerRef={messagesContainerRef}
+      />
+    </>
+  );
+}
