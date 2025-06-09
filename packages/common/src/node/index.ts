@@ -9,3 +9,4 @@ export { globFiles } from "./glob-files";
 export { getSystemInfo } from "./system-info";
 export { GitStatusReader, type GitStatusReaderOptions } from "./git-status";
 export { collectCustomRules } from "./custom-rules";
+export { MaxTerminalOutputSize } from "./limits";

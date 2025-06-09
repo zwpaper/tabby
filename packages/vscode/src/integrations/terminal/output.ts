@@ -1,14 +1,10 @@
 import { getLogger } from "@/lib/logger";
 import { signal } from "@preact/signals-core";
+import { MaxTerminalOutputSize } from "@ragdoll/common/node";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import type { ExecutionError } from "./terminal-job";
 
 const logger = getLogger("TerminalOutput");
-
-/**
- * Maximum content size in bytes before truncation occurs (1MB)
- */
-const MaxContentSize = 1_048_576;
 
 /**
  * Result of content truncation operation
@@ -32,12 +28,12 @@ export class OutputTruncator {
     let content = currentLines.join("\n");
     let contentBytes = Buffer.byteLength(content, "utf8");
 
-    if (contentBytes <= MaxContentSize) {
+    if (contentBytes <= MaxTerminalOutputSize) {
       return { lines: currentLines, isTruncated: this.isTruncated };
     }
 
     // Remove lines from the beginning until we're under the limit
-    while (contentBytes > MaxContentSize && currentLines.length > 0) {
+    while (contentBytes > MaxTerminalOutputSize && currentLines.length > 0) {
       currentLines.shift(); // Remove the first (oldest) line
       content = currentLines.join("\n");
       contentBytes = Buffer.byteLength(content, "utf8");
@@ -46,18 +42,11 @@ export class OutputTruncator {
     if (!this.isTruncated) {
       this.isTruncated = true;
       logger.warn(
-        `Shell output truncated at ${MaxContentSize} bytes - removed ${lines.length - currentLines.length} lines`,
+        `Shell output truncated at ${MaxTerminalOutputSize} bytes - removed ${lines.length - currentLines.length} lines`,
       );
     }
 
     return { lines: currentLines, isTruncated: true };
-  }
-
-  /**
-   * Returns whether content has been truncated
-   */
-  get hasBeenTruncated(): boolean {
-    return this.isTruncated;
   }
 }
 
