@@ -165,6 +165,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
     onFinish: (_, { finishReason }) => {
+      autoApproveGuard.current = true;
       vscodeHost.capture({
         event: "chatFinish",
         properties: {
@@ -213,16 +214,8 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     initialTodos: task?.todos,
     messages,
     todosRef,
+    append,
   });
-
-  const wrappedSaveTodos = useCallback(() => {
-    saveTodos();
-    append({
-      role: "user",
-      content:
-        "<user-reminder>I have updated the to-do list and provided it within environment details. Please review them and adjust the plan accordingly. NEVER WORK ON TASKS THAT HAS BEEN MARKED AS COMPLETED OR CANCELLED.</user-reminder>",
-    });
-  }, [saveTodos, append]);
 
   useAutoResume({
     autoResume:
@@ -411,7 +404,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                   hasDirtyChanges={hasDirtyChanges}
                   enterEditMode={enterEditMode}
                   exitEditMode={exitEditMode}
-                  saveTodos={wrappedSaveTodos}
+                  saveTodos={saveTodos}
                   updateTodoStatus={updateTodoStatus}
                   showEdit={showEditTodos}
                 />
