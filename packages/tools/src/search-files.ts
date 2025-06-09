@@ -2,20 +2,31 @@ import { z } from "zod";
 import { defineClientTool } from "./types";
 
 export const searchFiles = defineClientTool({
-  description:
-    "Request to perform a regex search across files in a specified directory, providing context-rich results. This tool searches for patterns or specific content across multiple files, displaying each match with encapsulating context.",
+  description: `
+- Fast content search tool that works with any codebase size
+- Searches file contents using regular expressions
+- Supports full regex syntax (eg. "log.*Error", "function\s+\w+", etc.)
+- Filter files by pattern with the include parameter (eg. "*.js", "*.{ts,tsx}")
+- Returns file paths with at least one match sorted by modification time
+- Use this tool when you need to find files containing specific patterns
+- If you need to identify/count the number of matches within files, use the executeCommand tool with \`rg\` (ripgrep) directly. Do NOT use \`grep\`.
+`.trim(),
   inputSchema: z.object({
     path: z
       .string()
       .describe(
-        "The path of the directory to search in (relative to the current working directory). This directory will be recursively searched.",
+        "The path of the directory to search in (relative to the current working directory).",
       ),
-    regex: z.string().describe("The regular expression pattern to search for."),
+    regex: z
+      .string()
+      .describe(
+        "The regular expression pattern to search for in file contents",
+      ),
     filePattern: z
       .string()
       .optional()
       .describe(
-        "Glob pattern to filter files (e.g., '*.ts' for TypeScript files). If not provided, it will search all files.",
+        'File pattern to include in the search (e.g. "*.js", "*.{ts,tsx}"). If not provided, it will search all files.',
       ),
   }),
   outputSchema: z.object({

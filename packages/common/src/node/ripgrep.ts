@@ -88,19 +88,19 @@ export async function searchFilesWithRipgrep(
 
   if (filePattern) {
     // Add glob pattern. Ensure it's properly quoted.
-    command += `--glob '${filePattern.replace(/'/g, "'''")}' `; // Escape single quotes in pattern
+    command += `--glob '${filePattern.replace(/'/g, "'\\''")}' `; // Escape single quotes in pattern
   }
 
-  const absPath = resolve(workspacePath, path.replace(/'/g, "'''"));
+  const absPath = resolve(workspacePath, path.replace(/'/g, "'\\''"));
   // Add regex and path. Ensure they are properly quoted.
-  command += `'${regex.replace(/'/g, "'''")}' '${absPath}'`;
+  command += `'${regex.replace(/'/g, "'\\''")}' '${absPath}'`;
   logger.info("command", command);
 
   try {
     const { stdout, stderr } = await execAsync(command, {
       // Set a reasonable maxBuffer size in case of large output
       // Consider streaming if output can be extremely large
-      maxBuffer: 1024 * 1024 * 10, // 10MB
+      maxBuffer: (1024 * 1024) / 2, // 0.5MB
       signal: abortSignal, // Pass the abort signal
     });
 
