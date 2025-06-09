@@ -1,4 +1,4 @@
-import { SocialLinks } from "../../../common/src/social";
+import { SocialLinks } from "@ragdoll/common";
 import waitlistApprovalEmail from "../templates/waitlist-approval-email.html" with {
   type: "text",
 };

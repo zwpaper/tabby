@@ -1,0 +1,7 @@
+{
+  "extends": ["//"],
+  "$schema": "https://turborepo.com/schema.json",
+  "boundaries": {
+    "implicitDependencies": ["vscode", "mocha"]
+  }
+}

@@ -5,6 +5,7 @@ check_git_clean() {
 
 main() {
     bun dep-check
+    bun turbo boundaries
     bun fix
     check_git_clean
     bun tsc

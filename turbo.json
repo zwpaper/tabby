@@ -17,5 +17,8 @@
       "dependsOn": ["@ragdoll/vscode-webui#build"],
       "outputs": ["dist/**"]
     }
+  },
+  "boundaries": {
+    "implicitDependencies": ["vitest"]
   }
 }

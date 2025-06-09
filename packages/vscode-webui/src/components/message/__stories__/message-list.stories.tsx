@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import type { UIMessage } from "ai";
-import logo from "../../../../../vscode/assets/icons/logo128.png";
 import { MessageList } from "../message-list";
 
 const meta: Meta<typeof MessageList> = {
@@ -390,7 +389,6 @@ export const Messages1: Story = {
       image: "https://example.com/user-avatar.png",
     },
     isLoading: false,
-    logo: logo,
     sendMessage: async () => null,
   },
   parameters: {
