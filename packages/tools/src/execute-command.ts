@@ -16,9 +16,20 @@ Before executing the command, please follow these steps:
    - Capture the output of the command.
 
 Usage notes:
-  - The command argument is required.
-  - If the output exceeds 30000 characters, output will be truncated before being returned to you.
-  - When issuing multiple commands, use the ';' or '&&' operator to separate them. DO NOT use newlines (newlines are ok in quoted strings).
+- The command argument is required.
+- If the output exceeds 30000 characters, output will be truncated before being returned to you.
+- When issuing multiple commands, use the ';' or '&&' operator to separate them. DO NOT use newlines (newlines are ok in quoted strings).
+- In order to ensure good formatting, ALWAYS pass the multi-line argument via a HEREDOC, a la this example:
+<example>
+git commit -m "$(cat <<'EOF'
+   Commit message here.
+
+   🤖 Generated with [Pochi](https://getpochi.com)
+
+   Co-Authored-By: Pochi <noreply@getpochi.com>
+   EOF
+   )"
+</example>
 
 Important:
 - NEVER update the git config
