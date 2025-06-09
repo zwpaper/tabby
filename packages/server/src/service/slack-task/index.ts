@@ -1,4 +1,4 @@
-import type { DBMessage, UserEvent } from "@ragdoll/common";
+import type { DBMessage, UserEvent } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
 import { slackService } from "../slack";
 import { taskService } from "../task";

@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai";
+import type { DB } from ".";
 
 export type DBMessage = {
   id: string;
@@ -60,3 +61,11 @@ export type TaskError = {
       kind: "AbortError";
     }
 );
+
+export type TaskEvent = {
+  type: "task:status-changed";
+  data: {
+    taskId: number;
+    status: DB["task"]["status"]["__select__"];
+  };
+};

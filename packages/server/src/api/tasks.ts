@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import type { UserEvent } from "@ragdoll/common";
+import type { UserEvent } from "@ragdoll/db";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";

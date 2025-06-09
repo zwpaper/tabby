@@ -8,8 +8,8 @@ import {
 import { useEnableReasoning, useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { useChat } from "@ai-sdk/react";
-import type { Environment, Todo } from "@ragdoll/common";
 import { formatters, fromUIMessages, toUIMessages } from "@ragdoll/common";
+import type { Environment, Todo } from "@ragdoll/db";
 import type { Attachment, UIMessage } from "ai";
 import type { InferResponseType } from "hono/client";
 import {

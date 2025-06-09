@@ -84,6 +84,7 @@
   },
   "devDependencies": {
     "@preact/signals-react-transform": "^0.5.1",
+    "@ragdoll/db": "workspace:*",
     "@ragdoll/tools": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
     "@storybook/addon-essentials": "^8.6.12",

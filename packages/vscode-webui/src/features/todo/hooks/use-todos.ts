@@ -1,6 +1,7 @@
 import type { Message } from "@ai-sdk/react";
 import type { CreateMessage, UIMessage } from "@ai-sdk/ui-utils";
-import { type Todo, findTodos, mergeTodos } from "@ragdoll/common";
+import { findTodos, mergeTodos } from "@ragdoll/common";
+import type { Todo } from "@ragdoll/db";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function useTodos({

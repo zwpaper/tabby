@@ -15,7 +15,7 @@ import {
 import { useAllowEditTodos } from "@/features/settings";
 import { cn } from "@/lib/utils";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import type { Todo } from "@ragdoll/common";
+import type { Todo } from "@ragdoll/db";
 import {
   Circle,
   CircleCheckBig,

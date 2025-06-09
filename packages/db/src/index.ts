@@ -34,7 +34,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
   };
 };
 
-export type { DBMessage, TaskError, UserEvent } from "./types";
+export type { DBMessage, TaskError, UserEvent, TaskEvent } from "./types";
 export {
   ZodEnvironment,
   type Environment,

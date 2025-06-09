@@ -1,10 +1,9 @@
-export type { TaskEvent, UserEvent } from "@ragdoll/common";
+export type { TaskEvent, UserEvent } from "@ragdoll/db";
 import { WebSocket } from "ws";
 export type * from "./types";
 export type { AppType } from "./server";
 export { deviceLinkClient } from "./lib/device-link/client";
 
-export type { DBMessage } from "@ragdoll/common";
 export type { auth } from "./auth";
 
 export interface PochiEventSource {

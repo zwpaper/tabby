@@ -1,10 +1,10 @@
-import type { Environment } from "@ragdoll/common";
 import {
   GitStatusReader,
   collectCustomRules,
   getSystemInfo,
   listWorkspaceFiles,
 } from "@ragdoll/common/node";
+import type { Environment } from "@ragdoll/db";
 import type { RunnerContext } from "../task-runner";
 
 /**

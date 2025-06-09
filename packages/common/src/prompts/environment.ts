@@ -1,6 +1,5 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
-import type { Environment, GitStatus } from "@ragdoll/db";
-import type { UserEvent } from "..";
+import type { Environment, GitStatus, UserEvent } from "@ragdoll/db";
 
 export function getReadEnvironmentResult(
   environment: Environment,

@@ -1,5 +1,5 @@
-import type { DBMessage, UserEvent } from "@ragdoll/common";
-import { ZodEnvironment } from "@ragdoll/common";
+import type { DBMessage, UserEvent } from "@ragdoll/db";
+import { ZodEnvironment } from "@ragdoll/db";
 import { ZodMcpToolType } from "@ragdoll/tools";
 import { z } from "zod";
 

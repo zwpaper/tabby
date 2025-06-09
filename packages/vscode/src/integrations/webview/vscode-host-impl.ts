@@ -35,12 +35,12 @@ import {
   ThreadSignal,
   type ThreadSignalSerialization,
 } from "@quilted/threads/signals";
-import type { Environment } from "@ragdoll/common";
 import {
   GitStatusReader,
   ignoreWalk,
   listWorkspaceFiles,
 } from "@ragdoll/common/node";
+import type { Environment } from "@ragdoll/db";
 import {
   type PreviewToolFunctionType,
   ServerToolApproved,

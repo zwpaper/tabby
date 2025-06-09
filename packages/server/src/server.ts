@@ -1,6 +1,6 @@
 import "./lib/laminar";
 
-import type { TaskEvent, UserEvent } from "@ragdoll/common";
+import type { TaskEvent, UserEvent } from "@ragdoll/db";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { etag } from "hono/etag";
