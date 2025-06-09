@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 You're In – Thanks for Signing Up! | Pochi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 32rem;
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+        }
+        
+        .title {
+            margin-bottom: 24px;
+            font-weight: bold;
+            font-size: 30px;
+            color: #111827;
+            line-height: 1.2;
+        }
+        
+        .content {
+            margin-bottom: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .content p {
+            color: #374151;
+            line-height: 1.6;
+        }
+        
+        .content .highlight {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .waitlist-code {
+            background-color: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            display: inline-block;
+        }
+        
+        .weekly-update {
+            font-weight: 500;
+            color: #d97706;
+        }
+        
+        .cta-section {
+            margin-bottom: 32px;
+        }
+        
+        .discord-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #4f46e5;
+            color: white;
+            padding: 16px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease;
+        }
+        
+        .discord-button:hover {
+            background-color: #4338ca;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .footer {
+            text-align: center;
+        }
+        
+        .footer p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .user-button {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #374151;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .user-button:hover {
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 640px) {
+            .title {
+                font-size: 24px;
+            }
+            
+            .container {
+                padding: 32px 24px;
+                margin: 0 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- User button in top-right corner -->
+    <div class="user-button" onclick="handleUserMenu()">
+        {{USER_INITIAL}}
+    </div>
+
+    <div class="container">
+        <h1 class="title">
+            🎉 You're In – Thanks for Signing Up!
+        </h1>
+
+        <div class="content">
+            <p>
+                We are gradually opening up early access to a small group of developers who want to be part of our Research Preview.
+            </p>
+            <p>
+                If you're excited to explore what we're building and help shape it with feedback, we'd love to have you in the first wave.
+            </p>
+            <p>
+                Join our Discord to connect with the team and other early users.
+            </p>
+            <p class="highlight">
+                Just DM us <span class="waitlist-code">WAITLIST</span> once you are in to fast-track your access.
+            </p>
+            <p class="weekly-update">
+                ⚡ We are approving a limited batch every week - hope to see you there!
+            </p>
+        </div>
+
+        <!-- Discord focused call-to-action -->
+        <div class="cta-section">
+            <a href="{{DISCORD_URL}}" target="_blank" rel="noopener noreferrer" class="discord-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14.983 3l.123 .006c2.014 .214 3.527 .672 4.966 1.673a1 1 0 0 1 .371 .488c1.876 5.315 2.373 9.987 1.451 12.28c-1.003 2.005 -2.606 3.553 -4.394 3.553c-.732 0 -1.693 -.968 -2.328 -2.045a21.512 21.512 0 0 0 2.103 -.493a1 1 0 1 0 -.55 -1.924c-3.32 .95 -6.13 .95 -9.45 0a1 1 0 0 0 -.55 1.924c.717 .204 1.416 .37 2.103 .494c-.635 1.075 -1.596 2.044 -2.328 2.044c-1.788 0 -3.391 -1.548 -4.428 -3.629c-.888 -2.217 -.39 -6.89 1.485 -12.204a1 1 0 0 1 .371 -.488c1.439 -1.001 2.952 -1.459 4.966 -1.673a1 1 0 0 1 .935 .435l.063 .107l.651 1.285l.137 -.016a12.97 12.97 0 0 1 2.643 0l.134 .016l.65 -1.284a1 1 0 0 1 .754 -.54l.122 -.009zm-5.983 7a2 2 0 0 0 -1.977 1.697l-.018 .154l-.005 .149l.005 .15a2 2 0 1 0 1.995 -2.15zm6 0a2 2 0 0 0 -1.977 1.697l-.018 .154l-.005 .149l.005 .15a2 2 0 1 0 1.995 -2.15z" />
+                </svg>
+                Join Discord
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>
+                Questions? Contact us at 
+                <a href="mailto:support@getpochi.com">support@getpochi.com</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function handleUserMenu() {
+            // This would typically open a user menu
+            // For now, just show a simple alert
+            alert('User menu - implement logout functionality here');
+        }
+    </script>
+</body>
+</html> 
