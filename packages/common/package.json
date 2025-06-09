@@ -9,7 +9,8 @@
     "./message-utils": "./src/message-utils.ts",
     "./git-utils": "./src/git-utils.ts",
     "./output-utils": "./src/output-utils.ts",
-    "./diff-utils": "./src/diff-utils.ts"
+    "./diff-utils": "./src/diff-utils.ts",
+    "./todo-utils": "./src/todo-utils.ts"
   },
   "scripts": {
     "tsc": "tsc",

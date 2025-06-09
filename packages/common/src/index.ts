@@ -7,7 +7,6 @@ export {
   type DataPart,
   type DBMessage,
 } from "./message";
-export { mergeTodos, findTodos } from "./todo-utils";
 
 export { formatters } from "./formatters";
 export { attachTransport, getLogger } from "./logger";

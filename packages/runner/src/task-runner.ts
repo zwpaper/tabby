@@ -2,13 +2,8 @@ import {
   isAssistantMessageWithCompletedToolCalls,
   updateToolCallResult,
 } from "@ai-sdk/ui-utils";
-import {
-  findTodos,
-  fromUIMessage,
-  getLogger,
-  mergeTodos,
-  toUIMessages,
-} from "@ragdoll/common";
+import { fromUIMessage, getLogger, toUIMessages } from "@ragdoll/common";
+import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { DB, Environment, TaskEvent, Todo } from "@ragdoll/db";
 import type { AppType, PochiEventSource } from "@ragdoll/server";
 import type { ToolFunctionType } from "@ragdoll/tools";
