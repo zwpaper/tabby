@@ -3,7 +3,40 @@ import { defineClientTool } from "./types";
 
 export const executeCommand = defineClientTool({
   description:
-    "Request to execute a CLI command on the system. Use this when you need to perform system operations or run specific commands to accomplish any step in the user's task.",
+    `Executes a given bash command in a persistent shell session, ensuring proper handling and security measures.
+
+Before executing the command, please follow these steps:
+
+1. Directory Verification:
+   - If the command will create new directories or files, first use the listFiles tool to verify the parent directory exists and is the correct location
+   - For example, before running "mkdir foo/bar", first use listFiles to check that "foo" exists and is the intended parent directory
+
+2. Command Execution:
+   - After ensuring proper quoting, execute the command.
+   - Capture the output of the command.
+
+Usage notes:
+  - The command argument is required.
+  - If the output exceeds 30000 characters, output will be truncated before being returned to you.
+  - When issuing multiple commands, use the ';' or '&&' operator to separate them. DO NOT use newlines (newlines are ok in quoted strings).
+
+Important:
+- NEVER update the git config
+- Return the PR URL when you're done, so the user can see it
+
+# Other common operations
+- Creating a Github PR
+gh pr create --title "the pr title" --body "$(cat <<'EOF'
+## Summary
+<1-3 bullet points>
+
+## Test plan
+[Checklist of TODOs for testing the pull request...]
+
+🤖 Generated with [Pochi](https://getpochi.com)
+EOF
+)"
+- View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments`.trim(),
   inputSchema: z.object({
     command: z
       .string()
