@@ -297,7 +297,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     addToolResult: allowAddToolResult ? addToolResult : undefined,
   });
 
-  useHandleChatEvents(isLoading ? append : undefined);
+  useHandleChatEvents(isLoading ? undefined : append);
 
   return (
     <div className="flex h-screen flex-col">
