@@ -38,6 +38,7 @@ test("environment", () => {
               "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.\n\nCurrently, two official plugins are available:",
           },
           gitStatus: {
+            origin: 'https://github.com/username/repo.git',
             currentBranch: 'add-environment-to-chat-request-body',
             mainBranch: 'main',
             status: 'M packages/vscode-webui-bridge/src/index.ts\nA packages/vscode-webui/src/lib/use-environment.ts\nM packages/vscode-webui/src/lib/vscode.ts\nM packages/vscode-webui/src/routes/chat.tsx\n?? src/fib.test.ts\n?? vitest.config.ts',

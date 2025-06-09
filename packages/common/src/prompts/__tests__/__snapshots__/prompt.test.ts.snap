@@ -1,74 +1,4 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`environment 1`] = `
-"# Current Time
-2021-01-01T00:00:00.000Z
-
-# Current Working Directory (/home/user/project) Files
-index.ts
-package.json
-tsconfig.json
-README.md
-
-# Active File Tabs in Editor
-README.md
-tsconfig.json
-package.json
-
-# Active Selection (README.md:3-5)
-
-\`\`\`
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-\`\`\`
-
-
-# GIT STATUS
-Current branch: add-environment-to-chat-request-body
-Main branch (you will usually use this for PRs): main
-
-Status:
-M packages/vscode-webui-bridge/src/index.ts
-A packages/vscode-webui/src/lib/use-environment.ts
-M packages/vscode-webui/src/lib/vscode.ts
-M packages/vscode-webui/src/routes/chat.tsx
-?? src/fib.test.ts
-?? vitest.config.ts
-
-Recent commits:
-02b50f727 feat(chat): add environment property to prepareRequestBody
-962185adb feat(webui): add new task link and pending component
-
-# Event triggered this task
-{
-  "type": "slack:message",
-  "data": {
-    "type": "message",
-    "subtype": "bot_message",
-    "event_ts": "1234567890.123456",
-    "user": "U12345678",
-    "text": "Hello, world!",
-    "ts": "1234567890.123456",
-    "channel": "C12345678",
-    "channel_type": "group",
-    "bot_id": "B12345678"
-  }
-}
-
-# TODOs
-Here's todo list for current task. If a task is marked as cancelled or completed, it no longer needs your attention, NEVER ATTEMPT TO COMPLETE IT AGAIN, this is SUPER IMPORTANT!!!.
-Otherwise, please follow the todo list to complete the task.
-
-[
-  {
-    "content": "fix this",
-    "id": "1",
-    "status": "pending",
-    "priority": "high"
-  }
-]"
-`;
+// Bun Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`snapshot 1`] = `
 "You are Pochi, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
@@ -156,4 +86,75 @@ You should always speak and think in the "en" language unless the user gives you
 
 Rules:
 # Rules from (abc)"
+`;
+
+exports[`environment 1`] = `
+"# Current Time
+2021-01-01T00:00:00.000Z
+
+# Current Working Directory (/home/user/project) Files
+index.ts
+package.json
+tsconfig.json
+README.md
+
+# Active File Tabs in Editor
+README.md
+tsconfig.json
+package.json
+
+# Active Selection (README.md:3-5)
+
+\`\`\`
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+\`\`\`
+
+
+# GIT STATUS
+Origin: https://github.com/username/repo.git
+Current branch: add-environment-to-chat-request-body
+Main branch (you will usually use this for PRs): main
+
+Status:
+M packages/vscode-webui-bridge/src/index.ts
+A packages/vscode-webui/src/lib/use-environment.ts
+M packages/vscode-webui/src/lib/vscode.ts
+M packages/vscode-webui/src/routes/chat.tsx
+?? src/fib.test.ts
+?? vitest.config.ts
+
+Recent commits:
+02b50f727 feat(chat): add environment property to prepareRequestBody
+962185adb feat(webui): add new task link and pending component
+
+# Event triggered this task
+{
+  "type": "slack:message",
+  "data": {
+    "type": "message",
+    "subtype": "bot_message",
+    "event_ts": "1234567890.123456",
+    "user": "U12345678",
+    "text": "Hello, world!",
+    "ts": "1234567890.123456",
+    "channel": "C12345678",
+    "channel_type": "group",
+    "bot_id": "B12345678"
+  }
+}
+
+# TODOs
+Here's todo list for current task. If a task is marked as cancelled or completed, it no longer needs your attention, NEVER ATTEMPT TO COMPLETE IT AGAIN, this is SUPER IMPORTANT!!!.
+Otherwise, please follow the todo list to complete the task.
+
+[
+  {
+    "content": "fix this",
+    "id": "1",
+    "status": "pending",
+    "priority": "high"
+  }
+]"
 `;

@@ -72,6 +72,9 @@ function getGitStatus(gitStatus: GitStatus | undefined) {
 
   let result = "# GIT STATUS\n";
 
+  if (gitStatus.origin) {
+    result += `Origin: ${gitStatus.origin}\n`;
+  }
   result += `Current branch: ${currentBranch}\n`;
   result += `Main branch (you will usually use this for PRs): ${mainBranch}\n\n`;
 
