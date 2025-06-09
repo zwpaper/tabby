@@ -8,7 +8,7 @@
     "build:default": "vite build",
     "build": "npm-run-all --parallel build:share build:default",
     "serve": "vite preview",
-    "test": "vitest run",
+    "test": "bun test",
     "tsc": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

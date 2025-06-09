@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { parseTitle } from "../message-utils";
 
 describe("message-utils", () => {

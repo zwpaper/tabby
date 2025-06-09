@@ -99,7 +99,7 @@ async function runDepcheck(
       ...(PackageIgnoreList[packageName] || []),
 
       // Workspace dependencies
-      "vitest",
+      "bun:test",
       "bun",
     ],
   };

@@ -8,7 +8,7 @@
   "scripts": {
     "start": "bun run src/cli.ts",
     "tsc": "tsc",
-    "test": "vitest run",
+    "test": "bun test",
     "build": "bun build src/cli.ts --compile --outfile ./dist/pochi-runner",
     "release": "./scripts/build-platform-binary.sh"
   },

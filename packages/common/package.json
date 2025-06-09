@@ -14,7 +14,7 @@
   },
   "scripts": {
     "tsc": "tsc",
-    "test": "vitest run"
+    "test": "bun test"
   },
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",
