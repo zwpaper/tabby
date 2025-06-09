@@ -10,7 +10,7 @@ import { apiClient, type authClient } from "@/lib/auth-client";
 import { useChat } from "@ai-sdk/react";
 import type { Environment, Todo } from "@ragdoll/common";
 import { formatters, fromUIMessages, toUIMessages } from "@ragdoll/common";
-import type { Attachment } from "ai";
+import type { Attachment, UIMessage } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
   ImageIcon,
@@ -43,6 +43,7 @@ import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { vscodeHost } from "@/lib/vscode";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 
+import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { ChatInputForm } from "./components/chat-input-form";
 import { useNewTaskHandler } from "./hooks/use-new-task-handler";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
@@ -164,7 +165,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     // experimental_throttle: 100,
     initialMessages,
     api: apiClient.api.chat.stream.$url().toString(),
-    onFinish: (_, { finishReason }) => {
+    onFinish: (message, { finishReason }) => {
       autoApproveGuard.current = true;
       vscodeHost.capture({
         event: "chatFinish",
@@ -173,6 +174,15 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
           finishReason,
         },
       });
+
+      if (
+        isBatchEvaluationTask &&
+        finishReason === "tool-calls" &&
+        message.parts &&
+        hasAttemptCompletion(message as UIMessage)
+      ) {
+        vscodeHost.closeCurrentWorkspace();
+      }
     },
     experimental_prepareRequestBody: (req) =>
       prepareRequestBody(taskId, req, selectedModel?.id),

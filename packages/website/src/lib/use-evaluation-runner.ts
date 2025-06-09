@@ -92,11 +92,7 @@ export function useEvaluationRunner(
 
       const taskForThisPrompt = promptTasks[promptIndex];
 
-      if (
-        taskForThisPrompt &&
-        (taskForThisPrompt.status === "completed" ||
-          taskForThisPrompt.status === "failed")
-      ) {
+      if (taskForThisPrompt && taskForThisPrompt.status === "completed") {
         return;
       }
 

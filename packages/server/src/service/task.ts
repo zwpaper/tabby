@@ -12,7 +12,10 @@ import {
   toUIMessage,
   toUIMessages,
 } from "@ragdoll/common";
-import { parseTitle } from "@ragdoll/common/message-utils";
+import {
+  hasAttemptCompletion,
+  parseTitle,
+} from "@ragdoll/common/message-utils";
 import type { DB } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
 import {
@@ -635,7 +638,7 @@ class TaskService {
 export const taskService = new TaskService();
 
 export function getTaskStatus(
-  messages: Message[],
+  messages: UIMessage[],
   finishReason: FinishReason,
 ): DB["task"]["status"]["__select__"] {
   const lastMessage = messages[messages.length - 1];
@@ -655,18 +658,6 @@ export function getTaskStatus(
   }
 
   return "failed";
-}
-
-function hasAttemptCompletion(message: Message): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolName === "attemptCompletion",
-  );
 }
 
 function hasUserInputTool(message: Message): boolean {

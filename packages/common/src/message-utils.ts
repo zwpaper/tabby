@@ -1,3 +1,4 @@
+import type { UIMessage } from "ai";
 import type { Parent, Root, Text } from "hast";
 import { toText } from "hast-util-to-text";
 import { rehype } from "rehype";
@@ -44,4 +45,16 @@ export function parseTitle(title: string | null) {
   const hast = rehype().parse(escapeUnknownXMLTags(title));
   formatXMLTags(hast);
   return toText(hast).slice(0, 256);
+}
+
+export function hasAttemptCompletion(message: UIMessage): boolean {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  return !!message.parts?.some(
+    (part) =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation.toolName === "attemptCompletion",
+  );
 }
