@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import { fileTypeFromBuffer } from "file-type";
+import { MaxReadFileSize } from "./limits";
 
 /**
  * File validation utilities
@@ -20,7 +21,6 @@ interface ContentProcessingOptions {
   startLine?: number;
   endLine?: number;
   addLineNumbers?: boolean;
-  maxBytes?: number;
 }
 
 interface ProcessedContent {
@@ -32,12 +32,8 @@ export function selectFileContent(
   fileContent: string,
   options: ContentProcessingOptions = {},
 ): ProcessedContent {
-  const {
-    startLine,
-    endLine,
-    addLineNumbers = false,
-    maxBytes = 1_048_576, // 1MB
-  } = options;
+  const { startLine, endLine, addLineNumbers = false } = options;
+  const maxBytes = MaxReadFileSize;
 
   const lines = fileContent.split("\n");
   const start = startLine ? startLine - 1 : 0;

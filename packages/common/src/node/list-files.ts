@@ -2,9 +2,9 @@ import path from "node:path";
 import { getLogger } from "..";
 import { validateRelativePath } from "./fs";
 import { ignoreWalk } from "./ignore-walk";
+import { MaxListFileItems } from "./limits";
 
 const logger = getLogger("listFiles");
-const MaxListFileItems = 500;
 
 interface ListFilesOptions {
   cwd: string;

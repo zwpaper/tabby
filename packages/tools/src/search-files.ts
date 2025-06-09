@@ -9,7 +9,6 @@ export const searchFiles = defineClientTool({
 - Filter files by pattern with the include parameter (eg. "*.js", "*.{ts,tsx}")
 - Returns file paths with at least one match sorted by modification time
 - Use this tool when you need to find files containing specific patterns
-- If you need to identify/count the number of matches within files, use the executeCommand tool with \`rg\` (ripgrep) directly. Do NOT use \`grep\`.
 `.trim(),
   inputSchema: z.object({
     path: z

@@ -2,6 +2,7 @@ import { exec } from "node:child_process";
 import { relative, resolve } from "node:path";
 import { promisify } from "node:util";
 import { getLogger } from "../logger";
+import { MaxRipgrepItems } from "./limits";
 
 const execAsync = promisify(exec);
 
@@ -74,7 +75,6 @@ export async function searchFilesWithRipgrep(
 }> {
   logger.info("searchFiles", path, regex, filePattern);
   const matches: { file: string; line: number; context: string }[] = [];
-  let isTruncated = false;
 
   // Construct the rg command
   // Use single quotes to wrap regex and path to handle potential spaces or special characters
@@ -84,7 +84,7 @@ export async function searchFilesWithRipgrep(
   // Added --case-sensitive based on original implementation's RegExp usage (default is case-sensitive)
   // Added --binary to skip binary files, similar to the original file-type check
   // Need to quote rgPath in case env.appRoot contains spaces
-  let command = `"${rgPath.replace(/"/g, '\\"')}" --json --case-sensitive --binary `; // Quote rgPath
+  let command = `"${rgPath.replace(/"/g, '\\"')}" --json --case-sensitive --binary --sortr modified `; // Quote rgPath
 
   if (filePattern) {
     // Add glob pattern. Ensure it's properly quoted.
@@ -100,23 +100,16 @@ export async function searchFilesWithRipgrep(
     const { stdout, stderr } = await execAsync(command, {
       // Set a reasonable maxBuffer size in case of large output
       // Consider streaming if output can be extremely large
-      maxBuffer: (1024 * 1024) / 2, // 0.5MB
+      maxBuffer: 1024 * 1024 * 10, // 10M
       signal: abortSignal, // Pass the abort signal
     });
 
     if (stderr) {
-      logger.warn("rg command stderr: ", stderr);
-      // Decide if stderr should be treated as an error or just a warning
-      // For now, we'll proceed but log it. Some rg warnings might not be fatal.
-      if (stderr.includes("maxBuffer length exceeded")) {
-        isTruncated = true;
-      }
+      logger.warn("rg command stderr: ", stderr.slice(0, 1000)); // Log first 1000 chars of stderr
     }
 
     // rg --json outputs newline-separated JSON objects
     const outputLines = stdout.trim().split("\n");
-
-    logger.trace("rg output: ", outputLines);
 
     for (const line of outputLines) {
       try {
@@ -183,5 +176,8 @@ export async function searchFilesWithRipgrep(
     // If error.code is 1 (no matches), we fall through and return the empty matches array, which is correct.
   }
 
-  return { matches, isTruncated };
+  return {
+    matches: matches.slice(0, MaxRipgrepItems),
+    isTruncated: matches.length > MaxRipgrepItems,
+  };
 }

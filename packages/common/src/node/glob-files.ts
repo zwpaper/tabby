@@ -3,8 +3,8 @@ import { minimatch } from "minimatch";
 import { getLogger } from "..";
 import { validateRelativePath } from "./fs";
 import { ignoreWalk } from "./ignore-walk";
+import { MaxGlobFileItems } from "./limits";
 
-const MaxGlobFileItems = 500;
 const logger = getLogger("globFiles");
 
 interface GlobFilesOptions {
