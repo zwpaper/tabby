@@ -1,7 +1,7 @@
 import { DiffView } from "@/integrations/editor/diff-view";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { parseDiffAndApplyV2 } from "@ragdoll/common/diff-utils";
+import { parseDiffAndApply } from "@ragdoll/common/diff-utils";
 import { validateTextFile } from "@ragdoll/common/node";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
@@ -34,7 +34,7 @@ export const previewApplyDiff: PreviewToolFunctionType<
 
   const fileContent = fileBuffer.toString();
 
-  const updatedContent = await parseDiffAndApplyV2(
+  const updatedContent = await parseDiffAndApply(
     fileContent,
     searchContent,
     replaceContent,
@@ -61,7 +61,7 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
 
   const fileContent = fileBuffer.toString();
 
-  const updatedContent = await parseDiffAndApplyV2(
+  const updatedContent = await parseDiffAndApply(
     fileContent,
     searchContent,
     replaceContent,

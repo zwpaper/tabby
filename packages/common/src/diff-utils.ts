@@ -3,7 +3,7 @@ import { getLogger } from "./logger";
 const logger = getLogger("diffUtils");
 
 function normalize(content: string): string {
-  return content.replace(/\r\n/g, "\n").trim();
+  return content.replace(/\r\n/g, "\n").replace(/[ \t]+$/gm, "");
 }
 
 export class DiffError extends Error {
@@ -16,7 +16,7 @@ export class DiffError extends Error {
 /**
  * Parse a diff and apply it to file content (new version matching tools definition)
  */
-export async function parseDiffAndApplyV2(
+export async function parseDiffAndApply(
   fileContent: string,
   searchContent: string,
   replaceContent: string,
@@ -92,7 +92,7 @@ export async function processMultipleDiffs(
   let updatedContent = fileContent;
 
   for (const edit of edits) {
-    updatedContent = await parseDiffAndApplyV2(
+    updatedContent = await parseDiffAndApply(
       updatedContent,
       edit.searchContent,
       edit.replaceContent,

@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
-import { parseDiffAndApplyV2 } from "@ragdoll/common/diff-utils";
+import { parseDiffAndApply } from "@ragdoll/common/diff-utils";
 import { validateTextFile } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { ensureFileDirectoryExists } from "../lib/fs";
@@ -20,7 +20,7 @@ export const applyDiff =
 
     const fileContent = fileBuffer.toString();
 
-    const updatedContent = await parseDiffAndApplyV2(
+    const updatedContent = await parseDiffAndApply(
       fileContent,
       searchContent,
       replaceContent,
