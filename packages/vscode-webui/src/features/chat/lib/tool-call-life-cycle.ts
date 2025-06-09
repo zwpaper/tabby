@@ -17,15 +17,24 @@ type ExecuteReturnType = ExecuteCommandReturnType | unknown;
 
 type ToolCallState =
   | {
+      // Represents preview runs at toolCall.state === "partial-call"
       type: "init";
       previewJob: Promise<PreviewReturnType>;
     }
   | {
+      // Represents the preview runs at toolCall.state === "call"
+      type: "pending";
+      previewJob: Promise<PreviewReturnType>;
+      abortController: AbortController;
+    }
+  | {
       type: "ready";
+      abortController: AbortController;
     }
   | {
       type: "execute";
       executeJob: Promise<ExecuteReturnType>;
+      // Controller to abort the execute job
       abortController: AbortController;
     }
   | {
@@ -81,40 +90,56 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
 
   preview(args: unknown, state: ToolInvocation["state"]) {
     if (this.status === "ready") {
-      vscodeHost.previewToolCall(this.toolName, args, {
-        state,
-        toolCallId: this.toolCallId,
-      });
+      this.previewReady(args, state);
     } else {
       this.previewInit(args, state);
     }
   }
 
+  private previewReady(args: unknown, state: ToolInvocation["state"]) {
+    const { abortController } = this.checkState("Preview", "ready");
+    vscodeHost.previewToolCall(this.toolName, args, {
+      state,
+      toolCallId: this.toolCallId,
+      abortSignal: ThreadAbortSignal.serialize(abortController.signal),
+    });
+  }
+
   private previewInit(args: unknown, state: ToolInvocation["state"]) {
     let { previewJob } = this.checkState("Preview", "init");
-    previewJob = previewJob.then(() =>
+    const previewToolCall = (abortSignal?: AbortSignal) =>
       vscodeHost.previewToolCall(this.toolName, args, {
         state,
         toolCallId: this.toolCallId,
-      }),
-    );
-    if (state === "call") {
-      previewJob.then((result) => {
-        // Ignore if call is already previewed.
-        if (this.status !== "init") return;
+        abortSignal: abortSignal
+          ? ThreadAbortSignal.serialize(abortSignal)
+          : undefined,
+      });
 
+    if (state === "partial-call") {
+      previewJob = previewJob.then(() => previewToolCall());
+      this.transitTo("init", {
+        type: "init",
+        previewJob,
+      });
+    } else if (state === "call") {
+      const abortController = new AbortController();
+      previewJob = previewJob.then(() =>
+        previewToolCall(abortController.signal),
+      );
+      previewJob.then((result) => {
         if (result?.error) {
-          this.transitTo("init", { type: "complete", result });
+          this.transitTo("pending", { type: "complete", result });
         } else {
-          this.transitTo("init", { type: "ready" });
+          this.transitTo("pending", { type: "ready", abortController });
         }
       });
+      this.transitTo("init", {
+        type: "pending",
+        previewJob,
+        abortController,
+      });
     }
-
-    this.transitTo("init", {
-      type: "init",
-      previewJob,
-    });
   }
 
   execute(args: unknown) {
@@ -146,6 +171,8 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
   }
 
   reject(errorText?: string) {
+    const { abortController } = this.checkState("Reject", "ready");
+    abortController.abort();
     this.transitTo("ready", {
       type: "complete",
       result: {

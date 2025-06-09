@@ -78,7 +78,7 @@ export class DiffView implements vscode.Disposable {
     }
   }
 
-  async update(content: string, isFinal: boolean) {
+  async update(content: string, isFinal: boolean, abortSignal?: AbortSignal) {
     if (this.isFinalized) {
       return;
     }
@@ -86,6 +86,27 @@ export class DiffView implements vscode.Disposable {
     if (isFinal) {
       logger.debug("Finalizing file", this.fileUri.fsPath);
       this.isFinalized = true;
+
+      if (abortSignal) {
+        const revertAndClose = async () => {
+          logger.debug(
+            "Abort signal received, reverting and closing diff view",
+          );
+          const updatedDocument = this.activeDiffEditor.document;
+          await discardChangesWithWorkspaceEdit(
+            updatedDocument,
+            this.originalContent,
+          );
+          closeAllNonDirtyDiffViews();
+        };
+
+        abortSignal.addEventListener("abort", revertAndClose);
+        this.disposables.push({
+          dispose: () => {
+            abortSignal.removeEventListener("abort", revertAndClose);
+          },
+        });
+      }
     }
 
     let accumulatedContent = content;
@@ -284,7 +305,10 @@ export class DiffView implements vscode.Disposable {
     );
   }
 
-  private static async createDiffView(id: string, relpath: string) {
+  private static async createDiffView(
+    id: string,
+    relpath: string,
+  ): Promise<DiffView> {
     const fileUri = vscode.Uri.joinPath(getWorkspaceFolder().uri, relpath);
     const fileExists = await isFileExists(fileUri);
     if (!fileExists) {
@@ -450,5 +474,22 @@ function handleTabChanges(e: vscode.TabChangeEvent) {
     logger.debug("Disposing diff view hook");
     DiffViewDisposable.dispose();
     DiffViewDisposable = undefined;
+  }
+}
+
+async function discardChangesWithWorkspaceEdit(
+  textDocument: vscode.TextDocument,
+  originalContent: string,
+) {
+  if (textDocument.isDirty) {
+    const fullRange = new vscode.Range(
+      textDocument.positionAt(0),
+      textDocument.positionAt(textDocument.getText().length),
+    );
+
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(textDocument.uri, fullRange, originalContent);
+    await vscode.workspace.applyEdit(edit);
+    await textDocument.save();
   }
 }

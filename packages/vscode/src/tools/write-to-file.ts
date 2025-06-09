@@ -5,14 +5,18 @@ import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
 
 export const previewWriteToFile: PreviewToolFunctionType<
   ClientToolsType["writeToFile"]
-> = async (args, { state, toolCallId }) => {
+> = async (args, { state, toolCallId, abortSignal }) => {
   const { path, content } = args || {};
   if (path === undefined || content === undefined) return;
 
   const processedContent = fixCodeGenerationOutput(content);
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
-  await diffView.update(processedContent, state !== "partial-call");
+  await diffView.update(
+    processedContent,
+    state !== "partial-call",
+    abortSignal,
+  );
 };
 
 /**

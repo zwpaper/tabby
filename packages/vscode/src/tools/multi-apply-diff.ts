@@ -14,7 +14,7 @@ const logger = getLogger("multiApplyDiffTool");
  */
 export const previewMultiApplyDiff: PreviewToolFunctionType<
   ClientToolsType["multiApplyDiff"]
-> = async (args, { toolCallId, state }) => {
+> = async (args, { toolCallId, state, abortSignal }) => {
   const { path, edits } = args || {};
   if (!args || !path || !edits || edits.length === 0) {
     return;
@@ -29,7 +29,7 @@ export const previewMultiApplyDiff: PreviewToolFunctionType<
   const updatedContent = await processMultipleDiffs(fileContent, edits);
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
-  await diffView.update(updatedContent, state !== "partial-call");
+  await diffView.update(updatedContent, state !== "partial-call", abortSignal);
 };
 
 /**

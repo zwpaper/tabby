@@ -265,6 +265,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       options: {
         toolCallId: string;
         state: "partial-call" | "call" | "result";
+        abortSignal?: ThreadAbortSignalSerialization;
       },
     ) => {
       const tool = ToolPreviewMap[toolName];
@@ -278,8 +279,17 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         );
       }
 
-      // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-      return await safeCall<undefined>(tool(args as any, options));
+      const abortSignal = options.abortSignal
+        ? new ThreadAbortSignal(options.abortSignal)
+        : undefined;
+
+      return await safeCall<undefined>(
+        // biome-ignore lint/suspicious/noExplicitAny: external call without type information
+        tool(args as any, {
+          ...options,
+          abortSignal,
+        }),
+      );
     },
   );
 
