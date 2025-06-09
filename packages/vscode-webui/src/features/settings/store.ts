@@ -1,4 +1,3 @@
-import { DefaultModelId } from "@/lib/constants";
 import type { ToolsByPermission } from "@ragdoll/tools";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -30,7 +29,7 @@ export interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      selectedModelId: DefaultModelId,
+      selectedModelId: undefined,
       autoApproveActive: true,
       autoApproveSettings: {
         read: true,

@@ -3,8 +3,6 @@ import { fromUIMessage } from "@ragdoll/common";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { MutableRefObject } from "react";
 
-import { DefaultModelId } from "@/lib/constants";
-
 export function prepareRequestBody(
   taskId: MutableRefObject<number | undefined>,
   request: {
@@ -18,7 +16,7 @@ export function prepareRequestBody(
     message.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
   return {
     id: taskId.current?.toString(),
-    model: triggerError ? "fake-model" : (model ?? DefaultModelId),
+    model: triggerError ? "fake-model" : model,
     message: fromUIMessage(message),
   };
 }
