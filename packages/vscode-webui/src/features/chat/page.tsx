@@ -414,6 +414,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                   className="h-6 w-6 rounded-md p-0 transition-opacity"
                   onClick={() => {
                     if (showStopButton) {
+                      autoApproveGuard.current = false;
                       handleStop();
                     } else {
                       handleSubmit();
