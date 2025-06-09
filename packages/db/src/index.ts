@@ -41,3 +41,8 @@ export {
   type GitStatus,
 } from "./environment";
 export { type Todo, ZodTodo } from "./todo";
+
+export type UserEventDataHelper<T extends UserEvent["type"]> = Extract<
+  UserEvent,
+  { type: T }
+>["data"];

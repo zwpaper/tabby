@@ -33,6 +33,7 @@
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@ragdoll/common": "workspace:*",
+    "@ragdoll/db": "workspace:*",
     "@ragdoll/server": "workspace:*",
     "@tabler/icons-react": "^3.31.0",
     "@tailwindcss/vite": "^4.0.6",

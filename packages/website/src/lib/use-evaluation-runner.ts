@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/auth-client";
-import type { UserEventDataHelper } from "@ragdoll/common";
+import type { UserEventDataHelper } from "@ragdoll/db";
 import { useMemo, useRef, useState } from "react";
 
 export interface EvaluationConfig {

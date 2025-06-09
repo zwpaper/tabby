@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/auth-client";
 import { useEvaluationRunner } from "@/lib/use-evaluation-runner";
-import type { UserEventDataHelper } from "@ragdoll/common";
+import type { UserEventDataHelper } from "@ragdoll/db";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {

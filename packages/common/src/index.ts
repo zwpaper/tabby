@@ -1,10 +1,3 @@
-import type { UserEvent } from "@ragdoll/db";
-
-export type UserEventDataHelper<T extends UserEvent["type"]> = Extract<
-  UserEvent,
-  { type: T }
->["data"];
-
 export {
   appendDataPart,
   fromUIMessage,
