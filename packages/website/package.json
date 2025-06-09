@@ -4,9 +4,9 @@
   "type": "module",
   "scripts": {
     "start": "vite --port 4111",
-    "build:website": "vite build && tsc",
-    "build:share": "bun scripts/build-share.js",
-    "build": "rm -rf dist && npm-run-all --parallel build:website build:share",
+    "build:website": "vite build",
+    "copy:share": "bun scripts/copy-share.js",
+    "build": "rm -rf dist && npm-run-all --parallel build:website copy:share",
     "serve": "vite preview",
     "test": "vitest run --passWithNoTests",
     "tsc": "tsc --noEmit",

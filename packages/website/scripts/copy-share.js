@@ -77,25 +77,21 @@ function ensureDir(dir) {
   }
 }
 
-console.log("🏗️  Building share.html for website...");
+console.log("🏗️  Copying share.html for website...");
 
-// Step 1: Build the vscode-wnode ebui share target
-console.log("\n📦 Building vscode-webui share target...");
-execCommand("bun run build:share", vsCodeWebuiRoot);
-
-// Step 2: Ensure website dist directories exist
+// Step 1: Ensure website dist directories exist
 console.log("\n📁 Creating website dist directories...");
 ensureDir(websiteDistDir);
 ensureDir(websiteAssetsDir);
 
-// Step 3: Copy share.html to website dist
+// Step 2: Copy share.html to website dist
 console.log("\n📄 Copying share.html...");
 const shareHtmlSrc = join(shareDistDir, "share.html");
 const shareHtmlDest = join(websiteDistDir, "share.html");
 copyFileSync(shareHtmlSrc, shareHtmlDest);
 console.log("Copied: share.html");
 
-// Step 4: Copy assets from share/assets to website/dist/assets
+// Step 3: Copy assets from share/assets to website/dist/assets
 console.log("\n🎨 Copying assets...");
 copyDirectory(shareAssetsDir, websiteAssetsDir);
 
