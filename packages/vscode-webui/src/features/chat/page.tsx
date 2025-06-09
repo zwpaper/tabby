@@ -1,7 +1,7 @@
 import { ModelSelect } from "@/components/model-select";
 import { Button } from "@/components/ui/button";
 import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
-import { useEnableReasoning, useSelectedModels } from "@/features/settings";
+import { useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { useChat } from "@ai-sdk/react";
 import { formatters, toUIMessages } from "@ragdoll/common";
@@ -170,8 +170,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
             ...JSON.parse(options.body as string),
             // Inject the environment variables into the request body
             environment: await buildEnvironment(),
-            // Inject reasoning configuration
-            reasoning: enableReasoning.current ? { enabled: true } : undefined,
+            // Inject the mcp tool set into the request body
             mcpToolSet,
           }),
       });
@@ -226,8 +225,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     setMessages,
     data,
   });
-
-  const enableReasoning = useEnableReasoning();
 
   useNewTaskHandler({ data, taskId, uid });
 

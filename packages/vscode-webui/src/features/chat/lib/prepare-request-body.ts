@@ -11,7 +11,7 @@ export function prepareRequestBody(
     messages: UIMessage[];
   },
   model: string | undefined,
-): Omit<RagdollChatRequest, "environment"> {
+): Omit<RagdollChatRequest, "environment" | "mcpToolSet"> {
   const message = request.messages[request.messages.length - 1];
   const triggerError =
     message.parts[0].type === "text" &&

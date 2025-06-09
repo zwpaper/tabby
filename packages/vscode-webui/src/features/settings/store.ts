@@ -18,14 +18,12 @@ export interface SettingsState {
   autoApproveSettings: AutoApprove;
 
   isDevMode: boolean;
-  enableReasoning: boolean;
   allowEditTodos: boolean;
 
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
-  updateEnableReasoning: (value: boolean) => void;
   updateAllowEditTodos: (value: boolean) => void;
 }
 
@@ -43,7 +41,6 @@ export const useSettingsStore = create<SettingsState>()(
         mcp: false,
       },
       isDevMode: false,
-      enableReasoning: false,
       allowEditTodos: false,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
@@ -58,8 +55,6 @@ export const useSettingsStore = create<SettingsState>()(
         set(() => ({ autoApproveActive: value })),
 
       updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
-      updateEnableReasoning: (value: boolean) =>
-        set(() => ({ enableReasoning: value })),
       updateAllowEditTodos: (value: boolean) =>
         set(() => ({ allowEditTodos: value })),
     }),

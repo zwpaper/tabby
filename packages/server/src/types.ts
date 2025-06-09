@@ -22,14 +22,6 @@ export const ZodChatRequestType = z.object({
     )
     .optional()
     .describe("MCP tools to use with this request"),
-  reasoning: z
-    .object({
-      enabled: z
-        .boolean()
-        .describe("Whether to enable reasoning/thinking mode"),
-    })
-    .optional()
-    .describe("Reasoning configuration"),
   environment: ZodEnvironment.optional(),
 });
 

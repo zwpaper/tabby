@@ -1,5 +1,3 @@
-import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
@@ -29,6 +27,7 @@ import {
   checkUserQuota,
   checkWaitlist,
 } from "../lib/check-request";
+import { getProviderOptionsById } from "../lib/constants";
 import { resolveServerTools } from "../lib/tools";
 import { after, setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
@@ -92,20 +91,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           stream,
         );
 
-        const providerOptions = req.reasoning?.enabled
-          ? {
-              google: {
-                thinkingConfig: {
-                  includeThoughts: true,
-                  thinkingBudget: 1024,
-                },
-              } satisfies GoogleGenerativeAIProviderOptions,
-              anthropic: {
-                thinking: { type: "enabled", budgetTokens: 10_000 },
-              } satisfies AnthropicProviderOptions,
-            }
-          : undefined;
-
+        const providerOptions = getProviderOptionsById(requestedModelId);
         const result = Laminar.withSession(`${user.id}-${id}`, () =>
           streamText({
             abortSignal: c.req.raw.signal,
@@ -201,8 +187,8 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             // Disable retries as we handle them ourselves.
             maxRetries: 0,
 
-            // 16k tokens.
-            maxTokens: 1024 * 16,
+            // 64k tokens.
+            maxTokens: 1024 * 64,
           }),
         );
 

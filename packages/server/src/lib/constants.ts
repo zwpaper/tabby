@@ -1,7 +1,7 @@
 // packages/server/src/lib/constants.ts
 
 import { anthropic } from "@ai-sdk/anthropic";
-import { google } from "@ai-sdk/google";
+import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import type { LanguageModelV1 } from "ai";
 
@@ -67,5 +67,32 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
       return google("gemini-2.5-flash-preview-04-17");
     default:
       return null;
+  }
+}
+
+export function getProviderOptionsById(modelId: string) {
+  switch (modelId) {
+    case "google/gemini-2.5-pro":
+      return {
+        google: {
+          thinkingConfig: {
+            includeThoughts: true,
+            // 8k thinking budget
+            thinkingBudget: 1024 * 8,
+          },
+        } satisfies GoogleGenerativeAIProviderOptions,
+      };
+    case "google/gemini-2.5-flash":
+      return {
+        google: {
+          thinkingConfig: {
+            includeThoughts: true,
+            // 16k thinking budget
+            thinkingBudget: 1024 * 16,
+          },
+        } satisfies GoogleGenerativeAIProviderOptions,
+      };
+    default:
+      return undefined;
   }
 }

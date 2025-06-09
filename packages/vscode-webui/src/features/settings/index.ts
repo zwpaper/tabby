@@ -3,7 +3,6 @@ export { useIsDevMode } from "./hooks/use-is-dev-mode";
 export { useModels, useSelectedModels, type Models } from "./hooks/use-models";
 export { useAutoApprove } from "./hooks/use-auto-approve";
 export { useToolAutoApproval } from "./hooks/use-tool-auto-approval";
-export { useEnableReasoning } from "./hooks/use-enable-reasoning";
 export { useAllowEditTodos } from "./hooks/use-allow-edit-todos";
 
 export { AutoApproveMenu } from "./components/auto-approve-menu";
