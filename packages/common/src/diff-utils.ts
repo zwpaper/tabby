@@ -2,6 +2,10 @@ import { getLogger } from "./logger";
 
 const logger = getLogger("diffUtils");
 
+function normalize(content: string): string {
+  return content.replace(/\r\n/g, "\n").trim();
+}
+
 export class DiffError extends Error {
   constructor(message: string) {
     super(message);
@@ -22,6 +26,11 @@ export async function parseDiffAndApplyV2(
     `Applying diff with expectedReplacements: ${expectedReplacements}`,
   );
 
+  const isCRLF = fileContent.includes("\r\n");
+
+  const normalizedFileContent = normalize(fileContent);
+  const normalizedSearchContent = normalize(searchContent);
+
   if (searchContent === replaceContent) {
     throw new DiffError(
       "Search content and replace content cannot be the same",
@@ -37,7 +46,10 @@ export async function parseDiffAndApplyV2(
   }
 
   // Count occurrences of searchContent in fileContent
-  const occurrences = countOccurrences(fileContent, searchContent);
+  const occurrences = countOccurrences(
+    normalizedFileContent,
+    normalizedSearchContent,
+  );
   logger.trace(`Found ${occurrences} occurrences of search content`);
 
   if (occurrences === 0) {
@@ -53,8 +65,15 @@ export async function parseDiffAndApplyV2(
   }
 
   // Replace all occurrences
-  const result = fileContent.replaceAll(searchContent, replaceContent);
+  const result = normalizedFileContent.replaceAll(
+    normalizedSearchContent,
+    replaceContent,
+  );
   logger.trace("Successfully applied diff");
+
+  if (isCRLF) {
+    return result.replace(/\n/g, "\r\n");
+  }
 
   return result;
 }
@@ -90,14 +109,17 @@ export async function processMultipleDiffs(
 function countOccurrences(text: string, searchContent: string): number {
   if (searchContent === "") return 0;
 
+  const normalizedText = normalize(text);
+  const normalizedSearchContent = normalize(searchContent);
+
   let count = 0;
   let position = 0;
 
   while (true) {
-    position = text.indexOf(searchContent, position);
+    position = normalizedText.indexOf(normalizedSearchContent, position);
     if (position === -1) break;
     count++;
-    position += searchContent.length;
+    position += normalizedSearchContent.length;
   }
 
   return count;
