@@ -8,6 +8,7 @@
   "scripts": {
     "start": "bun run src/cli.ts",
     "tsc": "tsc",
+    "test": "vitest run",
     "build": "bun build src/cli.ts --compile --outfile ./dist/pochi-runner",
     "release": "./scripts/build-platform-binary.sh"
   },
@@ -15,7 +16,6 @@
     "@ai-sdk/ui-utils": "catalog:",
     "@ragdoll/common": "workspace:*",
     "@ragdoll/server": "workspace:*",
-    "@ragdoll/vscode-webui-bridge": "workspace:*",
     "ai": "catalog:",
     "hono": "catalog:",
     "vscode-ripgrep": "^1.13.2"

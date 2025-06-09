@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",
-    "@ragdoll/common": "workspace:*",
+    "@ragdoll/db": "workspace:*",
     "ai": "catalog:",
     "json-schema": "^0.4.0",
     "zod": "catalog:"

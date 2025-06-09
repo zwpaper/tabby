@@ -1,4 +1,4 @@
-import { ZodTodo } from "@ragdoll/common";
+import { ZodTodo } from "@ragdoll/db";
 import { z } from "zod";
 import { defineClientTool } from "./types";
 

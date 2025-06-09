@@ -4,8 +4,9 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@ragdoll/common": "workspace:*",
-    "kysely": "catalog:"
+    "kysely": "catalog:",
+    "zod": "catalog:",
+    "ai": "catalog:"
   },
   "scripts": {
     "tsc": "tsc",

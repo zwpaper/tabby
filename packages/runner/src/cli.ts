@@ -1,5 +1,4 @@
 import { type AppType, createPochiEventSource } from "@ragdoll/server";
-import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { hc } from "hono/client";
 
 import { TaskRunner } from "./task-runner";
@@ -9,14 +8,17 @@ if (!process.env.POCHI_TASK_ID) {
   throw new Error("POCHI_TASK_ID is not set").toString();
 }
 
-const apiClient = hc<AppType>(getServerBaseUrl(), {
+const PochiServerUrl =
+  process.env.POCHI_SERVER_URL || "https://app.getpochi.com";
+
+const apiClient = hc<AppType>(PochiServerUrl, {
   headers: {
     Authorization: `Bearer ${process.env.POCHI_SESSION_TOKEN}`,
   },
 });
 
 const pochiEvents = createPochiEventSource(
-  getServerBaseUrl(),
+  PochiServerUrl,
   process.env.POCHI_SESSION_TOKEN,
 );
 

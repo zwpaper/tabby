@@ -1,4 +1,4 @@
-import type { Environment } from "../environment";
+import type { Environment } from "@ragdoll/db";
 
 type SystemPromptEnvironment = Environment["info"];
 

@@ -1,42 +1,5 @@
-import type { DB } from "@ragdoll/db";
-
-export type UserEvent =
-  | {
-      type: "slack:new-task";
-      data: {
-        channel: string;
-        ts: string;
-        prompt: string;
-      };
-    }
-  | {
-      type: "website:new-project";
-      data: {
-        requestId: string;
-        name?: string;
-        prompt: string;
-        attachments?: {
-          url: string;
-          name?: string;
-          contentType?: string;
-        }[];
-        githubTemplateUrl?: string;
-      };
-    }
-  | {
-      type: "batch:evaluation";
-      data: {
-        batchId: string;
-        githubTemplateUrl: string;
-        prompt: string;
-        startedAt: string;
-        projectDirectory: string;
-      };
-    }
-  | {
-      type: string;
-      data: unknown;
-    };
+import type { DB, UserEvent } from "@ragdoll/db";
+export { type Todo, ZodTodo } from "@ragdoll/db";
 
 export type UserEventDataHelper<T extends UserEvent["type"]> = Extract<
   UserEvent,
@@ -55,7 +18,9 @@ export {
   ZodEnvironment,
   type Environment,
   type GitStatus,
-} from "./environment";
+  type UserEvent,
+  type TaskError,
+} from "@ragdoll/db";
 export {
   appendDataPart,
   fromUIMessage,
@@ -65,26 +30,10 @@ export {
   type DataPart,
   type DBMessage,
 } from "./message";
-export { ZodTodo } from "./todo";
-export { type Todo, mergeTodos, findTodos } from "./todo";
+export { mergeTodos, findTodos } from "./todo-utils";
 
 export { formatters } from "./formatters";
 export { attachTransport, getLogger } from "./logger";
 export { prompts } from "./prompts";
-
-export type TaskError = {
-  message: string;
-} & (
-  | {
-      kind: "InternalError";
-    }
-  | {
-      kind: "APICallError";
-      requestBodyValues: unknown;
-    }
-  | {
-      kind: "AbortError";
-    }
-);
 
 export { SocialLinks } from "./social";

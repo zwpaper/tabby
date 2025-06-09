@@ -12,7 +12,8 @@
     "./diff-utils": "./src/diff-utils.ts"
   },
   "scripts": {
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",

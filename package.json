@@ -6,9 +6,9 @@
     "fix": "npm-run-all 'check:default -- --write' 'check:test -- --write'",
     "check:default": "biome check .",
     "check:test": "biome check --config-path=./biome.test.json .",
-    "test": "vitest --run --exclude packages/vscode",
-    "tsc": "bun --filter '*' tsc",
-    "build:server": "bun --filter @ragdoll/server --filter @ragdoll/website build",
+    "test": "turbo test",
+    "tsc": "turbo tsc",
+    "build:server": "turbo --filter @ragdoll/server --filter @ragdoll/website build",
     "dev:server": "bun --filter '*' dev:server",
     "dep-check": "bun scripts/dep-check.ts",
     "prepare": "husky",
@@ -40,7 +40,9 @@
     "depcheck": "^1.4.7",
     "husky": "^9.1.7",
     "npm-run-all": "^4.1.5",
+    "turbo": "^2.5.4",
     "typescript": "^5.7.2",
     "vitest": "^3.0.9"
-  }
+  },
+  "packageManager": "bun@1.2.0"
 }

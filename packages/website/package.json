@@ -8,7 +8,7 @@
     "build:share": "bun scripts/build-share.js",
     "build": "rm -rf dist && npm-run-all --parallel build:website build:share",
     "serve": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "tsc": "tsc --noEmit",
     "dev:server": "npm start"
   },

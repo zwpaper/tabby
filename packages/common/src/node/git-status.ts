@@ -1,6 +1,6 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { GitStatus } from "../environment";
+import type { GitStatus } from "@ragdoll/db";
 import { getLogger } from "../logger";
 
 export interface GitStatusReaderOptions {
