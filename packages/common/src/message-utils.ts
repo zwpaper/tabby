@@ -1,3 +1,4 @@
+import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
 import type { UIMessage } from "ai";
 import type { Parent, Root, Text } from "hast";
 import { toText } from "hast-util-to-text";
@@ -57,4 +58,62 @@ export function hasAttemptCompletion(message: UIMessage): boolean {
       part.type === "tool-invocation" &&
       part.toolInvocation.toolName === "attemptCompletion",
   );
+}
+
+export function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  const lastStepStartIndex = message.parts.reduce((lastIndex, part, index) => {
+    return part.type === "step-start" ? index : lastIndex;
+  }, -1);
+
+  const lastStepToolInvocations = message.parts
+    .slice(lastStepStartIndex + 1)
+    .filter((part) => part.type === "tool-invocation");
+
+  return message.parts.length > 0 && lastStepToolInvocations.length === 0;
+}
+
+export function isAssistantMessageWithEmptyParts(message: UIMessage): boolean {
+  return message.role === "assistant" && message.parts.length === 0;
+}
+
+export function isAssistantMessageWithPartialToolCalls(lastMessage: UIMessage) {
+  return (
+    lastMessage.role === "assistant" &&
+    lastMessage.parts.some(
+      (part) =>
+        part.type === "tool-invocation" &&
+        part.toolInvocation.state === "partial-call",
+    )
+  );
+}
+
+export function prepareLastMessageForRetry(
+  lastMessage: UIMessage,
+): UIMessage | null {
+  const message = {
+    ...lastMessage,
+    parts: [...lastMessage.parts],
+  };
+
+  do {
+    if (isAssistantMessageWithCompletedToolCalls(message)) {
+      return message;
+    }
+
+    if (isAssistantMessageWithNoToolCalls(message)) {
+      return message;
+    }
+
+    const lastStepStartIndex = message.parts.findLastIndex(
+      (part) => part.type === "step-start",
+    );
+
+    message.parts = message.parts.slice(0, lastStepStartIndex);
+  } while (message.parts.length > 0);
+
+  return null;
 }

@@ -1,8 +1,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
+import { prepareLastMessageForRetry } from "@ragdoll/common/message-utils";
 import { useCallback } from "react";
-import { isAssistantMessageWithNoToolCalls } from "../utils";
 import { ReadyForRetryError } from "./use-ready-for-retry-error";
 
 export function useRetry({
@@ -60,29 +59,4 @@ export function useRetry({
   );
 
   return retryRequest;
-}
-
-function prepareLastMessageForRetry(lastMessage: UIMessage): UIMessage | null {
-  const message = {
-    ...lastMessage,
-    parts: [...lastMessage.parts],
-  };
-
-  do {
-    if (isAssistantMessageWithCompletedToolCalls(message)) {
-      return message;
-    }
-
-    if (isAssistantMessageWithNoToolCalls(message)) {
-      return message;
-    }
-
-    const lastStepStartIndex = message.parts.findLastIndex(
-      (part) => part.type === "step-start",
-    );
-
-    message.parts = message.parts.slice(0, lastStepStartIndex);
-  } while (message.parts.length > 0);
-
-  return null;
 }

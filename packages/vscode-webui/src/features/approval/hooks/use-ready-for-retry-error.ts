@@ -1,11 +1,11 @@
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
-import { useMemo } from "react";
 import {
   isAssistantMessageWithEmptyParts,
   isAssistantMessageWithNoToolCalls,
   isAssistantMessageWithPartialToolCalls,
-} from "../utils";
+} from "@ragdoll/common/message-utils";
+import { useMemo } from "react";
 
 type RetryKind = "ready" | "tool-calls" | "no-tool-calls";
 

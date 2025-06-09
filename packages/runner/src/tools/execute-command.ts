@@ -14,7 +14,7 @@ export const executeCommand =
 
     if (isDevServer) {
       throw new Error(
-        "Dev server commands are not supported in background execution environment.",
+        "CRITICAL: Dev server commands block task execution indefinitely and must not be run in automated tasks. Use non-blocking alternatives instead.",
       );
     }
 
