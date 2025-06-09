@@ -3,7 +3,7 @@
   "bin": "src/cli.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./utils": "./src/utils.ts"
+    "./node": "./src/node.ts"
   },
   "scripts": {
     "start": "bun run src/cli.ts",

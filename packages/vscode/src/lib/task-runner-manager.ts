@@ -1,5 +1,5 @@
 import { type Signal, signal } from "@preact/signals-core";
-import { TaskRunner } from "@ragdoll/runner";
+import { TaskRunner } from "@ragdoll/runner/node";
 import type { TaskRunnerState } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";

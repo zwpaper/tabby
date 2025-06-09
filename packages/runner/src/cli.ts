@@ -1,8 +1,8 @@
 import { type AppType, createPochiEventSource } from "@ragdoll/server";
 import { hc } from "hono/client";
 
+import { asReadableMessage } from ".";
 import { TaskRunner } from "./task-runner";
-import { asReadableMessage } from "./utils";
 
 if (!process.env.POCHI_TASK_ID) {
   throw new Error("POCHI_TASK_ID is not set").toString();

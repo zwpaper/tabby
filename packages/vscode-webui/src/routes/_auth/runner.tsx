@@ -7,7 +7,7 @@ import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
 import { type UIMessage, updateToolCallResult } from "@ai-sdk/ui-utils";
 import { toUIMessages } from "@ragdoll/common";
-import { asReadableMessage } from "@ragdoll/runner/utils";
+import { asReadableMessage } from "@ragdoll/runner";
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { Bot } from "lucide-react";
