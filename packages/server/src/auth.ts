@@ -2,12 +2,10 @@ import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { admin, bearer, magicLink, oAuthProxy } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
-
 import { db } from "./db";
 import { handleGithubAccountUpdate } from "./github";
 import { StripePlans } from "./lib/constants";
 import { deviceLink } from "./lib/device-link";
-import { getWaitlistSignupEmailHtml } from "./lib/email-templates";
 import { resend } from "./lib/resend";
 import { stripeClient } from "./lib/stripe";
 
@@ -73,15 +71,11 @@ export const auth = betterAuth({
     oAuthProxy(),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        const emailHtml = getWaitlistSignupEmailHtml({
-          loginUrl: url,
-        });
-
         await resend.emails.send({
           from: "Pochi <noreply@getpochi.com>",
           to: email,
-          subject: "You are on the waitlist - from Pochi!",
-          html: emailHtml,
+          subject: "Login to Pochi",
+          html: `Click <a href="${url}">here</a> to login to Pochi.`,
         });
       },
     }),
