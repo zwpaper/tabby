@@ -1,6 +1,5 @@
 import type React from "react";
 import { type ReactNode, createContext, useContext, useRef } from "react";
-import { ChatEventProvider } from "./chat-events";
 import {
   type ToolCallLifeCycle,
   useToolCallLifeCycles,
@@ -35,11 +34,7 @@ export function ChatContextProvider({ children }: ChatContextProviderProps) {
     completeToolCalls,
   };
 
-  return (
-    <ChatContext.Provider value={value}>
-      <ChatEventProvider append={() => {}}>{children}</ChatEventProvider>
-    </ChatContext.Provider>
-  );
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
 
 function useChatState(): ChatState {

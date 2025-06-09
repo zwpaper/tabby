@@ -48,7 +48,7 @@ import { useNewTaskHandler } from "./hooks/use-new-task-handler";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useTokenUsageUpdater } from "./hooks/use-token-usage-updater";
-import { ChatEventProvider } from "./lib/chat-events";
+import { useHandleChatEvents } from "./lib/chat-events";
 import { prepareRequestBody } from "./lib/prepare-request-body";
 
 export function ChatPage({
@@ -360,150 +360,150 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     addToolResult: allowAddToolResult ? addToolResult : undefined,
   });
 
+  useHandleChatEvents(isLoading ? append : undefined);
+
   return (
-    <ChatEventProvider append={isLoading ? () => {} : append}>
-      <div className="flex h-screen flex-col">
-        <PreviewTool
-          messages={renderMessages}
-          // Only allow adding tool results when not loading
-        />
+    <div className="flex h-screen flex-col">
+      <PreviewTool
+        messages={renderMessages}
+        // Only allow adding tool results when not loading
+      />
 
-        {renderMessages.length === 0 &&
-          (isTaskLoading ? (
-            <div className="flex h-full w-full items-center justify-center">
-              <Loader2 className="animate-spin" />
-            </div>
-          ) : (
-            <EmptyChatPlaceholder />
-          ))}
-        {renderMessages.length > 0 && <div className="h-4" />}
-        <MessageList
-          messages={renderMessages}
-          user={auth.user}
-          logo={resourceUri?.logo128}
-          isLoading={isLoading || isTaskLoading}
-          containerRef={messagesContainerRef}
-        />
-        <div className="flex flex-col px-4">
-          <ErrorMessage error={displayError} />
-          {!isWorkspaceActive ? (
-            <WorkspaceRequiredPlaceholder
-              isFetching={isFetching}
-              className="mb-12"
-            />
-          ) : (
-            <>
-              <ApprovalButton pendingApproval={pendingApproval} retry={retry} />
-              {todos && todos.length > 0 && (
-                <LegacyTodoList
-                  className="mt-2"
-                  todos={todos}
-                  status={status}
-                  isEditMode={isEditMode}
-                  draftTodos={draftTodos}
-                  hasDirtyChanges={hasDirtyChanges}
-                  enterEditMode={enterEditMode}
-                  exitEditMode={exitEditMode}
-                  saveTodos={saveTodos}
-                  updateTodoStatus={updateTodoStatus}
-                  showEdit={showEditTodos}
-                />
-              )}
-              <AutoApproveMenu />
-              {files.length > 0 && (
-                <ImagePreviewList
-                  files={files}
-                  onRemove={handleRemoveImage}
-                  isUploading={isUploadingImages}
-                />
-              )}
-              <ChatInputForm
-                input={input}
-                setInput={setInput}
-                onSubmit={wrappedHandleSubmit}
-                isLoading={isLoading || isExecuting}
-                onPaste={handlePasteImage}
-                pendingApproval={pendingApproval}
+      {renderMessages.length === 0 &&
+        (isTaskLoading ? (
+          <div className="flex h-full w-full items-center justify-center">
+            <Loader2 className="animate-spin" />
+          </div>
+        ) : (
+          <EmptyChatPlaceholder />
+        ))}
+      {renderMessages.length > 0 && <div className="h-4" />}
+      <MessageList
+        messages={renderMessages}
+        user={auth.user}
+        logo={resourceUri?.logo128}
+        isLoading={isLoading || isTaskLoading}
+        containerRef={messagesContainerRef}
+      />
+      <div className="flex flex-col px-4">
+        <ErrorMessage error={displayError} />
+        {!isWorkspaceActive ? (
+          <WorkspaceRequiredPlaceholder
+            isFetching={isFetching}
+            className="mb-12"
+          />
+        ) : (
+          <>
+            <ApprovalButton pendingApproval={pendingApproval} retry={retry} />
+            {todos && todos.length > 0 && (
+              <LegacyTodoList
+                className="mt-2"
+                todos={todos}
                 status={status}
+                isEditMode={isEditMode}
+                draftTodos={draftTodos}
+                hasDirtyChanges={hasDirtyChanges}
+                enterEditMode={enterEditMode}
+                exitEditMode={exitEditMode}
+                saveTodos={saveTodos}
+                updateTodoStatus={updateTodoStatus}
+                showEdit={showEditTodos}
               />
-
-              {/* Hidden file input for image uploads */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept="image/*"
-                multiple
-                className="hidden"
+            )}
+            <AutoApproveMenu />
+            {files.length > 0 && (
+              <ImagePreviewList
+                files={files}
+                onRemove={handleRemoveImage}
+                isUploading={isUploadingImages}
               />
+            )}
+            <ChatInputForm
+              input={input}
+              setInput={setInput}
+              onSubmit={wrappedHandleSubmit}
+              isLoading={isLoading || isExecuting}
+              onPaste={handlePasteImage}
+              pendingApproval={pendingApproval}
+              status={status}
+            />
 
-              <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
-                <div className="flex items-center gap-2 overflow-x-hidden truncate">
-                  <ModelSelect
-                    value={selectedModel?.id}
-                    models={models}
-                    isLoading={isModelsLoading}
-                    onChange={handleSelectModel}
-                  />
-                </div>
+            {/* Hidden file input for image uploads */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/*"
+              multiple
+              className="hidden"
+            />
 
-                <div className="flex shrink-0 items-center gap-1">
-                  {!!selectedModel && (
-                    <TokenUsage
-                      contextWindow={selectedModel.contextWindow}
-                      totalTokens={totalTokens}
-                      className="mr-5"
-                    />
-                  )}
-                  <DevModeButton
-                    messages={messages}
-                    buildEnvironment={buildEnvironment}
-                    todos={todos}
-                    taskId={taskId.current}
-                  />
-                  {taskId.current && uid.current && (
-                    <PublicShareButton
-                      isPublicShared={task?.isPublicShared === true}
-                      disabled={isTaskLoading || isModelsLoading}
-                      taskId={taskId.current}
-                      uid={uid.current}
-                      onError={setAutoDismissError}
-                    />
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-6 w-6 rounded-md p-0"
-                  >
-                    <ImageIcon className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={isSubmitDisabled}
-                    className="h-6 w-6 rounded-md p-0 transition-opacity"
-                    onClick={() => {
-                      if (showStopButton) {
-                        handleStop();
-                      } else {
-                        wrappedHandleSubmit();
-                      }
-                    }}
-                  >
-                    {showStopButton ? (
-                      <StopCircleIcon className="size-4" />
-                    ) : (
-                      <SendHorizonal className="size-4" />
-                    )}
-                  </Button>
-                </div>
+            <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
+              <div className="flex items-center gap-2 overflow-x-hidden truncate">
+                <ModelSelect
+                  value={selectedModel?.id}
+                  models={models}
+                  isLoading={isModelsLoading}
+                  onChange={handleSelectModel}
+                />
               </div>
-            </>
-          )}
-        </div>
+
+              <div className="flex shrink-0 items-center gap-1">
+                {!!selectedModel && (
+                  <TokenUsage
+                    contextWindow={selectedModel.contextWindow}
+                    totalTokens={totalTokens}
+                    className="mr-5"
+                  />
+                )}
+                <DevModeButton
+                  messages={messages}
+                  buildEnvironment={buildEnvironment}
+                  todos={todos}
+                  taskId={taskId.current}
+                />
+                {taskId.current && uid.current && (
+                  <PublicShareButton
+                    isPublicShared={task?.isPublicShared === true}
+                    disabled={isTaskLoading || isModelsLoading}
+                    taskId={taskId.current}
+                    uid={uid.current}
+                    onError={setAutoDismissError}
+                  />
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-6 w-6 rounded-md p-0"
+                >
+                  <ImageIcon className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={isSubmitDisabled}
+                  className="h-6 w-6 rounded-md p-0 transition-opacity"
+                  onClick={() => {
+                    if (showStopButton) {
+                      handleStop();
+                    } else {
+                      wrappedHandleSubmit();
+                    }
+                  }}
+                >
+                  {showStopButton ? (
+                    <StopCircleIcon className="size-4" />
+                  ) : (
+                    <SendHorizonal className="size-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-    </ChatEventProvider>
+    </div>
   );
 }

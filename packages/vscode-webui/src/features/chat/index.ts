@@ -5,7 +5,7 @@ export {
   useToolCallLifeCycle,
 } from "./lib/chat-state";
 
-export { useSendMessage } from "./lib/chat-events";
+export { useSendMessage, useHandleChatEvents } from "./lib/chat-events";
 
 // Export new tool call state management hooks
 export type { ToolCallLifeCycle } from "./lib/tool-call-life-cycle";
