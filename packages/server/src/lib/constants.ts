@@ -23,11 +23,6 @@ export const AvailableModels: {
     costType: "basic",
   },
   {
-    id: "anthropic/claude-3.7-sonnet",
-    contextWindow: 200_000,
-    costType: "premium",
-  },
-  {
     id: "anthropic/claude-4-sonnet",
     contextWindow: 200_000,
     costType: "premium",
