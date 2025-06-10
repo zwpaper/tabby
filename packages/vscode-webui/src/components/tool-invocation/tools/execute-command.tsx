@@ -54,7 +54,6 @@ export const executeCommandTool: React.FC<
 
   const onDetach = () => {
     streamingResult?.detach();
-    abortTool();
   };
 
   return (

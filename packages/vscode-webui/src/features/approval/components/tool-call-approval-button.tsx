@@ -46,17 +46,13 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     lifecycle.execute(pendingApproval.tool.args);
   }, [pendingApproval.tool, lifecycle.status, lifecycle.execute]);
 
-  const onReject = useCallback(
-    (errorText?: string) => {
-      if (lifecycle.status !== "ready") {
-        return;
-      }
+  const onReject = useCallback(() => {
+    if (lifecycle.status !== "ready") {
+      return;
+    }
 
-      lifecycle.reject(errorText);
-    },
-    [lifecycle.status, lifecycle.reject],
-  );
-  const onRejectByUser = useCallback(() => onReject(), [onReject]);
+    lifecycle.reject();
+  }, [lifecycle.status, lifecycle.reject]);
 
   const isAutoApproved = useToolAutoApproval(
     pendingApproval.name,
@@ -83,7 +79,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
       <>
         <Button onClick={onAccept}>{acceptText}</Button>
         {rejectText !== "<disabled>" && (
-          <Button onClick={onRejectByUser} variant="secondary">
+          <Button onClick={onReject} variant="secondary">
             {rejectText}
           </Button>
         )}

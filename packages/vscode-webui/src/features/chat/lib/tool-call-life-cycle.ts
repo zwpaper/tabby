@@ -48,6 +48,12 @@ type ToolCallState =
   | {
       type: "complete";
       result: unknown;
+      reason:
+        | "execute-finish"
+        | "user-reject"
+        | "preview-reject"
+        | "user-detach"
+        | "user-abort";
     }
   | {
       type: "dispose";
@@ -80,8 +86,12 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       : undefined;
   }
 
-  get result() {
-    return this.state.type === "complete" ? this.state.result : undefined;
+  get complete() {
+    const complete = this.checkState("Result", "complete");
+    return {
+      result: complete.result,
+      reason: complete.reason,
+    };
   }
 
   dispose() {
@@ -129,7 +139,11 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       );
       previewJob.then((result) => {
         if (result?.error) {
-          this.transitTo("pending", { type: "complete", result });
+          this.transitTo("pending", {
+            type: "complete",
+            result,
+            reason: "preview-reject",
+          });
         } else {
           this.transitTo("pending", { type: "ready", abortController });
         }
@@ -170,20 +184,21 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
     }
   }
 
-  reject(errorText?: string) {
+  reject() {
     const { abortController } = this.checkState("Reject", "ready");
     abortController.abort();
     this.transitTo("ready", {
       type: "complete",
       result: {
         error:
-          errorText ||
-          "User rejected the tool call, please follow user's instructions for next steps",
+          "User rejected the tool call, please use askFollowupQuestion to clarify next step with user.",
       },
+      reason: "user-reject",
     });
   }
 
   private onExecuteDone(result: ExecuteReturnType) {
+    const execute = this.checkState("onExecuteDone", "execute");
     if (
       this.toolName === "executeCommand" &&
       typeof result === "object" &&
@@ -192,20 +207,34 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
     ) {
       this.onExecuteCommand(result as ExecuteCommandReturnType);
     } else {
-      this.transitTo("execute", { type: "complete", result });
+      this.transitTo("execute", {
+        type: "complete",
+        result,
+        reason: execute.abortController.signal.aborted
+          ? "user-abort"
+          : "execute-finish",
+      });
     }
   }
 
   private onExecuteCommand(result: ExecuteCommandReturnType) {
     const signal = threadSignal(result.output);
-
     const { abortController } = this.checkState("Streaming", "execute");
+
+    let isUserDetached = false;
+
+    const detach = () => {
+      isUserDetached = true;
+      result.detach();
+      abortController.abort();
+    };
+
     this.transitTo("execute", {
       type: "execute:streaming",
       abortController,
       executeCommand: {
         output: signal.value,
-        detach: result.detach,
+        detach,
       },
     });
 
@@ -219,12 +248,14 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
         if (output.error) {
           result.error = output.error;
         }
-        if (output.info) {
-          result.info = output.info;
-        }
         this.transitTo("execute:streaming", {
           type: "complete",
           result,
+          reason: isUserDetached
+            ? "user-detach"
+            : abortController.signal.aborted
+              ? "user-abort"
+              : "execute-finish",
         });
         unsubscribe();
       } else {
@@ -233,7 +264,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
           abortController,
           executeCommand: {
             output,
-            detach: result.detach,
+            detach,
           },
         });
       }

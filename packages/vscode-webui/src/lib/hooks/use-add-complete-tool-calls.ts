@@ -38,12 +38,44 @@ export function useAddCompleteToolCalls({
 
     for (const toolCall of completeToolCalls) {
       if (isToolStateCall(lastMessage, toolCall.toolCallId)) {
+        const { result, reason } = toolCall.complete;
+        // biome-ignore lint/suspicious/noExplicitAny: override external result
+        const overrideResult: any = {
+          ...(result as object),
+        };
+
+        // Use an switch clause so new reason will be caught by type checker.
+        switch (reason) {
+          case "user-abort":
+            overrideResult.error =
+              "User aborted the tool call, please use askFollowupQuestion to clarify next step with user.";
+            break;
+          case "user-reject":
+            overrideResult.error =
+              "User rejected the tool call, please use askFollowupQuestion to clarify next step with user.";
+            break;
+          case "user-detach":
+            // We use info instead of error to avoid the tool call being marked as failed.
+            overrideResult.info =
+              "User has detached the terminal, the job will continue running in the background, please use askFollowupQuestion to clarify next step with user.";
+            break;
+          case "preview-reject":
+          case "execute-finish":
+            break;
+          default:
+            assertUnreachable(reason);
+        }
+
         addToolResult({
           toolCallId: toolCall.toolCallId,
-          result: toolCall.result,
+          result: overrideResult,
         });
         toolCall.dispose();
       }
     }
   }, [completeToolCalls, messages, addToolResult]);
+}
+
+function assertUnreachable(_x: never): never {
+  throw new Error("Didn't expect to get here");
 }
