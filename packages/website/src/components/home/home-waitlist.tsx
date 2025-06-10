@@ -61,7 +61,7 @@ export function HomeWaitlist() {
         {/* Headline */}
         <motion.h1
           variants={itemVariants}
-          className="mb-6 font-bold text-4xl text-gray-800 md:text-5xl lg:text-6xl"
+          className="mb-6 whitespace-normal font-bold text-[28px] text-gray-800 sm:whitespace-nowrap sm:text-4xl md:text-5xl lg:text-6xl"
         >
           🤖 Your AI Teammate That Actually Gets It
         </motion.h1>
@@ -69,7 +69,7 @@ export function HomeWaitlist() {
         {/* Subheading */}
         <motion.h2
           variants={itemVariants}
-          className="mb-8 whitespace-nowrap font-semibold text-2xl text-gray-700 md:text-3xl"
+          className="mb-8 whitespace-normal font-semibold text-gray-700 text-xl sm:whitespace-nowrap sm:text-2xl md:text-3xl"
         >
           Pochi works like your best full-stack engineering buddy{" "}
           <motion.span
