@@ -126,19 +126,18 @@ export function useEvaluationRunner(
       try {
         if (cancelledRef.current) return;
 
-        const evaluationParams = {
-          batchId,
-          githubTemplateUrl,
-          prompt,
-          promptIndex,
-          totalPrompts: prompts.length,
-        };
         const taskResponse = await apiClient.api.tasks.$post({
           json: {
             prompt,
             event: {
               type: "batch:evaluation",
-              data: evaluationParams,
+              data: {
+                batchId,
+                githubTemplateUrl,
+                prompt,
+                promptIndex,
+                totalPrompts: prompts.length,
+              },
             },
           },
         });

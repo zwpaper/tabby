@@ -243,6 +243,12 @@ class TaskService {
       ],
     };
 
+    if (event?.type === "website:new-project") {
+      if (event.data.attachments) {
+        message.experimental_attachments = event.data.attachments;
+      }
+    }
+
     return await this.createTaskImpl(userId, {
       event: event || null,
       conversation: {

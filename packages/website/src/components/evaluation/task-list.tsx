@@ -45,19 +45,6 @@ export function TaskList({ tasks }: TaskListProps) {
                   </Badge>
                 </div>
               </div>
-              {task.event && (
-                <div className="text-muted-foreground text-xs">
-                  {task.event.type === "batch:evaluation" &&
-                    task.event.data?.projectDirectory && (
-                      <>
-                        <span className="font-medium">Project:</span>
-                        <code className="ml-2 rounded bg-muted px-2 py-1 text-xs">
-                          {task.event.data.projectDirectory}
-                        </code>
-                      </>
-                    )}
-                </div>
-              )}
             </div>
           </div>
         </div>

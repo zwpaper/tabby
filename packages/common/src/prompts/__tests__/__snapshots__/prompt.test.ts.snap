@@ -131,17 +131,11 @@ Recent commits:
 
 # Event triggered this task
 {
-  "type": "slack:message",
+  "type": "slack:new-task",
   "data": {
-    "type": "message",
-    "subtype": "bot_message",
-    "event_ts": "1234567890.123456",
-    "user": "U12345678",
-    "text": "Hello, world!",
-    "ts": "1234567890.123456",
     "channel": "C12345678",
-    "channel_type": "group",
-    "bot_id": "B12345678"
+    "ts": "1234567890.123456",
+    "prompt": "create a new task"
   }
 }
 

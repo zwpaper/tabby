@@ -38,13 +38,9 @@ export type UserEvent =
         batchId: string;
         githubTemplateUrl: string;
         prompt: string;
-        startedAt: string;
-        projectDirectory: string;
+        promptIndex: number;
+        totalPrompts: number;
       };
-    }
-  | {
-      type: string;
-      data: unknown;
     };
 
 export type TaskError = {
