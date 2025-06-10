@@ -8,6 +8,7 @@ export type CaptureEvent =
       properties: {
         modelId: string | undefined;
         finishReason: string;
+        numToolCalls?: number;
       };
     }
   | {

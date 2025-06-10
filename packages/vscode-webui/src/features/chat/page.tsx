@@ -140,11 +140,19 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     api: apiClient.api.chat.stream.$url().toString(),
     onFinish: (message, { finishReason }) => {
       autoApproveGuard.current = true;
+      let numToolCalls: number | undefined;
+      if (finishReason === "tool-calls") {
+        numToolCalls =
+          message.parts?.filter((part) => part.type === "tool-invocation")
+            .length || 0;
+      }
+
       vscodeHost.capture({
         event: "chatFinish",
         properties: {
           modelId: selectedModel?.id,
           finishReason,
+          numToolCalls,
         },
       });
 
