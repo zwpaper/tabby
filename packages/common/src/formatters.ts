@@ -114,10 +114,21 @@ function removeEmptyMessages(messages: UIMessage[]): UIMessage[] {
   return messages.filter((message) => message.parts.length > 0);
 }
 
+function removeMessagesWithoutTextOrFunctionCall(
+  messages: UIMessage[],
+): UIMessage[] {
+  return messages.filter((message) => {
+    return message.parts.some((part) => {
+      return part.type === "text" || part.type === "tool-invocation";
+    });
+  });
+}
+
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
 const LLMFormatOps: FormatOp[] = [
-  resolvePendingToolCalls,
   removeEmptyMessages,
+  removeMessagesWithoutTextOrFunctionCall,
+  resolvePendingToolCalls,
   stripKnownXMLTags,
 ];
 const UIFormatOps = [
