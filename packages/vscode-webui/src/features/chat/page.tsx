@@ -16,7 +16,6 @@ import { ErrorMessage } from "@/components/error-message";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { PreviewTool } from "@/components/preview-tool";
 import { PublicShareButton } from "@/components/public-share-button";
-import "@/components/prompt-form/prompt-form.css";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import { ApprovalButton, useApprovalAndRetry } from "@/features/approval";
