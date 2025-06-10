@@ -75,7 +75,9 @@ export function SharePage() {
             <div
               className={cn(
                 "grid gap-3",
-                todos && todos.length > 0 ? "md:grid-cols-4" : "md:grid-cols-1",
+                todos && todos.length > 0
+                  ? "grid-cols-1 md:grid-cols-4"
+                  : "md:grid-cols-1",
               )}
             >
               <div
