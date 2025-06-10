@@ -4,7 +4,7 @@ import type { TaskRunnerState } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import type { ApiClient } from "./auth-client";
-import { getWorkspaceFolder } from "./fs";
+import { getWorkspaceFolder, vscodeRipgrepPath } from "./fs";
 import { getLogger } from "./logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PochiEvents } from "./pochi-events";
@@ -44,7 +44,7 @@ export class TaskRunnerManager implements vscode.Disposable {
         this.apiClient,
         this.pochiEvents,
         taskId,
-        { cwd: getWorkspaceFolder().uri.fsPath },
+        { cwd: getWorkspaceFolder().uri.fsPath, rgPath: vscodeRipgrepPath },
       );
       this.taskRunners.set(taskId, taskState);
       this.updateStatus();

@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import * as diff from "diff";
 import { fileTypeFromBuffer } from "file-type";
 import * as vscode from "vscode";
@@ -98,3 +99,12 @@ export async function readDirectoryFiles(
     return [];
   }
 }
+
+export const vscodeRipgrepPath = join(
+  vscode.env.appRoot,
+  "node_modules",
+  "@vscode",
+  "ripgrep",
+  "bin",
+  "rg",
+);

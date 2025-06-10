@@ -36,7 +36,17 @@ import { writeToFile } from "./tools/write-to-file";
 type TaskStatus = DB["task"]["status"]["__select__"];
 
 export interface RunnerContext {
+  /**
+   * The current working directory for the task runner.
+   * This is used to determine where to read/write files and execute commands.
+   * It should be an absolute path.
+   */
   cwd: string;
+  /**
+   * The path to the ripgrep executable.
+   * This is used for searching files in the task runner.
+   */
+  rgPath: string;
   // Add more context properties here as needed in the future
   // e.g., environment variables, workspace settings, etc.
 }
@@ -125,9 +135,9 @@ export class TaskRunner {
     private readonly apiClient: ApiClient,
     private readonly pochiEvents: PochiEventSource,
     private readonly taskId: number,
-    context?: RunnerContext,
+    context: RunnerContext,
   ) {
-    this.context = context || { cwd: process.cwd() };
+    this.context = context;
   }
 
   private async buildEnvironment(): Promise<Environment> {

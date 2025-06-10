@@ -17,8 +17,7 @@
     "@ragdoll/common": "workspace:*",
     "@ragdoll/server": "workspace:*",
     "ai": "catalog:",
-    "hono": "catalog:",
-    "vscode-ripgrep": "^1.13.2"
+    "hono": "catalog:"
   },
   "devDependencies": {
     "@ragdoll/db": "workspace:*",
