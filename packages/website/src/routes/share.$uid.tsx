@@ -182,10 +182,7 @@ function RouteComponent() {
                   <span>{formatTime(loaderData.updatedAt, "Updated")}</span>
                 </div>
               )}
-              <div className="items-center gap-4">
-                {loaderData?.git && <GitBadge git={loaderData.git} />}
-              </div>
-
+              {loaderData?.git && <GitBadge git={loaderData.git} />}
               <WaitlistButton />
             </div>
           </div>
@@ -290,7 +287,7 @@ function GitBadge({
   className,
   git,
 }: { git: Task["git"]; className?: string }) {
-  if (!git) return null;
+  if (!git?.origin) return null;
 
   const repoInfo = parseGitOriginUrl(git.origin);
 
@@ -316,7 +313,9 @@ function GitBadge({
         <IconComponent className="h-4 w-4" />
         <span>{displayText}</span>
       </span>
-      <span className="text-muted-foreground/60">@{git.branch}</span>
+      {!!git.branch && (
+        <span className="text-muted-foreground/60">@{git.branch}</span>
+      )}
     </div>
   );
 

@@ -362,35 +362,21 @@ function TaskRow({
         )}
       >
         <div className="px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              {task.git ? (
-                <>
-                  <div className="mb-1 flex items-start justify-between">
-                    <GitBadge
-                      git={task.git}
-                      className="text-muted-foreground/80 text-xs"
-                    />
-                    <TaskStatusIcon
-                      status={task.status}
-                      runningInBackground={runningInBackground}
-                    />
-                  </div>
-                  <h3 className="line-clamp-2 font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
-                    {task.title}
-                  </h3>
-                </>
-              ) : (
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="line-clamp-2 flex-1 font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
-                    {task.title}
-                  </h3>
-                  <TaskStatusIcon
-                    status={task.status}
-                    runningInBackground={runningInBackground}
-                  />
-                </div>
-              )}
+          <div className="flex items-start gap-3">
+            <div className="flex-1 space-y-1 overflow-hidden">
+              <GitBadge
+                git={task.git}
+                className="max-w-full text-muted-foreground/80 text-xs"
+              />
+              <h3 className="line-clamp-2 flex-1 font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
+                {task.title}
+              </h3>
+            </div>
+            <div className="mt-0.5 shrink-0">
+              <TaskStatusIcon
+                status={task.status}
+                runningInBackground={runningInBackground}
+              />
             </div>
           </div>
         </div>
@@ -403,15 +389,15 @@ function GitBadge({
   className,
   git,
 }: { git: Task["git"]; className?: string }) {
-  if (!git) return null;
+  if (!git?.origin) return null;
 
   return (
     <Badge
       variant="outline"
       className={cn("border-none p-0 text-foreground", className)}
     >
-      <GitBranch />
-      {git.branch}
+      <GitBranch className="shrink-0" />
+      <span className="truncate">{git.branch}</span>
     </Badge>
   );
 }
