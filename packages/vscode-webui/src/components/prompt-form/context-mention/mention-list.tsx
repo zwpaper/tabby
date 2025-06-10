@@ -1,5 +1,5 @@
+import { FileIcon } from "@/components/tool-invocation/file-icon/file-icon";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileIcon, FolderIcon } from "lucide-react";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import type { MentionListActions } from "../shared";
 import {
@@ -94,11 +94,9 @@ function MentionItemView({ isSelected, data, ...rest }: MentionItemViewProps) {
       {...rest}
       ref={ref}
     >
-      {data.isDir ? (
-        <FolderIcon className="size-4 shrink-0" />
-      ) : (
-        <FileIcon className="size-4 shrink-0" />
-      )}
+      <div className="flex size-4 shrink-0 items-center justify-center">
+        <FileIcon isDirectory={data.isDir} path={data.filepath} />
+      </div>
       <span className="mr-2 ml-1 truncate whitespace-nowrap font-medium ">
         {basename}
       </span>
