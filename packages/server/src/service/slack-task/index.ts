@@ -1,10 +1,13 @@
 import type { DBMessage, UserEvent } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
+import { auth } from "../../auth";
+
+import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
+import { e2b } from "../e2b";
+import { githubService } from "../github";
 import { slackService } from "../slack";
 import { taskService } from "../task";
 import { slackRichTextRenderer } from "./slack-rich-text";
-
-// Generic type for Slack messages that covers both GenericMessageEvent and AppMentionEvent
 
 // Type alias for validated Slack task
 type Task = Awaited<ReturnType<(typeof taskService)["get"]>>;
@@ -137,43 +140,68 @@ class SlackTaskService {
     });
   }
 
-  async createTaskFromSlashCommand(
+  /**
+   * Create a GitHub repository task with cloud runner (E2B)
+   */
+  async createTaskWithCloudRunner(
     userId: string,
     command: { channel_id: string; user_id: string; text?: string },
     taskText: string,
   ) {
+    const parsedCommand = this.parseTaskCommand(taskText);
+
     const integration = await slackService.getIntegration(userId);
     if (!integration) return;
 
+    const githubToken = await githubService.getAccessToken(userId);
+    if (!githubToken) {
+      return;
+    }
+
+    const taskPrompt = parsedCommand.description;
+
+    const initialMessage = `🚀 Creating GitHub task for ${parsedCommand.githubRepository.owner}/${parsedCommand.githubRepository.repo}: ${parsedCommand.description}\n☁️ Starting cloud runner...`;
     const messageResult = await integration.webClient.chat.postMessage({
       channel: command.channel_id,
-      text: `Successfully created New task with prompt: ${taskText}`,
+      text: initialMessage,
     });
 
     if (!messageResult.ok || !messageResult.ts) {
-      console.error("Failed to post command message:", messageResult.error);
+      console.error("Failed to post GitHub task message:", messageResult.error);
       return;
     }
 
     const slackEvent: Extract<UserEvent, { type: "slack:new-task" }> = {
       type: "slack:new-task",
       data: {
-        ts: messageResult.ts,
         channel: command.channel_id,
-        prompt: taskText,
+        ts: messageResult.ts,
+        prompt: taskPrompt,
       },
     };
 
     const taskId = await taskService.createWithUserMessage(
       userId,
-      taskText,
+      taskPrompt,
       slackEvent,
     );
 
-    const taskData = this.createTaskCreationData(taskText);
+    // create a temp session for the cloud runner
+    const { token } = await (await auth.$context).internalAdapter.createSession(
+      userId,
+      undefined,
+    );
+
+    const sandbox = await e2b.create(token, {
+      taskId: taskId.toString(),
+      githubRepository: parsedCommand.githubRepository,
+      githubAccessToken: githubToken,
+    });
+
+    const taskData = this.createTaskCreationData(taskPrompt);
     const richTextBlocks = slackRichTextRenderer.renderTaskCreationResponse(
       taskId,
-      taskText,
+      `${taskPrompt}\n\n☁️ Cloud runner started in background`,
       taskData,
     );
 
@@ -184,7 +212,58 @@ class SlackTaskService {
       richTextBlocks,
     );
 
+    if (sandbox) {
+      const successBlocks = slackRichTextRenderer.renderCloudRunnerSuccess(
+        sandbox.sandboxId,
+        sandbox.serverURL,
+      );
+      await integration.webClient.chat.postMessage({
+        channel: command.channel_id,
+        thread_ts: messageResult.ts,
+        blocks: successBlocks,
+        text: `✅ Cloud runner started successfully! Sandbox ID: ${sandbox.sandboxId}`,
+      });
+    }
+
     return taskId;
+  }
+
+  /**
+   * Parse GitHub repository task command from Slack
+   */
+  private parseTaskCommand(commandText: string): {
+    description: string;
+    githubRepository: {
+      owner: string;
+      repo: string;
+    };
+  } {
+    const trimmedText = commandText.trim();
+    const match = trimmedText.match(/^\[(.+?\/.+?)\]\s*(.*)$/);
+
+    if (!match) {
+      throw new Error(
+        "Invalid command format. Expected: [owner/repo] description",
+      );
+    }
+
+    const repository = match[1];
+    const description = match[2];
+    const ownerAndRepo = parseOwnerAndRepo(repository);
+
+    if (!ownerAndRepo) {
+      // This case should ideally not be hit if the regex is correct
+      throw new Error("Invalid repository format. Expected: owner/repo");
+    }
+    const { owner, repo } = ownerAndRepo;
+
+    return {
+      description: description || "Work on repository",
+      githubRepository: {
+        owner,
+        repo,
+      },
+    };
   }
 
   private async reply(
@@ -265,14 +344,13 @@ class SlackTaskService {
         "text" in block &&
         block.text?.type === "mrkdwn"
       ) {
-        // Extract plain text from markdown, removing formatting
         const text = block.text.text
-          .replace(/\*([^*]+)\*/g, "$1") // Remove bold
-          .replace(/_([^_]+)_/g, "$1") // Remove italic
-          .replace(/`([^`]+)`/g, "$1") // Remove code
-          .replace(/```[^`]*```/g, "[Code Block]") // Replace code blocks
-          .replace(/> (.+)/g, "$1") // Remove quotes
-          .replace(/\n/g, " ") // Replace newlines with spaces
+          .replace(/\*([^*]+)\*/g, "$1")
+          .replace(/_([^_]+)_/g, "$1")
+          .replace(/`([^`]+)`/g, "$1")
+          .replace(/```[^`]*```/g, "[Code Block]")
+          .replace(/> (.+)/g, "$1")
+          .replace(/\n/g, " ")
           .trim();
 
         if (text) {
@@ -342,12 +420,9 @@ class SlackTaskService {
   } {
     if (!task) throw new Error("Task is required");
 
-    // Use actual stored error information, with fallback to conversation extraction
     if (task.error?.kind && task.error?.message) {
-      // Use stored error information
       let details = `Error Type: ${task.error.kind}\nMessage: ${task.error.message}`;
 
-      // Add additional details for specific error types
       if (
         task.error.kind === "APICallError" &&
         "requestBodyValues" in task.error
@@ -361,7 +436,6 @@ class SlackTaskService {
       };
     }
 
-    // Fallback to extracting error info from conversation messages
     const fallbackError = extractErrorInfo(task.conversation?.messages);
     return {
       message: fallbackError.message || "Task execution failed",
@@ -424,7 +498,6 @@ class SlackTaskService {
   private extractCompletionResult(messages?: DBMessage[]): string | undefined {
     if (!messages) return undefined;
 
-    // Find the last assistant message with attemptCompletion tool
     for (let i = messages.length - 1; i >= 0; i--) {
       const message = messages[i];
       if (message.role === "assistant" && message.parts) {
@@ -446,9 +519,7 @@ class SlackTaskService {
 
 export const slackTaskService = new SlackTaskService();
 
-// Utility functions for Slack task operations
-
-// Extract task notification data
+// Utility functions
 function extractTaskNotificationData(task: Task): TaskNotificationData {
   if (!task) throw new Error("Task is required");
 
@@ -466,12 +537,10 @@ function extractTaskNotificationData(task: Task): TaskNotificationData {
   };
 }
 
-// Check if task is from Slack
 function isSlackTask(task: Task): boolean {
   return task?.event?.type === "slack:new-task";
 }
 
-// Helper functions
 function extractUserQuery(messageText?: string): string {
   if (!messageText) return "Task execution requested";
   const cleanText = messageText.replace(/<@[A-Z0-9]+>/g, "").trim();
@@ -537,7 +606,6 @@ function getToolDescription(
 
   const baseDescription = descriptions[toolName] || `Using ${toolName} tool`;
 
-  // Add specific details based on args
   if (args) {
     if (toolName === "readFile" && typeof args.path === "string") {
       return `${baseDescription}: ${args.path}`;
@@ -553,19 +621,15 @@ function getToolDescription(
   return baseDescription;
 }
 
-// Helper function to extract error information from conversation messages
-// This is now used as a fallback when stored error information is not available
 function extractErrorInfo(messages?: DBMessage[]): {
   message?: string;
   details?: string;
 } {
   if (!messages) return {};
 
-  // Look for error messages in the conversation
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
 
-    // Check for tool invocation errors
     if (message.role === "assistant" && message.parts) {
       for (const part of message.parts) {
         if (
@@ -584,7 +648,6 @@ function extractErrorInfo(messages?: DBMessage[]): {
       }
     }
 
-    // Check for text content that might contain error information
     if (message.parts) {
       for (const part of message.parts) {
         if (
@@ -594,7 +657,7 @@ function extractErrorInfo(messages?: DBMessage[]): {
         ) {
           return {
             message: "Task execution failed",
-            details: part.text.substring(0, 500), // Limit length
+            details: part.text.substring(0, 500),
           };
         }
       }

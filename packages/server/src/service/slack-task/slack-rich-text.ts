@@ -20,7 +20,6 @@ class SlackRichTextRenderer {
     taskId: number,
     data: TaskDisplayData,
     statusFields: Array<{ type: "mrkdwn"; text: string }>,
-    includeActions = true,
   ): AnyBlock[] {
     const userQuery = data.userQuery || "Task execution in progress";
 
@@ -86,25 +85,6 @@ class SlackRichTextRenderer {
           {
             type: "mrkdwn",
             text: `⚡ Completed: ${completedToolsText} ✅`,
-          },
-        ],
-      });
-    }
-
-    if (includeActions) {
-      blocks.push({
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              emoji: true,
-              text: "Open In VSCode",
-            },
-            url: `vscode://TabbyML.pochi/?task=${taskId}`,
-            style: "primary",
-            value: "view_agent_details",
           },
         ],
       });
@@ -283,7 +263,7 @@ class SlackRichTextRenderer {
       userQuery: data?.userQuery || "Task is waiting for user input",
       startedAt: data?.startedAt || "Recently",
       elapsed: data?.elapsed || "Paused for user input",
-      currentOperation: "Task paused - User input required in VSCode",
+      currentOperation: "Task paused - User input required",
       ...data,
     };
 
@@ -310,34 +290,7 @@ class SlackRichTextRenderer {
       },
     ];
 
-    const blocks = this.renderTaskBlocks(taskId, taskData, statusFields, false);
-
-    // Add special call-to-action for VSCode
-    blocks.push({
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: "*🚨 Action Required:*\nThe AI agent needs your input to continue. Please switch to VSCode to provide the required information.",
-      },
-    });
-
-    // Add prominent VSCode button
-    blocks.push({
-      type: "actions",
-      elements: [
-        {
-          type: "button",
-          text: {
-            type: "plain_text",
-            emoji: true,
-            text: "Continue in VSCode",
-          },
-          url: `vscode://TabbyML.pochi/?task=${taskId}`,
-          style: "primary",
-          value: "resume_in_vscode",
-        },
-      ],
-    });
+    const blocks = this.renderTaskBlocks(taskId, taskData, statusFields);
 
     return blocks;
   }
@@ -350,6 +303,36 @@ class SlackRichTextRenderer {
         text: `❌ *Error*\n${message}`,
       },
     };
+  }
+
+  renderCloudRunnerSuccess(sandboxId: string, serverURL: string): AnyBlock[] {
+    return [
+      {
+        type: "section" as const,
+        text: {
+          type: "mrkdwn" as const,
+          text: `✅ *Cloud runner started successfully!*\n🆔 *Sandbox ID:* ${sandboxId}`,
+        },
+      },
+      {
+        type: "actions" as const,
+        elements: [
+          {
+            type: "button" as const,
+            text: {
+              type: "plain_text" as const,
+              emoji: true,
+              text: "🔗 Open Web VSCode",
+            },
+            url: serverURL.startsWith("http")
+              ? serverURL
+              : `https://${serverURL}`,
+            style: "primary" as const,
+            value: "open_server",
+          },
+        ],
+      },
+    ];
   }
 }
 

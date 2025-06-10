@@ -1,11 +1,12 @@
 import type { Server } from "node:http";
 import type { DB } from "@ragdoll/db";
-import { App, type Installation } from "@slack/bolt";
+import { App, type Installation, LogLevel } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
 import { sql } from "kysely";
 import { auth } from "../auth";
 import { db } from "../db";
 import { connectToWeb } from "../lib/connect";
+import { githubService } from "./github";
 import { slackTaskService } from "./slack-task";
 
 class SlackService {
@@ -27,6 +28,7 @@ class SlackService {
         "channels:read",
         "users:read",
         "im:read",
+        "users:read.email",
 
         // sendMessage / reaction.
         "chat:write",
@@ -181,14 +183,72 @@ class SlackService {
 
       if (!integration) return;
 
-      const taskText = command.text?.trim();
-      if (!taskText) return;
-
-      await slackTaskService.createTaskFromSlashCommand(
+      // Get user email from Slack and find corresponding userId
+      const userEmail = await this.getUserEmail(
         integration.userId,
-        command,
-        taskText,
+        vendorIntegrationId,
+        command.user_id,
       );
+
+      if (!userEmail) {
+        await respond({
+          text: "❌ Unable to get your email from Slack. Please ensure your email is set in your Slack profile.",
+          response_type: "ephemeral",
+        });
+        return;
+      }
+
+      // Find user by email
+      const targetUser = await db
+        .selectFrom("user")
+        .select(["id", "email", "name"])
+        .where("email", "=", userEmail)
+        .executeTakeFirst();
+
+      if (!targetUser) {
+        await respond({
+          text: `❌ No user found with email ${userEmail}. Please make sure you have an account on Pochi.`,
+          response_type: "ephemeral",
+        });
+        return;
+      }
+
+      const hasGithubConnection = await githubService.checkConnection(
+        targetUser.id,
+      );
+      if (!hasGithubConnection) {
+        await respond({
+          text: "❌ You need to connect your GitHub account first. Please visit your Pochi settings to connect GitHub.",
+          response_type: "ephemeral",
+        });
+        return;
+      }
+
+      const taskText = command.text?.trim();
+      if (!taskText) {
+        await respond({
+          text: "❌ Please provide a task description. Usage: `/newtask repo description`\nExample: `/newtask TabbyML/ragdoll please fix issue 5723`",
+          response_type: "ephemeral",
+        });
+        return;
+      }
+
+      try {
+        await slackTaskService.createTaskWithCloudRunner(
+          targetUser.id,
+          command,
+          taskText,
+        );
+        await respond({
+          text: "✅ GitHub task created with cloud runner!",
+          response_type: "ephemeral",
+        });
+      } catch (error) {
+        await respond({
+          text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage: \`/newtask repo description\`\nExample: \`/newtask TabbyML/ragdoll please fix issue 5723\``,
+          response_type: "ephemeral",
+        });
+      }
     });
   }
 
@@ -238,6 +298,37 @@ class SlackService {
       }
     }
     return null;
+  }
+
+  /**
+   * Get user email from Slack using the authenticated WebClient
+   */
+  async getUserEmail(
+    ownerId: string,
+    vendorIntegrationId: string,
+    slackUserId: string,
+  ) {
+    const integration = await this.getIntegration(ownerId, vendorIntegrationId);
+
+    if (!integration?.webClient) {
+      console.error("No authenticated Slack integration found for user");
+      return undefined;
+    }
+
+    const userInfo = await integration.webClient.users.info({
+      user: slackUserId,
+    });
+
+    if (!userInfo.ok) {
+      console.error("Failed to get Slack user info:", userInfo.error);
+      return undefined;
+    }
+    if (!userInfo.user?.profile?.email) {
+      console.warn("Slack user does not have an email address set");
+      return undefined;
+    }
+
+    return userInfo.user.profile.email;
   }
 }
 

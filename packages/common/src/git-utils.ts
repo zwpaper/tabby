@@ -145,3 +145,23 @@ export function getGitPlatformIcon(platform: GitPlatform) {
       return "git";
   }
 }
+
+/**
+ * Parses a repository string and extracts the owner and repo
+ *
+ * @param repoFullName - The repository full name (e.g. 'TabbyML/tabby')
+ * @returns The owner and repo, or null if the format is invalid
+ */
+export function parseOwnerAndRepo(
+  repoFullName: string,
+): { owner: string; repo: string } | null {
+  if (!repoFullName) return null;
+
+  const parts = repoFullName.split("/");
+  if (parts.length !== 2) return null;
+
+  const [owner, repo] = parts;
+  if (!owner || !repo) return null;
+
+  return { owner, repo };
+}

@@ -17,6 +17,7 @@
     "@ragdoll/tools": "workspace:*",
     "@slack/bolt": "catalog:",
     "@slack/web-api": "^7.9.2",
+    "@e2b/code-interpreter": "catalog:",
     "ai": "catalog:",
     "better-auth": "catalog:",
     "hono": "catalog:",
