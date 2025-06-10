@@ -1,6 +1,6 @@
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import type React from "react";
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 interface UseScrollToBottomProps {
   messagesContainerRef: React.RefObject<HTMLDivElement>;
@@ -14,6 +14,11 @@ export function useScrollToBottom({
   pendingApprovalName,
 }: UseScrollToBottomProps) {
   const { isAtBottom, scrollToBottom } = useIsAtBottom(messagesContainerRef);
+  const isAtBottomRef = useRef(isAtBottom);
+
+  useEffect(() => {
+    isAtBottomRef.current = isAtBottom;
+  }, [isAtBottom]);
 
   // Scroll to bottom when the message list height changes
   useEffect(() => {
@@ -22,15 +27,16 @@ export function useScrollToBottom({
       return;
     }
     const resizeObserver = new ResizeObserver(() => {
-      if (isAtBottom) {
+      if (isAtBottomRef.current) {
         requestAnimationFrame(() => scrollToBottom());
       }
     });
+    resizeObserver.observe(container);
     resizeObserver.observe(container.children[0]);
     return () => {
       resizeObserver.disconnect();
     }; // clean up
-  }, [isAtBottom, scrollToBottom, messagesContainerRef]);
+  }, [scrollToBottom, messagesContainerRef]);
 
   // scroll to bottom immediately when a user message is sent
   useLayoutEffect(() => {
