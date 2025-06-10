@@ -11,10 +11,6 @@ export const ZodChatRequestType = z.object({
   model: z.string().optional(), // Added model field
   event: ZodEventType.optional(),
   message: ZodMessageType,
-  tools: z
-    .array(z.string())
-    .optional()
-    .describe("Server side tools to use with this request"),
   mcpToolSet: z
     .record(
       z.string().describe("The name of the MCP tool."),

@@ -6,6 +6,7 @@ export {
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
 import { attemptCompletion } from "./attempt-completion";
+import { batchCall } from "./batch-call";
 import { executeCommand } from "./execute-command";
 import { globFiles } from "./glob-files";
 import { listFiles } from "./list-files";
@@ -36,19 +37,20 @@ export const ClientTools = {
   askFollowupQuestion,
   attemptCompletion,
   executeCommand,
-  listFiles,
-  readFile,
   globFiles,
-  searchFiles,
-  writeToFile,
-  todoWrite,
+  listFiles,
   multiApplyDiff,
+  readFile,
+  searchFiles,
+  todoWrite,
+  writeToFile,
 };
 
 export type ClientToolsType = typeof ClientTools;
 
 export const ServerTools = {
   webFetch,
+  batchCall,
   slackReplyThread,
 };
 

@@ -70,9 +70,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     const enabledClientTools = ClientTools;
 
     // Prepare the tools to be used in the streamText call
-    const enabledServerTools = selectServerTools(
-      ["webFetch"].concat(req.tools || []),
-    );
+    const enabledServerTools = selectServerTools(["webFetch", "batchCall"]);
 
     const { id, streamId, messages, event, uid } =
       await taskService.startStreaming(user.id, req);

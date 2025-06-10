@@ -3,7 +3,8 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import type { LanguageModelV1 } from "ai";
+import { type LanguageModelV1, wrapLanguageModel } from "ai";
+import { createBatchCallMiddleware } from "./batch-call-middleware";
 
 // Define available models
 export const AvailableModels: {
@@ -49,6 +50,18 @@ export const StripePlans = [
 ];
 
 export function getModelById(modelId: string): LanguageModelV1 | null {
+  const model = getModelByIdImpl(modelId);
+  if (!model) {
+    return model;
+  }
+
+  return wrapLanguageModel({
+    model,
+    middleware: createBatchCallMiddleware(),
+  });
+}
+
+function getModelByIdImpl(modelId: string): LanguageModelV1 | null {
   switch (modelId) {
     case "anthropic/claude-3.7-sonnet":
       return anthropic("claude-3-7-sonnet-20250219");
