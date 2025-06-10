@@ -318,7 +318,11 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
           />
         ) : (
           <>
-            <ApprovalButton pendingApproval={pendingApproval} retry={retry} />
+            <ApprovalButton
+              pendingApproval={pendingApproval}
+              retry={retry}
+              allowAddToolResult={true}
+            />
             {todos && todos.length > 0 && (
               <LegacyTodoList
                 className="mt-2"
