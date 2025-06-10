@@ -1,6 +1,6 @@
 import type { Server } from "node:http";
 import type { DB } from "@ragdoll/db";
-import { App, type Installation, LogLevel } from "@slack/bolt";
+import { App, type Installation } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
 import { sql } from "kysely";
 import { auth } from "../auth";
