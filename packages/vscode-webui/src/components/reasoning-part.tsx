@@ -1,8 +1,9 @@
 import type { ReasoningUIPart } from "@ai-sdk/ui-utils";
-import { ChevronDown, ChevronRight, Dot } from "lucide-react";
-import { useState } from "react";
+import { Dot, Lightbulb } from "lucide-react";
 
 import { MessageMarkdown } from "@/components/message/markdown";
+import { cn, tw } from "@/lib/utils";
+import { ExpandableToolContainer } from "./tool-invocation/tool-container";
 
 interface ReasoningPartUIProps {
   isLoading: boolean;
@@ -10,38 +11,24 @@ interface ReasoningPartUIProps {
 }
 
 export function ReasoningPartUI({ part, isLoading }: ReasoningPartUIProps) {
-  const [showDetails, setShowDetails] = useState(false);
-
-  return (
-    <div className="flex items-start">
-      <button
-        type="button"
-        onClick={() => setShowDetails(!showDetails)}
-        className="mt-1 mr-2 flex-shrink-0"
-        aria-label={showDetails ? "Hide details" : "Show details"}
-      >
-        {showDetails ? (
-          <ChevronDown className="size-4" />
-        ) : (
-          <ChevronRight className="size-4" />
-        )}
-      </button>
-      <div className="flex-grow">
-        <div
-          className="cursor-pointer font-medium italic"
-          onClick={() => setShowDetails(!showDetails)} // Also allow clicking text to toggle
-        >
-          Pochi is thinking
-          {isLoading && (
-            <Dot className="inline-block size-6 animate-ping duration-2000" />
+  const iconClass = tw`text-blue-700 dark:text-blue-300`;
+  const title = (
+    <span className="flex items-center gap-2">
+      {isLoading ? (
+        <Dot
+          className={cn(
+            "size-4 scale-150 animate-ping duration-2000",
+            iconClass,
           )}
-        </div>
-        {showDetails && (
-          <div className="pt-2">
-            <MessageMarkdown>{part.reasoning}</MessageMarkdown>
-          </div>
-        )}
-      </div>
-    </div>
+        />
+      ) : (
+        <Lightbulb className={cn("size-4 scale-90", iconClass)} />
+      )}
+      <span className="font-medium italic">Pochi is thinking ...</span>
+    </span>
   );
+
+  const detail = <MessageMarkdown>{part.reasoning}</MessageMarkdown>;
+
+  return <ExpandableToolContainer title={title} expandableDetail={detail} />;
 }

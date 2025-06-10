@@ -1,0 +1,33 @@
+import type { Meta, StoryObj } from "@storybook/react";
+
+import { ReasoningPartUI } from "../reasoning-part";
+
+const meta = {
+  title: "Pochi/ReasoningPartUI",
+  component: ReasoningPartUI,
+} satisfies Meta<typeof ReasoningPartUI>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    isLoading: false,
+    part: {
+      type: "reasoning",
+      reasoning: "This is a reasoning message.",
+      details: [],
+    },
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    isLoading: true,
+    part: {
+      type: "reasoning",
+      reasoning: "This is a reasoning message.",
+      details: [],
+    },
+  },
+};
