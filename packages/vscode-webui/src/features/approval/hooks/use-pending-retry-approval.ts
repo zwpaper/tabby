@@ -11,7 +11,7 @@ function fib(n: number): number {
 }
 
 function getRetryDelay(attempts: number, limit: number) {
-  if (attempts > limit) {
+  if (attempts >= limit) {
     return undefined;
   }
   return fib(attempts + 2);
@@ -108,7 +108,7 @@ export function usePendingRetryApproval({
       return undefined;
     }
     if (error) {
-      const attempts = retryCount ? retryCount.count : 1;
+      const attempts = retryCount ? retryCount.count : 0;
       const delay = getRetryDelay(attempts, limit);
       return {
         error,
