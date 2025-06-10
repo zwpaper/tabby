@@ -247,7 +247,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   });
 
   usePendingModelAutoStart({
-    enabled: status === "ready" && messages.length === 1,
+    enabled: status === "ready" && messages.length === 1 && !isTaskLoading,
     task: task,
     retry,
   });
