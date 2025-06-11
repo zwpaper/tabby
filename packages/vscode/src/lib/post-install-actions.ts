@@ -13,6 +13,7 @@ export class PostInstallActions {
     @inject("vscode.ExtensionContext") private context: vscode.ExtensionContext,
   ) {
     this.actions.push(new SetRemoteDefaultExtensionAction(this.context));
+    this.actions.push(new OpenTaskFromEnvAction());
 
     this.runActions();
   }
@@ -75,6 +76,20 @@ class SetRemoteDefaultExtensionAction implements Action {
       logger.info(
         `Added ${extensionId} to remote.defaultExtensionsIfInstalledLocally`,
       );
+    }
+  }
+}
+
+class OpenTaskFromEnvAction implements Action {
+  id = "open_task_from_env";
+
+  async execute(): Promise<void> {
+    const taskId = Number.parseInt(process.env.POCHI_TASK_ID || "-1");
+    if (taskId && Number.isNaN(taskId) && taskId > 0) {
+      logger.info(`Opening task from POCHI_TASK_ID: ${taskId}`);
+      await vscode.commands.executeCommand("ragdollWebui.focus");
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await vscode.commands.executeCommand("ragdoll.openTask", taskId);
     }
   }
 }
