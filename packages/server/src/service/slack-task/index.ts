@@ -1,6 +1,5 @@
 import type { DBMessage, UserEvent } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
-import { auth } from "../../auth";
 
 import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
 import { e2b } from "../e2b";
@@ -186,14 +185,9 @@ class SlackTaskService {
       slackEvent,
     );
 
-    // create a temp session for the cloud runner
-    const { token } = await (await auth.$context).internalAdapter.createSession(
+    const sandbox = await e2b.create({
       userId,
-      undefined,
-    );
-
-    const sandbox = await e2b.create(token, {
-      taskId: taskId.toString(),
+      taskId,
       githubRepository: parsedCommand.githubRepository,
       githubAccessToken: githubToken,
     });
@@ -215,7 +209,7 @@ class SlackTaskService {
     if (sandbox) {
       const successBlocks = slackRichTextRenderer.renderCloudRunnerSuccess(
         sandbox.sandboxId,
-        sandbox.serverURL,
+        sandbox.serverUrl,
       );
       await integration.webClient.chat.postMessage({
         channel: command.channel_id,

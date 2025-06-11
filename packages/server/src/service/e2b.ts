@@ -1,8 +1,11 @@
 import crypto from "node:crypto";
 import { Sandbox, type SandboxOpts } from "@e2b/code-interpreter";
+import { auth } from "../auth";
+import { db } from "../db";
 
-interface SandboxOptions {
-  taskId: string;
+interface CreateSandboxOptions {
+  userId: string;
+  taskId: number;
   githubAccessToken: string;
   githubRepository: {
     owner: string;
@@ -17,21 +20,31 @@ class E2B {
     readonly timeout: number = 60 * 60 * 1000, // 1 hour
   ) {}
 
-  public async create(
-    token: string,
-    options: SandboxOptions,
-  ): Promise<{ sandboxId: string; serverURL: string } | undefined> {
+  async create({
+    userId,
+    taskId,
+    githubAccessToken,
+    githubRepository,
+  }: CreateSandboxOptions): Promise<
+    { sandboxId: string; serverUrl: string } | undefined
+  > {
+    // create a temp session for the cloud runner
+    const session = await (await auth.$context).internalAdapter.createSession(
+      userId,
+      undefined,
+    );
+
     const vscodeToken = crypto.randomUUID();
 
     try {
       const envs = {
         POCHI_OPENVSCODE_TOKEN: vscodeToken,
-        POCHI_SESSION_TOKEN: token,
-        POCHI_TASK_ID: options.taskId,
+        POCHI_SESSION_TOKEN: session.token,
+        POCHI_TASK_ID: taskId.toString(),
 
-        GITHUB_TOKEN: options.githubAccessToken,
-        GH_TOKEN: options.githubAccessToken,
-        GH_REPO: `${options.githubRepository.owner}/${options.githubRepository.repo}`,
+        GITHUB_TOKEN: githubAccessToken,
+        GH_TOKEN: githubAccessToken,
+        GH_REPO: `${githubRepository.owner}/${githubRepository.repo}`,
       };
 
       // although we pass the envs, the startCommand is E2B does not use them
@@ -49,8 +62,15 @@ class E2B {
         cwd: "/home/pochi",
       });
 
-      const serverURL = `${sandbox.getHost(3000)}?tkn=${vscodeToken}`;
-      return { sandboxId: sandbox.sandboxId, serverURL };
+      const serverUrl = `${sandbox.getHost(3000)}?tkn=${vscodeToken}`;
+      await db
+        .insertInto("minion")
+        .values({
+          userId,
+          e2bSandboxId: sandbox.sandboxId,
+        })
+        .execute();
+      return { sandboxId: sandbox.sandboxId, serverUrl };
     } catch (error) {
       console.error("Error creating or interacting with E2B sandbox:", error);
       return undefined;

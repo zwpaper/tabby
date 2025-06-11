@@ -56,6 +56,14 @@ export interface ExternalIntegration {
   vendorData: Json;
 }
 
+export interface Minion {
+  createdAt: Generated<Timestamp>;
+  e2bSandboxId: string;
+  id: Generated<number>;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+}
+
 export interface MonthlyUsage {
   count: Generated<number>;
   id: Generated<number>;
@@ -140,6 +148,7 @@ export interface DB {
   account: Account;
   chatCompletion: ChatCompletion;
   externalIntegration: ExternalIntegration;
+  minion: Minion;
   monthlyUsage: MonthlyUsage;
   session: Session;
   subscription: Subscription;
