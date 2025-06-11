@@ -1,5 +1,8 @@
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
+import { SocialLinks } from "@ragdoll/common";
 import { useQuery } from "@tanstack/react-query";
 
 export const Quota: React.FC = () => {
@@ -33,6 +36,9 @@ export const Quota: React.FC = () => {
     limits.premium > 0
       ? Math.min((usages.premium / limits.premium) * 100, 100)
       : 0;
+
+  // Show warning when premium usage exceeds 80% (less than 20% credit remaining)
+  const showCreditWarning = premiumUsagePercent > 80;
 
   return (
     <div className="select-none px-2">
@@ -68,6 +74,35 @@ export const Quota: React.FC = () => {
           </div>
         </div>
       </div>
+      {/* Credit Warning Banner */}
+      {showCreditWarning && (
+        <div className="mt-3 mb-3 rounded-lg border bg-muted p-2 ">
+          <div className="flex flex-col gap-2">
+            <p className="text-muted-foreground text-xs ">
+              Want more credits? Join our Discord channel and share feedback or
+              report bugs to earn credit rewards.
+            </p>
+            <a
+              href={SocialLinks.Discord}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                size="sm"
+                className={cn(
+                  buttonVariants({ variant: "secondary" }),
+                  "w-full",
+                )}
+              >
+                <span className="hidden min-[280px]:inline ">
+                  Join Discord for Credit Rewards
+                </span>
+                <span className="min-[280px]:hidden">Join Discord</span>
+              </Button>
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

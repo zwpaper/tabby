@@ -29,9 +29,10 @@ export const WorkspaceRulesSection: React.FC = () => {
             href="command:ragdoll.editWorkspaceRules"
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonVariants({ variant: "secondary" })}
           >
-            Edit Rules
+            <Button className={buttonVariants({ variant: "secondary" })}>
+              Edit Rules
+            </Button>
           </a>
           <span className="text-muted-foreground text-sm">
             Customize rules for Pochi in this workspace.
