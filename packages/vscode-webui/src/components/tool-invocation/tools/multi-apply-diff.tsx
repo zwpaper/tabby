@@ -36,6 +36,7 @@ export const multiApplyDiffTool: React.FC<
           className="ml-1"
           path={path}
           onClick={tool.state !== "result" ? handleClick : undefined}
+          editSummary={result?.ui?.editSummary}
         />
       )}
     </>

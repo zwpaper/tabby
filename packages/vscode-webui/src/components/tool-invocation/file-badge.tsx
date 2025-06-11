@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { addLineBreak } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
+import { EditSummary } from "./edit-summary";
 import { FileIcon } from "./file-icon/file-icon";
 
 interface FileBadgeProps {
@@ -12,6 +13,10 @@ interface FileBadgeProps {
   className?: string;
   labelClassName?: string;
   isDirectory?: boolean;
+  editSummary?: {
+    added: number;
+    removed: number;
+  };
 }
 
 export const FileBadge: React.FC<FileBadgeProps> = ({
@@ -23,6 +28,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
   className,
   labelClassName,
   isDirectory = false,
+  editSummary,
 }) => {
   const lineRange = startLine
     ? endLine && startLine !== endLine
@@ -51,6 +57,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
         {addLineBreak(label || path)}
         <span className="text-zinc-500 dark:text-zinc-400">{lineRange}</span>
       </span>
+      {editSummary && <EditSummary editSummary={editSummary} />}
     </span>
   );
 };

@@ -124,12 +124,30 @@ function removeMessagesWithoutTextOrFunctionCall(
   });
 }
 
+function removeToolCallResultUIProperty(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => {
+    message.parts = message.parts.map((part) => {
+      if (
+        part.type === "tool-invocation" &&
+        part.toolInvocation.state === "result" &&
+        part.toolInvocation.result &&
+        part.toolInvocation.result.ui
+      ) {
+        part.toolInvocation.result.ui = undefined;
+      }
+      return part;
+    });
+    return message;
+  });
+}
+
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
 const LLMFormatOps: FormatOp[] = [
   removeEmptyMessages,
   removeMessagesWithoutTextOrFunctionCall,
   resolvePendingToolCalls,
   stripKnownXMLTags,
+  removeToolCallResultUIProperty,
 ];
 const UIFormatOps = [
   prompts.stripEnvironmentDetails,

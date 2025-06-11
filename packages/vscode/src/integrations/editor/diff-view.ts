@@ -193,6 +193,22 @@ export class DiffView implements vscode.Disposable {
     }
   }
 
+  private getEditSummary(original: string, modified: string) {
+    const diffs = diff.diffLines(original, modified);
+    let added = 0;
+    let removed = 0;
+
+    for (const part of diffs) {
+      if (part.added) {
+        added += part.count || 0;
+      } else if (part.removed) {
+        removed += part.count || 0;
+      }
+    }
+
+    return { added, removed };
+  }
+
   async saveChanges(relPath: string, newContent: string) {
     const updatedDocument = this.activeDiffEditor.document;
     const preSaveContent = updatedDocument.getText();
@@ -200,6 +216,10 @@ export class DiffView implements vscode.Disposable {
       await updatedDocument.save();
     }
     const postSaveContent = updatedDocument.getText();
+    const editSummary = this.getEditSummary(
+      this.originalContent || "",
+      postSaveContent,
+    );
 
     const document = await vscode.workspace.openTextDocument(this.fileUri);
     await vscode.window.showTextDocument(document, {
@@ -252,6 +272,7 @@ export class DiffView implements vscode.Disposable {
       userEdits,
       autoFormattingEdits,
       newProblems,
+      ui: { editSummary },
     };
   }
 

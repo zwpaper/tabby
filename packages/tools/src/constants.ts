@@ -30,4 +30,21 @@ export const EditFileOutputSchema = z.object({
     .string()
     .optional()
     .describe("The new problems found after writing the file, if any."),
+
+  ui: z
+    .object({
+      editSummary: z
+        .object({
+          added: z.number().describe("Number of lines added to the file."),
+          removed: z
+            .number()
+            .describe("Number of lines removed from the file."),
+        })
+        .optional()
+        .describe("A summary of the edits made to the file."),
+    })
+    .optional()
+    .describe(
+      "UI-specific information, would be removed before sending to the LLM.",
+    ),
 });
