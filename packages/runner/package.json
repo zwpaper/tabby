@@ -1,5 +1,6 @@
 {
   "name": "@ragdoll/runner",
+  "version": "0.1.0",
   "bin": "src/cli.ts",
   "exports": {
     ".": "./src/index.ts",
@@ -10,7 +11,8 @@
     "tsc": "tsc",
     "test": "bun test",
     "build": "bun build src/cli.ts --compile --outfile ./dist/pochi-runner",
-    "release": "./scripts/build-platform-binary.sh"
+    "build:all": "./scripts/build-platform-binary.sh",
+    "release": "bunx bumpp --tag=runner@%s"
   },
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",
