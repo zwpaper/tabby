@@ -1,3 +1,11 @@
+# 0.2.83
+
+## New Features
+- **webui**: add edit summary display to file editing tools
+
+## Bug Fixes
+- **runner**: wait and reload task if already streaming.
+
 # 0.2.81
 
 ## New Features
