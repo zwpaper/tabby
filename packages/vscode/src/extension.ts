@@ -4,6 +4,7 @@ import RagdollUriHandler from "@/integrations/uri-handler";
 import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
 import { container, instanceCachingFactory } from "tsyringe";
 import type * as vscode from "vscode";
+import { PochiAuthenticationProvider } from "./integrations/auth-provider";
 import { CommandManager } from "./integrations/command";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
 import { McpHub } from "./integrations/mcp/mcp-hub";
@@ -32,6 +33,7 @@ export async function activate(context: vscode.ExtensionContext) {
     useFactory: instanceCachingFactory(createApiClient),
   });
 
+  container.resolve(PochiAuthenticationProvider);
   container.resolve(RagdollWebviewProvider);
   container.resolve(RagdollUriHandler);
   container.resolve(CommandManager);

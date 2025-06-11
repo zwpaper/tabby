@@ -9,6 +9,12 @@
   "license": "Pochi User License",
   "activationEvents": ["onStartupFinished"],
   "contributes": {
+    "authentication": [
+      {
+        "label": "Pochi",
+        "id": "pochi"
+      }
+    ],
     "views": {
       "ragdoll": [
         {
