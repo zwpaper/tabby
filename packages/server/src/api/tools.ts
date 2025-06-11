@@ -31,12 +31,12 @@ const ToolDescriptions: Record<string, string> = {
     "When Pochi needs to access information from the internet to complete a task, Pochi uses the `webFetch` tool. It allows Pochi to fetch the content of a URL, just like a web browser. This is useful for a variety of purposes, such as retrieving data from an API, reading documentation, or checking the status of a service.\n\nFor example, if you ask Pochi to use a third-party library, Pochi can use `webFetch` to look up its documentation to understand how to use it correctly. This tool allows Pochi to bring external knowledge into our session to better assist you.",
 };
 
-const allTools = Object.entries({ ...ClientTools, ...ServerTools }).map(
-  ([id]) => ({
+const allTools = Object.entries({ ...ClientTools, ...ServerTools })
+  .map(([id]) => ({
     id,
     description: ToolDescriptions[id],
-  }),
-);
+  }))
+  .filter((x) => !!x.description);
 
 const tools = new Hono().use(requireAuth()).get("/", (c) => {
   return c.json(allTools);
