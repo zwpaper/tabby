@@ -152,11 +152,13 @@ function TodoListHeader({
   };
 
   return (
-    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center">
+    <div
+      className="group grid w-full cursor-pointer grid-cols-[1fr_auto_1fr] items-center"
+      onClick={toggleCollapse}
+    >
       <div />
       <button
         type="button"
-        onClick={toggleCollapse}
         className={cn(
           "flex select-none items-center justify-center overflow-hidden rounded-sm px-4 py-2 transition-colors focus:outline-none",
           {
@@ -164,7 +166,7 @@ function TodoListHeader({
           },
         )}
       >
-        <span className="h-6 truncate font-semibold">
+        <span className="h-6 truncate font-semibold transition-opacity group-focus-within:opacity-80 group-hover:opacity-80">
           {inProgressTodo ? (
             disableInProgressTodoTitle ? (
               <span>TODOs</span>
@@ -184,7 +186,11 @@ function TodoListHeader({
           )}
         </span>
       </button>
-      <div className="flex justify-end gap-1 pr-2">{children}</div>
+      <div className="flex justify-end">
+        <div className="flex gap-1 p-2" onClick={(e) => e.stopPropagation()}>
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
@@ -394,7 +400,7 @@ function TodoListItems({ className }: { className?: string }) {
     : todos.filter((todo) => todo.status !== "cancelled");
 
   return (
-    <ScrollArea className="px-1 pt-1 pb-2" viewportClassname={className}>
+    <ScrollArea className="px-1 pb-2" viewportClassname={className}>
       <motion.div
         initial={false}
         animate={isCollapsed ? "collapsed" : "open"}
