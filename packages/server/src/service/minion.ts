@@ -4,6 +4,7 @@ import { db } from "../db";
 
 const VSCodeToken = "pochi";
 const RepoFolder = "/home/pochi/project";
+const TemplateId = process.env.E2B_TEMPLATE_ID || "4kfoc92tmo1x9igbf6qp";
 
 interface CreateMinionOptions {
   userId: string;
@@ -39,7 +40,7 @@ class MinionService {
       timeoutMs: 60 * 60 * 1000,
       envs: envs,
     };
-    const sandbox = await Sandbox.create("4k07y7tv0j1vpssysf3d", opts);
+    const sandbox = await Sandbox.create(TemplateId, opts);
     sandbox.commands.run("/home/pochi/init.sh", {
       envs: envs,
       background: true,
