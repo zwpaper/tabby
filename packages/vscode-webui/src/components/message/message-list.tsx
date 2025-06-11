@@ -8,7 +8,9 @@ import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
 
@@ -25,6 +27,15 @@ export const MessageList: React.FC<{
   logo,
   containerRef,
 }) => {
+  const [debouncedIsLoading, setDebouncedIsLoading] = useDebounceState(
+    isLoading,
+    300,
+  );
+
+  useEffect(() => {
+    setDebouncedIsLoading(isLoading);
+  }, [isLoading, setDebouncedIsLoading]);
+
   return (
     <ScrollArea className="mb-2 flex-1 overflow-y-auto px-4" ref={containerRef}>
       {renderMessages.map((m, messageIndex) => (
@@ -76,7 +87,7 @@ export const MessageList: React.FC<{
           )}
         </div>
       ))}
-      {isLoading && (
+      {debouncedIsLoading && (
         <div className="pb-4">
           <Loader2 className="mx-auto size-6 animate-spin" />
         </div>
