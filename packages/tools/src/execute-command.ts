@@ -19,24 +19,38 @@ Usage notes:
 - The command argument is required.
 - If the output exceeds 30000 characters, output will be truncated before being returned to you.
 - When issuing multiple commands, use the ';' or '&&' operator to separate them. DO NOT use newlines (newlines are ok in quoted strings).
-- In order to ensure good formatting, ALWAYS pass the multi-line argument via a HEREDOC, a la this example:
+
+# Creating pull requests
+Use the gh command via the executeCommand tool for ALL GitHub-related tasks including working with issues, pull requests, checks, and releases. If given a Github URL use the gh command to get the information needed.
+
+IMPORTANT: When the user asks you to create a pull request, follow these steps carefully:
+
+1. Use batchCall to run the following commands in parallel, in order to understand the current state of the branch since it diverged from the main branch:
+   - Run a git status command to see all untracked files
+   - Run a git diff command to see both staged and unstaged changes that will be committed
+   - Check if the current branch tracks a remote branch and is up to date with the remote, so you know if you need to push to the remote
+   - Run a git log command and \`git diff main...HEAD\` to understand the full commit history for the current branch (from the time it diverged from the \`main\` branch)
+
+2. Analyze all changes that will be included in the pull request, making sure to look at all relevant commits (NOT just the latest commit, but ALL commits that will be included in the pull request!!!), and draft a pull request summary.
+
+- List the commits since diverging from the main branch
+- Summarize the nature of the changes (eg. new feature, enhancement to an existing feature, bug fix, refactoring, test, docs, etc.)
+- Brainstorm the purpose or motivation behind these changes
+- Assess the impact of these changes on the overall project
+- Do not use tools to explore code, beyond what is available in the git context
+- Check for any sensitive information that shouldn't be committed
+- Draft a concise (1-2 bullet points) pull request summary that focuses on the "why" rather than the "what"
+- Ensure the summary accurately reflects all changes since diverging from the main branch
+- Ensure your language is clear, concise, and to the point
+- Ensure the summary accurately reflects the changes and their purpose (ie. "add" means a wholly new feature, "update" means an enhancement to an existing feature, "fix" means a bug fix, etc.)
+- Ensure the summary is not generic (avoid words like "Update" or "Fix" without context)
+- Review the draft summary to ensure it accurately reflects the changes and their purpose
+
+3. Use batchCall to run the following commands in parallel:
+   - Create new branch if needed
+   - Push to remote with -u flag if needed
+   - Create PR using gh pr create with the format below. Use a HEREDOC to pass the body to ensure correct formatting.
 <example>
-git commit -m "$(cat <<'EOF'
-   Commit message here.
-
-   🤖 Generated with [Pochi](https://getpochi.com)
-
-   Co-Authored-By: Pochi <noreply@getpochi.com>
-   EOF
-   )"
-</example>
-
-Important:
-- NEVER update the git config
-- Return the PR URL when you're done, so the user can see it
-
-# Other common operations
-- Creating a Github PR
 gh pr create --title "the pr title" --body "$(cat <<'EOF'
 ## Summary
 <1-3 bullet points>
@@ -47,7 +61,15 @@ gh pr create --title "the pr title" --body "$(cat <<'EOF'
 🤖 Generated with [Pochi](https://getpochi.com)
 EOF
 )"
-- View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments`.trim(),
+</example>
+
+Important:
+- NEVER update the git config
+- Return the PR URL when you're done, so the user can see it
+
+# Other common operations
+- View comments on a Github PR: gh api repos/foo/bar/pulls/123/comments
+`.trim(),
   inputSchema: z.object({
     command: z
       .string()
