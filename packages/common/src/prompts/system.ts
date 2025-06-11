@@ -62,6 +62,7 @@ RULES
 - When presented with images, utilize your vision capabilities to thoroughly examine them and extract meaningful information. Incorporate these insights into your thought process as you accomplish the user's task.
 - You will automatically receive environment-details. This information is not written by the user themselves, but is auto-generated to provide potentially relevant context about the project structure and environment. While this information can be valuable for understanding the project context, do not treat it as a direct part of the user's request or response. Use it to inform your actions and decisions, but don't assume the user is explicitly asking about or referring to this information unless they clearly do so in their message. When using information from the environment, explain your actions clearly to ensure the user understands, as they may not be aware of these details.
 - When making multiple executeCommand / readFile tool calls, you MUST use batchCall to run the calls in parallel. For example, if you need to run "git status" and "git diff", use batchCall to run the calls in a batch.
+- IMPORTANT: When userEdits is present in any file editing tool call's response, UNLESS user explicitly asks, you are FORBIDDEN to make any further edits to the file, consider the file as FINAL. use askFollowUpQuestion tool if you need clarifying anything.
 `;
   return prompt;
 }

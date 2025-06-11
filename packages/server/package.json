@@ -6,9 +6,9 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
     "@ai-sdk/google": "^1.2.18",
-    "@ai-sdk/openai": "^1.3.2",
     "@ai-sdk/provider-utils": "catalog:",
     "@better-auth/stripe": "^1.2.7",
+    "@e2b/code-interpreter": "catalog:",
     "@hono-storage/s3": "^0.0.13",
     "@hono/zod-validator": "^0.4.3",
     "@lmnr-ai/lmnr": "^0.6.0",
@@ -18,7 +18,6 @@
     "@ragdoll/tools": "workspace:*",
     "@slack/bolt": "catalog:",
     "@slack/web-api": "^7.9.2",
-    "@e2b/code-interpreter": "catalog:",
     "ai": "catalog:",
     "better-auth": "catalog:",
     "hono": "catalog:",

@@ -1,9 +1,11 @@
 import { z } from "zod";
 
-export const EditFileResultPrompt = `After the file is written, if the user makes any edits, the userEdits field will be present in the result. If the editor's auto formatter is making any edits, the autoFormattingEdits field will be present in the result.
-You should pay special attention to these fields and apply the preferences in future operations.
-
-Note that the file is already saved with userEdits and autoFormattingEdits applied; you don't need to edit it again unless for other reasons (e.g., resolving a new problem).`;
+export const EditFileResultPrompt =
+  `You may see the following fields in the result:
+- userEdits: If the user makes any edits, this field will contain a diff between your edit and their changes.
+- autoFormattingEdits: If the auto-formatter makes any changes, this field will contain a diff against the file content after your edits and any user edits have been applied.
+- newProblems: If any new problems are found after the edit, this field will contain information about them.
+`.trim();
 
 export const EditFileOutputSchema = z.object({
   success: z

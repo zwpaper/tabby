@@ -2,7 +2,6 @@
 
 import { anthropic } from "@ai-sdk/anthropic";
 import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
-import { openai } from "@ai-sdk/openai";
 import { type LanguageModelV1, wrapLanguageModel } from "ai";
 import { createBatchCallMiddleware } from "./batch-call-middleware";
 
@@ -12,7 +11,6 @@ export const AvailableModels: {
   contextWindow: number;
   costType: "basic" | "premium";
 }[] = [
-  { id: "openai/gpt-4o-mini", contextWindow: 128_000, costType: "basic" },
   {
     id: "google/gemini-2.5-pro",
     contextWindow: 1_048_576,
@@ -63,12 +61,8 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
 
 function getModelByIdImpl(modelId: string): LanguageModelV1 | null {
   switch (modelId) {
-    case "anthropic/claude-3.7-sonnet":
-      return anthropic("claude-3-7-sonnet-20250219");
     case "anthropic/claude-4-sonnet":
       return anthropic("claude-4-sonnet-20250514");
-    case "openai/gpt-4o-mini":
-      return openai("gpt-4o-mini");
     case "google/gemini-2.5-pro":
       return google("gemini-2.5-pro-preview-06-05");
     case "google/gemini-2.5-flash":
