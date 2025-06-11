@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
 import { useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
-import { useChat } from "@ai-sdk/react";
+import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { formatters, toUIMessages } from "@ragdoll/common";
 import type { Environment, Todo } from "@ragdoll/db";
 import type { UIMessage } from "ai";
@@ -288,9 +288,11 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   });
 
   // Display errors with priority: 1. autoDismissError, 2. uploadImageError, 3. error pending retry approval
+  const taskError = useTaskError(status, task);
   const displayError =
     autoDismissError ||
     uploadImageError ||
+    taskError ||
     (pendingApproval?.name === "retry" ? pendingApproval.error : undefined);
 
   // Only allow adding tool results when not loading
@@ -442,4 +444,34 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       </div>
     </div>
   );
+}
+
+class TaskError extends Error {
+  constructor(
+    readonly name: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+function useTaskError(status: UseChatHelpers["status"], task?: Task | null) {
+  const init = useRef(false);
+  const [taskError, setTaskError] = useState<TaskError>();
+  useEffect(() => {
+    if (init.current || !task) return;
+    init.current = true;
+    const { error } = task;
+    if (error) {
+      setTaskError(new TaskError(error.kind, error.message));
+    }
+  }, [task]);
+
+  useEffect(() => {
+    if (init.current && !taskError) return;
+    if (status === "submitted" || status === "streaming") {
+      setTaskError(undefined);
+    }
+  }, [status, taskError]);
+  return taskError;
 }

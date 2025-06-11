@@ -27,9 +27,9 @@ import {
   Loader2,
   TerminalIcon,
   Wrench,
-  XCircle,
   Zap,
 } from "lucide-react";
+import { MdOutlineErrorOutline } from "react-icons/md";
 import { WorkspaceRequiredPlaceholder } from "../../components/workspace-required-placeholder";
 
 export const Route = createFileRoute("/_auth/tasks")({
@@ -313,7 +313,7 @@ const TaskStatusIcon = ({
     case "completed":
       return <CheckCircle2 {...iconProps} aria-label="Completed" />;
     case "failed":
-      return <XCircle {...iconProps} aria-label="Failed" />;
+      return <MdOutlineErrorOutline {...iconProps} aria-label="Failed" />;
     case "pending-model":
       return <Brain {...iconProps} aria-label="Pending Model" />;
     default:
