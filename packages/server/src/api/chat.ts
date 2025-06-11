@@ -221,6 +221,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       });
     }
 
+    c.header("Pochi-Task-Id", id.toString());
     return stream(c, (stream) => stream.pipe(resumableStream));
   })
   .get(

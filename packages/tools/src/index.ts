@@ -16,6 +16,7 @@ import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
 export type { PreviewToolFunctionType, ToolFunctionType } from "./types";
 import type { Tool } from "ai";
+import { newTask } from "./new-task";
 import { slackReplyThread } from "./slack-reply-thread";
 import { webFetch } from "./web-fetch";
 import { writeToFile } from "./write-to-file";
@@ -69,7 +70,7 @@ export const ToolsByPermission = {
     "applyDiff",
     "multiApplyDiff",
   ] satisfies ToolName[] as string[],
-  execute: ["executeCommand"] satisfies ToolName[] as string[],
+  execute: ["executeCommand", "newTask"] satisfies ToolName[] as string[],
   default: ["todoWrite"] satisfies ToolName[] as string[],
 };
 
