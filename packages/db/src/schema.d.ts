@@ -61,6 +61,7 @@ export interface Minion {
   e2bSandboxId: string;
   id: Generated<number>;
   updatedAt: Generated<Timestamp>;
+  url: string;
   userId: string;
 }
 

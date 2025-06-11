@@ -11,6 +11,7 @@ import chat from "./api/chat";
 import enhance from "./api/enhance";
 import events, { websocket } from "./api/events";
 import integrations from "./api/integrations";
+import minions from "./api/minions";
 import models from "./api/models";
 import tasks from "./api/tasks";
 import tools from "./api/tools";
@@ -109,6 +110,7 @@ const route = api
   .route("/usages", usages)
   .route("/billing", billing)
   .route("/tasks", tasks)
+  .route("/minions", minions)
   .route("/integrations", integrations)
   .route("/upload", upload)
   .route("/enhancePrompt", enhance)

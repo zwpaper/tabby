@@ -2,8 +2,8 @@ import type { DBMessage, UserEvent } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
 
 import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
-import { e2b } from "../e2b";
 import { githubService } from "../github";
+import { minionService } from "../minion";
 import { slackService } from "../slack";
 import { taskService } from "../task";
 import { slackRichTextRenderer } from "./slack-rich-text";
@@ -185,7 +185,7 @@ class SlackTaskService {
       slackEvent,
     );
 
-    const sandbox = await e2b.create({
+    const minion = await minionService.create({
       userId,
       taskId,
       githubRepository: parsedCommand.githubRepository,
@@ -206,18 +206,15 @@ class SlackTaskService {
       richTextBlocks,
     );
 
-    if (sandbox) {
-      const successBlocks = slackRichTextRenderer.renderCloudRunnerSuccess(
-        sandbox.sandboxId,
-        sandbox.serverUrl,
-      );
-      await integration.webClient.chat.postMessage({
-        channel: command.channel_id,
-        thread_ts: messageResult.ts,
-        blocks: successBlocks,
-        text: `✅ Cloud runner started successfully! Sandbox ID: ${sandbox.sandboxId}`,
-      });
-    }
+    const successBlocks = slackRichTextRenderer.renderCloudRunnerSuccess(
+      minion.url,
+    );
+    await integration.webClient.chat.postMessage({
+      channel: command.channel_id,
+      thread_ts: messageResult.ts,
+      blocks: successBlocks,
+      text: "✅ Cloud runner started successfully!",
+    });
 
     return taskId;
   }

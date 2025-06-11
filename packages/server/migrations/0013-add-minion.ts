@@ -14,6 +14,7 @@ export async function up(db: Kysely<any>): Promise<void> {
       col.references('user.id').onDelete('cascade').notNull()
     )
     .addColumn('e2bSandboxId', 'text', col => col.notNull())
+    .addColumn('url', 'text', col => col.notNull())
     .execute()
 }
 

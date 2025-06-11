@@ -305,13 +305,13 @@ class SlackRichTextRenderer {
     };
   }
 
-  renderCloudRunnerSuccess(sandboxId: string, serverURL: string): AnyBlock[] {
+  renderCloudRunnerSuccess(url: string): AnyBlock[] {
     return [
       {
         type: "section" as const,
         text: {
           type: "mrkdwn" as const,
-          text: `✅ *Cloud runner started successfully!*\n🆔 *Sandbox ID:* ${sandboxId}`,
+          text: "✅ *Cloud runner started successfully!*",
         },
       },
       {
@@ -324,9 +324,7 @@ class SlackRichTextRenderer {
               emoji: true,
               text: "🔗 Open Web VSCode",
             },
-            url: serverURL.startsWith("http")
-              ? serverURL
-              : `https://${serverURL}`,
+            url: url.startsWith("http") ? url : `https://${url}`,
             style: "primary" as const,
             value: "open_server",
           },

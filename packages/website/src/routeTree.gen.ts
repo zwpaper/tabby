@@ -18,6 +18,7 @@ import { Route as ShareUidImport } from './routes/share.$uid'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authenticated.stop-impersonating'
 import { Route as AuthenticatedRedirectVscodeImport } from './routes/_authenticated.redirect-vscode'
+import { Route as AuthenticatedMinionsImport } from './routes/_authenticated.minions'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated._settings/route'
 import { Route as AuthenticatedTasksIndexImport } from './routes/_authenticated.tasks/index'
@@ -76,6 +77,12 @@ const AuthenticatedRedirectVscodeRoute =
     path: '/redirect-vscode',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+
+const AuthenticatedMinionsRoute = AuthenticatedMinionsImport.update({
+  id: '/minions',
+  path: '/minions',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
@@ -203,6 +210,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/minions': {
+      id: '/_authenticated/minions'
+      path: '/minions'
+      fullPath: '/minions'
+      preLoaderRoute: typeof AuthenticatedMinionsImport
       parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/redirect-vscode': {
@@ -358,6 +372,7 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedMinionsRoute: typeof AuthenticatedMinionsRoute
   AuthenticatedRedirectVscodeRoute: typeof AuthenticatedRedirectVscodeRoute
   AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
@@ -369,6 +384,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedMinionsRoute: AuthenticatedMinionsRoute,
   AuthenticatedRedirectVscodeRoute: AuthenticatedRedirectVscodeRoute,
   AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
@@ -386,6 +402,7 @@ export interface FileRoutesByFullPath {
   '': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/minions': typeof AuthenticatedMinionsRoute
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
@@ -408,6 +425,7 @@ export interface FileRoutesByTo {
   '': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/minions': typeof AuthenticatedMinionsRoute
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
@@ -432,6 +450,7 @@ export interface FileRoutesById {
   '/waitlist': typeof WaitlistRoute
   '/_authenticated/_settings': typeof AuthenticatedSettingsRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/minions': typeof AuthenticatedMinionsRoute
   '/_authenticated/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/_authenticated/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
@@ -456,6 +475,7 @@ export interface FileRouteTypes {
     | ''
     | '/waitlist'
     | '/admin'
+    | '/minions'
     | '/redirect-vscode'
     | '/stop-impersonating'
     | '/auth/$pathname'
@@ -477,6 +497,7 @@ export interface FileRouteTypes {
     | ''
     | '/waitlist'
     | '/admin'
+    | '/minions'
     | '/redirect-vscode'
     | '/stop-impersonating'
     | '/auth/$pathname'
@@ -499,6 +520,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/_authenticated/_settings'
     | '/_authenticated/admin'
+    | '/_authenticated/minions'
     | '/_authenticated/redirect-vscode'
     | '/_authenticated/stop-impersonating'
     | '/auth/$pathname'
@@ -558,6 +580,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/_settings",
         "/_authenticated/admin",
+        "/_authenticated/minions",
         "/_authenticated/redirect-vscode",
         "/_authenticated/stop-impersonating",
         "/_authenticated/auth/device-link",
@@ -587,6 +610,10 @@ export const routeTree = rootRoute
         "/_authenticated/admin/prompt-evaluation",
         "/_authenticated/admin/users"
       ]
+    },
+    "/_authenticated/minions": {
+      "filePath": "_authenticated.minions.tsx",
+      "parent": "/_authenticated"
     },
     "/_authenticated/redirect-vscode": {
       "filePath": "_authenticated.redirect-vscode.tsx",
