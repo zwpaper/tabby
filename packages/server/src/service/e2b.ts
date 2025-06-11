@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import { Sandbox, type SandboxOpts } from "@e2b/code-interpreter";
 import { auth } from "../auth";
 import { db } from "../db";
@@ -12,6 +11,8 @@ interface CreateSandboxOptions {
     repo: string;
   };
 }
+
+const VSCodeToken = "pochi";
 
 class E2B {
   constructor(
@@ -34,11 +35,9 @@ class E2B {
       undefined,
     );
 
-    const vscodeToken = crypto.randomUUID();
-
     try {
       const envs = {
-        POCHI_OPENVSCODE_TOKEN: vscodeToken,
+        POCHI_OPENVSCODE_TOKEN: VSCodeToken,
         POCHI_SESSION_TOKEN: session.token,
         POCHI_TASK_ID: taskId.toString(),
 
@@ -62,7 +61,7 @@ class E2B {
         cwd: "/home/pochi",
       });
 
-      const serverUrl = `${sandbox.getHost(3000)}?tkn=${vscodeToken}`;
+      const serverUrl = `${sandbox.getHost(3000)}?tkn=${VSCodeToken}`;
       await db
         .insertInto("minion")
         .values({
