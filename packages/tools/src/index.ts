@@ -87,3 +87,5 @@ export const selectServerTools = (tools: string[]) => {
 
   return ret;
 };
+
+export { BatchCallTools } from "./batch-call";

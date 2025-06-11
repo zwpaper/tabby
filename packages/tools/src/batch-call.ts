@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { declareServerTool } from "./types";
 
-const BatchCallTools = [
+export const BatchCallTools = [
   "executeCommand",
   "globFiles",
   "listFiles",
@@ -10,7 +10,7 @@ const BatchCallTools = [
   "searchFiles",
   "todoWrite",
   "webFetch",
-] as const;
+];
 
 export const batchCall = declareServerTool({
   description: `
@@ -20,7 +20,7 @@ export const batchCall = declareServerTool({
 - Returns the collected results from all invocations
 - Use this tool when you need to run multiple independent tool operations at once -- it is awesome for speeding up your workflow, reducing both context usage and latency
 - Each tool will respect its own permissions and validation rules
-- The tool's outputs are NOT shown to the user; to answer the user's query, you MUST send a message with the results after the tool call completes, otherwise the user will not see the results
+- You're only allowed to call following tools in batchCall: ${BatchCallTools.join(", ")}.
 
 Example usage:
 {
@@ -54,9 +54,7 @@ Example usage:
     invocations: z
       .array(
         z.object({
-          toolName: z
-            .enum(BatchCallTools)
-            .describe("The name of the tool to invoke"),
+          toolName: z.string().describe("The name of the tool to invoke"),
           args: z.any().describe("The input to pass to the tool"),
         }),
       )

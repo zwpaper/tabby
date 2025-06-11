@@ -1,4 +1,4 @@
-import { ServerTools } from "@ragdoll/tools";
+import { BatchCallTools, ServerTools } from "@ragdoll/tools";
 import type { LanguageModelV1Middleware, LanguageModelV1StreamPart } from "ai";
 
 function createBatchCallTransformStream(): TransformStream<
@@ -38,6 +38,9 @@ function createBatchCallTransformStream(): TransformStream<
 
       const { invocations } = parameters.data;
       for (const [index, invocation] of invocations.entries()) {
+        if (!BatchCallTools.includes(invocation.toolName)) {
+          continue;
+        }
         controller.enqueue({
           type: "tool-call",
           toolCallType: "function",
