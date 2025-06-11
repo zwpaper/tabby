@@ -34,6 +34,7 @@ import { todoWrite } from "./tools/todo-write";
 import { writeToFile } from "./tools/write-to-file";
 
 type TaskStatus = DB["task"]["status"]["__select__"];
+type Task = Awaited<ReturnType<TaskRunner["loadTask"]>>;
 
 export interface RunnerContext {
   /**
@@ -87,7 +88,7 @@ type TaskStepProgress =
   | {
       type: "loading-task";
       phase: "end";
-      task: Awaited<ReturnType<TaskRunner["loadTask"]>>;
+      task: Task;
     }
   | {
       type: "executing-tool-call";
@@ -125,7 +126,6 @@ export type TaskRunnerProgress =
     };
 
 export class TaskRunner {
-  private readonly context: RunnerContext;
   private todos: Todo[] = [];
   private readonly retryLimit = 5;
   private retryCount = 0;
@@ -135,10 +135,8 @@ export class TaskRunner {
     private readonly apiClient: ApiClient,
     private readonly pochiEvents: PochiEventSource,
     private readonly taskId: number,
-    context: RunnerContext,
-  ) {
-    this.context = context;
-  }
+    private readonly context: RunnerContext,
+  ) {}
 
   private async buildEnvironment(): Promise<Environment> {
     const environment = await readEnvironment(this.context);
@@ -331,13 +329,12 @@ export class TaskRunner {
    */
   private async *step(): AsyncGenerator<TaskStepProgress> {
     yield { type: "loading-task", phase: "begin" };
-    const task = await this.loadTask();
-    yield { type: "loading-task", phase: "end", task };
+    let task = await this.loadTask();
 
-    logger.info("step start", task.status);
     if (task.status === "streaming") {
-      throw new Error("Task is already running");
+      task = await this.waitAndReloadTask();
     }
+    yield { type: "loading-task", phase: "end", task };
 
     if (task.status === "completed") {
       throw new Error("Task is already completed");
@@ -436,7 +433,7 @@ export class TaskRunner {
     this.abortController?.abort();
   }
 
-  async loadTask() {
+  private async loadTask() {
     const resp = await this.apiClient.api.tasks[":id"].$get({
       param: {
         id: this.taskId.toString(),
@@ -448,6 +445,73 @@ export class TaskRunner {
     }
 
     return await resp.json();
+  }
+
+  private async waitAndReloadTask() {
+    return new Promise<Task>((resolve, reject) => {
+      const cleanups: (() => void)[] = [];
+      const cleanupAndResolve = (task: Task | Promise<Task>) => {
+        for (const cleanup of cleanups) {
+          cleanup();
+        }
+        resolve(task);
+      };
+      const cleanupAndReject = (error: Error) => {
+        for (const cleanup of cleanups) {
+          cleanup();
+        }
+        reject(error);
+      };
+
+      // Try reloading the task directly
+      this.loadTask()
+        .then((task) => {
+          if (task.status !== "streaming") {
+            cleanupAndResolve(task);
+          }
+        })
+        .catch(() => {
+          // ignore
+        });
+
+      // Subscribe to task status changes
+      const unsubscribe = this.pochiEvents.subscribe<TaskEvent>(
+        "task:status-changed",
+        ({ data }) => {
+          if (data.taskId !== this.taskId) {
+            return;
+          }
+
+          if (data.status !== "streaming") {
+            cleanupAndResolve(this.loadTask());
+          }
+        },
+      );
+      cleanups.push(unsubscribe);
+
+      // Set a timeout to reload the task and reject if it is still streaming
+      const timer = setTimeout(() => {
+        unsubscribe();
+        this.loadTask()
+          .then((task) => {
+            if (task.status !== "streaming") {
+              cleanupAndResolve(task);
+            } else {
+              cleanupAndReject(
+                new Error(
+                  `Task ${this.taskId} is still streaming after timeout.`,
+                ),
+              );
+            }
+          })
+          .catch((error) => {
+            cleanupAndReject(error);
+          });
+      }, 120_000); // 120 seconds timeout
+      cleanups.push(() => {
+        clearTimeout(timer);
+      });
+    });
   }
 }
 
