@@ -1,5 +1,5 @@
 [build]
-buildCommand = "bun run build:server"
+buildCommand = "NODE_ENV=production bun run build:server"
 
 [deploy]
 startCommand = "cd packages/server && bun start"
