@@ -26,6 +26,7 @@ export async function disapproveInactiveUsers() {
       LEFT JOIN "chatCompletion" cc ON u.id = cc."userId"
       WHERE u."isWaitlistApproved" = true
         AND u.email NOT LIKE '%@tabbyml.com'
+        AND u."updatedAt" < ${expirationDate}
       GROUP BY u.id, u.email, u.name
       HAVING MAX(cc."createdAt") IS NULL OR MAX(cc."createdAt") < ${expirationDate}
     `.execute(trx);
