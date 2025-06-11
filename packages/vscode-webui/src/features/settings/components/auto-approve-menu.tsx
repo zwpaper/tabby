@@ -162,7 +162,7 @@ export function AutoApproveMenu() {
 
         {/* Max Attempts Section - Always visible */}
         <div className="mt-1 border-gray-200/30 border-t pt-2 [@media(min-width:400px)]:col-span-2">
-          <div className="flex items-center gap-3">
+          <div className="flex h-7 items-center gap-3">
             <Checkbox
               checked={autoApproveSettings.retry}
               onCheckedChange={(checked) =>
