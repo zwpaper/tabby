@@ -49,11 +49,13 @@ function DeviceLinkConfirmationPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(loaderData.error ?? null);
   const [isApproved, setIsApproved] = useState(false); // State to track approval success
+  const [showBackupLink, setShowBackupLink] = useState(false);
 
   const handleConfirm = async () => {
     setIsLoading(true);
     setError(null);
     setIsApproved(false); // Reset approval status
+    setShowBackupLink(false);
     try {
       const { error } = await authClient.deviceLink.approve({ token });
       if (error) {
@@ -62,6 +64,9 @@ function DeviceLinkConfirmationPage() {
       setIsApproved(true); // Set approval success
       if (loaderData.redirectTo) {
         window.location.href = loaderData.redirectTo;
+        setTimeout(() => {
+          setShowBackupLink(true);
+        }, 3000);
       }
       toast.success("Device sign-in approved successfully!");
       // Optionally redirect or update UI further upon success
@@ -78,7 +83,7 @@ function DeviceLinkConfirmationPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md transition-all duration-500 ease-in-out">
         <CardHeader>
           <CardTitle>Confirm Device Sign-in</CardTitle>
           <CardDescription>
@@ -86,7 +91,7 @@ function DeviceLinkConfirmationPage() {
             confirm if you initiated this sign-in.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 transition-all duration-500 ease-in-out">
           <p className="text-gray-500 text-sm dark:text-gray-400">
             Device:{" "}
             <span className="font-medium text-gray-900 dark:text-gray-100">
@@ -95,9 +100,24 @@ function DeviceLinkConfirmationPage() {
           </p>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           {isApproved && (
-            <p className="text-green-600 text-sm">
-              Sign-in approved successfully. You can close this window.
-            </p>
+            <div className="space-y-2 overflow-hidden">
+              <p className="fade-in animate-in text-green-600 text-sm duration-500 ease-in-out">
+                Sign-in approved successfully. You can close this window.
+              </p>
+              {loaderData.redirectTo && showBackupLink && (
+                <p className="fade-in slide-in-from-top-2 animate-in text-gray-500 text-sm duration-1000 ease-in-out">
+                  If you weren't automatically redirected,{" "}
+                  <a
+                    href={loaderData.redirectTo}
+                    className="text-gray-600 underline hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                    target="_self"
+                  >
+                    click here to redirect
+                  </a>
+                  .
+                </p>
+              )}
+            </div>
           )}
         </CardContent>
         <CardFooter className="flex justify-end space-x-2">
