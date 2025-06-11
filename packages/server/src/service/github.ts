@@ -1,3 +1,4 @@
+import { Octokit } from "@octokit/rest";
 import { sql } from "kysely";
 import { db } from "../db";
 
@@ -36,6 +37,29 @@ class GithubService {
     }
 
     return null;
+  }
+
+  /**
+   * Validate GitHub repo existence and user access permissions
+   */
+  async validateRepoAccess(
+    accessToken: string,
+    owner: string,
+    repo: string,
+  ): Promise<boolean> {
+    try {
+      const octokit = new Octokit({
+        auth: accessToken,
+      });
+      await octokit.rest.repos.get({
+        owner,
+        repo,
+      });
+      return true;
+    } catch (error) {
+      console.error("GitHub repo access validation failed:", error);
+      return false;
+    }
   }
 }
 

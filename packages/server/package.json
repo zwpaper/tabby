@@ -12,6 +12,7 @@
     "@hono-storage/s3": "^0.0.13",
     "@hono/zod-validator": "^0.4.3",
     "@lmnr-ai/lmnr": "^0.6.0",
+    "@octokit/rest": "^22.0.0",
     "@ragdoll/common": "workspace:*",
     "@ragdoll/db": "workspace:*",
     "@ragdoll/tools": "workspace:*",

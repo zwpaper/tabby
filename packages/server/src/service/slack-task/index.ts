@@ -147,13 +147,22 @@ class SlackTaskService {
     command: { channel_id: string; user_id: string; text?: string },
     taskText: string,
   ) {
-    const parsedCommand = this.parseTaskCommand(taskText);
-
     const integration = await slackService.getIntegration(userId);
     if (!integration) return;
 
     const githubToken = await githubService.getAccessToken(userId);
     if (!githubToken) {
+      return;
+    }
+
+    const parsedCommand = await this.parseTaskCommand(
+      taskText,
+      integration,
+      command.channel_id,
+      githubToken,
+    );
+
+    if (!parsedCommand) {
       return;
     }
 
@@ -222,20 +231,27 @@ class SlackTaskService {
   /**
    * Parse GitHub repository task command from Slack
    */
-  private parseTaskCommand(commandText: string): {
+  private async parseTaskCommand(
+    commandText: string,
+    integration: Awaited<ReturnType<typeof slackService.getIntegration>>,
+    channelId: string,
+    githubToken: string,
+  ): Promise<{
     description: string;
     githubRepository: {
       owner: string;
       repo: string;
     };
-  } {
+  } | null> {
     const trimmedText = commandText.trim();
     const match = trimmedText.match(/^\[(.+?\/.+?)\]\s*(.*)$/);
 
     if (!match) {
-      throw new Error(
-        "Invalid command format. Expected: [owner/repo] description",
-      );
+      await integration?.webClient.chat.postMessage({
+        channel: channelId,
+        text: "❌ Invalid command format. Expected: [owner/repo] description",
+      });
+      return null;
     }
 
     const repository = match[1];
@@ -243,10 +259,27 @@ class SlackTaskService {
     const ownerAndRepo = parseOwnerAndRepo(repository);
 
     if (!ownerAndRepo) {
-      // This case should ideally not be hit if the regex is correct
-      throw new Error("Invalid repository format. Expected: owner/repo");
+      await integration?.webClient.chat.postMessage({
+        channel: channelId,
+        text: "❌ Invalid repository format. Expected: owner/repo",
+      });
+      return null;
     }
     const { owner, repo } = ownerAndRepo;
+
+    const repoValidation = await githubService.validateRepoAccess(
+      githubToken,
+      owner,
+      repo,
+    );
+
+    if (!repoValidation) {
+      await integration?.webClient.chat.postMessage({
+        channel: channelId,
+        text: "❌ Failed to validate GitHub repo",
+      });
+      return null;
+    }
 
     return {
       description: description || "Work on repository",
