@@ -17,5 +17,6 @@
       "dependsOn": ["@ragdoll/vscode-webui#build"],
       "outputs": ["dist/**"]
     }
-  }
+  },
+  "globalPassThroughEnv": ["NODE_ENV"]
 }
