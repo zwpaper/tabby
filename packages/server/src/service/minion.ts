@@ -3,6 +3,8 @@ import { auth } from "../auth";
 import { db } from "../db";
 
 const VSCodeToken = "pochi";
+const RepoFolder = "/home/pochi/project";
+
 interface CreateMinionOptions {
   userId: string;
   taskId: number;
@@ -67,7 +69,9 @@ class MinionService {
 }
 
 function getUrl(sandbox: Sandbox) {
-  return `${sandbox.getHost(3000)}?tkn=${VSCodeToken}`;
+  return `${sandbox.getHost(3000)}?tkn=${VSCodeToken}&folder=${encodeURIComponent(
+    RepoFolder,
+  )}`;
 }
 
 export const minionService = new MinionService();
