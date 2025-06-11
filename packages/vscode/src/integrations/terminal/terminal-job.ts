@@ -32,6 +32,8 @@ export interface TerminalJobConfig {
   abortSignal?: AbortSignal;
   /** Background job configuration - detached by default and auto-completes after 5s of no output */
   background?: boolean;
+  /** timeout in seconds for the command execution */
+  timeout: number;
 }
 
 /**
@@ -127,10 +129,10 @@ export class TerminalJob implements vscode.Disposable {
     );
 
     try {
-      // Use Promise.race to handle abort signal alongside stream processing
+      // Use Promise.race to handle abort signal, timeout, and stream processing
       await Promise.race([
         this.processOutputStream(this.execution.read()),
-        this.createAbortPromise(),
+        this.createAbortAndTimeoutPromise(),
       ]);
     } catch (error) {
       // Re-throw ExecutionError as-is, wrap other errors
@@ -142,27 +144,55 @@ export class TerminalJob implements vscode.Disposable {
   }
 
   /**
-   * Creates a promise that rejects when the abort signal is triggered
+   * Creates a promise that rejects when the abort signal is triggered or timeout is reached
    */
-  private createAbortPromise(): Promise<never> {
+  private createAbortAndTimeoutPromise(): Promise<never> {
     return new Promise<never>((_, reject) => {
       const abortError = new ExecutionError(
         true,
         "Tool execution was aborted by user, please follow the user's guidance for next steps",
       );
 
+      const timeoutError = new ExecutionError(
+        false,
+        `Command execution timed out after ${this.config.timeout} seconds`,
+      );
+
+      // Check if already aborted
       if (this.config.abortSignal?.aborted) {
         reject(abortError);
         return;
       }
 
+      // Set up timeout
+      const timeoutId = setTimeout(() => {
+        logger.info(
+          `Command execution timed out after ${this.config.timeout}s: ${this.config.command}`,
+        );
+        reject(timeoutError);
+      }, this.config.timeout * 1000);
+
+      // Set up abort listener
       const abortListener = () => {
+        clearTimeout(timeoutId);
         logger.info(`Command execution aborted: ${this.config.command}`);
         reject(abortError);
       };
 
       this.config.abortSignal?.addEventListener("abort", abortListener, {
         once: true,
+      });
+
+      // Clean up timeout if promise chain is resolved elsewhere
+      // This is a fallback cleanup mechanism
+      const cleanup = () => {
+        clearTimeout(timeoutId);
+        this.config.abortSignal?.removeEventListener("abort", abortListener);
+      };
+
+      // Store cleanup function for potential use in dispose
+      this.disposables.push({
+        dispose: cleanup,
       });
     });
   }
@@ -173,11 +203,16 @@ export class TerminalJob implements vscode.Disposable {
   private async processOutputStream(
     outputStream: AsyncIterable<string>,
   ): Promise<void> {
-    const lineStream = this.config.background
+    const stream = this.config.background
       ? createBackgroundOutputStream(outputStream)
       : outputStream;
-    for await (const line of lineStream) {
-      this.outputManager.addLine(line);
+    for await (const chunk of stream) {
+      const lines = chunk
+        .split(/\r\n/)
+        .filter(
+          (line, index, array) => index !== array.length - 1 || line !== "",
+        ); // Filter out empty lines at the end
+      this.outputManager.addLine(...lines);
     }
   }
 

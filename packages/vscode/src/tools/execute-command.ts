@@ -6,7 +6,10 @@ import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
-> = async ({ command, cwd = ".", isDevServer }, { abortSignal }) => {
+> = async (
+  { command, cwd = ".", isDevServer, timeout = 60 },
+  { abortSignal },
+) => {
   if (!command) {
     throw new Error("Command is required to execute.");
   }
@@ -24,6 +27,7 @@ export const executeCommand: ToolFunctionType<
     cwd,
     abortSignal: abortSignal,
     background: isDevServer,
+    timeout,
   });
 
   // biome-ignore lint/suspicious/noExplicitAny: pass thread signal

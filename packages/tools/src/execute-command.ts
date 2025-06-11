@@ -3,7 +3,7 @@ import { defineClientTool } from "./types";
 
 export const executeCommand = defineClientTool({
   description:
-    `Executes a given bash command in a persistent shell session, ensuring proper handling and security measures.
+    `Executes a given bash command in a persistent shell session with optional timeout, ensuring proper handling and security measures.
 
 Before executing the command, please follow these steps:
 
@@ -17,6 +17,7 @@ Before executing the command, please follow these steps:
 
 Usage notes:
 - The command argument is required.
+- You can specify an optional timeout in seconds (up to 300s / 5 minutes). If not specified, commands will timeout after 60s (1 minute).
 - If the output exceeds 30000 characters, output will be truncated before being returned to you.
 - When issuing multiple commands, use the ';' or '&&' operator to separate them. DO NOT use newlines (newlines are ok in quoted strings).
 
@@ -86,6 +87,12 @@ Important:
       .describe(
         "Whether the command is being run as a development server, e.g. `npm run dev`.",
       ),
+    timeout: z
+      .number()
+      .min(1)
+      .max(60 * 5)
+      .optional()
+      .describe("Optional timeout in seconds, max 300 seconds."),
   }),
   outputSchema: z.object({
     output: z

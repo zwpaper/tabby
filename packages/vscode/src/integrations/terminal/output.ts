@@ -25,18 +25,25 @@ export class OutputTruncator {
    */
   truncateLines(lines: string[]): TruncationResult {
     const currentLines = [...lines];
-    let content = currentLines.join("\n");
-    let contentBytes = Buffer.byteLength(content, "utf8");
+
+    // Calculate initial content size using the same separator as joinContent
+    let contentBytes = this.calculateContentBytes(currentLines);
 
     if (contentBytes <= MaxTerminalOutputSize) {
       return { lines: currentLines, isTruncated: this.isTruncated };
     }
 
     // Remove lines from the beginning until we're under the limit
+    // Use running byte count to avoid O(n²) behavior
     while (contentBytes > MaxTerminalOutputSize && currentLines.length > 0) {
-      currentLines.shift(); // Remove the first (oldest) line
-      content = currentLines.join("\n");
-      contentBytes = Buffer.byteLength(content, "utf8");
+      const removedLine = currentLines.shift(); // Remove the first (oldest) line
+      if (!removedLine) break; // Safety check, though this shouldn't happen
+
+      // Subtract the removed line's bytes plus separator bytes
+      const removedLineBytes = Buffer.byteLength(removedLine, "utf8");
+      const separatorBytes =
+        currentLines.length > 0 ? Buffer.byteLength("\r\n", "utf8") : 0;
+      contentBytes -= removedLineBytes + separatorBytes;
     }
 
     if (!this.isTruncated) {
@@ -47,6 +54,23 @@ export class OutputTruncator {
     }
 
     return { lines: currentLines, isTruncated: true };
+  }
+
+  /**
+   * Calculates the total byte size of content when joined with separators
+   */
+  private calculateContentBytes(lines: string[]): number {
+    if (lines.length === 0) return 0;
+
+    let totalBytes = 0;
+    for (let i = 0; i < lines.length; i++) {
+      totalBytes += Buffer.byteLength(lines[i], "utf8");
+      // Add separator bytes for all lines except the last one
+      if (i < lines.length - 1) {
+        totalBytes += Buffer.byteLength("\r\n", "utf8");
+      }
+    }
+    return totalBytes;
   }
 }
 
@@ -63,8 +87,8 @@ export class OutputManager {
   /**
    * Adds a new line to the output and updates the signal
    */
-  addLine(line: string): void {
-    this.lines.push(line);
+  addLine(...lines: string[]): void {
+    this.lines.push(...lines);
     this.updateOutput("running");
   }
 
@@ -90,7 +114,7 @@ export class OutputManager {
     }
 
     this.output.value = {
-      content: this.lines.join(""),
+      content: joinContent(this.lines),
       status: "completed",
       isTruncated,
       error: errorText,
@@ -107,9 +131,13 @@ export class OutputManager {
     this.lines = truncatedLines;
 
     this.output.value = {
-      content: this.lines.join(""),
+      content: joinContent(this.lines),
       status,
       isTruncated,
     };
   }
+}
+
+function joinContent(lines: string[]): string {
+  return lines.join("\r\n");
 }
