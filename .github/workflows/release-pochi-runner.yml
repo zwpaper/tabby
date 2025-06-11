@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "runner@*"
 
 jobs:
   build:
@@ -18,8 +20,9 @@ jobs:
       - run: bun install
       - run: cd packages/runner && bun run release && ls -R dist
 
-      - uses: ncipollo/release-action@v1
-        if: github.event_name == 'push'
+      - name: Release latest
+        uses: ncipollo/release-action@v1
+        if: github.ref == 'refs/heads/main'
         with:
           allowUpdates: true
           prerelease: true
@@ -29,4 +32,20 @@ jobs:
           removeArtifacts: true
           owner: getpochi
           repo: code
+          token: ${{ secrets.POCHI_GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: extract_runner_version # Add an id to the step
+        if: startsWith(github.ref, 'refs/tags/runner@')
+        run: echo "version_number=$(echo ${{ github.ref_name }} | sed 's/runner@//')" >> $GITHUB_OUTPUT
+
+      - name: Release versioned
+        uses: ncipollo/release-action@v1
+        if: startsWith(github.ref, 'refs/tags/runner@')
+        with:
+          allowUpdates: true
+          artifacts: "packages/runner/dist/*"
+          owner: getpochi
+          repo: code
+          name: ${{ steps.extract_runner_version.outputs.version_number }}
           token: ${{ secrets.POCHI_GITHUB_TOKEN }}
