@@ -72,13 +72,15 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(["webFetch", "batchCall"]);
 
-    const { id, streamId, messages, event, uid } =
-      await taskService.startStreaming(user.id, req);
+    const { streamId, messages, event, uid } = await taskService.startStreaming(
+      user.id,
+      req,
+    );
 
     const dataStream = createDataStream({
       execute: async (stream) => {
         if (req.id === undefined) {
-          appendDataPart({ type: "append-id", id, uid }, stream);
+          appendDataPart({ type: "append-id", uid }, stream);
         }
 
         const preparedMessages = await prepareMessages(
@@ -90,7 +92,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         );
 
         const providerOptions = getProviderOptionsById(requestedModelId);
-        const result = Laminar.withSession(`${user.id}-${id}`, () =>
+        const result = Laminar.withSession(`${user.id}-${uid}`, () =>
           streamText({
             abortSignal: c.req.raw.signal,
             temperature: 0.2,
@@ -144,7 +146,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               const isUsageValid = !Number.isNaN(usage.totalTokens);
 
               await taskService.finishStreaming(
-                id,
+                uid,
                 user.id,
                 finalMessages,
                 finishReason,
@@ -175,7 +177,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               metadata: {
                 "user-id": user.id,
                 "user-email": user.email,
-                "task-id": id,
+                "task-id": uid,
               },
             },
             // Disallowing the model to repeat the environment details from our injection.
@@ -197,7 +199,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       onError(error) {
         // Failed to stream the response.
         const taskError = taskService.toTaskError(error);
-        taskService.failStreaming(id, user.id, taskError);
+        taskService.failStreaming(uid, user.id, taskError);
 
         if (taskError.kind === "APICallError") {
           console.log(
@@ -221,7 +223,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       });
     }
 
-    c.header("Pochi-Task-Id", id.toString());
+    c.header("Pochi-Task-Id", uid);
     return stream(c, (stream) => stream.pipe(resumableStream));
   })
   .get(
@@ -230,13 +232,12 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     async (c) => {
       setIdleTimeout(c.req.raw, 120);
 
-      const query = c.req.valid("query");
+      const { chatId: uid } = c.req.valid("query");
       const user = c.get("user");
-      const id = Number.parseInt(query.chatId);
       c.header("X-Vercel-AI-Data-Stream", "v1");
       c.header("Content-Type", "text/plain; charset=utf-8");
 
-      const streamId = await taskService.fetchLatestStreamId(id, user.id);
+      const streamId = await taskService.fetchLatestStreamId(uid, user.id);
       if (!streamId) {
         throw new HTTPException(404, { message: "Stream not found." });
       }
@@ -254,7 +255,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
         return stream(c, (stream) => stream.pipe(resumableStream));
       }
 
-      const task = await taskService.get(id, user.id);
+      const task = await taskService.get(uid, user.id);
       const mostRecentMessage = task?.conversation?.messages?.at(-1);
       if (!mostRecentMessage || mostRecentMessage.role !== "assistant") {
         return stream(c, (stream) => stream.pipe(emptyDataStream));

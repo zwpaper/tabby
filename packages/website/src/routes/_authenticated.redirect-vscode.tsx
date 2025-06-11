@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  taskId: z.number().optional(),
+  uid: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/redirect-vscode")({
@@ -23,19 +23,19 @@ export const Route = createFileRoute("/_authenticated/redirect-vscode")({
 });
 
 function RouteComponent() {
-  const { taskId } = Route.useSearch();
+  const { uid } = Route.useSearch();
   const [showManualButton, setShowManualButton] = useState(false);
   const { data: task } = useQuery({
-    queryKey: ["task", taskId],
+    queryKey: ["task", uid],
     queryFn: async () => {
-      if (!taskId) return null;
+      if (!uid) return null;
       // TODO(sma1lboy): should we just passing descrption directly?
-      const resp = await apiClient.api.tasks[":id"].$get({
-        param: { id: taskId.toString() },
+      const resp = await apiClient.api.tasks[":uid"].$get({
+        param: { uid },
       });
       return resp.json();
     },
-    enabled: !!taskId,
+    enabled: !!uid,
   });
 
   const description = useMemo(() => {
@@ -44,7 +44,7 @@ function RouteComponent() {
     }
     return null;
   }, [task]);
-  const vscodeLink = `vscode://TabbyML.pochi/?task=${taskId}`;
+  const vscodeLink = `vscode://TabbyML.pochi/?task=${uid}`;
 
   console.log(vscodeLink);
   const openVSCode = useCallback(() => {

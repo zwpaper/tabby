@@ -9,5 +9,5 @@ export const useTaskRunners = () => {
     queryFn: async () => threadSignal(await vscodeHost.readTaskRunners()),
   });
 
-  return data?.value || [];
+  return data?.value || {};
 };

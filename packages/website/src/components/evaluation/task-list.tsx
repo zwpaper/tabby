@@ -13,7 +13,7 @@ export function TaskList({ tasks }: TaskListProps) {
     <div className="max-h-80 space-y-3 overflow-y-auto pr-2">
       {tasks.map((task) => (
         <div
-          key={task.id}
+          key={task.uid}
           className="rounded-lg border bg-card p-4 shadow-sm transition-all duration-200 hover:bg-accent/50"
         >
           <div className="mb-3 flex items-start gap-3">
@@ -28,7 +28,7 @@ export function TaskList({ tasks }: TaskListProps) {
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      const vscodeLink = `vscode://TabbyML.pochi/?task=${task.id}`;
+                      const vscodeLink = `vscode://TabbyML.pochi/?task=${task.uid}`;
                       window.open(vscodeLink);
                     }}
                     className="h-6 px-2 text-xs"
@@ -41,7 +41,7 @@ export function TaskList({ tasks }: TaskListProps) {
                     variant="outline"
                     className="shrink-0 font-mono text-xs"
                   >
-                    #{task.id}
+                    {task.uid}
                   </Badge>
                 </div>
               </div>

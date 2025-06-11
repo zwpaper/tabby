@@ -134,7 +134,7 @@ export class TaskRunner {
   constructor(
     private readonly apiClient: ApiClient,
     private readonly pochiEvents: PochiEventSource,
-    private readonly taskId: number,
+    private readonly uid: string,
     private readonly context: RunnerContext,
   ) {}
 
@@ -157,7 +157,7 @@ export class TaskRunner {
     if (this.retryCount >= this.retryLimit) {
       logger.error(
         "Retry limit reached for task",
-        this.taskId,
+        this.uid,
         "with messages",
         messages,
       );
@@ -168,7 +168,7 @@ export class TaskRunner {
     }
     this.retryCount++;
 
-    logger.info("Retrying task", this.taskId, "with messages", messages);
+    logger.info("Retrying task", this.uid, "with messages", messages);
     const reload = async function* (
       this: TaskRunner,
     ): AsyncGenerator<TaskStepProgress> {
@@ -228,7 +228,7 @@ export class TaskRunner {
       const unsubscribe = this.pochiEvents.subscribe<TaskEvent>(
         "task:status-changed",
         ({ data }) => {
-          if (data.taskId !== this.taskId) {
+          if (data.uid !== this.uid) {
             return;
           }
 
@@ -244,7 +244,7 @@ export class TaskRunner {
           }
 
           throw new Error(
-            `Unexpected task status change: ${data.status} for task ${data.taskId}`,
+            `Unexpected task status change: ${data.status} for task ${data.uid}`,
           );
         },
       );
@@ -253,7 +253,7 @@ export class TaskRunner {
     const environment = await this.buildEnvironment();
     logger.info(
       "Starting streaming for task",
-      this.taskId,
+      this.uid,
       "with environment",
       environment,
     );
@@ -262,7 +262,7 @@ export class TaskRunner {
     const resp = await this.apiClient.api.chat.stream.$post(
       {
         json: {
-          id: this.taskId.toString(),
+          id: this.uid,
           message: fromUIMessage(lastMessage),
           environment,
         },
@@ -434,9 +434,9 @@ export class TaskRunner {
   }
 
   private async loadTask() {
-    const resp = await this.apiClient.api.tasks[":id"].$get({
+    const resp = await this.apiClient.api.tasks[":uid"].$get({
       param: {
-        id: this.taskId.toString(),
+        uid: this.uid,
       },
     });
 
@@ -478,7 +478,7 @@ export class TaskRunner {
       const unsubscribe = this.pochiEvents.subscribe<TaskEvent>(
         "task:status-changed",
         ({ data }) => {
-          if (data.taskId !== this.taskId) {
+          if (data.uid !== this.uid) {
             return;
           }
 
@@ -498,9 +498,7 @@ export class TaskRunner {
               cleanupAndResolve(task);
             } else {
               cleanupAndReject(
-                new Error(
-                  `Task ${this.taskId} is still streaming after timeout.`,
-                ),
+                new Error(`Task ${this.uid} is still streaming after timeout.`),
               );
             }
           })

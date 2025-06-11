@@ -104,16 +104,14 @@ const VSCodeHostStub = {
   openExternal: (_uri: string): Promise<void> => {
     return Promise.resolve();
   },
-  runTask: (_taskId: number): Promise<void> => {
+  runTask: (_uid: string): Promise<void> => {
     return Promise.resolve();
   },
   readTaskRunners: (): Promise<
-    ThreadSignalSerialization<{ [taskId: number]: TaskRunnerState }>
+    ThreadSignalSerialization<Record<string, TaskRunnerState>>
   > => {
     return Promise.resolve(
-      {} as ThreadSignalSerialization<{
-        [taskId: number]: TaskRunnerState;
-      }>,
+      {} as ThreadSignalSerialization<Record<string, TaskRunnerState>>,
     );
   },
 } satisfies VSCodeHostApi;

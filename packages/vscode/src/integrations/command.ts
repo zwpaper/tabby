@@ -133,7 +133,7 @@ export class CommandManager implements vscode.Disposable {
                   currentWorkspace,
                   params.githubTemplateUrl,
                   {
-                    taskId: task.id,
+                    uid: task.uid,
                   },
                   params.requestId,
                 );
@@ -152,7 +152,7 @@ export class CommandManager implements vscode.Disposable {
       vscode.commands.registerCommand(
         "ragdoll.prepareEvaluationProject",
         async (params: {
-          taskId: number;
+          uid: string;
           batchId: string;
           githubTemplateUrl: string;
         }) => {
@@ -179,7 +179,7 @@ export class CommandManager implements vscode.Disposable {
                   currentWorkspace,
                   params.githubTemplateUrl,
                   {
-                    taskId: params.taskId,
+                    uid: params.uid,
                   },
                 );
               } catch (error) {
@@ -196,7 +196,7 @@ export class CommandManager implements vscode.Disposable {
 
       vscode.commands.registerCommand(
         "ragdoll.openTask",
-        async (taskId: number) => {
+        async (uid: string) => {
           vscode.window.withProgress(
             {
               location: vscode.ProgressLocation.Notification,
@@ -207,7 +207,7 @@ export class CommandManager implements vscode.Disposable {
               await vscode.commands.executeCommand("ragdollWebui.focus");
               const webviewHost =
                 await this.ragdollWebviewProvider.retrieveWebviewHost();
-              webviewHost.openTask({ taskId });
+              webviewHost.openTask({ uid });
             },
           );
         },
@@ -219,7 +219,7 @@ export class CommandManager implements vscode.Disposable {
           await vscode.commands.executeCommand("ragdollWebui.focus");
           const webviewHost =
             await this.ragdollWebviewProvider.retrieveWebviewHost();
-          webviewHost.openTask({ taskId: "new" });
+          webviewHost.openTask({ uid: undefined });
         },
       ),
 

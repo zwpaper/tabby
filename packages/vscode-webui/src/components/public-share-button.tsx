@@ -16,7 +16,6 @@ import { useEffect, useState } from "react";
 interface PublicShareButtonProps {
   isPublicShared: boolean;
   disabled?: boolean;
-  taskId: number | undefined;
   uid: string | undefined;
   onError?: (e: Error) => void;
 }
@@ -24,7 +23,6 @@ interface PublicShareButtonProps {
 export function PublicShareButton({
   isPublicShared: initialIsPublicShared,
   disabled,
-  taskId,
   uid,
   onError,
 }: PublicShareButtonProps) {
@@ -46,13 +44,13 @@ export function PublicShareButton({
 
   const shareToggleMutation = useMutation({
     mutationFn: async (newIsPublicShared: boolean) => {
-      if (!taskId) {
+      if (!uid) {
         throw new Error("Task ID is required");
       }
 
-      const resp = await apiClient.api.tasks[":id"].share.$post({
+      const resp = await apiClient.api.tasks[":uid"].share.$post({
         param: {
-          id: taskId.toString(),
+          uid,
         },
         json: {
           isPublicShared: newIsPublicShared,
@@ -95,7 +93,7 @@ export function PublicShareButton({
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    if (shareToggleMutation.isPending || !taskId) return;
+    if (shareToggleMutation.isPending || !uid) return;
     shareToggleMutation.mutate(newIsPublicShared);
   };
 

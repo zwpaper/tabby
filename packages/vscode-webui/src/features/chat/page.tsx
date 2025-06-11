@@ -58,7 +58,7 @@ export function ChatPage({
 }
 
 type Task = NonNullable<
-  InferResponseType<(typeof apiClient.api.tasks)[":id"]["$get"]>
+  InferResponseType<(typeof apiClient.api.tasks)[":uid"]["$get"]>
 >;
 interface ChatProps {
   task: Task | null;
@@ -68,7 +68,6 @@ interface ChatProps {
 
 function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const autoApproveGuard = useAutoApproveGuard();
-  const taskId = useRef<number | undefined>(task?.id);
   const uid = useRef<string | undefined>(task?.uid);
   const [totalTokens, setTotalTokens] = useState<number>(
     task?.totalTokens || 0,
@@ -77,7 +76,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const isBatchEvaluationTask = task?.event?.type === "batch:evaluation";
 
   useEffect(() => {
-    taskId.current = task?.id;
     uid.current = task?.uid;
     if (task) {
       setTotalTokens(task.totalTokens || 0);
@@ -165,7 +163,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       }
     },
     experimental_prepareRequestBody: (req) =>
-      prepareRequestBody(taskId, req, selectedModel?.id),
+      prepareRequestBody(uid, req, selectedModel?.id),
     fetch: async (url, options) => {
       // Clear the data when a new request is made
       setData(undefined);
@@ -233,7 +231,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     data,
   });
 
-  useNewTaskHandler({ data, taskId, uid });
+  useNewTaskHandler({ data, uid });
 
   useTokenUsageUpdater({
     data,
@@ -277,7 +275,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     imageUpload,
     isSubmitDisabled,
     isLoading,
-    taskId,
+    uid,
     pendingApproval,
   });
 
@@ -397,13 +395,12 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                   messages={messages}
                   buildEnvironment={buildEnvironment}
                   todos={todos}
-                  taskId={taskId.current}
+                  uid={uid.current}
                 />
-                {taskId.current && uid.current && (
+                {uid.current && (
                   <PublicShareButton
                     isPublicShared={task?.isPublicShared === true}
                     disabled={isTaskLoading || isModelsLoading}
-                    taskId={taskId.current}
                     uid={uid.current}
                     onError={setAutoDismissError}
                   />

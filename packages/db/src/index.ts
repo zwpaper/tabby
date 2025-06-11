@@ -1,4 +1,4 @@
-import type { Generated, JSONColumnType } from "kysely";
+import type { ColumnType, Generated, JSONColumnType } from "kysely";
 import type { Environment } from "./environment";
 import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";
@@ -11,7 +11,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
 
   task: Omit<
     DbImpl["task"],
-    "event" | "conversation" | "environment" | "status" | "error"
+    "event" | "conversation" | "environment" | "status" | "error" | "taskId"
   > & {
     event: UserEvent | null;
     conversation: { messages: DBMessage[] } | null;
@@ -31,6 +31,9 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
       | "pending-model"
     >;
     error: TaskError | null;
+
+    // Make taskId writeable only for refactoring.
+    taskId: ColumnType<never, number, never>;
   };
 };
 

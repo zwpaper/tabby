@@ -17,7 +17,6 @@ interface TaskDisplayData {
 
 class SlackRichTextRenderer {
   private renderTaskBlocks(
-    taskId: number,
     data: TaskDisplayData,
     statusFields: Array<{ type: "mrkdwn"; text: string }>,
   ): AnyBlock[] {
@@ -28,7 +27,7 @@ class SlackRichTextRenderer {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `🐱 *AI Agent Task ${taskId} ${data.status || "Running"}*`,
+          text: `🐱 *AI Agent Task ${data.status || "Running"}*`,
         },
       },
       {
@@ -94,7 +93,6 @@ class SlackRichTextRenderer {
   }
 
   renderTaskCreationResponse(
-    taskId: number,
     description: string,
     data?: TaskDisplayData,
   ): AnyBlock[] {
@@ -128,14 +126,10 @@ class SlackRichTextRenderer {
       },
     ];
 
-    return this.renderTaskBlocks(taskId, taskData, statusFields);
+    return this.renderTaskBlocks(taskData, statusFields);
   }
 
-  renderTaskCompletion(
-    taskId: number,
-    result: string,
-    data?: TaskDisplayData,
-  ): AnyBlock[] {
+  renderTaskCompletion(result: string, data?: TaskDisplayData): AnyBlock[] {
     const taskData = {
       result,
       status: "Completed",
@@ -169,11 +163,10 @@ class SlackRichTextRenderer {
       },
     ];
 
-    return this.renderTaskBlocks(taskId, taskData, statusFields);
+    return this.renderTaskBlocks(taskData, statusFields);
   }
 
   renderTaskFailure(
-    taskId: number,
     errorMessage?: string,
     errorDetails?: string,
     data?: TaskDisplayData,
@@ -211,11 +204,10 @@ class SlackRichTextRenderer {
       },
     ];
 
-    return this.renderTaskBlocks(taskId, taskData, statusFields);
+    return this.renderTaskBlocks(taskData, statusFields);
   }
 
   renderTaskPendingTool(
-    taskId: number,
     pendingTool?: string,
     toolDescription?: string,
     data?: TaskDisplayData,
@@ -254,10 +246,10 @@ class SlackRichTextRenderer {
       },
     ];
 
-    return this.renderTaskBlocks(taskId, taskData, statusFields);
+    return this.renderTaskBlocks(taskData, statusFields);
   }
 
-  renderTaskPendingInput(taskId: number, data?: TaskDisplayData): AnyBlock[] {
+  renderTaskPendingInput(data?: TaskDisplayData): AnyBlock[] {
     const taskData = {
       status: "⏸️ Paused",
       userQuery: data?.userQuery || "Task is waiting for user input",
@@ -290,7 +282,7 @@ class SlackRichTextRenderer {
       },
     ];
 
-    const blocks = this.renderTaskBlocks(taskId, taskData, statusFields);
+    const blocks = this.renderTaskBlocks(taskData, statusFields);
 
     return blocks;
   }

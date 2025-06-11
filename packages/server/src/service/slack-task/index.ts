@@ -20,52 +20,42 @@ interface TaskNotificationData {
 }
 
 class SlackTaskService {
-  async notifyTaskStatusUpdate(userId: string, taskId: number) {
-    const task = await taskService.get(taskId, userId);
+  async notifyTaskStatusUpdate(userId: string, uid: string) {
+    const task = await taskService.get(uid, userId);
     if (!task || !isSlackTask(task)) {
       return;
     }
 
     switch (task.status) {
       case "completed":
-        await this.notifyTaskCompletion(userId, taskId, task);
+        await this.notifyTaskCompletion(userId, task);
         break;
       case "failed":
-        await this.notifyTaskFailure(userId, taskId, task);
+        await this.notifyTaskFailure(userId, task);
         break;
       case "pending-tool":
-        await this.notifyTaskPendingTool(userId, taskId, task);
+        await this.notifyTaskPendingTool(userId, task);
         break;
       case "pending-input":
-        await this.notifyTaskPendingInput(userId, taskId, task);
+        await this.notifyTaskPendingInput(userId, task);
         break;
       default:
         break;
     }
   }
 
-  private async notifyTaskPendingInput(
-    userId: string,
-    taskId: number,
-    task: Task,
-  ) {
+  private async notifyTaskPendingInput(userId: string, task: Task) {
     if (!task) return;
 
     const taskData = extractTaskNotificationData(task);
 
-    const richTextBlocks = slackRichTextRenderer.renderTaskPendingInput(
-      taskId,
-      taskData,
-    );
+    const richTextBlocks =
+      slackRichTextRenderer.renderTaskPendingInput(taskData);
 
     await this.updateSlackMessage(userId, task, richTextBlocks);
   }
 
-  private async notifyTaskPendingTool(
-    userId: string,
-    taskId: number,
-    task: Task,
-  ) {
+  private async notifyTaskPendingTool(userId: string, task: Task) {
     if (!task) return;
 
     const pendingToolInfo = this.extractPendingToolInfo(
@@ -74,7 +64,6 @@ class SlackTaskService {
     const taskData = extractTaskNotificationData(task);
 
     const richTextBlocks = slackRichTextRenderer.renderTaskPendingTool(
-      taskId,
       pendingToolInfo.toolName,
       pendingToolInfo.description,
       taskData,
@@ -83,14 +72,13 @@ class SlackTaskService {
     await this.updateSlackMessage(userId, task, richTextBlocks);
   }
 
-  private async notifyTaskFailure(userId: string, taskId: number, task: Task) {
+  private async notifyTaskFailure(userId: string, task: Task) {
     if (!task) return;
 
     const errorInfo = this.extractErrorInformation(task);
     const taskData = this.extractCompleteTaskNotificationData(task);
 
     const richTextBlocks = slackRichTextRenderer.renderTaskFailure(
-      taskId,
       errorInfo.message,
       errorInfo.details,
       taskData,
@@ -99,11 +87,7 @@ class SlackTaskService {
     await this.updateSlackMessage(userId, task, richTextBlocks);
   }
 
-  private async notifyTaskCompletion(
-    userId: string,
-    taskId: number,
-    task: Task,
-  ) {
+  private async notifyTaskCompletion(userId: string, task: Task) {
     if (!task) return;
 
     const taskData = this.extractCompleteTaskNotificationData(task);
@@ -112,7 +96,6 @@ class SlackTaskService {
     );
 
     const richTextBlocks = slackRichTextRenderer.renderTaskCompletion(
-      taskId,
       completionResult || "Task completed successfully.",
       taskData,
     );
@@ -188,7 +171,7 @@ class SlackTaskService {
       },
     };
 
-    const taskId = await taskService.createWithUserMessage(
+    const uid = await taskService.createWithUserMessage(
       userId,
       taskPrompt,
       slackEvent,
@@ -196,14 +179,13 @@ class SlackTaskService {
 
     const minion = await minionService.create({
       userId,
-      taskId,
+      uid,
       githubRepository: parsedCommand.githubRepository,
       githubAccessToken: githubToken,
     });
 
     const taskData = this.createTaskCreationData(taskPrompt);
     const richTextBlocks = slackRichTextRenderer.renderTaskCreationResponse(
-      taskId,
       `${taskPrompt}\n\n☁️ Cloud runner started in background`,
       taskData,
     );
@@ -225,7 +207,7 @@ class SlackTaskService {
       text: "✅ Cloud runner started successfully!",
     });
 
-    return taskId;
+    return uid;
   }
 
   /**
@@ -332,7 +314,7 @@ class SlackTaskService {
     const slackEventData = this.extractSlackEventData(task);
 
     if (!slackEventData?.ts || !slackEventData?.channel) {
-      console.error(`No message data found for task ${task.id}`);
+      console.error(`No message data found for task ${task.uid}`);
       return;
     }
 
@@ -349,7 +331,7 @@ class SlackTaskService {
     );
 
     if (!botMessageTs) {
-      console.error(`No bot message found in thread for task ${task.id}`);
+      console.error(`No bot message found in thread for task ${task.uid}`);
       return;
     }
 

@@ -79,7 +79,7 @@ function createVSCodeHost(): VSCodeHostApi {
           window.router.navigate({
             to: "/",
             search: {
-              taskId: params.taskId,
+              uid: params.uid,
               ts: Date.now(),
             },
             replace: true,

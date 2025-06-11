@@ -5,7 +5,7 @@ import { ReadyForRetryError } from "@/features/approval";
 import type { apiClient } from "@/lib/auth-client";
 
 type Task = NonNullable<
-  InferResponseType<(typeof apiClient.api.tasks)[":id"]["$get"]>
+  InferResponseType<(typeof apiClient.api.tasks)[":uid"]["$get"]>
 >;
 
 interface UseEventAutoStartOptions {

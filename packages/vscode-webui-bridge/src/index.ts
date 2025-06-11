@@ -26,11 +26,11 @@ export interface SessionState {
 }
 
 export interface TaskIdParams {
-  taskId: number;
+  uid: string;
 }
 
 export interface NewTaskParams {
-  taskId: "new";
+  uid: undefined;
 }
 
 export interface ExecuteCommandResult {

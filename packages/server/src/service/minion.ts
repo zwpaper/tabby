@@ -8,7 +8,7 @@ const TemplateId = process.env.E2B_TEMPLATE_ID || "4kfoc92tmo1x9igbf6qp";
 
 interface CreateMinionOptions {
   userId: string;
-  taskId: number;
+  uid: string;
   githubAccessToken: string;
   githubRepository: {
     owner: string;
@@ -18,7 +18,7 @@ interface CreateMinionOptions {
 class MinionService {
   async create({
     userId,
-    taskId,
+    uid,
     githubAccessToken,
     githubRepository,
   }: CreateMinionOptions) {
@@ -30,7 +30,7 @@ class MinionService {
     const envs = {
       POCHI_OPENVSCODE_TOKEN: VSCodeToken,
       POCHI_SESSION_TOKEN: session.token,
-      POCHI_TASK_ID: taskId.toString(),
+      POCHI_TASK_ID: uid,
 
       GITHUB_TOKEN: githubAccessToken,
       GH_TOKEN: githubAccessToken,

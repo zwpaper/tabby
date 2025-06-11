@@ -6,10 +6,7 @@ import { z } from "zod";
 import "@/components/prompt-form/prompt-form.css";
 
 const searchSchema = z.object({
-  taskId: z
-    .number()
-    .or(z.enum(["new"]))
-    .optional(),
+  uid: z.string().optional(),
   ts: z.number().optional(),
 });
 
@@ -19,19 +16,16 @@ export const Route = createFileRoute("/_auth/")({
 });
 
 function RouteComponent() {
-  const { taskId: taskIdFromRoute, ts = Date.now() } = Route.useSearch();
-  const key =
-    typeof taskIdFromRoute === "number"
-      ? `task-${taskIdFromRoute}`
-      : `new-${ts}`;
+  const { uid: uidFromRoute, ts = Date.now() } = Route.useSearch();
+  const key = uidFromRoute !== undefined ? `task-${uidFromRoute}` : `new-${ts}`;
 
   const { data: task, isFetching: isTaskLoading } = useQuery({
-    queryKey: ["task", taskIdFromRoute],
+    queryKey: ["task", uidFromRoute],
     queryFn: async () => {
-      if (typeof taskIdFromRoute === "number") {
-        const resp = await apiClient.api.tasks[":id"].$get({
+      if (uidFromRoute) {
+        const resp = await apiClient.api.tasks[":uid"].$get({
           param: {
-            id: taskIdFromRoute.toString(),
+            uid: uidFromRoute,
           },
         });
         return resp.json();
@@ -39,7 +33,7 @@ function RouteComponent() {
       return null;
     },
     refetchOnWindowFocus: false,
-    enabled: typeof taskIdFromRoute === "number",
+    enabled: !!uidFromRoute,
   });
 
   const { auth } = Route.useRouteContext();

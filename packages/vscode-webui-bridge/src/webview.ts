@@ -139,15 +139,13 @@ export interface VSCodeHostApi {
   /**
    * Start running a task in the background.
    */
-  runTask(taskId: number): Promise<void>;
+  runTask(uid: string): Promise<void>;
 
   /**
    * Reads the current task runners.
    */
   readTaskRunners(): Promise<
-    ThreadSignalSerialization<{
-      [taskId: number]: TaskRunnerState;
-    }>
+    ThreadSignalSerialization<Record<string, TaskRunnerState>>
   >;
 }
 

@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
-import { formatTaskId } from "@/lib/utils/task";
 import { Link } from "@tanstack/react-router";
 import { statuses } from "./constants";
 import { DataTableColumnHeader } from "./data-table-column-header";
@@ -37,17 +36,6 @@ export const columns: ColumnDef<Task>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Task" />
-    ),
-    cell: ({ row }) => (
-      <div className="w-[80px]">{formatTaskId(row.getValue("id"))}</div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
     accessorKey: "title",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Title" />
@@ -60,8 +48,8 @@ export const columns: ColumnDef<Task>[] = [
           )}
           <span className="max-w-[500px] truncate font-medium">
             <Link
-              to="/tasks/$taskId"
-              params={{ taskId: String(row.original.id) }}
+              to="/tasks/$uid"
+              params={{ uid: row.original.uid }}
               className="py-2 hover:underline"
             >
               {row.getValue("title")}

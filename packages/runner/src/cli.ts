@@ -23,9 +23,9 @@ const pochiEvents = createPochiEventSource(
   process.env.POCHI_SESSION_TOKEN,
 );
 
-const taskId = Number.parseInt(process.env.POCHI_TASK_ID);
-if (Number.isNaN(taskId)) {
-  throw new Error("POCHI_TASK_ID is not a number");
+const uid = process.env.POCHI_TASK_ID;
+if (!uid) {
+  throw new Error("POCHI_TASK_ID is not set");
 }
 
 const cwd = process.env.POCHI_CWD || process.cwd();
@@ -41,7 +41,7 @@ if (!rgPath) {
   }
   rgPath = foundRgPath;
 }
-const runner = new TaskRunner(apiClient, pochiEvents, taskId, { cwd, rgPath });
+const runner = new TaskRunner(apiClient, pochiEvents, uid, { cwd, rgPath });
 
 for await (const progress of runner.start()) {
   console.log(asReadableMessage(progress));

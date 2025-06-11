@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  taskId: z.number(),
+  uid: z.string(),
 });
 
 /**
@@ -33,11 +33,11 @@ export const Route = createFileRoute("/_auth/runner")({
 });
 
 function RunnerComponent() {
-  const { taskId } = Route.useSearch();
+  const { uid } = Route.useSearch();
   const resourceUri = useResourceURI();
   const { auth: authData } = Route.useRouteContext();
   const taskRunners = useTaskRunners();
-  const taskRunner = taskRunners[taskId];
+  const taskRunner = taskRunners[uid];
 
   const { status, progress, error } = taskRunner ?? {
     status: null,
@@ -50,15 +50,15 @@ function RunnerComponent() {
 
   const refreshTask = useCallback(async () => {
     setIsLoading(true);
-    const resp = await apiClient.api.tasks[":id"].$get({
+    const resp = await apiClient.api.tasks[":uid"].$get({
       param: {
-        id: taskId.toString(),
+        uid,
       },
     });
     const task = await resp.json();
     setIsLoading(false);
     setMessages(toUIMessages(task.conversation?.messages ?? []));
-  }, [taskId]);
+  }, [uid]);
 
   useEffect(() => {
     if (progress?.type === "loading-task") {
@@ -128,7 +128,7 @@ function RunnerComponent() {
             </div>
           )}
         </div>
-        <Link to={"/"} search={{ taskId }} className={buttonVariants()}>
+        <Link to={"/"} search={{ uid }} className={buttonVariants()}>
           Continue in Chat
         </Link>
       </div>

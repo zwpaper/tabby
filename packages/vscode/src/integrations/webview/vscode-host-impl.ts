@@ -353,14 +353,12 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     await vscode.env.openExternal(vscode.Uri.parse(uri));
   }
 
-  runTask = async (taskId: number) => {
-    this.taskRunnerManager.runTask(taskId);
+  runTask = async (uid: string) => {
+    this.taskRunnerManager.runTask(uid);
   };
 
   readTaskRunners = async (): Promise<
-    ThreadSignalSerialization<{
-      [taskId: number]: TaskRunnerState;
-    }>
+    ThreadSignalSerialization<Record<string, TaskRunnerState>>
   > => {
     return ThreadSignal.serialize(this.taskRunnerManager.status);
   };

@@ -19,7 +19,7 @@ interface UseChatSubmitProps {
   imageUpload: UseImageUploadReturn;
   isSubmitDisabled: boolean;
   isLoading: boolean;
-  taskId: React.MutableRefObject<number | undefined>;
+  uid: React.MutableRefObject<string | undefined>;
   pendingApproval: PendingApproval | undefined;
 }
 
@@ -28,7 +28,7 @@ export function useChatSubmit({
   imageUpload,
   isSubmitDisabled,
   isLoading,
-  taskId,
+  uid,
   pendingApproval,
 }: UseChatSubmitProps) {
   const autoApproveGuard = useAutoApproveGuard();
@@ -56,12 +56,12 @@ export function useChatSubmit({
       cancelUpload();
     } else if (isLoading) {
       stopChat();
-      if (taskId.current) {
+      if (uid.current) {
         const lastMessage = messages.at(-1);
         if (lastMessage) {
-          await apiClient.api.tasks[":id"].messages.$patch({
+          await apiClient.api.tasks[":uid"].messages.$patch({
             param: {
-              id: taskId.current.toString(),
+              uid: uid.current,
             },
             json: {
               messages: fromUIMessages([lastMessage]),
@@ -76,7 +76,7 @@ export function useChatSubmit({
     isExecuting,
     isUploading,
     isLoading,
-    taskId,
+    uid,
     messages,
     pendingApproval,
     abortToolCalls,

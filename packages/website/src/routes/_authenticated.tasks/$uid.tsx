@@ -1,7 +1,6 @@
 import { statuses } from "@/components/tasks/constants";
 import { apiClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { formatTaskId } from "@/lib/utils/task";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
@@ -12,12 +11,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 const isDEV = import.meta.env.DEV;
 const webviewOrigin = "http://localhost:4112";
 
-export const Route = createFileRoute("/_authenticated/tasks/$taskId")({
+export const Route = createFileRoute("/_authenticated/tasks/$uid")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { taskId } = Route.useParams();
+  const { uid } = Route.useParams();
   const {
     auth: { user },
   } = Route.useRouteContext();
@@ -25,22 +24,16 @@ function RouteComponent() {
   const [loaded, setLoaded] = useState(false);
   const [iframeError, setIframeError] = useState<Error | undefined>(undefined);
 
-  // Check if taskId is valid (numeric)
-  const isValidTaskId = !Number.isNaN(Number.parseInt(taskId));
-  const taskIdError = useMemo(() => {
-    return !isValidTaskId ? new Error("404") : undefined;
-  }, [isValidTaskId]);
-
   const {
     data: loaderData,
     isFetching,
     error: taskError,
   } = useQuery({
-    queryKey: ["task", taskId],
+    queryKey: ["task", uid],
     queryFn: async () => {
-      const resp = await apiClient.api.tasks[":id"].$get({
+      const resp = await apiClient.api.tasks[":uid"].$get({
         param: {
-          id: taskId,
+          uid: uid,
         },
       });
       if (!resp.ok) {
@@ -52,10 +45,9 @@ function RouteComponent() {
       return resp.json();
     },
     refetchOnWindowFocus: false,
-    enabled: isValidTaskId,
   });
 
-  const displayError = taskIdError || taskError || iframeError;
+  const displayError = taskError || iframeError;
 
   const iframeUrl = useMemo(() => {
     const hostOrigin = window.location.origin;
@@ -119,9 +111,7 @@ function RouteComponent() {
 
           <div className="flex flex-1 flex-col space-y-3 overflow-hidden pr-8">
             <h1 className="truncate whitespace-nowrap font-bold text-2xl">
-              {taskIdError
-                ? "Task"
-                : loaderData?.title || formatTaskId(Number.parseInt(taskId))}
+              loaderData?.title
             </h1>
 
             <div className="flex min-h-4 items-center justify-between gap-3 text-muted-foreground text-sm">
@@ -145,11 +135,7 @@ function RouteComponent() {
       <div className="flex flex-1 flex-col">
         {/* Error states */}
         {!!displayError && (
-          <ErrorDisplay
-            taskIdError={taskIdError}
-            taskError={taskError}
-            className="h-full"
-          />
+          <ErrorDisplay taskError={taskError} className="h-full" />
         )}
         {/* Loading state */}
         {isFetching && !loaderData && !displayError && (
@@ -180,26 +166,12 @@ type Task = NonNullable<
 >["data"][number];
 
 interface ErrorDisplayProps {
-  taskIdError?: Error;
   taskError?: Error | null;
   className?: string;
 }
 
-function ErrorDisplay({
-  taskIdError,
-  taskError,
-  className,
-}: ErrorDisplayProps) {
+function ErrorDisplay({ taskError, className }: ErrorDisplayProps) {
   const getErrorInfo = () => {
-    if (taskIdError) {
-      return {
-        title: "404",
-        message:
-          "Oops, it looks like the page you're looking for doesn't exist.",
-        type: "404" as const,
-      };
-    }
-
     if (taskError) {
       const isNotFound =
         taskError.message?.includes("not found") ||

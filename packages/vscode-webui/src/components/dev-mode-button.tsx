@@ -49,14 +49,14 @@ interface DevModeButtonProps {
   messages: UIMessage[];
   todos: Todo[] | undefined;
   buildEnvironment: () => Promise<Environment>;
-  taskId: number | undefined;
+  uid: string | undefined;
 }
 
 export function DevModeButton({
   messages,
   buildEnvironment,
   todos,
-  taskId,
+  uid,
 }: DevModeButtonProps) {
   const [isDevMode] = useIsDevMode();
   if (!isDevMode) return null;
@@ -86,12 +86,12 @@ export function DevModeButton({
   const { navigate } = useRouter();
 
   const handleRunInBackground = useCallback(() => {
-    if (!taskId) {
+    if (!uid) {
       return;
     }
-    vscodeHost.runTask(taskId);
-    navigate({ to: "/runner", replace: true, search: { taskId } });
-  }, [taskId, navigate]);
+    vscodeHost.runTask(uid);
+    navigate({ to: "/runner", replace: true, search: { uid } });
+  }, [uid, navigate]);
 
   return (
     <DropdownMenu>
@@ -124,7 +124,7 @@ export function DevModeButton({
             text="Copy Environment"
           />
           <CopyMenuItem fetchContent={getTodosContent} text="Copy TODOs" />
-          {taskId && (
+          {uid && (
             <DropdownMenuItem
               onClick={handleRunInBackground}
               className="cursor-pointer"

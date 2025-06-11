@@ -14,7 +14,7 @@ const logger = getLogger("TaskRunnerManager");
 @injectable()
 @singleton()
 export class TaskRunnerManager implements vscode.Disposable {
-  private taskRunners: Map<number, TaskRunnerState> = new Map();
+  private taskRunners: Map<string, TaskRunnerState> = new Map();
   readonly status: Signal<ReturnType<typeof this.buildStatus>>;
 
   constructor(
@@ -26,11 +26,11 @@ export class TaskRunnerManager implements vscode.Disposable {
     this.status = signal(this.buildStatus());
   }
 
-  async runTask(taskId: number) {
-    if (this.taskRunners.has(taskId)) {
-      const existingRunner = this.taskRunners.get(taskId);
+  async runTask(uid: string) {
+    if (this.taskRunners.has(uid)) {
+      const existingRunner = this.taskRunners.get(uid);
       if (existingRunner?.status === "running") {
-        logger.debug(`Task ${taskId} is already running.`);
+        logger.debug(`Task ${uid} is already running.`);
         return;
       }
     }
@@ -39,25 +39,23 @@ export class TaskRunnerManager implements vscode.Disposable {
       status: "running",
     };
     try {
-      logger.debug(`Starting task ${taskId}`);
-      const taskRunner = new TaskRunner(
-        this.apiClient,
-        this.pochiEvents,
-        taskId,
-        { cwd: getWorkspaceFolder().uri.fsPath, rgPath: vscodeRipgrepPath },
-      );
-      this.taskRunners.set(taskId, taskState);
+      logger.debug(`Starting task ${uid}`);
+      const taskRunner = new TaskRunner(this.apiClient, this.pochiEvents, uid, {
+        cwd: getWorkspaceFolder().uri.fsPath,
+        rgPath: vscodeRipgrepPath,
+      });
+      this.taskRunners.set(uid, taskState);
       this.updateStatus();
 
       for await (const progress of taskRunner.start()) {
-        logger.trace(`Task ${taskId} progress:`, progress);
+        logger.trace(`Task ${uid} progress:`, progress);
         // FIXME(zhiming): If progress is trying to run a toolcall which is not auto-approved, throw an error.
         taskState.progress = progress;
         this.updateStatus();
       }
-      logger.debug(`Task ${taskId} completed successfully.`);
+      logger.debug(`Task ${uid} completed successfully.`);
     } catch (error) {
-      logger.debug(`Task ${taskId} failed:`, error);
+      logger.debug(`Task ${uid} failed:`, error);
       taskState.error =
         error instanceof Error ? error.message : JSON.stringify(error);
     } finally {

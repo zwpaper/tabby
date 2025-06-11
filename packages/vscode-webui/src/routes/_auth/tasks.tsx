@@ -240,10 +240,10 @@ function Tasks({ cwd }: { cwd: string }) {
                 ))
               : tasks.map((task) => (
                   <TaskRow
-                    key={task.id}
+                    key={task.uid}
                     task={task}
                     runningInBackground={
-                      taskRunners[task.id]?.status === "running"
+                      taskRunners[task.uid]?.status === "running"
                     }
                   />
                 ))}
@@ -351,7 +351,7 @@ function TaskRow({
   return (
     <Link
       to={runningInBackground ? "/runner" : "/"}
-      search={{ taskId: task.id }}
+      search={{ uid: task.uid }}
       className="group cursor-pointer"
     >
       <div

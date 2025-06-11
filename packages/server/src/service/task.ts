@@ -57,15 +57,15 @@ class StreamingTask {
   constructor(
     readonly streamId: string,
     readonly userId: string,
-    readonly taskId: number,
+    readonly uid: string,
   ) {}
 
   get key() {
-    return StreamingTask.key(this.userId, this.taskId);
+    return StreamingTask.key(this.userId, this.uid);
   }
 
-  static key(userId: string, taskId: number) {
-    return `${userId}:${taskId}`;
+  static key(userId: string, uid: string) {
+    return `${userId}:${uid}`;
   }
 }
 
@@ -77,11 +77,11 @@ class TaskService {
     request: z.infer<typeof ZodChatRequestType>,
   ) {
     const streamId = generateId();
-    const { id, conversation, event, uid } = await this.prepareTask(
+    const { conversation, event, uid } = await this.prepareTask(
       userId,
       request,
     );
-    const streamingTask = new StreamingTask(streamId, userId, id);
+    const streamingTask = new StreamingTask(streamId, userId, uid);
     this.streamingTasks.set(streamingTask.key, streamingTask);
 
     const messages = appendClientMessage({
@@ -104,20 +104,19 @@ class TaskService {
         >`COALESCE("streamIds", '{}') || ARRAY[${streamId}]`,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
-      .where("taskId", "=", id)
+      .where("id", "=", uidDecode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
     publishTaskEvent(userId, {
       type: "task:status-changed",
       data: {
-        taskId: id,
+        uid,
         status: "streaming",
       },
     });
 
     return {
-      id,
       streamId,
       event,
       messages,
@@ -126,7 +125,7 @@ class TaskService {
   }
 
   async finishStreaming(
-    taskId: number,
+    uid: string,
     userId: string,
     messages: UIMessage[],
     finishReason: FinishReason,
@@ -146,23 +145,23 @@ class TaskService {
         // Clear error on successful completion
         error: null,
       })
-      .where("taskId", "=", taskId)
+      .where("id", "=", uidDecode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
     publishTaskEvent(userId, {
       type: "task:status-changed",
       data: {
-        taskId,
+        uid,
         status: status,
       },
     });
 
-    this.streamingTasks.delete(StreamingTask.key(userId, taskId));
-    slackTaskService.notifyTaskStatusUpdate(userId, taskId);
+    this.streamingTasks.delete(StreamingTask.key(userId, uid));
+    slackTaskService.notifyTaskStatusUpdate(userId, uid);
   }
 
-  async failStreaming(taskId: number, userId: string, error: TaskError) {
+  async failStreaming(uid: string, userId: string, error: TaskError) {
     await db
       .updateTable("task")
       .set({
@@ -170,20 +169,20 @@ class TaskService {
         updatedAt: sql`CURRENT_TIMESTAMP`,
         error,
       })
-      .where("taskId", "=", taskId)
+      .where("id", "=", uidDecode(uid))
       .where("userId", "=", userId)
       .execute();
 
     publishTaskEvent(userId, {
       type: "task:status-changed",
       data: {
-        taskId,
+        uid,
         status: "failed",
       },
     });
 
-    this.streamingTasks.delete(StreamingTask.key(userId, taskId));
-    slackTaskService.notifyTaskStatusUpdate(userId, taskId);
+    this.streamingTasks.delete(StreamingTask.key(userId, uid));
+    slackTaskService.notifyTaskStatusUpdate(userId, uid);
   }
 
   private async prepareTask(
@@ -191,21 +190,26 @@ class TaskService {
     request: z.infer<typeof ZodChatRequestType>,
   ) {
     const { id: chatId, event, environment } = request;
-    let taskId = chatId ? Number.parseInt(chatId) : undefined;
-    if (taskId === undefined) {
-      taskId = await this.create(userId, event);
+    let uid = chatId ?? undefined;
+    if (uid === undefined) {
+      uid = await this.create(userId, event);
     }
 
-    const data = await db
+    const {
+      id,
+      environment: taskEnvironment,
+      status,
+      ...data
+    } = await db
       .selectFrom("task")
       .select(["conversation", "event", "environment", "status", "id"])
-      .where("taskId", "=", taskId)
+      .where("id", "=", uidDecode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
-    this.verifyEnvironment(environment, data.environment);
+    this.verifyEnvironment(environment, taskEnvironment);
 
-    if (data.status === "streaming") {
+    if (status === "streaming") {
       throw new HTTPException(409, {
         message: "Task is already streaming",
       });
@@ -213,10 +217,7 @@ class TaskService {
 
     return {
       ...data,
-      environment: undefined,
-      status: undefined,
-      id: taskId,
-      uid: uidEncode(data.id),
+      uid: uidEncode(id),
     };
   }
 
@@ -230,7 +231,7 @@ class TaskService {
     userId: string,
     prompt: string,
     event?: UserEvent,
-  ): Promise<number> {
+  ): Promise<string> {
     const message: DBMessage = {
       id: generateId(),
       createdAt: new Date().toISOString(),
@@ -265,8 +266,8 @@ class TaskService {
       conversation: { messages: DBMessage[] } | null;
       status: DB["task"]["status"]["__insert__"];
     }>,
-  ): Promise<number> {
-    const { taskId } = await db.transaction().execute(async (trx) => {
+  ): Promise<string> {
+    const { id } = await db.transaction().execute(async (trx) => {
       const { nextTaskId } = await trx
         .insertInto("taskSequence")
         .values({ userId })
@@ -285,10 +286,10 @@ class TaskService {
           taskId: nextTaskId,
           ...taskData,
         })
-        .returning("taskId")
+        .returning("id")
         .executeTakeFirstOrThrow();
     });
-    return taskId;
+    return uidEncode(id);
   }
 
   private verifyEnvironment(
@@ -346,7 +347,6 @@ class TaskService {
       .where("userId", "=", userId)
       .select([
         "id",
-        "taskId",
         "createdAt",
         "updatedAt",
         "status",
@@ -355,7 +355,7 @@ class TaskService {
         titleSelect,
         gitSelect,
       ])
-      .orderBy("taskId", "desc")
+      .orderBy("id", "desc")
       .limit(limit)
       .offset(offset);
 
@@ -366,14 +366,11 @@ class TaskService {
     query = applyEventFilter(query, eventFilter);
 
     const items = await query.execute();
-    const data = items.map((task) => ({
+    const data = items.map(({ id, ...task }) => ({
       ...task,
-      uid: uidEncode(task.id), // Map id to uid
-      id: task.taskId, // Map taskId to id
+      uid: uidEncode(id), // Map id to uid
       title: parseTitle(task.title),
       totalTokens: task.totalTokens || undefined,
-      taskId: undefined,
-      // Ensure all selected fields are correctly mapped if names differ
     }));
 
     return {
@@ -387,13 +384,11 @@ class TaskService {
     };
   }
 
-  async get(id: number | string, userId: string) {
-    let taskQuery = db
+  async get(uid: string, userId: string) {
+    const taskQuery = db
       .selectFrom("task")
       .where("userId", "=", userId)
       .select([
-        "id",
-        "taskId",
         "createdAt",
         "updatedAt",
         "conversation",
@@ -405,13 +400,8 @@ class TaskService {
         titleSelect,
         gitSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
-      ]);
-
-    if (typeof id === "string") {
-      taskQuery = taskQuery.where("id", "=", uidDecode(id));
-    } else {
-      taskQuery = taskQuery.where("taskId", "=", id);
-    }
+      ])
+      .where("id", "=", uidDecode(uid));
 
     const task = await taskQuery.executeTakeFirst();
 
@@ -421,9 +411,7 @@ class TaskService {
 
     return {
       ...task,
-      uid: uidEncode(task.id), // Map id to uid
-      id: task.taskId, // Map taskId to id
-      taskId: undefined,
+      uid,
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
       title: parseTitle(task.title),
@@ -463,14 +451,14 @@ class TaskService {
       return null;
     }
 
+    const { userName, userImage, ...data } = task;
+
     return {
-      ...task,
+      ...data,
       user: {
-        name: task.userName,
-        image: task.userImage,
+        name: userName,
+        image: userImage,
       },
-      userName: undefined,
-      userImage: undefined,
       uid,
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
@@ -479,7 +467,7 @@ class TaskService {
   }
 
   async updateIsPublicShared(
-    taskId: number,
+    uid: string,
     userId: string,
     isPublicShared: boolean,
   ): Promise<boolean> {
@@ -489,20 +477,21 @@ class TaskService {
         isPublicShared,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
-      .where("taskId", "=", taskId)
+      .where("id", "=", uidDecode(uid))
       .where("userId", "=", userId)
       .executeTakeFirst();
     return result.numUpdatedRows > 0;
   }
 
   async appendMessages(
-    taskId: number,
+    uid: string,
     userId: string,
     messages: DBMessage[],
   ): Promise<boolean> {
+    const id = uidDecode(uid);
     const task = await db
       .selectFrom("task")
-      .where("taskId", "=", taskId)
+      .where("id", "=", id)
       .where("userId", "=", userId)
       .select(["conversation"])
       .executeTakeFirst();
@@ -532,27 +521,16 @@ class TaskService {
         },
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
-      .where("taskId", "=", taskId)
+      .where("id", "=", id)
       .where("userId", "=", userId)
       .executeTakeFirst();
     return result.numUpdatedRows > 0;
   }
 
-  async delete(taskId: number, userId: string): Promise<boolean> {
-    const task = await db
-      .selectFrom("task")
-      .where("taskId", "=", taskId)
-      .where("userId", "=", userId)
-      .select("taskId") // Select minimal data for existence check
-      .executeTakeFirst();
-
-    if (!task) {
-      return false; // Task not found
-    }
-
+  async delete(uid: string, userId: string): Promise<boolean> {
     const result = await db
       .deleteFrom("task")
-      .where("taskId", "=", taskId)
+      .where("id", "=", uidDecode(uid))
       .where("userId", "=", userId)
       .executeTakeFirst(); // Use executeTakeFirst for delete to get affected rows count
 
@@ -560,7 +538,7 @@ class TaskService {
   }
 
   async fetchLatestStreamId(
-    taskId: number,
+    uid: string,
     userId: string,
   ): Promise<string | null> {
     const result = await db
@@ -570,7 +548,7 @@ class TaskService {
           "latestStreamId",
         ),
       )
-      .where("taskId", "=", taskId)
+      .where("id", "=", uidDecode(uid))
       .where("userId", "=", userId)
       .executeTakeFirst();
 
@@ -589,7 +567,7 @@ class TaskService {
     const promises = [];
     for (const task of streamingTasksToFail) {
       promises.push(
-        this.failStreaming(task.taskId, task.userId, {
+        this.failStreaming(task.uid, task.userId, {
           kind: "AbortError",
           message: "Server is shutting down, task was aborted",
         }),

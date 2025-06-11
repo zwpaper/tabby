@@ -19,10 +19,6 @@ const PaginationSchema = z.object({
     .transform((val) => parseEventFilter(val)),
 });
 
-const TaskParamsSchema = z.object({
-  id: z.string(),
-});
-
 const TaskUidParamsSchema = z.object({
   uid: z.string(),
 });
@@ -47,15 +43,11 @@ const tasks = new Hono()
     const { prompt, event } = c.req.valid("json");
     const user = c.get("user");
 
-    const taskId = await taskService.createWithUserMessage(
-      user.id,
-      prompt,
-      event,
-    );
+    const uid = await taskService.createWithUserMessage(user.id, prompt, event);
 
     return c.json({
       success: true,
-      taskId,
+      uid,
     });
   })
 
@@ -77,18 +69,14 @@ const tasks = new Hono()
 
   // Get a single task by ID
   .get(
-    "/:id",
-    zValidator("param", TaskParamsSchema),
+    "/:uid",
+    zValidator("param", TaskUidParamsSchema),
     requireAuth(),
     async (c) => {
-      const { id } = c.req.valid("param") || {};
+      const { uid } = c.req.valid("param") || {};
       const user = c.get("user");
-      const taskId = Number.parseInt(id);
 
-      const task = await taskService.get(
-        Number.isNaN(taskId) ? id : taskId,
-        user.id,
-      );
+      const task = await taskService.get(uid, user.id);
 
       if (!task) {
         throw new HTTPException(404, { message: "Task not found" });
@@ -100,15 +88,14 @@ const tasks = new Hono()
 
   // Delete a task by ID
   .delete(
-    "/:id",
-    zValidator("param", TaskParamsSchema),
+    "/:uid",
+    zValidator("param", TaskUidParamsSchema),
     requireAuth(),
     async (c) => {
-      const { id } = c.req.valid("param");
+      const { uid } = c.req.valid("param");
       const user = c.get("user");
-      const taskId = Number.parseInt(id);
 
-      const deleted = await taskService.delete(taskId, user.id);
+      const deleted = await taskService.delete(uid, user.id);
 
       if (!deleted) {
         throw new HTTPException(404, { message: "Task not found" });
@@ -120,21 +107,16 @@ const tasks = new Hono()
 
   // Share/unshare a task by ID
   .post(
-    "/:id/share",
-    zValidator("param", TaskParamsSchema),
+    "/:uid/share",
+    zValidator("param", TaskUidParamsSchema),
     zValidator("json", TaskShareSchema),
     requireAuth(),
     async (c) => {
-      const { id } = c.req.valid("param");
+      const { uid } = c.req.valid("param");
       const { isPublicShared } = c.req.valid("json");
       const user = c.get("user");
-      const taskId = Number.parseInt(id);
-      if (Number.isNaN(taskId)) {
-        throw new HTTPException(400, { message: "Invalid task ID" });
-      }
-
       const updated = await taskService.updateIsPublicShared(
-        taskId,
+        uid,
         user.id,
         isPublicShared,
       );
@@ -169,23 +151,15 @@ const tasks = new Hono()
     },
   )
   .patch(
-    "/:id/messages",
-    zValidator("param", TaskParamsSchema),
+    "/:uid/messages",
+    zValidator("param", TaskUidParamsSchema),
     zValidator("json", TaskPatchSchema),
     requireAuth(),
     async (c) => {
-      const { id } = c.req.valid("param");
+      const { uid } = c.req.valid("param");
       const { messages } = c.req.valid("json");
       const user = c.get("user");
-      const taskId = Number.parseInt(id);
-      if (Number.isNaN(taskId)) {
-        throw new HTTPException(400, { message: "Invalid task ID" });
-      }
-      const updated = await taskService.appendMessages(
-        taskId,
-        user.id,
-        messages,
-      );
+      const updated = await taskService.appendMessages(uid, user.id, messages);
       if (!updated) {
         throw new HTTPException(404, { message: "Task not found" });
       }

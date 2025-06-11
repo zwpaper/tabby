@@ -32,8 +32,8 @@ export function DataTableRowActions<TData>({
   const onDelete = async () => {
     setIsDeleting(true);
     toast.promise(
-      apiClient.api.tasks[":id"].$delete({
-        param: { id: task.id.toString() },
+      apiClient.api.tasks[":uid"].$delete({
+        param: { uid: task.uid },
       }),
       {
         loading: "Deleting task...",
@@ -51,7 +51,7 @@ export function DataTableRowActions<TData>({
   };
 
   function openVSCode() {
-    window.open(`vscode://TabbyML.pochi/?task=${task.id}`);
+    window.open(`vscode://TabbyML.pochi/?task=${task.uid}`);
   }
 
   return (

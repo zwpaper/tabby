@@ -219,12 +219,12 @@ export function Home() {
           throw new Error("Failed to create task");
         }
 
-        const { taskId } = await taskResponse.json();
+        const { uid } = await taskResponse.json();
 
         await navigate({
           to: "/redirect-vscode",
           search: {
-            taskId,
+            uid,
           },
         });
 

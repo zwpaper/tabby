@@ -4,7 +4,7 @@ import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { MutableRefObject } from "react";
 
 export function prepareRequestBody(
-  taskId: MutableRefObject<number | undefined>,
+  uid: MutableRefObject<string | undefined>,
   request: {
     messages: UIMessage[];
   },
@@ -15,7 +15,7 @@ export function prepareRequestBody(
     message.parts[0].type === "text" &&
     message.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
   return {
-    id: taskId.current?.toString(),
+    id: uid.current,
     model: triggerError ? "fake-model" : model,
     message: fromUIMessage(message),
   };

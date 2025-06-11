@@ -148,9 +148,8 @@ export function useEvaluationRunner(
           return;
         }
 
-        const taskId = (await taskResponse.json()).taskId;
-
-        const vscodeUri = `vscode://TabbyML.pochi/?task=${taskId}`;
+        const { uid } = await taskResponse.json();
+        const vscodeUri = `vscode://TabbyML.pochi/?task=${uid}`;
         window.open(vscodeUri, "_blank");
 
         await new Promise((resolve) => setTimeout(resolve, 2000));

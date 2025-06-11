@@ -10,18 +10,19 @@ import { WorkspaceJobQueue } from "@/lib/workspace-job";
 import type { DB } from "@ragdoll/db";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
+
 export interface NewProjectTask {
-  id: number;
+  uid: string;
   event: Extract<DB["task"]["event"], { type: "website:new-project" }>;
 }
 interface EvaluationTask {
-  id: number;
+  uid: string;
   event: Extract<DB["task"]["event"], { type: "batch:evaluation" }>;
 }
 
 const logger = getLogger("RagdollUriHandler");
 
-function getEvaluationProjectUri(batchId: string, taskId: number): vscode.Uri {
+function getEvaluationProjectUri(batchId: string, uid: string): vscode.Uri {
   const homeUri = vscode.Uri.file(homedir());
   const evaluationBaseUri = vscode.Uri.joinPath(
     homeUri,
@@ -29,7 +30,7 @@ function getEvaluationProjectUri(batchId: string, taskId: number): vscode.Uri {
     "evaluation-tests",
     batchId,
   );
-  return vscode.Uri.joinPath(evaluationBaseUri, `prompt-${taskId}`);
+  return vscode.Uri.joinPath(evaluationBaseUri, `prompt-${uid}`);
 }
 
 @injectable()
@@ -67,18 +68,15 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
 
     const task = searchParams.get("task");
     if (task) {
-      const taskIdInt = Number.parseInt(task);
-      if (!Number.isNaN(taskIdInt)) {
-        await this.handleTaskEvent(taskIdInt);
-        return;
-      }
+      await this.handleTaskEvent(task);
+      return;
     }
   }
 
-  private async handleTaskEvent(taskId: number) {
+  private async handleTaskEvent(uid: string) {
     try {
-      const taskResponse = await this.apiClient.api.tasks[":id"].$get({
-        param: { id: taskId.toString() },
+      const taskResponse = await this.apiClient.api.tasks[":uid"].$get({
+        param: { uid },
       });
       if (!taskResponse.ok) {
         throw new Error(`Failed to get task: ${taskResponse.status}`);
@@ -94,12 +92,12 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
           break;
         default:
           // default to open the task
-          await vscode.commands.executeCommand("ragdoll.openTask", taskId);
+          await vscode.commands.executeCommand("ragdoll.openTask", uid);
           break;
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      vscode.window.showErrorMessage(`Task ${taskId} failed: ${message}`);
+      vscode.window.showErrorMessage(`Task ${uid} failed: ${message}`);
     }
   }
 
@@ -153,7 +151,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
   private async handleEvaluationTask(task: EvaluationTask) {
     const batchId = task.event.data.batchId;
 
-    const evaluationProjectDir = getEvaluationProjectUri(batchId, task.id);
+    const evaluationProjectDir = getEvaluationProjectUri(batchId, task.uid);
 
     await vscode.workspace.fs.createDirectory(evaluationProjectDir);
 
@@ -163,7 +161,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       command: "ragdoll.prepareEvaluationProject",
       args: [
         {
-          taskId: task.id,
+          uid: task.uid,
           batchId,
           githubTemplateUrl: task.event.data.githubTemplateUrl,
         },

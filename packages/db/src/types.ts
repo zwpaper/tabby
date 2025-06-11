@@ -61,7 +61,7 @@ export type TaskError = {
 export type TaskEvent = {
   type: "task:status-changed";
   data: {
-    taskId: number;
+    uid: string;
     status: DB["task"]["status"]["__select__"];
   };
 };
