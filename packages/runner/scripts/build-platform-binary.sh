@@ -11,9 +11,9 @@ build() {
     bun run build -- --target=$target --outfile=./dist/$platform/pochi-runner
     # generate .tar.gz for linux and mac, generate .zip for windows
     if [ "$platform" == "windows-x64" ]; then
-        zip -r ./dist/pochi-code-$platform.zip -j ./dist/$platform/*
+        zip -r ./dist/pochi-runner-$platform.zip -j ./dist/$platform/*
     else
-        tar -czvf ./dist/pochi-code-$platform.tar.gz -C ./dist/$platform .
+        tar -czvf ./dist/pochi-runner-$platform.tar.gz -C ./dist/$platform .
     fi
     rm -rf ./dist/$platform
 }
