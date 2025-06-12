@@ -14,20 +14,20 @@ describe("OutputTruncator", () => {
     // Create lines that will exceed the limit (MaxTerminalOutputSize is 30,000)
     const lines = [
       "a".repeat(8000), // 8000 bytes
-      "b".repeat(8000), // 8000 bytes  
+      "b".repeat(8000), // 8000 bytes
       "c".repeat(8000), // 8000 bytes
       "d".repeat(8000), // 8000 bytes
     ];
-    // Total: 32000 bytes + 6 bytes for separators = 32006 bytes (exceeds 30000)
+    // Total: 32000 bytes (exceeds 30000)
 
-    const result = truncator.truncateLines(lines);
+    const result = truncator.truncateChunks(lines);
 
     // Should remove lines from the beginning until under limit
     assert.strictEqual(result.isTruncated, true);
-    assert.ok(result.lines.length < lines.length);
-    
+    assert.ok(result.chunks.length < lines.length);
+
     // Verify the content size is under the limit
-    const joinedContent = result.lines.join("\r\n");
+    const joinedContent = result.chunks.join("");
     const contentBytes = Buffer.byteLength(joinedContent, "utf8");
     assert.ok(contentBytes <= MaxTerminalOutputSize);
   });
@@ -35,31 +35,32 @@ describe("OutputTruncator", () => {
   it("should not truncate when content is under limit", () => {
     const lines = [
       "short line 1",
-      "short line 2", 
+      "short line 2",
       "short line 3",
     ];
 
-    const result = truncator.truncateLines(lines);
+    const result = truncator.truncateChunks(lines);
 
     assert.strictEqual(result.isTruncated, false);
-    assert.deepStrictEqual(result.lines, lines);
+    assert.deepStrictEqual(result.chunks, lines);
   });
 
   it("should handle empty lines array", () => {
-    const result = truncator.truncateLines([]);
+    const result = truncator.truncateChunks([]);
 
     assert.strictEqual(result.isTruncated, false);
-    assert.deepStrictEqual(result.lines, []);
+    assert.deepStrictEqual(result.chunks, []);
   });
 
   it("should handle single line that exceeds limit", () => {
     const lines = ["x".repeat(35000)]; // Single line exceeding limit (35000 > 30000)
 
-    const result = truncator.truncateLines(lines);
+    const result = truncator.truncateChunks(lines);
 
-    // Should remove all lines if even one line exceeds the limit
+    // Should truncate the single line to fit within the limit
     assert.strictEqual(result.isTruncated, true);
-    assert.deepStrictEqual(result.lines, []);
+    assert.strictEqual(result.chunks.length, 1);
+    assert.ok(Buffer.byteLength(result.chunks[0], "utf8") <= MaxTerminalOutputSize);
   });
 
   it("should preserve the most recent lines when truncating", () => {
@@ -72,13 +73,15 @@ describe("OutputTruncator", () => {
     // Force truncation by making lines large
     const largeLines = lines.map(line => line + "x".repeat(10000));
 
-    const result = truncator.truncateLines(largeLines);
+    const result = truncator.truncateChunks(largeLines);
 
     assert.strictEqual(result.isTruncated, true);
     // Should keep the newest (last) lines
-    assert.ok(result.lines[result.lines.length - 1].includes("newest line"));
+    assert.ok(result.chunks[result.chunks.length - 1].includes("newest line"));
   });
 });
+
+
 
 
 

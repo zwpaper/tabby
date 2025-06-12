@@ -207,12 +207,7 @@ export class TerminalJob implements vscode.Disposable {
       ? createBackgroundOutputStream(outputStream)
       : outputStream;
     for await (const chunk of stream) {
-      const lines = chunk
-        .split(/\r\n/)
-        .filter(
-          (line, index, array) => index !== array.length - 1 || line !== "",
-        ); // Filter out empty lines at the end
-      this.outputManager.addLine(...lines);
+      this.outputManager.addChunk(chunk);
     }
   }
 

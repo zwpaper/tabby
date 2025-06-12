@@ -10,7 +10,7 @@ const logger = getLogger("TerminalOutput");
  * Result of content truncation operation
  */
 interface TruncationResult {
-  lines: string[];
+  chunks: string[];
   isTruncated: boolean;
 }
 
@@ -21,57 +21,78 @@ export class OutputTruncator {
   private isTruncated = false;
 
   /**
-   * Truncates lines to stay within the maximum content size limit
+   * Truncates chunks to stay within the maximum content size limit
    */
-  truncateLines(lines: string[]): TruncationResult {
-    const currentLines = [...lines];
+  truncateChunks(chunks: string[]): TruncationResult {
+    const currentChunks = [...chunks];
 
     // Calculate initial content size using the same separator as joinContent
-    let contentBytes = this.calculateContentBytes(currentLines);
+    let contentBytes = calculateContentBytes(currentChunks);
 
     if (contentBytes <= MaxTerminalOutputSize) {
-      return { lines: currentLines, isTruncated: this.isTruncated };
+      return { chunks: currentChunks, isTruncated: this.isTruncated };
     }
 
-    // Remove lines from the beginning until we're under the limit
-    // Use running byte count to avoid O(n²) behavior
-    while (contentBytes > MaxTerminalOutputSize && currentLines.length > 0) {
-      const removedLine = currentLines.shift(); // Remove the first (oldest) line
-      if (!removedLine) break; // Safety check, though this shouldn't happen
+    // Remove chunks from the beginning until we're under the limit
+    while (contentBytes > MaxTerminalOutputSize && currentChunks.length > 1) {
+      const removedChunk = currentChunks.shift(); // Remove the first (oldest) chunk
+      if (!removedChunk) break; // Safety check, though this shouldn't happen
 
-      // Subtract the removed line's bytes plus separator bytes
-      const removedLineBytes = Buffer.byteLength(removedLine, "utf8");
-      const separatorBytes =
-        currentLines.length > 0 ? Buffer.byteLength("\r\n", "utf8") : 0;
-      contentBytes -= removedLineBytes + separatorBytes;
+      // Subtract the removed chunk's bytes
+      const removedChunkBytes = Buffer.byteLength(removedChunk, "utf8");
+      contentBytes -= removedChunkBytes;
+    }
+
+    // If only one chunk left but still exceeds limit, truncate its content
+    if (contentBytes > MaxTerminalOutputSize && currentChunks.length === 1) {
+      currentChunks[0] = truncateTextByLimit(
+        currentChunks[0],
+        MaxTerminalOutputSize,
+      );
     }
 
     if (!this.isTruncated) {
       this.isTruncated = true;
-      logger.warn(
-        `Shell output truncated at ${MaxTerminalOutputSize} bytes - removed ${lines.length - currentLines.length} lines`,
-      );
+      logger.warn(`Shell output truncated at ${MaxTerminalOutputSize} bytes`);
     }
 
-    return { lines: currentLines, isTruncated: true };
+    return { chunks: currentChunks, isTruncated: true };
   }
+}
 
-  /**
-   * Calculates the total byte size of content when joined with separators
-   */
-  private calculateContentBytes(lines: string[]): number {
-    if (lines.length === 0) return 0;
+/**
+ * Truncates a single text chunk to fit within the specified byte limit
+ * Uses binary search to find the maximum length that fits within the limit
+ */
+function truncateTextByLimit(chunk: string, limit: number): string {
+  let left = 0;
+  let right = chunk.length;
 
-    let totalBytes = 0;
-    for (let i = 0; i < lines.length; i++) {
-      totalBytes += Buffer.byteLength(lines[i], "utf8");
-      // Add separator bytes for all lines except the last one
-      if (i < lines.length - 1) {
-        totalBytes += Buffer.byteLength("\r\n", "utf8");
-      }
+  while (left < right) {
+    const mid = Math.floor((left + right + 1) / 2);
+    const candidate = chunk.substring(chunk.length - mid);
+
+    if (Buffer.byteLength(candidate, "utf8") <= limit) {
+      left = mid;
+    } else {
+      right = mid - 1;
     }
-    return totalBytes;
   }
+
+  return chunk.substring(chunk.length - left);
+}
+
+/**
+ * Calculates the total byte size of content
+ */
+function calculateContentBytes(chunks: string[]): number {
+  if (chunks.length === 0) return 0;
+
+  let totalBytes = 0;
+  for (let i = 0; i < chunks.length; i++) {
+    totalBytes += Buffer.byteLength(chunks[i], "utf8");
+  }
+  return totalBytes;
 }
 
 export class OutputManager {
@@ -81,14 +102,17 @@ export class OutputManager {
     isTruncated: false,
   });
 
-  private lines: string[] = [];
+  /**
+   * output text chunks, a chunk may contain multiple lines
+   */
+  private chunks: string[] = [];
   private truncator = new OutputTruncator();
 
   /**
    * Adds a new line to the output and updates the signal
    */
-  addLine(...lines: string[]): void {
-    this.lines.push(...lines);
+  addChunk(chunk: string): void {
+    this.chunks.push(chunk);
     this.updateOutput("running");
   }
 
@@ -97,10 +121,10 @@ export class OutputManager {
    */
   finalize(detached: boolean, error?: ExecutionError): void {
     // Final truncation check
-    const { lines: finalLines, isTruncated } = this.truncator.truncateLines(
-      this.lines,
+    const { chunks: finalChunks, isTruncated } = this.truncator.truncateChunks(
+      this.chunks,
     );
-    this.lines = finalLines;
+    this.chunks = finalChunks;
     let errorText: string | undefined;
 
     if (detached) {
@@ -114,7 +138,7 @@ export class OutputManager {
     }
 
     this.output.value = {
-      content: joinContent(this.lines),
+      content: joinContent(this.chunks),
       status: "completed",
       isTruncated,
       error: errorText,
@@ -125,19 +149,24 @@ export class OutputManager {
    * Updates the output signal with current content and status
    */
   private updateOutput(status: ExecuteCommandResult["status"]): void {
-    const { lines: truncatedLines, isTruncated } = this.truncator.truncateLines(
-      this.lines,
-    );
-    this.lines = truncatedLines;
+    const { chunks: truncatedChunks, isTruncated } =
+      this.truncator.truncateChunks(this.chunks);
+    this.chunks = truncatedChunks;
 
     this.output.value = {
-      content: joinContent(this.lines),
+      content: joinContent(this.chunks),
       status,
       isTruncated,
     };
   }
 }
 
-function joinContent(lines: string[]): string {
-  return lines.join("\r\n");
+/**
+ * Joins an array of text chunks into a single string
+ * As \r and \n has special meaning in terminal, we just join them directly
+ * @param chunks The text chunks to join
+ * @returns The joined string
+ */
+function joinContent(chunks: string[]): string {
+  return chunks.join("");
 }
