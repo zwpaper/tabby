@@ -62,7 +62,9 @@ export class CommandManager implements vscode.Disposable {
     this.disposables.push(
       vscode.commands.registerCommand("ragdoll.openLoginPage", async () => {
         vscode.env.openExternal(
-          vscode.Uri.parse(`${getServerBaseUrl()}/auth/vscode-link`),
+          vscode.Uri.parse(
+            `${getServerBaseUrl()}/auth/vscode-link?uriScheme=${vscode.env.uriScheme}`,
+          ),
         );
       }),
 

@@ -2,7 +2,10 @@ import { authClient } from "@/lib/auth-client";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/auth/vscode-link")({
-  async loader() {
+  async loader({ location }) {
+    const searchParams = new URLSearchParams(location.search);
+    const uriScheme = searchParams.get("uriScheme") || "vscode";
+
     const { data, error } = await authClient.signIn.deviceLink({
       deviceName: "Pochi VSCode Extension",
     });
@@ -10,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/auth/vscode-link")({
       return { error };
     }
 
-    const vscodeUri = new URL("vscode://TabbyML.pochi");
+    const vscodeUri = new URL(`${uriScheme}://TabbyML.pochi`);
     vscodeUri.searchParams.set("token", data.token);
 
     const uri = new URL(data.approveLink);

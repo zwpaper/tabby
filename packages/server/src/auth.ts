@@ -42,6 +42,7 @@ export const auth = betterAuth({
     "https://app.getpochi.com",
     "https://ragdoll-production.up.railway.app",
     "http://localhost:4111",
+    "http://localhost:4113",
   ],
   session: {
     cookieCache: {
