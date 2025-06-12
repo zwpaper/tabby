@@ -2,6 +2,7 @@
 
 import { anthropic } from "@ai-sdk/anthropic";
 import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
+import { openai } from "@ai-sdk/openai";
 import { type LanguageModelV1, wrapLanguageModel } from "ai";
 import { createBatchCallMiddleware } from "./batch-call-middleware";
 
@@ -23,6 +24,11 @@ export const AvailableModels: {
   },
   {
     id: "anthropic/claude-4-sonnet",
+    contextWindow: 200_000,
+    costType: "premium",
+  },
+  {
+    id: "openai/o3",
     contextWindow: 200_000,
     costType: "premium",
   },
@@ -67,6 +73,10 @@ function getModelByIdImpl(modelId: string): LanguageModelV1 | null {
       return google("gemini-2.5-pro-preview-06-05");
     case "google/gemini-2.5-flash":
       return google("gemini-2.5-flash-preview-04-17");
+    case "openai/o3":
+      return openai("o3-2025-04-16", {
+        reasoningEffort: "medium",
+      });
     default:
       return null;
   }
