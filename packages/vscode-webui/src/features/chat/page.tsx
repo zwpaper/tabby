@@ -218,13 +218,12 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     hasDirtyChanges,
     enterEditMode,
     exitEditMode,
-    saveTodos,
+    saveTodos: saveTodosImpl,
     updateTodoStatus,
   } = useTodos({
     initialTodos: task?.todos,
     messages,
     todosRef,
-    append,
   });
 
   useAutoResume({
@@ -272,7 +271,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       isTaskLoading,
       isModelsLoading,
       isLoading,
-      isEditMode,
       isInputEmpty: !input.trim(),
       isFilesEmpty: files.length === 0,
       isUploadingImages,
@@ -286,6 +284,14 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     uid,
     pendingApproval,
   });
+
+  const saveTodos = useCallback(() => {
+    saveTodosImpl();
+    handleSubmit(
+      undefined,
+      "<user-reminder>I have updated the to-do list and provided it within environment details. Please review them and adjust the plan accordingly. NEVER WORK ON TASKS THAT HAS BEEN MARKED AS COMPLETED OR CANCELLED.</user-reminder>",
+    );
+  }, [saveTodosImpl, handleSubmit]);
 
   useScrollToBottom({
     messagesContainerRef,

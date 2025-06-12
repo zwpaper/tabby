@@ -85,7 +85,7 @@ export function useChatSubmit({
   ]);
 
   const handleSubmit = useCallback(
-    async (e?: React.FormEvent<HTMLFormElement>) => {
+    async (e?: React.FormEvent<HTMLFormElement>, prompt?: string) => {
       autoApproveGuard.current = true;
       e?.preventDefault();
 
@@ -95,13 +95,14 @@ export function useChatSubmit({
 
       await handleStop();
 
+      const content = prompt || input.trim();
       if (files.length > 0) {
         try {
           const uploadedImages = await upload();
 
           append({
             role: "user",
-            content: !input.trim() ? " " : input,
+            content: content.length === 0 ? " " : content,
             experimental_attachments: uploadedImages,
           });
 
@@ -110,11 +111,11 @@ export function useChatSubmit({
           // Error is already handled by the hook
           return;
         }
-      } else if (input.trim()) {
+      } else if (content.length > 0) {
         clearUploadImageError();
         append({
           role: "user",
-          content: input,
+          content,
         });
         setInput("");
       }

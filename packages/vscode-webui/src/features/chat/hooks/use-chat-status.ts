@@ -4,7 +4,6 @@ interface UseChatStatusProps {
   isTaskLoading: boolean;
   isModelsLoading: boolean;
   isLoading: boolean;
-  isEditMode: boolean;
   isInputEmpty: boolean;
   isFilesEmpty: boolean;
   isUploadingImages: boolean;
@@ -14,7 +13,6 @@ export function useChatStatus({
   isTaskLoading,
   isModelsLoading,
   isLoading,
-  isEditMode,
   isInputEmpty,
   isFilesEmpty,
   isUploadingImages,
@@ -24,21 +22,16 @@ export function useChatStatus({
 
   const isBusyCore = isTaskLoading || isModelsLoading;
 
-  const isBusy = isBusyCore || isExecuting || isLoading;
-
-  const showEditTodos = !isBusy;
+  const showEditTodos = !isBusyCore;
 
   const isSubmitDisabled =
-    isBusyCore ||
-    isEditMode ||
-    (!isLoading && isInputEmpty && isFilesEmpty && !isExecuting);
+    isBusyCore || (!isLoading && isInputEmpty && isFilesEmpty && !isExecuting);
 
   const showStopButton = isExecuting || isLoading || isUploadingImages;
 
   return {
     isExecuting,
     isBusyCore,
-    isBusy,
     showEditTodos,
     isSubmitDisabled,
     showStopButton,

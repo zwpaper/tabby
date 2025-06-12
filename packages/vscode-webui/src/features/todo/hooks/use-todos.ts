@@ -1,5 +1,5 @@
 import type { Message } from "@ai-sdk/react";
-import type { CreateMessage, UIMessage } from "@ai-sdk/ui-utils";
+import type { UIMessage } from "@ai-sdk/ui-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Todo } from "@ragdoll/db";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -8,12 +8,10 @@ export function useTodos({
   initialTodos,
   messages,
   todosRef,
-  append,
 }: {
   initialTodos?: Todo[];
   messages: Message[];
   todosRef: React.MutableRefObject<Todo[] | undefined>;
-  append: (message: CreateMessage) => void;
 }) {
   const [todos, setTodosImpl] = useState<Todo[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -39,12 +37,7 @@ export function useTodos({
     setTodos(draftTodos);
     setIsEditMode(false);
     setDraftTodos([]);
-    append({
-      role: "user",
-      content:
-        "<user-reminder>I have updated the to-do list and provided it within environment details. Please review them and adjust the plan accordingly. NEVER WORK ON TASKS THAT HAS BEEN MARKED AS COMPLETED OR CANCELLED.</user-reminder>",
-    });
-  }, [draftTodos, setTodos, append]);
+  }, [draftTodos, setTodos]);
 
   const updateTodoStatus = useCallback(
     (todoId: string, newStatus: Todo["status"]) => {
