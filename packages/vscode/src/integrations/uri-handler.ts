@@ -20,7 +20,7 @@ interface EvaluationTask {
   event: Extract<DB["task"]["event"], { type: "batch:evaluation" }>;
 }
 
-const logger = getLogger("RagdollUriHandler");
+const logger = getLogger("UriHandler");
 
 function getEvaluationProjectUri(batchId: string, uid: string): vscode.Uri {
   const homeUri = vscode.Uri.file(homedir());
