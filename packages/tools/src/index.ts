@@ -11,6 +11,7 @@ import { executeCommand } from "./execute-command";
 import { globFiles } from "./glob-files";
 import { listFiles } from "./list-files";
 import { multiApplyDiff } from "./multi-apply-diff";
+import { newTask } from "./new-task";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
@@ -46,7 +47,12 @@ export const ClientTools = {
   writeToFile,
 };
 
-export type ClientToolsType = typeof ClientTools;
+export const ExperimentalClientTools = {
+  newTask,
+};
+
+export type ClientToolsType = typeof ClientTools &
+  typeof ExperimentalClientTools;
 
 export const ServerTools = {
   webFetch,
@@ -83,6 +89,20 @@ export const selectServerTools = (tools: string[]) => {
     }
 
     ret[tool] = ServerTools[tool as keyof typeof ServerTools];
+  }
+
+  return ret;
+};
+
+export const selectExperimentalClientTools = (tools: string[]) => {
+  const ret: Record<string, Tool> = {};
+  for (const tool of tools) {
+    if (!(tool in ExperimentalClientTools)) {
+      throw new Error(`Tool ${tool} not found`);
+    }
+
+    ret[tool] =
+      ExperimentalClientTools[tool as keyof typeof ExperimentalClientTools];
   }
 
   return ret;

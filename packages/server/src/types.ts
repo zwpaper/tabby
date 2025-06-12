@@ -19,6 +19,10 @@ export const ZodChatRequestType = z.object({
     .optional()
     .describe("MCP tools to use with this request"),
   environment: ZodEnvironment.optional(),
+  enableNewTask: z
+    .boolean()
+    .optional()
+    .describe("Enable the newTask tool for this request"),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;

@@ -5,6 +5,7 @@ import type { DB, Environment } from "@ragdoll/db";
 import {
   ClientTools,
   parseMcpToolSet,
+  selectExperimentalClientTools,
   selectServerTools,
 } from "@ragdoll/tools";
 import {
@@ -54,6 +55,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       environment,
       mcpToolSet,
       model: requestedModelId = "google/gemini-2.5-pro",
+      enableNewTask = false,
     } = req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
@@ -67,7 +69,13 @@ const chat = new Hono<{ Variables: ContextVariables }>()
 
     checkWaitlist(user);
 
-    const enabledClientTools = ClientTools;
+    const experimentalClientTools = enableNewTask
+      ? selectExperimentalClientTools(["newTask"])
+      : {};
+    const enabledClientTools = {
+      ...ClientTools,
+      ...experimentalClientTools,
+    };
 
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(["webFetch", "batchCall"]);
