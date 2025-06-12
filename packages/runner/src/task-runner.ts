@@ -272,12 +272,7 @@ export class TaskRunner {
     });
 
     const environment = await this.buildEnvironment();
-    logger.info(
-      "Starting streaming for task",
-      this.uid,
-      "with environment",
-      environment,
-    );
+    logger.info("Starting streaming for task", this.uid);
 
     yield { type: "sending-result", phase: "begin", message: lastMessage };
     const resp = await this.apiClient.api.chat.stream.$post(
