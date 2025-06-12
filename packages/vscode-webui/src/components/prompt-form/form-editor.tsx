@@ -294,7 +294,9 @@ export function FormEditor({
         const text = props.editor.getText({
           blockSeparator: newLineCharacter,
         });
-        setInput(text);
+        if (text !== input) {
+          setInput(text);
+        }
 
         // Save content when changes
         debouncedSaveEditorState();
@@ -356,7 +358,7 @@ export function FormEditor({
       editor &&
       input !== editor.getText({ blockSeparator: newLineCharacter })
     ) {
-      editor.commands.setContent(input);
+      editor.commands.setContent(input, true);
     }
   }, [editor, input]);
 
