@@ -1,63 +1,49 @@
 import { type AppType, createPochiEventSource } from "@ragdoll/server";
-import { Command } from "commander";
 import { hc } from "hono/client";
 
+import { Command } from "@commander-js/extra-typings";
+import { getLogger } from "@ragdoll/common";
+import * as commander from "commander";
 import { asReadableMessage } from ".";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { TaskRunner } from "./task-runner";
 
 const program = new Command();
-
 program.name("pochi-runner").description("Pochi cli runner");
 
+const logger = getLogger("Pochi");
+
 program
-  .argument("[prompt]", "Direct prompt to execute")
-  .action(async (prompt) => {
-    // Check if we have a POCHI_TASK_ID environment variable
-    const taskId = process.env.POCHI_TASK_ID;
-
-    if (!taskId && !prompt) {
-      console.error(
-        "Error: Either POCHI_TASK_ID environment variable must be set or a prompt must be provided",
+  .argument("[prompt]", "Creating a new task with the given prompt")
+  .option("--url <url>", "Pochi server url", "https://app.getpochi.com")
+  .option("--task <uid>", "Task uid to execute", process.env.POCHI_TASK_ID)
+  .requiredOption("--cwd <cwd>", "Current working directory", process.cwd())
+  .requiredOption(
+    "--rg <path>",
+    "Path to ripgrep binary",
+    findRipgrep() || undefined,
+  )
+  .requiredOption(
+    "--token <token>",
+    "Pochi session token",
+    process.env.POCHI_SESSION_TOKEN,
+  )
+  .action(async (prompt, options) => {
+    if (!options.task && !prompt) {
+      throw new commander.InvalidArgumentError(
+        "Error: Either --task or a prompt must be provided",
       );
-      process.exit(1);
     }
 
-    const PochiServerUrl =
-      process.env.POCHI_SERVER_URL || "https://app.getpochi.com";
-
-    if (!process.env.POCHI_SESSION_TOKEN) {
-      console.error(
-        "Error: POCHI_SESSION_TOKEN environment variable is required",
-      );
-      process.exit(1);
-    }
-
-    const apiClient = hc<AppType>(PochiServerUrl, {
+    const apiClient = hc<AppType>(options.url, {
       headers: {
-        Authorization: `Bearer ${process.env.POCHI_SESSION_TOKEN}`,
+        Authorization: `Bearer ${options.token}`,
       },
     });
 
-    const pochiEvents = createPochiEventSource(
-      PochiServerUrl,
-      process.env.POCHI_SESSION_TOKEN,
-    );
+    const pochiEvents = createPochiEventSource(options.url, options.token);
 
-    const cwd = process.env.POCHI_CWD || process.cwd();
-    let rgPath = process.env.RIPGREP_PATH;
-
-    // If RIPGREP_PATH is not set, try to find ripgrep in system PATH
-    if (!rgPath) {
-      const foundRgPath = findRipgrep();
-      if (!foundRgPath) {
-        throw new Error(
-          "Ripgrep (rg) not found. Please install ripgrep or set RIPGREP_PATH environment variable",
-        );
-      }
-      rgPath = foundRgPath;
-    }
-
+    let uid = options.task;
     if (prompt) {
       const response = await apiClient.api.tasks.$post({
         json: {
@@ -67,29 +53,25 @@ program
 
       if (!response.ok) {
         const error = await response.text();
-        console.error(`Failed to create task: ${error}`);
-        process.exit(1);
+        throw new Error(`Failed to create task: ${error}`);
       }
 
       const task = await response.json();
-      const runner = new TaskRunner(apiClient, pochiEvents, task.uid, {
-        cwd,
-        rgPath,
-      });
+      uid = task.uid;
+    }
 
-      for await (const progress of runner.start()) {
-        console.log(asReadableMessage(progress));
-      }
-    } else if (taskId) {
-      // Use existing task ID mode
-      const runner = new TaskRunner(apiClient, pochiEvents, taskId, {
-        cwd,
-        rgPath,
-      });
+    logger.info(
+      `You can visit ${options.url}/share/${uid} to see the task progress.`,
+    );
 
-      for await (const progress of runner.start()) {
-        console.log(asReadableMessage(progress));
-      }
+    // Use existing task ID mode
+    const runner = new TaskRunner(apiClient, pochiEvents, uid, {
+      cwd: options.cwd,
+      rg: options.rg,
+    });
+
+    for await (const progress of runner.start()) {
+      logger.info(asReadableMessage(progress));
     }
 
     process.exit(0);

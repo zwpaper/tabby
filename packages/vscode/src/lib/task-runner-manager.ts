@@ -45,7 +45,7 @@ export class TaskRunnerManager implements vscode.Disposable {
       logger.debug(`Starting task ${uid}`);
       const taskRunner = new TaskRunner(this.apiClient, this.pochiEvents, uid, {
         cwd: getWorkspaceFolder().uri.fsPath,
-        rgPath: vscodeRipgrepPath,
+        rg: vscodeRipgrepPath,
         model: option?.model,
         allowedTools: option?.allowedTools,
       });

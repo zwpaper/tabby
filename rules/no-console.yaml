@@ -1,0 +1,8 @@
+id: no-console
+language: TypeScript
+rule:
+  pattern: console.$$$
+message: Don't use console for logging, use getLogger instead.
+severity: error
+files:
+  - "packages/runner/src/**/*.ts"

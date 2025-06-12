@@ -2,8 +2,9 @@
   "name": "ragdoll",
   "private": true,
   "scripts": {
-    "check": "npm-run-all check:default check:test",
+    "check": "npm-run-all check:default check:test check:ast-grep",
     "fix": "npm-run-all 'check:default -- --write' 'check:test -- --write'",
+    "check:ast-grep": "ast-grep scan",
     "check:default": "biome check .",
     "check:test": "biome check --config-path=./biome.test.json .",
     "test": "turbo test",
@@ -35,6 +36,7 @@
     }
   },
   "devDependencies": {
+    "@ast-grep/cli": "^0.38.5",
     "@biomejs/biome": "1.9.4",
     "@types/bun": "^1.2.6",
     "depcheck": "^1.4.7",
@@ -43,5 +45,6 @@
     "turbo": "^2.5.4",
     "typescript": "^5.7.2"
   },
-  "packageManager": "bun@1.2.15"
+  "packageManager": "bun@1.2.15",
+  "trustedDependencies": ["@ast-grep/cli"]
 }

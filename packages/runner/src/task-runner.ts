@@ -60,7 +60,7 @@ export interface RunnerContext {
    * The path to the ripgrep executable.
    * This is used for searching files in the task runner.
    */
-  rgPath: string;
+  rg: string;
   // Add more context properties here as needed in the future
   // e.g., environment variables, workspace settings, etc.
 }

@@ -6,7 +6,7 @@ describe("readEnvironment", () => {
   it("should return environment data for task runner", async () => {
     const context: RunnerContext = {
       cwd: process.cwd(),
-      rgPath: process.env.RIPGREP_PATH || "rg",
+      rg: process.env.RIPGREP_PATH || "rg",
     };
 
     const environment = await readEnvironment(context);
@@ -26,7 +26,7 @@ describe("readEnvironment", () => {
   it("should include git status if repository exists", async () => {
     const context: RunnerContext = {
       cwd: process.cwd(), // This should be a git repository
-      rgPath: process.env.RIPGREP_PATH || "rg",
+      rg: process.env.RIPGREP_PATH || "rg",
     };
 
     const environment = await readEnvironment(context);
@@ -43,7 +43,7 @@ describe("readEnvironment", () => {
   it("should not include VSCode-specific data", async () => {
     const context: RunnerContext = {
       cwd: process.cwd(),
-      rgPath: process.env.RIPGREP_PATH || "rg",
+      rg: process.env.RIPGREP_PATH || "rg",
     };
 
     const environment = await readEnvironment(context);

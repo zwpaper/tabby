@@ -5,7 +5,7 @@ import type { RunnerContext } from "../../task-runner";
 describe("executeCommand", () => {
   const mockContext: RunnerContext = {
     cwd: process.cwd(),
-    rgPath: "rg", // Mock ripgrep path
+    rg: "rg", // Mock ripgrep path
   };
 
   const mockToolExecutionOptions = {

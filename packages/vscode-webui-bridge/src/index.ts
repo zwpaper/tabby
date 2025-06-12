@@ -47,7 +47,7 @@ export interface TaskRunnerState {
   error?: string;
 }
 
-export type TaskRunnerOptions = Omit<RunnerContext, "cwd" | "rgPath">;
+export type TaskRunnerOptions = Omit<RunnerContext, "cwd" | "rg">;
 
 const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";

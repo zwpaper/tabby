@@ -4,6 +4,7 @@
     "": {
       "name": "ragdoll",
       "devDependencies": {
+        "@ast-grep/cli": "^0.38.5",
         "@biomejs/biome": "1.9.4",
         "@types/bun": "^1.2.6",
         "depcheck": "^1.4.7",
@@ -51,6 +52,7 @@
       "bin": "src/cli.ts",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
+        "@commander-js/extra-typings": "^14.0.0",
         "@ragdoll/common": "workspace:*",
         "@ragdoll/server": "workspace:*",
         "ai": "catalog:",
@@ -334,6 +336,9 @@
       },
     },
   },
+  "trustedDependencies": [
+    "@ast-grep/cli",
+  ],
   "catalog": {
     "@ai-sdk/provider-utils": "^2.2.8",
     "@ai-sdk/ui-utils": "^1.2.11",
@@ -371,6 +376,22 @@
     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
 
     "@asamuzakjp/css-color": ["@asamuzakjp/css-color@3.1.1", "", { "dependencies": { "@csstools/css-calc": "^2.1.2", "@csstools/css-color-parser": "^3.0.8", "@csstools/css-parser-algorithms": "^3.0.4", "@csstools/css-tokenizer": "^3.0.3", "lru-cache": "^10.4.3" } }, "sha512-hpRD68SV2OMcZCsrbdkccTw5FXjNDLo5OuqSHyHZfwweGsDWZwDJ2+gONyNAbazZclobMirACLw0lk8WVxIqxA=="],
+
+    "@ast-grep/cli": ["@ast-grep/cli@0.38.5", "https://registry.npmmirror.com/@ast-grep/cli/-/cli-0.38.5.tgz", { "dependencies": { "detect-libc": "2.0.4" }, "optionalDependencies": { "@ast-grep/cli-darwin-arm64": "0.38.5", "@ast-grep/cli-darwin-x64": "0.38.5", "@ast-grep/cli-linux-arm64-gnu": "0.38.5", "@ast-grep/cli-linux-x64-gnu": "0.38.5", "@ast-grep/cli-win32-arm64-msvc": "0.38.5", "@ast-grep/cli-win32-ia32-msvc": "0.38.5", "@ast-grep/cli-win32-x64-msvc": "0.38.5" }, "bin": { "sg": "sg", "ast-grep": "ast-grep" } }, "sha512-XcweX3rUW0H5idrNWSuR60+N7whX6sOshUkgZzTEcvnx67vcWxVUq+NbadU2ne2ZTc/WPhSSMLNc1lSkZsS4hA=="],
+
+    "@ast-grep/cli-darwin-arm64": ["@ast-grep/cli-darwin-arm64@0.38.5", "https://registry.npmmirror.com/@ast-grep/cli-darwin-arm64/-/cli-darwin-arm64-0.38.5.tgz", { "os": "darwin", "cpu": "arm64" }, "sha512-Hmu/6s1c73+KH0EU01EJSg4xonIq8pyCNHEkOFA200LOvwkVFmwnb4kMhScu7Fvc4mtsi4w4gMg7D8fj3D3i+Q=="],
+
+    "@ast-grep/cli-darwin-x64": ["@ast-grep/cli-darwin-x64@0.38.5", "https://registry.npmmirror.com/@ast-grep/cli-darwin-x64/-/cli-darwin-x64-0.38.5.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-eoeBKOvJDiGN7Pa2Hqe/qVh9hRPC0s2LklVOQZrB8/tTyvaFFfLylcjvLGcucV5yDbqv0e4UZgOavxkqs+d3NQ=="],
+
+    "@ast-grep/cli-linux-arm64-gnu": ["@ast-grep/cli-linux-arm64-gnu@0.38.5", "https://registry.npmmirror.com/@ast-grep/cli-linux-arm64-gnu/-/cli-linux-arm64-gnu-0.38.5.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-88MhGBUnIMh2+6nK2zLzJzidpO2Xngm0kDTdd0h1aqZDFTfSl5kFf5uU9cU+execp81QGJ1SRfgSz+m8JW3+KA=="],
+
+    "@ast-grep/cli-linux-x64-gnu": ["@ast-grep/cli-linux-x64-gnu@0.38.5", "https://registry.npmmirror.com/@ast-grep/cli-linux-x64-gnu/-/cli-linux-x64-gnu-0.38.5.tgz", { "os": "linux", "cpu": "x64" }, "sha512-yGpbxhrRIB2bcxYBAx6jEp94pNP5BpMkG8NmSPK47g+ceAcv6CXr7wKGW3eQH3dbZS+VdH2iGF4bcV7TNI47YA=="],
+
+    "@ast-grep/cli-win32-arm64-msvc": ["@ast-grep/cli-win32-arm64-msvc@0.38.5", "https://registry.npmmirror.com/@ast-grep/cli-win32-arm64-msvc/-/cli-win32-arm64-msvc-0.38.5.tgz", { "os": "win32", "cpu": "arm64" }, "sha512-FffyPFg+O4udoWmLDwXVW/5w99P8b4xBVO3PvBHeYv5lrCz54xDo7Z29uOnApZY9h2Xi1gJJnSwfbIJc/0eHjQ=="],
+
+    "@ast-grep/cli-win32-ia32-msvc": ["@ast-grep/cli-win32-ia32-msvc@0.38.5", "https://registry.npmmirror.com/@ast-grep/cli-win32-ia32-msvc/-/cli-win32-ia32-msvc-0.38.5.tgz", { "os": "win32", "cpu": "ia32" }, "sha512-5nKXKZff9IjtjBrziPhrDH4ss28zFpyZSJpmfPY/kJ6MQukEMdxag3QChNcT9YdCJx0wkxq8mcam1XvN84IOfQ=="],
+
+    "@ast-grep/cli-win32-x64-msvc": ["@ast-grep/cli-win32-x64-msvc@0.38.5", "https://registry.npmmirror.com/@ast-grep/cli-win32-x64-msvc/-/cli-win32-x64-msvc-0.38.5.tgz", { "os": "win32", "cpu": "x64" }, "sha512-QZJy6PtISspj1g0fgx/ClN+Qq5B1icnCUHgLJTwnFNTV6IqBssVYOTZciG7GHPphNU3ee/8NysMPyTbdHZsf1w=="],
 
     "@aws-crypto/crc32": ["@aws-crypto/crc32@5.2.0", "", { "dependencies": { "@aws-crypto/util": "^5.2.0", "@aws-sdk/types": "^3.222.0", "tslib": "^2.6.2" } }, "sha512-nLbCWqQNgUiwwtFsen1AdzAtvuLRsQS8rYgMuxCrdKf9kOssamGLuPwyTY9wyYblNr9+1XM8v6zoDTPPSIeANg=="],
 
@@ -545,6 +566,8 @@
     "@bufbuild/protobuf": ["@bufbuild/protobuf@2.5.2", "", {}, "sha512-foZ7qr0IsUBjzWIq+SuBLfdQCpJ1j8cTuNNT4owngTHoN5KsJb8L9t65fzz7SCeSWzescoOil/0ldqiL041ABg=="],
 
     "@colors/colors": ["@colors/colors@1.6.0", "", {}, "sha512-Ir+AOibqzrIsL6ajt3Rz3LskB7OiMVHqltZmspbW/TJuTVuyOMirVqAkjfY6JISiLHgyNqicAC8AyHHGzNd/dA=="],
+
+    "@commander-js/extra-typings": ["@commander-js/extra-typings@14.0.0", "https://registry.npmmirror.com/@commander-js/extra-typings/-/extra-typings-14.0.0.tgz", { "peerDependencies": { "commander": "~14.0.0" } }, "sha512-hIn0ncNaJRLkZrxBIp5AsW/eXEHNKYQBh0aPdoUqNgD+Io3NIykQqpKFyKcuasZhicGaEZJX/JBSIkZ4e5x8Dg=="],
 
     "@connectrpc/connect": ["@connectrpc/connect@2.0.0-rc.3", "", { "peerDependencies": { "@bufbuild/protobuf": "^2.2.0" } }, "sha512-ARBt64yEyKbanyRETTjcjJuHr2YXorzQo0etyS5+P6oSeW8xEuzajA9g+zDnMcj1hlX2dQE93foIWQGfpru7gQ=="],
 
@@ -1920,7 +1943,7 @@
 
     "detect-file": ["detect-file@1.0.0", "", {}, "sha512-DtCOLG98P007x7wiiOmfI0fi3eIKyWiLTGJ2MDnVi/E04lWGbf+JzrRHMm0rgIIZJGtHpKpbVgLWHrv8xXpc3Q=="],
 
-    "detect-libc": ["detect-libc@2.0.3", "", {}, "sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw=="],
+    "detect-libc": ["detect-libc@2.0.4", "https://registry.npmmirror.com/detect-libc/-/detect-libc-2.0.4.tgz", {}, "sha512-3UDv+G9CsCKO1WKMGw9fwq/SWJYbI0c5Y7LU1AXYoDdbhE2AHQ6N6Nb34sG8Fj7T5APy8qXDCKuuIHd1BR0tVA=="],
 
     "detect-node-es": ["detect-node-es@1.1.0", "", {}, "sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ=="],
 
@@ -4026,6 +4049,8 @@
 
     "kysely-codegen/zod": ["zod@3.24.2", "", {}, "sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ=="],
 
+    "lightningcss/detect-libc": ["detect-libc@2.0.3", "", {}, "sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw=="],
+
     "load-json-file/parse-json": ["parse-json@4.0.0", "", { "dependencies": { "error-ex": "^1.3.1", "json-parse-better-errors": "^1.0.1" } }, "sha512-aOIos8bujGN93/8Ox/jPLh7RwVnPEysynVFE+fQZyg6jKELEHwzgKdLRFHUgXJL6kylijVSBC4BvN9OmsB48Rw=="],
 
     "log-symbols/chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
@@ -4054,6 +4079,8 @@
 
     "node-fetch/whatwg-url": ["whatwg-url@5.0.0", "", { "dependencies": { "tr46": "~0.0.3", "webidl-conversions": "^3.0.0" } }, "sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw=="],
 
+    "node-gyp-build-optional-packages/detect-libc": ["detect-libc@2.0.3", "", {}, "sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw=="],
+
     "normalize-package-data/hosted-git-info": ["hosted-git-info@2.8.9", "", {}, "sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw=="],
 
     "normalize-package-data/semver": ["semver@5.7.2", "", { "bin": { "semver": "bin/semver" } }, "sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g=="],
@@ -4081,6 +4108,8 @@
     "path-scurry/lru-cache": ["lru-cache@11.1.0", "", {}, "sha512-QIXZUBJUx+2zHUdQujWejBkcD9+cs94tLn0+YL8UrCh+D5sCXZ4c7LaEH48pNwRY3MLDgqUFyhlCyjJPf1WP0A=="],
 
     "pg/pg-types": ["pg-types@2.2.0", "", { "dependencies": { "pg-int8": "1.0.1", "postgres-array": "~2.0.0", "postgres-bytea": "~1.0.0", "postgres-date": "~1.0.4", "postgres-interval": "^1.1.0" } }, "sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA=="],
+
+    "prebuild-install/detect-libc": ["detect-libc@2.0.3", "", {}, "sha512-bwy0MGW55bG41VqxxypOsdSdGqLwXPI/focwgTYCFMbdUiBAxLg9CFzG08sz2aqzknwiX7Hkl0bQENjg8iLByw=="],
 
     "pretty-format/ansi-styles": ["ansi-styles@5.2.0", "", {}, "sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA=="],
 
