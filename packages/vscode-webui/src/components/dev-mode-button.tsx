@@ -50,6 +50,7 @@ interface DevModeButtonProps {
   todos: Todo[] | undefined;
   buildEnvironment: () => Promise<Environment>;
   uid: string | undefined;
+  selectedModel?: string;
 }
 
 export function DevModeButton({
@@ -57,6 +58,7 @@ export function DevModeButton({
   buildEnvironment,
   todos,
   uid,
+  selectedModel,
 }: DevModeButtonProps) {
   const [isDevMode] = useIsDevMode();
   if (!isDevMode) return null;
@@ -89,9 +91,9 @@ export function DevModeButton({
     if (!uid) {
       return;
     }
-    vscodeHost.runTask(uid);
+    vscodeHost.runTask(uid, { model: selectedModel });
     navigate({ to: "/runner", replace: true, search: { uid } });
-  }, [uid, navigate]);
+  }, [uid, navigate, selectedModel]);
 
   return (
     <DropdownMenu>

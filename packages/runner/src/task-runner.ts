@@ -43,6 +43,19 @@ export interface RunnerContext {
    * It should be an absolute path.
    */
   cwd: string;
+
+  /**
+   * The llm model to use for the task runner.
+   */
+  model?: string;
+
+  /**
+   * The tools that are allowed to be used in the task runner.
+   * This is used to restrict the tools that can be used in the task runner.
+   * If not provided, all tools are allowed.
+   */
+  allowedTools?: string[];
+
   /**
    * The path to the ripgrep executable.
    * This is used for searching files in the task runner.
@@ -137,6 +150,14 @@ export class TaskRunner {
     private readonly uid: string,
     private readonly context: RunnerContext,
   ) {}
+
+  private get allowedTools() {
+    return this.context.allowedTools
+      ? this.context.allowedTools.filter(
+          (tool) => tool in ToolMap || tool in ServerTools,
+        )
+      : Object.keys(ToolMap).concat(Object.keys(ServerTools));
+  }
 
   private async buildEnvironment(): Promise<Environment> {
     const environment = await readEnvironment(this.context);
@@ -265,6 +286,7 @@ export class TaskRunner {
           id: this.uid,
           message: fromUIMessage(lastMessage),
           environment,
+          model: this.context.model,
         },
       },
       {
@@ -292,6 +314,11 @@ export class TaskRunner {
     tool: ToolInvocation,
     abortSignal?: AbortSignal,
   ) {
+    if (!this.allowedTools.includes(tool.toolName)) {
+      return {
+        error: `Tool ${tool.toolName} is not allowed in this task. Allowed tools: ${this.allowedTools.join(", ")}`,
+      };
+    }
     if (tool.toolName in ServerTools) {
       return ServerToolApproved;
     }

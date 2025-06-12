@@ -60,7 +60,10 @@ export const ServerTools = {
   slackReplyThread,
 };
 
-type ToolName = keyof typeof ClientTools | keyof typeof ServerTools;
+type ToolName =
+  | keyof typeof ClientTools
+  | keyof typeof ServerTools
+  | keyof typeof ExperimentalClientTools;
 
 export const ToolsByPermission = {
   read: [
@@ -75,7 +78,7 @@ export const ToolsByPermission = {
     "applyDiff",
     "multiApplyDiff",
   ] satisfies ToolName[] as string[],
-  execute: ["executeCommand"] satisfies ToolName[] as string[],
+  execute: ["executeCommand", "newTask"] satisfies ToolName[] as string[],
   default: ["todoWrite"] satisfies ToolName[] as string[],
 };
 

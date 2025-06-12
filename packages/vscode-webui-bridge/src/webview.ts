@@ -8,6 +8,7 @@ import type {
   ResourceURI,
   SessionState,
   TaskIdParams,
+  TaskRunnerOptions,
   TaskRunnerState,
 } from "./index"; // Adjusted to import from index.ts
 
@@ -139,7 +140,7 @@ export interface VSCodeHostApi {
   /**
    * Start running a task in the background.
    */
-  runTask(uid: string): Promise<void>;
+  runTask(uid: string, options?: TaskRunnerOptions): Promise<void>;
 
   /**
    * Reads the current task runners.

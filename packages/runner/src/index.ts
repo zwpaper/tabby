@@ -1,4 +1,4 @@
-export type { TaskRunnerProgress } from "./task-runner";
+export type { TaskRunnerProgress, RunnerContext } from "./task-runner";
 import type { TaskRunnerProgress } from "./task-runner";
 
 export function asReadableMessage(progress: TaskRunnerProgress): string {

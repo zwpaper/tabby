@@ -1,6 +1,9 @@
 import { type Signal, signal } from "@preact/signals-core";
 import { TaskRunner } from "@ragdoll/runner/node";
-import type { TaskRunnerState } from "@ragdoll/vscode-webui-bridge";
+import type {
+  TaskRunnerOptions,
+  TaskRunnerState,
+} from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import type { ApiClient } from "./auth-client";
@@ -26,7 +29,7 @@ export class TaskRunnerManager implements vscode.Disposable {
     this.status = signal(this.buildStatus());
   }
 
-  async runTask(uid: string) {
+  async runTask(uid: string, option?: TaskRunnerOptions) {
     if (this.taskRunners.has(uid)) {
       const existingRunner = this.taskRunners.get(uid);
       if (existingRunner?.status === "running") {
@@ -43,6 +46,8 @@ export class TaskRunnerManager implements vscode.Disposable {
       const taskRunner = new TaskRunner(this.apiClient, this.pochiEvents, uid, {
         cwd: getWorkspaceFolder().uri.fsPath,
         rgPath: vscodeRipgrepPath,
+        model: option?.model,
+        allowedTools: option?.allowedTools,
       });
       this.taskRunners.set(uid, taskState);
       this.updateStatus();

@@ -413,6 +413,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                   buildEnvironment={buildEnvironment}
                   todos={todos}
                   uid={uid.current}
+                  selectedModel={selectedModel?.id}
                 />
                 {uid.current && (
                   <PublicShareButton

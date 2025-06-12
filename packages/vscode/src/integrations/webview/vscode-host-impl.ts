@@ -53,6 +53,7 @@ import type {
   McpStatus,
   ResourceURI,
   SessionState,
+  TaskRunnerOptions,
   TaskRunnerState,
   VSCodeHostApi,
 } from "@ragdoll/vscode-webui-bridge";
@@ -354,8 +355,8 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     await vscode.env.openExternal(vscode.Uri.parse(uri));
   }
 
-  runTask = async (uid: string) => {
-    this.taskRunnerManager.runTask(uid);
+  runTask = async (uid: string, options?: TaskRunnerOptions) => {
+    this.taskRunnerManager.runTask(uid, options);
   };
 
   readTaskRunners = async (): Promise<

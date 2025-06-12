@@ -1,4 +1,5 @@
 import type { TaskRunnerProgress } from "@ragdoll/runner";
+import type { RunnerContext } from "@ragdoll/runner";
 
 export type {
   VSCodeHostApi,
@@ -45,6 +46,8 @@ export interface TaskRunnerState {
   progress?: TaskRunnerProgress;
   error?: string;
 }
+
+export type TaskRunnerOptions = Omit<RunnerContext, "cwd" | "rgPath">;
 
 const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";
