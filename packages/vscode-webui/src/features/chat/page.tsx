@@ -139,9 +139,17 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       autoApproveGuard.current = true;
       let numToolCalls: number | undefined;
       if (finishReason === "tool-calls") {
+        // Find the last step-start index
+        const lastStepStartIndex =
+          message.parts?.reduce((lastIndex, part, index) => {
+            return part.type === "step-start" ? index : lastIndex;
+          }, -1) ?? -1;
+
+        // Count tool invocations only from after the last step-start
         numToolCalls =
-          message.parts?.filter((part) => part.type === "tool-invocation")
-            .length || 0;
+          message.parts
+            ?.slice(lastStepStartIndex + 1)
+            .filter((part) => part.type === "tool-invocation").length || 0;
       }
 
       vscodeHost.capture({
