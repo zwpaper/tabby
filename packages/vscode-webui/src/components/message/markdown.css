@@ -51,4 +51,8 @@
   p {
     @apply leading-relaxed;
   }
+
+  a {
+    @apply underline;
+  }
 }
