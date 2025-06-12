@@ -1,50 +1,98 @@
 import { type AppType, createPochiEventSource } from "@ragdoll/server";
+import { Command } from "commander";
 import { hc } from "hono/client";
 
 import { asReadableMessage } from ".";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { TaskRunner } from "./task-runner";
 
-if (!process.env.POCHI_TASK_ID) {
-  throw new Error("POCHI_TASK_ID is not set").toString();
-}
+const program = new Command();
 
-const PochiServerUrl =
-  process.env.POCHI_SERVER_URL || "https://app.getpochi.com";
+program.name("pochi-runner").description("Pochi cli runner");
 
-const apiClient = hc<AppType>(PochiServerUrl, {
-  headers: {
-    Authorization: `Bearer ${process.env.POCHI_SESSION_TOKEN}`,
-  },
-});
+program
+  .argument("[prompt]", "Direct prompt to execute")
+  .action(async (prompt) => {
+    // Check if we have a POCHI_TASK_ID environment variable
+    const taskId = process.env.POCHI_TASK_ID;
 
-const pochiEvents = createPochiEventSource(
-  PochiServerUrl,
-  process.env.POCHI_SESSION_TOKEN,
-);
+    if (!taskId && !prompt) {
+      console.error(
+        "Error: Either POCHI_TASK_ID environment variable must be set or a prompt must be provided",
+      );
+      process.exit(1);
+    }
 
-const uid = process.env.POCHI_TASK_ID;
-if (!uid) {
-  throw new Error("POCHI_TASK_ID is not set");
-}
+    const PochiServerUrl =
+      process.env.POCHI_SERVER_URL || "https://app.getpochi.com";
 
-const cwd = process.env.POCHI_CWD || process.cwd();
-let rgPath = process.env.RIPGREP_PATH;
+    if (!process.env.POCHI_SESSION_TOKEN) {
+      console.error(
+        "Error: POCHI_SESSION_TOKEN environment variable is required",
+      );
+      process.exit(1);
+    }
 
-// If RIPGREP_PATH is not set, try to find ripgrep in system PATH
-if (!rgPath) {
-  const foundRgPath = findRipgrep();
-  if (!foundRgPath) {
-    throw new Error(
-      "Ripgrep (rg) not found. Please install ripgrep or set RIPGREP_PATH environment variable",
+    const apiClient = hc<AppType>(PochiServerUrl, {
+      headers: {
+        Authorization: `Bearer ${process.env.POCHI_SESSION_TOKEN}`,
+      },
+    });
+
+    const pochiEvents = createPochiEventSource(
+      PochiServerUrl,
+      process.env.POCHI_SESSION_TOKEN,
     );
-  }
-  rgPath = foundRgPath;
-}
-const runner = new TaskRunner(apiClient, pochiEvents, uid, { cwd, rgPath });
 
-for await (const progress of runner.start()) {
-  console.log(asReadableMessage(progress));
-}
+    const cwd = process.env.POCHI_CWD || process.cwd();
+    let rgPath = process.env.RIPGREP_PATH;
 
-process.exit(0);
+    // If RIPGREP_PATH is not set, try to find ripgrep in system PATH
+    if (!rgPath) {
+      const foundRgPath = findRipgrep();
+      if (!foundRgPath) {
+        throw new Error(
+          "Ripgrep (rg) not found. Please install ripgrep or set RIPGREP_PATH environment variable",
+        );
+      }
+      rgPath = foundRgPath;
+    }
+
+    if (prompt) {
+      const response = await apiClient.api.tasks.$post({
+        json: {
+          prompt,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error(`Failed to create task: ${error}`);
+        process.exit(1);
+      }
+
+      const task = await response.json();
+      const runner = new TaskRunner(apiClient, pochiEvents, task.uid, {
+        cwd,
+        rgPath,
+      });
+
+      for await (const progress of runner.start()) {
+        console.log(asReadableMessage(progress));
+      }
+    } else if (taskId) {
+      // Use existing task ID mode
+      const runner = new TaskRunner(apiClient, pochiEvents, taskId, {
+        cwd,
+        rgPath,
+      });
+
+      for await (const progress of runner.start()) {
+        console.log(asReadableMessage(progress));
+      }
+    }
+
+    process.exit(0);
+  });
+
+program.parse();

@@ -19,6 +19,7 @@
     "@ragdoll/common": "workspace:*",
     "@ragdoll/server": "workspace:*",
     "ai": "catalog:",
+    "commander": "^14.0.0",
     "hono": "catalog:"
   },
   "devDependencies": {
