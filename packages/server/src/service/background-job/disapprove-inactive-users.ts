@@ -1,7 +1,9 @@
 import { getLogger } from "@ragdoll/common";
+import { Queue, Worker } from "bullmq";
 import { sql } from "kysely";
-import cron from "node-cron";
 import { db } from "../../db";
+import { queueConfig } from "./redis";
+
 const ExpirationDays = 14;
 
 const logger = getLogger("InactiveUserDisapproval");
@@ -14,7 +16,7 @@ interface InactiveUser {
 }
 
 // Clean up inactive waitlist approvals by checking chatCompletions table
-export async function disapproveInactiveUsers() {
+async function disapproveInactiveUsers() {
   return await db.transaction().execute(async (trx) => {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() - ExpirationDays);
@@ -50,14 +52,20 @@ export async function disapproveInactiveUsers() {
   });
 }
 
-// Start the scheduler - runs every 15 minutes
-export function startDisapproveInactiveUsersScheduler() {
-  cron.schedule("*/15 * * * *", async () => {
-    logger.debug("Running 15-minute inactive user disapproval check...");
-    try {
+const QueueName = "disapprove-inactive-users";
+
+const queue = new Queue(QueueName, queueConfig);
+
+await queue.upsertJobScheduler("every-15-minutes", {
+  pattern: "*/15 * * * *",
+});
+
+export function createDisapproveInactiveUsersWorker() {
+  return new Worker(
+    QueueName,
+    async () => {
       await disapproveInactiveUsers();
-    } catch (error) {
-      logger.error("Error occurred during inactive user disapproval:", error);
-    }
-  });
+    },
+    queueConfig,
+  );
 }

@@ -2,6 +2,7 @@ import type { DBMessage, UserEvent } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
 
 import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
+import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { minionService } from "../minion";
 import { slackService } from "../slack";
@@ -20,7 +21,12 @@ interface TaskNotificationData {
 }
 
 class SlackTaskService {
-  async notifyTaskStatusUpdate(userId: string, uid: string) {
+  async notifyTaskStatusUpdate(userId: string, uid: string, async = true) {
+    if (async) {
+      enqueueNotifyTaskSlack({ userId, uid });
+      return;
+    }
+
     const task = await taskService.get(uid, userId);
     if (!task || !isSlackTask(task)) {
       return;
