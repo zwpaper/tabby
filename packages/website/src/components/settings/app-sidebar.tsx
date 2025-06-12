@@ -94,7 +94,7 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter>
         <QuotaDisplay /> {/* Add the QuotaDisplay component here */}
-        <UserButton size="full" />
+        <UserButton size="full" className="border-none shadow-none" />
       </SidebarFooter>
     </Sidebar>
   );

@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/settings/app-sidebar";
 import { SiteHeader } from "@/components/settings/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { cn, tw } from "@/lib/utils";
 import {
   IconBlocks,
   IconChartBar,
@@ -79,20 +80,22 @@ function Settings() {
     }
   }
 
+  const sidebarStyle = (x: string) => tw`[&>div[data-sidebar=sidebar]]:${x}`;
+
   return (
-    <SidebarProvider>
+    <SidebarProvider className="mx-auto max-w-6xl md:mt-8">
       <AppSidebar
-        variant="inset"
+        variant="floating"
+        className={cn(
+          "max-h-120",
+          ["bg-transparent", "border-none", "shadow-none"].map(sidebarStyle),
+        )}
         panes={MainPanes.filter((p) => !p.hide || user.role === "admin")}
       />
-      <SidebarInset>
+      <SidebarInset className="md:px-4">
         <SiteHeader title={activePane?.title} />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="w-full p-2 md:p-6">
-              <Outlet />
-            </div>
-          </div>
+        <div className="@container/main px-2 py-4">
+          <Outlet />
         </div>
       </SidebarInset>
     </SidebarProvider>

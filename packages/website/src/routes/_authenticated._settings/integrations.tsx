@@ -324,7 +324,7 @@ function IntegrationsPage() {
   }, [queryClient, userId]);
 
   return (
-    <div className="w-full space-y-6 md:w-[700px]">
+    <div className="w-full space-y-6">
       {/* GitHub Integration Section */}
       <GithubIntegrationSection
         isLoading={isLoading}
