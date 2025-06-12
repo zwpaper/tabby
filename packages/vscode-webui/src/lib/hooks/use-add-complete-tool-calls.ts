@@ -1,4 +1,4 @@
-import { useToolCallLifeCycle } from "@/features/chat";
+import { type ToolCallLifeCycle, useToolCallLifeCycle } from "@/features/chat";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import { useEffect } from "react";
 
@@ -38,37 +38,10 @@ export function useAddCompleteToolCalls({
 
     for (const toolCall of completeToolCalls) {
       if (isToolStateCall(lastMessage, toolCall.toolCallId)) {
-        const { result, reason } = toolCall.complete;
-        // biome-ignore lint/suspicious/noExplicitAny: override external result
-        const overrideResult: any = {
-          ...(result as object),
-        };
-
-        // Use an switch clause so new reason will be caught by type checker.
-        switch (reason) {
-          case "user-abort":
-            overrideResult.error =
-              "User aborted the tool call, please use askFollowupQuestion to clarify next step with user.";
-            break;
-          case "user-reject":
-            overrideResult.error =
-              "User rejected the tool call, please use askFollowupQuestion to clarify next step with user.";
-            break;
-          case "user-detach":
-            // We use info instead of error to avoid the tool call being marked as failed.
-            overrideResult.info =
-              "User has detached the terminal, the job will continue running in the background, please use askFollowupQuestion to clarify next step with user.";
-            break;
-          case "preview-reject":
-          case "execute-finish":
-            break;
-          default:
-            assertUnreachable(reason);
-        }
-
+        const result = overrideResult(toolCall.complete);
         addToolResult({
           toolCallId: toolCall.toolCallId,
-          result: overrideResult,
+          result,
         });
         toolCall.dispose();
       }
@@ -78,4 +51,40 @@ export function useAddCompleteToolCalls({
 
 function assertUnreachable(_x: never): never {
   throw new Error("Didn't expect to get here");
+}
+
+function overrideResult(complete: ToolCallLifeCycle["complete"]) {
+  const { result, reason } = complete;
+  if (typeof result !== "object") {
+    return result;
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: override external result
+  const output: any = {
+    ...(result as object),
+  };
+
+  // Use an switch clause so new reason will be caught by type checker.
+  switch (reason) {
+    case "user-abort":
+      output.error =
+        "User aborted the tool call, please use askFollowupQuestion to clarify next step with user.";
+      break;
+    case "user-reject":
+      output.error =
+        "User rejected the tool call, please use askFollowupQuestion to clarify next step with user.";
+      break;
+    case "user-detach":
+      // We use info instead of error to avoid the tool call being marked as failed.
+      output.info =
+        "User has detached the terminal, the job will continue running in the background, please use askFollowupQuestion to clarify next step with user.";
+      break;
+    case "preview-reject":
+    case "execute-finish":
+      break;
+    default:
+      assertUnreachable(reason);
+  }
+
+  return output;
 }
