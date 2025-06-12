@@ -23,6 +23,7 @@ import {
   multiApplyDiff,
   previewMultiApplyDiff,
 } from "@/tools/multi-apply-diff";
+import { newTask } from "@/tools/new-task";
 import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
 import { todoWrite } from "@/tools/todo-write";
@@ -393,6 +394,7 @@ const ToolMap: Record<
   applyDiff,
   todoWrite,
   multiApplyDiff,
+  newTask,
 };
 
 const ToolPreviewMap: Record<

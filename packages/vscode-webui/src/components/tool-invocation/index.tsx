@@ -8,6 +8,7 @@ import { executeCommandTool } from "./tools/execute-command";
 import { globFilesTool } from "./tools/glob-files";
 import { listFilesTool } from "./tools/list-files";
 import { multiApplyDiffTool } from "./tools/multi-apply-diff";
+import { newTaskTool } from "./tools/new-task";
 import { readFileTool } from "./tools/read-file";
 import { searchFilesTool } from "./tools/search-files";
 import { todoWriteTool } from "./tools/todo-write";
@@ -51,4 +52,5 @@ const Tools: Record<string, React.FC<ToolProps>> = {
   globFiles: globFilesTool,
   webFetch: webFetchTool,
   todoWrite: todoWriteTool,
+  newTask: newTaskTool,
 };

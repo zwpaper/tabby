@@ -30,6 +30,7 @@ import { vscodeHost } from "@/lib/vscode";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 
 import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
+import { useSettingsStore } from "../settings/store";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
 import { useChatStatus } from "./hooks/use-chat-status";
@@ -126,6 +127,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   }, []);
 
   const { toolset: mcpToolSet } = useMcp();
+  const { enableNewTask } = useSettingsStore();
 
   const latestHttpCode = useRef<number | undefined>(undefined);
   const chat = useChat({
@@ -185,6 +187,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
             environment: await buildEnvironment(),
             // Inject the mcp tool set into the request body
             mcpToolSet,
+            enableNewTask,
           }),
       });
       // If the task is already streaming, resume the stream

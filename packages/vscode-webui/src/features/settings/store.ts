@@ -18,12 +18,14 @@ export interface SettingsState {
 
   isDevMode: boolean;
   allowEditTodos: boolean;
+  enableNewTask: boolean | undefined;
 
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
   updateAllowEditTodos: (value: boolean) => void;
+  updateEnableNewTask: (value: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -41,6 +43,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
       isDevMode: false,
       allowEditTodos: true,
+      enableNewTask: undefined,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
@@ -56,6 +59,8 @@ export const useSettingsStore = create<SettingsState>()(
       updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
       updateAllowEditTodos: (value: boolean) =>
         set(() => ({ allowEditTodos: value })),
+      updateEnableNewTask: (value: boolean) =>
+        set(() => ({ enableNewTask: value })),
     }),
     {
       name: "ragdoll-settings-storage",

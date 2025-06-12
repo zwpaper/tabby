@@ -3,8 +3,14 @@ import { AccordionSection } from "../ui/accordion-section";
 import { SettingsCheckboxOption } from "../ui/settings-checkbox-option";
 
 export const AdvancedSettingsSection: React.FC = () => {
-  const { isDevMode, updateIsDevMode, allowEditTodos, updateAllowEditTodos } =
-    useSettingsStore();
+  const {
+    isDevMode,
+    updateIsDevMode,
+    allowEditTodos,
+    updateAllowEditTodos,
+    enableNewTask,
+    updateEnableNewTask,
+  } = useSettingsStore();
 
   return (
     <AccordionSection title="Advanced Settings">
@@ -27,6 +33,16 @@ export const AdvancedSettingsSection: React.FC = () => {
             updateAllowEditTodos(!!checked);
           }}
         />
+        {isDevMode && (
+          <SettingsCheckboxOption
+            id="enable-tool-new-task"
+            label="Enable Tool: newTask"
+            checked={!!enableNewTask}
+            onCheckedChange={(checked) => {
+              updateEnableNewTask(!!checked);
+            }}
+          />
+        )}
       </div>
     </AccordionSection>
   );

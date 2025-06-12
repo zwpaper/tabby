@@ -115,6 +115,7 @@
       "name": "pochi",
       "version": "0.2.85",
       "dependencies": {
+        "@ai-sdk/ui-utils": "catalog:",
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@preact/signals-core": "catalog:",
         "@quilted/threads": "catalog:",

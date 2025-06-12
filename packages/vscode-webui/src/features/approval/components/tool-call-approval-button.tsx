@@ -26,6 +26,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     writeToFile: "Save",
     executeCommand: "Run",
     todoWrite: "Continue",
+    newTask: "Run",
   };
 
   const ToolRejectText: Record<string, string> = {
