@@ -1,3 +1,4 @@
+import { minimatch } from "minimatch";
 import { type ILogObjMeta, type IMeta, Logger } from "tslog";
 
 const isVSCodeEnvironment = () => {
@@ -36,8 +37,8 @@ function stringToLogLevel(level: string) {
 function parseLogMinLevelAndType(name: string) {
   const config = process.env.POCHI_LOG || "";
   for (const item of config.split(",")) {
-    const [key, value] = item.split("=");
-    if (key === name) {
+    const [pattern, value] = item.split("=");
+    if (minimatch(name, pattern)) {
       return stringToLogLevel(value);
     }
   }
