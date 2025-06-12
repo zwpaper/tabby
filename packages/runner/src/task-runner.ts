@@ -19,6 +19,7 @@ import {
   ServerToolApproved,
   ServerTools,
   type ToolFunctionType,
+  isUserInputTool,
 } from "@ragdoll/tools";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
@@ -129,14 +130,13 @@ type TaskStepProgress =
   | {
       type: "step-completed";
       status: TaskStatus;
-    };
-
-export type TaskRunnerProgress =
-  | (TaskStepProgress & { step: number })
+    }
   | {
       type: "runner-stopped";
       status: TaskStatus | undefined;
     };
+
+export type TaskRunnerProgress = TaskStepProgress & { step: number };
 
 export class TaskRunner {
   private todos: Todo[] = [];
@@ -359,16 +359,18 @@ export class TaskRunner {
     yield { type: "loading-task", phase: "end", task };
 
     if (task.status === "completed") {
-      throw new Error("Task is already completed");
-    }
-
-    if (task.status === "pending-input") {
-      throw new Error("Task is pending input");
+      yield { type: "runner-stopped", status: "completed" };
+      return;
     }
 
     // We're only abled to handle "error" / tool-call
     const messages = toUIMessages(task.conversation?.messages || []);
     const lastMessage = getLastMessage(messages);
+
+    if (hasUserInputTool(lastMessage) && task.status === "pending-input") {
+      yield { type: "runner-stopped", status: "pending-input" };
+      return;
+    }
 
     if (isReadyForRetry(lastMessage)) {
       return yield* this.retry(messages);
@@ -426,26 +428,23 @@ export class TaskRunner {
     this.abortController = new AbortController();
     let step = 0;
     while (true) {
-      let status: TaskStatus | undefined = undefined;
       for await (const progress of this.step()) {
         if (this.abortController.signal.aborted) {
           yield {
             type: "runner-stopped",
             status: "failed",
+            step,
+          };
+          return;
+        }
+        if (progress.type === "runner-stopped") {
+          yield {
+            ...progress,
+            step,
           };
           return;
         }
         yield { ...progress, step };
-        if (progress.type === "step-completed") {
-          status = progress.status;
-        }
-      }
-      if (status !== "pending-tool") {
-        yield {
-          type: "runner-stopped",
-          status,
-        };
-        return;
       }
       step++;
     }
@@ -561,5 +560,17 @@ function isReadyForRetry(lastMessage: UIMessage): boolean {
     isAssistantMessageWithEmptyParts(lastMessage) ||
     isAssistantMessageWithPartialToolCalls(lastMessage) ||
     isAssistantMessageWithCompletedToolCalls(lastMessage)
+  );
+}
+
+function hasUserInputTool(message: Message): boolean {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  return !!message.parts?.some(
+    (part) =>
+      part.type === "tool-invocation" &&
+      isUserInputTool(part.toolInvocation.toolName),
   );
 }
