@@ -36,24 +36,24 @@ export const writeToFileTool: React.FC<
           className="ml-1"
           path={path}
           onClick={tool.state !== "result" ? handleClick : undefined}
-          editSummary={result?.ui?.editSummary}
+          editSummary={result?._meta?.editSummary}
         />
       )}
     </>
   );
 
-  const detials = [];
+  const details = [];
   if (result?.newProblems) {
-    detials.push(
+    details.push(
       <NewProblems key="new-problems" newProblems={result?.newProblems} />,
     );
   }
 
   if (result?.userEdits) {
-    detials.push(<UserEdits key="user-edits" userEdits={result?.userEdits} />);
+    details.push(<UserEdits key="user-edits" userEdits={result?.userEdits} />);
   }
 
-  const detail = detials.length > 0 ? <>{detials}</> : undefined;
+  const detail = details.length > 0 ? <>{details}</> : undefined;
 
   return (
     <ExpandableToolContainer

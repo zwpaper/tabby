@@ -35,7 +35,7 @@ export const applyDiffTool: React.FC<
           className="ml-1"
           path={path}
           onClick={tool.state !== "result" ? handleClick : undefined}
-          editSummary={result?.ui?.editSummary}
+          editSummary={result?._meta?.editSummary}
         />
       )}
     </>

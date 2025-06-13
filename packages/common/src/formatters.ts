@@ -138,16 +138,16 @@ function removeToolCallArgumentMetadata(messages: UIMessage[]): UIMessage[] {
   });
 }
 
-function removeToolCallResultUIProperty(messages: UIMessage[]): UIMessage[] {
+function removeToolCallResultMetadata(messages: UIMessage[]): UIMessage[] {
   return messages.map((message) => {
     message.parts = message.parts.map((part) => {
       if (
         part.type === "tool-invocation" &&
         part.toolInvocation.state === "result" &&
         part.toolInvocation.result &&
-        part.toolInvocation.result.ui
+        part.toolInvocation.result._meta
       ) {
-        part.toolInvocation.result.ui = undefined;
+        part.toolInvocation.result._meta = undefined;
       }
       return part;
     });
@@ -161,7 +161,7 @@ const LLMFormatOps: FormatOp[] = [
   removeMessagesWithoutTextOrFunctionCall,
   resolvePendingToolCalls,
   stripKnownXMLTags,
-  removeToolCallResultUIProperty,
+  removeToolCallResultMetadata,
   removeToolCallArgumentMetadata,
 ];
 const UIFormatOps = [

@@ -31,7 +31,7 @@ export const EditFileOutputSchema = z.object({
     .optional()
     .describe("The new problems found after writing the file, if any."),
 
-  ui: z
+  _meta: z
     .object({
       editSummary: z
         .object({
@@ -45,6 +45,6 @@ export const EditFileOutputSchema = z.object({
     })
     .optional()
     .describe(
-      "UI-specific information, would be removed before sending to the LLM.",
+      "Metadata that would be removed before sending to the LLM (e.g. UI specific data).",
     ),
 });

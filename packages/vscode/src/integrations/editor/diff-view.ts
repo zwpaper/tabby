@@ -272,7 +272,7 @@ export class DiffView implements vscode.Disposable {
       userEdits,
       autoFormattingEdits,
       newProblems,
-      ui: { editSummary },
+      _meta: { editSummary },
     };
   }
 
