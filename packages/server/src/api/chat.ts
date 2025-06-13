@@ -196,7 +196,9 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             maxRetries: 0,
 
             // 62k tokens. (Claude max = 64000)
-            maxTokens: 1024 * 62,
+            maxTokens: selectedModel.modelId.includes("4o-mini")
+              ? 1024 * 16
+              : 1024 * 62,
           }),
         );
 

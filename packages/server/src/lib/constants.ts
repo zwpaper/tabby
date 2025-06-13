@@ -33,6 +33,11 @@ export const AvailableModels: {
     contextWindow: 200_000,
     costType: "premium",
   },
+  {
+    id: "openai/gpt-4o-mini",
+    contextWindow: 200_000,
+    costType: "premium",
+  },
 ];
 
 export const StripePlans = [
@@ -81,6 +86,8 @@ function getModelByIdImpl(modelId: string): LanguageModelV1 | null {
       return openai("o3-2025-04-16", {
         reasoningEffort: "medium",
       });
+    case "openai/gpt-4o-mini":
+      return openai("gpt-4o-mini");
     default:
       return null;
   }

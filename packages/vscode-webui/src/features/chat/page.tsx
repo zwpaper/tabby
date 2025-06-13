@@ -269,15 +269,20 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  const { isExecuting, isSubmitDisabled, showStopButton, showEditTodos } =
-    useChatStatus({
-      isTaskLoading,
-      isModelsLoading,
-      isLoading,
-      isInputEmpty: !input.trim(),
-      isFilesEmpty: files.length === 0,
-      isUploadingImages,
-    });
+  const {
+    isExecuting,
+    isSubmitDisabled,
+    showStopButton,
+    showEditTodos,
+    showPreview,
+  } = useChatStatus({
+    isTaskLoading,
+    isModelsLoading,
+    isLoading,
+    isInputEmpty: !input.trim(),
+    isFilesEmpty: files.length === 0,
+    isUploadingImages,
+  });
 
   const { handleSubmit, handleStop } = useChatSubmit({
     chat,
@@ -322,10 +327,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   return (
     <div className="flex h-screen flex-col">
-      <PreviewTool
-        messages={renderMessages}
-        // Only allow adding tool results when not loading
-      />
+      {showPreview && <PreviewTool messages={renderMessages} />}
       <ChatArea
         messages={renderMessages}
         isTaskLoading={isTaskLoading}

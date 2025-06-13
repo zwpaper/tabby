@@ -29,11 +29,13 @@ export function useChatStatus({
 
   const showStopButton = isExecuting || isLoading || isUploadingImages;
 
+  const showPreview = !isBusyCore;
   return {
     isExecuting,
     isBusyCore,
     showEditTodos,
     isSubmitDisabled,
     showStopButton,
+    showPreview,
   };
 }
