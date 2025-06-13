@@ -78,7 +78,8 @@ app.use(
           hostname === "vscode.ikw.app" ||
           hostname.endsWith(".e2b.app") ||
           hostname.endsWith(".gitpod.io") ||
-          hostname.endsWith(".vscode-gitpod-cdn.com")
+          hostname.endsWith(".vscode-gitpod-cdn.com") ||
+          hostname.startsWith("http://localhost")
         ) {
           return origin;
         }
