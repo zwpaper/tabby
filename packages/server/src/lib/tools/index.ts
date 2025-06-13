@@ -48,6 +48,7 @@ export async function resolveServerTools(
       ) {
         const toolInvocation = part.toolInvocation;
         const result = await executeServerTools(user, toolInvocation);
+        stream.write(formatDataStreamPart("tool_call", toolInvocation));
         stream.write(
           formatDataStreamPart("tool_result", {
             toolCallId: toolInvocation.toolCallId,
