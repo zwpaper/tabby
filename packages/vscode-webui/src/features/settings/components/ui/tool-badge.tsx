@@ -14,6 +14,7 @@ export interface ToolBadgeProps {
   id: string;
   href?: string;
   disabled?: boolean;
+  notAvailable?: boolean;
   description?: string;
 }
 
@@ -21,6 +22,7 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
   id,
   href,
   disabled,
+  notAvailable,
   description,
 }) => {
   return (
@@ -30,7 +32,8 @@ export const ToolBadge: React.FC<ToolBadgeProps> = ({
           <Badge
             variant="secondary"
             className={cn({
-              "line-through opacity-60": !!disabled,
+              "line-through": !!disabled,
+              "opacity-60": !!notAvailable,
             })}
           >
             {id}

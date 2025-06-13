@@ -193,7 +193,11 @@ const Connection: React.FC<{
         {hasTools && (
           <>
             <hr className="border-muted" />
-            <McpToolBadgeList serverName={name} tools={tools} />
+            <McpToolBadgeList
+              serverName={name}
+              serverStatus={status}
+              tools={tools}
+            />
           </>
         )}
       </div>
@@ -203,8 +207,9 @@ const Connection: React.FC<{
 
 const McpToolBadgeList: React.FC<{
   serverName: string;
+  serverStatus: "stopped" | "starting" | "ready" | "error";
   tools: McpConnection["tools"];
-}> = ({ serverName, tools }) => {
+}> = ({ serverName, serverStatus, tools }) => {
   const keys = Object.keys(tools);
   return (
     <TooltipProvider>
@@ -215,7 +220,12 @@ const McpToolBadgeList: React.FC<{
               key={name}
               id={name}
               disabled={tools[name].disabled}
-              href={commandForMcp("toggleToolEnabled", serverName, name)}
+              notAvailable={tools[name].disabled || serverStatus !== "ready"}
+              href={
+                serverStatus === "ready"
+                  ? commandForMcp("toggleToolEnabled", serverName, name)
+                  : undefined
+              }
               description={tools[name].description}
             />
           ))

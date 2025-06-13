@@ -1,6 +1,7 @@
 import { threadSignal } from "@quilted/threads/signals";
 import type { McpConnection, McpStatus } from "@ragdoll/vscode-webui-bridge";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { vscodeHost } from "../vscode";
 
 /** @useSignals */
@@ -10,43 +11,23 @@ export const useMcp = () => {
     queryFn: fetchMcpStatus,
   });
 
-  const parsed: McpStatus = data?.value ?? { connections: {}, toolset: {} };
-  const connectNames = Object.keys(parsed.connections);
-
-  const toolsQueries = useQueries({
-    queries: connectNames.map((connectionName) => ({
-      queryKey: ["mcpConnectTools", connectionName],
-      queryFn: async () => {
-        const connection = parsed.connections[connectionName];
-        return {
-          name: connectionName,
-          tools: connection?.tools || {},
-        };
-      },
-      enabled: parsed.connections[connectionName]?.status === "ready",
-      staleTime: 2 * 60 * 1000,
-      gcTime: 15 * 60 * 1000,
-    })),
-  });
-
-  const mcpTools: Record<string, McpConnection["tools"]> = {};
-  for (const query of toolsQueries) {
-    if (query.data) {
-      mcpTools[query.data.name] = query.data.tools;
-    }
-  }
+  const mcpStatus: McpStatus = data?.value ?? { connections: {}, toolset: {} };
+  const cachedMcpTools = useMcpToolsCache(mcpStatus);
 
   const mergedConnections: Record<string, McpConnection> = {};
-  for (const [name, connection] of Object.entries(parsed.connections)) {
+  for (const [name, connection] of Object.entries(mcpStatus.connections)) {
     mergedConnections[name] = {
       ...connection,
-      tools: connection.tools || mcpTools[name] || {},
+      tools:
+        Object.keys(connection.tools).length > 0
+          ? connection.tools
+          : cachedMcpTools[name] || {},
     };
   }
 
   return {
     connections: mergedConnections,
-    toolset: parsed.toolset,
+    toolset: mcpStatus.toolset,
     isLoading: isLoading,
   };
 };
@@ -54,3 +35,38 @@ export const useMcp = () => {
 async function fetchMcpStatus() {
   return threadSignal(await vscodeHost.readMcpStatus());
 }
+
+const useMcpToolsCache = (mcpStatus: McpStatus) => {
+  const queryClient = useQueryClient();
+  const toolsQueries = useQueries({
+    queries: Object.keys(mcpStatus.connections).map((name) => ({
+      queryKey: ["mcpConnectTools", name],
+      queryFn: async () => {
+        const connection = mcpStatus.connections[name];
+        return {
+          name,
+          tools: connection?.tools || {},
+        };
+      },
+      enabled: mcpStatus.connections[name]?.status === "ready",
+      gcTime: Number.POSITIVE_INFINITY,
+    })),
+  });
+  useEffect(() => {
+    for (const name in mcpStatus.connections) {
+      if (mcpStatus.connections[name].status === "ready") {
+        queryClient.invalidateQueries({
+          queryKey: ["mcpConnectTools", name],
+        });
+      }
+    }
+  }, [mcpStatus, queryClient]);
+
+  const cachedMcpTools: Record<string, McpConnection["tools"]> = {};
+  for (const query of toolsQueries) {
+    if (query.data) {
+      cachedMcpTools[query.data.name] = query.data.tools;
+    }
+  }
+  return cachedMcpTools;
+};
