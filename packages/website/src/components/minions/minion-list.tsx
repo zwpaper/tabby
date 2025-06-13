@@ -1,5 +1,8 @@
 import { apiClient } from "@/lib/auth-client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { Button } from "../ui/button";
 
 async function fetchMinions() {
   const res = await apiClient.api.minions.$get();
@@ -11,6 +14,7 @@ async function fetchMinions() {
 }
 
 export function MinionList() {
+  const queryClient = useQueryClient();
   const {
     data: minions,
     error,
@@ -18,6 +22,27 @@ export function MinionList() {
   } = useQuery({
     queryKey: ["minions"],
     queryFn: fetchMinions,
+  });
+
+  const { mutate: resume } = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiClient.api.minions[":id"].resume.$post({
+        param: { id: id.toString() },
+      });
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Minion resumed successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["minions"],
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
 
   if (isLoading) {
@@ -34,7 +59,11 @@ export function MinionList() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {minions?.map((minion) => (
           <div key={minion.id} className="rounded-lg border p-4 shadow-sm">
-            <h2 className="mb-2 font-semibold text-xl">Minion #{minion.id}</h2>
+            <Link to={"/minions/$id"} params={{ id: minion.id.toString() }}>
+              <h2 className="mb-2 font-semibold text-xl">
+                Minion #{minion.id}
+              </h2>
+            </Link>
             <p>
               <span className="font-semibold">Sandbox ID:</span>{" "}
               {minion.e2bSandboxId}
@@ -53,6 +82,9 @@ export function MinionList() {
             <p className="mt-2 text-gray-500 text-sm">
               Created: {new Date(minion.createdAt).toLocaleString()}
             </p>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={() => resume(minion.id)}>Resume</Button>
+            </div>
           </div>
         ))}
       </div>

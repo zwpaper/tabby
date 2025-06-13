@@ -343,7 +343,7 @@
   "catalog": {
     "@ai-sdk/provider-utils": "^2.2.8",
     "@ai-sdk/ui-utils": "^1.2.11",
-    "@e2b/code-interpreter": "^1.5.1",
+    "@e2b/code-interpreter": "^1.2.0-beta.4",
     "@preact/signals-core": "^1.8.0",
     "@quilted/threads": "^3.1.3",
     "@slack/bolt": "^4.2.1",
@@ -590,7 +590,7 @@
 
     "@daveyplate/better-auth-ui": ["@daveyplate/better-auth-ui@1.5.18", "", { "peerDependencies": { "@better-fetch/fetch": ">=1.1.0", "@daveyplate/better-auth-tanstack": "^1.3.3", "@hookform/resolvers": ">=5.0.0", "@instantdb/react": ">=0.18.0", "@radix-ui/react-avatar": ">=1.1.0", "@radix-ui/react-checkbox": ">=1.1.0", "@radix-ui/react-context": ">=1.1.0", "@radix-ui/react-dialog": ">=1.1.0", "@radix-ui/react-dropdown-menu": ">=2.1.0", "@radix-ui/react-label": ">=2.1.0", "@radix-ui/react-primitive": ">=2.0.0", "@radix-ui/react-separator": ">=1.1.0", "@radix-ui/react-slot": ">=1.1.0", "@radix-ui/react-tabs": ">=1.1.0", "@radix-ui/react-use-callback-ref": ">=1.1.0", "@radix-ui/react-use-layout-effect": ">=1.1.0", "@react-email/components": ">=0.0.33", "@tanstack/react-query": ">=5.66.0", "@triplit/client": ">=1.0.0", "@triplit/react": ">=1.0.0", "better-auth": "^1.2.4", "class-variance-authority": ">=0.7.0", "clsx": ">=2.1.0", "input-otp": ">=1.4.0", "lucide-react": ">=0.469.0", "react": ">=18.0.0", "react-dom": ">=18.0.0", "react-hook-form": ">=7.55.0", "react-qr-code": ">=2.0.0", "sonner": ">=1.7.0", "tailwind-merge": ">=2.6.0", "tailwindcss": ">=3.0.0", "ua-parser-js": ">=2.0.0", "zod": ">=3.24.0" } }, "sha512-nBFUm7iS6ruF6b1I1PUe8O0JCr7S4WoPclhAhvwLknOGNsuRkbT+wBsTL/1YvF1qB0bAVhEHeYjRlLaeZnVAXQ=="],
 
-    "@e2b/code-interpreter": ["@e2b/code-interpreter@1.5.1", "", { "dependencies": { "e2b": "^1.4.0" } }, "sha512-mkyKjAW2KN5Yt0R1I+1lbH3lo+W/g/1+C2lnwlitXk5wqi/g94SEO41XKdmDf5WWpKG3mnxWDR5d6S/lyjmMEw=="],
+    "@e2b/code-interpreter": ["@e2b/code-interpreter@1.2.0-beta.4", "https://registry.npmmirror.com/@e2b/code-interpreter/-/code-interpreter-1.2.0-beta.4.tgz", { "dependencies": { "e2b": "1.2.0-beta.4" } }, "sha512-09Rciui9D/d7Fl7nzlNMYKFzloakauYNyXGMZxlD8UUY5oLvbuoT1zMDEKgKhfAbBkO8cRNPAZ1jRGLKYJlrUw=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.25.4", "", { "os": "aix", "cpu": "ppc64" }, "sha512-1VCICWypeQKhVbE9oW/sJaAmjLxhVqacdkvPLEjwlttjfwENRSClS8EjBz0KzRyFSCPDIkuXW34Je/vk7zdB7Q=="],
 
@@ -1976,7 +1976,7 @@
 
     "dunder-proto": ["dunder-proto@1.0.1", "", { "dependencies": { "call-bind-apply-helpers": "^1.0.1", "es-errors": "^1.3.0", "gopd": "^1.2.0" } }, "sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A=="],
 
-    "e2b": ["e2b@1.5.2", "", { "dependencies": { "@bufbuild/protobuf": "^2.2.2", "@connectrpc/connect": "2.0.0-rc.3", "@connectrpc/connect-web": "2.0.0-rc.3", "compare-versions": "^6.1.0", "openapi-fetch": "^0.9.7", "platform": "^1.3.6" } }, "sha512-Qs0LNROM/RppVzwL1nXSKfr9pekE3v2NVB/EFRtD8TIVjNmiitiNPrvQGftqcLK/D0OqMe/4nhxTfh78+uZhlQ=="],
+    "e2b": ["e2b@1.2.0-beta.4", "https://registry.npmmirror.com/e2b/-/e2b-1.2.0-beta.4.tgz", { "dependencies": { "@bufbuild/protobuf": "^2.2.2", "@connectrpc/connect": "2.0.0-rc.3", "@connectrpc/connect-web": "2.0.0-rc.3", "compare-versions": "^6.1.0", "openapi-fetch": "^0.9.7", "platform": "^1.3.6" } }, "sha512-LIXU1oWV9MnsSOtGPJh5LjZ17CQ/K252Ko/JJ+URn7EoFYShtRz+LZD4YsSWVOQUiI/+8EybHRsZtjhxw8zPXw=="],
 
     "eastasianwidth": ["eastasianwidth@0.2.0", "", {}, "sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA=="],
 

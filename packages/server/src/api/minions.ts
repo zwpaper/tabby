@@ -18,6 +18,14 @@ const minions = new Hono()
     return c.json({
       data,
     });
+  })
+  .post("/:id/resume", async (c) => {
+    const user = c.get("user");
+    const { id } = c.req.param();
+    const data = await minionService.resume(user.id, Number.parseInt(id));
+    return c.json({
+      data,
+    });
   });
 
 export default minions;
