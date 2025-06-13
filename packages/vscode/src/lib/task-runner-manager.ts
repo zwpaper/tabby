@@ -46,8 +46,7 @@ export class TaskRunnerManager implements vscode.Disposable {
       const taskRunner = new TaskRunner(this.apiClient, this.pochiEvents, uid, {
         cwd: getWorkspaceFolder().uri.fsPath,
         rg: vscodeRipgrepPath,
-        model: option?.model,
-        allowedTools: option?.allowedTools,
+        ...option,
       });
       this.taskRunners.set(uid, taskState);
       this.updateStatus();

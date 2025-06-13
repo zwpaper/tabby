@@ -4,11 +4,7 @@ import { getLogger } from "@/lib/logger";
 import { TaskRunnerManager } from "@/lib/task-runner-manager";
 import type { ToolInvocationUIPart } from "@ai-sdk/ui-utils";
 import { fromUIMessage, toUIMessages } from "@ragdoll/common";
-import {
-  type ClientToolsType,
-  type ToolFunctionType,
-  ToolsByPermission,
-} from "@ragdoll/tools";
+import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { generateId } from "ai";
 import { container } from "tsyringe";
 
@@ -64,9 +60,7 @@ export const newTask: ToolFunctionType<ClientToolsType["newTask"]> = async (
 
   // Run the newTask in background
   const taskRunnerManager = container.resolve(TaskRunnerManager);
-  await taskRunnerManager.runTask(taskUid, {
-    allowedTools: [...ToolsByPermission.read, ...ToolsByPermission.default],
-  });
+  await taskRunnerManager.runTask(taskUid);
 
   // Fetch the task status after the runner has stopped
   const fetchTaskResp = await apiClient.api.tasks[":uid"].$get({

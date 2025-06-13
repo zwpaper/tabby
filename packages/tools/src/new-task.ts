@@ -1,20 +1,9 @@
 import { z } from "zod";
 import { defineClientTool } from "./types";
 
-export const NewTaskAllowedTools = [
-  "readFile",
-  "listFiles",
-  "globFiles",
-  "searchFiles",
-  "webFetch",
-  "todoWrite",
-  "executeCommand",
-  "attemptCompletion",
-];
-
 export const newTask = defineClientTool({
   description:
-    `Create a task that can be executed autonomously by a runner in the same environment as the current task. It has access to the following tools: ${NewTaskAllowedTools.join(", ")}.
+    `Create a task that can be executed autonomously by a runner in the same environment as the current task. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries, use the Agent tool to perform the search for you.
 
 Always include a reminder in your prompt to ensure the result will be submitted through the \`attemptCompletion\` tool.
 If the runner stops without submitting the result, it will return an error message.
