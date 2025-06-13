@@ -42,7 +42,7 @@ export class PochiAuthenticationProvider
     this.disposables.push(
       this.authEvents.loginEvent.event(() => {
         // handle login from webview
-        logger.info("User logged in, refreshing sessions");
+        logger.debug("User logged in, refreshing sessions");
         this.getSessions().then((sessions) => {
           this.currentSession = sessions[0];
           this.sessionChangeEmitter.fire({
@@ -56,7 +56,7 @@ export class PochiAuthenticationProvider
     this.disposables.push(
       this.authEvents.logoutEvent.event(() => {
         // handle logout from webview
-        logger.info("User logged out, clearing sessions");
+        logger.debug("User logged out, clearing sessions");
         if (!this.currentSession) {
           logger.warn("No current session to clear on logout");
           return;
@@ -71,7 +71,7 @@ export class PochiAuthenticationProvider
     );
     // make sure pochi extension use this authentication provider at least once
     authentication.getSession(PochiAuthProviderId, [], {}).then((sessions) => {
-      logger.info("Existing sessions:", sessions?.id, sessions?.account);
+      logger.debug("Existing sessions:", sessions?.id, sessions?.account);
       this.currentSession = sessions;
     });
   }
