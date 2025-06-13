@@ -325,12 +325,6 @@ export function Home() {
             content: {
               base: "mr-10",
             },
-            base: "border-2",
-            trigger: {
-              avatar: {
-                base: "transition-transform duration-300 hover:scale-110 hover:rotate-3",
-              },
-            },
           }}
         />
       </div>

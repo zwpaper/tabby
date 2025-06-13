@@ -2,8 +2,12 @@ import { useSession } from "@/lib/auth-hooks";
 import { UserButton as UserButtonImpl } from "@daveyplate/better-auth-ui";
 import { CircleStopIcon, ShieldUser } from "lucide-react";
 import type React from "react";
+import { merge } from "remeda";
 
-export function UserButton(props: React.ComponentProps<typeof UserButtonImpl>) {
+export function UserButton({
+  classNames = {},
+  ...props
+}: React.ComponentProps<typeof UserButtonImpl>) {
   const { data: auth } = useSession();
   const { additionalLinks = [] } = props;
   if (auth?.session.impersonatedBy) {
@@ -20,5 +24,25 @@ export function UserButton(props: React.ComponentProps<typeof UserButtonImpl>) {
       icon: <ShieldUser />,
     });
   }
-  return <UserButtonImpl {...props} additionalLinks={additionalLinks} />;
+
+  if (props.size === "icon") {
+    classNames = merge(
+      {
+        base: "border-2",
+        trigger: {
+          avatar: {
+            base: "transition-transform duration-300 hover:scale-110 hover:rotate-3",
+          },
+        },
+      },
+      classNames,
+    );
+  }
+  return (
+    <UserButtonImpl
+      classNames={classNames}
+      {...props}
+      additionalLinks={additionalLinks}
+    />
+  );
 }

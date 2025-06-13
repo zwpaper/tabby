@@ -1,7 +1,8 @@
 import { AppSidebar } from "@/components/settings/app-sidebar";
 import { SiteHeader } from "@/components/settings/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { cn, tw } from "@/lib/utils";
+import { UserButton } from "@/components/user-button";
+import { cn } from "@/lib/utils";
 import {
   IconBlocks,
   IconChartBar,
@@ -9,12 +10,13 @@ import {
   IconUserCircle,
 } from "@tabler/icons-react";
 import {
+  Link,
   Outlet,
   createFileRoute,
   redirect,
   useRouterState,
 } from "@tanstack/react-router";
-import { BrainCircuit } from "lucide-react";
+import { BrainCircuit, Terminal } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_settings")({
   beforeLoad: async (ctx) => {
@@ -80,24 +82,39 @@ function Settings() {
     }
   }
 
-  const sidebarStyle = (x: string) => tw`[&>div[data-sidebar=sidebar]]:${x}`;
-
   return (
-    <SidebarProvider className="mx-auto max-w-6xl md:mt-8">
-      <AppSidebar
-        variant="floating"
-        className={cn(
-          "max-h-120",
-          ["bg-transparent", "border-none", "shadow-none"].map(sidebarStyle),
-        )}
-        panes={MainPanes.filter((p) => !p.hide || user.role === "admin")}
-      />
-      <SidebarInset className="md:px-4">
-        <SiteHeader title={activePane?.title} />
-        <div className="@container/main px-2 py-4">
-          <Outlet />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="mx-auto max-w-6xl">
+      <NavHeader />
+      <SidebarProvider>
+        <AppSidebar
+          variant="floating"
+          className={cn(
+            "max-h-90",
+            "[&>div[data-sidebar=sidebar]]:bg-transparent",
+            "[&>div[data-sidebar=sidebar]]:border-none",
+            "[&>div[data-sidebar=sidebar]]:shadow-none",
+          )}
+          panes={MainPanes.filter((p) => !p.hide || user.role === "admin")}
+        />
+        <SidebarInset className="md:px-4">
+          <SiteHeader title={activePane?.title} />
+          <div className="@container/main px-2 py-4">
+            <Outlet />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
+  );
+}
+
+function NavHeader() {
+  return (
+    <span className="hidden w-full justify-between px-6 pt-4 md:mb-8 md:flex">
+      <Link to="/" className="flex items-center gap-1.5">
+        <Terminal className="!size-5 animate-[spin_6s_linear_infinite]" />
+        <span className="font-semibold text-base">Pochi</span>
+      </Link>
+      <UserButton size="icon" />
+    </span>
   );
 }

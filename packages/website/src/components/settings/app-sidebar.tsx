@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
 import { Terminal } from "lucide-react";
-import { UserButton } from "../user-button";
 import { NavDocuments } from "./nav-documents";
 import { NavMain } from "./nav-main";
 import { NavSecondary } from "./nav-secondary";
@@ -70,7 +69,7 @@ export function AppSidebar({
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="md:hidden">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -94,7 +93,6 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter>
         <QuotaDisplay /> {/* Add the QuotaDisplay component here */}
-        <UserButton size="full" className="border-none shadow-none" />
       </SidebarFooter>
     </Sidebar>
   );
