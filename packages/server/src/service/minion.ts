@@ -41,11 +41,14 @@ class MinionService {
       envs: envs,
     };
     const sandbox = await Sandbox.create(TemplateId, opts);
-    sandbox.commands.run("/home/pochi/init.sh", {
-      envs: envs,
-      background: true,
-      cwd: "/home/pochi",
-    });
+    sandbox.commands.run(
+      "/home/pochi/init.sh 2>&1 | tee /home/pochi/init.log",
+      {
+        envs: envs,
+        background: true,
+        cwd: "/home/pochi",
+      },
+    );
     const res = await db
       .insertInto("minion")
       .values({
@@ -66,6 +69,29 @@ class MinionService {
       .execute();
 
     return minions;
+  }
+
+  private async getSandbox(userId: string, minionId: number) {
+    const minion = await db
+      .selectFrom("minion")
+      .selectAll()
+      .where("userId", "=", userId)
+      .where("id", "=", minionId)
+      .executeTakeFirstOrThrow();
+    const sandbox = await Sandbox.connect(minion.e2bSandboxId);
+    return { minion: { ...minion, e2bSandboxId: undefined }, sandbox };
+  }
+
+  async get(userId: string, minionId: number) {
+    const { minion, sandbox } = await this.getSandbox(userId, minionId);
+    const sandboxInfo = await sandbox.getInfo();
+    return {
+      ...minion,
+      sandboxInfo: {
+        ...sandboxInfo,
+        isRunning: await sandbox.isRunning(),
+      },
+    };
   }
 }
 
