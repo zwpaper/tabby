@@ -20,9 +20,13 @@ import {
 import { useTheme } from "../theme-provider";
 
 const useXtermTheme = (): ITheme => {
-  const theme = useTheme();
-  const [background, setBackground] = useState<string>("");
-  const [foreground, setForeground] = useState<string>("");
+  const { theme } = useTheme();
+  const [background, setBackground] = useState<string>(
+    theme === "dark" ? "#1e1e1e" : "#ffffff",
+  );
+  const [foreground, setForeground] = useState<string>(
+    theme === "dark" ? "#d4d4d4" : "#000000",
+  );
   // biome-ignore lint/correctness/useExhaustiveDependencies(theme): need to re-run on theme change
   const xtermTheme = useMemo(() => {
     const style = window.getComputedStyle(document.body);
