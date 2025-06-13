@@ -5,7 +5,7 @@ import { apiClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_authenticated/tasks/")({
+export const Route = createFileRoute("/_authenticated/_base/tasks")({
   component: TaskPage,
 });
 
@@ -24,7 +24,6 @@ function TaskPage() {
 
   return (
     <div className="mx-auto hidden h-full max-w-6xl flex-1 flex-col space-y-8 p-8 md:flex">
-      <h3 className="text-lg">Tasks</h3>
       {isLoading ? <Loading /> : <DataTable data={tasks} columns={columns} />}
     </div>
   );

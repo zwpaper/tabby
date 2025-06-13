@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
-import { Link } from "@tanstack/react-router";
 import { statuses } from "./constants";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -47,13 +46,7 @@ export const columns: ColumnDef<Task>[] = [
             <Badge variant="outline">{row.original.event.type}</Badge>
           )}
           <span className="max-w-[500px] truncate font-medium">
-            <Link
-              to="/tasks/$uid"
-              params={{ uid: row.original.uid }}
-              className="py-2 hover:underline"
-            >
-              {row.getValue("title")}
-            </Link>
+            {row.getValue("title")}
           </span>
         </div>
       );

@@ -11,7 +11,9 @@ import { Loader2, Plus } from "lucide-react"; // Removed Unplug
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/_settings/integrations")({
+export const Route = createFileRoute(
+  "/_authenticated/_base/_settings/integrations",
+)({
   component: IntegrationsPage,
 });
 

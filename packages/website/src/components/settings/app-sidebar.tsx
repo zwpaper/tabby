@@ -12,13 +12,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Link } from "@tanstack/react-router";
-import { Terminal } from "lucide-react";
 import { NavDocuments } from "./nav-documents";
 import { NavMain } from "./nav-main";
 import { NavSecondary } from "./nav-secondary";
@@ -69,21 +63,6 @@ export function AppSidebar({
 }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="md:hidden">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <Link to="/">
-                <Terminal className="!size-5 animate-[spin_6s_linear_infinite]" />
-                <span className="font-semibold text-base">Pochi</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
       <SidebarContent>
         <NavMain items={panes} />
         {false && <NavDocuments items={data.documents} />}

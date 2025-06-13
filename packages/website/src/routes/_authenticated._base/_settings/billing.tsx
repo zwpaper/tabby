@@ -39,18 +39,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiClient, authClient } from "@/lib/auth-client";
 import moment from "moment";
 
-export const Route = createFileRoute("/_authenticated/_settings/billing")({
-  loader: async () => {
-    const { data, error } = await authClient.subscription.list();
-    if (error) {
-      throw new Error(error.message);
-    }
-    return {
-      activeSubscriptions: data || null,
-    };
+export const Route = createFileRoute("/_authenticated/_base/_settings/billing")(
+  {
+    loader: async () => {
+      const { data, error } = await authClient.subscription.list();
+      if (error) {
+        throw new Error(error.message);
+      }
+      return {
+        activeSubscriptions: data || null,
+      };
+    },
+    component: Billing,
   },
-  component: Billing,
-});
+);
 
 type BillingCycle = "monthly" | "yearly";
 

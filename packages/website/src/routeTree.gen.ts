@@ -20,18 +20,18 @@ import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authent
 import { Route as AuthenticatedRedirectVscodeImport } from './routes/_authenticated.redirect-vscode'
 import { Route as AuthenticatedMinionsImport } from './routes/_authenticated.minions'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated._settings/route'
-import { Route as AuthenticatedTasksIndexImport } from './routes/_authenticated.tasks/index'
-import { Route as AuthenticatedTasksUidImport } from './routes/_authenticated.tasks/$uid'
+import { Route as AuthenticatedBaseRouteImport } from './routes/_authenticated._base/route'
 import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authenticated.auth/vscode-link'
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
 import { Route as AuthenticatedAdminPromptEvaluationImport } from './routes/_authenticated.admin/prompt-evaluation'
-import { Route as AuthenticatedSettingsUsageImport } from './routes/_authenticated._settings/usage'
-import { Route as AuthenticatedSettingsModelImport } from './routes/_authenticated._settings/model'
-import { Route as AuthenticatedSettingsIntegrationsImport } from './routes/_authenticated._settings/integrations'
-import { Route as AuthenticatedSettingsBillingImport } from './routes/_authenticated._settings/billing'
-import { Route as AuthenticatedSettingsAccountImport } from './routes/_authenticated._settings/account'
+import { Route as AuthenticatedBaseTasksImport } from './routes/_authenticated._base/tasks'
+import { Route as AuthenticatedBaseSettingsRouteImport } from './routes/_authenticated._base/_settings/route'
+import { Route as AuthenticatedBaseSettingsUsageImport } from './routes/_authenticated._base/_settings/usage'
+import { Route as AuthenticatedBaseSettingsModelImport } from './routes/_authenticated._base/_settings/model'
+import { Route as AuthenticatedBaseSettingsIntegrationsImport } from './routes/_authenticated._base/_settings/integrations'
+import { Route as AuthenticatedBaseSettingsBillingImport } from './routes/_authenticated._base/_settings/billing'
+import { Route as AuthenticatedBaseSettingsAccountImport } from './routes/_authenticated._base/_settings/account'
 
 // Create/Update Routes
 
@@ -90,22 +90,8 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteImport.update({
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
-const AuthenticatedSettingsRouteRoute = AuthenticatedSettingsRouteImport.update(
-  {
-    id: '/_settings',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any,
-)
-
-const AuthenticatedTasksIndexRoute = AuthenticatedTasksIndexImport.update({
-  id: '/tasks/',
-  path: '/tasks/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-
-const AuthenticatedTasksUidRoute = AuthenticatedTasksUidImport.update({
-  id: '/tasks/$uid',
-  path: '/tasks/$uid',
+const AuthenticatedBaseRouteRoute = AuthenticatedBaseRouteImport.update({
+  id: '/_base',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
@@ -136,41 +122,51 @@ const AuthenticatedAdminPromptEvaluationRoute =
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 
-const AuthenticatedSettingsUsageRoute = AuthenticatedSettingsUsageImport.update(
-  {
+const AuthenticatedBaseTasksRoute = AuthenticatedBaseTasksImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedBaseRouteRoute,
+} as any)
+
+const AuthenticatedBaseSettingsRouteRoute =
+  AuthenticatedBaseSettingsRouteImport.update({
+    id: '/_settings',
+    getParentRoute: () => AuthenticatedBaseRouteRoute,
+  } as any)
+
+const AuthenticatedBaseSettingsUsageRoute =
+  AuthenticatedBaseSettingsUsageImport.update({
     id: '/usage',
     path: '/usage',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any,
-)
+    getParentRoute: () => AuthenticatedBaseSettingsRouteRoute,
+  } as any)
 
-const AuthenticatedSettingsModelRoute = AuthenticatedSettingsModelImport.update(
-  {
+const AuthenticatedBaseSettingsModelRoute =
+  AuthenticatedBaseSettingsModelImport.update({
     id: '/model',
     path: '/model',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
-  } as any,
-)
+    getParentRoute: () => AuthenticatedBaseSettingsRouteRoute,
+  } as any)
 
-const AuthenticatedSettingsIntegrationsRoute =
-  AuthenticatedSettingsIntegrationsImport.update({
+const AuthenticatedBaseSettingsIntegrationsRoute =
+  AuthenticatedBaseSettingsIntegrationsImport.update({
     id: '/integrations',
     path: '/integrations',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+    getParentRoute: () => AuthenticatedBaseSettingsRouteRoute,
   } as any)
 
-const AuthenticatedSettingsBillingRoute =
-  AuthenticatedSettingsBillingImport.update({
+const AuthenticatedBaseSettingsBillingRoute =
+  AuthenticatedBaseSettingsBillingImport.update({
     id: '/billing',
     path: '/billing',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+    getParentRoute: () => AuthenticatedBaseSettingsRouteRoute,
   } as any)
 
-const AuthenticatedSettingsAccountRoute =
-  AuthenticatedSettingsAccountImport.update({
+const AuthenticatedBaseSettingsAccountRoute =
+  AuthenticatedBaseSettingsAccountImport.update({
     id: '/account',
     path: '/account',
-    getParentRoute: () => AuthenticatedSettingsRouteRoute,
+    getParentRoute: () => AuthenticatedBaseSettingsRouteRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -198,11 +194,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WaitlistImport
       parentRoute: typeof rootRoute
     }
-    '/_authenticated/_settings': {
-      id: '/_authenticated/_settings'
+    '/_authenticated/_base': {
+      id: '/_authenticated/_base'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      preLoaderRoute: typeof AuthenticatedBaseRouteImport
       parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/admin': {
@@ -247,40 +243,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShareUidImport
       parentRoute: typeof rootRoute
     }
-    '/_authenticated/_settings/account': {
-      id: '/_authenticated/_settings/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AuthenticatedSettingsAccountImport
-      parentRoute: typeof AuthenticatedSettingsRouteImport
+    '/_authenticated/_base/_settings': {
+      id: '/_authenticated/_base/_settings'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthenticatedBaseSettingsRouteImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
     }
-    '/_authenticated/_settings/billing': {
-      id: '/_authenticated/_settings/billing'
-      path: '/billing'
-      fullPath: '/billing'
-      preLoaderRoute: typeof AuthenticatedSettingsBillingImport
-      parentRoute: typeof AuthenticatedSettingsRouteImport
-    }
-    '/_authenticated/_settings/integrations': {
-      id: '/_authenticated/_settings/integrations'
-      path: '/integrations'
-      fullPath: '/integrations'
-      preLoaderRoute: typeof AuthenticatedSettingsIntegrationsImport
-      parentRoute: typeof AuthenticatedSettingsRouteImport
-    }
-    '/_authenticated/_settings/model': {
-      id: '/_authenticated/_settings/model'
-      path: '/model'
-      fullPath: '/model'
-      preLoaderRoute: typeof AuthenticatedSettingsModelImport
-      parentRoute: typeof AuthenticatedSettingsRouteImport
-    }
-    '/_authenticated/_settings/usage': {
-      id: '/_authenticated/_settings/usage'
-      path: '/usage'
-      fullPath: '/usage'
-      preLoaderRoute: typeof AuthenticatedSettingsUsageImport
-      parentRoute: typeof AuthenticatedSettingsRouteImport
+    '/_authenticated/_base/tasks': {
+      id: '/_authenticated/_base/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedBaseTasksImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
     }
     '/_authenticated/admin/prompt-evaluation': {
       id: '/_authenticated/admin/prompt-evaluation'
@@ -310,46 +285,86 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuthVscodeLinkImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/tasks/$uid': {
-      id: '/_authenticated/tasks/$uid'
-      path: '/tasks/$uid'
-      fullPath: '/tasks/$uid'
-      preLoaderRoute: typeof AuthenticatedTasksUidImport
-      parentRoute: typeof AuthenticatedImport
+    '/_authenticated/_base/_settings/account': {
+      id: '/_authenticated/_base/_settings/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedBaseSettingsAccountImport
+      parentRoute: typeof AuthenticatedBaseSettingsRouteImport
     }
-    '/_authenticated/tasks/': {
-      id: '/_authenticated/tasks/'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof AuthenticatedTasksIndexImport
-      parentRoute: typeof AuthenticatedImport
+    '/_authenticated/_base/_settings/billing': {
+      id: '/_authenticated/_base/_settings/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBaseSettingsBillingImport
+      parentRoute: typeof AuthenticatedBaseSettingsRouteImport
+    }
+    '/_authenticated/_base/_settings/integrations': {
+      id: '/_authenticated/_base/_settings/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AuthenticatedBaseSettingsIntegrationsImport
+      parentRoute: typeof AuthenticatedBaseSettingsRouteImport
+    }
+    '/_authenticated/_base/_settings/model': {
+      id: '/_authenticated/_base/_settings/model'
+      path: '/model'
+      fullPath: '/model'
+      preLoaderRoute: typeof AuthenticatedBaseSettingsModelImport
+      parentRoute: typeof AuthenticatedBaseSettingsRouteImport
+    }
+    '/_authenticated/_base/_settings/usage': {
+      id: '/_authenticated/_base/_settings/usage'
+      path: '/usage'
+      fullPath: '/usage'
+      preLoaderRoute: typeof AuthenticatedBaseSettingsUsageImport
+      parentRoute: typeof AuthenticatedBaseSettingsRouteImport
     }
   }
 }
 
 // Create and export the route tree
 
-interface AuthenticatedSettingsRouteRouteChildren {
-  AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
-  AuthenticatedSettingsBillingRoute: typeof AuthenticatedSettingsBillingRoute
-  AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
-  AuthenticatedSettingsModelRoute: typeof AuthenticatedSettingsModelRoute
-  AuthenticatedSettingsUsageRoute: typeof AuthenticatedSettingsUsageRoute
+interface AuthenticatedBaseSettingsRouteRouteChildren {
+  AuthenticatedBaseSettingsAccountRoute: typeof AuthenticatedBaseSettingsAccountRoute
+  AuthenticatedBaseSettingsBillingRoute: typeof AuthenticatedBaseSettingsBillingRoute
+  AuthenticatedBaseSettingsIntegrationsRoute: typeof AuthenticatedBaseSettingsIntegrationsRoute
+  AuthenticatedBaseSettingsModelRoute: typeof AuthenticatedBaseSettingsModelRoute
+  AuthenticatedBaseSettingsUsageRoute: typeof AuthenticatedBaseSettingsUsageRoute
 }
 
-const AuthenticatedSettingsRouteRouteChildren: AuthenticatedSettingsRouteRouteChildren =
+const AuthenticatedBaseSettingsRouteRouteChildren: AuthenticatedBaseSettingsRouteRouteChildren =
   {
-    AuthenticatedSettingsAccountRoute: AuthenticatedSettingsAccountRoute,
-    AuthenticatedSettingsBillingRoute: AuthenticatedSettingsBillingRoute,
-    AuthenticatedSettingsIntegrationsRoute:
-      AuthenticatedSettingsIntegrationsRoute,
-    AuthenticatedSettingsModelRoute: AuthenticatedSettingsModelRoute,
-    AuthenticatedSettingsUsageRoute: AuthenticatedSettingsUsageRoute,
+    AuthenticatedBaseSettingsAccountRoute:
+      AuthenticatedBaseSettingsAccountRoute,
+    AuthenticatedBaseSettingsBillingRoute:
+      AuthenticatedBaseSettingsBillingRoute,
+    AuthenticatedBaseSettingsIntegrationsRoute:
+      AuthenticatedBaseSettingsIntegrationsRoute,
+    AuthenticatedBaseSettingsModelRoute: AuthenticatedBaseSettingsModelRoute,
+    AuthenticatedBaseSettingsUsageRoute: AuthenticatedBaseSettingsUsageRoute,
   }
 
-const AuthenticatedSettingsRouteRouteWithChildren =
-  AuthenticatedSettingsRouteRoute._addFileChildren(
-    AuthenticatedSettingsRouteRouteChildren,
+const AuthenticatedBaseSettingsRouteRouteWithChildren =
+  AuthenticatedBaseSettingsRouteRoute._addFileChildren(
+    AuthenticatedBaseSettingsRouteRouteChildren,
+  )
+
+interface AuthenticatedBaseRouteRouteChildren {
+  AuthenticatedBaseSettingsRouteRoute: typeof AuthenticatedBaseSettingsRouteRouteWithChildren
+  AuthenticatedBaseTasksRoute: typeof AuthenticatedBaseTasksRoute
+}
+
+const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
+  {
+    AuthenticatedBaseSettingsRouteRoute:
+      AuthenticatedBaseSettingsRouteRouteWithChildren,
+    AuthenticatedBaseTasksRoute: AuthenticatedBaseTasksRoute,
+  }
+
+const AuthenticatedBaseRouteRouteWithChildren =
+  AuthenticatedBaseRouteRoute._addFileChildren(
+    AuthenticatedBaseRouteRouteChildren,
   )
 
 interface AuthenticatedAdminRouteRouteChildren {
@@ -370,27 +385,23 @@ const AuthenticatedAdminRouteRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedSettingsRouteRoute: typeof AuthenticatedSettingsRouteRouteWithChildren
+  AuthenticatedBaseRouteRoute: typeof AuthenticatedBaseRouteRouteWithChildren
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedMinionsRoute: typeof AuthenticatedMinionsRoute
   AuthenticatedRedirectVscodeRoute: typeof AuthenticatedRedirectVscodeRoute
   AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
   AuthenticatedAuthVscodeLinkRoute: typeof AuthenticatedAuthVscodeLinkRoute
-  AuthenticatedTasksUidRoute: typeof AuthenticatedTasksUidRoute
-  AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedSettingsRouteRoute: AuthenticatedSettingsRouteRouteWithChildren,
+  AuthenticatedBaseRouteRoute: AuthenticatedBaseRouteRouteWithChildren,
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedMinionsRoute: AuthenticatedMinionsRoute,
   AuthenticatedRedirectVscodeRoute: AuthenticatedRedirectVscodeRoute,
   AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
   AuthenticatedAuthVscodeLinkRoute: AuthenticatedAuthVscodeLinkRoute,
-  AuthenticatedTasksUidRoute: AuthenticatedTasksUidRoute,
-  AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -399,7 +410,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/minions': typeof AuthenticatedMinionsRoute
@@ -407,22 +418,21 @@ export interface FileRoutesByFullPath {
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
-  '/account': typeof AuthenticatedSettingsAccountRoute
-  '/billing': typeof AuthenticatedSettingsBillingRoute
-  '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
-  '/model': typeof AuthenticatedSettingsModelRoute
-  '/usage': typeof AuthenticatedSettingsUsageRoute
+  '/tasks': typeof AuthenticatedBaseTasksRoute
   '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/tasks/$uid': typeof AuthenticatedTasksUidRoute
-  '/tasks': typeof AuthenticatedTasksIndexRoute
+  '/account': typeof AuthenticatedBaseSettingsAccountRoute
+  '/billing': typeof AuthenticatedBaseSettingsBillingRoute
+  '/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
+  '/model': typeof AuthenticatedBaseSettingsModelRoute
+  '/usage': typeof AuthenticatedBaseSettingsUsageRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/minions': typeof AuthenticatedMinionsRoute
@@ -430,17 +440,16 @@ export interface FileRoutesByTo {
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
-  '/account': typeof AuthenticatedSettingsAccountRoute
-  '/billing': typeof AuthenticatedSettingsBillingRoute
-  '/integrations': typeof AuthenticatedSettingsIntegrationsRoute
-  '/model': typeof AuthenticatedSettingsModelRoute
-  '/usage': typeof AuthenticatedSettingsUsageRoute
+  '/tasks': typeof AuthenticatedBaseTasksRoute
   '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/tasks/$uid': typeof AuthenticatedTasksUidRoute
-  '/tasks': typeof AuthenticatedTasksIndexRoute
+  '/account': typeof AuthenticatedBaseSettingsAccountRoute
+  '/billing': typeof AuthenticatedBaseSettingsBillingRoute
+  '/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
+  '/model': typeof AuthenticatedBaseSettingsModelRoute
+  '/usage': typeof AuthenticatedBaseSettingsUsageRoute
 }
 
 export interface FileRoutesById {
@@ -448,24 +457,24 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/waitlist': typeof WaitlistRoute
-  '/_authenticated/_settings': typeof AuthenticatedSettingsRouteRouteWithChildren
+  '/_authenticated/_base': typeof AuthenticatedBaseRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/minions': typeof AuthenticatedMinionsRoute
   '/_authenticated/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/_authenticated/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
-  '/_authenticated/_settings/account': typeof AuthenticatedSettingsAccountRoute
-  '/_authenticated/_settings/billing': typeof AuthenticatedSettingsBillingRoute
-  '/_authenticated/_settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
-  '/_authenticated/_settings/model': typeof AuthenticatedSettingsModelRoute
-  '/_authenticated/_settings/usage': typeof AuthenticatedSettingsUsageRoute
+  '/_authenticated/_base/_settings': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
+  '/_authenticated/_base/tasks': typeof AuthenticatedBaseTasksRoute
   '/_authenticated/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/_authenticated/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/_authenticated/tasks/$uid': typeof AuthenticatedTasksUidRoute
-  '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
+  '/_authenticated/_base/_settings/account': typeof AuthenticatedBaseSettingsAccountRoute
+  '/_authenticated/_base/_settings/billing': typeof AuthenticatedBaseSettingsBillingRoute
+  '/_authenticated/_base/_settings/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
+  '/_authenticated/_base/_settings/model': typeof AuthenticatedBaseSettingsModelRoute
+  '/_authenticated/_base/_settings/usage': typeof AuthenticatedBaseSettingsUsageRoute
 }
 
 export interface FileRouteTypes {
@@ -480,17 +489,16 @@ export interface FileRouteTypes {
     | '/stop-impersonating'
     | '/auth/$pathname'
     | '/share/$uid'
+    | '/tasks'
+    | '/admin/prompt-evaluation'
+    | '/admin/users'
+    | '/auth/device-link'
+    | '/auth/vscode-link'
     | '/account'
     | '/billing'
     | '/integrations'
     | '/model'
     | '/usage'
-    | '/admin/prompt-evaluation'
-    | '/admin/users'
-    | '/auth/device-link'
-    | '/auth/vscode-link'
-    | '/tasks/$uid'
-    | '/tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -502,40 +510,39 @@ export interface FileRouteTypes {
     | '/stop-impersonating'
     | '/auth/$pathname'
     | '/share/$uid'
+    | '/tasks'
+    | '/admin/prompt-evaluation'
+    | '/admin/users'
+    | '/auth/device-link'
+    | '/auth/vscode-link'
     | '/account'
     | '/billing'
     | '/integrations'
     | '/model'
     | '/usage'
-    | '/admin/prompt-evaluation'
-    | '/admin/users'
-    | '/auth/device-link'
-    | '/auth/vscode-link'
-    | '/tasks/$uid'
-    | '/tasks'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/waitlist'
-    | '/_authenticated/_settings'
+    | '/_authenticated/_base'
     | '/_authenticated/admin'
     | '/_authenticated/minions'
     | '/_authenticated/redirect-vscode'
     | '/_authenticated/stop-impersonating'
     | '/auth/$pathname'
     | '/share/$uid'
-    | '/_authenticated/_settings/account'
-    | '/_authenticated/_settings/billing'
-    | '/_authenticated/_settings/integrations'
-    | '/_authenticated/_settings/model'
-    | '/_authenticated/_settings/usage'
+    | '/_authenticated/_base/_settings'
+    | '/_authenticated/_base/tasks'
     | '/_authenticated/admin/prompt-evaluation'
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
     | '/_authenticated/auth/vscode-link'
-    | '/_authenticated/tasks/$uid'
-    | '/_authenticated/tasks/'
+    | '/_authenticated/_base/_settings/account'
+    | '/_authenticated/_base/_settings/billing'
+    | '/_authenticated/_base/_settings/integrations'
+    | '/_authenticated/_base/_settings/model'
+    | '/_authenticated/_base/_settings/usage'
   fileRoutesById: FileRoutesById
 }
 
@@ -578,29 +585,24 @@ export const routeTree = rootRoute
     "/_authenticated": {
       "filePath": "_authenticated.tsx",
       "children": [
-        "/_authenticated/_settings",
+        "/_authenticated/_base",
         "/_authenticated/admin",
         "/_authenticated/minions",
         "/_authenticated/redirect-vscode",
         "/_authenticated/stop-impersonating",
         "/_authenticated/auth/device-link",
-        "/_authenticated/auth/vscode-link",
-        "/_authenticated/tasks/$uid",
-        "/_authenticated/tasks/"
+        "/_authenticated/auth/vscode-link"
       ]
     },
     "/waitlist": {
       "filePath": "waitlist.tsx"
     },
-    "/_authenticated/_settings": {
-      "filePath": "_authenticated._settings/route.tsx",
+    "/_authenticated/_base": {
+      "filePath": "_authenticated._base/route.tsx",
       "parent": "/_authenticated",
       "children": [
-        "/_authenticated/_settings/account",
-        "/_authenticated/_settings/billing",
-        "/_authenticated/_settings/integrations",
-        "/_authenticated/_settings/model",
-        "/_authenticated/_settings/usage"
+        "/_authenticated/_base/_settings",
+        "/_authenticated/_base/tasks"
       ]
     },
     "/_authenticated/admin": {
@@ -629,25 +631,20 @@ export const routeTree = rootRoute
     "/share/$uid": {
       "filePath": "share.$uid.tsx"
     },
-    "/_authenticated/_settings/account": {
-      "filePath": "_authenticated._settings/account.tsx",
-      "parent": "/_authenticated/_settings"
+    "/_authenticated/_base/_settings": {
+      "filePath": "_authenticated._base/_settings/route.tsx",
+      "parent": "/_authenticated/_base",
+      "children": [
+        "/_authenticated/_base/_settings/account",
+        "/_authenticated/_base/_settings/billing",
+        "/_authenticated/_base/_settings/integrations",
+        "/_authenticated/_base/_settings/model",
+        "/_authenticated/_base/_settings/usage"
+      ]
     },
-    "/_authenticated/_settings/billing": {
-      "filePath": "_authenticated._settings/billing.tsx",
-      "parent": "/_authenticated/_settings"
-    },
-    "/_authenticated/_settings/integrations": {
-      "filePath": "_authenticated._settings/integrations.tsx",
-      "parent": "/_authenticated/_settings"
-    },
-    "/_authenticated/_settings/model": {
-      "filePath": "_authenticated._settings/model.tsx",
-      "parent": "/_authenticated/_settings"
-    },
-    "/_authenticated/_settings/usage": {
-      "filePath": "_authenticated._settings/usage.tsx",
-      "parent": "/_authenticated/_settings"
+    "/_authenticated/_base/tasks": {
+      "filePath": "_authenticated._base/tasks.tsx",
+      "parent": "/_authenticated/_base"
     },
     "/_authenticated/admin/prompt-evaluation": {
       "filePath": "_authenticated.admin/prompt-evaluation.tsx",
@@ -665,13 +662,25 @@ export const routeTree = rootRoute
       "filePath": "_authenticated.auth/vscode-link.tsx",
       "parent": "/_authenticated"
     },
-    "/_authenticated/tasks/$uid": {
-      "filePath": "_authenticated.tasks/$uid.tsx",
-      "parent": "/_authenticated"
+    "/_authenticated/_base/_settings/account": {
+      "filePath": "_authenticated._base/_settings/account.tsx",
+      "parent": "/_authenticated/_base/_settings"
     },
-    "/_authenticated/tasks/": {
-      "filePath": "_authenticated.tasks/index.tsx",
-      "parent": "/_authenticated"
+    "/_authenticated/_base/_settings/billing": {
+      "filePath": "_authenticated._base/_settings/billing.tsx",
+      "parent": "/_authenticated/_base/_settings"
+    },
+    "/_authenticated/_base/_settings/integrations": {
+      "filePath": "_authenticated._base/_settings/integrations.tsx",
+      "parent": "/_authenticated/_base/_settings"
+    },
+    "/_authenticated/_base/_settings/model": {
+      "filePath": "_authenticated._base/_settings/model.tsx",
+      "parent": "/_authenticated/_base/_settings"
+    },
+    "/_authenticated/_base/_settings/usage": {
+      "filePath": "_authenticated._base/_settings/usage.tsx",
+      "parent": "/_authenticated/_base/_settings"
     }
   }
 }
