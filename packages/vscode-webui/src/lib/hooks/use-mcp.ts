@@ -40,7 +40,7 @@ export const useMcp = () => {
   for (const [name, connection] of Object.entries(parsed.connections)) {
     mergedConnections[name] = {
       ...connection,
-      tools: mcpTools[name] || connection.tools,
+      tools: connection.tools || mcpTools[name] || {},
     };
   }
 

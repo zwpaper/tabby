@@ -88,7 +88,7 @@
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.mcp.toogleToolEnabled",
+        "command": "ragdoll.mcp.toggleToolEnabled",
         "title": "Toggle MCP Tool Enabled",
         "category": "Pochi"
       }
@@ -120,7 +120,7 @@
           "when": "false"
         },
         {
-          "command": "ragdoll.mcp.toogleToolEnabled",
+          "command": "ragdoll.mcp.toggleToolEnabled",
           "when": "false"
         }
       ],

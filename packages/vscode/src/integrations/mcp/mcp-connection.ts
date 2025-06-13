@@ -15,6 +15,7 @@ import {
 } from "./types";
 import {
   checkUrlIsSseServer,
+  isToolEnabledChanged,
   readableError,
   shouldRestartDueToConfigChanged,
 } from "./utils";
@@ -206,6 +207,11 @@ export class McpConnection implements vscode.Disposable {
       this.logger.debug("Configuration changed, restarting...");
       this.fsm.send({ type: "restart" });
       return;
+    }
+
+    if (isToolEnabledChanged(oldConfig, config)) {
+      this.logger.debug("Tool enabled/disabled changed, updating status...");
+      this.updateStatus();
     }
   }
 

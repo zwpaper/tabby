@@ -303,9 +303,9 @@ export class CommandManager implements vscode.Disposable {
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.mcp.toogleToolEnabled",
-        async () => {
-          throw Error("Not implemented yet");
+        "ragdoll.mcp.toggleToolEnabled",
+        async (serverName: string, toolName: string) => {
+          this.mcpHub.toggleToolEnabled(serverName, toolName);
         },
       ),
     );

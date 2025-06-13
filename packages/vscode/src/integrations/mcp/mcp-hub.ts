@@ -83,6 +83,32 @@ export class McpHub implements vscode.Disposable {
     return uniqueName;
   }
 
+  toggleToolEnabled(serverName: string, toolName: string) {
+    if (!this.config?.[serverName]) {
+      logger.debug(
+        `Tried to toggle tool for non-existing server: ${serverName}`,
+      );
+      return;
+    }
+    // Create a deep copy of the server config to avoid mutating the original
+    const serverConfig = { ...this.config[serverName] };
+    if (!serverConfig.disabledTools) {
+      serverConfig.disabledTools = [];
+    } else {
+      // Also copy the disabledTools array
+      serverConfig.disabledTools = [...serverConfig.disabledTools];
+    }
+
+    const index = serverConfig.disabledTools.indexOf(toolName);
+    const isCurrentlyDisabled = index > -1;
+    if (isCurrentlyDisabled) {
+      serverConfig.disabledTools.splice(index, 1);
+    } else {
+      serverConfig.disabledTools.push(toolName);
+    }
+    this.updateServerConfig(serverName, serverConfig);
+  }
+
   private generateUniqueName(baseName: string): string {
     const currentServers = this.config;
     let serverName = baseName;
@@ -98,6 +124,18 @@ export class McpHub implements vscode.Disposable {
 
   private updateServerConfig(name: string, newConfig: McpServerConfig) {
     if (!this.config) return;
+
+    // Check if the configuration actually changed to avoid unnecessary updates
+    const currentConfig = this.config[name];
+    if (
+      currentConfig &&
+      JSON.stringify(currentConfig) === JSON.stringify(newConfig)
+    ) {
+      logger.trace(
+        `No configuration change detected for server ${name}, skipping update`,
+      );
+      return;
+    }
 
     const updatedConfig = {
       ...this.config,
@@ -119,6 +157,16 @@ export class McpHub implements vscode.Disposable {
     this.listeners.push({
       dispose: this.configuration.mcpServers.subscribe((newConfig) => {
         logger.debug("MCP servers configuration changed:", newConfig);
+
+        // Check if the configuration actually changed to avoid redundant processing
+        if (
+          this.config &&
+          JSON.stringify(this.config) === JSON.stringify(newConfig)
+        ) {
+          logger.trace("Configuration unchanged, skipping processing");
+          return;
+        }
+
         this.config = newConfig;
 
         // Update existing connections

@@ -215,7 +215,7 @@ const McpToolBadgeList: React.FC<{
               key={name}
               id={name}
               disabled={tools[name].disabled}
-              href={commandForMcp("toogleToolEnabled", serverName, name)}
+              href={commandForMcp("toggleToolEnabled", serverName, name)}
               description={tools[name].description}
             />
           ))
@@ -236,7 +236,7 @@ function commandForMcp(
     | "startServer"
     | "stopServer"
     | "restartServer"
-    | "toogleToolEnabled",
+    | "toggleToolEnabled",
   serverName?: string,
   toolName?: string,
   recommendedServer?: {
@@ -255,7 +255,7 @@ function commandForMcp(
   } else if (command === "restartServer") {
     cmd = "serverControl";
     args = ["restart", serverName];
-  } else if (command === "toogleToolEnabled") {
+  } else if (command === "toggleToolEnabled") {
     args = [serverName, toolName];
   } else if (command === "addServer" && recommendedServer) {
     args = [serverName, recommendedServer];
