@@ -35,7 +35,17 @@ function stringToLogLevel(level: string) {
 }
 
 function parseLogMinLevelAndType(name: string) {
+  if (isVSCodeEnvironment()) {
+    return 0;
+  }
+
   const config = process.env.POCHI_LOG || "";
+  // POCHI_LOG=debug
+  if (!config.includes("=")) {
+    return stringToLogLevel(config);
+  }
+
+  // POCHI_LOG=Pochi=debug,Ragdoll=info
   for (const item of config.split(",")) {
     const [pattern, value] = item.split("=");
     if (minimatch(name, pattern)) {

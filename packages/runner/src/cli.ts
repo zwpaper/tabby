@@ -4,9 +4,8 @@ import { hc } from "hono/client";
 import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
 import * as commander from "commander";
-import { asReadableMessage } from ".";
 import { findRipgrep } from "./lib/find-ripgrep";
-import { TaskRunner } from "./task-runner";
+import { TaskRunner, type TaskRunnerProgress } from "./task-runner";
 
 const program = new Command();
 program.name("pochi-runner").description("Pochi cli runner");
@@ -71,10 +70,65 @@ program
     });
 
     for await (const progress of runner.start()) {
-      logger.info(asReadableMessage(progress));
+      writeLog(progress);
     }
 
     process.exit(0);
   });
+
+function writeLog(progress: TaskRunnerProgress) {
+  const output = logger;
+  switch (progress.type) {
+    case "loading-task":
+      if (progress.phase === "begin") {
+        output.debug(`[Step ${progress.step}] Loading task...`);
+      }
+      if (progress.phase === "end") {
+        output.debug(`[Step ${progress.step}] Task loaded successfully.`);
+      }
+      break;
+    case "executing-tool-call":
+      if (progress.phase === "begin") {
+        return output.info(
+          `[Step ${progress.step}] Executing tool: ${progress.toolName}`,
+        );
+      }
+      if (progress.phase === "end") {
+        const error =
+          typeof progress.toolResult === "object" &&
+          progress.toolResult !== null &&
+          "error" in progress.toolResult &&
+          progress.toolResult.error
+            ? progress.toolResult.error
+            : undefined;
+        if (error) {
+          output.error(
+            `[Step ${progress.step}] Tool ${progress.toolName} ✗ (${error})`,
+          );
+        } else {
+          output.info(`[Step ${progress.step}] Tool ${progress.toolName} ✓`);
+        }
+      }
+      break;
+    case "sending-result":
+      if (progress.phase === "begin") {
+        output.debug(`[Step ${progress.step}] Sending result...`);
+      }
+      if (progress.phase === "end") {
+        output.debug(`[Step ${progress.step}] Result sent successfully.`);
+      }
+      break;
+    case "step-completed":
+      return output.debug(
+        `[Step ${progress.step}] Step completed with status: ${progress.status}`,
+      );
+    case "runner-stopped":
+      return output.info(
+        `Task runner stopped with final status: ${progress.status}`,
+      );
+    default:
+      return "";
+  }
+}
 
 program.parse();

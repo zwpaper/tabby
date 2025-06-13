@@ -7,9 +7,8 @@ import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
 import { type UIMessage, updateToolCallResult } from "@ai-sdk/ui-utils";
 import { toUIMessages } from "@ragdoll/common";
-import { asReadableMessage } from "@ragdoll/runner";
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import type { TaskRunnerProgress } from "@ragdoll/runner";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { Bot } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
@@ -134,4 +133,47 @@ function RunnerComponent() {
       </div>
     </div>
   );
+}
+
+function asReadableMessage(progress: TaskRunnerProgress): string {
+  switch (progress.type) {
+    case "loading-task":
+      if (progress.phase === "begin") {
+        return `[Step ${progress.step}] Loading task...`;
+      }
+      if (progress.phase === "end") {
+        return `[Step ${progress.step}] Task loaded successfully.`;
+      }
+      break;
+    case "executing-tool-call":
+      if (progress.phase === "begin") {
+        return `[Step ${progress.step}] Executing tool: ${progress.toolName}`;
+      }
+      if (progress.phase === "end") {
+        const error =
+          typeof progress.toolResult === "object" &&
+          progress.toolResult !== null &&
+          "error" in progress.toolResult &&
+          progress.toolResult.error
+            ? progress.toolResult.error
+            : undefined;
+        return `[Step ${progress.step}] Tool ${progress.toolName} ${error ? "✗" : "✓"}${error ? ` (${error})` : ""}`;
+      }
+      break;
+    case "sending-result":
+      if (progress.phase === "begin") {
+        return `[Step ${progress.step}] Sending result...`;
+      }
+      if (progress.phase === "end") {
+        return `[Step ${progress.step}] Result sent successfully.`;
+      }
+      break;
+    case "step-completed":
+      return `[Step ${progress.step}] Step completed with status: ${progress.status}`;
+    case "runner-stopped":
+      return `Task runner stopped with final status: ${progress.status}`;
+    default:
+      return "";
+  }
+  return "";
 }
