@@ -85,7 +85,7 @@ function Settings() {
   return (
     <div className="mx-auto max-w-6xl">
       <NavHeader />
-      <SidebarProvider>
+      <SidebarProvider className="md:min-h-[80vh]">
         <AppSidebar
           variant="floating"
           className={cn(

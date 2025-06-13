@@ -90,7 +90,7 @@ function SlackIntegrationSection({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-lg border bg-slate-100 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+                className="size-8"
                 onClick={handleConnectSlack}
                 aria-label="Connect new Slack workspace"
               >
