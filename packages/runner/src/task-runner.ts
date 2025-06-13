@@ -189,7 +189,7 @@ export class TaskRunner {
     }
     this.retryCount++;
 
-    logger.info("Retrying task", this.uid, "with messages", messages);
+    logger.trace("Retrying task", this.uid, "with messages", messages);
     const reload = async function* (
       this: TaskRunner,
     ): AsyncGenerator<TaskStepProgress> {
@@ -272,7 +272,7 @@ export class TaskRunner {
     });
 
     const environment = await this.buildEnvironment();
-    logger.info("Starting streaming for task", this.uid);
+    logger.debug("Starting streaming for task", this.uid);
 
     yield { type: "sending-result", phase: "begin", message: lastMessage };
     const resp = await this.apiClient.api.chat.stream.$post(
@@ -327,7 +327,7 @@ export class TaskRunner {
       };
     }
 
-    logger.info(
+    logger.trace(
       "Executing tool",
       tool.toolName,
       "with args",

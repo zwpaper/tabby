@@ -70,7 +70,7 @@ export async function globFiles(
     throw new Error(`Failed to glob files: ${errorMessage}`);
   }
 
-  logger.info(`Found ${files.length} files matching pattern ${globPattern}`);
+  logger.debug(`Found ${files.length} files matching pattern ${globPattern}`);
   logger.trace("Files found in globFiles:", files);
   return { files, isTruncated };
 }

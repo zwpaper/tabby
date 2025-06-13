@@ -73,7 +73,7 @@ export async function searchFilesWithRipgrep(
   matches: { file: string; line: number; context: string }[];
   isTruncated: boolean;
 }> {
-  logger.info("searchFiles", path, regex, filePattern);
+  logger.debug("searchFiles", path, regex, filePattern);
   const matches: { file: string; line: number; context: string }[] = [];
 
   // Construct the rg command
@@ -94,7 +94,7 @@ export async function searchFilesWithRipgrep(
   const absPath = resolve(workspacePath, path.replace(/'/g, "'\\''"));
   // Add regex and path. Ensure they are properly quoted.
   command += `'${regex.replace(/'/g, "'\\''")}' '${absPath}'`;
-  logger.info("command", command);
+  logger.debug("command", command);
 
   try {
     const { stdout, stderr } = await execAsync(command, {
