@@ -291,17 +291,17 @@ class SlackService {
 
   private async getInstallationByUser(userId: string) {
     const result = await db
-      .selectFrom("slackConnect as sc")
-      .innerJoin("externalIntegration as ei", (join) =>
+      .selectFrom("slackConnect")
+      .innerJoin("externalIntegration", (join) =>
         join.on(
-          sql`ei."vendorData"->>'integrationId'`,
+          sql`"externalIntegration"."vendorData"->>'integrationId'`,
           "=",
-          "sc.vendorIntegrationId",
+          sql`"slackConnect"."vendorIntegrationId"`,
         ),
       )
-      .select("ei.vendorData")
-      .where("sc.userId", "=", userId)
-      .where(sql`ei."vendorData"->>'provider'`, "=", "slack")
+      .select("externalIntegration.vendorData")
+      .where("slackConnect.userId", "=", userId)
+      .where(sql`"externalIntegration"."vendorData"->>'provider'`, "=", "slack")
       .executeTakeFirst();
 
     if (!result) return null;
