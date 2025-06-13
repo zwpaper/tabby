@@ -70,7 +70,7 @@ class MinionService {
 }
 
 function getUrl(sandbox: Sandbox) {
-  return `${sandbox.getHost(3000)}?tkn=${VSCodeToken}&folder=${encodeURIComponent(
+  return `https://${sandbox.getHost(3000)}?tkn=${VSCodeToken}&folder=${encodeURIComponent(
     RepoFolder,
   )}`;
 }
