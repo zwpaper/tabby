@@ -1,5 +1,5 @@
 import type { DBMessage, UserEvent } from "@ragdoll/db";
-import type { AnyBlock } from "@slack/web-api";
+import type { AnyBlock, WebClient } from "@slack/web-api";
 
 import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
 import { enqueueNotifyTaskSlack } from "../background-job";
@@ -9,7 +9,6 @@ import { slackService } from "../slack";
 import { taskService } from "../task";
 import { slackRichTextRenderer } from "./slack-rich-text";
 
-// Type alias for validated Slack task
 type Task = Awaited<ReturnType<(typeof taskService)["get"]>>;
 
 // Interface for extracted task data used in notifications
@@ -115,13 +114,13 @@ class SlackTaskService {
     if (!task) return;
 
     const slackEventData = this.extractSlackEventData(task);
-    const integration = await slackService.getIntegration(userId);
+    const webClient = await slackService.getWebClientByUser(userId);
 
-    if (!integration || !slackEventData.channel || !slackEventData.ts) {
+    if (!webClient || !slackEventData.channel || !slackEventData.ts) {
       return;
     }
 
-    await integration.webClient.reactions.add({
+    await webClient.reactions.add({
       channel: slackEventData.channel,
       timestamp: slackEventData.ts,
       name: "white_check_mark",
@@ -136,8 +135,8 @@ class SlackTaskService {
     command: { channel_id: string; user_id: string; text?: string },
     taskText: string,
   ) {
-    const integration = await slackService.getIntegration(userId);
-    if (!integration) return;
+    const webClient = await slackService.getWebClientByUser(userId);
+    if (!webClient) return;
 
     const githubToken = await githubService.getAccessToken(userId);
     if (!githubToken) {
@@ -146,7 +145,7 @@ class SlackTaskService {
 
     const parsedCommand = await this.parseTaskCommand(
       taskText,
-      integration,
+      webClient,
       command.channel_id,
       githubToken,
     );
@@ -158,7 +157,7 @@ class SlackTaskService {
     const taskPrompt = parsedCommand.description;
 
     const initialMessage = `🚀 Creating GitHub task for ${parsedCommand.githubRepository.owner}/${parsedCommand.githubRepository.repo}: ${parsedCommand.description}\n☁️ Starting cloud runner...`;
-    const messageResult = await integration.webClient.chat.postMessage({
+    const messageResult = await webClient.chat.postMessage({
       channel: command.channel_id,
       text: initialMessage,
     });
@@ -206,7 +205,7 @@ class SlackTaskService {
     const successBlocks = slackRichTextRenderer.renderCloudRunnerSuccess(
       minion.url,
     );
-    await integration.webClient.chat.postMessage({
+    await webClient.chat.postMessage({
       channel: command.channel_id,
       thread_ts: messageResult.ts,
       blocks: successBlocks,
@@ -221,7 +220,7 @@ class SlackTaskService {
    */
   private async parseTaskCommand(
     commandText: string,
-    integration: Awaited<ReturnType<typeof slackService.getIntegration>>,
+    webClient: WebClient,
     channelId: string,
     githubToken: string,
   ): Promise<{
@@ -235,7 +234,7 @@ class SlackTaskService {
     const match = trimmedText.match(/^\[(.+?\/.+?)\]\s*(.*)$/);
 
     if (!match) {
-      await integration?.webClient.chat.postMessage({
+      await webClient.chat.postMessage({
         channel: channelId,
         text: "❌ Invalid command format. Expected: [owner/repo] description",
       });
@@ -247,7 +246,7 @@ class SlackTaskService {
     const ownerAndRepo = parseOwnerAndRepo(repository);
 
     if (!ownerAndRepo) {
-      await integration?.webClient.chat.postMessage({
+      await webClient.chat.postMessage({
         channel: channelId,
         text: "❌ Invalid repository format. Expected: owner/repo",
       });
@@ -262,7 +261,7 @@ class SlackTaskService {
     );
 
     if (!repoValidation) {
-      await integration?.webClient.chat.postMessage({
+      await webClient.chat.postMessage({
         channel: channelId,
         text: "❌ Failed to validate GitHub repo",
       });
@@ -284,18 +283,18 @@ class SlackTaskService {
     ts: string,
     text: AnyBlock[] | string,
   ) {
-    const integration = await slackService.getIntegration(userId);
-    if (!integration) return;
+    const webClient = await slackService.getWebClientByUser(userId);
+    if (!webClient) return;
 
     switch (typeof text) {
       case "string":
-        return await integration.webClient.chat.postMessage({
+        return await webClient.chat.postMessage({
           channel,
           thread_ts: ts,
           text,
         });
       case "object":
-        return await integration.webClient.chat.postMessage({
+        return await webClient.chat.postMessage({
           channel,
           thread_ts: ts,
           blocks: text,
@@ -324,14 +323,14 @@ class SlackTaskService {
       return;
     }
 
-    const integration = await slackService.getIntegration(userId);
-    if (!integration) {
+    const webClient = await slackService.getWebClientByUser(userId);
+    if (!webClient) {
       console.error("No Slack integration found for user");
       return;
     }
 
     const botMessageTs = await this.findBotMessageInThread(
-      integration,
+      webClient,
       slackEventData.channel,
       slackEventData.ts,
     );
@@ -341,7 +340,7 @@ class SlackTaskService {
       return;
     }
 
-    await integration.webClient.chat.update({
+    await webClient.chat.update({
       channel: slackEventData.channel,
       ts: botMessageTs,
       blocks,
@@ -374,13 +373,11 @@ class SlackTaskService {
   }
 
   private async findBotMessageInThread(
-    integration: Awaited<ReturnType<typeof slackService.getIntegration>>,
+    webClient: WebClient,
     channel: string,
     threadTs: string,
   ): Promise<string | null> {
-    if (!integration) return null;
-
-    const result = await integration.webClient.conversations.replies({
+    const result = await webClient.conversations.replies({
       channel,
       ts: threadTs,
       inclusive: true,
@@ -391,7 +388,7 @@ class SlackTaskService {
       return null;
     }
 
-    const authResult = await integration.webClient.auth.test();
+    const authResult = await webClient.auth.test();
     if (!authResult.ok) {
       console.error("Failed to authenticate bot:", authResult.error);
       return null;

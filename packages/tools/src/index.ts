@@ -17,7 +17,6 @@ import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
 export type { PreviewToolFunctionType, ToolFunctionType } from "./types";
 import type { Tool } from "ai";
-import { slackReplyThread } from "./slack-reply-thread";
 import { webFetch } from "./web-fetch";
 import { writeToFile } from "./write-to-file";
 
@@ -57,7 +56,6 @@ export type ClientToolsType = typeof ClientTools &
 export const ServerTools = {
   webFetch,
   batchCall,
-  slackReplyThread,
 };
 
 type ToolName =

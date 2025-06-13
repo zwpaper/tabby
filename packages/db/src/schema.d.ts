@@ -85,6 +85,14 @@ export interface Session {
   userId: string;
 }
 
+export interface SlackConnect {
+  createdAt: Generated<Timestamp>;
+  id: Generated<number>;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+  vendorIntegrationId: string;
+}
+
 export interface Subscription {
   cancelAtPeriodEnd: boolean | null;
   id: string;
@@ -152,6 +160,7 @@ export interface DB {
   minion: Minion;
   monthlyUsage: MonthlyUsage;
   session: Session;
+  slackConnect: SlackConnect;
   subscription: Subscription;
   task: Task;
   taskSequence: TaskSequence;

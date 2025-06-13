@@ -174,31 +174,25 @@ class SlackService {
       const vendorIntegrationId = context.teamId || context.enterpriseId;
       if (!vendorIntegrationId) return;
 
-      const integration = await db
-        .selectFrom("externalIntegration")
-        .select("userId")
-        .where(sql`"vendorData"->>'provider'`, "=", "slack")
-        .where(sql`"vendorData"->>'integrationId'`, "=", vendorIntegrationId)
-        .executeTakeFirst();
+      const webClient =
+        await this.getWebClientByIntegration(vendorIntegrationId);
 
-      if (!integration) return;
+      if (!webClient) return;
 
-      // Get user email from Slack and find corresponding userId
-      const userEmail = await this.getUserEmail(
-        integration.userId,
-        vendorIntegrationId,
-        command.user_id,
-      );
+      const userInfo = await webClient.users.info({
+        user: command.user_id,
+      });
 
-      if (!userEmail) {
+      if (!userInfo.ok || !userInfo.user?.profile?.email) {
         await respond({
           text: "❌ Unable to get your email from Slack. Please ensure your email is set in your Slack profile.",
           response_type: "ephemeral",
         });
         return;
       }
+      const userEmail = userInfo.user.profile.email;
 
-      // Find user by email
+      // get the target email of the user
       const targetUser = await db
         .selectFrom("user")
         .select(["id", "email", "name"])
@@ -233,6 +227,21 @@ class SlackService {
         return;
       }
 
+      // Update SlackConnect mapping
+      await db
+        .insertInto("slackConnect")
+        .values({
+          userId: targetUser.id,
+          vendorIntegrationId,
+        })
+        .onConflict((oc) =>
+          oc.column("userId").doUpdateSet({
+            vendorIntegrationId,
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          }),
+        )
+        .execute();
+
       try {
         await slackTaskService.createTaskWithCloudRunner(
           targetUser.id,
@@ -265,70 +274,62 @@ class SlackService {
     }
   }
 
-  async getIntegration(userId: string, vendorIntegrationId?: string) {
-    let query = db
+  private async getInstallation(vendorIntegrationId: string) {
+    const result = await db
       .selectFrom("externalIntegration")
       .select("vendorData")
       .where(sql`"vendorData"->>'provider'`, "=", "slack")
-      .where("userId", "=", userId);
+      .where(sql`"vendorData"->>'integrationId'`, "=", vendorIntegrationId)
+      .executeTakeFirst();
 
-    if (vendorIntegrationId) {
-      query = query.where(
-        sql`"vendorData"->>'integrationId'`,
-        "=",
-        vendorIntegrationId,
-      );
-    }
-
-    const result = await query.executeTakeFirst();
     if (!result) return null;
 
     const { vendorData } = result;
 
-    if (vendorData.provider === "slack") {
-      const installation = vendorData.payload as Installation<"v2", boolean>; // Add type assertion
-      if (installation.bot?.token) {
-        return {
-          webClient: new WebClient(
-            installation.bot.token,
-            this.app.webClientOptions,
-          ),
-          slackUserId: installation.user.id,
-        };
-      }
-    }
-    return null;
+    return vendorData.payload as Installation<"v2", boolean>;
   }
 
-  /**
-   * Get user email from Slack using the authenticated WebClient
-   */
-  async getUserEmail(
-    ownerId: string,
-    vendorIntegrationId: string,
-    slackUserId: string,
-  ) {
-    const integration = await this.getIntegration(ownerId, vendorIntegrationId);
+  private async getInstallationByUser(userId: string) {
+    const result = await db
+      .selectFrom("slackConnect as sc")
+      .innerJoin("externalIntegration as ei", (join) =>
+        join.on(
+          sql`ei."vendorData"->>'integrationId'`,
+          "=",
+          "sc.vendorIntegrationId",
+        ),
+      )
+      .select("ei.vendorData")
+      .where("sc.userId", "=", userId)
+      .where(sql`ei."vendorData"->>'provider'`, "=", "slack")
+      .executeTakeFirst();
 
-    if (!integration?.webClient) {
-      console.error("No authenticated Slack integration found for user");
-      return undefined;
+    if (!result) return null;
+
+    const { vendorData } = result;
+
+    return vendorData.payload as Installation<"v2", boolean>;
+  }
+
+  private getWebClient(installation: Installation<"v2", boolean>) {
+    if (!installation.bot?.token) {
+      return null;
     }
+    return new WebClient(installation.bot.token, this.app.webClientOptions);
+  }
 
-    const userInfo = await integration.webClient.users.info({
-      user: slackUserId,
-    });
+  async getWebClientByIntegration(vendorIntegrationId: string) {
+    const installation = await this.getInstallation(vendorIntegrationId);
+    if (!installation) return null;
 
-    if (!userInfo.ok) {
-      console.error("Failed to get Slack user info:", userInfo.error);
-      return undefined;
-    }
-    if (!userInfo.user?.profile?.email) {
-      console.warn("Slack user does not have an email address set");
-      return undefined;
-    }
+    return this.getWebClient(installation);
+  }
 
-    return userInfo.user.profile.email;
+  async getWebClientByUser(userId: string) {
+    const installation = await this.getInstallationByUser(userId);
+    if (!installation) return null;
+
+    return this.getWebClient(installation);
   }
 }
 

@@ -7,11 +7,9 @@ import {
   formatDataStreamPart,
 } from "ai";
 import type { User } from "../../auth";
-import { slackReplyThreadImpl } from "./slack-reply-thread";
 import { webFetchImpl } from "./web-fetch";
 
 const ServerToolsImpl: Record<string, (ctx: User) => Tool> = {
-  slackReplyThread: slackReplyThreadImpl,
   webFetch: webFetchImpl,
 };
 
