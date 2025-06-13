@@ -20,7 +20,7 @@ const enhance = new Hono().post(
 
     const modelId = "openai/gpt-4o-mini";
 
-    const selectedModel = checkModel(modelId);
+    const selectedModel = checkModel(modelId, user.id);
 
     // TODO: remove whitelist check
     checkWaitlist(user);

@@ -5,6 +5,7 @@ import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import { type LanguageModelV1, wrapLanguageModel } from "ai";
 import { createBatchCallMiddleware } from "./batch-call-middleware";
+import { createNewTaskMiddleware } from "./new-task-middleware";
 
 // Define available models
 export const AvailableModels: {
@@ -53,7 +54,10 @@ export const StripePlans = [
   },
 ];
 
-export function getModelById(modelId: string): LanguageModelV1 | null {
+export function getModelById(
+  modelId: string,
+  userId: string,
+): LanguageModelV1 | null {
   const model = getModelByIdImpl(modelId);
   if (!model) {
     return model;
@@ -61,7 +65,7 @@ export function getModelById(modelId: string): LanguageModelV1 | null {
 
   return wrapLanguageModel({
     model,
-    middleware: createBatchCallMiddleware(),
+    middleware: [createBatchCallMiddleware(), createNewTaskMiddleware(userId)],
   });
 }
 

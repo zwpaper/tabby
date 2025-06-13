@@ -28,6 +28,11 @@ Usage notes:
     prompt: z
       .string()
       .describe("The detailed prompt for the task to be performed."),
+    _meta: z
+      .object({
+        uid: z.string().describe("A unique identifier for the task."),
+      })
+      .optional(),
   }),
   outputSchema: z.object({
     result: z

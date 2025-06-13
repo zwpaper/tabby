@@ -12,7 +12,6 @@ import {
   type CoreMessage,
   type DataStreamWriter,
   type LanguageModel,
-  type ToolSet,
   type UIMessage,
   appendResponseMessages,
   createDataStream,
@@ -66,7 +65,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     const user = c.get("user");
 
     await checkUserQuota(user, c, requestedModelId);
-    const selectedModel = checkModel(requestedModelId);
+    const selectedModel = checkModel(requestedModelId, user.id);
 
     checkWaitlist(user);
 
@@ -122,10 +121,8 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               ...formatters.llm(preparedMessages),
             ],
             tools: {
-              ...prepareTools({
-                ...enabledClientTools,
-                ...enabledServerTools, // Add the enabled server tools
-              }),
+              ...enabledClientTools,
+              ...enabledServerTools,
               ...parsedMcpTools,
             },
             providerOptions,
@@ -303,19 +300,6 @@ async function prepareMessages(
     process.env.POCHI_INJECT_ENVIRONMENT_DETAILS_MODE === "assistant",
   );
   return messages;
-}
-
-function prepareTools<TOOLS extends ToolSet>(tools: TOOLS) {
-  // Strip out the _meta field from the zod schema of each tool. (so they got excluded in jsonschema).
-  return Object.fromEntries(
-    Object.entries(tools).map(([name, tool]) => {
-      const toolWithoutMeta: typeof tool = {
-        ...tool,
-        parameters: tool.parameters.omit({ _meta: true }),
-      };
-      return [name, toolWithoutMeta];
-    }),
-  );
 }
 
 export default chat;

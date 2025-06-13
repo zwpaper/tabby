@@ -4,8 +4,8 @@ import type { User } from "../auth";
 import { usageService } from "../service/usage";
 import { AvailableModels, getModelById } from "./constants";
 
-export function checkModel(modelId: string) {
-  const selectedModel = getModelById(modelId);
+export function checkModel(modelId: string, userId: string) {
+  const selectedModel = getModelById(modelId, userId);
   if (!selectedModel) {
     throw new HTTPException(400, {
       message: `Invalid model '${modelId}'`,
