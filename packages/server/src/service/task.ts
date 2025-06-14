@@ -96,6 +96,7 @@ class TaskService {
     await db
       .updateTable("task")
       .set({
+        // underlying we merged two state transition - pending-input -> pending-model -> streaming
         status: "streaming",
         conversation: {
           messages: fromUIMessages(messagesToSave),
