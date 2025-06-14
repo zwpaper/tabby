@@ -26,7 +26,6 @@ export const app = new Hono().use(authRequest);
 
 // Only use logger in development / testing.
 if (process.env.NODE_ENV !== "production") {
-  console.log(`Activating logger in ${process.env.NODE_ENV} mode`);
   app.use(logger());
 }
 
@@ -64,7 +63,6 @@ app.use(
   "/api/*",
   cors({
     origin: (origin) => {
-      console.log("origin", origin);
       if (origin.startsWith("vscode-webview://")) {
         return origin;
       }

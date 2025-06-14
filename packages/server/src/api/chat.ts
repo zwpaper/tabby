@@ -1,3 +1,5 @@
+import { google } from "@ai-sdk/google";
+import { jsonSchema } from "@ai-sdk/ui-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
@@ -12,9 +14,11 @@ import {
   type CoreMessage,
   type DataStreamWriter,
   type LanguageModel,
+  NoSuchToolError,
   type UIMessage,
   appendResponseMessages,
   createDataStream,
+  generateObject,
   streamText,
 } from "ai";
 import { Hono } from "hono";
@@ -199,6 +203,34 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             maxTokens: selectedModel.modelId.includes("4o-mini")
               ? 1024 * 16
               : 1024 * 62,
+
+            experimental_repairToolCall: async ({
+              toolCall,
+              parameterSchema,
+              error,
+            }) => {
+              if (NoSuchToolError.isInstance(error)) {
+                return null; // do not attempt to fix invalid tool names
+              }
+
+              const { object: repairedArgs } = await generateObject({
+                model: google("gemini-2.5-flash-preview-04-17"),
+                schema: jsonSchema(parameterSchema(toolCall)),
+                prompt: [
+                  `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
+                  JSON.stringify(toolCall.args),
+                  "The tool accepts the following schema:",
+                  JSON.stringify(parameterSchema(toolCall)),
+                  "Please fix the arguments.",
+                ].join("\n"),
+                experimental_telemetry: {
+                  isEnabled: true,
+                  tracer: getTracer(),
+                },
+              });
+
+              return { ...toolCall, args: JSON.stringify(repairedArgs) };
+            },
           }),
         );
 
