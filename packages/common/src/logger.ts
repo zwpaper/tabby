@@ -3,7 +3,13 @@ import { type ILogObjMeta, type IMeta, Logger } from "tslog";
 
 const isVSCodeEnvironment = () => {
   if (typeof process !== "undefined") {
-    return !!process.env.VSCODE_PID;
+    if (process.env.VSCODE_PID) {
+      return true;
+    }
+
+    if (process.env.VSCODE_SERVER_PORT) {
+      return true;
+    }
   }
 
   return false;
