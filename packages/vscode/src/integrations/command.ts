@@ -4,7 +4,7 @@ import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
 import { getWorkspaceRulesFileUri } from "@/lib/env";
-import { showOutputPanel } from "@/lib/logger";
+import { getLogger, showOutputPanel } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -19,6 +19,8 @@ import { CommandPalette } from "./command-palette";
 import { McpHub } from "./mcp/mcp-hub";
 import type { McpServerConfig } from "./mcp/types";
 import type { NewProjectTask } from "./uri-handler";
+
+const logger = getLogger("CommandManager");
 
 @injectable()
 @singleton()
@@ -308,6 +310,20 @@ export class CommandManager implements vscode.Disposable {
           this.mcpHub.toggleToolEnabled(serverName, toolName);
         },
       ),
+
+      vscode.commands.registerCommand("ragdoll.toggleFocus", async () => {
+        const webviewHost =
+          await this.ragdollWebviewProvider.retrieveWebviewHost();
+        if (await webviewHost.isFocused()) {
+          logger.debug("Focused on editor");
+          await vscode.commands.executeCommand(
+            "workbench.action.focusActiveEditorGroup",
+          );
+        } else {
+          logger.debug("Focused on webui");
+          await vscode.commands.executeCommand("ragdollWebui.focus");
+        }
+      }),
     );
   }
 

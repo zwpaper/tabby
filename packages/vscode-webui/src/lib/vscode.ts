@@ -103,6 +103,10 @@ function createVSCodeHost(): VSCodeHostApi {
         onAuthChanged() {
           queryClient.resetQueries();
         },
+
+        async isFocused() {
+          return window.document.hasFocus();
+        },
       },
     },
   );

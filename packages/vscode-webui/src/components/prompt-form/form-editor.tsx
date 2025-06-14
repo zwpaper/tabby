@@ -369,11 +369,19 @@ export function FormEditor({
     }
   }, [editor, autoFocus]);
 
-  const focusEditor = () => {
+  const focusEditor = useCallback(() => {
     if (editor && !editor.isFocused) {
       editor.commands.focus();
     }
-  };
+  }, [editor]);
+
+  // Auto focus when document is focused.
+  useEffect(() => {
+    window.addEventListener("focus", focusEditor);
+    return () => {
+      window.removeEventListener("focus", focusEditor);
+    };
+  }, [focusEditor]);
 
   return (
     <form

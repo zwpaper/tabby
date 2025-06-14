@@ -125,7 +125,13 @@ export class RagdollWebviewProvider
       },
       {
         exports: vscodeHost,
-        imports: ["openTask", "openTaskList", "openSettings", "onAuthChanged"],
+        imports: [
+          "openTask",
+          "openTaskList",
+          "openSettings",
+          "onAuthChanged",
+          "isFocused",
+        ],
       },
     );
   }

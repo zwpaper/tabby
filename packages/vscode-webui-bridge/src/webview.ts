@@ -161,4 +161,6 @@ export interface WebviewHostApi {
   openSettings(): void;
 
   onAuthChanged(): void;
+
+  isFocused(): Promise<boolean>;
 }

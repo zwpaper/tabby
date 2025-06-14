@@ -142,6 +142,13 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "command": "ragdoll.toggleFocus",
+        "key": "ctrl+l",
+        "mac": "cmd+l"
+      }
+    ],
     "configuration": [
       {
         "title": "Pochi",
