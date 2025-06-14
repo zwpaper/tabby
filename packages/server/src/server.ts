@@ -64,6 +64,7 @@ app.use(
   "/api/*",
   cors({
     origin: (origin) => {
+      console.log("origin", origin);
       if (origin.startsWith("vscode-webview://")) {
         return origin;
       }
@@ -77,6 +78,7 @@ app.use(
           hostname.endsWith(".vscode-cdn.net") ||
           hostname === "vscode.ikw.app" ||
           hostname.endsWith(".e2b.app") ||
+          hostname.endsWith(".e2b.dev") ||
           hostname.endsWith(".gitpod.io") ||
           hostname.endsWith(".vscode-gitpod-cdn.com")
         ) {
