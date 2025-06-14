@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { sql } from "kysely";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
@@ -43,7 +44,7 @@ const admin = new Hono().post(
       // Update user to approved status
       const result = await db
         .updateTable("user")
-        .set({ isWaitlistApproved: true })
+        .set({ isWaitlistApproved: true, updatedAt: sql`CURRENT_TIMESTAMP` })
         .where("id", "=", userId)
         .returning("id")
         .executeTakeFirst();

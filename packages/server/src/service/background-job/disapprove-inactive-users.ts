@@ -38,8 +38,8 @@ async function disapproveInactiveUsers() {
       const userIds = result.rows.map((user) => user.id);
 
       await sql`
-        UPDATE "user" 
-        SET "isWaitlistApproved" = false 
+        UPDATE "user"
+        SET "isWaitlistApproved" = false, "updatedAt" = CURRENT_TIMESTAMP
         WHERE id = ANY(${userIds})
       `.execute(trx);
 
