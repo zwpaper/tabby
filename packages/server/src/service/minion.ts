@@ -21,7 +21,7 @@ interface CreateMinionOptions {
   userId: string;
   uid: string;
   githubAccessToken: string;
-  githubRepository: {
+  githubRepository?: {
     owner: string;
     repo: string;
   };
@@ -38,15 +38,19 @@ class MinionService {
       undefined,
     );
 
-    const envs = {
+    const envs: Record<string, string> = {
       POCHI_OPENVSCODE_TOKEN: VSCodeToken,
       POCHI_SESSION_TOKEN: session.token,
       POCHI_TASK_ID: uid,
 
       GITHUB_TOKEN: githubAccessToken,
       GH_TOKEN: githubAccessToken,
-      GH_REPO: `${githubRepository.owner}/${githubRepository.repo}`,
     };
+
+    if (githubRepository) {
+      envs.GH_REPO = `${githubRepository.owner}/${githubRepository.repo}`;
+    }
+
     const opts: SandboxOpts = {
       timeoutMs: SandboxTimeoutMs,
       envs: envs,

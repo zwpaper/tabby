@@ -36,6 +36,8 @@ import { db } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
 import { publishTaskEvent } from "../server";
 import type { ZodChatRequestType } from "../types";
+import { githubService } from "./github";
+import { minionService } from "./minion";
 import { slackTaskService } from "./slack-task";
 
 const titleSelect =
@@ -616,6 +618,37 @@ class TaskService {
     }
 
     return internalError(error.message);
+  }
+
+  async createWithRunner({
+    userId,
+    prompt,
+    event,
+    githubRepository,
+  }: {
+    userId: string;
+    userEmail?: string;
+    prompt: string;
+    event: UserEvent;
+    githubRepository?: { owner: string; repo: string };
+  }) {
+    const githubAccessToken = await githubService.getAccessToken(userId);
+
+    if (!githubAccessToken) {
+      throw new HTTPException(401, {
+        message: "GitHub access token is required to create a runner task",
+      });
+    }
+
+    const uid = await this.createWithUserMessage(userId, prompt, event);
+    const minion = await minionService.create({
+      userId,
+      uid,
+      githubAccessToken,
+      githubRepository,
+    });
+
+    return { uid, minion };
   }
 }
 

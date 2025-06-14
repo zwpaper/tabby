@@ -15,6 +15,7 @@ import { z } from "zod";
 
 const searchSchema = z.object({
   uid: z.string().optional(),
+  url: z.string(),
 });
 
 export const Route = createFileRoute("/_authenticated/redirect-vscode")({
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/redirect-vscode")({
 });
 
 function RouteComponent() {
-  const { uid } = Route.useSearch();
+  const { uid, url } = Route.useSearch();
   const [showManualButton, setShowManualButton] = useState(false);
   const { data: task } = useQuery({
     queryKey: ["task", uid],
@@ -44,23 +45,23 @@ function RouteComponent() {
     }
     return null;
   }, [task]);
-  const vscodeLink = `vscode://TabbyML.pochi/?task=${uid}`;
 
-  console.log(vscodeLink);
   const openVSCode = useCallback(() => {
-    window.open(vscodeLink);
-  }, [vscodeLink]);
+    window.open(url);
+  }, [url]);
 
   useEffect(() => {
+    const delay = url.startsWith("vscode://") ? 1000 : 8000;
+
     const redirectTimeoutHandle = setTimeout(() => {
       openVSCode();
       setShowManualButton(true);
-    }, 1000);
+    }, delay);
 
     return () => {
       clearTimeout(redirectTimeoutHandle);
     };
-  }, [openVSCode]);
+  }, [openVSCode, url]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
@@ -94,7 +95,7 @@ function RouteComponent() {
             <p className="mb-2 text-muted-foreground text-xs">
               If VS Code doesn't open automatically, click{" "}
               <a
-                href={vscodeLink}
+                href={url}
                 target="_blank"
                 rel="noreferrer"
                 className="underline"

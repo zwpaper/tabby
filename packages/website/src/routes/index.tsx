@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
 const searchSchema = z.object({
+  enableRemotePochi: z.boolean().optional(),
   input: z.string().optional(),
 });
 

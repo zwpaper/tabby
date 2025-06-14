@@ -4,7 +4,6 @@ import type { AnyBlock, WebClient } from "@slack/web-api";
 import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
 import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
-import { minionService } from "../minion";
 import { slackService } from "../slack";
 import { taskService } from "../task";
 import { slackRichTextRenderer } from "./slack-rich-text";
@@ -27,7 +26,7 @@ class SlackTaskService {
     }
 
     const task = await taskService.get(uid, userId);
-    if (!task || !isSlackTask(task)) {
+    if (!task || !isNotifyableTask(task)) {
       return;
     }
 
@@ -113,7 +112,7 @@ class SlackTaskService {
   private async addCompletionReaction(userId: string, task: Task) {
     if (!task) return;
 
-    const slackEventData = this.extractSlackEventData(task);
+    const slackEventData = this.extractSlackDataFromTask(task);
     const webClient = await slackService.getWebClientByUser(userId);
 
     if (!webClient || !slackEventData.channel || !slackEventData.ts) {
@@ -125,6 +124,34 @@ class SlackTaskService {
       timestamp: slackEventData.ts,
       name: "white_check_mark",
     });
+  }
+
+  /**
+   * Send created task message to slack and return message timestamp
+   */
+  private async sendCreatedTaskMessage(
+    userId: string,
+    prompt: string,
+    githubRepository: { owner: string; repo: string },
+    channelId: string,
+  ): Promise<{ ts: string } | null> {
+    const webClient = await slackService.getWebClientByUser(userId);
+    if (!webClient) return null;
+
+    const initialMessage = `🚀 Creating GitHub task for ${githubRepository.owner}/${githubRepository.repo}: ${prompt}\n☁️ Starting cloud runner...`;
+    const messageResult = await webClient.chat.postMessage({
+      channel: channelId,
+      text: initialMessage,
+    });
+
+    if (!messageResult.ok || !messageResult.ts) {
+      console.error("Failed to post GitHub task message:", messageResult.error);
+      return null;
+    }
+
+    return {
+      ts: messageResult.ts,
+    };
   }
 
   /**
@@ -156,60 +183,39 @@ class SlackTaskService {
 
     const taskPrompt = parsedCommand.description;
 
-    const initialMessage = `🚀 Creating GitHub task for ${parsedCommand.githubRepository.owner}/${parsedCommand.githubRepository.repo}: ${parsedCommand.description}\n☁️ Starting cloud runner...`;
-    const messageResult = await webClient.chat.postMessage({
-      channel: command.channel_id,
-      text: initialMessage,
-    });
-
-    if (!messageResult.ok || !messageResult.ts) {
-      console.error("Failed to post GitHub task message:", messageResult.error);
-      return;
-    }
-
     const slackEvent: Extract<UserEvent, { type: "slack:new-task" }> = {
       type: "slack:new-task",
       data: {
         channel: command.channel_id,
-        ts: messageResult.ts,
+        ts: "",
         prompt: taskPrompt,
       },
     };
 
-    const uid = await taskService.createWithUserMessage(
+    const success = await this.notifyInitMessageAndSetupEvent({
       userId,
-      taskPrompt,
-      slackEvent,
-    );
-
-    const minion = await minionService.create({
-      userId,
-      uid,
+      prompt: taskPrompt,
       githubRepository: parsedCommand.githubRepository,
-      githubAccessToken: githubToken,
+      event: slackEvent,
     });
 
-    const taskData = this.createTaskCreationData(taskPrompt);
-    const richTextBlocks = slackRichTextRenderer.renderTaskCreationResponse(
-      `${taskPrompt}\n\n☁️ Cloud runner started in background`,
-      taskData,
-    );
+    if (!success) {
+      console.error("Failed to send slack message");
+      return;
+    }
 
-    await this.reply(
+    const { uid, minion } = await taskService.createWithRunner({
       userId,
-      command.channel_id,
-      messageResult.ts,
-      richTextBlocks,
-    );
+      prompt: taskPrompt,
+      githubRepository: parsedCommand.githubRepository,
+      event: slackEvent,
+    });
 
-    const successBlocks = slackRichTextRenderer.renderCloudRunnerSuccess(
-      minion.url,
-    );
-    await webClient.chat.postMessage({
-      channel: command.channel_id,
-      thread_ts: messageResult.ts,
-      blocks: successBlocks,
-      text: "✅ Cloud runner started successfully!",
+    await this.sendTaskInitReply({
+      userId,
+      prompt: taskPrompt,
+      serverUrl: minion.url,
+      event: slackEvent,
     });
 
     return uid;
@@ -316,7 +322,7 @@ class SlackTaskService {
       return;
     }
 
-    const slackEventData = this.extractSlackEventData(task);
+    const slackEventData = this.extractSlackDataFromTask(task);
 
     if (!slackEventData?.ts || !slackEventData?.channel) {
       console.error(`No message data found for task ${task.uid}`);
@@ -412,7 +418,7 @@ class SlackTaskService {
   ): TaskNotificationData {
     if (!task) throw new Error("Task is required");
 
-    const slackEvent = this.extractSlackEventData(task);
+    const slackEvent = this.extractSlackDataFromTask(task);
     const userQuery = extractUserQuery(slackEvent.prompt);
 
     return {
@@ -452,16 +458,16 @@ class SlackTaskService {
     };
   }
 
-  private extractSlackEventData(task: Task) {
-    if (!task || !isSlackTask(task)) {
+  private extractSlackDataFromTask(task: Task) {
+    if (!task || !isNotifyableTask(task)) {
       throw new Error("Invalid Slack task");
     }
 
-    const slackEvent = task.event as Extract<
-      UserEvent,
-      { type: "slack:new-task" }
-    >;
-    return slackEvent.data;
+    return task.event?.data as {
+      prompt: string;
+      channel?: string;
+      ts?: string;
+    };
   }
 
   private createTaskCreationData(messageText: string): {
@@ -524,6 +530,73 @@ class SlackTaskService {
     }
     return undefined;
   }
+
+  private async notifyInitMessageAndSetupEvent({
+    userId,
+    prompt,
+    githubRepository,
+    event,
+  }: {
+    userId: string;
+    prompt: string;
+    githubRepository: { owner: string; repo: string };
+    event: Extract<UserEvent, { type: "slack:new-task" }>;
+  }): Promise<boolean> {
+    const webClient = await slackService.getWebClientByUser(userId);
+    if (!webClient) return false;
+
+    const channelId = event.data.channel;
+
+    const slackInfo = await this.sendCreatedTaskMessage(
+      userId,
+      prompt,
+      githubRepository,
+      channelId,
+    );
+
+    if (!slackInfo) {
+      return false;
+    }
+
+    event.data.ts = slackInfo.ts;
+    event.data.channel = channelId;
+
+    return true;
+  }
+
+  private async sendTaskInitReply({
+    userId,
+    prompt,
+    serverUrl,
+    event,
+  }: {
+    userId: string;
+    prompt: string;
+    serverUrl: string;
+    event: Extract<UserEvent, { type: "slack:new-task" }>;
+  }): Promise<boolean> {
+    const webClient = await slackService.getWebClientByUser(userId);
+    if (!webClient || !event.data.channel || !event.data.ts) return false;
+
+    const taskData = this.createTaskCreationData(prompt);
+    const richTextBlocks = slackRichTextRenderer.renderTaskCreationResponse(
+      `${prompt}\n\n☁️ Cloud runner started in background`,
+      taskData,
+    );
+
+    await this.reply(userId, event.data.channel, event.data.ts, richTextBlocks);
+
+    const successBlocks =
+      slackRichTextRenderer.renderCloudRunnerSuccess(serverUrl);
+    await webClient.chat.postMessage({
+      channel: event.data.channel,
+      thread_ts: event.data.ts,
+      blocks: successBlocks,
+      text: "✅ Cloud runner started successfully!",
+    });
+
+    return true;
+  }
 }
 
 export const slackTaskService = new SlackTaskService();
@@ -546,7 +619,7 @@ function extractTaskNotificationData(task: Task): TaskNotificationData {
   };
 }
 
-function isSlackTask(task: Task): boolean {
+function isNotifyableTask(task: Task): boolean {
   return task?.event?.type === "slack:new-task";
 }
 

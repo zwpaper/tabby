@@ -43,11 +43,26 @@ const tasks = new Hono()
     const { prompt, event } = c.req.valid("json");
     const user = c.get("user");
 
-    const uid = await taskService.createWithUserMessage(user.id, prompt, event);
+    let uid: string;
+    let url: string | undefined;
+    if (event?.type === "website:new-remote-project") {
+      const { uid: remoteUid, minion } = await taskService.createWithRunner({
+        userId: user.id,
+        userEmail: user.email,
+        prompt,
+        event,
+      });
+      uid = remoteUid;
+      url = minion?.url;
+    } else {
+      uid = await taskService.createWithUserMessage(user.id, prompt, event);
+      url = `vscode://TabbyML.pochi/?task=${uid}`;
+    }
 
     return c.json({
       success: true,
       uid,
+      url,
     });
   })
 

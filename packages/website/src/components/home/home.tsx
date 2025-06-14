@@ -27,8 +27,8 @@ import {
   SparklesIcon,
   Terminal,
 } from "lucide-react";
-import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { HomeBackgroundGradient } from "./constants";
 
 export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at once
@@ -38,6 +38,7 @@ interface SearchParams {
 }
 
 export function Home() {
+  const router = useRouter();
   const { auth } = Route.useRouteContext();
   const isMobileDevice = useIsMobile();
   const [showMobileWarning, setShowMobileWarning] = useState(false);
@@ -198,11 +199,16 @@ export function Home() {
           }
         }
 
+        const enableRemotePochi =
+          router.state.location.search.enableRemotePochi;
+
         const taskResponse = await apiClient.api.tasks.$post({
           json: {
             prompt: input,
             event: {
-              type: "website:new-project",
+              type: enableRemotePochi
+                ? "website:new-remote-project"
+                : "website:new-project",
               data: {
                 requestId: crypto.randomUUID(),
                 name,
@@ -219,12 +225,13 @@ export function Home() {
           throw new Error("Failed to create task");
         }
 
-        const { uid } = await taskResponse.json();
+        const { uid, url } = await taskResponse.json();
 
         await navigate({
           to: "/redirect-vscode",
           search: {
             uid,
+            url,
           },
         });
 
@@ -433,6 +440,7 @@ export function Home() {
           />
         </DialogContent>
       </Dialog>
+
       <MobileWarningDialog
         open={showMobileWarning}
         onOpenChange={setShowMobileWarning}
