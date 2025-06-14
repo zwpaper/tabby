@@ -205,10 +205,9 @@ export function Home() {
         const taskResponse = await apiClient.api.tasks.$post({
           json: {
             prompt: input,
+            remote: enableRemotePochi,
             event: {
-              type: enableRemotePochi
-                ? "website:new-remote-project"
-                : "website:new-project",
+              type: "website:new-project",
               data: {
                 requestId: crypto.randomUUID(),
                 name,

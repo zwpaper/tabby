@@ -33,20 +33,6 @@ export type UserEvent =
       };
     }
   | {
-      type: "website:new-remote-project";
-      data: {
-        requestId: string;
-        name?: string;
-        prompt: string;
-        attachments?: {
-          url: string;
-          name?: string;
-          contentType?: string;
-        }[];
-        githubTemplateUrl: string;
-      };
-    }
-  | {
       type: "batch:evaluation";
       data: {
         batchId: string;

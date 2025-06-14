@@ -26,6 +26,12 @@ const TaskUidParamsSchema = z.object({
 const ZodUserEvent: z.ZodType<UserEvent> = z.any();
 const TaskCreateSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
+  remote: z
+    .boolean()
+    .optional()
+    .describe(
+      "Whether to run the task remotely in sandbox for website:new-project",
+    ),
   event: ZodUserEvent.optional(),
 });
 
@@ -40,12 +46,12 @@ const TaskPatchSchema = z.object({
 // Create a tasks router with authentication
 const tasks = new Hono()
   .post("/", zValidator("json", TaskCreateSchema), requireAuth(), async (c) => {
-    const { prompt, event } = c.req.valid("json");
+    const { prompt, event, remote } = c.req.valid("json");
     const user = c.get("user");
 
     let uid: string;
     let url: string | undefined;
-    if (event?.type === "website:new-remote-project") {
+    if (remote && event?.type === "website:new-project") {
       const { uid: remoteUid, minion } = await taskService.createWithRunner({
         userId: user.id,
         userEmail: user.email,
