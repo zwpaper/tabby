@@ -69,7 +69,7 @@ class MinionService {
       .values({
         userId,
         e2bSandboxId: sandbox.sandboxId,
-        url: getUrl(sandbox),
+        url: getUrl(sandbox, !!githubRepository, uid),
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -132,10 +132,23 @@ class MinionService {
   }
 }
 
-function getUrl(sandbox: Sandbox) {
-  return `https://${sandbox.getHost(3000)}?tkn=${VSCodeToken}&folder=${encodeURIComponent(
-    SandboxPath.project,
-  )}`;
+function getUrl(sandbox: Sandbox, hasRepository: boolean, uid: string) {
+  const url = new URL(`https://${sandbox.getHost(3000)}`);
+  url.searchParams.append("tkn", VSCodeToken);
+  if (hasRepository) {
+    url.searchParams.append("folder", encodeURIComponent(SandboxPath.project));
+  } else {
+    url.searchParams.append(
+      "callback",
+      encodeURIComponent(
+        JSON.stringify({
+          authority: "tabbyml.pochi",
+          query: `task=${uid}`,
+        }),
+      ),
+    );
+  }
+  return url.toString();
 }
 
 export const minionService = new MinionService();
