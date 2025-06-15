@@ -2,6 +2,7 @@ import { Sandbox, type SandboxOpts } from "@e2b/code-interpreter";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "../auth";
 import { db } from "../db";
+import { enqueuePauseInactiveSandbox } from "./background-job";
 
 const VSCodeToken = "pochi";
 
@@ -15,7 +16,7 @@ const SandboxPath = {
 };
 
 const TemplateId = process.env.E2B_TEMPLATE_ID || "4kfoc92tmo1x9igbf6qp";
-const SandboxTimeoutMs = 60 * 1000 * 10; // 10 minutes
+const SandboxTimeoutMs = 60 * 1000 * 15; // 15 minutes
 
 interface CreateMinionOptions {
   userId: string;
@@ -55,7 +56,10 @@ class MinionService {
       timeoutMs: SandboxTimeoutMs,
       envs: envs,
     };
+
     const sandbox = await Sandbox.create(TemplateId, opts);
+    enqueuePauseInactiveSandbox({ sandboxId: sandbox.sandboxId });
+
     sandbox.commands.run(
       `${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
       {
@@ -121,6 +125,7 @@ class MinionService {
       await Sandbox.resume(minion.e2bSandboxId, {
         timeoutMs: SandboxTimeoutMs,
       });
+      enqueuePauseInactiveSandbox({ sandboxId: minion.e2bSandboxId });
     } catch (err) {
       if (err instanceof Error && err.name === "NotFoundError") {
         throw new HTTPException(404, {
