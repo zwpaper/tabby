@@ -4,7 +4,6 @@ import type * as React from "react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -13,7 +12,6 @@ import {
 import { Link } from "@tanstack/react-router";
 import { ShieldAlert } from "lucide-react";
 import { NavMain } from "../settings/nav-main";
-import { UserButton } from "../user-button";
 
 const adminNavItems = [
   {
@@ -50,9 +48,6 @@ export function AdminSidebar({
       <SidebarContent>
         <NavMain items={adminNavItems} />
       </SidebarContent>
-      <SidebarFooter>
-        <UserButton size="full" />
-      </SidebarFooter>
     </Sidebar>
   );
 }

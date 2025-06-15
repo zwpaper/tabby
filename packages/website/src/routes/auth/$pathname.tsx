@@ -12,11 +12,11 @@ function Auth() {
       return (
         <div className="flex size-full min-h-screen grow flex-col items-center justify-center gap-3">
           <AuthCard
-            view={"signUp"}
+            view="SIGN_UP"
             localization={{
-              signUp: "Register for waitlist 👋",
-              signUpDescription: "Fill in your details to join our waitlist",
-              email: "Email",
+              SIGN_UP: "Register for waitlist 👋",
+              SIGN_UP_DESCRIPTION: "Fill in your details to join our waitlist",
+              EMAIL: "Email",
             }}
           />
         </div>

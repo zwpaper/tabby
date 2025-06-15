@@ -25,9 +25,13 @@ export function Providers({
           onSessionChange={() =>
             router.navigate({ to: location.pathname, replace: true })
           }
-          providers={["github", "google"]}
           signUp={true}
-          settingsURL="/account"
+          settings={{
+            url: "/account",
+          }}
+          social={{
+            providers: ["github", "google"],
+          }}
           avatar
           credentials={false}
           magicLink={true}
