@@ -6,13 +6,15 @@ import { enqueuePauseInactiveSandbox } from "./background-job";
 
 const VSCodeToken = "pochi";
 
-const SandboxHome = "/home/pochi";
+const SandboxHome = "/home/user";
+const SandboxLogDir = `${SandboxHome}/.log`;
+const RemotePochiHome = `${SandboxHome}/.remote-pochi`;
 const SandboxPath = {
   home: SandboxHome,
   project: `${SandboxHome}/project`,
-  init: `${SandboxHome}/init.sh`,
-  initLog: `${SandboxHome}/init.log`,
-  runnerLog: `${SandboxHome}/runner.log`,
+  init: `${RemotePochiHome}/init.sh`,
+  initLog: `${SandboxLogDir}/init.log`,
+  runnerLog: `${SandboxLogDir}/runner.log`,
 };
 
 const TemplateId = process.env.E2B_TEMPLATE_ID || "4kfoc92tmo1x9igbf6qp";
@@ -61,7 +63,7 @@ class MinionService {
     enqueuePauseInactiveSandbox({ sandboxId: sandbox.sandboxId });
 
     sandbox.commands.run(
-      `${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
+      `mkdir -p ${SandboxLogDir} && ${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
       {
         envs: envs,
         background: true,
