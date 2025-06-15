@@ -83,18 +83,23 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       }
 
       const task = await taskResponse.json();
-      switch (task?.event?.type) {
-        case "batch:evaluation":
-          await this.handleEvaluationTask(task as EvaluationTask);
-          break;
-        case "website:new-project":
-          await this.handleNewProjectTask(task as NewProjectTask);
-          break;
-        default:
-          // default to open the task
-          await vscode.commands.executeCommand("ragdoll.openTask", uid);
-          break;
+      const openTask = () =>
+        vscode.commands.executeCommand("ragdoll.openTask", uid);
+      const isNewTask = task?.conversation?.messages.length === 1;
+      if (isNewTask) {
+        switch (task?.event?.type) {
+          case "batch:evaluation":
+            await this.handleEvaluationTask(task as EvaluationTask);
+            break;
+          case "website:new-project":
+            await this.handleNewProjectTask(task as NewProjectTask);
+            break;
+          default:
+            break;
+        }
       }
+
+      await openTask();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       vscode.window.showErrorMessage(`Task ${uid} failed: ${message}`);
