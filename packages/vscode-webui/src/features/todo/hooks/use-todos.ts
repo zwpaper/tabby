@@ -1,5 +1,6 @@
 import type { Message } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
+import { prompts } from "@ragdoll/common";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Todo } from "@ragdoll/db";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -100,7 +101,6 @@ export function useTodos({
   );
 
   const lastMessage = messages.at(-1);
-  // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef): todosRef is a ref
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef.current): todosRef is a ref
   useEffect(() => {
     if (
@@ -114,8 +114,7 @@ export function useTodos({
     if (
       lastMessage &&
       lastMessage.role === "user" &&
-      // FIXME: exclude automatic user message from reminder
-      !lastMessage.content.startsWith("<user-reminder>")
+      !prompts.isUserReminder(lastMessage.content)
     ) {
       const todos = todosRef.current || [];
       // Check if all todos is canceled or done.
@@ -124,11 +123,10 @@ export function useTodos({
       );
 
       if (allTodosDoneOrCanceled) {
-        // Reset todos if all todos is canceled or done when there's a new user message.
-        todosRef.current = [];
+        setTodos([]);
       }
     }
-  }, [lastMessage, updateTodos]);
+  }, [lastMessage, updateTodos, setTodos]);
 
   return {
     todosRef,
