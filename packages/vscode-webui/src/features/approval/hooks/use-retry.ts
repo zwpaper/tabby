@@ -1,5 +1,6 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
+import { prompts } from "@ragdoll/common";
 import { prepareLastMessageForRetry } from "@ragdoll/common/message-utils";
 import { useCallback } from "react";
 import { ReadyForRetryError } from "./use-ready-for-retry-error";
@@ -42,8 +43,9 @@ export function useRetry({
       ) {
         return await append({
           role: "user",
-          content:
-            "<user-reminder>You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.</user-reminder>",
+          content: prompts.createUserReminder(
+            "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
+          ),
         });
       }
 

@@ -100,9 +100,33 @@ export function useTodos({
   );
 
   const lastMessage = messages.at(-1);
+  // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef): todosRef is a ref
+  // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef.current): todosRef is a ref
   useEffect(() => {
-    if (lastMessage && lastMessage.parts !== undefined) {
+    if (
+      lastMessage &&
+      lastMessage.role === "assistant" &&
+      lastMessage.parts !== undefined
+    ) {
       updateTodos(lastMessage as UIMessage);
+    }
+
+    if (
+      lastMessage &&
+      lastMessage.role === "user" &&
+      // FIXME: exclude automatic user message from reminder
+      !lastMessage.content.startsWith("<user-reminder>")
+    ) {
+      const todos = todosRef.current || [];
+      // Check if all todos is canceled or done.
+      const allTodosDoneOrCanceled = todos.every(
+        (todo) => todo.status === "completed" || todo.status === "cancelled",
+      );
+
+      if (allTodosDoneOrCanceled) {
+        // Reset todos if all todos is canceled or done when there's a new user message.
+        todosRef.current = [];
+      }
     }
   }, [lastMessage, updateTodos]);
 

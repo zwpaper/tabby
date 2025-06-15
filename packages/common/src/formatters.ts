@@ -78,10 +78,7 @@ export function removeUserReminderMessage(messages: UIMessage[]): UIMessage[] {
     if (message.role !== "user") return true;
     return !message.parts.some((part) => {
       if (part.type !== "text") return false;
-      return (
-        part.text.startsWith("<user-reminder>") &&
-        part.text.endsWith("</user-reminder>")
-      );
+      return prompts.isUserReminder(part.text);
     });
   });
 }

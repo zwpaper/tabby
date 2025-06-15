@@ -4,7 +4,7 @@ import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
 import { useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
-import { formatters, toUIMessages } from "@ragdoll/common";
+import { formatters, prompts, toUIMessages } from "@ragdoll/common";
 import type { Environment, Todo } from "@ragdoll/db";
 import type { UIMessage } from "ai";
 import type { InferResponseType } from "hono/client";
@@ -297,7 +297,9 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     saveTodosImpl();
     handleSubmit(
       undefined,
-      "<user-reminder>I have updated the to-do list and provided it within environment details. Please review them and adjust the plan accordingly. NEVER WORK ON TASKS THAT HAS BEEN MARKED AS COMPLETED OR CANCELLED.</user-reminder>",
+      prompts.createUserReminder(
+        "I have updated the to-do list and provided it within environment details. Please review them and adjust the plan accordingly. NEVER WORK ON TASKS THAT HAS BEEN MARKED AS COMPLETED OR CANCELLED.",
+      ),
     );
   }, [saveTodosImpl, handleSubmit]);
 

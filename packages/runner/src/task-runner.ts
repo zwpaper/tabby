@@ -5,7 +5,12 @@ import {
   prepareAttachmentsForRequest,
   updateToolCallResult,
 } from "@ai-sdk/ui-utils";
-import { fromUIMessage, getLogger, toUIMessages } from "@ragdoll/common";
+import {
+  fromUIMessage,
+  getLogger,
+  prompts,
+  toUIMessages,
+} from "@ragdoll/common";
 import {
   isAssistantMessageWithEmptyParts,
   isAssistantMessageWithNoToolCalls,
@@ -211,8 +216,9 @@ export class TaskRunner {
     if (isAssistantMessageWithNoToolCalls(lastMessage)) {
       return yield* append({
         role: "user",
-        content:
-          "<user-reminder>You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.</user-reminder>",
+        content: prompts.createUserReminder(
+          "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
+        ),
       });
     }
 
