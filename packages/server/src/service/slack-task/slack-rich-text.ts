@@ -1,323 +1,257 @@
 import type { AnyBlock } from "@slack/web-api";
 
-interface TaskDisplayData {
-  userQuery?: string;
-  currentTool?: string;
-  toolsCompleted?: number;
-  startedAt?: string;
-  elapsed?: string;
-  currentOperation?: string;
-  completedTools?: string[];
-  status?: string;
-  statusEmoji?: string;
-  result?: string;
-  errorMessage?: string;
-  errorDetails?: string;
-}
-
 class SlackRichTextRenderer {
-  private renderTaskBlocks(
-    data: TaskDisplayData,
-    statusFields: Array<{ type: "mrkdwn"; text: string }>,
+  renderTaskCreated(
+    prompt: string,
+    githubRepository: { owner: string; repo: string },
   ): AnyBlock[] {
-    const userQuery = data.userQuery || "Task execution in progress";
-
-    const blocks: AnyBlock[] = [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `🐱 *AI Agent Task ${data.status || "Running"}*`,
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*💬 User Query:*\n> "${userQuery}"`,
-        },
-      },
-      {
-        type: "divider",
-      },
-      {
-        type: "section",
-        fields: statusFields,
-      },
-    ];
-
-    if (data.currentOperation) {
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*🔍 Current Operation:*\n${data.currentOperation}`,
-        },
-      });
-    }
-
-    if (data.result) {
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*✅ Task Result:*\n${data.result}`,
-        },
-      });
-    }
-
-    if (data.errorDetails) {
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*❌ Error Details:*\n\`\`\`${data.errorDetails.substring(0, 300)}\`\`\``,
-        },
-      });
-    }
-
-    if (data.completedTools && data.completedTools.length > 0) {
-      const completedToolsText = data.completedTools.join(" ✅ | ");
-      blocks.push({
-        type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: `⚡ Completed: ${completedToolsText} ✅`,
-          },
-        ],
-      });
-    }
-
-    return blocks;
-  }
-
-  renderTaskCreationResponse(
-    description: string,
-    data?: TaskDisplayData,
-  ): AnyBlock[] {
-    const taskData = {
-      userQuery: description,
-      status: "Created",
-      startedAt: data?.startedAt || new Date().toLocaleString(),
-      ...data,
-    };
-
-    const statusFields = [
-      {
-        type: "mrkdwn" as const,
-        text: "*Current Status:*\n🟢 Initialized",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Progress:*\n0 steps completed",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Agent State:*\n🤖 Ready to start",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Started:*\n${taskData.startedAt}`,
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Tokens Used:*\n0",
-      },
-    ];
-
-    return this.renderTaskBlocks(taskData, statusFields);
-  }
-
-  renderTaskCompletion(result: string, data?: TaskDisplayData): AnyBlock[] {
-    const taskData = {
-      result,
-      status: "Completed",
-      userQuery: data?.userQuery || "Task completed successfully",
-      startedAt: data?.startedAt || "Recently",
-      elapsed: data?.elapsed || "Processing complete",
-      completedTools: data?.completedTools || [],
-      ...data,
-    };
-
-    const statusFields = [
-      {
-        type: "mrkdwn" as const,
-        text: "*Current Status:*\n✅ Completed Successfully",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Agent State:*\n🤖 Task Finished",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Final Status:*\n✨ Success",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Started:*\n${taskData.startedAt}`,
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Duration:*\n${taskData.elapsed}`,
-      },
-    ];
-
-    return this.renderTaskBlocks(taskData, statusFields);
-  }
-
-  renderTaskFailure(
-    errorMessage?: string,
-    errorDetails?: string,
-    data?: TaskDisplayData,
-  ): AnyBlock[] {
-    const taskData = {
-      errorMessage: errorMessage || "Task execution failed due to an error",
-      errorDetails,
-      status: "Failed",
-      userQuery: data?.userQuery || "Task execution encountered an error",
-      startedAt: data?.startedAt || "Recently",
-      elapsed: data?.elapsed || "Failed during execution",
-      ...data,
-    };
-
-    const statusFields = [
-      {
-        type: "mrkdwn" as const,
-        text: "*Current Status:*\n🔴 Failed",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Agent State:*\n🤖 Error",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Final Status:*\n💥 Execution Failed",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Started:*\n${taskData.startedAt}`,
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Failed At:*\n${taskData.elapsed}`,
-      },
-    ];
-
-    return this.renderTaskBlocks(taskData, statusFields);
-  }
-
-  renderTaskPendingTool(
-    pendingTool?: string,
-    toolDescription?: string,
-    data?: TaskDisplayData,
-  ): AnyBlock[] {
-    const taskData = {
-      currentTool: pendingTool || "awaiting_input",
-      currentOperation:
-        toolDescription || "Task is waiting for user input to continue",
-      status: "Awaiting Input",
-      userQuery: data?.userQuery || "Task is paused for user input",
-      startedAt: data?.startedAt || "Recently",
-      elapsed: data?.elapsed || "Paused for input",
-      ...data,
-    };
-
-    const statusFields = [
-      {
-        type: "mrkdwn" as const,
-        text: "*Current Status:*\n🟡 Processing",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Agent State:*\n🤖 Working",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Pending Tool:*\n⏳ ${pendingTool || "user_input"}`,
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Started:*\n${taskData.startedAt}`,
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Paused At:*\n${taskData.elapsed}`,
-      },
-    ];
-
-    return this.renderTaskBlocks(taskData, statusFields);
-  }
-
-  renderTaskPendingInput(data?: TaskDisplayData): AnyBlock[] {
-    const taskData = {
-      status: "⏸️ Paused",
-      userQuery: data?.userQuery || "Task is waiting for user input",
-      startedAt: data?.startedAt || "Recently",
-      elapsed: data?.elapsed || "Paused for user input",
-      currentOperation: "Task paused - User input required",
-      ...data,
-    };
-
-    const statusFields = [
-      {
-        type: "mrkdwn" as const,
-        text: "*Current Status:*\n⏸️ Paused for Input",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Agent State:*\n🛑 Waiting",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: "*Next Action:*\n👤 User Input Required",
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Started:*\n${taskData.startedAt}`,
-      },
-      {
-        type: "mrkdwn" as const,
-        text: `*Paused At:*\n${taskData.elapsed}`,
-      },
-    ];
-
-    const blocks = this.renderTaskBlocks(taskData, statusFields);
-
-    return blocks;
-  }
-
-  renderErrorMessage(message: string) {
-    return {
-      type: "section" as const,
-      text: {
-        type: "mrkdwn" as const,
-        text: `❌ *Error*\n${message}`,
-      },
-    };
-  }
-
-  renderCloudRunnerSuccess(url: string): AnyBlock[] {
     return [
       {
-        type: "section" as const,
+        type: "header",
         text: {
-          type: "mrkdwn" as const,
+          type: "plain_text",
+          text: `🐱 Task Created for project ${githubRepository.owner}/${githubRepository.repo}`,
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*💬 Query:* ${prompt}`,
+        },
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: "*Status:* 🟢 Initializing",
+          },
+          {
+            type: "mrkdwn",
+            text: `*Started:* ${new Date().toLocaleTimeString()}`,
+          },
+        ],
+      },
+    ];
+  }
+
+  renderTaskStarting(prompt: string): AnyBlock[] {
+    return [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "🚀 Task Starting",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*💬 Query:* ${prompt}`,
+        },
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: "*Status:* 🟢 Starting",
+          },
+          {
+            type: "mrkdwn",
+            text: `*Started:* ${new Date().toLocaleTimeString()}`,
+          },
+        ],
+      },
+    ];
+  }
+
+  renderTaskRunning(
+    prompt: string,
+    toolDescription: string,
+    elapsed: string,
+  ): AnyBlock[] {
+    return [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "⚡ Task Running",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*💬 Query:* ${prompt}`,
+        },
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `*Status:* 🟡 ${toolDescription}`,
+          },
+          {
+            type: "mrkdwn",
+            text: `*Runtime:* ${elapsed}`,
+          },
+        ],
+      },
+    ];
+  }
+
+  renderTaskWaitingInput(prompt: string, elapsed: string): AnyBlock[] {
+    return [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "⏸️ Waiting for Input",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*💬 Query:* ${prompt}`,
+        },
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: "*Status:* ⏸️ Pending input",
+          },
+          {
+            type: "mrkdwn",
+            text: `*Waiting:* ${elapsed}`,
+          },
+        ],
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "👤 *Required:* Waiting for user to continue the task",
+        },
+      },
+    ];
+  }
+
+  renderTaskComplete(
+    prompt: string,
+    elapsed: string,
+    result: string,
+  ): AnyBlock[] {
+    return [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "✅ Task Complete",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*💬 Query:* ${prompt}`,
+        },
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: "*Status:* ✅ Complete",
+          },
+          {
+            type: "mrkdwn",
+            text: `*Duration:* ${elapsed}`,
+          },
+        ],
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*📋 Result:* ${result}`,
+        },
+      },
+    ];
+  }
+
+  renderTaskFailed(
+    prompt: string,
+    elapsed: string,
+    errorMessage: string,
+  ): AnyBlock[] {
+    return [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "❌ Task Failed",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*💬 Query:* ${prompt}`,
+        },
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: "*Status:* ❌ Failed",
+          },
+          {
+            type: "mrkdwn",
+            text: `*Duration:* ${elapsed}`,
+          },
+        ],
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*🚨 Error:* ${errorMessage}`,
+        },
+      },
+    ];
+  }
+
+  renderCloudRunnerSuccess(serverUrl: string): AnyBlock[] {
+    return [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
           text: "✅ *Cloud runner started successfully!*",
         },
       },
       {
-        type: "actions" as const,
+        type: "actions",
         elements: [
           {
-            type: "button" as const,
+            type: "button",
             text: {
-              type: "plain_text" as const,
+              type: "plain_text",
               emoji: true,
               text: "🔗 Open Web VSCode",
             },
-            url: url.startsWith("http") ? url : `https://${url}`,
-            style: "primary" as const,
+            url: serverUrl.startsWith("http")
+              ? serverUrl
+              : `https://${serverUrl}`,
+            style: "primary",
             value: "open_server",
           },
         ],

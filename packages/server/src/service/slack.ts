@@ -158,19 +158,6 @@ class SlackService {
       // Acknowledge the command request
       await ack();
 
-      // Check if command is used in DM
-      const isDM =
-        command.channel_name === "directmessage" ||
-        command.channel_id.startsWith("D");
-
-      if (!isDM) {
-        await respond({
-          text: "❌ The `/newtask` command can only be used in direct messages. Please send me a DM to create tasks.",
-          response_type: "ephemeral",
-        });
-        return;
-      }
-
       const vendorIntegrationId = context.teamId || context.enterpriseId;
       if (!vendorIntegrationId) return;
 
@@ -247,11 +234,8 @@ class SlackService {
           targetUser.id,
           command,
           taskText,
+          command.user_id,
         );
-        await respond({
-          text: "✅ GitHub task created with cloud runner!",
-          response_type: "ephemeral",
-        });
       } catch (error) {
         await respond({
           text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage: \`/newtask repo description\`\nExample: \`/newtask TabbyML/ragdoll please fix issue 5723\``,
