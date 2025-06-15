@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,16 +15,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { apiClient } from "@/lib/auth-client";
-import { taskSchema } from "./types";
+import type { InferResponseType } from "hono/client";
 
-interface DataTableRowActionsProps<TData> {
-  row: Row<TData>;
+type Task = InferResponseType<
+  (typeof apiClient.api.tasks)["$get"]
+>["data"][number];
+
+interface TaskRowActionsProps {
+  task: Task;
 }
 
-export function DataTableRowActions<TData>({
-  row,
-}: DataTableRowActionsProps<TData>) {
-  const task = taskSchema.parse(row.original);
+export function TaskRowActions({ task }: TaskRowActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -38,7 +38,7 @@ export function DataTableRowActions<TData>({
       {
         loading: "Deleting task...",
         success: () => {
-          queryClient.invalidateQueries({ queryKey: ["tasks"] }); // Assuming 'tasks' is the query key
+          queryClient.invalidateQueries({ queryKey: ["tasks"] });
           setIsDeleting(false);
           return "Task deleted successfully.";
         },

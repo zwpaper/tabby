@@ -26,8 +26,9 @@ import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authentica
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
 import { Route as AuthenticatedAdminPromptEvaluationImport } from './routes/_authenticated.admin/prompt-evaluation'
-import { Route as AuthenticatedBaseTasksImport } from './routes/_authenticated._base/tasks'
 import { Route as AuthenticatedBaseSettingsRouteImport } from './routes/_authenticated._base/_settings/route'
+import { Route as AuthenticatedBaseTasksIndexImport } from './routes/_authenticated._base/tasks/index'
+import { Route as AuthenticatedBaseTasksUidImport } from './routes/_authenticated._base/tasks/$uid'
 import { Route as AuthenticatedBaseSettingsUsageImport } from './routes/_authenticated._base/_settings/usage'
 import { Route as AuthenticatedBaseSettingsModelImport } from './routes/_authenticated._base/_settings/model'
 import { Route as AuthenticatedBaseSettingsIntegrationsImport } from './routes/_authenticated._base/_settings/integrations'
@@ -129,17 +130,24 @@ const AuthenticatedAdminPromptEvaluationRoute =
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 
-const AuthenticatedBaseTasksRoute = AuthenticatedBaseTasksImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => AuthenticatedBaseRouteRoute,
-} as any)
-
 const AuthenticatedBaseSettingsRouteRoute =
   AuthenticatedBaseSettingsRouteImport.update({
     id: '/_settings',
     getParentRoute: () => AuthenticatedBaseRouteRoute,
   } as any)
+
+const AuthenticatedBaseTasksIndexRoute =
+  AuthenticatedBaseTasksIndexImport.update({
+    id: '/tasks/',
+    path: '/tasks/',
+    getParentRoute: () => AuthenticatedBaseRouteRoute,
+  } as any)
+
+const AuthenticatedBaseTasksUidRoute = AuthenticatedBaseTasksUidImport.update({
+  id: '/tasks/$uid',
+  path: '/tasks/$uid',
+  getParentRoute: () => AuthenticatedBaseRouteRoute,
+} as any)
 
 const AuthenticatedBaseSettingsUsageRoute =
   AuthenticatedBaseSettingsUsageImport.update({
@@ -250,13 +258,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseSettingsRouteImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
-    '/_authenticated/_base/tasks': {
-      id: '/_authenticated/_base/tasks'
-      path: '/tasks'
-      fullPath: '/tasks'
-      preLoaderRoute: typeof AuthenticatedBaseTasksImport
-      parentRoute: typeof AuthenticatedBaseRouteImport
-    }
     '/_authenticated/admin/prompt-evaluation': {
       id: '/_authenticated/admin/prompt-evaluation'
       path: '/prompt-evaluation'
@@ -334,6 +335,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseSettingsUsageImport
       parentRoute: typeof AuthenticatedBaseSettingsRouteImport
     }
+    '/_authenticated/_base/tasks/$uid': {
+      id: '/_authenticated/_base/tasks/$uid'
+      path: '/tasks/$uid'
+      fullPath: '/tasks/$uid'
+      preLoaderRoute: typeof AuthenticatedBaseTasksUidImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
+    '/_authenticated/_base/tasks/': {
+      id: '/_authenticated/_base/tasks/'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedBaseTasksIndexImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
   }
 }
 
@@ -366,14 +381,16 @@ const AuthenticatedBaseSettingsRouteRouteWithChildren =
 
 interface AuthenticatedBaseRouteRouteChildren {
   AuthenticatedBaseSettingsRouteRoute: typeof AuthenticatedBaseSettingsRouteRouteWithChildren
-  AuthenticatedBaseTasksRoute: typeof AuthenticatedBaseTasksRoute
+  AuthenticatedBaseTasksUidRoute: typeof AuthenticatedBaseTasksUidRoute
+  AuthenticatedBaseTasksIndexRoute: typeof AuthenticatedBaseTasksIndexRoute
 }
 
 const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
   {
     AuthenticatedBaseSettingsRouteRoute:
       AuthenticatedBaseSettingsRouteRouteWithChildren,
-    AuthenticatedBaseTasksRoute: AuthenticatedBaseTasksRoute,
+    AuthenticatedBaseTasksUidRoute: AuthenticatedBaseTasksUidRoute,
+    AuthenticatedBaseTasksIndexRoute: AuthenticatedBaseTasksIndexRoute,
   }
 
 const AuthenticatedBaseRouteRouteWithChildren =
@@ -433,7 +450,6 @@ export interface FileRoutesByFullPath {
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
-  '/tasks': typeof AuthenticatedBaseTasksRoute
   '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
@@ -445,6 +461,8 @@ export interface FileRoutesByFullPath {
   '/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/model': typeof AuthenticatedBaseSettingsModelRoute
   '/usage': typeof AuthenticatedBaseSettingsUsageRoute
+  '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/tasks': typeof AuthenticatedBaseTasksIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -456,7 +474,6 @@ export interface FileRoutesByTo {
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
-  '/tasks': typeof AuthenticatedBaseTasksRoute
   '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
@@ -468,6 +485,8 @@ export interface FileRoutesByTo {
   '/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/model': typeof AuthenticatedBaseSettingsModelRoute
   '/usage': typeof AuthenticatedBaseSettingsUsageRoute
+  '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/tasks': typeof AuthenticatedBaseTasksIndexRoute
 }
 
 export interface FileRoutesById {
@@ -482,7 +501,6 @@ export interface FileRoutesById {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
   '/_authenticated/_base/_settings': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
-  '/_authenticated/_base/tasks': typeof AuthenticatedBaseTasksRoute
   '/_authenticated/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
@@ -494,6 +512,8 @@ export interface FileRoutesById {
   '/_authenticated/_base/_settings/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/_authenticated/_base/_settings/model': typeof AuthenticatedBaseSettingsModelRoute
   '/_authenticated/_base/_settings/usage': typeof AuthenticatedBaseSettingsUsageRoute
+  '/_authenticated/_base/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/_authenticated/_base/tasks/': typeof AuthenticatedBaseTasksIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -507,7 +527,6 @@ export interface FileRouteTypes {
     | '/stop-impersonating'
     | '/auth/$pathname'
     | '/share/$uid'
-    | '/tasks'
     | '/admin/prompt-evaluation'
     | '/admin/users'
     | '/auth/device-link'
@@ -519,6 +538,8 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/model'
     | '/usage'
+    | '/tasks/$uid'
+    | '/tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -529,7 +550,6 @@ export interface FileRouteTypes {
     | '/stop-impersonating'
     | '/auth/$pathname'
     | '/share/$uid'
-    | '/tasks'
     | '/admin/prompt-evaluation'
     | '/admin/users'
     | '/auth/device-link'
@@ -541,6 +561,8 @@ export interface FileRouteTypes {
     | '/integrations'
     | '/model'
     | '/usage'
+    | '/tasks/$uid'
+    | '/tasks'
   id:
     | '__root__'
     | '/'
@@ -553,7 +575,6 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/share/$uid'
     | '/_authenticated/_base/_settings'
-    | '/_authenticated/_base/tasks'
     | '/_authenticated/admin/prompt-evaluation'
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
@@ -565,6 +586,8 @@ export interface FileRouteTypes {
     | '/_authenticated/_base/_settings/integrations'
     | '/_authenticated/_base/_settings/model'
     | '/_authenticated/_base/_settings/usage'
+    | '/_authenticated/_base/tasks/$uid'
+    | '/_authenticated/_base/tasks/'
   fileRoutesById: FileRoutesById
 }
 
@@ -625,7 +648,8 @@ export const routeTree = rootRoute
       "parent": "/_authenticated",
       "children": [
         "/_authenticated/_base/_settings",
-        "/_authenticated/_base/tasks"
+        "/_authenticated/_base/tasks/$uid",
+        "/_authenticated/_base/tasks/"
       ]
     },
     "/_authenticated/admin": {
@@ -660,10 +684,6 @@ export const routeTree = rootRoute
         "/_authenticated/_base/_settings/model",
         "/_authenticated/_base/_settings/usage"
       ]
-    },
-    "/_authenticated/_base/tasks": {
-      "filePath": "_authenticated._base/tasks.tsx",
-      "parent": "/_authenticated/_base"
     },
     "/_authenticated/admin/prompt-evaluation": {
       "filePath": "_authenticated.admin/prompt-evaluation.tsx",
@@ -708,6 +728,14 @@ export const routeTree = rootRoute
     "/_authenticated/_base/_settings/usage": {
       "filePath": "_authenticated._base/_settings/usage.tsx",
       "parent": "/_authenticated/_base/_settings"
+    },
+    "/_authenticated/_base/tasks/$uid": {
+      "filePath": "_authenticated._base/tasks/$uid.tsx",
+      "parent": "/_authenticated/_base"
+    },
+    "/_authenticated/_base/tasks/": {
+      "filePath": "_authenticated._base/tasks/index.tsx",
+      "parent": "/_authenticated/_base"
     }
   }
 }
