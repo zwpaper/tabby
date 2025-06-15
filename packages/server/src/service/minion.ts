@@ -1,6 +1,6 @@
 import { Sandbox, type SandboxOpts } from "@e2b/code-interpreter";
 import { HTTPException } from "hono/http-exception";
-import { auth } from "../auth";
+import { auth } from "../better-auth";
 import { db } from "../db";
 import { enqueuePauseInactiveSandbox } from "./background-job";
 
@@ -36,14 +36,21 @@ class MinionService {
     githubAccessToken,
     githubRepository,
   }: CreateMinionOptions) {
-    const session = await (await auth.$context).internalAdapter.createSession(
-      userId,
-      undefined,
-    );
+    const apiKey = await auth.api.createApiKey({
+      body: {
+        userId,
+        name: `API Key for task ${uid}`,
+        expiresIn: 60 * 60 * 24 * 30, // 30 days, match with the sandbox timeout
+        prefix: "pk_minion_",
+        metadata: {
+          uid,
+        },
+      },
+    });
 
     const envs: Record<string, string> = {
       POCHI_OPENVSCODE_TOKEN: VSCodeToken,
-      POCHI_SESSION_TOKEN: session.token,
+      POCHI_SESSION_TOKEN: apiKey.key,
       POCHI_TASK_ID: uid,
 
       GITHUB_TOKEN: githubAccessToken,

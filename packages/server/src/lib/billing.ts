@@ -1,5 +1,6 @@
 import type { HonoRequest } from "hono";
-import { type User, auth } from "../auth";
+import type { User } from "../auth";
+import { auth } from "../better-auth";
 import { StripePlans } from "./constants";
 
 export async function readActiveSubscriptionLimits(user: User, r: HonoRequest) {

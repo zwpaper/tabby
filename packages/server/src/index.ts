@@ -4,7 +4,7 @@ export type * from "./types";
 export type { AppType } from "./server";
 export { deviceLinkClient } from "./lib/device-link/client";
 
-export type { auth } from "./auth";
+export type { auth } from "./better-auth";
 
 export interface PochiEventSource {
   /* Subscribe to events, returns a function to unsubscribe */

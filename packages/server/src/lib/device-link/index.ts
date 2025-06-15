@@ -134,7 +134,7 @@ export const deviceLink = () => {
 
           const session = await ctx.context.internalAdapter.createSession(
             user.id,
-            ctx.request,
+            ctx,
           );
 
           if (!session) {

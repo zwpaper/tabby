@@ -3,7 +3,7 @@ import type { DB } from "@ragdoll/db";
 import { App, type Installation } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
 import { sql } from "kysely";
-import { auth } from "../auth";
+import { auth } from "../better-auth";
 import { db } from "../db";
 import { connectToWeb } from "../lib/connect";
 import { githubService } from "./github";
