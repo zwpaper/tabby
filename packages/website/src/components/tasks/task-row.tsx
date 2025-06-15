@@ -5,7 +5,6 @@ import type { InferResponseType } from "hono/client";
 import { Calendar } from "lucide-react";
 import { GitBadge } from "../git-badge";
 import { TaskRowActions } from "./task-row-actions";
-import { TaskStatusIcon } from "./task-status-icon";
 
 type Task = InferResponseType<
   (typeof apiClient.api.tasks)["$get"]
@@ -24,14 +23,11 @@ export function TaskRow({ task }: TaskRowProps) {
     >
       <div className="px-4 py-3">
         <div className="flex items-start gap-3">
-          <div className="shrink-0 pt-0.5">
-            <TaskStatusIcon status={task.status} runningInBackground={false} />
-          </div>
           <div className="flex-1 space-y-2 overflow-hidden">
             <h3 className="line-clamp-2 flex-1 font-medium text-foreground">
               {task.title}
             </h3>
-            <div className="flex min-h-4 flex-col gap-3 text-muted-foreground text-xs md:flex-row md:items-center">
+            <div className="flex min-h-4 flex-col gap-3 text-muted-foreground text-xs md:mt-3 md:flex-row md:items-center">
               {task?.updatedAt && (
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />

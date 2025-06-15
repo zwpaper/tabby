@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/_base")({
 
 function RouteComponent() {
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <NavHeader />
       <Outlet />
     </div>
@@ -28,7 +28,7 @@ function NavHeader() {
             to="/tasks"
             search={{
               page: 1,
-              limit: 10,
+              limit: 20,
             }}
             className="px-2 py-1.5 hover:text-foreground"
             activeOptions={{

@@ -68,13 +68,15 @@ export function TaskRowActions({ task }: TaskRowActionsProps) {
 
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem onClick={openVSCode}>
-          Open
-          <DropdownMenuShortcut>⌘L</DropdownMenuShortcut>
+          Open in IDE
+          {false && <DropdownMenuShortcut>⌘L</DropdownMenuShortcut>}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onDelete} disabled={isDeleting}>
-          Delete
-          <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-        </DropdownMenuItem>
+        {false && (
+          <DropdownMenuItem onClick={onDelete} disabled={isDeleting}>
+            Delete
+            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -10,7 +10,7 @@ import { z } from "zod";
 
 const taskSearchSchema = z.object({
   page: z.number().min(1).optional().default(1),
-  limit: z.number().min(10).max(50).optional().default(10),
+  limit: z.number().min(20).max(50).optional().default(20),
 });
 
 export const Route = createFileRoute("/_authenticated/_base/tasks/")({
