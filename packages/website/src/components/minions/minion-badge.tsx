@@ -16,12 +16,12 @@ export function MinionBadge({ minionId }: MinionBadgeProps) {
 
   return (
     <Badge
-      variant="outline"
+      variant="secondary"
       className="cursor-pointer hover:opacity-70"
       onClick={handleClick}
     >
       <HardDrive className="h-4 w-4" />
-      <span>Cloud</span>
+      <span>remote</span>
     </Badge>
   );
 }

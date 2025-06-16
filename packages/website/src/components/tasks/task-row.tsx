@@ -1,5 +1,6 @@
 import type { apiClient } from "@/lib/auth-client";
 import { formatRelativeTime } from "@/lib/utils/ui";
+import { IconBrandChrome, IconBrandSlack } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
 import { Calendar } from "lucide-react";
@@ -33,11 +34,7 @@ export function TaskRow({ task }: TaskRowProps) {
             </h3>
             {showBadges && (
               <div className="flex flex-wrap items-center gap-3">
-                {task.event?.type && (
-                  <Badge className="cursor-default" variant="secondary">
-                    {formatEventType(task.event?.type)}
-                  </Badge>
-                )}
+                {task.event?.type && <EventBadge event={task.event.type} />}
                 {task?.minionId && <MinionBadge minionId={task.minionId} />}
               </div>
             )}
@@ -66,6 +63,24 @@ export function TaskRow({ task }: TaskRowProps) {
   );
 }
 
-function formatEventType(eventType: string) {
-  return eventType.split(":")[0];
+function EventBadge({ event }: { event: string }) {
+  const type = event.split(":")[0];
+  let IconType = IconBrandChrome;
+  switch (type) {
+    case "slack":
+      IconType = IconBrandSlack;
+      break;
+    default:
+      break;
+  }
+  return (
+    <Badge
+      variant="default"
+      className="cursor-default bg-primary/20 text-secondary-foreground"
+      onClick={(e) => e.preventDefault()}
+    >
+      <IconType className="size-4" />
+      {type}
+    </Badge>
+  );
 }
