@@ -48,16 +48,22 @@ class MinionService {
     githubAccessToken,
     githubRepository,
   }: CreateMinionOptions) {
-    const context = await auth.$context;
-    const session = await (await auth.$context).internalAdapter.createSession(
-      userId,
-      // @ts-expect-error
-      { context },
-    );
+    const apiKey = await auth.api.createApiKey({
+      body: {
+        userId,
+        name: `API Key for task ${uid}`,
+        expiresIn: 60 * 60 * 24 * 30, // 30 days, match with the sandbox timeout
+        prefix: "pk_minion_",
+        metadata: {
+          uid,
+        },
+        rateLimitEnabled: false,
+      },
+    });
 
     const envs: Record<string, string> = {
       POCHI_OPENVSCODE_TOKEN: VSCodeToken,
-      POCHI_SESSION_TOKEN: session.token,
+      POCHI_SESSION_TOKEN: apiKey.key,
       POCHI_TASK_ID: uid,
 
       GITHUB_TOKEN: githubAccessToken,

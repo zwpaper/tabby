@@ -1,7 +1,19 @@
 import { stripe } from "@better-auth/stripe";
-import { betterAuth } from "better-auth";
-import { admin, bearer, magicLink, oAuthProxy } from "better-auth/plugins";
+import {
+  type GenericEndpointContext,
+  type Session,
+  betterAuth,
+} from "better-auth";
+import {
+  admin,
+  apiKey,
+  bearer,
+  createAuthMiddleware,
+  magicLink,
+  oAuthProxy,
+} from "better-auth/plugins";
 
+import moment from "moment";
 import { db } from "./db";
 import { handleGithubAccountUpdate } from "./github";
 import { StripePlans } from "./lib/constants";
@@ -96,16 +108,10 @@ export const auth = betterAuth({
         plans: StripePlans,
       },
     }),
-    // apiKey({
-    //   enableMetadata: true,
-    //   customAPIKeyGetter: (ctx) => {
-    //     const key = ctx.headers?.get("authorization")?.split(" ")[1];
-    //     if (key?.startsWith("pk_")) {
-    //       return key;
-    //     }
-    //     return null;
-    //   },
-    // }),
+    apiKey({
+      enableMetadata: true,
+      customAPIKeyGetter: getApiKey,
+    }),
   ],
   databaseHooks: {
     account: {
@@ -135,4 +141,44 @@ export const auth = betterAuth({
       },
     },
   },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      const key = getApiKey(ctx);
+      if (key && ctx.path === "/get-session") {
+        // biome-ignore lint/suspicious/noExplicitAny: break type ciruclar dependencies
+        const data: any = await (auth as any).api.verifyApiKey({
+          body: {
+            key,
+          },
+        });
+
+        if (data.valid && data.key) {
+          const { userId } = data.key;
+          const user = await ctx.context.internalAdapter.findUserById(userId);
+          return ctx.json({
+            user,
+            session: {
+              id: data.key.id,
+              token: key,
+              userId,
+              userAgent: ctx.request?.headers.get("user-agent") ?? null,
+              ipAddress: null,
+              createdAt: /* @__PURE__ */ new Date(),
+              updatedAt: /* @__PURE__ */ new Date(),
+              expiresAt:
+                data.key.expiresAt || moment().add("7", "days").toDate(),
+            } satisfies Session,
+          });
+        }
+      }
+    }),
+  },
 });
+
+function getApiKey(ctx: GenericEndpointContext) {
+  const key = ctx.headers?.get("authorization")?.split(" ")[1];
+  if (key?.startsWith("pk_")) {
+    return key;
+  }
+  return null;
+}
