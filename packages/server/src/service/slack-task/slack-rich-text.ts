@@ -229,7 +229,7 @@ class SlackRichTextRenderer {
     ];
   }
 
-  renderCloudRunnerSuccess(serverUrl: string): AnyBlock[] {
+  renderCloudRunnerSuccess(minionId: string): AnyBlock[] {
     return [
       {
         type: "section",
@@ -248,9 +248,7 @@ class SlackRichTextRenderer {
               emoji: true,
               text: "🔗 Open Web VSCode",
             },
-            url: serverUrl.startsWith("http")
-              ? serverUrl
-              : `https://${serverUrl}`,
+            url: `https://app.getpochi.com/api/minions/${minionId}/redirect`,
             style: "primary",
             value: "open_server",
           },

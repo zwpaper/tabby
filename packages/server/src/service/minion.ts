@@ -103,7 +103,7 @@ class MinionService {
     );
 
     signalKeepAliveSandbox({ sandboxId: sandbox.sandboxId });
-    return res;
+    return { ...res, id: idEncode(res.id) };
   }
 
   async signalKeepAliveMinion(userId: string, minionId: string) {
@@ -179,7 +179,7 @@ function getUrl(sandbox: Sandbox, hasRepository: boolean, uid: string) {
   const url = new URL(`https://${sandbox.getHost(3000)}`);
   url.searchParams.append("tkn", VSCodeToken);
   if (hasRepository) {
-    url.searchParams.append("folder", encodeURIComponent(SandboxPath.project));
+    url.searchParams.append("folder", SandboxPath.project);
   } else {
     url.searchParams.append(
       "callback",

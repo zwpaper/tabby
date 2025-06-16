@@ -263,7 +263,7 @@ class SlackTaskService {
     await this.sendTaskStarting({
       userId,
       prompt: taskPrompt,
-      serverUrl: minion.url,
+      minionId: minion.id,
       event: slackEvent,
       slackUserId,
     });
@@ -425,13 +425,13 @@ class SlackTaskService {
   private async sendTaskStarting({
     userId,
     prompt,
-    serverUrl,
+    minionId,
     event,
     slackUserId,
   }: {
     userId: string;
     prompt: string;
-    serverUrl: string;
+    minionId: string;
     event: Extract<UserEvent, { type: "slack:new-task" }>;
     slackUserId: string;
   }): Promise<boolean> {
@@ -450,7 +450,7 @@ class SlackTaskService {
 
     // Send ephemeral cloud runner success message
     const ephemeralBlocks =
-      slackRichTextRenderer.renderCloudRunnerSuccess(serverUrl);
+      slackRichTextRenderer.renderCloudRunnerSuccess(minionId);
 
     await webClient.chat.postEphemeral({
       channel: event.data.channel,

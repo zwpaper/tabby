@@ -1,6 +1,7 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import type { GitStatus } from "@ragdoll/db";
+import { parseGitOriginUrl } from "../git-utils";
 import { getLogger } from "../logger";
 
 export interface GitStatusReaderOptions {
@@ -72,11 +73,38 @@ export class GitStatusReader {
   }
 
   /**
+   * Sanitize git origin URL by removing credential information
+   * Returns a clean URL safe for display in environment/prompts
+   */
+  private sanitizeOriginUrl(originUrl: string | undefined): string | undefined {
+    if (!originUrl) return undefined;
+
+    let cleanedUrl = originUrl;
+    if (originUrl.startsWith("https://")) {
+      const url = new URL(originUrl);
+      url.username = "";
+      url.password = "";
+      cleanedUrl = url.toString();
+    }
+
+    const repoInfo = parseGitOriginUrl(cleanedUrl);
+    if (repoInfo) {
+      return repoInfo.webUrl;
+    }
+
+    if (originUrl.startsWith("git@") || originUrl.startsWith("ssh://")) {
+      return originUrl;
+    }
+
+    return cleanedUrl;
+  }
+
+  /**
    * Implementation of git status collection
    * Collects all git data and returns it as structured data
    */
   private async readGitStatusImpl(): Promise<GitStatus> {
-    const [origin, currentBranch, mainBranch, status, recentCommits] =
+    const [rawOrigin, currentBranch, mainBranch, status, recentCommits] =
       await Promise.all([
         this.execGit("remote get-url origin").catch(() => undefined),
         this.execGit("rev-parse --abbrev-ref HEAD").catch(() => "unknown"),
@@ -86,6 +114,8 @@ export class GitStatusReader {
           .then((x) => x.split("\n"))
           .catch(() => []),
       ]);
+
+    const origin = this.sanitizeOriginUrl(rawOrigin);
 
     return {
       origin,
