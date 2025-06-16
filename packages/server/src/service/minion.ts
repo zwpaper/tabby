@@ -19,7 +19,7 @@ const SandboxPath = {
 };
 
 const TemplateId = process.env.E2B_TEMPLATE_ID || "4kfoc92tmo1x9igbf6qp";
-const SandboxTimeoutMs = 60 * 1000 * 15; // 15 minutes
+const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 
 interface CreateMinionOptions {
   userId: string;
@@ -75,7 +75,6 @@ class MinionService {
     }
 
     const opts: SandboxOpts = {
-      timeoutMs: SandboxTimeoutMs,
       envs: envs,
     };
 
