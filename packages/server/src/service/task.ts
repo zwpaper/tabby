@@ -83,10 +83,7 @@ class TaskService {
     request: z.infer<typeof ZodChatRequestType>,
   ) {
     const streamId = generateId();
-    const { conversation, event, uid } = await this.prepareTask(
-      userId,
-      request,
-    );
+    const { conversation, uid } = await this.prepareTask(userId, request);
     const streamingTask = new StreamingTask(streamId, userId, uid);
     this.streamingTasks.set(streamingTask.key, streamingTask);
 
@@ -133,7 +130,6 @@ class TaskService {
 
     return {
       streamId,
-      event,
       messages,
       uid,
     };

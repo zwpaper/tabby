@@ -3,7 +3,7 @@ import { jsonSchema } from "@ai-sdk/ui-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
-import type { DB, Environment } from "@ragdoll/db";
+import type { Environment } from "@ragdoll/db";
 import {
   ClientTools,
   parseMcpToolSet,
@@ -84,7 +84,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(["webFetch", "batchCall"]);
 
-    const { streamId, messages, event, uid } = await taskService.startStreaming(
+    const { streamId, messages, uid } = await taskService.startStreaming(
       user.id,
       req,
     );
@@ -99,7 +99,6 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           messages,
           environment,
           user,
-          event,
           stream,
         );
 
@@ -323,14 +322,12 @@ async function prepareMessages(
   inputMessages: UIMessage[],
   environment: Environment | undefined,
   user: User,
-  event: DB["task"]["event"],
   stream: DataStreamWriter,
 ): Promise<UIMessage[]> {
   let messages = await resolveServerTools(inputMessages, user, stream);
   messages = prompts.injectEnvironmentDetails(
     messages,
     environment,
-    event,
     process.env.POCHI_INJECT_ENVIRONMENT_DETAILS_MODE === "assistant",
   );
   return messages;

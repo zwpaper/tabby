@@ -1,17 +1,13 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
-import type { Environment, GitStatus, UserEvent } from "@ragdoll/db";
+import type { Environment, GitStatus } from "@ragdoll/db";
 
-export function getReadEnvironmentResult(
-  environment: Environment,
-  event: UserEvent | null,
-) {
+export function getReadEnvironmentResult(environment: Environment) {
   const sections = [
     getCurrentTime(environment.currentTime),
     getWorkspaceFiles(environment.workspace, environment.info),
     getCurrentOpenedFiles(environment.workspace),
     getCurrentWorkingFile(environment.workspace),
     getGitStatus(environment.workspace.gitStatus),
-    getEvent(event),
     getTodos(environment.todos),
   ]
     .filter(Boolean)
@@ -56,13 +52,6 @@ function getCurrentWorkingFile(workspace: Environment["workspace"]) {
     return "";
   }
   return `# Active Selection (${filepath}:${range.start.line + 1}-${range.end.line + 1})\n\n\`\`\`\n${content}\n\`\`\`\n`;
-}
-
-function getEvent(event: UserEvent | null) {
-  if (event) {
-    return `# Event triggered this task\n${JSON.stringify(event, null, 2)}`;
-  }
-  return "";
 }
 
 function getGitStatus(gitStatus: GitStatus | undefined) {
@@ -127,7 +116,6 @@ function getInjectMessage(
 export function injectEnvironmentDetails(
   messages: UIMessage[],
   environment: Environment | undefined,
-  event: UserEvent | null,
   injectInAssistantMessage: boolean,
 ) {
   if (environment === undefined) return messages;
@@ -136,7 +124,7 @@ export function injectEnvironmentDetails(
 
   const textPart = {
     type: "text",
-    text: `<${EnvironmentDetailsTag}>\n${getReadEnvironmentResult(environment, event)}\n</${EnvironmentDetailsTag}>`,
+    text: `<${EnvironmentDetailsTag}>\n${getReadEnvironmentResult(environment)}\n</${EnvironmentDetailsTag}>`,
   } satisfies TextUIPart;
 
   const parts = messageToInject.parts || [];

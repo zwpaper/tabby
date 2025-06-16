@@ -131,16 +131,6 @@ Recent commits:
 02b50f727 feat(chat): add environment property to prepareRequestBody
 962185adb feat(webui): add new task link and pending component
 
-# Event triggered this task
-{
-  "type": "slack:new-task",
-  "data": {
-    "channel": "C12345678",
-    "ts": "1234567890.123456",
-    "prompt": "create a new task"
-  }
-}
-
 # TODOs
 Here's todo list for current task. If a task is marked as cancelled or completed, it no longer needs your attention, NEVER ATTEMPT TO COMPLETE IT AGAIN, this is SUPER IMPORTANT!!!.
 Otherwise, please follow the todo list to complete the task.

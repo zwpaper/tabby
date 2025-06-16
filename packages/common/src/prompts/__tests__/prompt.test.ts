@@ -62,14 +62,6 @@ test("environment", () => {
           homedir: "/home/user",
           shell: "bash",
       }},
-      {
-        type: "slack:new-task",
-        data: {
-          channel: "C12345678",
-          ts: "1234567890.123456",
-          prompt: "create a new task",
-        },
-      },
     ),
   ).toMatchSnapshot();
 });
