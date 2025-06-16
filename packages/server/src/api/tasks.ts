@@ -60,7 +60,7 @@ const tasks = new Hono()
         event,
       });
       uid = remoteUid;
-      url = minion?.url;
+      url = `/api/minions/${minion.id}/redirect`;
     } else {
       uid = await taskService.createWithUserMessage(user.id, prompt, event);
       url = `vscode://TabbyML.pochi/?task=${uid}`;

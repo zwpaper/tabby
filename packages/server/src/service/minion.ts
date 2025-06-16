@@ -170,8 +170,56 @@ class MinionService {
     }
 
     signalKeepAliveSandbox({ sandboxId: minion.e2bSandboxId });
+
+    await verifyMinionUrl(minion.url);
+
     return minion.url;
   }
+}
+
+async function verifyMinionUrl(url: string) {
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(
+      () =>
+        reject(
+          new HTTPException(503, {
+            message: "Service Unavailable, please try again later",
+          }),
+        ),
+      30 * 1000,
+    ),
+  );
+
+  const verifyPromise = (async () => {
+    let a = 0;
+    let b = 1;
+    while (true) {
+      try {
+        const res = await fetch(url, {
+          method: "GET",
+          redirect: "manual",
+        });
+        if (res.status === 302) {
+          return;
+        }
+        console.warn(
+          `Failed to verify minion url, status code: ${res.status}, retrying...`,
+        );
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          throw new HTTPException(503, {
+            message: "Service Unavailable, please try again later",
+          });
+        }
+        console.warn("Failed to verify minion url, retrying...", err);
+      }
+      const delay = b * 1000;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      [a, b] = [b, a + b];
+    }
+  })();
+
+  await Promise.race([timeoutPromise, verifyPromise]);
 }
 
 function getUrl(sandbox: Sandbox, hasRepository: boolean, uid: string) {
