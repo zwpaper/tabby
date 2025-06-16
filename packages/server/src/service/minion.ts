@@ -82,7 +82,7 @@ class MinionService {
       .values({
         userId,
         e2bSandboxId: sandbox.sandboxId,
-        url: getUrl(sandbox, !!githubRepository, uid),
+        url: getUrl(sandbox, uid),
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -114,6 +114,7 @@ class MinionService {
       .selectFrom("minion")
       .selectAll()
       .where("userId", "=", userId)
+      .orderBy("createdAt", "desc")
       .limit(limit)
       .offset(offset);
 
@@ -192,9 +193,10 @@ class MinionService {
 
     signalKeepAliveSandbox({ sandboxId: minion.e2bSandboxId });
 
-    await verifyMinionUrl(minion.url);
+    const url = getUrl(sandbox);
+    await verifyMinionUrl(url);
 
-    return minion.url;
+    return url;
   }
 }
 
@@ -207,7 +209,7 @@ async function verifyMinionUrl(url: string) {
             message: "Service Unavailable, please try again later",
           }),
         ),
-      30 * 1000,
+      9 * 1000,
     ),
   );
 
@@ -220,7 +222,7 @@ async function verifyMinionUrl(url: string) {
           method: "GET",
           redirect: "manual",
         });
-        if (res.status === 302) {
+        if (res.status === 200) {
           return;
         }
       } catch (err) {
@@ -235,11 +237,9 @@ async function verifyMinionUrl(url: string) {
   await Promise.race([timeoutPromise, verifyPromise]);
 }
 
-function getUrl(sandbox: Sandbox, hasRepository: boolean, uid: string) {
+function getUrl(sandbox: Sandbox, uid?: string) {
   const url = new URL(`https://${sandbox.getHost(9080)}`);
-  if (hasRepository) {
-    url.searchParams.append("folder", SandboxPath.project);
-  } else {
+  if (uid) {
     url.searchParams.append(
       "callback",
       encodeURIComponent(
@@ -249,6 +249,8 @@ function getUrl(sandbox: Sandbox, hasRepository: boolean, uid: string) {
         }),
       ),
     );
+  } else {
+    url.searchParams.append("folder", SandboxPath.project);
   }
   return url.toString();
 }
