@@ -7,5 +7,3 @@ create table "account" ("id" text not null primary key, "accountId" text not nul
 create table "verification" ("id" text not null primary key, "identifier" text not null, "value" text not null, "expiresAt" timestamp not null, "createdAt" timestamp, "updatedAt" timestamp);
 
 create table "subscription" ("id" text not null primary key, "plan" text not null, "referenceId" text not null, "stripeCustomerId" text, "stripeSubscriptionId" text, "status" text not null, "periodStart" timestamp, "periodEnd" timestamp, "cancelAtPeriodEnd" boolean, "seats" integer);
-
-create table "apikey" ("id" text not null primary key, "name" text, "start" text, "prefix" text, "key" text not null, "userId" text not null references "user" ("id"), "refillInterval" integer, "refillAmount" integer, "lastRefillAt" timestamp, "enabled" boolean, "rateLimitEnabled" boolean, "rateLimitTimeWindow" integer, "rateLimitMax" integer, "requestCount" integer, "remaining" integer, "lastRequest" timestamp, "expiresAt" timestamp, "createdAt" timestamp not null, "updatedAt" timestamp not null, "permissions" text, "metadata" text);
