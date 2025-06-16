@@ -1,12 +1,6 @@
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
-import {
-  admin,
-  apiKey,
-  bearer,
-  magicLink,
-  oAuthProxy,
-} from "better-auth/plugins";
+import { admin, bearer, magicLink, oAuthProxy } from "better-auth/plugins";
 
 import { db } from "./db";
 import { handleGithubAccountUpdate } from "./github";
@@ -102,16 +96,16 @@ export const auth = betterAuth({
         plans: StripePlans,
       },
     }),
-    apiKey({
-      enableMetadata: true,
-      customAPIKeyGetter: (ctx) => {
-        const key = ctx.headers?.get("authorization")?.split(" ")[1];
-        if (key?.startsWith("pk_")) {
-          return key;
-        }
-        return null;
-      },
-    }),
+    // apiKey({
+    //   enableMetadata: true,
+    //   customAPIKeyGetter: (ctx) => {
+    //     const key = ctx.headers?.get("authorization")?.split(" ")[1];
+    //     if (key?.startsWith("pk_")) {
+    //       return key;
+    //     }
+    //     return null;
+    //   },
+    // }),
   ],
   databaseHooks: {
     account: {
