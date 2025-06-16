@@ -28,19 +28,19 @@ export function TaskRow({ task }: TaskRowProps) {
       <div className="px-4 py-3">
         <div className="flex items-start gap-3">
           <div className="flex-1 space-y-2 overflow-hidden">
-            {showBadges && (
-              <div className="flex flex-wrap items-center gap-3">
-                {task?.minionId && <MinionBadge minionId={task.minionId} />}
-                {task.event?.type && (
-                  <Badge variant="secondary" className="cursor-default">
-                    {task.event?.type}
-                  </Badge>
-                )}
-              </div>
-            )}
             <h3 className="line-clamp-2 flex-1 font-medium text-foreground">
               {task.title}
             </h3>
+            {showBadges && (
+              <div className="flex flex-wrap items-center gap-3">
+                {task.event?.type && (
+                  <Badge className="cursor-default" variant="secondary">
+                    {formatEventType(task.event?.type)}
+                  </Badge>
+                )}
+                {task?.minionId && <MinionBadge minionId={task.minionId} />}
+              </div>
+            )}
             <div className="flex min-h-4 flex-col gap-3 text-muted-foreground text-xs md:mt-3 md:flex-row md:items-center">
               {task?.updatedAt && (
                 <div className="flex items-center gap-1">
@@ -64,4 +64,8 @@ export function TaskRow({ task }: TaskRowProps) {
       </div>
     </Link>
   );
+}
+
+function formatEventType(eventType: string) {
+  return eventType.split(":")[0];
 }

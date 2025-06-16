@@ -15,9 +15,13 @@ export function MinionBadge({ minionId }: MinionBadgeProps) {
   };
 
   return (
-    <Badge className="cursor-pointer hover:opacity-70" onClick={handleClick}>
+    <Badge
+      variant="outline"
+      className="cursor-pointer hover:opacity-70"
+      onClick={handleClick}
+    >
       <HardDrive className="h-4 w-4" />
-      <span>Minion #{minionId}</span>
+      <span>Cloud</span>
     </Badge>
   );
 }
