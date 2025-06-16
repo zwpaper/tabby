@@ -4,10 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-html {
-  scrollbar-gutter: stable both-edges;
-}
-
 body {
   @apply m-0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
