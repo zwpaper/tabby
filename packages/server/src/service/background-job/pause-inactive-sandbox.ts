@@ -24,6 +24,8 @@ export async function signalKeepAliveSandbox(data: PauseInactiveSandboxData) {
 }
 
 export function createPauseInactiveSandboxWorker() {
+  init();
+
   return new Worker<PauseInactiveSandboxData>(
     QueueName,
     async (job) => {
@@ -40,4 +42,14 @@ export function createPauseInactiveSandboxWorker() {
     },
     queueConfig,
   );
+}
+
+async function init() {
+  const paginator = Sandbox.list();
+  while (paginator.hasNext) {
+    const sandboxes = await paginator.nextItems();
+    for (const sandbox of sandboxes) {
+      signalKeepAliveSandbox({ sandboxId: sandbox.sandboxId });
+    }
+  }
 }
