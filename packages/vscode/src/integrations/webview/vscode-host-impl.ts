@@ -178,6 +178,10 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return vscode.workspace.workspaceFolders?.[0].uri.fsPath;
   };
 
+  readMinionId = async (): Promise<string | undefined> => {
+    return process.env.POCHI_MINION_ID;
+  };
+
   listFilesInWorkspace = async (): Promise<
     {
       filepath: string;

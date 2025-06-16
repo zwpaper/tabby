@@ -107,6 +107,8 @@ export interface VSCodeHostApi {
 
   readCurrentWorkspace(): Promise<string | undefined>;
 
+  readMinionId(): Promise<string | undefined>;
+
   /**
    * @param event - The event name.
    * @param properties - The event properties.

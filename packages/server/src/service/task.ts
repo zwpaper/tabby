@@ -336,6 +336,7 @@ class TaskService {
     page: number,
     limit: number,
     cwd?: string,
+    minionId?: string,
     eventFilter?: Record<string, unknown>,
   ) {
     const offset = (page - 1) * limit;
@@ -350,6 +351,14 @@ class TaskService {
         sql`environment->'info'->'cwd'`,
         "@>",
         `"${cwd}"`,
+      );
+    }
+
+    if (minionId) {
+      totalCountQuery = totalCountQuery.where(
+        sql`environment->'info'->'minionId'`,
+        "@>",
+        `"${minionId}"`,
       );
     }
 
@@ -378,6 +387,14 @@ class TaskService {
 
     if (cwd) {
       query = query.where(sql`environment->'info'->'cwd'`, "@>", `"${cwd}"`);
+    }
+
+    if (minionId) {
+      query = query.where(
+        sql`environment->'info'->'minionId'`,
+        "@>",
+        `"${minionId}"`,
+      );
     }
 
     query = applyEventFilter(query, eventFilter);

@@ -12,6 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/auth-client";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
+import { useMinionId } from "@/lib/hooks/use-minion-id";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -154,23 +155,25 @@ const getPaginationItems = (
 };
 
 function App() {
-  const { data: currentWorkspace, isFetching } = useCurrentWorkspace();
-  if (isFetching) {
+  const { data: currentWorkspace, isFetching: isFetchingWorkspace } =
+    useCurrentWorkspace();
+  const { data: minionId, isFetching: isFetchingMinionId } = useMinionId();
+  if (isFetchingMinionId || isFetchingWorkspace) {
     return;
   }
 
   if (!currentWorkspace) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center">
-        <WorkspaceRequiredPlaceholder isFetching={isFetching} />
+        <WorkspaceRequiredPlaceholder isFetching={isFetchingWorkspace} />
       </div>
     );
   }
 
-  return <Tasks cwd={currentWorkspace} />;
+  return <Tasks cwd={currentWorkspace} minionId={minionId} />;
 }
 
-function Tasks({ cwd }: { cwd: string }) {
+function Tasks({ cwd, minionId }: { cwd: string; minionId?: string }) {
   const limit = 20;
   const router = useRouter();
   const { page = 1 } = Route.useSearch();
@@ -184,6 +187,7 @@ function Tasks({ cwd }: { cwd: string }) {
             page: page.toString(),
             limit: limit.toString(),
             cwd,
+            minionId,
           },
         })
         .then((x) => x.json()),

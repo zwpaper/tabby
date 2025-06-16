@@ -73,6 +73,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "openExternal",
         "runTask",
         "readTaskRunners",
+        "readMinionId",
       ],
       exports: {
         openTask(params) {

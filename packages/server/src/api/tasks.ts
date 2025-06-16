@@ -12,6 +12,7 @@ import { ZodMessageType } from "../types";
 const PaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
+  minionId: z.string().optional(),
   cwd: z.string().optional(),
   eventFilter: z
     .string()
@@ -74,7 +75,7 @@ const tasks = new Hono()
 
   // List tasks with pagination
   .get("/", zValidator("query", PaginationSchema), requireAuth(), async (c) => {
-    const { cwd, page, limit, eventFilter } = c.req.valid("query");
+    const { cwd, page, limit, eventFilter, minionId } = c.req.valid("query");
     const user = c.get("user");
 
     const result = await taskService.list(
@@ -82,6 +83,7 @@ const tasks = new Hono()
       page,
       limit,
       cwd,
+      minionId,
       eventFilter,
     );
 

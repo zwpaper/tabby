@@ -114,6 +114,9 @@ const VSCodeHostStub = {
       {} as ThreadSignalSerialization<Record<string, TaskRunnerState>>,
     );
   },
+  readMinionId: async () => {
+    return Promise.resolve(undefined);
+  },
 } satisfies VSCodeHostApi;
 
 export function createVscodeHostStub(overrides?: Partial<VSCodeHostApi>) {
