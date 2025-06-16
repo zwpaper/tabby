@@ -40,6 +40,22 @@ function NavHeader() {
           >
             Tasks
           </Link>
+          <Link
+            to="/minions"
+            search={{
+              page: 1,
+              limit: 20,
+            }}
+            className="px-2 py-1.5 hover:text-foreground"
+            activeOptions={{
+              includeSearch: false,
+            }}
+            activeProps={{
+              className: "text-foreground font-medium",
+            }}
+          >
+            Minions
+          </Link>
         </span>
       </span>
       <UserButton size="icon" />

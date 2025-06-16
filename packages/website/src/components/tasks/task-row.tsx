@@ -4,6 +4,8 @@ import { Link } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
 import { Calendar } from "lucide-react";
 import { GitBadge } from "../git-badge";
+import { MinionBadge } from "../minions/minion-badge";
+import { Badge } from "../ui/badge";
 import { TaskRowActions } from "./task-row-actions";
 
 type Task = InferResponseType<
@@ -15,6 +17,8 @@ interface TaskRowProps {
 }
 
 export function TaskRow({ task }: TaskRowProps) {
+  const showBadges = task?.minionId || task.event?.type;
+
   return (
     <Link
       to={"/tasks/$uid"}
@@ -24,6 +28,16 @@ export function TaskRow({ task }: TaskRowProps) {
       <div className="px-4 py-3">
         <div className="flex items-start gap-3">
           <div className="flex-1 space-y-2 overflow-hidden">
+            {showBadges && (
+              <div className="flex flex-wrap items-center gap-3">
+                {task?.minionId && <MinionBadge minionId={task.minionId} />}
+                {task.event?.type && (
+                  <Badge variant="secondary" className="cursor-default">
+                    {task.event?.type}
+                  </Badge>
+                )}
+              </div>
+            )}
             <h3 className="line-clamp-2 flex-1 font-medium text-foreground">
               {task.title}
             </h3>
@@ -34,7 +48,7 @@ export function TaskRow({ task }: TaskRowProps) {
                   <span>{formatRelativeTime(task.updatedAt, "Updated")}</span>
                 </div>
               )}
-              {task?.git && <GitBadge git={task.git} />}
+              {task?.git && <GitBadge git={task.git} interactive={false} />}
             </div>
           </div>
           <div

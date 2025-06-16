@@ -108,17 +108,40 @@ class MinionService {
     signalKeepAliveSandbox({ sandboxId: minion.e2bSandboxId });
   }
 
-  async list(userId: string) {
-    const minions = await db
+  async list(userId: string, page: number, limit: number) {
+    const offset = (page - 1) * limit;
+    const minionsQuery = db
       .selectFrom("minion")
       .selectAll()
       .where("userId", "=", userId)
-      .execute();
+      .limit(limit)
+      .offset(offset);
 
-    return minions.map((minion) => ({
-      ...minion,
-      id: idEncode(minion.id),
-    }));
+    const totalCountQuery = db
+      .selectFrom("minion")
+      .select(db.fn.count("id").as("count"))
+      .where("userId", "=", userId);
+
+    const [minions, totalCountResult] = await Promise.all([
+      minionsQuery.execute(),
+      totalCountQuery.executeTakeFirstOrThrow(),
+    ]);
+
+    const totalCount = Number(totalCountResult.count);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      data: minions.map((minion) => ({
+        ...minion,
+        id: idEncode(minion.id),
+      })),
+      pagination: {
+        page,
+        limit,
+        totalPages,
+        totalCount,
+      },
+    };
   }
 
   private async getMinion(userId: string, minionId: string) {

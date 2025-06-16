@@ -45,6 +45,10 @@ const titleSelect =
     "title",
   );
 
+const minionIdSelect = sql<string | null>`environment->'info'->>'minionId'`.as(
+  "minionId",
+);
+
 const { uidEncode, uidDecode } = (() => {
   const alphabet =
     "RBgHuE5stw6UbcCoZJiamLkyYnqV1xSO8efMhzXK3vI9F27WPrd0jA4lGTNpQD";
@@ -380,6 +384,7 @@ class TaskService {
         "event",
         titleSelect,
         gitSelect,
+        minionIdSelect,
       ])
       .orderBy("id", "desc")
       .limit(limit)

@@ -20,14 +20,13 @@ import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authent
 import { Route as AuthenticatedRedirectVscodeImport } from './routes/_authenticated.redirect-vscode'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
 import { Route as AuthenticatedBaseRouteImport } from './routes/_authenticated._base/route'
-import { Route as AuthenticatedMinionsIndexImport } from './routes/_authenticated.minions/index'
-import { Route as AuthenticatedMinionsIdImport } from './routes/_authenticated.minions/$id'
 import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authenticated.auth/vscode-link'
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
 import { Route as AuthenticatedAdminPromptEvaluationImport } from './routes/_authenticated.admin/prompt-evaluation'
 import { Route as AuthenticatedBaseSettingsRouteImport } from './routes/_authenticated._base/_settings/route'
 import { Route as AuthenticatedBaseTasksIndexImport } from './routes/_authenticated._base/tasks/index'
+import { Route as AuthenticatedBaseMinionsIndexImport } from './routes/_authenticated._base/minions/index'
 import { Route as AuthenticatedBaseTasksUidImport } from './routes/_authenticated._base/tasks/$uid'
 import { Route as AuthenticatedBaseSettingsUsageImport } from './routes/_authenticated._base/_settings/usage'
 import { Route as AuthenticatedBaseSettingsModelImport } from './routes/_authenticated._base/_settings/model'
@@ -91,18 +90,6 @@ const AuthenticatedBaseRouteRoute = AuthenticatedBaseRouteImport.update({
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
-const AuthenticatedMinionsIndexRoute = AuthenticatedMinionsIndexImport.update({
-  id: '/minions/',
-  path: '/minions/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-
-const AuthenticatedMinionsIdRoute = AuthenticatedMinionsIdImport.update({
-  id: '/minions/$id',
-  path: '/minions/$id',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-
 const AuthenticatedAuthVscodeLinkRoute =
   AuthenticatedAuthVscodeLinkImport.update({
     id: '/auth/vscode-link',
@@ -140,6 +127,13 @@ const AuthenticatedBaseTasksIndexRoute =
   AuthenticatedBaseTasksIndexImport.update({
     id: '/tasks/',
     path: '/tasks/',
+    getParentRoute: () => AuthenticatedBaseRouteRoute,
+  } as any)
+
+const AuthenticatedBaseMinionsIndexRoute =
+  AuthenticatedBaseMinionsIndexImport.update({
+    id: '/minions/',
+    path: '/minions/',
     getParentRoute: () => AuthenticatedBaseRouteRoute,
   } as any)
 
@@ -286,20 +280,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuthVscodeLinkImport
       parentRoute: typeof AuthenticatedImport
     }
-    '/_authenticated/minions/$id': {
-      id: '/_authenticated/minions/$id'
-      path: '/minions/$id'
-      fullPath: '/minions/$id'
-      preLoaderRoute: typeof AuthenticatedMinionsIdImport
-      parentRoute: typeof AuthenticatedImport
-    }
-    '/_authenticated/minions/': {
-      id: '/_authenticated/minions/'
-      path: '/minions'
-      fullPath: '/minions'
-      preLoaderRoute: typeof AuthenticatedMinionsIndexImport
-      parentRoute: typeof AuthenticatedImport
-    }
     '/_authenticated/_base/_settings/account': {
       id: '/_authenticated/_base/_settings/account'
       path: '/account'
@@ -342,6 +322,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseTasksUidImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
+    '/_authenticated/_base/minions/': {
+      id: '/_authenticated/_base/minions/'
+      path: '/minions'
+      fullPath: '/minions'
+      preLoaderRoute: typeof AuthenticatedBaseMinionsIndexImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
     '/_authenticated/_base/tasks/': {
       id: '/_authenticated/_base/tasks/'
       path: '/tasks'
@@ -382,6 +369,7 @@ const AuthenticatedBaseSettingsRouteRouteWithChildren =
 interface AuthenticatedBaseRouteRouteChildren {
   AuthenticatedBaseSettingsRouteRoute: typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   AuthenticatedBaseTasksUidRoute: typeof AuthenticatedBaseTasksUidRoute
+  AuthenticatedBaseMinionsIndexRoute: typeof AuthenticatedBaseMinionsIndexRoute
   AuthenticatedBaseTasksIndexRoute: typeof AuthenticatedBaseTasksIndexRoute
 }
 
@@ -390,6 +378,7 @@ const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
     AuthenticatedBaseSettingsRouteRoute:
       AuthenticatedBaseSettingsRouteRouteWithChildren,
     AuthenticatedBaseTasksUidRoute: AuthenticatedBaseTasksUidRoute,
+    AuthenticatedBaseMinionsIndexRoute: AuthenticatedBaseMinionsIndexRoute,
     AuthenticatedBaseTasksIndexRoute: AuthenticatedBaseTasksIndexRoute,
   }
 
@@ -422,8 +411,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
   AuthenticatedAuthVscodeLinkRoute: typeof AuthenticatedAuthVscodeLinkRoute
-  AuthenticatedMinionsIdRoute: typeof AuthenticatedMinionsIdRoute
-  AuthenticatedMinionsIndexRoute: typeof AuthenticatedMinionsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -433,8 +420,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
   AuthenticatedAuthVscodeLinkRoute: AuthenticatedAuthVscodeLinkRoute,
-  AuthenticatedMinionsIdRoute: AuthenticatedMinionsIdRoute,
-  AuthenticatedMinionsIndexRoute: AuthenticatedMinionsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -454,14 +439,13 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/minions/$id': typeof AuthenticatedMinionsIdRoute
-  '/minions': typeof AuthenticatedMinionsIndexRoute
   '/account': typeof AuthenticatedBaseSettingsAccountRoute
   '/billing': typeof AuthenticatedBaseSettingsBillingRoute
   '/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/model': typeof AuthenticatedBaseSettingsModelRoute
   '/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/minions': typeof AuthenticatedBaseMinionsIndexRoute
   '/tasks': typeof AuthenticatedBaseTasksIndexRoute
 }
 
@@ -478,14 +462,13 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/minions/$id': typeof AuthenticatedMinionsIdRoute
-  '/minions': typeof AuthenticatedMinionsIndexRoute
   '/account': typeof AuthenticatedBaseSettingsAccountRoute
   '/billing': typeof AuthenticatedBaseSettingsBillingRoute
   '/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/model': typeof AuthenticatedBaseSettingsModelRoute
   '/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/minions': typeof AuthenticatedBaseMinionsIndexRoute
   '/tasks': typeof AuthenticatedBaseTasksIndexRoute
 }
 
@@ -505,14 +488,13 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/_authenticated/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
-  '/_authenticated/minions/$id': typeof AuthenticatedMinionsIdRoute
-  '/_authenticated/minions/': typeof AuthenticatedMinionsIndexRoute
   '/_authenticated/_base/_settings/account': typeof AuthenticatedBaseSettingsAccountRoute
   '/_authenticated/_base/_settings/billing': typeof AuthenticatedBaseSettingsBillingRoute
   '/_authenticated/_base/_settings/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/_authenticated/_base/_settings/model': typeof AuthenticatedBaseSettingsModelRoute
   '/_authenticated/_base/_settings/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/_authenticated/_base/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/_authenticated/_base/minions/': typeof AuthenticatedBaseMinionsIndexRoute
   '/_authenticated/_base/tasks/': typeof AuthenticatedBaseTasksIndexRoute
 }
 
@@ -531,14 +513,13 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
-    | '/minions/$id'
-    | '/minions'
     | '/account'
     | '/billing'
     | '/integrations'
     | '/model'
     | '/usage'
     | '/tasks/$uid'
+    | '/minions'
     | '/tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -554,14 +535,13 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
-    | '/minions/$id'
-    | '/minions'
     | '/account'
     | '/billing'
     | '/integrations'
     | '/model'
     | '/usage'
     | '/tasks/$uid'
+    | '/minions'
     | '/tasks'
   id:
     | '__root__'
@@ -579,14 +559,13 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
     | '/_authenticated/auth/vscode-link'
-    | '/_authenticated/minions/$id'
-    | '/_authenticated/minions/'
     | '/_authenticated/_base/_settings/account'
     | '/_authenticated/_base/_settings/billing'
     | '/_authenticated/_base/_settings/integrations'
     | '/_authenticated/_base/_settings/model'
     | '/_authenticated/_base/_settings/usage'
     | '/_authenticated/_base/tasks/$uid'
+    | '/_authenticated/_base/minions/'
     | '/_authenticated/_base/tasks/'
   fileRoutesById: FileRoutesById
 }
@@ -635,9 +614,7 @@ export const routeTree = rootRoute
         "/_authenticated/redirect-vscode",
         "/_authenticated/stop-impersonating",
         "/_authenticated/auth/device-link",
-        "/_authenticated/auth/vscode-link",
-        "/_authenticated/minions/$id",
-        "/_authenticated/minions/"
+        "/_authenticated/auth/vscode-link"
       ]
     },
     "/waitlist": {
@@ -649,6 +626,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/_base/_settings",
         "/_authenticated/_base/tasks/$uid",
+        "/_authenticated/_base/minions/",
         "/_authenticated/_base/tasks/"
       ]
     },
@@ -701,14 +679,6 @@ export const routeTree = rootRoute
       "filePath": "_authenticated.auth/vscode-link.tsx",
       "parent": "/_authenticated"
     },
-    "/_authenticated/minions/$id": {
-      "filePath": "_authenticated.minions/$id.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/minions/": {
-      "filePath": "_authenticated.minions/index.tsx",
-      "parent": "/_authenticated"
-    },
     "/_authenticated/_base/_settings/account": {
       "filePath": "_authenticated._base/_settings/account.tsx",
       "parent": "/_authenticated/_base/_settings"
@@ -731,6 +701,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_base/tasks/$uid": {
       "filePath": "_authenticated._base/tasks/$uid.tsx",
+      "parent": "/_authenticated/_base"
+    },
+    "/_authenticated/_base/minions/": {
+      "filePath": "_authenticated._base/minions/index.tsx",
       "parent": "/_authenticated/_base"
     },
     "/_authenticated/_base/tasks/": {

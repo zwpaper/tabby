@@ -19,7 +19,12 @@ type Task = NonNullable<
 export function GitBadge({
   className,
   git,
-}: { git: Task["git"]; className?: string }) {
+  interactive = true,
+}: {
+  git: Task["git"];
+  className?: string;
+  interactive?: boolean;
+}) {
   if (!git?.origin) return null;
 
   const repoInfo = parseGitOriginUrl(git.origin);
@@ -55,15 +60,24 @@ export function GitBadge({
   // If it's a recognized platform with a web URL, make it clickable
   if (repoInfo?.webUrl) {
     return (
-      <a
-        href={repoInfo.webUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="transition-opacity hover:opacity-80"
-        title={`Open ${repoInfo.shorthand} on ${repoInfo.platform}`}
+      <span
+        onClick={(e) => {
+          if (interactive) {
+            e.stopPropagation();
+            window.open(repoInfo.webUrl, "_blank", "noopener,noreferrer");
+          }
+        }}
+        className={cn("cursor-pointer transition-opacity", {
+          "hover:opacity-80": interactive,
+        })}
+        title={
+          interactive
+            ? `Open ${repoInfo.shorthand} on ${repoInfo.platform}`
+            : undefined
+        }
       >
         {badgeContent}
-      </a>
+      </span>
     );
   }
 

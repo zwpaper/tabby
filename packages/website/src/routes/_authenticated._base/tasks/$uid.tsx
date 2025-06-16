@@ -44,6 +44,7 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
 
 function RouteComponent() {
   const loaderData = Route.useLoaderData();
+  const { auth } = Route.useRouteContext();
 
   return (
     <div className="mx-auto flex max-w-6xl flex-1 flex-col space-y-8">
@@ -59,6 +60,7 @@ function RouteComponent() {
       <TaskContent
         conversation={loaderData.conversation}
         todos={loaderData.todos}
+        user={auth.user}
       />
     </div>
   );

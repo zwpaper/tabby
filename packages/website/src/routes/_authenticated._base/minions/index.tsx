@@ -1,41 +1,39 @@
 import { DataTablePagination } from "@/components/data-table-pagination";
-import { TaskRow } from "@/components/tasks/task-row";
-
+import { MinionRow } from "@/components/minions/minion-row";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-
 import { z } from "zod";
 
-const taskSearchSchema = z.object({
+const minionSearchSchema = z.object({
   page: z.number().min(1).optional().default(1),
   limit: z.number().min(20).max(50).optional().default(20),
 });
 
-export const Route = createFileRoute("/_authenticated/_base/tasks/")({
-  component: TaskPage,
-  validateSearch: (search) => taskSearchSchema.parse(search),
+export const Route = createFileRoute("/_authenticated/_base/minions/")({
+  component: MinionsPage,
+  validateSearch: (search) => minionSearchSchema.parse(search),
 });
 
-function TaskPage() {
+function MinionsPage() {
   const router = useRouter();
   const { page, limit } = Route.useSearch();
   const { data, isLoading } = useQuery({
-    queryKey: ["tasks", page, limit],
+    queryKey: ["minions", page, limit],
     queryFn: () =>
-      apiClient.api.tasks
+      apiClient.api.minions
         .$get({ query: { page: page.toString(), limit: limit.toString() } })
         .then((x) => x.json()),
     placeholderData: keepPreviousData,
   });
 
-  const tasks = data?.data || [];
+  const minions = data?.data || [];
   const totalPages = data?.pagination?.totalPages || 1;
 
   const onPageChange = (page: number) => {
     router.navigate({
-      to: "/tasks",
+      to: "/minions",
       search: {
         limit,
         page,
@@ -45,7 +43,7 @@ function TaskPage() {
 
   const onLimitChange = (newLimit: number) => {
     router.navigate({
-      to: "/tasks",
+      to: "/minions",
       search: {
         limit: newLimit,
         page: 1, // Reset to page 1 when limit changes
@@ -65,8 +63,8 @@ function TaskPage() {
     <div className="mx-auto h-full max-w-6xl flex-1 flex-col space-y-8 px-2 pt-0 pb-8 md:flex md:px-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          {tasks.map((task) => (
-            <TaskRow key={task.uid} task={task} />
+          {minions.map((minion) => (
+            <MinionRow key={minion.id} minion={minion} />
           ))}
         </div>
         <DataTablePagination
