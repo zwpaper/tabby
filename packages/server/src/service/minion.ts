@@ -5,8 +5,6 @@ import { auth } from "../better-auth";
 import { db } from "../db";
 import { signalKeepAliveSandbox } from "./background-job";
 
-const VSCodeToken = "pochi";
-
 const SandboxHome = "/home/user";
 const SandboxLogDir = `${SandboxHome}/.log`;
 const RemotePochiHome = `${SandboxHome}/.remote-pochi`;
@@ -62,7 +60,6 @@ class MinionService {
     });
 
     const envs: Record<string, string> = {
-      POCHI_OPENVSCODE_TOKEN: VSCodeToken,
       POCHI_SESSION_TOKEN: apiKey.key,
       POCHI_TASK_ID: uid,
 
@@ -91,7 +88,7 @@ class MinionService {
       .executeTakeFirstOrThrow();
 
     sandbox.commands.run(
-      `mkdir -p ${SandboxLogDir} && ${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
+      `${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
       {
         envs: {
           ...envs,
@@ -247,8 +244,7 @@ async function verifyMinionUrl(url: string) {
 }
 
 function getUrl(sandbox: Sandbox, hasRepository: boolean, uid: string) {
-  const url = new URL(`https://${sandbox.getHost(3000)}`);
-  url.searchParams.append("tkn", VSCodeToken);
+  const url = new URL(`https://${sandbox.getHost(9080)}`);
   if (hasRepository) {
     url.searchParams.append("folder", SandboxPath.project);
   } else {
