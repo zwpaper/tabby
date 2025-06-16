@@ -57,6 +57,7 @@ class MinionService {
         metadata: {
           uid,
         },
+        rateLimitEnabled: false,
       },
     });
 
