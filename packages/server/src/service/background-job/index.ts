@@ -4,8 +4,8 @@ import { createPauseInactiveSandboxWorker } from "./pause-inactive-sandbox";
 
 export function startWorkers() {
   createNotifyTaskSlackWorker();
-  createPauseInactiveSandboxWorker();
   if (process.env.NODE_ENV === "production") {
+    createPauseInactiveSandboxWorker();
     createDisapproveInactiveUsersWorker();
   }
 }
