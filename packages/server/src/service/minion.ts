@@ -223,16 +223,8 @@ async function verifyMinionUrl(url: string) {
         if (res.status === 302) {
           return;
         }
-        console.warn(
-          `Failed to verify minion url, status code: ${res.status}, retrying...`,
-        );
       } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          throw new HTTPException(503, {
-            message: "Service Unavailable, please try again later",
-          });
-        }
-        console.warn("Failed to verify minion url, retrying...", err);
+        // Ignore error, wait for next iteration
       }
       const delay = b * 1000;
       await new Promise((resolve) => setTimeout(resolve, delay));
