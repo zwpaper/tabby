@@ -4,6 +4,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Handle scrollbar gutter fix */
+html {
+  scrollbar-gutter: stable;
+
+  @supports (scrollbar-gutter: stable) {
+    body {
+      width: 100%;
+    }
+  }
+}
+
 body {
   @apply m-0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
