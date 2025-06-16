@@ -36,8 +36,7 @@ export function createPauseInactiveSandboxWorker() {
         await sandbox.pause();
         logger.info(`Sandbox ${sandboxId} paused`);
       } catch (error) {
-        logger.error(`Failed to pause sandbox ${sandboxId}`, error);
-        throw error;
+        logger.debug(`Failed to pause sandbox ${sandboxId}`, error);
       }
     },
     queueConfig,
