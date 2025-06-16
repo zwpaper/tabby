@@ -25,7 +25,7 @@ export function TaskRow({ task }: TaskRowProps) {
     <Link
       to={"/tasks/$uid"}
       params={{ uid: task.uid }}
-      className="group block cursor-pointer rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-card hover:shadow-sm"
+      className="group block cursor-pointer rounded-sm border border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-card hover:shadow-sm"
     >
       <div className="px-4 py-4 sm:px-5">
         <div className="flex items-start gap-3 sm:gap-4">
