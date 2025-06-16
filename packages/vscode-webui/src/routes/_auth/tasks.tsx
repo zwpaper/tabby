@@ -170,7 +170,7 @@ function App() {
     );
   }
 
-  return <Tasks cwd={currentWorkspace} minionId={minionId} />;
+  return <Tasks cwd={currentWorkspace} minionId={minionId || undefined} />;
 }
 
 function Tasks({ cwd, minionId }: { cwd: string; minionId?: string }) {
