@@ -1,8 +1,7 @@
 import { apiClient } from "@/lib/auth-client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { Button } from "../ui/button";
+import { buttonVariants } from "../ui/button";
 
 async function fetchMinions() {
   const res = await apiClient.api.minions.$get();
@@ -14,7 +13,6 @@ async function fetchMinions() {
 }
 
 export function MinionList() {
-  const queryClient = useQueryClient();
   const {
     data: minions,
     error,
@@ -22,27 +20,6 @@ export function MinionList() {
   } = useQuery({
     queryKey: ["minions"],
     queryFn: fetchMinions,
-  });
-
-  const { mutate: resume } = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiClient.api.minions[":id"].resume.$post({
-        param: { id: id.toString() },
-      });
-      if (!res.ok) {
-        throw new Error(await res.text());
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      toast.success("Minion resumed successfully");
-      queryClient.invalidateQueries({
-        queryKey: ["minions"],
-      });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
   });
 
   if (isLoading) {
@@ -68,23 +45,17 @@ export function MinionList() {
               <span className="font-semibold">Sandbox ID:</span>{" "}
               {minion.e2bSandboxId}
             </p>
-            <p>
-              <span className="font-semibold">URL:</span>{" "}
-              <a
-                href={minion.url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                {minion.url}
-              </a>
-            </p>
             <p className="mt-2 text-gray-500 text-sm">
               Created: {new Date(minion.createdAt).toLocaleString()}
             </p>
-            <div className="mt-4 flex justify-end">
-              <Button onClick={() => resume(minion.id)}>Resume</Button>
-            </div>
+            <a
+              href={`/api/minions/${minion.id}/redirect`}
+              className={buttonVariants({
+                variant: "outline",
+              })}
+            >
+              Open
+            </a>
           </div>
         ))}
       </div>

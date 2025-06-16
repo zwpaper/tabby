@@ -14,18 +14,16 @@ const minions = new Hono()
   .get("/:id", async (c) => {
     const user = c.get("user");
     const { id } = c.req.param();
-    const data = await minionService.get(user.id, Number.parseInt(id));
+    const data = await minionService.get(user.id, id);
     return c.json({
       data,
     });
   })
-  .post("/:id/resume", async (c) => {
+  .get("/:id/redirect", async (c) => {
     const user = c.get("user");
     const { id } = c.req.param();
-    const data = await minionService.resume(user.id, Number.parseInt(id));
-    return c.json({
-      data,
-    });
+    const url = await minionService.redirect(user.id, id);
+    return c.redirect(url);
   });
 
 export default minions;

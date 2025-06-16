@@ -119,6 +119,14 @@ class TaskService {
       },
     });
 
+    // Keep the minion active
+    if (request.environment?.info.minionId) {
+      minionService.signalKeepAliveMinion(
+        userId,
+        request.environment.info.minionId,
+      );
+    }
+
     return {
       streamId,
       event,
@@ -313,6 +321,12 @@ class TaskService {
     if (environment.info.cwd !== expectedEnvironment.info.cwd) {
       throw new HTTPException(400, {
         message: "Environment CWD mismatch",
+      });
+    }
+
+    if (environment.info.minionId !== expectedEnvironment.info.minionId) {
+      throw new HTTPException(400, {
+        message: "Environment Minion ID mismatch",
       });
     }
   }

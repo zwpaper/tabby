@@ -1,8 +1,9 @@
 import { Sandbox, type SandboxOpts } from "@e2b/code-interpreter";
 import { HTTPException } from "hono/http-exception";
+import Sqids from "sqids";
 import { auth } from "../better-auth";
 import { db } from "../db";
-import { enqueuePauseInactiveSandbox } from "./background-job";
+import { signalKeepAliveSandbox } from "./background-job";
 
 const VSCodeToken = "pochi";
 
@@ -29,6 +30,17 @@ interface CreateMinionOptions {
     repo: string;
   };
 }
+
+const { idEncode, idDecode } = (() => {
+  const alphabet =
+    "iMypeAm79qGcLfO8jtXTk1d5xPE2bUW0H6awuYoCgzVlhQnBsF3ZRJDvKN4IrS";
+  const coder = new Sqids({ minLength: 8, alphabet });
+  return {
+    idEncode: (id: number) => coder.encode([id]),
+    idDecode: (id: string) => coder.decode(id)[0],
+  };
+})();
+
 class MinionService {
   async create({
     userId,
@@ -67,16 +79,6 @@ class MinionService {
     };
 
     const sandbox = await Sandbox.create(TemplateId, opts);
-    enqueuePauseInactiveSandbox({ sandboxId: sandbox.sandboxId });
-
-    sandbox.commands.run(
-      `mkdir -p ${SandboxLogDir} && ${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
-      {
-        envs: envs,
-        background: true,
-        cwd: SandboxPath.home,
-      },
-    );
     const res = await db
       .insertInto("minion")
       .values({
@@ -86,7 +88,26 @@ class MinionService {
       })
       .returningAll()
       .executeTakeFirstOrThrow();
+
+    sandbox.commands.run(
+      `mkdir -p ${SandboxLogDir} && ${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
+      {
+        envs: {
+          ...envs,
+          POCHI_MINION_ID: idEncode(res.id),
+        },
+        background: true,
+        cwd: SandboxPath.home,
+      },
+    );
+
+    signalKeepAliveSandbox({ sandboxId: sandbox.sandboxId });
     return res;
+  }
+
+  async signalKeepAliveMinion(userId: string, minionId: string) {
+    const minion = await this.getMinion(userId, minionId);
+    signalKeepAliveSandbox({ sandboxId: minion.e2bSandboxId });
   }
 
   async list(userId: string) {
@@ -96,29 +117,33 @@ class MinionService {
       .where("userId", "=", userId)
       .execute();
 
-    return minions;
+    return minions.map((minion) => ({
+      ...minion,
+      id: idEncode(minion.id),
+    }));
   }
 
-  private async getMinion(userId: string, minionId: number) {
+  private async getMinion(userId: string, minionId: string) {
     return await db
       .selectFrom("minion")
       .selectAll()
       .where("userId", "=", userId)
-      .where("id", "=", minionId)
+      .where("id", "=", idDecode(minionId))
       .executeTakeFirstOrThrow();
   }
 
-  private async getSandbox(userId: string, minionId: number) {
+  private async getSandbox(userId: string, minionId: string) {
     const minion = await this.getMinion(userId, minionId);
     const sandbox = await Sandbox.connect(minion.e2bSandboxId);
     return { minion, sandbox };
   }
 
-  async get(userId: string, minionId: number) {
+  async get(userId: string, minionId: string) {
     const { minion, sandbox } = await this.getSandbox(userId, minionId);
     const isRunning = await sandbox.isRunning();
     return {
       ...minion,
+      id: idEncode(minion.id),
       sandbox: isRunning
         ? {
             initLog: await sandbox.files.read(SandboxPath.initLog),
@@ -128,21 +153,24 @@ class MinionService {
     };
   }
 
-  async resume(userId: string, minionId: number) {
-    const minion = await this.getMinion(userId, minionId);
-    try {
-      await Sandbox.resume(minion.e2bSandboxId, {
-        timeoutMs: SandboxTimeoutMs,
-      });
-      enqueuePauseInactiveSandbox({ sandboxId: minion.e2bSandboxId });
-    } catch (err) {
-      if (err instanceof Error && err.name === "NotFoundError") {
-        throw new HTTPException(404, {
-          message: "Minion not found or expired",
+  async redirect(userId: string, minionId: string) {
+    const { minion, sandbox } = await this.getSandbox(userId, minionId);
+    if (!(await sandbox.isRunning())) {
+      try {
+        await Sandbox.resume(minion.e2bSandboxId, {
+          timeoutMs: SandboxTimeoutMs,
         });
+      } catch (err) {
+        if (err instanceof Error && err.name === "NotFoundError") {
+          throw new HTTPException(404, {
+            message: "Minion not found or expired",
+          });
+        }
       }
     }
-    return { success: true };
+
+    signalKeepAliveSandbox({ sandboxId: minion.e2bSandboxId });
+    return minion.url;
   }
 }
 

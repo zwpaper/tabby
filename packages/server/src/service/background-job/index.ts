@@ -11,4 +11,4 @@ export function startWorkers() {
 }
 
 export { enqueueNotifyTaskSlack } from "./notify-task-slack";
-export { enqueuePauseInactiveSandbox } from "./pause-inactive-sandbox";
+export { signalKeepAliveSandbox } from "./pause-inactive-sandbox";

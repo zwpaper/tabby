@@ -10,16 +10,19 @@ export function getSystemInfo(cwd?: string): {
   shell: string;
   os: string;
   homedir: string;
+  minionId: string;
 } {
   const platform = process.platform;
   const homedir = os.homedir();
   const shell = process.env.SHELL || "";
   const currentWorkingDirectory = cwd || process.cwd();
+  const minionId = process.env.POCHI_MINION_ID || "";
 
   return {
     cwd: currentWorkingDirectory,
     shell,
     os: platform,
     homedir,
+    minionId,
   };
 }

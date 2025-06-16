@@ -73,6 +73,10 @@ export const ZodEnvironment = z.object({
       shell: z.string().describe("The default shell."),
       os: z.string().describe("The operating system."),
       homedir: z.string().describe("The home directory."),
+      minionId: z
+        .string()
+        .optional()
+        .describe("The ID of the minion (remote Pochi)."),
       customRules: z
         .string()
         .optional()

@@ -13,11 +13,13 @@ interface PauseInactiveSandboxData {
 
 const queue = new Queue<PauseInactiveSandboxData>(QueueName, queueConfig);
 
-export function enqueuePauseInactiveSandbox(data: PauseInactiveSandboxData) {
+export async function signalKeepAliveSandbox(data: PauseInactiveSandboxData) {
+  const jobId = `pause-sandbox:${data.sandboxId}`;
+  await queue.remove(jobId);
   queue.add(QueueName, data, {
     delay: 60 * 1000 * 10, // 10 minutes
+    jobId,
     attempts: 1,
-    jobId: `pause-sandbox:${data.sandboxId}`,
   });
 }
 
