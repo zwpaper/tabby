@@ -76,6 +76,7 @@ class MinionService {
 
     const opts: SandboxOpts = {
       envs: envs,
+      timeoutMs: SandboxTimeoutMs,
     };
 
     const sandbox = await Sandbox.create(TemplateId, opts);
