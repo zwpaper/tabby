@@ -1,0 +1,19 @@
+diff --git a/dist/plugins/index.mjs b/dist/plugins/index.mjs
+index 6db68a1861702bb14967ea6156378fa93b85f5f8..c29fff8b5b8019b27cd3d28476825ce45589a883 100644
+--- a/dist/plugins/index.mjs
++++ b/dist/plugins/index.mjs
+@@ -1925,7 +1925,13 @@ const apiKey = (options) => {
+             };
+             ctx.context.session = session;
+             if (ctx.path === "/get-session") {
+-              return session;
++              if (ctx === undefined) {
++                return session;
++              } else {
++                return {
++                  context: ctx
++                };
++              }
+             } else {
+               return {
+                 context: ctx
