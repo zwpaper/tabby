@@ -1,4 +1,5 @@
 import { DataTablePagination } from "@/components/data-table-pagination";
+import { TaskFilters } from "@/components/tasks/task-filters";
 import { TaskRow } from "@/components/tasks/task-row";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,27 +56,45 @@ function TaskPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto h-full max-w-6xl flex-1 flex-col space-y-8 px-2 pt-0 pb-8 md:flex md:px-6">
-        <Loading />
+      <div className="mx-auto h-full max-w-6xl flex-1 flex-col space-y-8 px-2 pt-6 pb-8 md:flex md:px-6 md:pt-8">
+        <div className="space-y-6">
+          <TaskFilters
+            onRepositoryChange={() => {}}
+            onSearchChange={() => {}}
+          />
+          <Loading />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto h-full max-w-6xl flex-1 flex-col space-y-8 px-2 pt-0 pb-8 md:flex md:px-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          {tasks.map((task) => (
-            <TaskRow key={task.uid} task={task} />
-          ))}
-        </div>
-        <DataTablePagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-          limit={limit}
-          onLimitChange={onLimitChange}
+    <div className="mx-auto h-full max-w-6xl flex-1 flex-col space-y-8 px-2 pt-6 pb-8 md:flex md:px-6 md:pt-8">
+      <div className="space-y-6">
+        <TaskFilters
+          onRepositoryChange={(repository) => {
+            // Mock filter handler - in real implementation this would filter tasks
+            console.log("Repository filter changed:", repository);
+          }}
+          onSearchChange={(search) => {
+            // Mock search handler - in real implementation this would filter tasks
+            console.log("Search filter changed:", search);
+          }}
         />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            {tasks.map((task) => (
+              <TaskRow key={task.uid} task={task} />
+            ))}
+          </div>
+          <DataTablePagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+            limit={limit}
+            onLimitChange={onLimitChange}
+          />
+        </div>
       </div>
     </div>
   );

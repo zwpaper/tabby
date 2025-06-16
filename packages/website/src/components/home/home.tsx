@@ -37,8 +37,7 @@ interface SearchParams {
   input?: string;
 }
 
-export function Home() {
-  const router = useRouter();
+export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
   const { auth } = Route.useRouteContext();
   const isMobileDevice = useIsMobile();
   const [showMobileWarning, setShowMobileWarning] = useState(false);
@@ -198,9 +197,6 @@ export function Home() {
             throw new Error("Failed to upload images. Please try again.");
           }
         }
-
-        const enableRemotePochi =
-          router.state.location.search.enableRemotePochi;
 
         const taskResponse = await apiClient.api.tasks.$post({
           json: {
