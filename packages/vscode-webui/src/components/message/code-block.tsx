@@ -68,7 +68,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
     return (
       <div
         className={cn(
-          "code-block relative flex max-h-[30vh] w-full flex-col rounded-md border bg-[var(--vscode-editor-background)] font-sans",
+          "code-block relative flex max-h-[30vh] w-full flex-col rounded-sm border bg-[var(--vscode-editor-background)] font-sans",
           className,
         )}
       >
@@ -84,7 +84,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                      className="size-6 p-0 text-xs focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
                       onClick={() => setWrapLongLines(!wrapLongLines)}
                     >
                       {wrapLongLines ? <AlignJustifyIcon /> : <WrapTextIcon />}
@@ -100,7 +100,7 @@ const CodeBlock: FC<CodeBlockProps> = memo(
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                    className="size-6 p-0 text-xs focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
                     onClick={onCopy}
                   >
                     {isCopied ? <CheckIcon /> : <CopyIcon />}

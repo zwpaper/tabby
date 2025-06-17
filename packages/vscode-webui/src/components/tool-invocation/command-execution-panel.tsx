@@ -117,7 +117,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                  className="size-6 p-0 text-xs focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
                   onClick={toggleExpanded}
                 >
                   {expanded ? <ChevronsDownUpIcon /> : <ChevronsUpDownIcon />}
@@ -136,7 +136,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-6 p-0 text-xs hover:bg-[#3C382F] hover:text-[#F4F4F5] focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
+                className="size-6 p-0 text-xs focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
                 onClick={onCopy}
               >
                 {isCopied ? <CheckIcon /> : <CopyIcon />}

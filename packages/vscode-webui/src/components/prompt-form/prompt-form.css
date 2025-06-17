@@ -84,7 +84,7 @@
   background-color: var(--popover);
   color: var(--popover-foreground);
   border-radius: 0.25rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--vscode-editorWidget-border);
 }
 
 @property --gradient-angle {
