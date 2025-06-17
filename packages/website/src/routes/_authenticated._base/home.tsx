@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_base/home")({
 
 function RouteComponent() {
   return (
-    <div className="container mx-auto flex max-h-[1080px] max-w-7xl flex-1 items-center px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto flex max-h-[1080px] max-w-7xl flex-1 items-start px-4 pt-16 sm:px-6 lg:items-center lg:px-8 lg:pt-0">
       <div className="space-y-8">
         <div className="space-y-4 text-center">
           <h1 className="font-bold text-3xl text-foreground tracking-tight">
@@ -99,7 +99,7 @@ export function InstallPanel() {
       <CardContent className="p-0">
         <div className="grid grid-cols-1 gap-0 lg:grid-cols-4">
           {/* Editor Selection Sidebar */}
-          <div className="min-h-160 border-b lg:col-span-1 lg:border-r lg:border-b-0">
+          <div className="border-b lg:col-span-1 lg:border-r lg:border-b-0">
             <div className="p-6">
               <h3 className="mb-4 font-semibold text-muted-foreground text-sm uppercase tracking-wide">
                 Install
