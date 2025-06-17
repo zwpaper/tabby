@@ -102,6 +102,7 @@ function TaskPage() {
       search: (prev) => ({
         ...prev,
         ...newFilters,
+        q: newFilters.q || undefined,
         page: 1,
         pageSize: prev.pageSize ?? 20,
       }),

@@ -11,14 +11,14 @@ export const Route = createFileRoute("/_authenticated/_base/home")({
 function RouteComponent() {
   return (
     <div className="container mx-auto flex max-h-[1080px] max-w-7xl flex-1 items-start px-4 pt-16 sm:px-6 lg:items-center lg:px-8 lg:pt-0">
-      <div className="space-y-8">
+      <div className="space-y-8 pb-4">
         <div className="space-y-4 text-center">
           <h1 className="font-bold text-3xl text-foreground tracking-tight">
             Get Started with Pochi
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            Install Pochi across your development workflow - from Slack for team
-            collaboration to VSCode for hands-on coding
+            Onboard your Pochi teammate on your existing dev tools - Slack for
+            team collaboration, and VSCode for hands-on coding
           </p>
         </div>
         <InstallPanel />
@@ -96,7 +96,7 @@ export function InstallPanel() {
 
   return (
     <Card className="rounded-lg border shadow-sm">
-      <CardContent className="p-0">
+      <CardContent className="min-h-150 p-0">
         <div className="grid grid-cols-1 gap-0 lg:grid-cols-4">
           {/* Editor Selection Sidebar */}
           <div className="border-b lg:col-span-1 lg:border-r lg:border-b-0">

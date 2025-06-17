@@ -52,18 +52,10 @@ export function TaskFilters({
     onRepositoryChange(value);
   };
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      onSearchChange(searchValue);
-    }
-  };
-
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setSearchValue(value);
-    if (value === "") {
-      onSearchChange("");
-    }
+    setSearchValue(value || "");
+    onSearchChange(value);
   };
 
   const clearSearch = () => {
@@ -91,7 +83,6 @@ export function TaskFilters({
             placeholder="Search tasks..."
             value={searchValue}
             onChange={handleSearchInputChange}
-            onKeyDown={handleSearchKeyDown}
             className="w-full pr-9 pl-9 sm:w-[280px]"
           />
           {searchValue && (
