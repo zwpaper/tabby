@@ -13,6 +13,7 @@ export type UserEvent =
   | {
       type: "slack:new-task";
       data: {
+        slackUserId?: string;
         channel: string;
         ts: string;
         prompt: string;

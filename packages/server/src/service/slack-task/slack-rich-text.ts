@@ -4,257 +4,496 @@ class SlackRichTextRenderer {
   renderTaskCreated(
     prompt: string,
     githubRepository: { owner: string; repo: string },
+    slackUserId: string,
   ): AnyBlock[] {
     return [
-      {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: `🐱 Task Created for project ${githubRepository.owner}/${githubRepository.repo}`,
-        },
-      },
+      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*💬 Query:* ${prompt}`,
+          text: `*🟢 Initializing* • Started at ${new Date().toLocaleTimeString()}`,
         },
-      },
-      {
-        type: "section",
-        fields: [
-          {
-            type: "mrkdwn",
-            text: "*Status:* 🟢 Initializing",
-          },
-          {
-            type: "mrkdwn",
-            text: `*Started:* ${new Date().toLocaleTimeString()}`,
-          },
-        ],
       },
     ];
   }
 
-  renderTaskStarting(prompt: string): AnyBlock[] {
-    return [
-      {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: "🚀 Task Starting",
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*💬 Query:* ${prompt}`,
-        },
-      },
-      {
-        type: "section",
-        fields: [
-          {
-            type: "mrkdwn",
-            text: "*Status:* 🟢 Starting",
-          },
-          {
-            type: "mrkdwn",
-            text: `*Started:* ${new Date().toLocaleTimeString()}`,
-          },
-        ],
-      },
-    ];
-  }
-
-  renderTaskRunning(
+  renderTaskStarting(
     prompt: string,
-    toolDescription: string,
-    elapsed: string,
+    githubRepository: { owner: string; repo: string },
+    slackUserId: string,
+    taskId: string,
+    todos?: Array<{ content: string; status: string }>,
+    isLocal?: boolean,
   ): AnyBlock[] {
-    return [
-      {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: "⚡ Task Running",
-        },
-      },
+    const blocks: AnyBlock[] = [
+      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*💬 Query:* ${prompt}`,
-        },
-      },
-      {
-        type: "section",
-        fields: [
-          {
-            type: "mrkdwn",
-            text: `*Status:* 🟡 ${toolDescription}`,
-          },
-          {
-            type: "mrkdwn",
-            text: `*Runtime:* ${elapsed}`,
-          },
-        ],
-      },
-    ];
-  }
-
-  renderTaskWaitingInput(prompt: string, elapsed: string): AnyBlock[] {
-    return [
-      {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: "⏸️ Waiting for Input",
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*💬 Query:* ${prompt}`,
-        },
-      },
-      {
-        type: "section",
-        fields: [
-          {
-            type: "mrkdwn",
-            text: "*Status:* ⏸️ Pending input",
-          },
-          {
-            type: "mrkdwn",
-            text: `*Waiting:* ${elapsed}`,
-          },
-        ],
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "👤 *Required:* Waiting for user to continue the task",
+          text: "*🟢 I'm gonna starting the task right now*",
         },
       },
     ];
-  }
 
-  renderTaskComplete(
-    prompt: string,
-    elapsed: string,
-    result: string,
-  ): AnyBlock[] {
-    return [
-      {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: "✅ Task Complete",
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*💬 Query:* ${prompt}`,
-        },
-      },
-      {
-        type: "section",
-        fields: [
-          {
-            type: "mrkdwn",
-            text: "*Status:* ✅ Complete",
-          },
-          {
-            type: "mrkdwn",
-            text: `*Duration:* ${elapsed}`,
-          },
-        ],
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*📋 Result:* ${result}`,
-        },
-      },
-    ];
-  }
+    if (todos && todos.length > 0) {
+      const todoText = todos
+        .map((todo) => {
+          if (todo.status === "completed") {
+            return `• ~${todo.content}~`;
+          }
+          return `• ${todo.content}`;
+        })
+        .join("\n");
 
-  renderTaskFailed(
-    prompt: string,
-    elapsed: string,
-    errorMessage: string,
-  ): AnyBlock[] {
-    return [
-      {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: "❌ Task Failed",
-        },
-      },
-      {
+      blocks.push({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*💬 Query:* ${prompt}`,
+          text: `*📝 I will follow these steps to complete this task:*\n${todoText}`,
         },
-      },
-      {
-        type: "section",
-        fields: [
-          {
-            type: "mrkdwn",
-            text: "*Status:* ❌ Failed",
-          },
-          {
-            type: "mrkdwn",
-            text: `*Duration:* ${elapsed}`,
-          },
-        ],
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*🚨 Error:* ${errorMessage}`,
-        },
-      },
-    ];
-  }
+      });
+    }
 
-  renderCloudRunnerSuccess(minionId: string): AnyBlock[] {
-    return [
-      {
+    if (isLocal) {
+      blocks.push({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "✅ *Cloud runner started successfully!*",
+          text: `🔗 *Open in VS Code:* \`vscode://TabbyML.pochi/?task=${taskId}\``,
         },
-      },
-      {
+      });
+    } else {
+      blocks.push({
         type: "actions",
         elements: [
           {
             type: "button",
             text: {
               type: "plain_text",
-              emoji: true,
-              text: "🔗 Open Web VSCode",
+              text: "📄 View Task Details",
             },
-            url: `https://app.getpochi.com/api/minions/${minionId}/redirect`,
+            url: `https://app.getpochi.com/tasks/${taskId}`,
             style: "primary",
-            value: "open_server",
           },
         ],
+      });
+    }
+
+    return blocks;
+  }
+
+  renderTaskRunning(
+    prompt: string,
+    githubRepository: { owner: string; repo: string },
+    slackUserId: string,
+    taskId: string,
+    toolDescription: string,
+    todos?: Array<{ content: string; status: string }>,
+    completedTools?: string[],
+    currentTool?: string,
+  ): AnyBlock[] {
+    const blocks: AnyBlock[] = [
+      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*🟡 Running:* ${toolDescription}`,
+        },
       },
     ];
+
+    if (todos && todos.length > 0) {
+      const todoText = todos
+        .map((todo) => {
+          if (todo.status === "completed") {
+            return `• ~${todo.content}~`;
+          }
+          return `• ${todo.content}`;
+        })
+        .join("\n");
+
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*📝 Here's my progress on the task steps:*\n${todoText}`,
+        },
+      });
+    }
+
+    if (completedTools && completedTools.length > 0) {
+      const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
+      const currentToolDisplay = currentTool ? ` → ${currentTool} 🔄` : "";
+
+      blocks.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `⚡ Completed tools: ${toolChain}${currentToolDisplay}`,
+          },
+        ],
+      });
+    }
+
+    blocks.push(this.renderFooterBlock(taskId));
+
+    return blocks;
+  }
+
+  renderTaskWaitingInput(
+    prompt: string,
+    githubRepository: { owner: string; repo: string },
+    slackUserId: string,
+    taskId: string,
+    waitingReason: string,
+    todos?: Array<{ content: string; status: string }>,
+    completedTools?: string[],
+  ): AnyBlock[] {
+    const blocks: AnyBlock[] = [
+      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*⏸️ Pending*\n\n\`${waitingReason}\``,
+        },
+      },
+    ];
+
+    if (todos && todos.length > 0) {
+      const todoText = todos
+        .map((todo) => {
+          if (todo.status === "completed") {
+            return `• ~${todo.content}~`;
+          }
+          return `• ${todo.content}`;
+        })
+        .join("\n");
+
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*📝 Current progress on my task steps:*\n${todoText}`,
+        },
+      });
+    }
+
+    if (completedTools && completedTools.length > 0) {
+      const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
+
+      blocks.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `⚡ Completed tools: ${toolChain}`,
+          },
+        ],
+      });
+    }
+
+    blocks.push({
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "📄 View Task Details",
+          },
+          url: `https://app.getpochi.com/tasks/${taskId}`,
+          style: "primary",
+        },
+      ],
+    });
+
+    return blocks;
+  }
+
+  renderTaskComplete(
+    prompt: string,
+    githubRepository: { owner: string; repo: string },
+    slackUserId: string,
+    taskId: string,
+    result: string,
+    todos?: Array<{ content: string; status: string }>,
+    completedTools?: string[],
+  ): AnyBlock[] {
+    const blocks: AnyBlock[] = [
+      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "*✅ Complete*\n*Result Generated:* Analysis completed successfully",
+        },
+      },
+    ];
+
+    if (todos && todos.length > 0) {
+      const todoText = todos
+        .map((todo) => {
+          if (todo.status === "completed") {
+            return `• ~${todo.content}~`;
+          }
+          return `• ${todo.content}`;
+        })
+        .join("\n");
+
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*📝 Task completion status:*\n${todoText}`,
+        },
+      });
+    }
+
+    // Truncate result if too long to avoid Slack character limit
+    const maxLength = 2900;
+    let displayResult = result;
+    let needsMoreLink = false;
+
+    if (result.length > maxLength) {
+      displayResult = `${result.substring(0, maxLength)}...`;
+      needsMoreLink = true;
+    }
+
+    const resultText = `*📋 Analysis Result:*\n${displayResult}${
+      needsMoreLink
+        ? `\n\n*<https://app.getpochi.com/tasks/${taskId}|More details on task page>*`
+        : ""
+    }`;
+
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: resultText,
+      },
+    });
+
+    if (completedTools && completedTools.length > 0) {
+      const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
+
+      blocks.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `⚡ Completed tools: ${toolChain}`,
+          },
+        ],
+      });
+    }
+
+    blocks.push({
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "📄 View Task Details",
+          },
+          url: `https://app.getpochi.com/tasks/${taskId}`,
+          style: "primary",
+        },
+      ],
+    });
+
+    return blocks;
+  }
+
+  renderTaskFailed(
+    prompt: string,
+    githubRepository: { owner: string; repo: string },
+    slackUserId: string,
+    taskId: string,
+    errorMessage: string,
+    todos?: Array<{ content: string; status: string }>,
+    completedTools?: string[],
+    failedTool?: string,
+  ): AnyBlock[] {
+    const blocks: AnyBlock[] = [
+      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*❌ Failed*\n*Error:* ${errorMessage}`,
+        },
+      },
+    ];
+
+    if (todos && todos.length > 0) {
+      const todoText = todos
+        .map((todo) => {
+          if (todo.status === "completed") {
+            return `• ~${todo.content}~`;
+          }
+          return `• ${todo.content}`;
+        })
+        .join("\n");
+
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*📝 Task progress when error occurred:*\n${todoText}`,
+        },
+      });
+    }
+
+    if (completedTools && completedTools.length > 0) {
+      const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
+      const failedToolDisplay = failedTool ? ` → ${failedTool} ❌` : "";
+
+      blocks.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `⚡ Completed tools: ${toolChain}${failedToolDisplay}`,
+          },
+        ],
+      });
+    }
+
+    blocks.push({
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "📄 View Task Details",
+          },
+          url: `https://app.getpochi.com/tasks/${taskId}`,
+          style: "primary",
+        },
+      ],
+    });
+
+    return blocks;
+  }
+
+  /**
+   * Extract header from existing Slack message blocks
+   */
+  extractHeaderFromBlocks(blocks: AnyBlock[]): AnyBlock | null {
+    return (
+      blocks.find(
+        (block) =>
+          block.type === "section" &&
+          "text" in block &&
+          block.text?.type === "mrkdwn" &&
+          typeof block.text.text === "string" &&
+          block.text.text.includes(":wave: Oh! I just received a task"),
+      ) || null
+    );
+  }
+
+  /**
+   * Extract footer (actions) from existing Slack message blocks
+   */
+  extractFooterFromBlocks(blocks: AnyBlock[]): AnyBlock | null {
+    return (
+      blocks.find(
+        (block) =>
+          block.type === "actions" &&
+          "elements" in block &&
+          Array.isArray(block.elements) &&
+          block.elements.some(
+            (element) =>
+              "text" in element &&
+              element.text &&
+              typeof element.text === "object" &&
+              "text" in element.text &&
+              element.text.text === "📄 View Task Details",
+          ),
+      ) || null
+    );
+  }
+
+  private renderHeaderBlock(
+    prompt: string,
+    githubRepository: { owner: string; repo: string },
+    slackUserId: string,
+  ): AnyBlock {
+    return {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `:wave: Oh! I just received a task from <@${slackUserId}> about "${prompt}" for repository: <https://github.com/${githubRepository.owner}/${githubRepository.repo}|@${githubRepository.owner}/${githubRepository.repo}>. Let me investigate it...`,
+      },
+    };
+  }
+
+  private renderFooterBlock(taskId: string): AnyBlock {
+    return {
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "📄 View Task Details",
+          },
+          url: `https://app.getpochi.com/tasks/${taskId}`,
+          style: "primary",
+        },
+      ],
+    };
+  }
+
+  /**
+   * Parse header to extract repository and user information
+   */
+  parseHeaderInfo(headerBlock: AnyBlock): {
+    githubRepository?: { owner: string; repo: string };
+    slackUserId?: string;
+    prompt?: string;
+  } {
+    if (
+      headerBlock.type !== "section" ||
+      !("text" in headerBlock) ||
+      !headerBlock.text ||
+      headerBlock.text.type !== "mrkdwn" ||
+      typeof headerBlock.text.text !== "string"
+    ) {
+      return {};
+    }
+
+    const text = headerBlock.text.text;
+
+    // Extract slack user ID
+    const userMatch = text.match(/<@([^>]+)>/);
+    const slackUserId = userMatch?.[1];
+
+    // Extract prompt
+    const promptMatch = text.match(/about "([^"]+)"/);
+    const prompt = promptMatch?.[1];
+
+    // Looking for pattern like: |@owner/repo>
+    const repoMatch = text.match(/\|@([^/]+)\/([^>]+)>/);
+    const githubRepository = repoMatch
+      ? {
+          owner: repoMatch[1],
+          repo: repoMatch[2],
+        }
+      : undefined;
+
+    return {
+      githubRepository,
+      slackUserId,
+      prompt,
+    };
   }
 }
 

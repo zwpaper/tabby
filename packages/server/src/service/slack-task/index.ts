@@ -1,7 +1,10 @@
 import type { DBMessage, UserEvent } from "@ragdoll/db";
 import type { WebClient } from "@slack/web-api";
 
-import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
+import {
+  parseGitOriginUrl,
+  parseOwnerAndRepo,
+} from "@ragdoll/common/git-utils";
 import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { slackService } from "../slack";
@@ -50,10 +53,22 @@ class SlackTaskService {
       return;
     }
 
-    const elapsed = calculateElapsed(task.createdAt);
+    // Get header info from task data instead of Slack API
+    const headerInfo = this.extractHeaderInfoFromTask(task);
+
+    const waitingReason = this.extractWaitingReason(task);
+    const completedTools = this.extractCompletedTools(
+      task.conversation?.messages,
+    );
+
     const blocks = slackRichTextRenderer.renderTaskWaitingInput(
-      slackEventData.prompt,
-      elapsed,
+      headerInfo.prompt,
+      headerInfo.githubRepository,
+      headerInfo.slackUserId,
+      task.uid,
+      waitingReason,
+      task.todos,
+      completedTools,
     );
 
     await webClient.chat.update({
@@ -74,16 +89,25 @@ class SlackTaskService {
       return;
     }
 
+    // Get header info from task data instead of Slack API
+    const headerInfo = this.extractHeaderInfoFromTask(task);
+
     const pendingToolInfo = this.extractPendingToolInfo(
       task.conversation?.messages,
     );
-    const elapsed = calculateElapsed(task.createdAt);
     const toolDescription = pendingToolInfo.description || "Processing task";
-
+    const completedTools = this.extractCompletedTools(
+      task.conversation?.messages,
+    );
     const blocks = slackRichTextRenderer.renderTaskRunning(
-      slackEventData.prompt,
+      headerInfo.prompt,
+      headerInfo.githubRepository,
+      headerInfo.slackUserId,
+      task.uid,
       toolDescription,
-      elapsed,
+      task.todos,
+      completedTools,
+      pendingToolInfo.toolName,
     );
 
     await webClient.chat.update({
@@ -104,13 +128,24 @@ class SlackTaskService {
       return;
     }
 
+    // Get header info from task data instead of Slack API
+    const headerInfo = this.extractHeaderInfoFromTask(task);
+
     const errorInfo = this.extractErrorInformation(task);
-    const elapsed = calculateElapsed(task.createdAt);
+    const completedTools = this.extractCompletedTools(
+      task.conversation?.messages,
+    );
+    const failedTool = this.extractFailedTool(task.conversation?.messages);
 
     const blocks = slackRichTextRenderer.renderTaskFailed(
-      slackEventData.prompt,
-      elapsed,
+      headerInfo.prompt,
+      headerInfo.githubRepository,
+      headerInfo.slackUserId,
+      task.uid,
       errorInfo.message,
+      task.todos,
+      completedTools,
+      failedTool,
     );
 
     await webClient.chat.update({
@@ -131,15 +166,24 @@ class SlackTaskService {
       return;
     }
 
+    // Get header info from task data instead of Slack API
+    const headerInfo = this.extractHeaderInfoFromTask(task);
+
     const completionResult = this.extractCompletionResult(
       task.conversation?.messages,
     );
-    const elapsed = calculateElapsed(task.createdAt);
+    const completedTools = this.extractCompletedTools(
+      task.conversation?.messages,
+    );
 
     const blocks = slackRichTextRenderer.renderTaskComplete(
-      slackEventData.prompt,
-      elapsed,
+      headerInfo.prompt,
+      headerInfo.githubRepository,
+      headerInfo.slackUserId,
+      task.uid,
       completionResult || "Task completed successfully.",
+      task.todos,
+      completedTools,
     );
 
     await webClient.chat.update({
@@ -177,6 +221,7 @@ class SlackTaskService {
     prompt: string,
     githubRepository: { owner: string; repo: string },
     channelId: string,
+    slackUserId: string,
   ): Promise<{ ts: string } | null> {
     const webClient = await slackService.getWebClientByUser(userId);
     if (!webClient) return null;
@@ -184,6 +229,7 @@ class SlackTaskService {
     const blocks = slackRichTextRenderer.renderTaskCreated(
       prompt,
       githubRepository,
+      slackUserId,
     );
 
     const messageResult = await webClient.chat.postMessage({
@@ -237,6 +283,7 @@ class SlackTaskService {
       taskPrompt,
       parsedCommand.githubRepository,
       command.channel_id,
+      slackUserId,
     );
 
     if (!slackInfo?.ts) {
@@ -250,22 +297,28 @@ class SlackTaskService {
         channel: command.channel_id,
         ts: slackInfo.ts,
         prompt: taskPrompt,
+        slackUserId: slackUserId,
       },
     };
 
-    const { uid, minion } = await taskService.createWithRunner({
+    const { uid } = await taskService.createWithRunner({
       userId,
       prompt: taskPrompt,
       githubRepository: parsedCommand.githubRepository,
       event: slackEvent,
     });
 
+    // Get the created task to retrieve todos
+    const task = await taskService.get(uid, userId);
+
     await this.sendTaskStarting({
       userId,
       prompt: taskPrompt,
-      minionId: minion.id,
       event: slackEvent,
       slackUserId,
+      githubRepository: parsedCommand.githubRepository,
+      taskId: uid,
+      todos: task?.todos,
     });
 
     return uid;
@@ -342,6 +395,49 @@ class SlackTaskService {
       prompt: string;
       channel?: string;
       ts?: string;
+      slackUserId?: string;
+    };
+  }
+
+  /**
+   * Extract header info from task data instead of Slack API
+   */
+  private extractHeaderInfoFromTask(task: Task | null): {
+    prompt: string;
+    githubRepository: { owner: string; repo: string };
+    slackUserId: string;
+  } {
+    if (!task) {
+      return {
+        prompt: "Work on repository",
+        githubRepository: { owner: "user", repo: "repo" },
+        slackUserId: "FAKE_USER_ID",
+      };
+    }
+
+    let prompt = "Work on repository";
+
+    const eventData = this.extractSlackDataFromTask(task);
+    if (eventData.prompt) {
+      prompt = eventData.prompt;
+    }
+
+    // Get repository from task.git.origin using parseGitOriginUrl
+    let githubRepository = { owner: "user", repo: "repo" };
+    if (task.git) {
+      const gitInfo = parseGitOriginUrl(task.git.origin);
+      if (gitInfo) {
+        githubRepository = { owner: gitInfo.owner, repo: gitInfo.repo };
+      }
+    }
+
+    // Get slackUserId from event data or fallback to fake ID
+    const slackUserId = eventData.slackUserId || "FAKE_USER_ID";
+
+    return {
+      prompt,
+      githubRepository,
+      slackUserId,
     };
   }
 
@@ -425,21 +521,34 @@ class SlackTaskService {
   private async sendTaskStarting({
     userId,
     prompt,
-    minionId,
     event,
     slackUserId,
+    githubRepository,
+    taskId,
+    todos,
+    isLocal,
   }: {
     userId: string;
     prompt: string;
-    minionId: string;
     event: Extract<UserEvent, { type: "slack:new-task" }>;
     slackUserId: string;
+    githubRepository: { owner: string; repo: string };
+    taskId: string;
+    todos?: Array<{ content: string; status: string }>;
+    isLocal?: boolean;
   }): Promise<boolean> {
     const webClient = await slackService.getWebClientByUser(userId);
     if (!webClient || !event.data.channel || !event.data.ts) return false;
 
     // Update main message with starting status
-    const blocks = slackRichTextRenderer.renderTaskStarting(prompt);
+    const blocks = slackRichTextRenderer.renderTaskStarting(
+      prompt,
+      githubRepository,
+      slackUserId,
+      taskId,
+      todos,
+      isLocal,
+    );
 
     await webClient.chat.update({
       channel: event.data.channel,
@@ -448,18 +557,89 @@ class SlackTaskService {
       blocks,
     });
 
-    // Send ephemeral cloud runner success message
-    const ephemeralBlocks =
-      slackRichTextRenderer.renderCloudRunnerSuccess(minionId);
-
-    await webClient.chat.postEphemeral({
-      channel: event.data.channel,
-      user: slackUserId,
-      text: "Cloud runner started successfully!",
-      blocks: ephemeralBlocks,
-    });
-
     return true;
+  }
+
+  /**
+   * Extract waiting reason from task
+   */
+  private extractWaitingReason(task: Task): string {
+    if (!task) return "I need someone help me about this issue!";
+    // Check recent messages for askFollowupQuestion tool calls
+    if (!task.conversation?.messages) {
+      return "I need someone help me about this issue!";
+    }
+
+    for (let i = task.conversation.messages.length - 1; i >= 0; i--) {
+      const message = task.conversation.messages[i];
+      if (message.role === "assistant" && message.parts) {
+        for (const part of message.parts) {
+          if (
+            part.type === "tool-invocation" &&
+            part.toolInvocation?.toolName === "ask-followup-question" &&
+            part.toolInvocation?.args?.question
+          ) {
+            return part.toolInvocation.args.question as string;
+          }
+        }
+      }
+    }
+
+    return "I need clarification on which specific aspects you'd like me to focus on";
+  }
+
+  /**
+   * Extract completed tools from messages
+   */
+  private extractCompletedTools(messages?: DBMessage[]): string[] {
+    const completedTools: string[] = [];
+
+    if (!messages) return completedTools;
+
+    for (const message of messages) {
+      if (message.role === "assistant" && message.parts) {
+        for (const part of message.parts) {
+          if (
+            part.type === "tool-invocation" &&
+            part.toolInvocation?.state === "result" &&
+            part.toolInvocation?.toolName
+          ) {
+            const toolName = part.toolInvocation.toolName;
+            completedTools.push(toolName);
+          }
+        }
+      }
+    }
+
+    return completedTools;
+  }
+
+  /**
+   * Extract failed tool from messages
+   */
+  private extractFailedTool(messages?: DBMessage[]): string | undefined {
+    if (!messages) return undefined;
+
+    // Search from the latest messages first
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.role === "assistant" && message.parts) {
+        for (const part of message.parts) {
+          if (
+            part.type === "tool-invocation" &&
+            part.toolInvocation?.state === "result" &&
+            part.toolInvocation?.toolName &&
+            part.toolInvocation?.result &&
+            typeof part.toolInvocation.result === "object" &&
+            "error" in part.toolInvocation.result
+          ) {
+            return part.toolInvocation.toolName;
+          }
+        }
+      }
+    }
+
+    return undefined;
   }
 }
 
@@ -470,53 +650,38 @@ function isNotifyableTask(task: Task): boolean {
   return task?.event?.type === "slack:new-task";
 }
 
-function calculateElapsed(createdAt?: Date): string {
-  if (!createdAt) return "Recently";
-
-  const now = new Date();
-  const diffMs = now.getTime() - createdAt.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMinutes / 60);
-
-  if (diffHours > 0) {
-    return `${diffHours}h ${diffMinutes % 60}m`;
-  }
-  if (diffMinutes > 0) {
-    return `${diffMinutes}m`;
-  }
-  return "Just started";
-}
-
 function getToolDescription(
   toolName: string,
   args?: Record<string, unknown>,
 ): string {
-  const descriptions: Record<string, string> = {
-    readFile: "Reading file contents",
-    writeToFile: "Writing to file",
-    executeCommand: "Executing command",
-    searchFiles: "Searching through files",
-    applyDiff: "Applying code changes",
-    askFollowupQuestion: "Asking for user input",
-    webFetch: "Fetching web content",
-    listFiles: "Listing directory contents",
-  };
-
-  const baseDescription = descriptions[toolName] || `Using ${toolName} tool`;
-
   if (args) {
     if (toolName === "readFile" && typeof args.path === "string") {
-      return `Reading ${args.path}`;
+      return `I'm reading ${args.path} to understand its contents`;
+    }
+    if (toolName === "listFiles" && typeof args.path === "string") {
+      return `I'm exploring the directory ${args.path} to see what files are available`;
     }
     if (toolName === "executeCommand" && typeof args.command === "string") {
-      return `Running ${args.command}`;
+      return `I'm running the command: ${args.command}`;
+    }
+    if (toolName === "searchFiles" && typeof args.query === "string") {
+      return `I'm searching through files for "${args.query}"`;
+    }
+    if (toolName === "globFiles" && typeof args.pattern === "string") {
+      return `I'm finding files that match the pattern ${args.pattern}`;
     }
     if (toolName === "writeToFile" && typeof args.path === "string") {
-      return `Writing ${args.path}`;
+      return `I'm writing content to ${args.path}`;
+    }
+    if (toolName === "applyDiff" && typeof args.file === "string") {
+      return `I'm applying code changes to ${args.file}`;
+    }
+    if (toolName === "webFetch" && typeof args.url === "string") {
+      return `I'm fetching content from ${args.url}`;
     }
   }
 
-  return baseDescription;
+  return `I'm using the ${toolName} tool to help me with the task`;
 }
 
 function extractErrorInfo(messages?: DBMessage[]): {
