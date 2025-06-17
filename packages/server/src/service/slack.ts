@@ -87,12 +87,12 @@ class SlackService {
             return true;
           },
           success: (_installation, _options, _req, res) => {
-            const redirectUri = "/integrations?slack_connected=true";
+            const redirectUri = "/profile?slack_connected=true";
             res.writeHead(302, { Location: redirectUri });
             res.end();
           },
           failure: (_codeError, _options, _req, res) => {
-            const redirectUri = "/integrations?slack_connected=false";
+            const redirectUri = "/profile?slack_connected=false";
             res.writeHead(302, { Location: redirectUri });
             res.end();
           },
