@@ -93,11 +93,6 @@ const integrationDisplayConfigs: IntegrationDisplayConfig[] = [
     displayName: "GitHub",
     capabilities: ["issue", "pr", "repository"],
   },
-  {
-    provider: "slack",
-    displayName: "Slack",
-    capabilities: ["message", "history"],
-  },
 ];
 
 const Connections: React.FC<{
