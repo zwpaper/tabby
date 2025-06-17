@@ -1,5 +1,7 @@
+import { AccessControlButton } from "@/components/task/access-control-button";
 import { ErrorDisplay, TaskContent } from "@/components/task/content";
 import { TaskHeader } from "@/components/task/header";
+import { OpenInIdeButton } from "@/components/task/open-in-ide-button";
 import { TaskPageSkeleton } from "@/components/task/skeleton";
 import { useTheme } from "@/components/theme-provider";
 import { apiClient } from "@/lib/auth-client";
@@ -50,8 +52,20 @@ function RouteComponent() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-1 flex-col space-y-8">
-      {/* Task header */}
-      <TaskHeader>
+      <TaskHeader
+        actions={
+          <span className="hidden items-center gap-1 md:flex [&>button]:min-w-16">
+            <OpenInIdeButton
+              uid={loaderData.uid}
+              minionId={loaderData.minionId}
+            />
+            <AccessControlButton
+              uid={loaderData.uid}
+              isPublicShared={loaderData.isPublicShared}
+            />
+          </span>
+        }
+      >
         <TaskHeader.Title title={loaderData?.title} />
         <TaskHeader.Subtitle
           updatedAt={loaderData?.updatedAt}

@@ -434,6 +434,7 @@ class TaskService {
         "isPublicShared",
         titleSelect,
         gitSelect,
+        minionIdSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
       ])
       .where("id", "=", uidDecode(uid));
