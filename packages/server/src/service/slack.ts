@@ -44,6 +44,9 @@ class SlackService {
         "groups:history",
         "im:history",
         "mpim:history",
+
+        // Commands.
+        "commands",
       ],
       installerOptions: {
         authVersion: "v2",
