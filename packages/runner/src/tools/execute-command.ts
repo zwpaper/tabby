@@ -33,7 +33,10 @@ export const executeCommand =
     }
 
     try {
+      const shell = process.platform === "linux" ? "/bin/bash" : undefined;
+
       const { stdout, stderr } = await execCommand(command, {
+        shell,
         timeout: timeout * 1000, // Convert to milliseconds
         cwd: resolvedCwd,
         signal: abortSignal,
