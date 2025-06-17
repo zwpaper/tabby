@@ -104,7 +104,7 @@ function AccountCard({ session }: AccountCardProps) {
   return (
     <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
       <CardContent className="p-4">
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
           {/* Avatar */}
           <div className="size-16 flex-shrink-0">
             <UserAvatar user={auth?.user} className="size-16" />
@@ -131,7 +131,7 @@ function AccountCard({ session }: AccountCardProps) {
           </div>
 
           {/* Sign Out Button */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 md:mr-4">
             <Button
               variant="outline"
               size="sm"
