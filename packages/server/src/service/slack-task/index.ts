@@ -270,6 +270,7 @@ class SlackTaskService {
       webClient,
       command.channel_id,
       githubToken,
+      slackUserId,
     );
 
     if (!parsedCommand) {
@@ -371,6 +372,7 @@ class SlackTaskService {
     webClient: WebClient,
     channelId: string,
     githubToken: string,
+    slackUserId: string,
   ): Promise<{
     description: string;
     githubRepository: {
@@ -391,8 +393,9 @@ class SlackTaskService {
       ownerAndRepo = parseOwnerAndRepo(repository);
 
       if (!ownerAndRepo) {
-        await webClient.chat.postMessage({
+        await webClient.chat.postEphemeral({
           channel: channelId,
+          user: slackUserId,
           text: "❌ Invalid repository format. Expected: owner/repo",
         });
         return null;
@@ -406,8 +409,9 @@ class SlackTaskService {
       );
 
       if (!ownerAndRepo) {
-        await webClient.chat.postMessage({
+        await webClient.chat.postEphemeral({
           channel: channelId,
+          user: slackUserId,
           text: "❌ No repository specified. Either:\n• Use format: `/newtask [owner/repo] description`\n• Or set a channel topic with format: `[repo:owner/repo]`\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set topic: `Project discussion [repo:TabbyML/tabby]`",
         });
         return null;
@@ -423,8 +427,9 @@ class SlackTaskService {
     );
 
     if (!repoValidation) {
-      await webClient.chat.postMessage({
+      await webClient.chat.postEphemeral({
         channel: channelId,
+        user: slackUserId,
         text: `❌ Failed to validate GitHub repo: ${owner}/${repo}. Please check if the repository exists and you have access to it.`,
       });
       return null;
