@@ -108,9 +108,7 @@ export function InstallPanel() {
                 {editors.map((editor) => (
                   <Button
                     key={editor.name}
-                    variant={
-                      activeEditor === editor.name ? "secondary" : "ghost"
-                    }
+                    variant={activeEditor === editor.name ? "accent" : "ghost"}
                     className="h-auto w-full justify-start gap-3 px-3 py-3"
                     onClick={() => setActiveEditor(editor.name)}
                   >

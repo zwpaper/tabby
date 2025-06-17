@@ -288,7 +288,10 @@ function SlackWorkspaceCard({
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <IconBrandSlack size={20} className="text-[#4A154B]" />
+              <IconBrandSlack
+                size={20}
+                className="text-[#4A154B] dark:text-zinc-200"
+              />
               <span className="font-medium text-base">Slack Workspaces</span>
             </div>
             <Button

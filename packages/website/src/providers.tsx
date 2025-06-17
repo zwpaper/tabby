@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { authClient } from "@/lib/auth-client";
 import type { Router } from "@/main";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "./components/theme-provider";
 
 export function Providers({
   router,
@@ -36,7 +37,7 @@ export function Providers({
           credentials={false}
           magicLink={true}
         >
-          {children}
+          <ThemeProvider>{children}</ThemeProvider>
           <Toaster richColors offset={{ bottom: 16 }} />
         </AuthUIProviderTanstack>
       </AuthQueryProvider>

@@ -316,7 +316,7 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
   return (
     <div
       className={cn(
-        "relative flex min-h-screen flex-col items-center p-4 text-black",
+        "relative flex min-h-screen flex-col items-center p-4 text-black dark:text-white",
         HomeBackgroundGradient,
       )}
     >
@@ -335,7 +335,7 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
         What can I help you ship?
       </h1>
       <form
-        className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm"
+        className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80"
         onSubmit={handleSubmit}
       >
         {files.length > 0 && (
@@ -353,7 +353,7 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
             handlePasteImage(e);
           }}
           placeholder="Ask pochi to build..."
-          className="mb-4 min-h-10 w-full resize-none border-none bg-transparent text-black text-lg placeholder-gray-400 shadow-none focus-visible:ring-0"
+          className="mb-4 min-h-10 w-full resize-none border-none bg-transparent text-black text-lg placeholder-gray-400 shadow-none focus-visible:ring-0 dark:text-white dark:placeholder-gray-500"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
@@ -362,7 +362,7 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full text-gray-500 transition-colors hover:bg-gray-200/50 hover:text-black"
+              className="rounded-full text-gray-500 transition-colors hover:bg-gray-200/50 hover:text-black dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
               onClick={handleEnhance}
               disabled={isEnhancing || !inputValue.trim()}
             >
@@ -375,7 +375,7 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full text-gray-500 transition-colors hover:bg-gray-200/50 hover:text-black"
+              className="rounded-full text-gray-500 transition-colors hover:bg-gray-200/50 hover:text-black dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
               onClick={handleImageUploadClick}
             >
               <ImageIcon className="h-5 w-5" />

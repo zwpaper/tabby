@@ -60,7 +60,7 @@ export function UserButton({
     [navigate],
   );
 
-  if (pathname !== "/profile") {
+  if (pathname !== "/profile" && pathname !== "/waitlist") {
     return (
       <Button
         size="icon"

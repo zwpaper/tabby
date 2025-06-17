@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/theme-toggle";
 import { UserButton } from "@/components/user-button";
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { Terminal } from "lucide-react";
@@ -60,7 +61,10 @@ function NavHeader() {
           )}
         </span>
       </span>
-      <UserButton size="icon" />
+      <span className="flex gap-2">
+        <ThemeToggle />
+        <UserButton size="icon" />
+      </span>
     </span>
   );
 }

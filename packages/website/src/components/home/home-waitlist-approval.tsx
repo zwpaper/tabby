@@ -26,25 +26,25 @@ export function HomeWaitlistApproval() {
 
       <div className="flex min-h-screen flex-col items-center justify-center px-4">
         <div className="w-full max-w-lg text-center">
-          <h1 className="mb-6 font-bold text-3xl text-gray-900">
+          <h1 className="mb-6 font-bold text-3xl text-gray-900 dark:text-gray-100">
             🎉 You're In – Thanks for Signing Up!
           </h1>
 
           <div className="mb-8 space-y-4">
-            <p className="text-gray-700">
+            <p className="text-gray-700 dark:text-gray-300">
               We are gradually opening up early access to a small group of
               developers who want to be part of our Research Preview.
             </p>
-            <p className="text-gray-700">
+            <p className="text-gray-700 dark:text-gray-300">
               If you're excited to explore what we're building and help shape it
               with feedback, we'd love to have you in the first wave.
             </p>
-            <p className="text-gray-700">
+            <p className="text-gray-700 dark:text-gray-300">
               Join our Discord to connect with the team and other early users.
             </p>
-            <p className="font-semibold text-gray-800">
+            <p className="font-semibold text-gray-800 dark:text-gray-200">
               Just DM us{" "}
-              <span className="rounded bg-gray-100 px-2 py-1 font-mono text-sm">
+              <span className="rounded bg-gray-100 px-2 py-1 font-mono text-sm dark:bg-gray-800">
                 WAITLIST
               </span>{" "}
               once you are in to fast-track your access.
@@ -83,11 +83,11 @@ export function HomeWaitlistApproval() {
           </div>
 
           <div className="text-center">
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 text-sm dark:text-gray-400">
               Questions? Contact us at{" "}
               <a
                 href="mailto:support@getpochi.com"
-                className="text-blue-500 hover:underline"
+                className="text-blue-500 hover:underline dark:text-blue-400"
               >
                 support@getpochi.com
               </a>

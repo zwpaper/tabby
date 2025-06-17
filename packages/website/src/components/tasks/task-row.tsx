@@ -71,19 +71,23 @@ function EventBadge({
 }: { event: string; minionId?: string; className?: string }) {
   const type = event.split(":")[0];
   let IconType = IconBrandChrome;
-  let badgeColor = "bg-blue-50 text-blue-700 border-blue-200";
+  let badgeColor =
+    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800";
 
   switch (type) {
     case "slack":
       IconType = IconBrandSlack;
-      badgeColor = "bg-purple-50 text-purple-700 border-purple-200";
+      badgeColor =
+        "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800";
       break;
     case "code":
       IconType = IconBrandVscode;
-      badgeColor = "bg-blue-50 text-blue-700 border-blue-200";
+      badgeColor =
+        "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800";
       break;
     default:
-      badgeColor = "bg-gray-50 text-gray-700 border-gray-200";
+      badgeColor =
+        "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950/50 dark:text-gray-300 dark:border-gray-800";
       break;
   }
 

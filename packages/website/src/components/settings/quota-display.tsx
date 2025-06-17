@@ -27,7 +27,7 @@ export function QuotaDisplay({ classNames }: QuotaDisplayProps) {
   });
 
   if (isLoading) {
-    return <Skeleton className="h-24 w-full" />;
+    return <Skeleton className="h-[116px] w-full" />;
   }
 
   if (error) {

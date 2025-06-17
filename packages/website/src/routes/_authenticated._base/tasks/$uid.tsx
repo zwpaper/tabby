@@ -1,6 +1,7 @@
 import { ErrorDisplay, TaskContent } from "@/components/task/content";
 import { TaskHeader } from "@/components/task/header";
 import { TaskPageSkeleton } from "@/components/task/skeleton";
+import { useTheme } from "@/components/theme-provider";
 import { apiClient } from "@/lib/auth-client";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
 function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const { auth } = Route.useRouteContext();
+  const { theme } = useTheme();
 
   return (
     <div className="mx-auto flex max-w-6xl flex-1 flex-col space-y-8">
@@ -61,6 +63,7 @@ function RouteComponent() {
         conversation={loaderData.conversation}
         todos={loaderData.todos}
         user={auth.user}
+        theme={theme}
       />
     </div>
   );
