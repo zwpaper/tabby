@@ -7,7 +7,11 @@ import { UserButton } from "@/components/user-button";
 import { apiClient, authClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { cn } from "@/lib/utils";
-import { IconBrandGithub, IconLogout } from "@tabler/icons-react";
+import {
+  IconBrandGithub,
+  IconBrandSlack,
+  IconLogout,
+} from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
@@ -231,6 +235,114 @@ function GithubConnectCard({
   );
 }
 
+// Slack Workspace Installation Component
+interface SlackWorkspaceCardProps {
+  isLoading: boolean;
+  integrations: ApiIntegrationsResponse | undefined;
+  userId: string | undefined;
+  queryClient: ReturnType<typeof useQueryClient>;
+}
+
+function SlackWorkspaceCard({
+  isLoading,
+  integrations,
+  userId,
+  queryClient,
+}: SlackWorkspaceCardProps) {
+  const slackIntegrations =
+    integrations?.filter((i) => i.provider === "slack") || [];
+
+  const disconnectSlackMutation = useMutation({
+    mutationFn: async (integrationId: number) => {
+      const response = await apiClient.api.integrations[":id"].$delete({
+        param: {
+          id: integrationId.toString(),
+        },
+      });
+      if (!response.ok) throw new Error("Failed to disconnect Slack");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success("Slack workspace disconnected successfully");
+      queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
+    },
+    onError: (error) => {
+      toast.error("Failed to disconnect Slack workspace", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleConnectSlack = () => {
+    window.location.href = "/slack/installations";
+  };
+
+  const handleDisconnectSlack = (integrationId: number) => {
+    disconnectSlackMutation.mutate(integrationId);
+  };
+
+  return (
+    <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
+      <CardContent className="p-4">
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <IconBrandSlack size={20} className="text-[#4A154B]" />
+              <span className="font-medium text-base">Slack Workspaces</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleConnectSlack}
+              className="text-xs"
+            >
+              Add Workspace
+            </Button>
+          </div>
+
+          {/* Workspace List */}
+          {isLoading && !integrations ? (
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full rounded-lg" />
+              <Skeleton className="h-12 w-full rounded-lg" />
+            </div>
+          ) : slackIntegrations.length > 0 ? (
+            <div className="space-y-2">
+              {slackIntegrations.map((integration) => (
+                <div
+                  key={integration.id}
+                  className="flex items-center justify-between rounded-lg bg-muted/30 p-3"
+                >
+                  <div className="font-medium text-sm">
+                    {integration.payload.team?.name || "Slack Workspace"}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDisconnectSlack(integration.id)}
+                    disabled={disconnectSlackMutation.isPending}
+                    className="text-destructive text-xs hover:bg-destructive/10"
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-border border-dashed p-6 text-center">
+              <p className="text-muted-foreground text-sm">
+                No workspaces connected yet. Add a workspace to start using
+                Pochi in your Slack channels.
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function RouteComponent() {
   const { data: session } = useSession();
   const userId = session?.user.id;
@@ -256,13 +368,29 @@ function RouteComponent() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const githubSuccess = urlParams.get("github_connected");
+    const slackSuccess = urlParams.get("slack_connected");
+
+    let needsInvalidation = false;
 
     if (githubSuccess !== null) {
+      needsInvalidation = true;
       if (githubSuccess === "true") {
         toast.success("GitHub integration connected successfully");
       } else {
         toast.error("Failed to connect GitHub integration");
       }
+    }
+
+    if (slackSuccess !== null) {
+      needsInvalidation = true;
+      if (slackSuccess === "true") {
+        toast.success("Slack workspace connected successfully");
+      } else {
+        toast.error("Failed to connect Slack workspace");
+      }
+    }
+
+    if (needsInvalidation) {
       window.history.replaceState(null, "", window.location.pathname);
       queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
     }
@@ -333,10 +461,29 @@ function RouteComponent() {
             External Integrations
           </h2>
           <p className="text-muted-foreground text-xs">
-            Connect external services to enhance your workflow and productivity
+            Connect external services to enable Pochi to utilize them in its
+            tools using
           </p>
         </div>
         <GithubConnectCard
+          isLoading={integrationsLoading}
+          integrations={integrations}
+          userId={userId}
+          queryClient={queryClient}
+        />
+      </div>
+
+      {/* Slack Workspace Installation Section */}
+      <div className="space-y-4">
+        <div className="mx-4 space-y-1">
+          <h2 className="font-semibold text-base text-foreground">
+            Slack Workspaces
+          </h2>
+          <p className="text-muted-foreground text-xs">
+            Connect Slack workspaces to use Pochi directly in your team channels
+          </p>
+        </div>
+        <SlackWorkspaceCard
           isLoading={integrationsLoading}
           integrations={integrations}
           userId={userId}
