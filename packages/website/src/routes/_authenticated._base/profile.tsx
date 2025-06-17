@@ -293,7 +293,7 @@ function SlackWorkspaceCard({
                 size={20}
                 className="text-[#4A154B] dark:text-zinc-200"
               />
-              <span className="font-medium text-base">Slack Workspaces</span>
+              <span className="font-medium text-base">Workspaces</span>
             </div>
             <Button
               variant="outline"
@@ -301,7 +301,7 @@ function SlackWorkspaceCard({
               onClick={handleConnectSlack}
               className="text-xs"
             >
-              Add Workspace
+              Add
             </Button>
           </div>
 
@@ -439,19 +439,21 @@ function RouteComponent() {
                   </div>
                 </div>
 
-                {/* Stats Section */}
-                <StatItem
-                  label="TASKS"
-                  value={taskCountQuery.data?.summary?.taskCount || 0}
-                  isLoading={taskCountQuery.isLoading && !taskCountQuery.data}
-                  isError={taskCountQuery.isError}
-                />
-                <StatItem
-                  label="MESSAGES"
-                  value={taskCountQuery.data?.summary?.completionCount || 0}
-                  isLoading={taskCountQuery.isLoading && !taskCountQuery.data}
-                  isError={taskCountQuery.isError}
-                />
+                <div className="grid grid-cols-2 lg:col-span-2">
+                  {/* Stats Section */}
+                  <StatItem
+                    label="TASKS"
+                    value={taskCountQuery.data?.summary?.taskCount || 0}
+                    isLoading={taskCountQuery.isLoading && !taskCountQuery.data}
+                    isError={taskCountQuery.isError}
+                  />
+                  <StatItem
+                    label="MESSAGES"
+                    value={taskCountQuery.data?.summary?.completionCount || 0}
+                    isLoading={taskCountQuery.isLoading && !taskCountQuery.data}
+                    isError={taskCountQuery.isError}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
@@ -480,9 +482,7 @@ function RouteComponent() {
       {/* Slack Workspace Installation Section */}
       <div className="space-y-4">
         <div className="mx-4 space-y-1">
-          <h2 className="font-semibold text-base text-foreground">
-            Slack Workspaces
-          </h2>
+          <h2 className="font-semibold text-base text-foreground">Slack</h2>
           <p className="text-muted-foreground text-xs">
             Connect Slack workspaces to use Pochi directly in your team channels
           </p>
