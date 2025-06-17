@@ -208,7 +208,7 @@ class SlackService {
       const taskText = command.text?.trim();
       if (!taskText) {
         await respond({
-          text: "❌ Please provide a task description. Usage: `/newtask repo description`\nExample: `/newtask TabbyML/ragdoll please fix issue 5723`",
+          text: "❌ Please provide a task description. Usage:\n• `/newtask [owner/repo] description`\n• Or `/newtask description` (if channel topic contains `[repo:owner/repo]`)\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set channel topic: `Project discussion [repo:TabbyML/tabby]` and use: `/newtask fix the login issue`",
           response_type: "ephemeral",
         });
         return;
@@ -238,7 +238,7 @@ class SlackService {
         );
       } catch (error) {
         await respond({
-          text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage: \`/newtask repo description\`\nExample: \`/newtask TabbyML/ragdoll please fix issue 5723\``,
+          text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage:\n• \`/newtask [owner/repo] description\`\n• Or \`/newtask description\` (if channel topic contains \`[repo:owner/repo]\`)\n\nExample: \`/newtask [TabbyML/tabby] fix the login issue\``,
           response_type: "ephemeral",
         });
       }

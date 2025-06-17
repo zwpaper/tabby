@@ -325,6 +325,45 @@ class SlackTaskService {
   }
 
   /**
+   * Extract repository information from channel topic
+   * Looks for patterns like [repo:owner/repo] in the topic
+   */
+  private async extractRepoFromChannelTopic(
+    webClient: WebClient,
+    channelId: string,
+  ): Promise<{ owner: string; repo: string } | null> {
+    try {
+      const channelInfo = await webClient.conversations.info({
+        channel: channelId,
+      });
+
+      if (!channelInfo.ok || !channelInfo.channel?.topic?.value) {
+        return null;
+      }
+
+      const topic = channelInfo.channel.topic.value;
+      // Look for patterns like [repo:owner/repo] in the topic
+      const repoMatch = topic.match(/\[repo:([^/]+\/[^\]]+)\]/i);
+
+      if (!repoMatch) {
+        return null;
+      }
+
+      const repository = repoMatch[1];
+      const ownerAndRepo = parseOwnerAndRepo(repository);
+
+      if (!ownerAndRepo) {
+        return null;
+      }
+
+      return ownerAndRepo;
+    } catch (error) {
+      console.error("Error extracting repo from channel topic:", error);
+      return null;
+    }
+  }
+
+  /**
    * Parse GitHub repository task command from Slack
    */
   private async parseTaskCommand(
@@ -340,27 +379,41 @@ class SlackTaskService {
     };
   } | null> {
     const trimmedText = commandText.trim();
-    const match = trimmedText.match(/^\[(.+?\/.+?)\]\s*(.*)$/);
+    const explicitRepoMatch = trimmedText.match(/^\[(.+?\/.+?)\]\s*(.*)$/);
 
-    if (!match) {
-      await webClient.chat.postMessage({
-        channel: channelId,
-        text: "❌ Invalid command format. Expected: [owner/repo] description",
-      });
-      return null;
+    let ownerAndRepo: { owner: string; repo: string } | null = null;
+    let description: string;
+
+    if (explicitRepoMatch) {
+      // User provided explicit repo format: [owner/repo] description
+      const repository = explicitRepoMatch[1];
+      description = explicitRepoMatch[2];
+      ownerAndRepo = parseOwnerAndRepo(repository);
+
+      if (!ownerAndRepo) {
+        await webClient.chat.postMessage({
+          channel: channelId,
+          text: "❌ Invalid repository format. Expected: owner/repo",
+        });
+        return null;
+      }
+    } else {
+      // No explicit repo provided, try to extract from channel topic
+      description = trimmedText;
+      ownerAndRepo = await this.extractRepoFromChannelTopic(
+        webClient,
+        channelId,
+      );
+
+      if (!ownerAndRepo) {
+        await webClient.chat.postMessage({
+          channel: channelId,
+          text: "❌ No repository specified. Either:\n• Use format: `/newtask [owner/repo] description`\n• Or set a channel topic with format: `[repo:owner/repo]`\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set topic: `Project discussion [repo:TabbyML/tabby]`",
+        });
+        return null;
+      }
     }
 
-    const repository = match[1];
-    const description = match[2];
-    const ownerAndRepo = parseOwnerAndRepo(repository);
-
-    if (!ownerAndRepo) {
-      await webClient.chat.postMessage({
-        channel: channelId,
-        text: "❌ Invalid repository format. Expected: owner/repo",
-      });
-      return null;
-    }
     const { owner, repo } = ownerAndRepo;
 
     const repoValidation = await githubService.validateRepoAccess(
@@ -372,7 +425,7 @@ class SlackTaskService {
     if (!repoValidation) {
       await webClient.chat.postMessage({
         channel: channelId,
-        text: "❌ Failed to validate GitHub repo",
+        text: `❌ Failed to validate GitHub repo: ${owner}/${repo}. Please check if the repository exists and you have access to it.`,
       });
       return null;
     }
