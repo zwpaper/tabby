@@ -73,6 +73,19 @@ export class GitStatusReader {
   }
 
   /**
+   * Check if URL is an SCP-like git URL with embedded credentials
+   * e.g., user@password:TabbyML/tabby.git
+   */
+  private isScpLikeGitUrl(originUrl: string): boolean {
+    return (
+      originUrl.includes("@") &&
+      originUrl.includes(":") &&
+      !originUrl.startsWith("git@") &&
+      !originUrl.startsWith("ssh://")
+    );
+  }
+
+  /**
    * Sanitize git origin URL by removing credential information
    * Returns a clean URL safe for display in environment/prompts
    */
@@ -80,20 +93,24 @@ export class GitStatusReader {
     if (!originUrl) return undefined;
 
     let cleanedUrl = originUrl;
+
     if (originUrl.startsWith("https://")) {
       const url = new URL(originUrl);
       url.username = "";
       url.password = "";
       cleanedUrl = url.toString();
+    } else if (this.isScpLikeGitUrl(originUrl)) {
+      const colonIndex = originUrl.lastIndexOf(":");
+      if (colonIndex !== -1) {
+        cleanedUrl = originUrl.substring(colonIndex + 1);
+      }
+    } else if (originUrl.startsWith("git@") || originUrl.startsWith("ssh://")) {
+      cleanedUrl = originUrl;
     }
 
     const repoInfo = parseGitOriginUrl(cleanedUrl);
     if (repoInfo) {
       return repoInfo.webUrl;
-    }
-
-    if (originUrl.startsWith("git@") || originUrl.startsWith("ssh://")) {
-      return originUrl;
     }
 
     return cleanedUrl;
