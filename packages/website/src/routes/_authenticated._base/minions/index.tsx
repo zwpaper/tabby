@@ -8,7 +8,7 @@ import { z } from "zod";
 
 const minionSearchSchema = z.object({
   page: z.number().min(1).optional().default(1),
-  limit: z.number().min(20).max(50).optional().default(20),
+  pageSize: z.number().min(10).max(50).optional().default(20),
 });
 
 export const Route = createFileRoute("/_authenticated/_base/minions/")({
@@ -16,37 +16,41 @@ export const Route = createFileRoute("/_authenticated/_base/minions/")({
   validateSearch: (search) => minionSearchSchema.parse(search),
 });
 
+const limit = 100;
 function MinionsPage() {
   const router = useRouter();
-  const { page, limit } = Route.useSearch();
+  const { page, pageSize } = Route.useSearch();
   const { data, isLoading } = useQuery({
-    queryKey: ["minions", page, limit],
+    queryKey: ["minions", 1, limit],
     queryFn: () =>
       apiClient.api.minions
-        .$get({ query: { page: page.toString(), limit: limit.toString() } })
+        .$get({
+          query: { page: "1", limit: limit.toString() },
+        })
         .then((x) => x.json()),
     placeholderData: keepPreviousData,
   });
 
-  const minions = data?.data || [];
-  const totalPages = data?.pagination?.totalPages || 1;
+  const allMinions = data?.data || [];
+  const totalPages = Math.ceil(allMinions.length / pageSize);
+  const minions = allMinions.slice((page - 1) * pageSize, page * pageSize);
 
   const onPageChange = (page: number) => {
     router.navigate({
       to: "/minions",
       search: {
-        limit,
+        pageSize,
         page,
       },
     });
   };
 
-  const onLimitChange = (newLimit: number) => {
+  const onPageSizeChange = (newPageSize: number) => {
     router.navigate({
       to: "/minions",
       search: {
-        limit: newLimit,
-        page: 1, // Reset to page 1 when limit changes
+        pageSize: newPageSize,
+        page: 1, // Reset to page 1 when pageSize changes
       },
     });
   };
@@ -71,8 +75,8 @@ function MinionsPage() {
           page={page}
           totalPages={totalPages}
           onPageChange={onPageChange}
-          limit={limit}
-          onLimitChange={onLimitChange}
+          pageSize={pageSize}
+          onPageSizeChange={onPageSizeChange}
         />
       </div>
     </div>

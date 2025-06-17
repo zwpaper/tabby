@@ -12,73 +12,63 @@ import {
   IconBrandGithub,
   IconBrandGitlab,
 } from "@tabler/icons-react";
-import { Search, X } from "lucide-react";
+import { FolderGitIcon, Search, X } from "lucide-react";
 import { useState } from "react";
 
-// Mock repository data
-const mockRepositories = [
-  {
-    id: "all",
-    name: "All Repositories",
-    icon: null,
-  },
-  {
-    id: "ragdoll",
-    name: "TabbyML/ragdoll",
-    icon: IconBrandGithub,
-    platform: "github",
-  },
-  {
-    id: "tabby",
-    name: "TabbyML/tabby",
-    icon: IconBrandGithub,
-    platform: "github",
-  },
-  {
-    id: "pochi-website",
-    name: "TabbyML/pochi-website",
-    icon: IconBrandGithub,
-    platform: "github",
-  },
-  {
-    id: "example-gitlab",
-    name: "company/project",
-    icon: IconBrandGitlab,
-    platform: "gitlab",
-  },
-  {
-    id: "example-bitbucket",
-    name: "team/repository",
-    icon: IconBrandBitbucket,
-    platform: "bitbucket",
-  },
-];
-
-interface TaskFiltersProps {
-  onRepositoryChange?: (repository: string) => void;
-  onSearchChange?: (search: string) => void;
+export interface Repository {
+  id: string;
+  name: string;
+  platform?: string;
 }
 
+interface TaskFiltersProps {
+  repositories: Repository[];
+  onRepositoryChange: (repository: string) => void;
+  onSearchChange: (search: string) => void;
+  initialRepository?: string;
+  initialSearch?: string;
+}
+
+const iconMap = {
+  github: IconBrandGithub,
+  gitlab: IconBrandGitlab,
+  bitbucket: IconBrandBitbucket,
+  git: FolderGitIcon,
+};
+
 export function TaskFilters({
+  repositories,
   onRepositoryChange,
   onSearchChange,
+  initialRepository = "all",
+  initialSearch = "",
 }: TaskFiltersProps) {
-  const [selectedRepository, setSelectedRepository] = useState("all");
-  const [searchValue, setSearchValue] = useState("");
+  const [selectedRepository, setSelectedRepository] =
+    useState(initialRepository);
+  const [searchValue, setSearchValue] = useState(initialSearch);
 
   const handleRepositoryChange = (value: string) => {
     setSelectedRepository(value);
-    onRepositoryChange?.(value);
+    onRepositoryChange(value);
   };
 
-  const handleSearchChange = (value: string) => {
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      onSearchChange(searchValue);
+    }
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     setSearchValue(value);
-    onSearchChange?.(value);
+    if (value === "") {
+      onSearchChange("");
+    }
   };
 
   const clearSearch = () => {
     setSearchValue("");
-    onSearchChange?.("");
+    onSearchChange("");
   };
 
   const hasActiveFilters =
@@ -87,8 +77,8 @@ export function TaskFilters({
   const clearAllFilters = () => {
     setSelectedRepository("all");
     setSearchValue("");
-    onRepositoryChange?.("all");
-    onSearchChange?.("");
+    onRepositoryChange("all");
+    onSearchChange("");
   };
 
   return (
@@ -100,7 +90,8 @@ export function TaskFilters({
           <Input
             placeholder="Search tasks..."
             value={searchValue}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={handleSearchInputChange}
+            onKeyDown={handleSearchKeyDown}
             className="w-full pr-9 pl-9 sm:w-[280px]"
           />
           {searchValue && (
@@ -127,14 +118,19 @@ export function TaskFilters({
             <SelectValue placeholder="Select repository" />
           </SelectTrigger>
           <SelectContent>
-            {mockRepositories.map((repo) => (
-              <SelectItem key={repo.id} value={repo.id}>
-                <div className="flex items-center gap-2">
-                  {repo.icon && <repo.icon className="h-4 w-4" />}
-                  <span className="truncate">{repo.name}</span>
-                </div>
-              </SelectItem>
-            ))}
+            {repositories.map((repo) => {
+              const Icon = repo.platform
+                ? iconMap[repo.platform as keyof typeof iconMap]
+                : null;
+              return (
+                <SelectItem key={repo.id} value={repo.id}>
+                  <div className="flex items-center gap-2">
+                    {Icon && <Icon className="h-4 w-4" />}
+                    <span className="truncate">{repo.name}</span>
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

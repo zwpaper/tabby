@@ -29,7 +29,7 @@ function NavHeader() {
             to="/tasks"
             search={{
               page: 1,
-              limit: 20,
+              pageSize: 20,
             }}
             className="px-2 py-1.5 hover:text-foreground"
             activeOptions={{
@@ -46,7 +46,7 @@ function NavHeader() {
               to="/minions"
               search={{
                 page: 1,
-                limit: 20,
+                pageSize: 20,
               }}
               className="px-2 py-1.5 hover:text-foreground"
               activeOptions={{

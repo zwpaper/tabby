@@ -48,7 +48,7 @@
     },
     "packages/runner": {
       "name": "@ragdoll/runner",
-      "version": "0.1.5",
+      "version": "0.1.7",
       "bin": "src/cli.ts",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
@@ -118,7 +118,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.2.94",
+      "version": "0.2.96",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
         "@modelcontextprotocol/sdk": "^1.12.0",
@@ -310,6 +310,7 @@
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
         "framer-motion": "^12.11.0",
+        "fuzzysort": "^3.1.0",
         "hono": "catalog:",
         "lucide-react": "^0.487.0",
         "moment": "catalog:",
@@ -2160,6 +2161,8 @@
     "function.prototype.name": ["function.prototype.name@1.1.8", "", { "dependencies": { "call-bind": "^1.0.8", "call-bound": "^1.0.3", "define-properties": "^1.2.1", "functions-have-names": "^1.2.3", "hasown": "^2.0.2", "is-callable": "^1.2.7" } }, "sha512-e5iwyodOHhbMr/yNrc7fDYG4qlbIvI5gajyzPnb5TCwyhjApznQh1BMFou9b30SevY43gCJKXycoCBjMbsuW0Q=="],
 
     "functions-have-names": ["functions-have-names@1.2.3", "", {}, "sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ=="],
+
+    "fuzzysort": ["fuzzysort@3.1.0", "", {}, "sha512-sR9BNCjBg6LNgwvxlBd0sBABvQitkLzoVY9MYYROQVX/FvfJ4Mai9LsGhDgd8qYdds0bY77VzYd5iuB+v5rwQQ=="],
 
     "gensync": ["gensync@1.0.0-beta.2", "", {}, "sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg=="],
 

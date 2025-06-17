@@ -18,16 +18,16 @@ interface DataTablePaginationProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  limit: number;
-  onLimitChange: (limit: number) => void;
+  pageSize: number;
+  onPageSizeChange: (pageSize: number) => void;
 }
 
 export function DataTablePagination({
   page,
   totalPages,
   onPageChange,
-  limit,
-  onLimitChange,
+  pageSize,
+  onPageSizeChange,
 }: DataTablePaginationProps) {
   return (
     <div className="flex items-center justify-between px-2">
@@ -38,13 +38,13 @@ export function DataTablePagination({
         <div className="flex items-center space-x-2">
           <p className="font-medium text-sm">Rows per page</p>
           <Select
-            value={`${limit}`}
+            value={`${pageSize}`}
             onValueChange={(value) => {
-              onLimitChange(Number(value));
+              onPageSizeChange(Number(value));
             }}
           >
             <SelectTrigger className="w-[70px]" size="sm">
-              <SelectValue placeholder={`${limit}`} />
+              <SelectValue placeholder={`${pageSize}`} />
             </SelectTrigger>
             <SelectContent side="top">
               {[10, 20, 30, 40, 50].map((pageSize) => (
