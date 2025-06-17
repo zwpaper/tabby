@@ -54,7 +54,7 @@ function RouteComponent() {
     <div className="mx-auto flex max-w-6xl flex-1 flex-col space-y-8">
       <TaskHeader
         actions={
-          <span className="hidden items-center gap-1 md:flex [&>button]:min-w-16">
+          <span className="hidden items-center gap-1 md:flex [&>button]:min-w-20">
             <OpenInIdeButton
               uid={loaderData.uid}
               minionId={loaderData.minionId}

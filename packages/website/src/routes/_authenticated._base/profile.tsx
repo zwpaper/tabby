@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { UserButton } from "@/components/user-button";
 import { apiClient, authClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@daveyplate/better-auth-ui";
 import {
   IconBrandGithub,
   IconBrandSlack,
@@ -100,13 +100,14 @@ function AccountCard({ session }: AccountCardProps) {
     });
   };
 
+  const { data: auth } = useSession();
   return (
     <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
       <CardContent className="p-4">
         <div className="flex items-center gap-6">
           {/* Avatar */}
-          <div className="h-16 w-16 flex-shrink-0">
-            <UserButton size="icon" classNames={{ base: "h-16 w-16" }} />
+          <div className="size-16 flex-shrink-0">
+            <UserAvatar user={auth?.user} className="size-16" />
           </div>
 
           {/* Name */}
