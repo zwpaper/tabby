@@ -28,6 +28,7 @@ class SlackService {
         "channels:read",
         "users:read",
         "im:read",
+        "groups:read",
         "users:read.email",
 
         // sendMessage / reaction.
