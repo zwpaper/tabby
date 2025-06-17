@@ -104,7 +104,7 @@ function Loading() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
+        {Array.from({ length: 10 }).map((_, i) => (
           <Skeleton key={i} className="h-[78px] w-full" />
         ))}
       </div>

@@ -1,8 +1,15 @@
 import { useSession } from "@/lib/auth-hooks";
-import { UserButton as UserButtonImpl } from "@daveyplate/better-auth-ui";
+import { cn } from "@/lib/utils";
+import {
+  UserAvatar,
+  UserButton as UserButtonImpl,
+} from "@daveyplate/better-auth-ui";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { CircleStopIcon, ShieldUser } from "lucide-react";
 import type React from "react";
+import { type MouseEventHandler, useCallback } from "react";
 import { merge } from "remeda";
+import { Button } from "./ui/button";
 
 export function UserButton({
   classNames = {},
@@ -38,6 +45,38 @@ export function UserButton({
       classNames,
     );
   }
+
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      navigate({
+        to: "/profile",
+      });
+    },
+    [navigate],
+  );
+
+  if (pathname !== "/profile") {
+    return (
+      <Button
+        size="icon"
+        className={cn("size-fit rounded-full")}
+        variant="ghost"
+        onClick={onClick}
+      >
+        <UserAvatar
+          user={auth?.user}
+          className={classNames?.base}
+          classNames={classNames.trigger?.avatar}
+        />
+      </Button>
+    );
+  }
+
   return (
     <UserButtonImpl
       classNames={classNames}

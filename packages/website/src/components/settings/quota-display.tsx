@@ -2,10 +2,19 @@
 import { Skeleton } from "@/components/ui/skeleton";
 // ./packages/website/src/components/settings/quota-display.tsx
 import { apiClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 // Removed Card imports
 
-export function QuotaDisplay() {
+interface QuotaDisplayProps {
+  classNames?: {
+    base?: string;
+    title?: string;
+    bar?: string;
+  };
+}
+
+export function QuotaDisplay({ classNames }: QuotaDisplayProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["billingQuota"],
     queryFn: async () => {
@@ -41,8 +50,13 @@ export function QuotaDisplay() {
       : 0;
 
   return (
-    <div className="mb-4 px-2 pb-1">
-      <div className="mb-3 font-bold text-muted-foreground text-xs">
+    <div className={cn("mb-4 px-2 pb-1", classNames?.base)}>
+      <div
+        className={cn(
+          "mb-3 font-bold text-muted-foreground text-xs",
+          classNames?.title,
+        )}
+      >
         {data.plan}
       </div>
       <div className="space-y-2">
@@ -54,9 +68,14 @@ export function QuotaDisplay() {
                 {usages.basic} / {limits.basic}
               </span>
             </div>
-            <div className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+            <div
+              className={cn(
+                "h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700",
+                classNames?.bar,
+              )}
+            >
               <div
-                className="h-1 rounded-full bg-blue-500"
+                className="h-full rounded-full bg-blue-500"
                 style={{ width: `${basicUsagePercent}%` }}
               />
             </div>
@@ -69,9 +88,14 @@ export function QuotaDisplay() {
               {usages.premium} / {limits.premium}
             </span>
           </div>
-          <div className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+          <div
+            className={cn(
+              "h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700",
+              classNames?.bar,
+            )}
+          >
             <div
-              className="h-1 rounded-full bg-amber-500"
+              className="h-full rounded-full bg-amber-500"
               style={{ width: `${premiumUsagePercent}%` }}
             />
           </div>

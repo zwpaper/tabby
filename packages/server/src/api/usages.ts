@@ -10,6 +10,7 @@ import "moment-timezone";
 // Define the schema for query parameters
 const UsageQuerySchema = z.object({
   start: z.string().optional(), // start date in ISO format (YYYY-MM-DD)
+  includeDailyUsage: z.string().optional(),
   end: z.string().optional(), // end date in ISO format (YYYY-MM-DD)
   tz: z.string().optional(), // timezone offset in minutes
 });
@@ -20,7 +21,12 @@ const usages = new Hono().get(
   zValidator("query", UsageQuerySchema),
   async (c) => {
     const user = c.get("user");
-    const { start, end, tz = "UTC" } = c.req.valid("query");
+    const {
+      start,
+      end,
+      tz = "UTC",
+      includeDailyUsage = "true",
+    } = c.req.valid("query");
 
     // Default to last 30 days if no date range is provided
     const endDate = end
@@ -29,6 +35,15 @@ const usages = new Hono().get(
     const startDate = start
       ? moment.tz(start, tz).toDate()
       : moment.tz(endDate, tz).subtract(30, "days").toDate();
+
+    // Query to get aggregate tasks data.
+    const aggregateTaskResult = await db
+      .selectFrom("task")
+      .select([db.fn.count("id").as("taskCount")])
+      .where("userId", "=", user.id)
+      .where("createdAt", ">=", startDate)
+      .where("createdAt", "<=", endDate)
+      .executeTakeFirst();
 
     // Query to get aggregate data across the date range
     const aggregateResult = await db
@@ -43,20 +58,29 @@ const usages = new Hono().get(
       .where("createdAt", "<=", endDate)
       .executeTakeFirst();
 
-    // Query to get daily breakdowns, adjusting for user's timezone
-    const dailyResults = await db
-      .selectFrom("chatCompletion")
-      .select([
-        sql<Date>`DATE("createdAt")`.as("date"),
-        "modelId",
-        db.fn.count("id").as("count"),
-      ])
-      .where("userId", "=", user.id)
-      .where("createdAt", ">=", startDate)
-      .where("createdAt", "<=", endDate)
-      .groupBy(["date", "modelId"])
-      .orderBy("date")
-      .execute();
+    const daily =
+      includeDailyUsage === "true"
+        ? // Query to get daily breakdowns, adjusting for user's timezone
+          (
+            await db
+              .selectFrom("chatCompletion")
+              .select([
+                sql<Date>`DATE("createdAt")`.as("date"),
+                "modelId",
+                db.fn.count("id").as("count"),
+              ])
+              .where("userId", "=", user.id)
+              .where("createdAt", ">=", startDate)
+              .where("createdAt", "<=", endDate)
+              .groupBy(["date", "modelId"])
+              .orderBy("date")
+              .execute()
+          ).map((day) => ({
+            date: moment(day.date).format("YYYY-MM-DD"),
+            modelId: day.modelId,
+            completionCount: Number(day.count || 0),
+          }))
+        : null;
 
     return c.json({
       summary: {
@@ -66,12 +90,9 @@ const usages = new Hono().get(
         totalTokens:
           Number(aggregateResult?.totalPromptTokens || 0) +
           Number(aggregateResult?.totalCompletionTokens || 0),
+        taskCount: Number(aggregateTaskResult?.taskCount || 0),
       },
-      daily: dailyResults.map((day) => ({
-        date: moment(day.date).format("YYYY-MM-DD"),
-        modelId: day.modelId,
-        completionCount: Number(day.count || 0),
-      })),
+      daily,
     });
   },
 );

@@ -27,7 +27,7 @@ export function Providers({
           }
           signUp={true}
           settings={{
-            url: "/account",
+            url: "/profile",
           }}
           social={{
             providers: ["github", "google"],

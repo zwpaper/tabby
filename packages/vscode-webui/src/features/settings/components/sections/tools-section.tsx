@@ -63,7 +63,7 @@ export const ToolsSection: React.FC = () => {
   });
 
   const titleElement = (
-    <a href={`${getServerBaseUrl()}/integrations`}>Integrations</a>
+    <a href={`${getServerBaseUrl()}/profile`}>Integrations</a>
   );
 
   return (

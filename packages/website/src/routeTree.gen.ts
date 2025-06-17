@@ -24,6 +24,7 @@ import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authentica
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
 import { Route as AuthenticatedAdminPromptEvaluationImport } from './routes/_authenticated.admin/prompt-evaluation'
+import { Route as AuthenticatedBaseProfileImport } from './routes/_authenticated._base/profile'
 import { Route as AuthenticatedBaseHomeImport } from './routes/_authenticated._base/home'
 import { Route as AuthenticatedBaseSettingsRouteImport } from './routes/_authenticated._base/_settings/route'
 import { Route as AuthenticatedBaseTasksIndexImport } from './routes/_authenticated._base/tasks/index'
@@ -117,6 +118,12 @@ const AuthenticatedAdminPromptEvaluationRoute =
     path: '/prompt-evaluation',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+
+const AuthenticatedBaseProfileRoute = AuthenticatedBaseProfileImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedBaseRouteRoute,
+} as any)
 
 const AuthenticatedBaseHomeRoute = AuthenticatedBaseHomeImport.update({
   id: '/home',
@@ -266,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseHomeImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
+    '/_authenticated/_base/profile': {
+      id: '/_authenticated/_base/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedBaseProfileImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
     '/_authenticated/admin/prompt-evaluation': {
       id: '/_authenticated/admin/prompt-evaluation'
       path: '/prompt-evaluation'
@@ -383,6 +397,7 @@ const AuthenticatedBaseSettingsRouteRouteWithChildren =
 interface AuthenticatedBaseRouteRouteChildren {
   AuthenticatedBaseSettingsRouteRoute: typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   AuthenticatedBaseHomeRoute: typeof AuthenticatedBaseHomeRoute
+  AuthenticatedBaseProfileRoute: typeof AuthenticatedBaseProfileRoute
   AuthenticatedBaseTasksUidRoute: typeof AuthenticatedBaseTasksUidRoute
   AuthenticatedBaseMinionsIndexRoute: typeof AuthenticatedBaseMinionsIndexRoute
   AuthenticatedBaseTasksIndexRoute: typeof AuthenticatedBaseTasksIndexRoute
@@ -393,6 +408,7 @@ const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
     AuthenticatedBaseSettingsRouteRoute:
       AuthenticatedBaseSettingsRouteRouteWithChildren,
     AuthenticatedBaseHomeRoute: AuthenticatedBaseHomeRoute,
+    AuthenticatedBaseProfileRoute: AuthenticatedBaseProfileRoute,
     AuthenticatedBaseTasksUidRoute: AuthenticatedBaseTasksUidRoute,
     AuthenticatedBaseMinionsIndexRoute: AuthenticatedBaseMinionsIndexRoute,
     AuthenticatedBaseTasksIndexRoute: AuthenticatedBaseTasksIndexRoute,
@@ -452,6 +468,7 @@ export interface FileRoutesByFullPath {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
   '/home': typeof AuthenticatedBaseHomeRoute
+  '/profile': typeof AuthenticatedBaseProfileRoute
   '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
@@ -476,6 +493,7 @@ export interface FileRoutesByTo {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
   '/home': typeof AuthenticatedBaseHomeRoute
+  '/profile': typeof AuthenticatedBaseProfileRoute
   '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
@@ -503,6 +521,7 @@ export interface FileRoutesById {
   '/share/$uid': typeof ShareUidRoute
   '/_authenticated/_base/_settings': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   '/_authenticated/_base/home': typeof AuthenticatedBaseHomeRoute
+  '/_authenticated/_base/profile': typeof AuthenticatedBaseProfileRoute
   '/_authenticated/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
@@ -529,6 +548,7 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/share/$uid'
     | '/home'
+    | '/profile'
     | '/admin/prompt-evaluation'
     | '/admin/users'
     | '/auth/device-link'
@@ -552,6 +572,7 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/share/$uid'
     | '/home'
+    | '/profile'
     | '/admin/prompt-evaluation'
     | '/admin/users'
     | '/auth/device-link'
@@ -577,6 +598,7 @@ export interface FileRouteTypes {
     | '/share/$uid'
     | '/_authenticated/_base/_settings'
     | '/_authenticated/_base/home'
+    | '/_authenticated/_base/profile'
     | '/_authenticated/admin/prompt-evaluation'
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
@@ -648,6 +670,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/_base/_settings",
         "/_authenticated/_base/home",
+        "/_authenticated/_base/profile",
         "/_authenticated/_base/tasks/$uid",
         "/_authenticated/_base/minions/",
         "/_authenticated/_base/tasks/"
@@ -688,6 +711,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_base/home": {
       "filePath": "_authenticated._base/home.tsx",
+      "parent": "/_authenticated/_base"
+    },
+    "/_authenticated/_base/profile": {
+      "filePath": "_authenticated._base/profile.tsx",
       "parent": "/_authenticated/_base"
     },
     "/_authenticated/admin/prompt-evaluation": {

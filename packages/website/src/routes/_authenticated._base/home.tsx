@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_base/home")({
 
 function RouteComponent() {
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="container mx-auto flex max-h-[1080px] max-w-7xl flex-1 items-center px-4 sm:px-6 lg:px-8">
       <div className="space-y-8">
         <div className="space-y-4 text-center">
           <h1 className="font-bold text-3xl text-foreground tracking-tight">
