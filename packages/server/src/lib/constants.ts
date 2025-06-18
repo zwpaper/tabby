@@ -2,7 +2,6 @@
 
 import { anthropic } from "@ai-sdk/anthropic";
 import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
-import { openai } from "@ai-sdk/openai";
 import {
   type LanguageModelV1,
   type LanguageModelV1Middleware,
@@ -13,14 +12,13 @@ import {
   type NewTaskMiddlewareContext,
   createNewTaskMiddleware,
 } from "./new-task-middleware";
+import { createToolMiddleware } from "./tool-call-middleware";
 
 // Define available models
 export type AvailableModelId =
   | "google/gemini-2.5-pro"
   | "google/gemini-2.5-flash"
-  | "anthropic/claude-4-sonnet"
-  | "openai/o3"
-  | "openai/gpt-4o-mini";
+  | "anthropic/claude-4-sonnet";
 
 export const AvailableModels: {
   id: AvailableModelId;
@@ -82,6 +80,12 @@ export function getModel(
     middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
   }
 
+  if (
+    !!process.env.POCHI_GEMINI_CUSTOM_TOOL_CALLS &&
+    modelId.includes("google/gemini-2.5")
+  ) {
+    middleware.push(createToolMiddleware());
+  }
   return wrapLanguageModel({
     model,
     middleware,
@@ -96,12 +100,6 @@ function getModelById(modelId: AvailableModelId): LanguageModelV1 {
       return google("gemini-2.5-pro-preview-06-05");
     case "google/gemini-2.5-flash":
       return google("gemini-2.5-flash-preview-04-17");
-    case "openai/o3":
-      return openai("o3-2025-04-16", {
-        reasoningEffort: "medium",
-      });
-    case "openai/gpt-4o-mini":
-      return openai("gpt-4o-mini");
   }
 }
 
@@ -112,8 +110,6 @@ export function getProviderOptionsById(modelId: string) {
         google: {
           thinkingConfig: {
             includeThoughts: true,
-            // 8k thinking budget
-            thinkingBudget: 1024 * 8,
           },
         } satisfies GoogleGenerativeAIProviderOptions,
       };
@@ -122,8 +118,6 @@ export function getProviderOptionsById(modelId: string) {
         google: {
           thinkingConfig: {
             includeThoughts: true,
-            // 16k thinking budget
-            thinkingBudget: 1024 * 16,
           },
         } satisfies GoogleGenerativeAIProviderOptions,
       };

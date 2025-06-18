@@ -19,8 +19,7 @@ const enhance = new Hono().post(
     const { prompt } = await c.req.valid("json");
     const user = c.get("user");
 
-    const modelId = "openai/gpt-4o-mini";
-    const selectedModel = getModel(modelId);
+    const selectedModel = getModel("google/gemini-2.5-flash");
 
     // TODO: remove whitelist check
     checkWaitlist(user);

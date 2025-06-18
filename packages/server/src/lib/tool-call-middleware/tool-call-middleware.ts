@@ -22,21 +22,68 @@ type StreamingToolCall = {
 const defaultTemplate = (tools: string) =>
   `====
 
-TOOL CALLING
+API INVOCATIONS
 
-You are provided with function signatures within <tools></tools> XML tags in JSON schema format.
+You are provided with api signatures within <api-list></api-list> XML tags in JSON schema format.
 You may call one or more functions to assist with the user query.
 Do not make assumptions about what values to plug into functions; you must follow the function signature strictly to call functions.
-Here are the available tools:
-<tools>
+Here are the available apis:
+<api-list>
 ${tools}
-</tools>
+</api-list>
 
-For each function call return the arguments in JSON text format within tool-call XML tags:
+For each api invocation return the arguments in JSON text format within api-request XML tags:
 
-<tool-call name="{arg-name}">
+<api-request name="{arg-name}">
 {argument-dict}
-</tool-call>
+</api-request>
+
+## OUTPUT FORMAT
+Please remember you are not allowed to use any format related to function calling or fc or tool_code.
+For each api request respone, you are only allowed to return the arguments in JSON text format within api-request XML tags as following:
+
+<api-request name="{arg-name}">
+{argument-dict}
+</api-request>
+
+### EXAMPLE OUTPUT 1
+<api-request name="executeCommand">
+{
+  "command": "bun install"
+}
+</api-request>
+
+### EXAMPLE OUTPUT 2
+<api-request name="todoWrite">
+{
+  "todos": [
+    {
+      "id": "install-dependencies",
+      "content": "Run 'bun install' to ensure all dependencies are installed.",
+      "status": "pending",
+      "priority": "high"
+    },
+    {
+      "id": "implement-footer",
+      "content": "Implement a basic Footer.",
+      "status": "pending",
+      "priority": "low"
+    },
+    {
+      "id": "add-animations",
+      "content": "Integrate framer-motion for animations.",
+      "status": "pending",
+      "priority": "medium"
+    },
+    {
+      "id": "start-dev-server",
+      "content": "Run 'bun dev' to start the development server.",
+      "status": "pending",
+      "priority": "low"
+    }
+  ]
+}
+</api-request>
 `;
 
 // Extract tool call processing logic for wrapGenerate
@@ -224,17 +271,17 @@ function createToolCallTransformStream(
 
 export function createToolMiddleware(): LanguageModelV1Middleware {
   // Set defaults with validated config
-  const toolCallEndTag = "</tool-call>";
+  const toolCallEndTag = "</api-request>";
   const toolResponseTagTemplate = (name: string) =>
-    `<tool-response name="${name}">`;
-  const toolResponseEndTag = "</tool-response>";
+    `<api-response name="${name}">`;
+  const toolResponseEndTag = "</api-response>";
   const toolSystemPromptTemplate = defaultTemplate;
 
   // Pre-compile regex for better performance - new format with name attribute
-  const toolCallStartRegex = /<tool-call\s+name="([^"]+)">/;
-  const toolCallStartPrefix = "<tool-call";
+  const toolCallStartRegex = /<api-request\s+name="([^"]+)">/;
+  const toolCallStartPrefix = "<api-request";
   const toolCallRegex =
-    /<tool-call\s+name="([^"]+)">(.*?)(?:<\/tool-call>|$)/gs;
+    /<api-request\s+name="([^"]+)">(.*?)(?:<\/api-request>|$)/gs;
 
   return {
     middlewareVersion: "v1",
@@ -255,7 +302,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
     wrapGenerate: async ({ doGenerate }) => {
       const result = await doGenerate();
 
-      if (!result.text?.includes("<tool-call")) {
+      if (!result.text?.includes("<api-request")) {
         return result;
       }
 
@@ -292,7 +339,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
               if (content.type === "tool-call") {
                 return {
                   type: "text",
-                  text: `<tool-call name="${content.toolName}">${JSON.stringify(content.args)}</tool-call>`,
+                  text: `<api-request name="${content.toolName}">${JSON.stringify(content.args)}</api-request>`,
                 };
               }
 
@@ -328,23 +375,23 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
           ? params.mode.tools
           : {};
 
-      const systemPrompt = toolSystemPromptTemplate(
+      const toolSystemPrompt = toolSystemPromptTemplate(
         JSON.stringify(originalToolDefinitions, null, 2),
       );
 
-      const toolSystemPrompt: LanguageModelV1Prompt =
+      const promptWithTools: LanguageModelV1Prompt =
         processedPrompt[0]?.role === "system"
           ? [
               {
                 role: "system",
-                content: `${systemPrompt}\n\n${processedPrompt[0].content}`,
+                content: `${toolSystemPrompt}\n\n${processedPrompt[0].content}`,
               },
               ...processedPrompt.slice(1),
             ]
           : [
               {
                 role: "system",
-                content: systemPrompt,
+                content: toolSystemPrompt,
               },
               ...processedPrompt,
             ];
@@ -355,7 +402,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
           // set the mode back to regular and remove the default tools.
           type: "regular",
         },
-        prompt: toolSystemPrompt,
+        prompt: promptWithTools,
       };
     },
   };
