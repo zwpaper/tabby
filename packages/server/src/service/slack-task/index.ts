@@ -1,4 +1,4 @@
-import type { DBMessage, UserEvent } from "@ragdoll/db";
+import type { DBMessage, Todo, UserEvent } from "@ragdoll/db";
 import type { WebClient } from "@slack/web-api";
 
 import {
@@ -57,11 +57,15 @@ class SlackTaskService {
     const headerInfo = this.extractHeaderInfoFromTask(task);
 
     const waitingReason = this.extractWaitingReason(task);
+    if (!waitingReason) {
+      // If there's no waiting reason, we don't need to send a message
+      return;
+    }
     const completedTools = this.extractCompletedTools(
       task.conversation?.messages,
     );
 
-    const blocks = slackRichTextRenderer.renderTaskWaitingInput(
+    const blocks = slackRichTextRenderer.renderTaskAskFollowUpQuestion(
       headerInfo.prompt,
       headerInfo.githubRepository,
       headerInfo.slackUserId,
@@ -95,16 +99,14 @@ class SlackTaskService {
     const pendingToolInfo = this.extractPendingToolInfo(
       task.conversation?.messages,
     );
-    const toolDescription = pendingToolInfo.description || "Processing task";
     const completedTools = this.extractCompletedTools(
       task.conversation?.messages,
     );
-    const blocks = slackRichTextRenderer.renderTaskRunning(
+    const blocks = slackRichTextRenderer.renderTaskPendingTool(
       headerInfo.prompt,
       headerInfo.githubRepository,
       headerInfo.slackUserId,
       task.uid,
-      toolDescription,
       task.todos,
       completedTools,
       pendingToolInfo.toolName,
@@ -584,7 +586,6 @@ class SlackTaskService {
     githubRepository,
     taskId,
     todos,
-    isLocal,
   }: {
     userId: string;
     prompt: string;
@@ -592,8 +593,7 @@ class SlackTaskService {
     slackUserId: string;
     githubRepository: { owner: string; repo: string };
     taskId: string;
-    todos?: Array<{ content: string; status: string }>;
-    isLocal?: boolean;
+    todos?: Todo[];
   }): Promise<boolean> {
     const webClient = await slackService.getWebClientByUser(userId);
     if (!webClient || !event.data.channel || !event.data.ts) return false;
@@ -605,7 +605,6 @@ class SlackTaskService {
       slackUserId,
       taskId,
       todos,
-      isLocal,
     );
 
     await webClient.chat.update({
@@ -621,11 +620,10 @@ class SlackTaskService {
   /**
    * Extract waiting reason from task
    */
-  private extractWaitingReason(task: Task): string {
-    if (!task) return "I need someone help me about this issue!";
+  private extractWaitingReason(task: Task): string | undefined {
     // Check recent messages for askFollowupQuestion tool calls
-    if (!task.conversation?.messages) {
-      return "I need someone help me about this issue!";
+    if (!task?.conversation?.messages) {
+      return;
     }
 
     for (let i = task.conversation.messages.length - 1; i >= 0; i--) {
@@ -642,8 +640,6 @@ class SlackTaskService {
         }
       }
     }
-
-    return "I need clarification on which specific aspects you'd like me to focus on";
   }
 
   /**
