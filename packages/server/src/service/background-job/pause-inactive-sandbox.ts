@@ -1,9 +1,7 @@
 import { Sandbox } from "@e2b/code-interpreter";
-import { getLogger } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
+import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
-
-const logger = getLogger("PauseInactiveSandbox");
 
 const QueueName = "pause-inactive-sandbox";
 
@@ -35,6 +33,7 @@ export function createPauseInactiveSandboxWorker() {
   return new Worker<PauseInactiveSandboxData>(
     QueueName,
     async (job) => {
+      const logger = getJobLogger(job);
       const { sandboxId } = job.data;
       logger.debug(`Pausing sandbox ${sandboxId}`);
       try {

@@ -38,7 +38,8 @@
     "sqids": "^0.3.0",
     "stripe": "17",
     "ws": "^8.18.1",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "tslog": "catalog:"
   },
   "scripts": {
     "tsc": "tsc --noEmit",

@@ -19,5 +19,5 @@ const connection = createRedisConnection();
 
 export const queueConfig: QueueBaseOptions = {
   connection,
-  prefix: "pochi",
+  prefix: process.env.NODE_ENV === "production" ? "pochi" : "dev-pochi",
 };

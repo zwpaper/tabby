@@ -1,12 +1,10 @@
-import { getLogger } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
 import { sql } from "kysely";
 import { db } from "../../db";
+import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
 const ExpirationDays = 14;
-
-const logger = getLogger("InactiveUserDisapproval");
 
 interface InactiveUser {
   id: string;
@@ -16,7 +14,9 @@ interface InactiveUser {
 }
 
 // Clean up inactive waitlist approvals by checking chatCompletions table
-async function disapproveInactiveUsers() {
+async function disapproveInactiveUsers(
+  logger: ReturnType<typeof getJobLogger>,
+) {
   return await db.transaction().execute(async (trx) => {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() - ExpirationDays);
@@ -73,8 +73,9 @@ await queue.upsertJobScheduler(
 export function createDisapproveInactiveUsersWorker() {
   return new Worker(
     QueueName,
-    async () => {
-      await disapproveInactiveUsers();
+    async (job) => {
+      const logger = getJobLogger(job);
+      await disapproveInactiveUsers(logger);
     },
     queueConfig,
   );

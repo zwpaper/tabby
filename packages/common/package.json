@@ -24,7 +24,7 @@
     "rehype": "^13.0.2",
     "remeda": "catalog:",
     "zod": "catalog:",
-    "tslog": "^4.9.3",
+    "tslog": "catalog:",
     "ignore": "^7.0.5",
     "file-type": "catalog:",
     "minimatch": "^10.0.1"
