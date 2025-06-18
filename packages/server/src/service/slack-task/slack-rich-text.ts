@@ -1,5 +1,6 @@
 import type { Todo } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
+import slackifyMarkdown from "slackify-markdown";
 
 const PreparingTaskBlock = {
   type: "section",
@@ -86,7 +87,7 @@ class SlackRichTextRenderer {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*🤔️ I need some help to proceed*\n\n${waitingReason}`,
+          text: `*🤔️ I need some help to proceed*\n\n${slackifyMarkdown(waitingReason)}`,
         },
       },
     ];
@@ -128,7 +129,7 @@ class SlackRichTextRenderer {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `✅ ${displayResult}`,
+        text: `✅ ${slackifyMarkdown(displayResult)}`,
       },
     });
 
