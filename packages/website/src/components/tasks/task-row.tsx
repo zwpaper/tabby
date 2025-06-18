@@ -18,9 +18,13 @@ type Task = InferResponseType<
 
 interface TaskRowProps {
   task: Task;
+  fuzzyResult?: Fuzzysort.Result;
 }
 
-export function TaskRow({ task }: TaskRowProps) {
+export function TaskRow({ task, fuzzyResult }: TaskRowProps) {
+  const highlightedTitle = fuzzyResult?.highlight((m, i) => (
+    <mark key={i}>{m}</mark>
+  ));
   return (
     <Link
       to={"/tasks/$uid"}
@@ -32,7 +36,7 @@ export function TaskRow({ task }: TaskRowProps) {
           <div className="flex-1 space-y-2.5 overflow-hidden sm:space-y-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-2">
               <h3 className="line-clamp-2 flex-1 font-semibold text-foreground text-sm leading-relaxed transition-colors sm:text-base">
-                {addLineBreak(task.title)}
+                {highlightedTitle || addLineBreak(task.title)}
               </h3>
               {task.event?.type && (
                 <EventBadge
@@ -68,7 +72,11 @@ function EventBadge({
   className,
   event,
   minionId,
-}: { event: string; minionId?: string; className?: string }) {
+}: {
+  event: string;
+  minionId?: string;
+  className?: string;
+}) {
   const type = event.split(":")[0];
   let IconType = IconBrandChrome;
   let badgeColor =

@@ -68,8 +68,9 @@ function TaskPage() {
     return Array.from(repoMap.values());
   }, [processedTasks]);
 
-  const filteredTasks = useMemo(() => {
+  const { tasks: filteredTasks, fuzzyResultMap } = useMemo(() => {
     let tasks = processedTasks;
+    let fuzzyResultMap: Record<string, Fuzzysort.Result> = {};
 
     if (repository && repository !== "all") {
       tasks = tasks.filter(
@@ -80,14 +81,21 @@ function TaskPage() {
     }
 
     if (q) {
-      const matchedUids = fuzzy(q, tasks, {
+      const result = fuzzy(q, tasks, {
         key: (item) => item.title,
-      }).map((x) => x.obj.uid);
-      const uidSet = new Set(matchedUids);
-      tasks = tasks.filter((x) => uidSet.has(x.uid));
+        threshold: 0.3,
+      });
+      fuzzyResultMap = result.reduce(
+        (acc, item) => {
+          acc[item.obj.uid] = item;
+          return acc;
+        },
+        {} as Record<string, Fuzzysort.Result>,
+      );
+      tasks = tasks.filter((task) => fuzzyResultMap[task.uid]);
     }
 
-    return tasks;
+    return { tasks, fuzzyResultMap };
   }, [processedTasks, repository, q]);
 
   const totalPages = Math.ceil(filteredTasks.length / pageSize);
@@ -166,7 +174,11 @@ function TaskPage() {
             <>
               <div className="space-y-2">
                 {tasks.map((task) => (
-                  <TaskRow key={task.uid} task={task} />
+                  <TaskRow
+                    key={task.uid}
+                    task={task}
+                    fuzzyResult={fuzzyResultMap[task.uid]}
+                  />
                 ))}
               </div>
               {totalPages > 1 && (
