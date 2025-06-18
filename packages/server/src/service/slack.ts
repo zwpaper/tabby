@@ -250,6 +250,7 @@ class SlackService {
         });
       }
     });
+    this.app.action("view_task_button", ({ ack }) => ack());
   }
 
   async handler(req: Request) {

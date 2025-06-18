@@ -57,8 +57,8 @@ class SlackTaskService {
     const headerInfo = this.extractHeaderInfoFromTask(task);
     const taskStats = this.extractTaskStatistics(task);
 
-    const waitingReason = this.extractWaitingReason(task);
-    if (!waitingReason) {
+    const waitingInfo = this.extractWaitingReason(task);
+    if (!waitingInfo) {
       // If there's no waiting reason, we don't need to send a message
       return;
     }
@@ -68,7 +68,8 @@ class SlackTaskService {
       headerInfo.githubRepository,
       headerInfo.slackUserId,
       task.uid,
-      waitingReason,
+      waitingInfo.question,
+      waitingInfo.followUp,
       task.todos,
       taskStats.messagesCount,
       taskStats.totalTokens,
@@ -583,9 +584,11 @@ class SlackTaskService {
   }
 
   /**
-   * Extract waiting reason from task
+   * Extract waiting reason and follow-up suggestions from task
    */
-  private extractWaitingReason(task: Task): string | undefined {
+  private extractWaitingReason(
+    task: Task,
+  ): { question: string; followUp?: string[] } | undefined {
     // Check recent messages for askFollowupQuestion tool calls
     if (!task?.conversation?.messages) {
       return;
@@ -597,10 +600,15 @@ class SlackTaskService {
         for (const part of message.parts) {
           if (
             part.type === "tool-invocation" &&
-            part.toolInvocation?.toolName === "ask-followup-question" &&
+            part.toolInvocation?.toolName === "askFollowupQuestion" &&
             part.toolInvocation?.args?.question
           ) {
-            return part.toolInvocation.args.question as string;
+            return {
+              question: part.toolInvocation.args.question as string,
+              followUp: part.toolInvocation.args.followUp as
+                | string[]
+                | undefined,
+            };
           }
         }
       }

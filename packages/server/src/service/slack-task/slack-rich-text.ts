@@ -75,6 +75,7 @@ class SlackRichTextRenderer {
     slackUserId: string,
     taskId: string,
     waitingReason: string,
+    followUpSuggestions?: string[],
     todos?: Todo[],
     messagesCount?: number,
     totalTokens?: number,
@@ -85,10 +86,12 @@ class SlackRichTextRenderer {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*🤔️ I need some help to proceed*\n\n\`${waitingReason}\``,
+          text: `*🤔️ I need some help to proceed*\n\n${waitingReason}`,
         },
       },
     ];
+
+    this.renderFollowUpSuggestionsBlock(blocks, followUpSuggestions);
 
     this.renderTodoListBlock(blocks, todos);
 
@@ -184,12 +187,15 @@ class SlackRichTextRenderer {
   ) {
     const statsTexts: string[] = [];
 
-    if (messagesCount !== undefined) {
+    if (messagesCount !== undefined && messagesCount > 0) {
       statsTexts.push(`📊 ${messagesCount} rounds`);
     }
 
-    if (totalTokens !== undefined) {
-      const formattedTokens = totalTokens.toLocaleString();
+    if (totalTokens !== undefined && totalTokens > 0) {
+      const formattedTokens =
+        totalTokens >= 1000
+          ? `${(totalTokens / 1000).toFixed(1)}k`
+          : totalTokens.toLocaleString();
       statsTexts.push(`🔢 ${formattedTokens} tokens`);
     }
 
@@ -216,7 +222,7 @@ class SlackRichTextRenderer {
           },
           url: `https://app.getpochi.com/tasks/${taskId}`,
           style: "primary" as const,
-          action_id: `view_task_${taskId}`,
+          action_id: "view_task_button",
         },
       ],
     });
@@ -254,6 +260,27 @@ class SlackRichTextRenderer {
       text: {
         type: "mrkdwn",
         text: `${headerText}\n${todoText}`,
+      },
+    });
+  }
+
+  private renderFollowUpSuggestionsBlock(
+    dst: AnyBlock[],
+    suggestions?: string[],
+  ) {
+    if (!suggestions || suggestions.length === 0) {
+      return;
+    }
+
+    const suggestionText = suggestions
+      .map((suggestion, index) => `${index + 1}. ${suggestion}`)
+      .join("\n");
+
+    dst.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*💡 Suggested answers:*\n${suggestionText}`,
       },
     });
   }
