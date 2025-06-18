@@ -254,8 +254,7 @@ class SlackRichTextRenderer {
     }
 
     const toolChain = completedTools
-      .filter(isUserInputTool)
-      .filter((tool) => tool !== "todoWrite")
+      .filter((tool) => !isUserInputTool(tool) && tool !== "todoWrite")
       .map((tool) => `${tool} ✅`)
       .join(" → ");
     let additionalTool = "";
@@ -271,7 +270,7 @@ class SlackRichTextRenderer {
       elements: [
         {
           type: "mrkdwn",
-          text: `⚡ Progress: ${toolChain}${additionalTool}`,
+          text: `⚡ ${toolChain}${additionalTool}`,
         },
       ],
     });
