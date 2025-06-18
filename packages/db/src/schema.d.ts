@@ -114,6 +114,7 @@ export interface Task {
   event: Json | null;
   id: Generated<number>;
   isPublicShared: Generated<boolean>;
+  parentId: number | null;
   status: Generated<string>;
   streamIds: string[] | null;
   taskId: number;

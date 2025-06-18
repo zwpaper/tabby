@@ -2,8 +2,13 @@ import { ExperimentalClientTools } from "@ragdoll/tools";
 import type { LanguageModelV1Middleware, LanguageModelV1StreamPart } from "ai";
 import { taskService } from "../service/task";
 
+export interface NewTaskMiddlewareContext {
+  userId: string;
+  parentId: string;
+}
+
 function createNewTaskTransformStream(
-  userId: string,
+  context: NewTaskMiddlewareContext,
 ): TransformStream<LanguageModelV1StreamPart, LanguageModelV1StreamPart> {
   return new TransformStream<
     LanguageModelV1StreamPart,
@@ -37,7 +42,12 @@ function createNewTaskTransformStream(
       }
 
       const { prompt } = parameters.data;
-      const uid = await taskService.createWithUserMessage(userId, prompt);
+      const uid = await taskService.createWithUserMessage(
+        context.userId,
+        prompt,
+        undefined, // event
+        context.parentId,
+      );
       controller.enqueue({
         ...chunk,
         args: JSON.stringify({
@@ -52,13 +62,13 @@ function createNewTaskTransformStream(
 }
 
 export function createNewTaskMiddleware(
-  userId: string,
+  context: NewTaskMiddlewareContext,
 ): LanguageModelV1Middleware {
   return {
     middlewareVersion: "v1",
     wrapStream: async ({ doStream }) => {
       const { stream, ...rest } = await doStream();
-      const transformStream = createNewTaskTransformStream(userId);
+      const transformStream = createNewTaskTransformStream(context);
       return {
         stream: stream.pipeThrough(transformStream),
         ...rest,

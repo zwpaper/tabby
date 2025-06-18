@@ -4,7 +4,8 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireAuth } from "../auth";
-import { checkModel, checkWaitlist } from "../lib/check-request";
+import { checkWaitlist } from "../lib/check-request";
+import { getModel } from "../lib/constants";
 
 const EnhancePromptSchema = z.object({
   prompt: z.string().min(8),
@@ -19,8 +20,7 @@ const enhance = new Hono().post(
     const user = c.get("user");
 
     const modelId = "openai/gpt-4o-mini";
-
-    const selectedModel = checkModel(modelId, user.id);
+    const selectedModel = getModel(modelId);
 
     // TODO: remove whitelist check
     checkWaitlist(user);

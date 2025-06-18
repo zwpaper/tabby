@@ -3,13 +3,27 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
-import { type LanguageModelV1, wrapLanguageModel } from "ai";
+import {
+  type LanguageModelV1,
+  type LanguageModelV1Middleware,
+  wrapLanguageModel,
+} from "ai";
 import { createBatchCallMiddleware } from "./batch-call-middleware";
-import { createNewTaskMiddleware } from "./new-task-middleware";
+import {
+  type NewTaskMiddlewareContext,
+  createNewTaskMiddleware,
+} from "./new-task-middleware";
 
 // Define available models
+export type AvailableModelId =
+  | "google/gemini-2.5-pro"
+  | "google/gemini-2.5-flash"
+  | "anthropic/claude-4-sonnet"
+  | "openai/o3"
+  | "openai/gpt-4o-mini";
+
 export const AvailableModels: {
-  id: string;
+  id: AvailableModelId;
   contextWindow: number;
   costType: "basic" | "premium";
 }[] = [
@@ -49,22 +63,32 @@ export const StripePlans = [
   },
 ];
 
-export function getModelById(
-  modelId: string,
-  userId: string,
-): LanguageModelV1 | null {
-  const model = getModelByIdImpl(modelId);
-  if (!model) {
-    return model;
+export interface MiddlewareContext {
+  newTask?: NewTaskMiddlewareContext;
+}
+
+export function getModel(
+  modelId: AvailableModelId,
+  middlewareContext: MiddlewareContext = {},
+): LanguageModelV1 {
+  const model = getModelById(modelId);
+
+  // Create middlewares
+  const middleware: LanguageModelV1Middleware[] = [];
+
+  middleware.push(createBatchCallMiddleware());
+
+  if (middlewareContext.newTask) {
+    middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
   }
 
   return wrapLanguageModel({
     model,
-    middleware: [createBatchCallMiddleware(), createNewTaskMiddleware(userId)],
+    middleware,
   });
 }
 
-function getModelByIdImpl(modelId: string): LanguageModelV1 | null {
+function getModelById(modelId: AvailableModelId): LanguageModelV1 {
   switch (modelId) {
     case "anthropic/claude-4-sonnet":
       return anthropic("claude-4-sonnet-20250514");
@@ -78,8 +102,6 @@ function getModelByIdImpl(modelId: string): LanguageModelV1 | null {
       });
     case "openai/gpt-4o-mini":
       return openai("gpt-4o-mini");
-    default:
-      return null;
   }
 }
 

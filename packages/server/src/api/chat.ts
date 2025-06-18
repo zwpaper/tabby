@@ -32,7 +32,7 @@ import {
   checkUserQuota,
   checkWaitlist,
 } from "../lib/check-request";
-import { getProviderOptionsById } from "../lib/constants";
+import { getModel, getProviderOptionsById } from "../lib/constants";
 import { resolveServerTools } from "../lib/tools";
 import { after, setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
@@ -69,7 +69,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     const user = c.get("user");
 
     await checkUserQuota(user, c, requestedModelId);
-    const selectedModel = checkModel(requestedModelId, user.id);
+    const validModelId = checkModel(requestedModelId);
 
     checkWaitlist(user);
 
@@ -88,6 +88,11 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       user.id,
       req,
     );
+
+    const middlewareContext = {
+      newTask: enableNewTask ? { userId: user.id, parentId: uid } : undefined,
+    };
+    const selectedModel = getModel(validModelId, middlewareContext);
 
     const dataStream = createDataStream({
       execute: async (stream) => {

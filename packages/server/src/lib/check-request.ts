@@ -2,16 +2,16 @@ import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { User } from "../auth";
 import { usageService } from "../service/usage";
-import { AvailableModels, getModelById } from "./constants";
+import { type AvailableModelId, AvailableModels } from "./constants";
 
-export function checkModel(modelId: string, userId: string) {
-  const selectedModel = getModelById(modelId, userId);
-  if (!selectedModel) {
+export function checkModel(modelId: string): AvailableModelId {
+  const found = AvailableModels.find((model) => model.id === modelId);
+  if (!found) {
     throw new HTTPException(400, {
       message: `Invalid model '${modelId}'`,
     });
   }
-  return selectedModel;
+  return modelId as AvailableModelId;
 }
 
 export function checkWaitlist(user: User, errorMessage = "Internal user only") {

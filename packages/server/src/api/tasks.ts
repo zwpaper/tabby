@@ -18,6 +18,12 @@ const PaginationSchema = z.object({
     .string()
     .optional()
     .transform((val) => parseEventFilter(val)),
+  parentId: z
+    .string()
+    .optional()
+    .describe(
+      "List all sub tasks of a parent task by given parentId. If not provided, list all non-sub tasks.",
+    ),
 });
 
 const TaskUidParamsSchema = z.object({
@@ -75,7 +81,8 @@ const tasks = new Hono()
 
   // List tasks with pagination
   .get("/", zValidator("query", PaginationSchema), requireAuth(), async (c) => {
-    const { cwd, page, limit, eventFilter, minionId } = c.req.valid("query");
+    const { cwd, page, limit, eventFilter, minionId, parentId } =
+      c.req.valid("query");
     const user = c.get("user");
 
     const result = await taskService.list(
@@ -85,6 +92,7 @@ const tasks = new Hono()
       cwd,
       minionId,
       eventFilter,
+      parentId,
     );
 
     return c.json(result);

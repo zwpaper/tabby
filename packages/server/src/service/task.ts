@@ -242,6 +242,7 @@ class TaskService {
     userId: string,
     prompt: string,
     event?: UserEvent,
+    parentId?: string | null,
   ): Promise<string> {
     const message: DBMessage = {
       id: generateId(),
@@ -267,6 +268,7 @@ class TaskService {
         messages: [message],
       },
       status: "pending-model",
+      parentId: parentId ? uidDecode(parentId) : null,
     });
   }
 
@@ -276,6 +278,7 @@ class TaskService {
       event: UserEvent | null;
       conversation: { messages: DBMessage[] } | null;
       status: DB["task"]["status"]["__insert__"];
+      parentId: number | null;
     }>,
   ): Promise<string> {
     const { id } = await db.transaction().execute(async (trx) => {
@@ -338,6 +341,7 @@ class TaskService {
     cwd?: string,
     minionId?: string,
     eventFilter?: Record<string, unknown>,
+    parentId?: string | null,
   ) {
     const offset = (page - 1) * limit;
 
@@ -364,6 +368,16 @@ class TaskService {
 
     totalCountQuery = applyEventFilter(totalCountQuery, eventFilter);
 
+    if (!parentId) {
+      totalCountQuery = totalCountQuery.where("parentId", "is", null);
+    } else {
+      totalCountQuery = totalCountQuery.where(
+        "parentId",
+        "=",
+        uidDecode(parentId),
+      );
+    }
+
     const totalCountResult = await totalCountQuery.executeTakeFirst();
     const totalCount = Number(totalCountResult?.count ?? 0);
     const totalPages = Math.ceil(totalCount / limit);
@@ -378,6 +392,7 @@ class TaskService {
         "status",
         "totalTokens",
         "event",
+        "parentId",
         titleSelect,
         gitSelect,
         minionIdSelect,
@@ -399,6 +414,12 @@ class TaskService {
     }
 
     query = applyEventFilter(query, eventFilter);
+
+    if (!parentId) {
+      query = query.where("parentId", "is", null);
+    } else {
+      query = query.where("parentId", "=", uidDecode(parentId));
+    }
 
     const items = await query.execute();
     const data = items.map(({ id, ...task }) => ({
@@ -432,6 +453,7 @@ class TaskService {
         "status",
         "error",
         "isPublicShared",
+        "parentId",
         titleSelect,
         gitSelect,
         minionIdSelect,
@@ -448,6 +470,7 @@ class TaskService {
     return {
       ...task,
       uid,
+      parentId: task.parentId !== null ? uidEncode(task.parentId) : null,
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
       title: parseTitle(task.title),
