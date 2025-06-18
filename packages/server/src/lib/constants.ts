@@ -68,6 +68,7 @@ export interface MiddlewareContext {
 export function getModel(
   modelId: AvailableModelId,
   middlewareContext: MiddlewareContext = {},
+  enableGeminiCustomToolCalls = false,
 ): LanguageModelV1 {
   const model = getModelById(modelId);
 
@@ -80,10 +81,7 @@ export function getModel(
     middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
   }
 
-  if (
-    !!process.env.POCHI_GEMINI_CUSTOM_TOOL_CALLS &&
-    modelId.includes("google/gemini-2.5")
-  ) {
+  if (enableGeminiCustomToolCalls && modelId.includes("google/gemini-2.5")) {
     middleware.push(createToolMiddleware());
   }
   return wrapLanguageModel({

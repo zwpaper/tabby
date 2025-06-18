@@ -10,6 +10,8 @@ export const AdvancedSettingsSection: React.FC = () => {
     updateAllowEditTodos,
     enableNewTask,
     updateEnableNewTask,
+    enableGeminiCustomToolCalls,
+    updateEnableGeminiCustomToolCalls,
   } = useSettingsStore();
 
   return (
@@ -34,14 +36,24 @@ export const AdvancedSettingsSection: React.FC = () => {
           }}
         />
         {isDevMode && (
-          <SettingsCheckboxOption
-            id="enable-tool-new-task"
-            label="Enable Tool: newTask"
-            checked={!!enableNewTask}
-            onCheckedChange={(checked) => {
-              updateEnableNewTask(!!checked);
-            }}
-          />
+          <>
+            <SettingsCheckboxOption
+              id="enable-gemini-custom-tool-calls"
+              label="Enable Gemini Custom Tool Calls"
+              checked={enableGeminiCustomToolCalls}
+              onCheckedChange={(checked) => {
+                updateEnableGeminiCustomToolCalls(!!checked);
+              }}
+            />
+            <SettingsCheckboxOption
+              id="enable-tool-new-task"
+              label="Enable Tool: newTask"
+              checked={!!enableNewTask}
+              onCheckedChange={(checked) => {
+                updateEnableNewTask(!!checked);
+              }}
+            />
+          </>
         )}
       </div>
     </AccordionSection>

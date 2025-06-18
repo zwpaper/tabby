@@ -127,7 +127,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   }, []);
 
   const { toolset: mcpToolSet } = useMcp();
-  const { enableNewTask } = useSettingsStore();
+  const { enableNewTask, enableGeminiCustomToolCalls } = useSettingsStore();
 
   const latestHttpCode = useRef<number | undefined>(undefined);
   const chat = useChat({
@@ -188,6 +188,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
             // Inject the mcp tool set into the request body
             mcpToolSet,
             enableNewTask,
+            enableGeminiCustomToolCalls,
           }),
       });
       // If the task is already streaming, resume the stream

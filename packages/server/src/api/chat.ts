@@ -60,6 +60,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
       mcpToolSet,
       model: requestedModelId = "google/gemini-2.5-pro",
       enableNewTask = false,
+      enableGeminiCustomToolCalls = false,
     } = req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
@@ -92,7 +93,11 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     const middlewareContext = {
       newTask: enableNewTask ? { userId: user.id, parentId: uid } : undefined,
     };
-    const selectedModel = getModel(validModelId, middlewareContext);
+    const selectedModel = getModel(
+      validModelId,
+      middlewareContext,
+      enableGeminiCustomToolCalls,
+    );
 
     const dataStream = createDataStream({
       execute: async (stream) => {

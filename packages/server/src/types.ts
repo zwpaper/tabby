@@ -23,6 +23,10 @@ export const ZodChatRequestType = z.object({
     .boolean()
     .optional()
     .describe("Enable the newTask tool for this request"),
+  enableGeminiCustomToolCalls: z
+    .boolean()
+    .optional()
+    .describe("Enable custom tool calls for Gemini models"),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;
