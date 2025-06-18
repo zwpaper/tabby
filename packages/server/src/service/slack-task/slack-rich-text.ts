@@ -124,21 +124,7 @@ class SlackRichTextRenderer {
       });
     }
 
-    if (completedTools && completedTools.length > 0) {
-      const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
-      const currentToolDisplay = currentTool ? ` → ${currentTool} 🔄` : "";
-
-      blocks.push({
-        type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: `⚡ Completed tools: ${toolChain}${currentToolDisplay}`,
-          },
-        ],
-      });
-    }
-
+    this.renderCompletedToolsBlock(blocks, completedTools, currentTool);
     blocks.push(this.renderFooterBlock(taskId));
 
     return blocks;
@@ -183,19 +169,7 @@ class SlackRichTextRenderer {
       });
     }
 
-    if (completedTools && completedTools.length > 0) {
-      const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
-
-      blocks.push({
-        type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: `⚡ Completed tools: ${toolChain}`,
-          },
-        ],
-      });
-    }
+    this.renderCompletedToolsBlock(blocks, completedTools);
 
     blocks.push({
       type: "actions",
@@ -278,19 +252,7 @@ class SlackRichTextRenderer {
       },
     });
 
-    if (completedTools && completedTools.length > 0) {
-      const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
-
-      blocks.push({
-        type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: `⚡ Completed tools: ${toolChain}`,
-          },
-        ],
-      });
-    }
+    this.renderCompletedToolsBlock(blocks, completedTools);
 
     blocks.push({
       type: "actions",
@@ -350,20 +312,12 @@ class SlackRichTextRenderer {
       });
     }
 
-    if (completedTools && completedTools.length > 0) {
-      const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
-      const failedToolDisplay = failedTool ? ` → ${failedTool} ❌` : "";
-
-      blocks.push({
-        type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: `⚡ Completed tools: ${toolChain}${failedToolDisplay}`,
-          },
-        ],
-      });
-    }
+    this.renderCompletedToolsBlock(
+      blocks,
+      completedTools,
+      undefined,
+      failedTool,
+    );
 
     blocks.push({
       type: "actions",
@@ -450,6 +404,36 @@ class SlackRichTextRenderer {
         },
       ],
     };
+  }
+
+  private renderCompletedToolsBlock(
+    dst: AnyBlock[],
+    completedTools?: string[],
+    currentTool?: string,
+    failedTool?: string,
+  ) {
+    if (!completedTools || completedTools.length === 0) {
+      return;
+    }
+
+    const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
+    let additionalTool = "";
+
+    if (currentTool) {
+      additionalTool = ` → ${currentTool} 🔄`;
+    } else if (failedTool) {
+      additionalTool = ` → ${failedTool} ❌`;
+    }
+
+    dst.push({
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `⚡ Completed tools: ${toolChain}${additionalTool}`,
+        },
+      ],
+    });
   }
 
   /**
