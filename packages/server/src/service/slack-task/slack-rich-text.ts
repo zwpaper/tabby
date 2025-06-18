@@ -1,15 +1,16 @@
 import type { Todo } from "@ragdoll/db";
+import { isUserInputTool } from "@ragdoll/tools";
 import type { AnyBlock } from "@slack/web-api";
 
 const RenderOptions = {
-  enableToolCalls: false,
+  enableToolCalls: true,
 };
 
 const PreparingTaskBlock = {
   type: "section",
   text: {
     type: "mrkdwn",
-    text: "*🟢 Preparing* **Pochi** to work in the cloud ...",
+    text: "*🟢 Preparing* remote environment for Pochi ...",
   },
 };
 
@@ -59,7 +60,7 @@ class SlackRichTextRenderer {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*🟡 Running:* ${currentTool}`,
+          text: "*🟡 Running:*",
         },
       },
     ];
@@ -183,7 +184,7 @@ class SlackRichTextRenderer {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `:wave: <@${slackUserId}>: ${prompt} [<https://github.com/${githubRepository.owner}/${githubRepository.repo}|${githubRepository.owner}/${githubRepository.repo}>]`,
+        text: `:books: <https://github.com/${githubRepository.owner}/${githubRepository.repo}|${githubRepository.owner}/${githubRepository.repo}> <@${slackUserId}>: ${prompt}`,
       },
     };
   }
@@ -196,7 +197,7 @@ class SlackRichTextRenderer {
           type: "button",
           text: {
             type: "plain_text",
-            text: "📄 View",
+            text: "📄 See details",
           },
           url: `https://app.getpochi.com/tasks/${taskId}`,
           style: "primary",
@@ -252,7 +253,11 @@ class SlackRichTextRenderer {
       return;
     }
 
-    const toolChain = completedTools.map((tool) => `${tool} ✅`).join(" → ");
+    const toolChain = completedTools
+      .filter(isUserInputTool)
+      .filter((tool) => tool !== "todoWrite")
+      .map((tool) => `${tool} ✅`)
+      .join(" → ");
     let additionalTool = "";
 
     if (currentTool) {
@@ -266,7 +271,7 @@ class SlackRichTextRenderer {
       elements: [
         {
           type: "mrkdwn",
-          text: `⚡ Completed tools: ${toolChain}${additionalTool}`,
+          text: `⚡ Progress: ${toolChain}${additionalTool}`,
         },
       ],
     });
