@@ -54,11 +54,21 @@ async function disapproveInactiveUsers() {
 
 const QueueName = "disapprove-inactive-users";
 
-const queue = new Queue(QueueName, queueConfig);
+export const queue = new Queue(QueueName, queueConfig);
 
-await queue.upsertJobScheduler("every-15-minutes", {
-  pattern: "*/15 * * * *",
-});
+await queue.upsertJobScheduler(
+  "every-15-minutes",
+  {
+    pattern: "*/15 * * * *",
+  },
+  {
+    opts: {
+      removeOnComplete: {
+        age: 60 * 60 * 24 * 1, // 1 day
+      },
+    },
+  },
+);
 
 export function createDisapproveInactiveUsersWorker() {
   return new Worker(

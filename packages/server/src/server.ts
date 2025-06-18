@@ -19,6 +19,7 @@ import upload from "./api/upload";
 import usages from "./api/usages";
 import { authRequest } from "./auth";
 import { auth } from "./better-auth";
+import { queuedash } from "./queuedash";
 import { startWorkers } from "./service/background-job";
 import { slackService } from "./service/slack";
 import { taskService } from "./service/task";
@@ -97,6 +98,9 @@ app.use(
 
 // Auth routes
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+// queue dash.
+app.route("/queuedash", queuedash);
 
 const api = app.basePath("/api");
 

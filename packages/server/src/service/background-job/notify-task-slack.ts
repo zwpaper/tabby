@@ -13,7 +13,7 @@ function dedupeId(job: NotifyTaskSlack) {
   return `notify-task-slack:${job.userId}-${job.uid}`;
 }
 
-const queue = new Queue<NotifyTaskSlack>(QueueName, queueConfig);
+export const queue = new Queue<NotifyTaskSlack>(QueueName, queueConfig);
 
 export function enqueueNotifyTaskSlack(data: NotifyTaskSlack) {
   queue.add(QueueName, data, {
@@ -24,6 +24,9 @@ export function enqueueNotifyTaskSlack(data: NotifyTaskSlack) {
     },
     deduplication: {
       id: dedupeId(data),
+    },
+    removeOnComplete: {
+      age: 60 * 60 * 24 * 7, // 7 days
     },
   });
 }

@@ -34,14 +34,28 @@ export const optionalAuth = createMiddleware<{ Variables: { user?: User } }>(
   },
 );
 
-export const requireAuth = (role?: string) =>
+export const requireAuth = (
+  opts?: string | { role?: string; internal?: boolean },
+) =>
   createMiddleware<{ Variables: { user: User } }>(async (c, next) => {
+    if (typeof opts === "string") {
+      // biome-ignore lint/style/noParameterAssign: simplify the code
+      opts = { role: opts };
+    }
+    const { role, internal } = opts ?? {};
+
     const user = c.get("user");
     if (!user) {
       return c.json({ error: "Unauthorized" }, 401);
     }
     // Check for role if provided.
     if (role && user.role !== role) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+    if (
+      internal &&
+      (!user.email.endsWith("@tabbyml.com") || !user.emailVerified)
+    ) {
       return c.json({ error: "Forbidden" }, 403);
     }
     await next();
