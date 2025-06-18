@@ -1,5 +1,4 @@
 import type { Todo } from "@ragdoll/db";
-import { isUserInputTool } from "@ragdoll/tools";
 import type { AnyBlock } from "@slack/web-api";
 
 const PreparingTaskBlock = {
@@ -28,6 +27,8 @@ class SlackRichTextRenderer {
     slackUserId: string,
     taskId: string,
     todos?: Todo[],
+    messagesCount?: number,
+    totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
@@ -36,7 +37,7 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    blocks.push(this.renderFooterBlock(taskId));
+    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
 
     return blocks;
   }
@@ -47,8 +48,8 @@ class SlackRichTextRenderer {
     slackUserId: string,
     taskId: string,
     todos?: Todo[],
-    completedTools?: string[],
-    currentTool?: string,
+    messagesCount?: number,
+    totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
@@ -63,8 +64,7 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    this.renderCompletedToolsBlock(blocks, completedTools, currentTool);
-    blocks.push(this.renderFooterBlock(taskId));
+    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
 
     return blocks;
   }
@@ -76,6 +76,8 @@ class SlackRichTextRenderer {
     taskId: string,
     waitingReason: string,
     todos?: Todo[],
+    messagesCount?: number,
+    totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
@@ -90,7 +92,7 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    blocks.push(this.renderFooterBlock(taskId));
+    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
 
     return blocks;
   }
@@ -102,6 +104,8 @@ class SlackRichTextRenderer {
     taskId: string,
     result: string,
     todos?: Todo[],
+    messagesCount?: number,
+    totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
@@ -125,7 +129,7 @@ class SlackRichTextRenderer {
       },
     });
 
-    blocks.push(this.renderFooterBlock(taskId));
+    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
 
     return blocks;
   }
@@ -137,8 +141,8 @@ class SlackRichTextRenderer {
     taskId: string,
     errorMessage: string,
     todos?: Todo[],
-    completedTools?: string[],
-    failedTool?: string,
+    messagesCount?: number,
+    totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
@@ -153,14 +157,7 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    this.renderCompletedToolsBlock(
-      blocks,
-      completedTools,
-      undefined,
-      failedTool,
-    );
-
-    blocks.push(this.renderFooterBlock(taskId));
+    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
 
     return blocks;
   }
@@ -179,21 +176,50 @@ class SlackRichTextRenderer {
     };
   }
 
-  private renderFooterBlock(taskId: string): AnyBlock {
-    return {
+  private renderFooterBlock(
+    dst: AnyBlock[],
+    taskId: string,
+    messagesCount?: number,
+    totalTokens?: number,
+  ) {
+    const statsTexts: string[] = [];
+
+    if (messagesCount !== undefined) {
+      statsTexts.push(`📊 ${messagesCount} rounds`);
+    }
+
+    if (totalTokens !== undefined) {
+      const formattedTokens = totalTokens.toLocaleString();
+      statsTexts.push(`🔢 ${formattedTokens} tokens`);
+    }
+
+    if (statsTexts.length > 0) {
+      dst.push({
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: statsTexts.join("  "),
+          },
+        ],
+      });
+    }
+
+    dst.push({
       type: "actions",
       elements: [
         {
-          type: "button",
+          type: "button" as const,
           text: {
-            type: "plain_text",
+            type: "plain_text" as const,
             text: "📄 See details",
           },
           url: `https://app.getpochi.com/tasks/${taskId}`,
-          style: "primary",
+          style: "primary" as const,
+          action_id: `view_task_${taskId}`,
         },
       ],
-    };
+    });
   }
 
   private renderTodoListBlock(dst: AnyBlock[], todos?: Todo[]) {
@@ -217,9 +243,9 @@ class SlackRichTextRenderer {
       )
       .map((todo) => {
         if (todo.status === "completed") {
-          return `- ~${todo.content}~`;
+          return `• ~${todo.content}~`;
         }
-        return `- ${todo.content}`;
+        return `• ${todo.content}`;
       })
       .join("\n");
 
@@ -229,39 +255,6 @@ class SlackRichTextRenderer {
         type: "mrkdwn",
         text: `${headerText}\n${todoText}`,
       },
-    });
-  }
-
-  private renderCompletedToolsBlock(
-    dst: AnyBlock[],
-    completedTools?: string[],
-    currentTool?: string,
-    failedTool?: string,
-  ) {
-    if (!completedTools || completedTools.length === 0) {
-      return;
-    }
-
-    const toolChain = completedTools
-      .filter((tool) => !isUserInputTool(tool) && tool !== "todoWrite")
-      .map((tool) => `${tool} ✅`)
-      .join(" → ");
-    let additionalTool = "";
-
-    if (currentTool) {
-      additionalTool = ` → ${currentTool} 🔄`;
-    } else if (failedTool) {
-      additionalTool = ` → ${failedTool} ❌`;
-    }
-
-    dst.push({
-      type: "context",
-      elements: [
-        {
-          type: "mrkdwn",
-          text: `⚡ ${toolChain}${additionalTool}`,
-        },
-      ],
     });
   }
 

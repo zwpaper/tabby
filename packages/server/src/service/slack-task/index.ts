@@ -55,6 +55,7 @@ class SlackTaskService {
 
     // Get header info from task data instead of Slack API
     const headerInfo = this.extractHeaderInfoFromTask(task);
+    const taskStats = this.extractTaskStatistics(task);
 
     const waitingReason = this.extractWaitingReason(task);
     if (!waitingReason) {
@@ -69,6 +70,8 @@ class SlackTaskService {
       task.uid,
       waitingReason,
       task.todos,
+      taskStats.messagesCount,
+      taskStats.totalTokens,
     );
 
     await webClient.chat.update({
@@ -91,21 +94,16 @@ class SlackTaskService {
 
     // Get header info from task data instead of Slack API
     const headerInfo = this.extractHeaderInfoFromTask(task);
+    const taskStats = this.extractTaskStatistics(task);
 
-    const pendingToolInfo = this.extractPendingToolInfo(
-      task.conversation?.messages,
-    );
-    const completedTools = this.extractCompletedTools(
-      task.conversation?.messages,
-    );
     const blocks = slackRichTextRenderer.renderTaskPendingTool(
       headerInfo.prompt,
       headerInfo.githubRepository,
       headerInfo.slackUserId,
       task.uid,
       task.todos,
-      completedTools,
-      pendingToolInfo.toolName,
+      taskStats.messagesCount,
+      taskStats.totalTokens,
     );
 
     await webClient.chat.update({
@@ -128,12 +126,9 @@ class SlackTaskService {
 
     // Get header info from task data instead of Slack API
     const headerInfo = this.extractHeaderInfoFromTask(task);
+    const taskStats = this.extractTaskStatistics(task);
 
     const errorInfo = this.extractErrorInformation(task);
-    const completedTools = this.extractCompletedTools(
-      task.conversation?.messages,
-    );
-    const failedTool = this.extractFailedTool(task.conversation?.messages);
 
     const blocks = slackRichTextRenderer.renderTaskFailed(
       headerInfo.prompt,
@@ -142,8 +137,8 @@ class SlackTaskService {
       task.uid,
       errorInfo.message,
       task.todos,
-      completedTools,
-      failedTool,
+      taskStats.messagesCount,
+      taskStats.totalTokens,
     );
 
     await webClient.chat.update({
@@ -166,6 +161,7 @@ class SlackTaskService {
 
     // Get header info from task data instead of Slack API
     const headerInfo = this.extractHeaderInfoFromTask(task);
+    const taskStats = this.extractTaskStatistics(task);
 
     const completionResult = this.extractCompletionResult(
       task.conversation?.messages,
@@ -178,6 +174,8 @@ class SlackTaskService {
       task.uid,
       completionResult || "Task completed successfully.",
       task.todos,
+      taskStats.messagesCount,
+      taskStats.totalTokens,
     );
 
     await webClient.chat.update({
@@ -493,33 +491,6 @@ class SlackTaskService {
     };
   }
 
-  private extractPendingToolInfo(messages?: DBMessage[]): {
-    toolName?: string;
-    description?: string;
-  } {
-    if (!messages) return {};
-
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      if (message.role === "assistant" && message.parts) {
-        for (const part of message.parts) {
-          if (
-            part.type === "tool-invocation" &&
-            part.toolInvocation?.state !== "result"
-          ) {
-            const toolName = part.toolInvocation?.toolName || "unknown tool";
-            const description = getToolDescription(
-              toolName,
-              part.toolInvocation?.args,
-            );
-            return { toolName, description };
-          }
-        }
-      }
-    }
-    return {};
-  }
-
   private extractCompletionResult(messages?: DBMessage[]): string | undefined {
     if (!messages) return undefined;
 
@@ -597,6 +568,8 @@ class SlackTaskService {
       slackUserId,
       taskId,
       todos,
+      0,
+      0,
     );
 
     await webClient.chat.update({
@@ -634,58 +607,21 @@ class SlackTaskService {
     }
   }
 
-  /**
-   * Extract completed tools from messages
-   */
-  private extractCompletedTools(messages?: DBMessage[]): string[] {
-    const completedTools: string[] = [];
-
-    if (!messages) return completedTools;
-
-    for (const message of messages) {
-      if (message.role === "assistant" && message.parts) {
-        for (const part of message.parts) {
-          if (
-            part.type === "tool-invocation" &&
-            part.toolInvocation?.state === "result" &&
-            part.toolInvocation?.toolName
-          ) {
-            const toolName = part.toolInvocation.toolName;
-            completedTools.push(toolName);
-          }
-        }
-      }
+  private extractTaskStatistics(task: Task): {
+    messagesCount: number;
+    totalTokens: number;
+  } {
+    if (!task) {
+      return { messagesCount: 0, totalTokens: 0 };
     }
 
-    return completedTools;
-  }
+    // Get message count from conversation
+    const messagesCount = task.conversation?.messages?.length || 0;
 
-  /**
-   * Extract failed tool from messages
-   */
-  private extractFailedTool(messages?: DBMessage[]): string | undefined {
-    if (!messages) return undefined;
+    // Get total tokens from task totalTokens field
+    const totalTokens = task.totalTokens || 0;
 
-    // Search from the latest messages first
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      if (message.role === "assistant" && message.parts) {
-        for (const part of message.parts) {
-          if (
-            part.type === "tool-invocation" &&
-            part.toolInvocation?.state === "result" &&
-            part.toolInvocation?.toolName &&
-            part.toolInvocation?.result &&
-            typeof part.toolInvocation.result === "object" &&
-            "error" in part.toolInvocation.result
-          ) {
-            return part.toolInvocation.toolName;
-          }
-        }
-      }
-    }
-
-    return undefined;
+    return { messagesCount, totalTokens };
   }
 }
 
@@ -694,40 +630,6 @@ export const slackTaskService = new SlackTaskService();
 // Utility functions
 function isNotifyableTask(task: Task): boolean {
   return task?.event?.type === "slack:new-task";
-}
-
-function getToolDescription(
-  toolName: string,
-  args?: Record<string, unknown>,
-): string {
-  if (args) {
-    if (toolName === "readFile" && typeof args.path === "string") {
-      return `I'm reading ${args.path} to understand its contents`;
-    }
-    if (toolName === "listFiles" && typeof args.path === "string") {
-      return `I'm exploring the directory ${args.path} to see what files are available`;
-    }
-    if (toolName === "executeCommand" && typeof args.command === "string") {
-      return `I'm running the command: ${args.command}`;
-    }
-    if (toolName === "searchFiles" && typeof args.query === "string") {
-      return `I'm searching through files for "${args.query}"`;
-    }
-    if (toolName === "globFiles" && typeof args.pattern === "string") {
-      return `I'm finding files that match the pattern ${args.pattern}`;
-    }
-    if (toolName === "writeToFile" && typeof args.path === "string") {
-      return `I'm writing content to ${args.path}`;
-    }
-    if (toolName === "applyDiff" && typeof args.file === "string") {
-      return `I'm applying code changes to ${args.file}`;
-    }
-    if (toolName === "webFetch" && typeof args.url === "string") {
-      return `I'm fetching content from ${args.url}`;
-    }
-  }
-
-  return `I'm using the ${toolName} tool to help me with the task`;
 }
 
 function extractErrorInfo(messages?: DBMessage[]): {
