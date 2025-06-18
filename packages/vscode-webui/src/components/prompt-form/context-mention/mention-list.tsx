@@ -1,6 +1,6 @@
 import { FileIcon } from "@/components/tool-invocation/file-icon/file-icon";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import type { MentionListActions } from "../shared";
 import {
   useMentionItems,
@@ -30,6 +30,13 @@ export const MentionList = forwardRef<MentionListActions, MentionListProps>(
   ({ items: initialItems, command, query, fetchItems }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const items = useMentionItems(initialItems, query, fetchItems);
+
+    // Reset selectedIndex when items change to prevent out-of-bounds access
+    useEffect(() => {
+      if (selectedIndex >= items.length) {
+        setSelectedIndex(Math.max(0, items.length - 1));
+      }
+    }, [items.length, selectedIndex]);
 
     const handleSelect = (item: MentionItem) => {
       command({ id: item.filepath, filepath: item.filepath });

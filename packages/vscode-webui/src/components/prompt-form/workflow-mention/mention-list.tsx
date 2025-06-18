@@ -1,7 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { vscodeHost } from "@/lib/vscode";
 import { FileIcon } from "lucide-react";
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import type { MentionListActions } from "../shared";
 import {
   useMentionItems,
@@ -34,6 +34,13 @@ export const WorkflowMentionList = forwardRef<
 >(({ items: initialItems, command, query, fetchItems }, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const items = useMentionItems(initialItems, query, fetchItems);
+
+  // Reset selectedIndex when items change to prevent out-of-bounds access
+  useEffect(() => {
+    if (selectedIndex >= items.length) {
+      setSelectedIndex(Math.max(0, items.length - 1));
+    }
+  }, [items.length, selectedIndex]);
 
   const handleSelect = async (item: WorkflowItem) => {
     vscodeHost.capture({
