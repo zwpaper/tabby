@@ -2,10 +2,6 @@ import type { Todo } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
 import type { AnyBlock } from "@slack/web-api";
 
-const RenderOptions = {
-  enableToolCalls: true,
-};
-
 const PreparingTaskBlock = {
   type: "section",
   text: {
@@ -60,7 +56,7 @@ class SlackRichTextRenderer {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "*🟡 Running:*",
+          text: "*🟡 Running*",
         },
       },
     ];
@@ -80,7 +76,6 @@ class SlackRichTextRenderer {
     taskId: string,
     waitingReason: string,
     todos?: Todo[],
-    completedTools?: string[],
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
@@ -95,8 +90,6 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    this.renderCompletedToolsBlock(blocks, completedTools);
-
     blocks.push(this.renderFooterBlock(taskId));
 
     return blocks;
@@ -109,7 +102,6 @@ class SlackRichTextRenderer {
     taskId: string,
     result: string,
     todos?: Todo[],
-    completedTools?: string[],
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
@@ -132,8 +124,6 @@ class SlackRichTextRenderer {
         text: `✅ ${displayResult}`,
       },
     });
-
-    this.renderCompletedToolsBlock(blocks, completedTools);
 
     blocks.push(this.renderFooterBlock(taskId));
 
@@ -248,7 +238,6 @@ class SlackRichTextRenderer {
     currentTool?: string,
     failedTool?: string,
   ) {
-    if (!RenderOptions.enableToolCalls) return;
     if (!completedTools || completedTools.length === 0) {
       return;
     }

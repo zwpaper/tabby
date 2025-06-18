@@ -61,9 +61,6 @@ class SlackTaskService {
       // If there's no waiting reason, we don't need to send a message
       return;
     }
-    const completedTools = this.extractCompletedTools(
-      task.conversation?.messages,
-    );
 
     const blocks = slackRichTextRenderer.renderTaskAskFollowUpQuestion(
       headerInfo.prompt,
@@ -72,7 +69,6 @@ class SlackTaskService {
       task.uid,
       waitingReason,
       task.todos,
-      completedTools,
     );
 
     await webClient.chat.update({
@@ -174,9 +170,6 @@ class SlackTaskService {
     const completionResult = this.extractCompletionResult(
       task.conversation?.messages,
     );
-    const completedTools = this.extractCompletedTools(
-      task.conversation?.messages,
-    );
 
     const blocks = slackRichTextRenderer.renderTaskComplete(
       headerInfo.prompt,
@@ -185,7 +178,6 @@ class SlackTaskService {
       task.uid,
       completionResult || "Task completed successfully.",
       task.todos,
-      completedTools,
     );
 
     await webClient.chat.update({
