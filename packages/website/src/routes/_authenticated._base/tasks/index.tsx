@@ -1,7 +1,8 @@
 import { DataTablePagination } from "@/components/data-table-pagination";
-import type { Repository } from "@/components/tasks/task-filters";
+import type { Branch, Repository } from "@/components/tasks/task-filters";
 import { TaskFilters } from "@/components/tasks/task-filters";
 import { TaskRow } from "@/components/tasks/task-row";
+import type { FilterValues } from "@/components/tasks/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
 import { parseGitOriginUrl } from "@ragdoll/common/git-utils";
@@ -15,6 +16,7 @@ const taskSearchSchema = z.object({
   page: z.number().min(1).optional().default(1),
   pageSize: z.number().min(10).max(50).optional().default(20),
   repository: z.string().optional(),
+  branch: z.string().optional(),
   q: z.string().optional(),
 });
 
@@ -23,11 +25,11 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/")({
   validateSearch: (search) => taskSearchSchema.parse(search),
 });
 
-const limit = 100;
+const limit = 500;
 
 function TaskPage() {
   const router = useRouter();
-  const { page, pageSize, repository, q } = Route.useSearch();
+  const { page, pageSize, repository, branch, q } = Route.useSearch();
   const { data, isLoading } = useQuery({
     queryKey: ["tasks", 1, limit],
     queryFn: () =>
@@ -38,6 +40,12 @@ function TaskPage() {
         .then((x) => x.json()),
     placeholderData: keepPreviousData,
   });
+
+  const initialFilterValues: FilterValues = {
+    q,
+    repository,
+    branch,
+  };
 
   const allTasks = data?.data || [];
 
@@ -50,8 +58,6 @@ function TaskPage() {
 
   const repositories = useMemo<Repository[]>(() => {
     const repoMap = new Map<string, Repository>();
-    repoMap.set("all", { id: "all", name: "All Repositories" });
-
     for (const task of processedTasks) {
       if (task.repoInfo) {
         const repoId = `${task.repoInfo.platform}:${task.repoInfo.shorthand}`;
@@ -68,11 +74,30 @@ function TaskPage() {
     return Array.from(repoMap.values());
   }, [processedTasks]);
 
+  const branches = useMemo<Branch[]>(() => {
+    if (!repository) {
+      return [];
+    }
+
+    const branchMap = new Map<string, Branch>();
+    for (const task of processedTasks) {
+      if (
+        task.repoInfo &&
+        `${task.repoInfo.platform}:${task.repoInfo.shorthand}` === repository &&
+        task.git?.branch
+      ) {
+        if (!branchMap.has(task.git.branch)) {
+          branchMap.set(task.git.branch, { name: task.git.branch });
+        }
+      }
+    }
+    return Array.from(branchMap.values());
+  }, [processedTasks, repository]);
+
   const { tasks: filteredTasks, fuzzyResultMap } = useMemo(() => {
     let tasks = processedTasks;
-    let fuzzyResultMap: Record<string, Fuzzysort.Result> = {};
 
-    if (repository && repository !== "all") {
+    if (repository) {
       tasks = tasks.filter(
         (task) =>
           task.repoInfo &&
@@ -80,6 +105,11 @@ function TaskPage() {
       );
     }
 
+    if (branch) {
+      tasks = tasks.filter((task) => task.git?.branch === branch);
+    }
+
+    let fuzzyResultMap: Record<string, Fuzzysort.Result> = {};
     if (q) {
       const result = fuzzy(q, tasks, {
         key: (item) => item.title,
@@ -92,25 +122,20 @@ function TaskPage() {
         },
         {} as Record<string, Fuzzysort.Result>,
       );
-      tasks = tasks.filter((task) => fuzzyResultMap[task.uid]);
+      tasks = tasks.filter((x) => fuzzyResultMap[x.uid]);
     }
 
     return { tasks, fuzzyResultMap };
-  }, [processedTasks, repository, q]);
+  }, [processedTasks, repository, branch, q]);
 
   const totalPages = Math.ceil(filteredTasks.length / pageSize);
   const tasks = filteredTasks.slice((page - 1) * pageSize, page * pageSize);
 
-  const onFilterChange = (newFilters: {
-    repository?: string;
-    q?: string;
-  }) => {
+  const onFilterChange = (newFilters: FilterValues) => {
     router.navigate({
       to: "/tasks",
       search: (prev) => ({
-        ...prev,
         ...newFilters,
-        q: newFilters.q || undefined,
         page: 1,
         pageSize: prev.pageSize ?? 20,
       }),
@@ -139,14 +164,28 @@ function TaskPage() {
   };
 
   if (isLoading) {
+    const loadingRepositories: Repository[] = [];
+    if (repository) {
+      const [platform, ...nameParts] = repository.split(":");
+      loadingRepositories.push({
+        id: repository,
+        name: nameParts.join(":"),
+        platform,
+      });
+    }
+
+    const loadingBranches: Branch[] = [];
+    if (branch) {
+      loadingBranches.push({ name: branch });
+    }
     return (
       <div className="mx-auto h-full max-w-6xl flex-1 flex-col space-y-8 px-2 pt-6 pb-8 md:flex md:px-6 md:pt-8">
         <div className="space-y-6">
           <TaskFilters
-            repositories={[{ id: "all", name: "All Repositories" }]}
-            onRepositoryChange={() => {}}
-            onSearchChange={() => {}}
-            initialRepository="all"
+            repositories={loadingRepositories}
+            branches={loadingBranches}
+            initialValues={initialFilterValues}
+            onFilterChange={() => {}}
           />
           <Loading />
         </div>
@@ -159,10 +198,9 @@ function TaskPage() {
       <div className="space-y-6">
         <TaskFilters
           repositories={repositories}
-          initialRepository={repository}
-          initialSearch={q}
-          onRepositoryChange={(repo) => onFilterChange({ repository: repo })}
-          onSearchChange={(s) => onFilterChange({ q: s })}
+          branches={branches}
+          initialValues={initialFilterValues}
+          onFilterChange={onFilterChange}
         />
         <div className="space-y-4">
           {allTasks.length === 0 ? (

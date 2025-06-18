@@ -1,19 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  IconBrandBitbucket,
-  IconBrandGithub,
-  IconBrandGitlab,
-} from "@tabler/icons-react";
-import { FolderGitIcon, Search, X } from "lucide-react";
-import { useState } from "react";
+import { Search, X } from "lucide-react";
+import { useEffect, useReducer } from "react";
+import { BranchFilter } from "./branch-filter";
+import { RepositoryFilter } from "./repository-filter";
+import type { FilterValues } from "./types";
 
 export interface Repository {
   id: string;
@@ -21,112 +12,113 @@ export interface Repository {
   platform?: string;
 }
 
-interface TaskFiltersProps {
-  repositories: Repository[];
-  onRepositoryChange: (repository: string) => void;
-  onSearchChange: (search: string) => void;
-  initialRepository?: string;
-  initialSearch?: string;
+export interface Branch {
+  name: string;
 }
 
-const iconMap = {
-  github: IconBrandGithub,
-  gitlab: IconBrandGitlab,
-  bitbucket: IconBrandBitbucket,
-  git: FolderGitIcon,
-};
+interface TaskFiltersProps {
+  repositories: Repository[];
+  branches: Branch[];
+  onFilterChange: (filters: FilterValues) => void;
+  initialValues?: FilterValues;
+}
+
+type FilterState = FilterValues;
+
+type FilterAction =
+  | { type: "SET_REPOSITORY"; payload?: string }
+  | { type: "SET_BRANCH"; payload?: string }
+  | { type: "SET_SEARCH"; payload: string | undefined }
+  | { type: "CLEAR_ALL" };
+
+function filterReducer(state: FilterState, action: FilterAction): FilterState {
+  switch (action.type) {
+    case "SET_REPOSITORY":
+      return { ...state, repository: action.payload, branch: undefined };
+    case "SET_BRANCH":
+      return { ...state, branch: action.payload };
+    case "SET_SEARCH":
+      return { ...state, q: action.payload };
+    case "CLEAR_ALL":
+      return { repository: undefined, branch: undefined, q: undefined };
+    default:
+      return state;
+  }
+}
 
 export function TaskFilters({
   repositories,
-  onRepositoryChange,
-  onSearchChange,
-  initialRepository = "all",
-  initialSearch = "",
+  branches,
+  onFilterChange,
+  initialValues = {},
 }: TaskFiltersProps) {
-  const [selectedRepository, setSelectedRepository] =
-    useState(initialRepository);
-  const [searchValue, setSearchValue] = useState(initialSearch);
+  const [filters, dispatch] = useReducer(filterReducer, {
+    repository: initialValues.repository,
+    branch: initialValues.branch,
+    q: initialValues.q ?? "",
+  });
 
-  const handleRepositoryChange = (value: string) => {
-    setSelectedRepository(value);
-    onRepositoryChange(value);
+  useEffect(() => {
+    onFilterChange(filters);
+  }, [filters, onFilterChange]);
+
+  const handleRepositoryChange = (value?: string) => {
+    dispatch({ type: "SET_REPOSITORY", payload: value });
+  };
+
+  const handleBranchChange = (value?: string) => {
+    dispatch({ type: "SET_BRANCH", payload: value });
   };
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchValue(value || "");
-    onSearchChange(value);
+    dispatch({ type: "SET_SEARCH", payload: e.target.value });
   };
 
   const clearSearch = () => {
-    setSearchValue("");
-    onSearchChange("");
+    dispatch({ type: "SET_SEARCH", payload: undefined });
   };
 
   const hasActiveFilters =
-    selectedRepository !== "all" || searchValue.length > 0;
+    !!filters.repository || !!filters.branch || !!filters.q;
 
   const clearAllFilters = () => {
-    setSelectedRepository("all");
-    setSearchValue("");
-    onRepositoryChange("all");
-    onSearchChange("");
+    dispatch({ type: "CLEAR_ALL" });
   };
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        {/* Search Filter */}
-        <div className="relative">
-          <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tasks..."
-            value={searchValue}
-            onChange={handleSearchInputChange}
-            className="w-full pr-9 pl-9 sm:w-[280px]"
-          />
-          {searchValue && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearSearch}
-              className="-translate-y-1/2 absolute top-1/2 right-1 h-7 w-7 p-0 hover:bg-muted"
-            >
-              <X className="h-3 w-3" />
-              <span className="sr-only">Clear search</span>
-            </Button>
-          )}
-        </div>
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="relative w-full sm:w-[280px]">
+        <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search tasks..."
+          value={filters.q ?? ""}
+          onChange={handleSearchInputChange}
+          className="w-full pr-9 pl-9"
+        />
+        {filters.q && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearSearch}
+            className="-translate-y-1/2 absolute top-1/2 right-1 h-7 w-7 p-0 hover:bg-muted"
+          >
+            <X className="h-3 w-3" />
+            <span className="sr-only">Clear search</span>
+          </Button>
+        )}
       </div>
-
-      {/* Repository Filter */}
-      <div className="flex items-center gap-2">
-        <Select
-          value={selectedRepository}
-          onValueChange={handleRepositoryChange}
-        >
-          <SelectTrigger className="w-[200px] sm:w-[240px]">
-            <SelectValue placeholder="Select repository" />
-          </SelectTrigger>
-          <SelectContent>
-            {repositories.map((repo) => {
-              const Icon = repo.platform
-                ? iconMap[repo.platform as keyof typeof iconMap]
-                : null;
-              return (
-                <SelectItem key={repo.id} value={repo.id}>
-                  <div className="flex items-center gap-2">
-                    {Icon && <Icon className="h-4 w-4" />}
-                    <span className="truncate">{repo.name}</span>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Clear Filters */}
+      <RepositoryFilter
+        repositories={repositories}
+        selectedRepository={filters.repository}
+        onRepositoryChange={handleRepositoryChange}
+      />
+      {filters.repository && (
+        <BranchFilter
+          branches={branches}
+          selectedBranch={filters.branch}
+          onBranchChange={handleBranchChange}
+        />
+      )}
       {hasActiveFilters && (
         <Button
           variant="outline"
