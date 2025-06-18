@@ -1,5 +1,5 @@
 import type { DBMessage, Todo, UserEvent } from "@ragdoll/db";
-import type { WebClient } from "@slack/web-api";
+import type { AnyBlock, WebClient } from "@slack/web-api";
 
 import {
   parseGitOriginUrl,
@@ -11,7 +11,7 @@ import { slackService } from "../slack";
 import { taskService } from "../task";
 import { slackRichTextRenderer } from "./slack-rich-text";
 
-type Task = Awaited<ReturnType<(typeof taskService)["get"]>>;
+type Task = NonNullable<Awaited<ReturnType<(typeof taskService)["get"]>>>;
 
 class SlackTaskService {
   async notifyTaskStatusUpdate(userId: string, uid: string, async = true) {
@@ -25,168 +25,110 @@ class SlackTaskService {
       return;
     }
 
+    await this.sendTaskStatusUpdate(userId, task);
+  }
+
+  private async sendTaskStatusUpdate(userId: string, task: Task) {
+    const slackEventData = this.extractSlackDataFromTask(task);
+    const webClient = await slackService.getWebClientByUser(userId);
+
+    if (!webClient || !slackEventData.channel || !slackEventData.ts) {
+      return;
+    }
+
+    const headerInfo = this.extractHeaderInfoFromTask(task);
+    const taskStats = this.extractTaskStatistics(task);
+
+    let blocks: AnyBlock[];
+    let text: string;
+    let postAction: (() => Promise<void>) | undefined;
+
     switch (task.status) {
-      case "completed":
-        await this.sendTaskCompletion(userId, task);
+      case "completed": {
+        const completionResult = this.extractCompletionResult(
+          task.conversation?.messages,
+        );
+        blocks = slackRichTextRenderer.renderTaskComplete(
+          headerInfo.prompt,
+          headerInfo.githubRepository,
+          headerInfo.slackUserId,
+          task.uid,
+          completionResult || "Task completed successfully.",
+          task.todos,
+          taskStats.requestsCount,
+          taskStats.totalTokens,
+        );
+        text = "Task completed";
+        postAction = () => this.addCompletionReaction(userId, task);
         break;
-      case "failed":
-        await this.sendTaskFailure(userId, task);
+      }
+
+      case "failed": {
+        const errorInfo = this.extractErrorInformation(task);
+        blocks = slackRichTextRenderer.renderTaskFailed(
+          headerInfo.prompt,
+          headerInfo.githubRepository,
+          headerInfo.slackUserId,
+          task.uid,
+          errorInfo.message,
+          task.todos,
+          taskStats.requestsCount,
+          taskStats.totalTokens,
+        );
+        text = "Task failed";
         break;
-      case "pending-tool":
-        await this.sendTaskPendingTool(userId, task);
+      }
+
+      // @ts-expect-error: fall through to render task running if pending-input is not a askFollowUpQuestion tool call.
+      // biome-ignore lint/suspicious/noFallthroughSwitchClause: same as above
+      case "pending-input": {
+        const askFollowUpQuestion = this.extractAskFollowUpQuestion(task);
+        if (askFollowUpQuestion) {
+          blocks = slackRichTextRenderer.renderTaskAskFollowUpQuestion(
+            headerInfo.prompt,
+            headerInfo.githubRepository,
+            headerInfo.slackUserId,
+            task.uid,
+            askFollowUpQuestion.question,
+            askFollowUpQuestion.followUp,
+            task.todos,
+            taskStats.requestsCount,
+            taskStats.totalTokens,
+          );
+          text = "Need user input";
+          break;
+        }
+      }
+      case "streaming":
+      case "pending-model":
+      case "pending-tool": {
+        blocks = slackRichTextRenderer.renderTaskRunning(
+          headerInfo.prompt,
+          headerInfo.githubRepository,
+          headerInfo.slackUserId,
+          task.uid,
+          task.todos,
+          taskStats.requestsCount,
+          taskStats.totalTokens,
+        );
+        text = "Task running";
         break;
-      case "pending-input":
-        await this.sendTaskPendingInput(userId, task);
-        break;
-      default:
-        break;
+      }
+      default: {
+        throw task.status satisfies never;
+      }
     }
-  }
-
-  private async sendTaskPendingInput(userId: string, task: Task) {
-    if (!task) return;
-
-    const slackEventData = this.extractSlackDataFromTask(task);
-    const webClient = await slackService.getWebClientByUser(userId);
-
-    if (!webClient || !slackEventData.channel || !slackEventData.ts) {
-      return;
-    }
-
-    // Get header info from task data instead of Slack API
-    const headerInfo = this.extractHeaderInfoFromTask(task);
-    const taskStats = this.extractTaskStatistics(task);
-
-    const waitingInfo = this.extractWaitingReason(task);
-    if (!waitingInfo) {
-      // If there's no waiting reason, we don't need to send a message
-      return;
-    }
-
-    const blocks = slackRichTextRenderer.renderTaskAskFollowUpQuestion(
-      headerInfo.prompt,
-      headerInfo.githubRepository,
-      headerInfo.slackUserId,
-      task.uid,
-      waitingInfo.question,
-      waitingInfo.followUp,
-      task.todos,
-      taskStats.messagesCount,
-      taskStats.totalTokens,
-    );
 
     await webClient.chat.update({
       channel: slackEventData.channel,
       ts: slackEventData.ts,
-      text: "Task waiting for input",
+      text,
       blocks,
     });
-  }
 
-  private async sendTaskPendingTool(userId: string, task: Task) {
-    if (!task) return;
-
-    const slackEventData = this.extractSlackDataFromTask(task);
-    const webClient = await slackService.getWebClientByUser(userId);
-
-    if (!webClient || !slackEventData.channel || !slackEventData.ts) {
-      return;
+    if (postAction) {
+      await postAction();
     }
-
-    // Get header info from task data instead of Slack API
-    const headerInfo = this.extractHeaderInfoFromTask(task);
-    const taskStats = this.extractTaskStatistics(task);
-
-    const blocks = slackRichTextRenderer.renderTaskPendingTool(
-      headerInfo.prompt,
-      headerInfo.githubRepository,
-      headerInfo.slackUserId,
-      task.uid,
-      task.todos,
-      taskStats.messagesCount,
-      taskStats.totalTokens,
-    );
-
-    await webClient.chat.update({
-      channel: slackEventData.channel,
-      ts: slackEventData.ts,
-      text: "Task running",
-      blocks,
-    });
-  }
-
-  private async sendTaskFailure(userId: string, task: Task) {
-    if (!task) return;
-
-    const slackEventData = this.extractSlackDataFromTask(task);
-    const webClient = await slackService.getWebClientByUser(userId);
-
-    if (!webClient || !slackEventData.channel || !slackEventData.ts) {
-      return;
-    }
-
-    // Get header info from task data instead of Slack API
-    const headerInfo = this.extractHeaderInfoFromTask(task);
-    const taskStats = this.extractTaskStatistics(task);
-
-    const errorInfo = this.extractErrorInformation(task);
-
-    const blocks = slackRichTextRenderer.renderTaskFailed(
-      headerInfo.prompt,
-      headerInfo.githubRepository,
-      headerInfo.slackUserId,
-      task.uid,
-      errorInfo.message,
-      task.todos,
-      taskStats.messagesCount,
-      taskStats.totalTokens,
-    );
-
-    await webClient.chat.update({
-      channel: slackEventData.channel,
-      ts: slackEventData.ts,
-      text: "Task failed",
-      blocks,
-    });
-  }
-
-  private async sendTaskCompletion(userId: string, task: Task) {
-    if (!task) return;
-
-    const slackEventData = this.extractSlackDataFromTask(task);
-    const webClient = await slackService.getWebClientByUser(userId);
-
-    if (!webClient || !slackEventData.channel || !slackEventData.ts) {
-      return;
-    }
-
-    // Get header info from task data instead of Slack API
-    const headerInfo = this.extractHeaderInfoFromTask(task);
-    const taskStats = this.extractTaskStatistics(task);
-
-    const completionResult = this.extractCompletionResult(
-      task.conversation?.messages,
-    );
-
-    const blocks = slackRichTextRenderer.renderTaskComplete(
-      headerInfo.prompt,
-      headerInfo.githubRepository,
-      headerInfo.slackUserId,
-      task.uid,
-      completionResult || "Task completed successfully.",
-      task.todos,
-      taskStats.messagesCount,
-      taskStats.totalTokens,
-    );
-
-    await webClient.chat.update({
-      channel: slackEventData.channel,
-      ts: slackEventData.ts,
-      text: "Task completed",
-      blocks,
-    });
-
-    await this.addCompletionReaction(userId, task);
   }
 
   private async addCompletionReaction(userId: string, task: Task) {
@@ -586,11 +528,11 @@ class SlackTaskService {
   /**
    * Extract waiting reason and follow-up suggestions from task
    */
-  private extractWaitingReason(
+  private extractAskFollowUpQuestion(
     task: Task,
   ): { question: string; followUp?: string[] } | undefined {
     // Check recent messages for askFollowupQuestion tool calls
-    if (!task?.conversation?.messages) {
+    if (!task.conversation?.messages) {
       return;
     }
 
@@ -616,20 +558,31 @@ class SlackTaskService {
   }
 
   private extractTaskStatistics(task: Task): {
-    messagesCount: number;
+    requestsCount: number;
     totalTokens: number;
   } {
     if (!task) {
-      return { messagesCount: 0, totalTokens: 0 };
+      return { requestsCount: 0, totalTokens: 0 };
     }
 
     // Get message count from conversation
-    const messagesCount = task.conversation?.messages?.length || 0;
+    const requestsCount =
+      task.conversation?.messages?.reduce((count_, message) => {
+        let count = count_;
+        if (message.role === "assistant") {
+          for (const part of message.parts || []) {
+            if (part.type === "step-start") {
+              count++;
+            }
+          }
+        }
+        return count;
+      }, 0) || 0;
 
     // Get total tokens from task totalTokens field
     const totalTokens = task.totalTokens || 0;
 
-    return { messagesCount, totalTokens };
+    return { requestsCount, totalTokens };
   }
 }
 

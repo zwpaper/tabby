@@ -27,7 +27,7 @@ class SlackRichTextRenderer {
     slackUserId: string,
     taskId: string,
     todos?: Todo[],
-    messagesCount?: number,
+    requestsCount?: number,
     totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
@@ -37,18 +37,18 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
+    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
 
     return blocks;
   }
 
-  renderTaskPendingTool(
+  renderTaskRunning(
     prompt: string,
     githubRepository: { owner: string; repo: string },
     slackUserId: string,
     taskId: string,
     todos?: Todo[],
-    messagesCount?: number,
+    requestsCount?: number,
     totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
@@ -64,7 +64,7 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
+    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
 
     return blocks;
   }
@@ -77,7 +77,7 @@ class SlackRichTextRenderer {
     waitingReason: string,
     followUpSuggestions?: string[],
     todos?: Todo[],
-    messagesCount?: number,
+    requestsCount?: number,
     totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
@@ -95,7 +95,7 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
+    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
 
     return blocks;
   }
@@ -107,7 +107,7 @@ class SlackRichTextRenderer {
     taskId: string,
     result: string,
     todos?: Todo[],
-    messagesCount?: number,
+    requestsCount?: number,
     totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
@@ -132,7 +132,7 @@ class SlackRichTextRenderer {
       },
     });
 
-    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
+    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
 
     return blocks;
   }
@@ -144,7 +144,7 @@ class SlackRichTextRenderer {
     taskId: string,
     errorMessage: string,
     todos?: Todo[],
-    messagesCount?: number,
+    requestsCount?: number,
     totalTokens?: number,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
@@ -160,7 +160,7 @@ class SlackRichTextRenderer {
 
     this.renderTodoListBlock(blocks, todos);
 
-    this.renderFooterBlock(blocks, taskId, messagesCount, totalTokens);
+    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
 
     return blocks;
   }
@@ -182,13 +182,13 @@ class SlackRichTextRenderer {
   private renderFooterBlock(
     dst: AnyBlock[],
     taskId: string,
-    messagesCount?: number,
+    requestsCount?: number,
     totalTokens?: number,
   ) {
     const statsTexts: string[] = [];
 
-    if (messagesCount !== undefined && messagesCount > 0) {
-      statsTexts.push(`📊 ${messagesCount} rounds`);
+    if (requestsCount !== undefined && requestsCount > 0) {
+      statsTexts.push(`📊 ${requestsCount} rounds`);
     }
 
     if (totalTokens !== undefined && totalTokens > 0) {
