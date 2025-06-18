@@ -121,7 +121,10 @@ class SlackService {
               "=",
               vendorIntegrationId,
             )
-            .executeTakeFirstOrThrow();
+            .executeTakeFirstOrThrow()
+            .catch(() => {
+              throw new Error(`Integration ${vendorIntegrationId} not found`);
+            });
 
           if (vendorData.provider === "slack") {
             return vendorData.payload;
