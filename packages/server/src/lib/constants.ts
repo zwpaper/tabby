@@ -28,16 +28,6 @@ export const AvailableModels: {
     contextWindow: 200_000,
     costType: "premium",
   },
-  {
-    id: "openai/o3",
-    contextWindow: 200_000,
-    costType: "premium",
-  },
-  {
-    id: "openai/gpt-4o-mini",
-    contextWindow: 200_000,
-    costType: "premium",
-  },
 ];
 
 export const StripePlans = [
