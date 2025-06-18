@@ -30,11 +30,11 @@ export function createPauseInactiveSandboxWorker() {
     QueueName,
     async (job) => {
       const { sandboxId } = job.data;
-      logger.info(`Pausing sandbox ${sandboxId}`);
+      logger.debug(`Pausing sandbox ${sandboxId}`);
       try {
         const sandbox = await Sandbox.connect(sandboxId);
         await sandbox.pause();
-        logger.info(`Sandbox ${sandboxId} paused`);
+        logger.debug(`Sandbox ${sandboxId} paused`);
       } catch (error) {
         logger.debug(`Failed to pause sandbox ${sandboxId}`, error);
       }
