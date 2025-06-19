@@ -36,7 +36,6 @@ import { applyEventFilter } from "../lib/event-filter";
 import type { ZodChatRequestType } from "../types";
 import { githubService } from "./github";
 import { minionService } from "./minion";
-import { slackTaskService } from "./slack-task";
 
 const titleSelect =
   sql<string>`(conversation #>> '{messages, 0, parts, 0, text}')::text`.as(
@@ -143,7 +142,6 @@ class TaskService {
       .executeTakeFirstOrThrow();
 
     this.streamingTasks.delete(StreamingTask.key(userId, uid));
-    slackTaskService.notifyTaskStatusUpdate(userId, uid);
   }
 
   async failStreaming(uid: string, userId: string, error: TaskError) {
@@ -159,7 +157,6 @@ class TaskService {
       .execute();
 
     this.streamingTasks.delete(StreamingTask.key(userId, uid));
-    slackTaskService.notifyTaskStatusUpdate(userId, uid);
   }
 
   private async prepareTask(

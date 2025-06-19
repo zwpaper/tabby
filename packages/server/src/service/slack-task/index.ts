@@ -5,7 +5,6 @@ import {
   parseGitOriginUrl,
   parseOwnerAndRepo,
 } from "@ragdoll/common/git-utils";
-import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { slackService } from "../slack";
 import { taskService } from "../task";
@@ -14,12 +13,7 @@ import { slackRichTextRenderer } from "./slack-rich-text";
 type Task = NonNullable<Awaited<ReturnType<(typeof taskService)["get"]>>>;
 
 class SlackTaskService {
-  async notifyTaskStatusUpdate(userId: string, uid: string, async = true) {
-    if (async) {
-      enqueueNotifyTaskSlack({ userId, uid });
-      return;
-    }
-
+  async notifyTaskStatusUpdate(userId: string, uid: string) {
     const task = await taskService.get(uid, userId);
     if (!task || !isNotifyableTask(task)) {
       return;

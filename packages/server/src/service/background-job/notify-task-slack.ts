@@ -38,7 +38,6 @@ export function createNotifyTaskSlackWorker() {
       await slackTaskService.notifyTaskStatusUpdate(
         job.data.userId,
         job.data.uid,
-        false,
       );
     },
     {

@@ -4,6 +4,7 @@ import moment from "moment";
 import { Pool } from "pg";
 import { parse } from "pg-connection-string";
 import { publishTaskEvent } from "../server";
+import { enqueueNotifyTaskSlack } from "../service/background-job";
 import { idCoders } from "./id-coders";
 
 const pool = (() => {
@@ -45,6 +46,13 @@ export async function startListenDBEvents() {
       const { userId, id, status } = JSON.parse(
         msg.payload,
       ) as TaskStatusChanged;
+
+      const uid = idCoders.uid.encode(id);
+      enqueueNotifyTaskSlack({
+        userId,
+        uid,
+      });
+
       publishTaskEvent(userId, {
         type: "task:status-changed",
         data: {
