@@ -1,11 +1,12 @@
 import { AccessControlButton } from "@/components/task/access-control-button";
-import { ErrorDisplay, TaskContent } from "@/components/task/content";
+import { TaskContent } from "@/components/task/content";
 import { TaskHeader } from "@/components/task/header";
 import { OpenInIdeButton } from "@/components/task/open-in-ide-button";
 import { TaskPageSkeleton } from "@/components/task/skeleton";
 import { useTheme } from "@/components/theme-provider";
 import { apiClient } from "@/lib/auth-client";
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { normalizeApiError, toHttpError } from "@/lib/error";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
   component: RouteComponent,
@@ -20,18 +21,13 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
       });
 
       if (!resp.ok) {
-        if (resp.status === 404 || resp.status === 403) {
-          throw notFound();
-        }
-        throw new Error(`Failed to load task: ${resp.status}`);
+        throw toHttpError(resp);
       }
 
-      return resp.json();
+      const json = await resp.json();
+      return json;
     } catch (error) {
-      if (error instanceof Error && error.message === "404") {
-        throw notFound();
-      }
-      throw error;
+      throw normalizeApiError(error);
     }
   },
   head: ({ loaderData }) => ({
@@ -42,7 +38,6 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
     ],
   }),
   pendingComponent: TaskPageSkeleton,
-  errorComponent: ({ error }) => <ErrorDisplay taskError={error} />,
 });
 
 function RouteComponent() {
@@ -66,10 +61,10 @@ function RouteComponent() {
           </span>
         }
       >
-        <TaskHeader.Title title={loaderData?.title} />
+        <TaskHeader.Title title={loaderData.title} />
         <TaskHeader.Subtitle
-          updatedAt={loaderData?.updatedAt}
-          git={loaderData?.git}
+          updatedAt={loaderData.updatedAt}
+          git={loaderData.git}
         />
       </TaskHeader>
 

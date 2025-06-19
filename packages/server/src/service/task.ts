@@ -405,7 +405,6 @@ class TaskService {
   async get(uid: string, userId: string) {
     const taskQuery = db
       .selectFrom("task")
-      .where("userId", "=", userId)
       .select([
         "createdAt",
         "updatedAt",
@@ -416,6 +415,7 @@ class TaskService {
         "error",
         "isPublicShared",
         "parentId",
+        "userId",
         titleSelect,
         gitSelect,
         minionIdSelect,
@@ -426,7 +426,11 @@ class TaskService {
     const task = await taskQuery.executeTakeFirst();
 
     if (!task) {
-      return null; // Return null if task not found, let the API layer handle 404
+      throw new HTTPException(404, { message: "Task not found" });
+    }
+
+    if (userId !== task.userId) {
+      throw new HTTPException(403, { message: "Forbidden" });
     }
 
     return {

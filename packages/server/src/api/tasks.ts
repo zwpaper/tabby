@@ -120,10 +120,6 @@ const tasks = new Hono()
 
       const task = await taskService.get(uid, user.id);
 
-      if (!task) {
-        throw new HTTPException(404, { message: "Task not found" });
-      }
-
       return c.json(task); // task already includes id
     },
   )

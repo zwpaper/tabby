@@ -1,4 +1,4 @@
-import { ErrorDisplay, TaskContent } from "@/components/task/content";
+import { TaskContent } from "@/components/task/content";
 import { TaskHeader } from "@/components/task/header";
 import { TaskPageSkeleton } from "@/components/task/skeleton";
 import { useTheme } from "@/components/theme-provider";
@@ -6,8 +6,9 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { apiClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
+import { normalizeApiError, toHttpError } from "@/lib/error";
 import { cn } from "@/lib/utils";
-import { Link, createFileRoute, notFound } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/share/$uid")({
@@ -23,18 +24,13 @@ export const Route = createFileRoute("/share/$uid")({
       });
 
       if (!resp.ok) {
-        if (resp.status === 404 || resp.status === 403) {
-          throw notFound();
-        }
-        throw new Error(`Failed to load task: ${resp.status}`);
+        throw toHttpError(resp);
       }
 
-      return resp.json();
+      const json = await resp.json();
+      return json;
     } catch (error) {
-      if (error instanceof Error && error.message === "404") {
-        throw notFound();
-      }
-      throw error;
+      throw normalizeApiError(error);
     }
   },
   head: ({ loaderData }) => ({
@@ -45,7 +41,6 @@ export const Route = createFileRoute("/share/$uid")({
     ],
   }),
   pendingComponent: TaskPageSkeleton,
-  errorComponent: ({ error }) => <ErrorDisplay taskError={error} />,
 });
 
 function ThemeWrapped() {
