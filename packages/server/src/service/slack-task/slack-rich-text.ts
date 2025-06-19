@@ -166,6 +166,147 @@ class SlackRichTextRenderer {
     return blocks;
   }
 
+  renderWaitlistApprovalRequired(): AnyBlock[] {
+    return [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "🐈 Reservation now!",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "*Oops! You need to be a Pochi member to use this command.*",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "I can see you're trying to get some AI teammate help – that's exactly what I do! 🐱\n\n*Here's what you're missing out on:*\n• AI writes code for you based on simple descriptions\n• Automatic bug fixes and feature implementations  \n• Seamless GitHub integration\n• Real-time progress updates (just like you tried to use!)",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "⚡ *Quick start:* Sign up takes less than 2 minutes, then come back and try that command again!",
+        },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "🚀 Get Started Now",
+              emoji: true,
+            },
+            style: "primary",
+            url: "https://app.getpochi.com",
+            action_id: "get_started_button",
+          },
+        ],
+      },
+    ];
+  }
+
+  renderGitHubConnectionRequired(): AnyBlock[] {
+    return [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "🔗 GitHub Not Connected",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "🔗 *Almost there!*\n\nYou're a Pochi member, but we need access to your GitHub repositories to help you code.",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "🛡️ *Why connect GitHub?*\n• Pochi reads your code to understand context\n• Makes intelligent suggestions based on your codebase\n• Can directly create pull requests with fixes\n• Keeps your code secure with read-only access by default",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "⚡ *Takes 30 seconds:* Connect GitHub, then come back and try your command again!",
+        },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "🔗 Connect GitHub",
+              emoji: true,
+            },
+            style: "primary",
+            url: "https://app.getpochi.com/integrations",
+            action_id: "connect_github_button",
+          },
+        ],
+      },
+    ];
+  }
+
+  renderWaitlistPendingApproval(): AnyBlock[] {
+    return [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "⏳ Waiting for Approval",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "*Thanks for signing up! You're on the waitlist and pending approval.*",
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "I can see you're eager to start coding with AI assistance – that's awesome! 🚀\n\n*What happens next:*\n• Our team will review your application shortly\n• You'll get notified once approved\n• Then you can use all Pochi features including this command!\n• Average approval time: 24-48 hours",
+        },
+      },
+
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "*DM us with 'get fast approve' for quick approval!*",
+        },
+      },
+      {
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: "💡 _Tip: Active community members often get approved faster!_",
+          },
+        ],
+      },
+    ];
+  }
+
   private renderHeaderBlock(
     prompt: string,
     githubRepository: { owner: string; repo: string },

@@ -8,6 +8,7 @@ import { db } from "../db";
 import { connectToWeb } from "../lib/connect";
 import { githubService } from "./github";
 import { slackTaskService } from "./slack-task";
+import { slackRichTextRenderer } from "./slack-task/slack-rich-text";
 
 class SlackService {
   private app: App;
@@ -189,13 +190,21 @@ class SlackService {
       // get the target email of the user
       const targetUser = await db
         .selectFrom("user")
-        .select(["id", "email", "name"])
+        .select(["id", "email", "name", "isWaitlistApproved"])
         .where("email", "=", userEmail)
         .executeTakeFirst();
 
       if (!targetUser) {
         await respond({
-          text: `❌ No user found with email ${userEmail}. Please make sure you have an account on Pochi.`,
+          blocks: slackRichTextRenderer.renderWaitlistApprovalRequired(),
+          response_type: "ephemeral",
+        });
+        return;
+      }
+
+      if (!targetUser.isWaitlistApproved) {
+        await respond({
+          blocks: slackRichTextRenderer.renderWaitlistPendingApproval(),
           response_type: "ephemeral",
         });
         return;
@@ -206,7 +215,7 @@ class SlackService {
       );
       if (!hasGithubConnection) {
         await respond({
-          text: "❌ You need to connect your GitHub account first. Please visit your Pochi settings to connect GitHub.",
+          blocks: slackRichTextRenderer.renderGitHubConnectionRequired(),
           response_type: "ephemeral",
         });
         return;
@@ -250,7 +259,11 @@ class SlackService {
         });
       }
     });
+
+    // Handle button actions
     this.app.action("view_task_button", ({ ack }) => ack());
+    this.app.action("get_started_button", ({ ack }) => ack());
+    this.app.action("connect_github_button", ({ ack }) => ack());
   }
 
   async handler(req: Request) {
