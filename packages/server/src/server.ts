@@ -19,7 +19,7 @@ import upload from "./api/upload";
 import usages from "./api/usages";
 import { authRequest } from "./auth";
 import { auth } from "./better-auth";
-import { startListenDBEvents } from "./db";
+import { startListenDBEvents } from "./db/events";
 import { queuedash } from "./queuedash";
 import { startWorkers } from "./service/background-job";
 import { slackService } from "./service/slack";

@@ -30,6 +30,7 @@ import {
 } from "ai";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
+import { DatabaseError } from "pg";
 import type { z } from "zod";
 import { db, uidCoder } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
@@ -668,6 +669,57 @@ class TaskService {
 
     return { uid, minion };
   }
+
+  async lock(uid: string, userId: string) {
+    try {
+      const newLock = await db
+        .insertInto("taskLock")
+        .columns(["id", "taskId"])
+        .expression((eb) =>
+          eb
+            .selectFrom("task")
+            .select([sql<string>`'${generateId()}'`.as("id"), "id as taskId"])
+            .where("id", "=", uidCoder.decode(uid))
+            .where("userId", "=", userId),
+        )
+        .returning(["id"])
+        .executeTakeFirst();
+
+      if (!newLock) {
+        throw new HTTPException(404, { message: "Task not found" });
+      }
+
+      return newLock.id;
+    } catch (e) {
+      if (e instanceof DatabaseError && e.code === "23505") {
+        // unique_violation
+        throw new HTTPException(409, {
+          message: "Task is locked by other session",
+        });
+      }
+      throw e;
+    }
+  }
+
+  async releaseLock(uid: string, userId: string, lockId: string) {
+    const result = await db
+      .deleteFrom("taskLock")
+      .where("id", "=", lockId)
+      .where("taskId", "in", (eb) =>
+        eb
+          .selectFrom("task as t")
+          .select("t.id")
+          .where("t.id", "=", uidCoder.decode(uid))
+          .where("t.userId", "=", userId),
+      )
+      .executeTakeFirst();
+
+    if (result.numDeletedRows === 0n) {
+      throw new HTTPException(404, {
+        message: "Lock not found or task not found",
+      });
+    }
+  }
 }
 
 export const taskService = new TaskService();
@@ -709,7 +761,7 @@ function hasUserInputTool(message: Message): boolean {
 
 // Build git object with origin and branch from environment
 const gitSelect = sql<{ origin: string; branch: string } | null>`
-  CASE 
+  CASE
     WHEN environment #>> '{workspace,gitStatus,origin}' IS NULL THEN NULL
     ELSE json_build_object(
       'origin', environment #>> '{workspace,gitStatus,origin}',

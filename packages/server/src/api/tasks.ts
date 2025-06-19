@@ -30,6 +30,11 @@ const TaskUidParamsSchema = z.object({
   uid: z.string(),
 });
 
+const TaskLockParamsSchema = z.object({
+  uid: z.string(),
+  lockId: z.string(),
+});
+
 const ZodTaskCreateEvent: z.ZodType<TaskCreateEvent> = z.any();
 const TaskCreateSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
@@ -200,6 +205,28 @@ const tasks = new Hono()
       if (!updated) {
         throw new HTTPException(404, { message: "Task not found" });
       }
+      return c.json({ success: true });
+    },
+  )
+  .post(
+    "/:uid/lock",
+    zValidator("param", TaskUidParamsSchema),
+    requireAuth(),
+    async (c) => {
+      const { uid } = c.req.valid("param");
+      const user = c.get("user");
+      const lock = await taskService.lock(uid, user.id);
+      return c.json({ success: true, lock });
+    },
+  )
+  .delete(
+    "/:uid/lock/:lockId",
+    zValidator("param", TaskLockParamsSchema),
+    requireAuth(),
+    async (c) => {
+      const { uid, lockId } = c.req.valid("param");
+      const user = c.get("user");
+      await taskService.releaseLock(uid, user.id, lockId);
       return c.json({ success: true });
     },
   );

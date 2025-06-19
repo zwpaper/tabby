@@ -39,6 +39,30 @@ export interface Account {
   userId: string;
 }
 
+export interface Apikey {
+  createdAt: Timestamp;
+  enabled: boolean | null;
+  expiresAt: Timestamp | null;
+  id: string;
+  key: string;
+  lastRefillAt: Timestamp | null;
+  lastRequest: Timestamp | null;
+  metadata: string | null;
+  name: string | null;
+  permissions: string | null;
+  prefix: string | null;
+  rateLimitEnabled: boolean | null;
+  rateLimitMax: number | null;
+  rateLimitTimeWindow: number | null;
+  refillAmount: number | null;
+  refillInterval: number | null;
+  remaining: number | null;
+  requestCount: number | null;
+  start: string | null;
+  updatedAt: Timestamp;
+  userId: string;
+}
+
 export interface ChatCompletion {
   completionTokens: number;
   createdAt: Generated<Timestamp>;
@@ -123,6 +147,12 @@ export interface Task {
   userId: string;
 }
 
+export interface TaskLock {
+  createdAt: Generated<Timestamp>;
+  id: string;
+  taskId: number;
+}
+
 export interface TaskSequence {
   id: Generated<number>;
   nextTaskId: Generated<number>;
@@ -156,6 +186,7 @@ export interface Verification {
 
 export interface DB {
   account: Account;
+  apikey: Apikey;
   chatCompletion: ChatCompletion;
   externalIntegration: ExternalIntegration;
   minion: Minion;
@@ -164,6 +195,7 @@ export interface DB {
   slackConnect: SlackConnect;
   subscription: Subscription;
   task: Task;
+  taskLock: TaskLock;
   taskSequence: TaskSequence;
   user: User;
   verification: Verification;
