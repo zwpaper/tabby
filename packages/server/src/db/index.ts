@@ -5,7 +5,7 @@ import { Pool } from "pg";
 import { parse } from "pg-connection-string";
 import { publishTaskEvent } from "../server";
 import { enqueueNotifyTaskSlack } from "../service/background-job";
-import { idCoders } from "./id-coders";
+import { uidCoder } from "./id-coders";
 
 const pool = (() => {
   const conn = parse(process.env.DATABASE_URL || "");
@@ -47,7 +47,7 @@ export async function startListenDBEvents() {
         msg.payload,
       ) as TaskStatusChanged;
 
-      const uid = idCoders.uid.encode(id);
+      const uid = uidCoder.encode(id);
       enqueueNotifyTaskSlack({
         userId,
         uid,
@@ -56,7 +56,7 @@ export async function startListenDBEvents() {
       publishTaskEvent(userId, {
         type: "task:status-changed",
         data: {
-          uid: idCoders.uid.encode(id),
+          uid,
           status,
         },
       });
@@ -77,4 +77,4 @@ async function dbMaintainance() {
   }
 }
 
-export { idCoders } from "./id-coders";
+export { minionIdCoder, uidCoder } from "./id-coders";

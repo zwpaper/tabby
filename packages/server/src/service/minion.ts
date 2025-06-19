@@ -1,7 +1,7 @@
 import { Sandbox, type SandboxOpts } from "@e2b/code-interpreter";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "../better-auth";
-import { db, idCoders } from "../db";
+import { db, minionIdCoder } from "../db";
 import { signalKeepAliveSandbox } from "./background-job";
 
 const SandboxHome = "/home/user";
@@ -28,7 +28,7 @@ interface CreateMinionOptions {
   };
 }
 
-const { encode: idEncode, decode: idDecode } = idCoders.minion;
+const { encode: idEncode, decode: idDecode } = minionIdCoder;
 
 class MinionService {
   async create({

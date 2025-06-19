@@ -31,7 +31,7 @@ import {
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import type { z } from "zod";
-import { db, idCoders } from "../db";
+import { db, uidCoder } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
 import type { ZodChatRequestType } from "../types";
 import { githubService } from "./github";
@@ -46,7 +46,7 @@ const minionIdSelect = sql<string | null>`environment->'info'->>'minionId'`.as(
   "minionId",
 );
 
-const { encode: uidEncode, decode: uidDecode } = idCoders.uid;
+const { encode: uidEncode, decode: uidDecode } = uidCoder;
 
 class StreamingTask {
   constructor(
