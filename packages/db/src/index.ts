@@ -2,7 +2,7 @@ import type { ColumnType, Generated, JSONColumnType } from "kysely";
 import type { Environment } from "./environment";
 import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";
-import type { DBMessage, TaskError, UserEvent } from "./types";
+import type { DBMessage, TaskCreateEvent, TaskError } from "./types";
 
 export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
   externalIntegration: Omit<DbImpl["externalIntegration"], "vendorData"> & {
@@ -13,7 +13,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
     DbImpl["task"],
     "event" | "conversation" | "environment" | "status" | "error" | "taskId"
   > & {
-    event: UserEvent | null;
+    event: TaskCreateEvent | null;
     conversation: { messages: DBMessage[] } | null;
     environment: Environment | null;
     status: Generated<
@@ -37,7 +37,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
   };
 };
 
-export type { DBMessage, TaskError, UserEvent, TaskEvent } from "./types";
+export type { DBMessage, TaskError, TaskCreateEvent, TaskEvent } from "./types";
 export {
   ZodEnvironment,
   type Environment,
@@ -45,7 +45,5 @@ export {
 } from "./environment";
 export { type Todo, ZodTodo } from "./todo";
 
-export type UserEventDataHelper<T extends UserEvent["type"]> = Extract<
-  UserEvent,
-  { type: T }
->["data"];
+export type TaskCreateEventDataHelper<T extends TaskCreateEvent["type"]> =
+  Extract<TaskCreateEvent, { type: T }>["data"];

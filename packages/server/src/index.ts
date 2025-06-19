@@ -1,4 +1,4 @@
-export type { TaskEvent, UserEvent } from "@ragdoll/db";
+export type { TaskEvent, TaskCreateEvent } from "@ragdoll/db";
 import { WebSocket } from "ws";
 export type * from "./types";
 export type { AppType } from "./server";

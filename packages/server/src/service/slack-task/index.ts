@@ -1,4 +1,4 @@
-import type { DBMessage, Todo, UserEvent } from "@ragdoll/db";
+import type { DBMessage, TaskCreateEvent, Todo } from "@ragdoll/db";
 import type { AnyBlock, WebClient } from "@slack/web-api";
 
 import {
@@ -227,7 +227,7 @@ class SlackTaskService {
       return;
     }
 
-    const slackEvent: Extract<UserEvent, { type: "slack:new-task" }> = {
+    const slackEvent: Extract<TaskCreateEvent, { type: "slack:new-task" }> = {
       type: "slack:new-task",
       data: {
         channel: command.channel_id,
@@ -495,7 +495,7 @@ class SlackTaskService {
   }: {
     userId: string;
     prompt: string;
-    event: Extract<UserEvent, { type: "slack:new-task" }>;
+    event: Extract<TaskCreateEvent, { type: "slack:new-task" }>;
     slackUserId: string;
     githubRepository: { owner: string; repo: string };
     taskId: string;

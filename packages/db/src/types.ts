@@ -9,7 +9,7 @@ export type DBMessage = {
   experimental_attachments?: UIMessage["experimental_attachments"];
 };
 
-export type UserEvent =
+export type TaskCreateEvent =
   | {
       type: "slack:new-task";
       data: {

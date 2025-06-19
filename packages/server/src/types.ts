@@ -1,10 +1,10 @@
-import type { DBMessage, UserEvent } from "@ragdoll/db";
+import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
 import { ZodEnvironment } from "@ragdoll/db";
 import { ZodMcpToolType } from "@ragdoll/tools";
 import { z } from "zod";
 
 export const ZodMessageType: z.ZodType<DBMessage> = z.any();
-const ZodEventType: z.ZodType<UserEvent> = z.any();
+const ZodEventType: z.ZodType<TaskCreateEvent> = z.any();
 
 export const ZodChatRequestType = z.object({
   id: z.string().optional(),

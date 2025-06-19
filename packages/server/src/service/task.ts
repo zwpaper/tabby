@@ -13,9 +13,9 @@ import type {
   DB,
   DBMessage,
   Environment,
+  TaskCreateEvent,
   TaskError,
   Todo,
-  UserEvent,
 } from "@ragdoll/db";
 import { isUserInputTool } from "@ragdoll/tools";
 import {
@@ -232,7 +232,7 @@ class TaskService {
     };
   }
 
-  private async create(userId: string, event: UserEvent | null = null) {
+  private async create(userId: string, event: TaskCreateEvent | null = null) {
     return await this.createTaskImpl(userId, {
       event,
     });
@@ -241,7 +241,7 @@ class TaskService {
   async createWithUserMessage(
     userId: string,
     prompt: string,
-    event?: UserEvent,
+    event?: TaskCreateEvent,
     parentId?: string | null,
   ): Promise<string> {
     const message: DBMessage = {
@@ -275,7 +275,7 @@ class TaskService {
   private async createTaskImpl(
     userId: string,
     taskData: Partial<{
-      event: UserEvent | null;
+      event: TaskCreateEvent | null;
       conversation: { messages: DBMessage[] } | null;
       status: DB["task"]["status"]["__insert__"];
       parentId: number | null;
@@ -686,7 +686,7 @@ class TaskService {
     userId: string;
     userEmail?: string;
     prompt: string;
-    event: UserEvent;
+    event: TaskCreateEvent;
     githubRepository?: { owner: string; repo: string };
   }) {
     const githubAccessToken = await githubService.getAccessToken(userId);

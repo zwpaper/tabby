@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import type { UserEvent } from "@ragdoll/db";
+import type { TaskCreateEvent } from "@ragdoll/db";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -30,7 +30,7 @@ const TaskUidParamsSchema = z.object({
   uid: z.string(),
 });
 
-const ZodUserEvent: z.ZodType<UserEvent> = z.any();
+const ZodTaskCreateEvent: z.ZodType<TaskCreateEvent> = z.any();
 const TaskCreateSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
   remote: z
@@ -39,7 +39,7 @@ const TaskCreateSchema = z.object({
     .describe(
       "Whether to run the task remotely in sandbox for website:new-project",
     ),
-  event: ZodUserEvent.optional(),
+  event: ZodTaskCreateEvent.optional(),
 });
 
 const TaskShareSchema = z.object({

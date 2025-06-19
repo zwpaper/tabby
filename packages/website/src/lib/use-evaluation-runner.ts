@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/auth-client";
-import type { UserEventDataHelper } from "@ragdoll/db";
+import type { TaskCreateEventDataHelper } from "@ragdoll/db";
 import { useMemo, useRef, useState } from "react";
 
 export interface EvaluationConfig {
@@ -76,7 +76,7 @@ export function useEvaluationRunner(
           eventFilter: JSON.stringify({
             type: "batch:evaluation",
             data: { batchId } satisfies Partial<
-              UserEventDataHelper<"batch:evaluation">
+              TaskCreateEventDataHelper<"batch:evaluation">
             >,
           }),
         },
