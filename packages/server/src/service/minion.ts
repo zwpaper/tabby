@@ -28,8 +28,6 @@ interface CreateMinionOptions {
   };
 }
 
-const { encode: idEncode, decode: idDecode } = minionIdCoder;
-
 class MinionService {
   async create({
     userId,
@@ -83,7 +81,7 @@ class MinionService {
       {
         envs: {
           ...envs,
-          POCHI_MINION_ID: idEncode(res.id),
+          POCHI_MINION_ID: minionIdCoder.encode(res.id),
         },
         background: true,
         cwd: SandboxPath.home,
@@ -91,7 +89,7 @@ class MinionService {
     );
 
     signalKeepAliveSandbox({ sandboxId: sandbox.sandboxId });
-    return { ...res, id: idEncode(res.id) };
+    return { ...res, id: minionIdCoder.encode(res.id) };
   }
 
   async signalKeepAliveMinion(userId: string, minionId: string) {
@@ -125,7 +123,7 @@ class MinionService {
     return {
       data: minions.map((minion) => ({
         ...minion,
-        id: idEncode(minion.id),
+        id: minionIdCoder.encode(minion.id),
       })),
       pagination: {
         page,
@@ -141,7 +139,7 @@ class MinionService {
       .selectFrom("minion")
       .selectAll()
       .where("userId", "=", userId)
-      .where("id", "=", idDecode(minionId))
+      .where("id", "=", minionIdCoder.decode(minionId))
       .executeTakeFirstOrThrow();
   }
 
@@ -156,7 +154,7 @@ class MinionService {
     const isRunning = await sandbox.isRunning();
     return {
       ...minion,
-      id: idEncode(minion.id),
+      id: minionIdCoder.encode(minion.id),
       sandbox: isRunning
         ? {
             initLog: await sandbox.files.read(SandboxPath.initLog),

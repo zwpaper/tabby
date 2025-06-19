@@ -46,8 +46,6 @@ const minionIdSelect = sql<string | null>`environment->'info'->>'minionId'`.as(
   "minionId",
 );
 
-const { encode: uidEncode, decode: uidDecode } = uidCoder;
-
 class StreamingTask {
   constructor(
     readonly streamId: string,
@@ -97,7 +95,7 @@ class TaskService {
         >`COALESCE("streamIds", '{}') || ARRAY[${streamId}]`,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
-      .where("id", "=", uidDecode(uid))
+      .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
@@ -137,7 +135,7 @@ class TaskService {
         // Clear error on successful completion
         error: null,
       })
-      .where("id", "=", uidDecode(uid))
+      .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
@@ -152,7 +150,7 @@ class TaskService {
         updatedAt: sql`CURRENT_TIMESTAMP`,
         error,
       })
-      .where("id", "=", uidDecode(uid))
+      .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .execute();
 
@@ -177,7 +175,7 @@ class TaskService {
     } = await db
       .selectFrom("task")
       .select(["conversation", "event", "environment", "status", "id"])
-      .where("id", "=", uidDecode(uid))
+      .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
@@ -191,7 +189,7 @@ class TaskService {
 
     return {
       ...data,
-      uid: uidEncode(id),
+      uid: uidCoder.encode(id),
     };
   }
 
@@ -231,7 +229,7 @@ class TaskService {
         messages: [message],
       },
       status: "pending-model",
-      parentId: parentId ? uidDecode(parentId) : null,
+      parentId: parentId ? uidCoder.decode(parentId) : null,
     });
   }
 
@@ -266,7 +264,7 @@ class TaskService {
         .returning("id")
         .executeTakeFirstOrThrow();
     });
-    return uidEncode(id);
+    return uidCoder.encode(id);
   }
 
   private verifyEnvironment(
@@ -337,7 +335,7 @@ class TaskService {
       totalCountQuery = totalCountQuery.where(
         "parentId",
         "=",
-        uidDecode(parentId),
+        uidCoder.decode(parentId),
       );
     }
 
@@ -381,13 +379,13 @@ class TaskService {
     if (!parentId) {
       query = query.where("parentId", "is", null);
     } else {
-      query = query.where("parentId", "=", uidDecode(parentId));
+      query = query.where("parentId", "=", uidCoder.decode(parentId));
     }
 
     const items = await query.execute();
     const data = items.map(({ id, ...task }) => ({
       ...task,
-      uid: uidEncode(id), // Map id to uid
+      uid: uidCoder.encode(id), // Map id to uid
       title: parseTitle(task.title),
       totalTokens: task.totalTokens || undefined,
     }));
@@ -422,7 +420,7 @@ class TaskService {
         minionIdSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
       ])
-      .where("id", "=", uidDecode(uid));
+      .where("id", "=", uidCoder.decode(uid));
 
     const task = await taskQuery.executeTakeFirst();
 
@@ -433,7 +431,7 @@ class TaskService {
     return {
       ...task,
       uid,
-      parentId: task.parentId !== null ? uidEncode(task.parentId) : null,
+      parentId: task.parentId !== null ? uidCoder.encode(task.parentId) : null,
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
       title: parseTitle(task.title),
@@ -444,7 +442,7 @@ class TaskService {
     const taskQuery = db
       .selectFrom("task")
       .innerJoin("user", "task.userId", "user.id")
-      .where("task.id", "=", uidDecode(uid))
+      .where("task.id", "=", uidCoder.decode(uid))
       .where((eb) => {
         if (userId !== undefined) {
           return eb.or([
@@ -499,7 +497,7 @@ class TaskService {
         isPublicShared,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
-      .where("id", "=", uidDecode(uid))
+      .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirst();
     return result.numUpdatedRows > 0;
@@ -510,7 +508,7 @@ class TaskService {
     userId: string,
     messages: DBMessage[],
   ): Promise<boolean> {
-    const id = uidDecode(uid);
+    const id = uidCoder.decode(uid);
     const task = await db
       .selectFrom("task")
       .where("id", "=", id)
@@ -552,7 +550,7 @@ class TaskService {
   async delete(uid: string, userId: string): Promise<boolean> {
     const result = await db
       .deleteFrom("task")
-      .where("id", "=", uidDecode(uid))
+      .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirst(); // Use executeTakeFirst for delete to get affected rows count
 
@@ -570,7 +568,7 @@ class TaskService {
           "latestStreamId",
         ),
       )
-      .where("id", "=", uidDecode(uid))
+      .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirst();
 
