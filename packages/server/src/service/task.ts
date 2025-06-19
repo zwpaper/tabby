@@ -30,11 +30,9 @@ import {
 } from "ai";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
-import Sqids from "sqids";
 import type { z } from "zod";
-import { db } from "../db";
+import { db, idCoders } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
-import { publishTaskEvent } from "../server";
 import type { ZodChatRequestType } from "../types";
 import { githubService } from "./github";
 import { minionService } from "./minion";
@@ -49,15 +47,7 @@ const minionIdSelect = sql<string | null>`environment->'info'->>'minionId'`.as(
   "minionId",
 );
 
-const { uidEncode, uidDecode } = (() => {
-  const alphabet =
-    "RBgHuE5stw6UbcCoZJiamLkyYnqV1xSO8efMhzXK3vI9F27WPrd0jA4lGTNpQD";
-  const coder = new Sqids({ minLength: 8, alphabet });
-  return {
-    uidEncode: (id: number) => coder.encode([id]),
-    uidDecode: (id: string) => coder.decode(id)[0],
-  };
-})();
+const { encode: uidEncode, decode: uidDecode } = idCoders.uid;
 
 class StreamingTask {
   constructor(
@@ -112,14 +102,6 @@ class TaskService {
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
-    publishTaskEvent(userId, {
-      type: "task:status-changed",
-      data: {
-        uid,
-        status: "streaming",
-      },
-    });
-
     // Keep the minion active
     if (request.environment?.info.minionId) {
       minionService.signalKeepAliveMinion(
@@ -160,14 +142,6 @@ class TaskService {
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
-    publishTaskEvent(userId, {
-      type: "task:status-changed",
-      data: {
-        uid,
-        status: status,
-      },
-    });
-
     this.streamingTasks.delete(StreamingTask.key(userId, uid));
     slackTaskService.notifyTaskStatusUpdate(userId, uid);
   }
@@ -183,14 +157,6 @@ class TaskService {
       .where("id", "=", uidDecode(uid))
       .where("userId", "=", userId)
       .execute();
-
-    publishTaskEvent(userId, {
-      type: "task:status-changed",
-      data: {
-        uid,
-        status: "failed",
-      },
-    });
 
     this.streamingTasks.delete(StreamingTask.key(userId, uid));
     slackTaskService.notifyTaskStatusUpdate(userId, uid);

@@ -1,8 +1,7 @@
 import { Sandbox, type SandboxOpts } from "@e2b/code-interpreter";
 import { HTTPException } from "hono/http-exception";
-import Sqids from "sqids";
 import { auth } from "../better-auth";
-import { db } from "../db";
+import { db, idCoders } from "../db";
 import { signalKeepAliveSandbox } from "./background-job";
 
 const SandboxHome = "/home/user";
@@ -29,15 +28,7 @@ interface CreateMinionOptions {
   };
 }
 
-const { idEncode, idDecode } = (() => {
-  const alphabet =
-    "iMypeAm79qGcLfO8jtXTk1d5xPE2bUW0H6awuYoCgzVlhQnBsF3ZRJDvKN4IrS";
-  const coder = new Sqids({ minLength: 8, alphabet });
-  return {
-    idEncode: (id: number) => coder.encode([id]),
-    idDecode: (id: string) => coder.decode(id)[0],
-  };
-})();
+const { encode: idEncode, decode: idDecode } = idCoders.minion;
 
 class MinionService {
   async create({
