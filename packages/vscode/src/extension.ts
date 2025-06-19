@@ -8,6 +8,7 @@ import { PochiAuthenticationProvider } from "./integrations/auth-provider";
 import { CommandManager } from "./integrations/command";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
 import { McpHub } from "./integrations/mcp/mcp-hub";
+import { TerminalLinkProvider } from "./integrations/terminal-link-provider";
 import { type AuthClient, createAuthClient } from "./lib/auth-client";
 import { type ApiClient, createApiClient } from "./lib/auth-client";
 import { FileLogger } from "./lib/file-logger";
@@ -41,6 +42,7 @@ export async function activate(context: vscode.ExtensionContext) {
   container.resolve(McpHub);
   container.resolve(PostInstallActions);
   container.resolve(FileLogger);
+  container.resolve(TerminalLinkProvider);
 }
 
 // This method is called when your extension is deactivated
