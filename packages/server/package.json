@@ -44,7 +44,7 @@
   "scripts": {
     "tsc": "tsc --noEmit",
     "dev:server": "bun --hot src/server.ts",
-    "build": "bun build src/server.ts --outdir dist --target bun",
+    "build": "bun build src/server.ts --outdir dist --target bun --sourcemap=external",
     "start": "bun run dist/server.js",
     "test": "bun test"
   },
