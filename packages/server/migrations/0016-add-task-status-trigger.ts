@@ -5,7 +5,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     CREATE OR REPLACE FUNCTION task_status_channel()
     RETURNS TRIGGER AS $$
     BEGIN
-      PERFORM pg_notify('task_status_channel', json_build_object('id', NEW.id, 'status', NEW.status, 'userId', NEW."userId")::text);
+      PERFORM pg_notify('task_status_channel', json_build_object('id', NEW.id, 'status', NEW.status, 'userId', NEW."userId", 'eventType', NEW.event->>'type')::text);
       RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
@@ -28,5 +28,6 @@ export async function down(db: Kysely<any>): Promise<void> {
     DROP FUNCTION IF EXISTS task_status_channel();
   `.execute(db)
 }
+
 
 

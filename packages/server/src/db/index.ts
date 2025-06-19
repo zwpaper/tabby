@@ -1,10 +1,10 @@
-import type { DB } from "@ragdoll/db";
+import type { DB, TaskCreateEvent } from "@ragdoll/db";
 import { Kysely, PostgresDialect } from "kysely";
 import moment from "moment";
 import { Pool } from "pg";
 import { parse } from "pg-connection-string";
 import { publishTaskEvent } from "../server";
-import { enqueueNotifyTaskSlack } from "../service/background-job";
+import { slackTaskService } from "../service/slack-task";
 import { uidCoder } from "./id-coders";
 
 const pool = (() => {
@@ -29,6 +29,7 @@ type TaskStatusChanged = {
   id: number;
   status: DB["task"]["status"]["__select__"];
   userId: string;
+  eventType: TaskCreateEvent["type"] | null;
 };
 
 export async function startListenDBEvents() {
@@ -43,14 +44,15 @@ export async function startListenDBEvents() {
         console.warn("No payload in task_status_channel");
         return;
       }
-      const { userId, id, status } = JSON.parse(
+      const { userId, id, status, eventType } = JSON.parse(
         msg.payload,
       ) as TaskStatusChanged;
 
       const uid = uidCoder.encode(id);
-      enqueueNotifyTaskSlack({
+      slackTaskService.enqueueNotifyTaskSlack({
         userId,
         uid,
+        eventType,
       });
 
       publishTaskEvent(userId, {

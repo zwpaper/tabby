@@ -5,6 +5,7 @@ import {
   parseGitOriginUrl,
   parseOwnerAndRepo,
 } from "@ragdoll/common/git-utils";
+import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { slackService } from "../slack";
 import { taskService } from "../task";
@@ -578,13 +579,34 @@ class SlackTaskService {
 
     return { requestsCount, totalTokens };
   }
+
+  shouldNotifyForEvent(eventType: TaskCreateEvent["type"] | null) {
+    return shouldNotifyForEvent(eventType);
+  }
+
+  enqueueNotifyTaskSlack({
+    userId,
+    uid,
+    eventType,
+  }: {
+    userId: string;
+    uid: string;
+    eventType: TaskCreateEvent["type"] | null;
+  }) {
+    if (!shouldNotifyForEvent(eventType)) return;
+    enqueueNotifyTaskSlack({ userId, uid });
+  }
 }
 
 export const slackTaskService = new SlackTaskService();
 
 // Utility functions
 function isNotifyableTask(task: Task): boolean {
-  return task?.event?.type === "slack:new-task";
+  return shouldNotifyForEvent(task?.event?.type || null);
+}
+
+function shouldNotifyForEvent(eventType: TaskCreateEvent["type"] | null) {
+  return eventType === "slack:new-task";
 }
 
 function extractErrorInfo(messages?: DBMessage[]): {
