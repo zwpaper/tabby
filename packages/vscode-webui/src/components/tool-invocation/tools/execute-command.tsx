@@ -40,6 +40,10 @@ export const executeCommandTool: React.FC<
 
   const { streamingResult } = lifecycle;
 
+  if (streamingResult && streamingResult.toolName !== "executeCommand") {
+    throw new Error("Unexpected streaming result for executeCommand tool");
+  }
+
   let output = streamingResult?.output.content || "";
   let completed = false;
   if (

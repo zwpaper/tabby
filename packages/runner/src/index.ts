@@ -1,1 +1,1 @@
-export type { TaskRunnerProgress, RunnerContext } from "./task-runner";
+export type { TaskRunnerProgress, RunnerContext, Task } from "./task-runner";

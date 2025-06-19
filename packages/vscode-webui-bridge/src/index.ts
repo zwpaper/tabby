@@ -1,4 +1,4 @@
-import type { TaskRunnerProgress } from "@ragdoll/runner";
+import type { Task, TaskRunnerProgress } from "@ragdoll/runner";
 import type { RunnerContext } from "@ragdoll/runner";
 
 export type {
@@ -45,9 +45,12 @@ export interface TaskRunnerState {
   status: "running" | "stopped";
   progress?: TaskRunnerProgress;
   error?: string;
+  task?: Task;
 }
 
-export type TaskRunnerOptions = Omit<RunnerContext, "cwd" | "rg">;
+export type TaskRunnerOptions = Omit<RunnerContext, "cwd" | "rg"> & {
+  abortSignal?: AbortSignal;
+};
 
 const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";

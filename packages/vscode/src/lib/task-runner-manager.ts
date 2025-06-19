@@ -51,10 +51,13 @@ export class TaskRunnerManager implements vscode.Disposable {
       this.taskRunners.set(uid, taskState);
       this.updateStatus();
 
-      for await (const progress of taskRunner.start()) {
+      for await (const progress of taskRunner.start(option?.abortSignal)) {
         logger.trace(`Task ${uid} progress:`, progress);
         // FIXME(zhiming): If progress is trying to run a toolcall which is not auto-approved, throw an error.
         taskState.progress = progress;
+        if (progress.type === "loading-task" && progress.phase === "end") {
+          taskState.task = progress.task;
+        }
         this.updateStatus();
       }
       logger.debug(`Task ${uid} completed successfully.`);

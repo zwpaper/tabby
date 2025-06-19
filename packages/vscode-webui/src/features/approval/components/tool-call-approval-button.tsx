@@ -56,7 +56,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   }, [lifecycle.status, lifecycle.reject]);
 
   const isAutoApproved = useToolAutoApproval(
-    pendingApproval.name,
+    pendingApproval,
     autoApproveGuard.current,
   );
 

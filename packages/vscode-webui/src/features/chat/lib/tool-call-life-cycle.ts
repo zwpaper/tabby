@@ -4,7 +4,10 @@ import {
   type ThreadSignalSerialization,
   threadSignal,
 } from "@quilted/threads/signals";
-import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
+import type {
+  ExecuteCommandResult,
+  TaskRunnerState,
+} from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import Emittery from "emittery";
 
@@ -14,6 +17,10 @@ type ExecuteCommandReturnType = {
   detach: () => void;
 };
 type ExecuteReturnType = ExecuteCommandReturnType | unknown;
+
+type NewTaskReturnType = {
+  result: ThreadSignalSerialization<{ [taskUid: string]: TaskRunnerState }>;
+};
 
 type ToolCallState =
   | {
@@ -40,10 +47,16 @@ type ToolCallState =
   | {
       type: "execute:streaming";
       abortController: AbortController;
-      executeCommand: {
-        detach: () => void;
-        output: ExecuteCommandResult;
-      };
+      streamingResult:
+        | {
+            toolName: "executeCommand";
+            detach: () => void;
+            output: ExecuteCommandResult;
+          }
+        | {
+            toolName: "newTask";
+            result: TaskRunnerState;
+          };
     }
   | {
       type: "complete";
@@ -82,7 +95,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
 
   get streamingResult() {
     return this.state.type === "execute:streaming"
-      ? this.state.executeCommand
+      ? this.state.streamingResult
       : undefined;
   }
 
@@ -166,7 +179,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       .catch((err) => ({
         error: `Failed to execute tool: ${err.message}`,
       }))
-      .then(this.onExecuteDone.bind(this));
+      .then((result) => this.onExecuteDone(result, args));
 
     this.transitTo("ready", {
       type: "execute",
@@ -197,7 +210,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
     });
   }
 
-  private onExecuteDone(result: ExecuteReturnType) {
+  private onExecuteDone(result: ExecuteReturnType, args: unknown) {
     const execute = this.checkState("onExecuteDone", "execute");
     if (
       this.toolName === "executeCommand" &&
@@ -206,6 +219,13 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       "output" in result
     ) {
       this.onExecuteCommand(result as ExecuteCommandReturnType);
+    } else if (
+      this.toolName === "newTask" &&
+      typeof result === "object" &&
+      result !== null &&
+      "result" in result
+    ) {
+      this.onExecuteNewTask(result as NewTaskReturnType, args);
     } else {
       this.transitTo("execute", {
         type: "complete",
@@ -232,7 +252,8 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
     this.transitTo("execute", {
       type: "execute:streaming",
       abortController,
-      executeCommand: {
+      streamingResult: {
+        toolName: "executeCommand",
         output: signal.value,
         detach,
       },
@@ -262,9 +283,66 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
         this.transitTo("execute:streaming", {
           type: "execute:streaming",
           abortController,
-          executeCommand: {
+          streamingResult: {
+            toolName: "executeCommand",
             output,
             detach,
+          },
+        });
+      }
+    });
+  }
+
+  private onExecuteNewTask(result: NewTaskReturnType, args: unknown) {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    const uid = (args as any)?._meta?.uid;
+    if (!uid) {
+      throw new Error(
+        `[${this.toolName}:${this.toolCallId}] newTask requires a valid UID in args._meta.uid`,
+      );
+    }
+    const signal = threadSignal(result.result);
+    const { abortController } = this.checkState("onExecuteNewTask", "execute");
+    this.transitTo("execute", {
+      type: "execute:streaming",
+      abortController,
+      streamingResult: {
+        toolName: "newTask",
+        result: signal.value[uid] ?? {
+          status: "running",
+        },
+      },
+    });
+
+    const unsubscribe = signal.subscribe((status) => {
+      const state = status[uid];
+      if (state?.status === "stopped") {
+        const result: { result?: string; error?: string } = {};
+        if (state.progress?.type === "runner-stopped") {
+          result.result = state.progress.result;
+          if (state.progress.error) {
+            result.error = `Task runner stopped: ${state.progress.error}`;
+          }
+        }
+
+        if (state.error) {
+          result.error = `${result.error} Run Task Failed: ${state.error}`;
+        }
+        this.transitTo("execute:streaming", {
+          type: "complete",
+          result,
+          reason: abortController.signal.aborted
+            ? "user-abort"
+            : "execute-finish",
+        });
+        unsubscribe();
+      } else {
+        this.transitTo("execute:streaming", {
+          type: "execute:streaming",
+          abortController,
+          streamingResult: {
+            toolName: "newTask",
+            result: state,
           },
         });
       }

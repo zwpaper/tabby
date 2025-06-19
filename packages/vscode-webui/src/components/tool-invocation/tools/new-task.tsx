@@ -1,5 +1,6 @@
 import { MessageMarkdown } from "@/components/message";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToolCallLifeCycle } from "@/features/chat";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { HighlightedText } from "../highlight-text";
 import { StatusIcon } from "../status-icon";
@@ -10,6 +11,10 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   tool,
   isExecuting,
 }) => {
+  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle(
+    tool.toolName,
+    tool.toolCallId,
+  );
   const { description, prompt } = tool.args || {};
 
   let result = undefined;
@@ -19,6 +24,12 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   let error = undefined;
   if (tool.state === "result" && "error" in tool.result) {
     error = tool.result.error;
+  }
+
+  const { streamingResult } = lifecycle;
+
+  if (streamingResult && streamingResult.toolName !== "newTask") {
+    throw new Error("Unexpected streaming result for newTask tool");
   }
 
   const title = (

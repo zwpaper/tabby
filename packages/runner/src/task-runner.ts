@@ -1,4 +1,5 @@
 import {
+  type ToolInvocationUIPart,
   generateId,
   getMessageParts,
   isAssistantMessageWithCompletedToolCalls,
@@ -40,7 +41,7 @@ import { todoWrite } from "./tools/todo-write";
 import { writeToFile } from "./tools/write-to-file";
 
 type TaskStatus = DB["task"]["status"]["__select__"];
-type Task = Awaited<ReturnType<TaskRunner["loadTask"]>>;
+export type Task = Awaited<ReturnType<TaskRunner["loadTask"]>>;
 
 export interface RunnerContext {
   /**
@@ -132,6 +133,8 @@ type TaskStepProgress =
   | {
       type: "runner-stopped";
       status: TaskStatus | undefined;
+      result?: string;
+      error?: string;
     };
 
 export type TaskRunnerProgress = TaskStepProgress & { step: number };
@@ -140,7 +143,7 @@ export class TaskRunner {
   private todos: Todo[] = [];
   private readonly retryLimit = 5;
   private retryCount = 0;
-  private abortController?: AbortController;
+  private abortSignal?: AbortSignal;
 
   constructor(
     private readonly apiClient: ApiClient,
@@ -234,7 +237,6 @@ export class TaskRunner {
     messages: UIMessage[],
   ): AsyncGenerator<TaskStepProgress> {
     const lastMessage = getLastMessage(messages);
-    const abortController = new AbortController();
     const streamDone = new Promise<TaskStatus>((resolve) => {
       let streamingStarted = false;
       const unsubscribe = this.pochiEvents.subscribe<TaskEvent>(
@@ -277,7 +279,7 @@ export class TaskRunner {
       },
       {
         init: {
-          signal: abortController.signal,
+          signal: this.abortSignal,
         },
       },
     );
@@ -345,7 +347,11 @@ export class TaskRunner {
     yield { type: "loading-task", phase: "end", task };
 
     if (task.status === "completed") {
-      yield { type: "runner-stopped", status: "completed" };
+      yield {
+        type: "runner-stopped",
+        status: "completed",
+        result: getTaskResult(task),
+      };
       return;
     }
 
@@ -385,7 +391,7 @@ export class TaskRunner {
       };
       const toolResult = await this.executeToolCall(
         nextToolCall,
-        this.abortController?.signal,
+        this.abortSignal,
       );
 
       yield {
@@ -410,15 +416,16 @@ export class TaskRunner {
    * Start the task runner and yield progress updates
    * @yields {@link TaskRunnerProgress} - Progress updates throughout task execution
    */
-  async *start(): AsyncGenerator<TaskRunnerProgress> {
-    this.abortController = new AbortController();
+  async *start(abortSignal?: AbortSignal): AsyncGenerator<TaskRunnerProgress> {
+    this.abortSignal = abortSignal ?? new AbortController().signal;
     let step = 0;
     while (true) {
       for await (const progress of this.step()) {
-        if (this.abortController.signal.aborted) {
+        if (this.abortSignal.aborted) {
           yield {
             type: "runner-stopped",
             status: "failed",
+            error: "Task execution aborted by user",
             step,
           };
           return;
@@ -434,10 +441,6 @@ export class TaskRunner {
       }
       step++;
     }
-  }
-
-  stop() {
-    this.abortController?.abort();
   }
 
   private async loadTask() {
@@ -559,4 +562,33 @@ function hasUserInputTool(message: Message): boolean {
       part.type === "tool-invocation" &&
       isUserInputTool(part.toolInvocation.toolName),
   );
+}
+
+/**
+ * Get task execution result from last attemptCompletion tool args
+ * @param messages task messages
+ * @returns
+ */
+export function getTaskResult(task: Task) {
+  const messages = toUIMessages(task.conversation?.messages || []);
+  const lastMessage = messages.at(-1);
+  if (!lastMessage) {
+    return;
+  }
+
+  if (lastMessage.role !== "assistant") {
+    return;
+  }
+  const part = lastMessage.parts.findLast(
+    (
+      part,
+    ): part is ToolInvocationUIPart & {
+      toolInvocation: { state: "result" };
+    } =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation.toolName === "attemptCompletion",
+  );
+  if (part) {
+    return part.toolInvocation.args.result;
+  }
 }
