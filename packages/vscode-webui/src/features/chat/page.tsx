@@ -320,10 +320,10 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading || isEditMode);
-
   useAddCompleteToolCalls({
     messages,
     addToolResult: allowAddToolResult ? addToolResult : undefined,
+    setMessages: setMessages,
   });
 
   useHandleChatEvents(isLoading ? undefined : append);

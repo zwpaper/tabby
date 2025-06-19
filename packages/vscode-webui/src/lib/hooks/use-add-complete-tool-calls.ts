@@ -1,10 +1,11 @@
 import { type ToolCallLifeCycle, useToolCallLifeCycle } from "@/features/chat";
-import type { UIMessage } from "@ai-sdk/ui-utils";
+import { type UIMessage, updateToolCallResult } from "@ai-sdk/ui-utils";
 import { useEffect } from "react";
 
 interface UseAddCompleteToolCallsProps {
   messages: UIMessage[];
   addToolResult?: (result: { toolCallId: string; result: unknown }) => void;
+  setMessages: (messages: UIMessage[]) => void;
 }
 
 function isToolStateCall(message: UIMessage, toolCallId: string): boolean {
@@ -26,6 +27,7 @@ function isToolStateCall(message: UIMessage, toolCallId: string): boolean {
 
 export function useAddCompleteToolCalls({
   messages,
+  setMessages,
   addToolResult,
 }: UseAddCompleteToolCallsProps): void {
   const { completeToolCalls } = useToolCallLifeCycle();
@@ -39,14 +41,24 @@ export function useAddCompleteToolCalls({
     for (const toolCall of completeToolCalls) {
       if (isToolStateCall(lastMessage, toolCall.toolCallId)) {
         const result = overrideResult(toolCall.complete);
-        addToolResult({
-          toolCallId: toolCall.toolCallId,
-          result,
-        });
+        if (toolCall.complete.reason !== "user-abort") {
+          addToolResult({
+            toolCallId: toolCall.toolCallId,
+            result,
+          });
+        } else {
+          // User abort, update the message with the result.
+          updateToolCallResult({
+            messages,
+            toolCallId: toolCall.toolCallId,
+            toolResult: result,
+          });
+          setMessages(messages);
+        }
         toolCall.dispose();
       }
     }
-  }, [completeToolCalls, messages, addToolResult]);
+  }, [completeToolCalls, messages, setMessages, addToolResult]);
 }
 
 function assertUnreachable(_x: never): never {
