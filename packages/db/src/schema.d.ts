@@ -151,6 +151,7 @@ export interface TaskLock {
   createdAt: Generated<Timestamp>;
   id: string;
   taskId: number;
+  updatedAt: Generated<Timestamp>;
 }
 
 export interface TaskSequence {

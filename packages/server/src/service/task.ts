@@ -720,6 +720,27 @@ class TaskService {
       });
     }
   }
+
+  async refreshLock(uid: string, userId: string, lockId: string) {
+    const result = await db
+      .updateTable("taskLock")
+      .set({ updatedAt: sql`CURRENT_TIMESTAMP` })
+      .where("id", "=", lockId)
+      .where("taskId", "in", (eb) =>
+        eb
+          .selectFrom("task as t")
+          .select("t.id")
+          .where("t.id", "=", uidCoder.decode(uid))
+          .where("t.userId", "=", userId),
+      )
+      .executeTakeFirst();
+
+    if (result.numUpdatedRows === 0n) {
+      throw new HTTPException(404, {
+        message: "Lock not found or task not found",
+      });
+    }
+  }
 }
 
 export const taskService = new TaskService();

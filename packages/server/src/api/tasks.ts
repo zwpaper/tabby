@@ -229,6 +229,17 @@ const tasks = new Hono()
       await taskService.releaseLock(uid, user.id, lockId);
       return c.json({ success: true });
     },
+  )
+  .post(
+    "/:uid/lock/:lockId",
+    zValidator("param", TaskLockParamsSchema),
+    requireAuth(),
+    async (c) => {
+      const { uid, lockId } = c.req.valid("param");
+      const user = c.get("user");
+      await taskService.refreshLock(uid, user.id, lockId);
+      return c.json({ success: true });
+    },
   );
 
 export default tasks;

@@ -10,10 +10,20 @@ export async function up(db: Kysely<any>) {
     .addColumn("createdAt", "timestamptz", (cb) =>
       cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`),
     )
+    .addColumn("updatedAt", "timestamptz", (cb) =>
+      cb.notNull().defaultTo(sql`CURRENT_TIMESTAMP`)
+    )
+    .execute();
+
+  await db.schema
+    .createIndex("task_lock_updated_at_index")
+    .on("taskLock")
+    .column("updatedAt")
     .execute();
 }
 
 export async function down(db: Kysely<any>) {
+  await db.schema.dropIndex("task_lock_updated_at_index").ifExists().execute();
   await db.schema.dropTable("taskLock").ifExists().execute();
 }
 
