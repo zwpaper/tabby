@@ -18,6 +18,7 @@ const logger = getLogger("TaskRunnerManager");
 @singleton()
 export class TaskRunnerManager implements vscode.Disposable {
   private taskRunners: Map<string, TaskRunnerState> = new Map();
+  private taskRunnersStop: Map<string, () => void> = new Map();
   readonly status: Signal<ReturnType<typeof this.buildStatus>>;
 
   constructor(
@@ -30,6 +31,12 @@ export class TaskRunnerManager implements vscode.Disposable {
   }
 
   async runTask(uid: string, option?: TaskRunnerOptions) {
+    const stopTask = () => {
+      logger.debug(`Task ${uid} aborted.`);
+      this.taskRunnersStop.get(uid)?.();
+      this.taskRunnersStop.delete(uid);
+    };
+    option?.abortSignal?.addEventListener("abort", stopTask);
     if (this.taskRunners.has(uid)) {
       const existingRunner = this.taskRunners.get(uid);
       if (existingRunner?.status === "running") {
@@ -49,9 +56,10 @@ export class TaskRunnerManager implements vscode.Disposable {
         ...option,
       });
       this.taskRunners.set(uid, taskState);
+      this.taskRunnersStop.set(uid, () => taskRunner.stop());
       this.updateStatus();
 
-      for await (const progress of taskRunner.start(option?.abortSignal)) {
+      for await (const progress of taskRunner.start()) {
         logger.trace(`Task ${uid} progress:`, progress);
         // FIXME(zhiming): If progress is trying to run a toolcall which is not auto-approved, throw an error.
         taskState.progress = progress;
@@ -67,6 +75,8 @@ export class TaskRunnerManager implements vscode.Disposable {
         error instanceof Error ? error.message : JSON.stringify(error);
     } finally {
       taskState.status = "stopped";
+      option?.abortSignal?.removeEventListener("abort", stopTask);
+      this.taskRunnersStop.delete(uid);
       this.updateStatus();
     }
   }

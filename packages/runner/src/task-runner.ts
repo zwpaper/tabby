@@ -143,7 +143,7 @@ export class TaskRunner {
   private todos: Todo[] = [];
   private readonly retryLimit = 5;
   private retryCount = 0;
-  private abortSignal?: AbortSignal;
+  private abortController?: AbortController;
 
   constructor(
     private readonly apiClient: ApiClient,
@@ -162,7 +162,7 @@ export class TaskRunner {
 
   private updateTodos(todos: Todo[] = []) {
     // Update the context todos with the new todos
-    this.todos = todos.length ? todos : mergeTodos(this.todos, todos);
+    this.todos = mergeTodos(this.todos, todos);
   }
 
   private async *retry(
@@ -279,7 +279,7 @@ export class TaskRunner {
       },
       {
         init: {
-          signal: this.abortSignal,
+          signal: this.abortController?.signal,
         },
       },
     );
@@ -391,7 +391,7 @@ export class TaskRunner {
       };
       const toolResult = await this.executeToolCall(
         nextToolCall,
-        this.abortSignal,
+        this.abortController?.signal,
       );
 
       yield {
@@ -416,12 +416,12 @@ export class TaskRunner {
    * Start the task runner and yield progress updates
    * @yields {@link TaskRunnerProgress} - Progress updates throughout task execution
    */
-  async *start(abortSignal?: AbortSignal): AsyncGenerator<TaskRunnerProgress> {
-    this.abortSignal = abortSignal ?? new AbortController().signal;
+  async *start(): AsyncGenerator<TaskRunnerProgress> {
+    this.abortController = new AbortController();
     let step = 0;
     while (true) {
       for await (const progress of this.step()) {
-        if (this.abortSignal.aborted) {
+        if (this.abortController.signal.aborted) {
           yield {
             type: "runner-stopped",
             status: "failed",
@@ -441,6 +441,10 @@ export class TaskRunner {
       }
       step++;
     }
+  }
+
+  stop() {
+    this.abortController?.abort();
   }
 
   private async loadTask() {
