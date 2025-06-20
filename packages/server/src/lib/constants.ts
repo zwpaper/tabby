@@ -55,7 +55,7 @@ export const StripePlans = [
     priceId: "price_1RApQzDZw4FSeDxlCtidLAf5",
     annualDiscountPriceId: "price_1RApRUDZw4FSeDxlDrULHG4Z",
     limits: {
-      basic: 100_000,
+      basic: 5_000,
       premium: 500,
     },
   },
