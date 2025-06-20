@@ -4,7 +4,6 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 
 const searchSchema = z.object({
-  enableRemotePochi: z.boolean().optional(),
   input: z.string().optional(),
 });
 
@@ -22,14 +21,14 @@ export const Route = createFileRoute("/")({
 
 function Root() {
   const { auth } = Route.useRouteContext();
-  const { enableRemotePochi } = Route.useSearch();
+  const { input } = Route.useSearch();
 
   // Use waitlist check hook to get latest waitlist approval status
   useWaitlistCheck();
 
   // If signed in, show HomeComponent
   if (auth) {
-    return <Home enableRemotePochi={enableRemotePochi} />;
+    return <Home initialInput={input} className="pt-[25vh]" />;
   }
 
   // If not signed in, show waitlist component

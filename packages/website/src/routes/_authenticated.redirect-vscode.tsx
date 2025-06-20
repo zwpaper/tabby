@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/redirect-vscode")({
 function RouteComponent() {
   const { uid, url } = Route.useSearch();
   const [showManualButton, setShowManualButton] = useState(false);
+  const isVscode = url.startsWith("vscode://");
   const { data: task } = useQuery({
     queryKey: ["task", uid],
     queryFn: async () => {
@@ -46,22 +47,22 @@ function RouteComponent() {
     return null;
   }, [task]);
 
-  const openVSCode = useCallback(() => {
+  const openRedirectUrl = useCallback(() => {
     window.open(url);
   }, [url]);
 
   useEffect(() => {
-    const delay = url.startsWith("vscode://") ? 1000 : 8000;
+    const delay = isVscode ? 1000 : 8000;
 
     const redirectTimeoutHandle = setTimeout(() => {
-      openVSCode();
+      openRedirectUrl();
       setShowManualButton(true);
     }, delay);
 
     return () => {
       clearTimeout(redirectTimeoutHandle);
     };
-  }, [openVSCode, url]);
+  }, [openRedirectUrl, isVscode]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted/30">
@@ -78,10 +79,12 @@ function RouteComponent() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
-          <div className="flex items-start gap-3 rounded-md border p-3">
-            <Puzzle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
-            <p>Ensure the Pochi VS Code extension is installed.</p>
-          </div>
+          {isVscode && (
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Puzzle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
+              <p>Ensure the Pochi VS Code extension is installed.</p>
+            </div>
+          )}
           <div className="flex items-start gap-3 rounded-md border p-3">
             <LifeBuoy className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-500" />
             <p>
@@ -93,7 +96,9 @@ function RouteComponent() {
         {showManualButton && (
           <CardFooter className="flex items-center justify-center">
             <p className="mb-2 text-muted-foreground text-xs">
-              If VS Code doesn't open automatically, click{" "}
+              {/* Differentiate between VSCode and Minion */}
+              If {isVscode ? "VS Code" : "task"} doesn't open automatically,
+              click{" "}
               <a
                 href={url}
                 target="_blank"

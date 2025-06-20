@@ -1,5 +1,7 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserButton } from "@/components/user-button";
+import { useSession } from "@/lib/auth-hooks";
+import { isTabbyEmployee } from "@/lib/utils/auth";
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { Terminal } from "lucide-react";
 
@@ -17,6 +19,8 @@ function RouteComponent() {
 }
 
 function NavHeader() {
+  const { data: auth } = useSession();
+
   return (
     <span className="mb-4 flex w-full justify-between px-2 pt-4 md:mb-8 md:px-6">
       <span className="flex items-center gap-6">
@@ -41,6 +45,17 @@ function NavHeader() {
           >
             Tasks
           </Link>
+          {isTabbyEmployee(auth?.user) && (
+            <Link
+              to="/tasks/create"
+              className="px-2 py-1.5 hover:text-foreground"
+              activeProps={{
+                className: "text-foreground font-medium",
+              }}
+            >
+              Create Task
+            </Link>
+          )}
           {false && (
             <Link
               to="/minions"

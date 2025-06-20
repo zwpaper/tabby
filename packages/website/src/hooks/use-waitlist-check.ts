@@ -1,15 +1,16 @@
 import { type User, authClient } from "@/lib/auth-client";
+import { isTabbyEmployee } from "@/lib/utils/auth";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 /**
- * Checks if a user is approved for waitlist access
- * @param user - The user object to check
- * @returns true if user is waitlist approved or is a tabbyml.com employee
+ * Checks if a user is approved for waitlist access.
+ * @param user The user object to check.
+ * @returns true if the user is approved for the waitlist.
  */
 function isUserWaitlistApproved(user: User | null | undefined): boolean {
   if (!user) return false;
-  return user.isWaitlistApproved || user.email.endsWith("@tabbyml.com");
+  return user.isWaitlistApproved || isTabbyEmployee(user);
 }
 
 /**

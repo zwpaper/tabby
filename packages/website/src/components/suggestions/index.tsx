@@ -6,6 +6,7 @@ import {
   FileSignatureIcon,
   ImageIcon,
   LayoutDashboardIcon,
+  Loader2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import scene3DPrompt from "./prompts/3d-scene.md";
@@ -18,14 +19,26 @@ interface PromptSuggestionsProps {
   hasSelectImage: boolean;
   handleSelectImage: () => void;
   handleSubmit: (input: string, name: string) => void;
+  isSubmitting: boolean;
 }
 
 export function PromptSuggestions({
   hasSelectImage,
   handleSelectImage,
   handleSubmit,
+  isSubmitting,
 }: PromptSuggestionsProps) {
   const [waitingForImageSelect, setWaitingForImageSelect] = useState(false);
+  const [pendingSuggestion, setPendingSuggestion] = useState<
+    string | undefined
+  >();
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setPendingSuggestion(undefined);
+    }
+  }, [isSubmitting]);
+
   useEffect(() => {
     if (hasSelectImage && waitingForImageSelect) {
       setWaitingForImageSelect(false);
@@ -39,6 +52,10 @@ export function PromptSuggestions({
   }, [handleSubmit, hasSelectImage, waitingForImageSelect]);
 
   const handleSuggestionClick = async (prompt: string, name: string) => {
+    if (isSubmitting) {
+      return;
+    }
+    setPendingSuggestion(name);
     if (name === "clone-a-screenshot") {
       setWaitingForImageSelect(true);
       if (!hasSelectImage) {
@@ -63,7 +80,11 @@ export function PromptSuggestions({
               }
               className="rounded-xl border border-gray-200 bg-white/80 py-2 shadow-md backdrop-blur-sm transition-all duration-300 ease-in-out hover:shadow-[0_0_2px_2px_theme(colors.cyan.400/0.5),_0_0_4px_3px_theme(colors.purple.500/0.5)] dark:border-gray-700 dark:hover:border-purple-400 dark:hover:shadow-[0_0_2px_2px_theme(colors.cyan.300/0.7),_0_0_4px_3px_theme(colors.purple.400/0.5)]"
             >
-              {suggestion.icon}
+              {pendingSuggestion === suggestion.name && isSubmitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                suggestion.icon
+              )}
               {suggestion.label}
             </Button>
           ))}

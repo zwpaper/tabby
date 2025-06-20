@@ -5,9 +5,9 @@ import { PromptSuggestions } from "@/components/suggestions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { UserButton } from "@/components/user-button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apiClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-hooks";
 import { useEnhancingPrompt } from "@/lib/use-enhancing-prompt";
 import { cn } from "@/lib/utils";
 import {
@@ -16,7 +16,6 @@ import {
   processImageFiles,
   validateImages,
 } from "@/lib/utils/image";
-import { Route } from "@/routes";
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { useRouter } from "@tanstack/react-router";
 import type { Attachment } from "ai";
@@ -33,24 +32,25 @@ import { HomeBackgroundGradient } from "./constants";
 
 export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at once
 
-interface SearchParams {
-  input?: string;
-}
-
-export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
-  const { auth } = Route.useRouteContext();
+export function Home({
+  initialInput,
+  className,
+  titleVisible = true,
+}: { initialInput?: string; className?: string; titleVisible?: boolean }) {
+  const { data: auth } = useSession();
   const isMobileDevice = useIsMobile();
   const [showMobileWarning, setShowMobileWarning] = useState(false);
-
-  const search = Route.useSearch() as SearchParams;
+  const [creationMode, setCreationMode] = useState<"remote" | "local">(
+    "remote",
+  );
   const { enhancePrompt, isPending: isEnhancing } = useEnhancingPrompt();
 
   const [inputValue, setInputValue] = useState(() => {
-    if (search.input) {
+    if (initialInput) {
       try {
-        return decodeURIComponent(search.input);
+        return decodeURIComponent(initialInput);
       } catch (e) {
-        return search.input;
+        return initialInput;
       }
     }
     return "";
@@ -188,6 +188,7 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
       setShowAuthDialog(true);
     } else {
       try {
+        setIsSubmitting(true);
         let attachments: Attachment[] | undefined = undefined;
 
         if (files.length > 0) {
@@ -201,7 +202,7 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
         const taskResponse = await apiClient.api.tasks.$post({
           json: {
             prompt: input,
-            remote: enableRemotePochi,
+            remote: creationMode === "remote",
             event: {
               type: "website:new-project",
               data: {
@@ -217,7 +218,8 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
         });
 
         if (!taskResponse.ok) {
-          throw new Error("Failed to create task");
+          const errorMessage = await taskResponse.text();
+          throw new Error(errorMessage);
         }
 
         const { uid, url } = await taskResponse.json();
@@ -313,27 +315,22 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
     }
   };
 
+  const isRemoteMode = creationMode === "remote";
+
   return (
     <div
       className={cn(
-        "relative flex min-h-screen flex-col items-center p-4 text-black dark:text-white",
+        "relative flex min-h-screen flex-col items-center p-4 pt-8 text-black dark:text-white",
         HomeBackgroundGradient,
+        className,
       )}
     >
-      <div className="absolute top-10 right-10">
-        <UserButton
-          size="icon"
-          classNames={{
-            content: {
-              base: "mr-10",
-            },
-          }}
-        />
-      </div>
-      <h1 className="mt-[25vh] mb-12 flex gap-4 font-bold text-3xl tracking-tight md:text-5xl">
-        <Terminal className="hidden size-12 animate-[spin_6s_linear_infinite] md:block" />
-        What can I help you ship?
-      </h1>
+      {titleVisible && (
+        <h1 className="mb-12 flex gap-4 font-bold text-3xl tracking-tight md:text-5xl">
+          <Terminal className="hidden size-12 animate-[spin_6s_linear_infinite] md:block" />
+          What can I help you ship?
+        </h1>
+      )}
       <form
         className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80"
         onSubmit={handleSubmit}
@@ -357,7 +354,33 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1 rounded-lg bg-gray-200/50 p-1 dark:bg-gray-700/50">
+            <Button
+              type="button"
+              variant={isRemoteMode ? "default" : "ghost"}
+              size="sm"
+              className={cn("h-6 rounded-sm text-xs", {
+                "text-white": isRemoteMode,
+                "text-gray-500 dark:text-gray-400": !isRemoteMode,
+              })}
+              onClick={() => setCreationMode("remote")}
+            >
+              Remote
+            </Button>
+            <Button
+              type="button"
+              variant={!isRemoteMode ? "default" : "ghost"}
+              size="sm"
+              className={cn("h-6 rounded-sm text-xs", {
+                "text-white": !isRemoteMode,
+                "text-gray-500 dark:text-gray-400": isRemoteMode,
+              })}
+              onClick={() => setCreationMode("local")}
+            >
+              Local
+            </Button>
+          </div>
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
@@ -416,8 +439,9 @@ export function Home({ enableRemotePochi }: { enableRemotePochi?: boolean }) {
         hasSelectImage={!!files.length}
         handleSelectImage={handleImageUploadClick}
         handleSubmit={doSubmit}
+        isSubmitting={isSubmitting}
       />
-      <div className="mt-4 text-right text-destructive text-sm">
+      <div className="mt-4 text-right font-medium text-destructive text-sm">
         {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. submitError */}
         {imageSelectionError?.message ||
           uploadImageError?.message ||

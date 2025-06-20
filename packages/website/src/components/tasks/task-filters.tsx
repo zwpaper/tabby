@@ -87,7 +87,7 @@ export function TaskFilters({
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-      <div className="relative w-full sm:w-[280px]">
+      <div className="relative w-full sm:w-[240px]">
         <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search tasks..."
@@ -124,7 +124,7 @@ export function TaskFilters({
           variant="outline"
           size="sm"
           onClick={clearAllFilters}
-          className="self-start sm:self-auto"
+          className="h-9 self-start sm:self-auto"
         >
           Clear filters
         </Button>
