@@ -48,8 +48,10 @@ export function createApiClient(container: DependencyContainer) {
   const tokenStorage = container.resolve(TokenStorage);
 
   const app = hc<AppType>(getServerBaseUrl(), {
-    headers: {
-      Authorization: `Bearer ${tokenStorage.token.value}`,
+    headers: () => {
+      return {
+        Authorization: `Bearer ${tokenStorage.token.value}`,
+      };
     },
   });
 
