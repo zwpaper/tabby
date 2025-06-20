@@ -70,7 +70,7 @@ export class TabState implements vscode.Disposable {
 
 function getActiveSelection(): FileSelection | undefined {
   const activeEditor = vscode.window.activeTextEditor;
-  if (activeEditor?.document) {
+  if (activeEditor?.document && activeEditor.document.uri.scheme === "file") {
     const selection = activeEditor.selection;
     const relativePath = vscode.workspace.asRelativePath(
       activeEditor.document.uri,
