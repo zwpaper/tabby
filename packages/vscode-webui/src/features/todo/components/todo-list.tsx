@@ -145,6 +145,12 @@ function TodoListHeader({
     [displayTodos],
   );
 
+  useEffect(() => {
+    if (pendingTodosNum === 0 && todos.length > 0) {
+      setIsCollapsed(true);
+    }
+  }, [pendingTodosNum, todos, setIsCollapsed]);
+
   const toggleCollapse = () => {
     if (disableCollapse) return;
     if (editState?.isEditMode) return;
@@ -391,7 +397,10 @@ function TodoIcon({ todo }: TodoIconProps) {
 }
 
 // Items component for displaying the todo list
-function TodoListItems({ className }: { className?: string }) {
+function TodoListItems({
+  className,
+  viewportClassname,
+}: { className?: string; viewportClassname?: string }) {
   const { todos, isCollapsed, editState } = useTodoListContext();
 
   // Use draftTodos when in edit mode, otherwise use todos
@@ -400,7 +409,10 @@ function TodoListItems({ className }: { className?: string }) {
     : todos.filter((todo) => todo.status !== "cancelled");
 
   return (
-    <ScrollArea className="px-1 pb-2" viewportClassname={className}>
+    <ScrollArea
+      className={cn("px-1 pb-2", className)}
+      viewportClassname={viewportClassname}
+    >
       <motion.div
         initial={false}
         animate={isCollapsed ? "collapsed" : "open"}
@@ -499,7 +511,7 @@ export function LegacyTodoList({
           updateTodoStatus={updateTodoStatus}
         />
       </TodoList.Header>
-      <TodoList.Items className="max-h-48" />
+      <TodoList.Items viewportClassname="max-h-48" />
     </TodoList>
   );
 }

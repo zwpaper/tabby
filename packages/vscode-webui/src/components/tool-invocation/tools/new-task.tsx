@@ -1,7 +1,11 @@
 import { MessageMarkdown } from "@/components/message";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToolCallLifeCycle } from "@/features/chat";
+import { TodoList } from "@/features/todo";
+import { apiClient } from "@/lib/auth-client";
+import type { Todo } from "@ragdoll/db";
 import type { ClientToolsType } from "@ragdoll/tools";
+import { useEffect, useState } from "react";
 import { HighlightedText } from "../highlight-text";
 import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
@@ -16,6 +20,14 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     tool.toolCallId,
   );
   const { description, prompt } = tool.args || {};
+  const [todos, setTodos] = useState<Todo[]>([]);
+
+  const taskUid = tool.args?._meta?.uid;
+  if (!taskUid) {
+    throw new Error(
+      "The 'newTask' tool must have a task UID in its arguments (_meta.uid).",
+    );
+  }
 
   let result = undefined;
   if (tool.state === "result" && "result" in tool.result) {
@@ -26,11 +38,35 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     error = tool.result.error;
   }
 
+  useEffect(() => {
+    if (result || error) {
+      apiClient.api.tasks[":uid"]
+        .$get({
+          param: {
+            uid: taskUid,
+          },
+        })
+        .then(async (response) => {
+          const task = await response.json();
+          if (task) {
+            setTodos(task.todos || []);
+          }
+        });
+    }
+  }, [result, error, taskUid]);
+
   const { streamingResult } = lifecycle;
 
   if (streamingResult && streamingResult.toolName !== "newTask") {
     throw new Error("Unexpected streaming result for newTask tool");
   }
+
+  useEffect(() => {
+    const todos = streamingResult?.result?.task?.todos;
+    if (todos) {
+      setTodos(todos);
+    }
+  }, [streamingResult?.result?.task?.todos]);
 
   const title = (
     <>
@@ -41,24 +77,34 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
       </span>
     </>
   );
+
   return (
     <ExpandableToolContainer
       title={title}
       expandableDetail={
         <div className="overflow-hidden rounded-lg border bg-[var(--vscode-editor-background)]">
-          <ScrollArea className="p-4" viewportClassname="max-h-52">
-            <MessageMarkdown isMinimalView>{prompt || ""}</MessageMarkdown>
+          <ScrollArea className="p-4" viewportClassname="max-h-100">
+            <ScrollArea
+              className="mb-2 rounded-lg bg-card p-4"
+              viewportClassname="max-h-52"
+            >
+              <MessageMarkdown isMinimalView>{prompt || ""}</MessageMarkdown>
+            </ScrollArea>
+            {todos && todos.length > 0 && (
+              <TodoList todos={todos} className="[&>.todo-border]:!hidden">
+                <TodoList.Header
+                  disableCollapse={false}
+                  disableInProgressTodoTitle={true}
+                />
+                <TodoList.Items className="py-0" />
+              </TodoList>
+            )}
+            {(result || error) && (
+              <MessageMarkdown isMinimalView>
+                {result || error || ""}
+              </MessageMarkdown>
+            )}
           </ScrollArea>
-          {(result || error) && (
-            <>
-              <hr className="my-2 border-[var(--vscode-editorWidget-border)]" />
-              <ScrollArea className="p-4" viewportClassname="max-h-52">
-                <MessageMarkdown isMinimalView>
-                  {result || error || ""}
-                </MessageMarkdown>
-              </ScrollArea>
-            </>
-          )}
         </div>
       }
     />

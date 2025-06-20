@@ -326,7 +326,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
         }
 
         if (state.error) {
-          result.error = `${result.error} Run Task Failed: ${state.error}`;
+          result.error = `Run Task Failed: ${state.error}`;
         }
         this.transitTo("execute:streaming", {
           type: "complete",

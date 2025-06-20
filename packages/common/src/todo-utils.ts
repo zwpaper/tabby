@@ -2,6 +2,11 @@ import type { Todo } from "@ragdoll/db";
 import type { UIMessage } from "ai";
 
 export function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
+  // If newTodos is empty, return existing todos
+  if (newTodos.length === 0) {
+    return todos;
+  }
+
   const todoMap = new Map(todos.map((todo) => [todo.id, todo]));
   for (const newTodo of newTodos) {
     todoMap.set(newTodo.id, newTodo);
@@ -33,7 +38,7 @@ export function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
   return ret;
 }
 
-export function findTodos(message: UIMessage) {
+export function findTodos(message: UIMessage): Todo[] | undefined {
   if (message.role !== "assistant") {
     return;
   }
