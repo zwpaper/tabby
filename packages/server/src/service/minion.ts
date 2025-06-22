@@ -1,21 +1,9 @@
-import { Sandbox, type SandboxOpts } from "@e2b/code-interpreter";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
 import { signalKeepAliveSandbox } from "./background-job";
+import { type CreateSandboxOptions, getSandboxProvider } from "./sandbox";
 
-const SandboxHome = "/home/user";
-const SandboxLogDir = `${SandboxHome}/.log`;
-const RemotePochiHome = `${SandboxHome}/.remote-pochi`;
-const SandboxPath = {
-  home: SandboxHome,
-  project: `${SandboxHome}/project`,
-  init: `${RemotePochiHome}/init.sh`,
-  initLog: `${SandboxLogDir}/init.log`,
-  runnerLog: `${SandboxLogDir}/runner.log`,
-};
-
-const TemplateId = process.env.E2B_TEMPLATE_ID || "4kfoc92tmo1x9igbf6qp";
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 
 interface CreateMinionOptions {
@@ -29,6 +17,12 @@ interface CreateMinionOptions {
 }
 
 class MinionService {
+  private sandboxProvider: ReturnType<typeof getSandboxProvider>;
+
+  constructor() {
+    this.sandboxProvider = getSandboxProvider();
+  }
+
   async create({
     userId,
     uid,
@@ -60,35 +54,32 @@ class MinionService {
       envs.GH_REPO = `${githubRepository.owner}/${githubRepository.repo}`;
     }
 
-    const opts: SandboxOpts = {
+    const opts: CreateSandboxOptions = {
+      userId,
+      uid,
+      githubAccessToken,
+      githubRepository: githubRepository
+        ? {
+            owner: githubRepository.owner,
+            repo: githubRepository.repo,
+          }
+        : undefined,
       envs: envs,
       timeoutMs: SandboxTimeoutMs,
     };
 
-    const sandbox = await Sandbox.create(TemplateId, opts);
+    const sandbox = await this.sandboxProvider.create(opts);
     const res = await db
       .insertInto("minion")
       .values({
         userId,
-        e2bSandboxId: sandbox.sandboxId,
-        url: getUrl(sandbox, uid),
+        e2bSandboxId: sandbox.id,
+        url: this.sandboxProvider.getUrl(sandbox.id, uid),
       })
       .returningAll()
       .executeTakeFirstOrThrow();
 
-    sandbox.commands.run(
-      `${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
-      {
-        envs: {
-          ...envs,
-          POCHI_MINION_ID: minionIdCoder.encode(res.id),
-        },
-        background: true,
-        cwd: SandboxPath.home,
-      },
-    );
-
-    signalKeepAliveSandbox({ sandboxId: sandbox.sandboxId });
+    signalKeepAliveSandbox({ sandboxId: sandbox.id });
     return { ...res, id: minionIdCoder.encode(res.id) };
   }
 
@@ -145,32 +136,33 @@ class MinionService {
 
   private async getSandbox(userId: string, minionId: string) {
     const minion = await this.getMinion(userId, minionId);
-    const sandbox = await Sandbox.connect(minion.e2bSandboxId);
+    const sandbox = await this.sandboxProvider.connect(minion.e2bSandboxId);
     return { minion, sandbox };
   }
 
   async get(userId: string, minionId: string) {
     const { minion, sandbox } = await this.getSandbox(userId, minionId);
-    const isRunning = await sandbox.isRunning();
+
     return {
       ...minion,
       id: minionIdCoder.encode(minion.id),
-      sandbox: isRunning
-        ? {
-            initLog: await sandbox.files.read(SandboxPath.initLog),
-            runnerLog: await sandbox.files.read(SandboxPath.runnerLog),
-          }
+      sandbox: sandbox.isRunning
+        ? await (async () => {
+            const logs = await this.sandboxProvider.getLogs(sandbox.id);
+            return {
+              initLog: logs ? logs.initLog : "",
+              runnerLog: logs ? logs.runnerLog : "",
+            };
+          })()
         : null,
     };
   }
 
   async redirect(userId: string, minionId: string) {
     const { minion, sandbox } = await this.getSandbox(userId, minionId);
-    if (!(await sandbox.isRunning())) {
+    if (!sandbox.isRunning) {
       try {
-        await Sandbox.resume(minion.e2bSandboxId, {
-          timeoutMs: SandboxTimeoutMs,
-        });
+        await this.sandboxProvider.resume(sandbox.id, SandboxTimeoutMs);
       } catch (err) {
         if (err instanceof Error && err.name === "NotFoundError") {
           throw new HTTPException(404, {
@@ -182,7 +174,7 @@ class MinionService {
 
     signalKeepAliveSandbox({ sandboxId: minion.e2bSandboxId });
 
-    const url = getUrl(sandbox);
+    const url = this.sandboxProvider.getUrl(sandbox.id);
     await verifyMinionUrl(url);
 
     return url;
@@ -224,24 +216,6 @@ async function verifyMinionUrl(url: string) {
   })();
 
   await Promise.race([timeoutPromise, verifyPromise]);
-}
-
-function getUrl(sandbox: Sandbox, uid?: string) {
-  const url = new URL(`https://${sandbox.getHost(9080)}`);
-  if (uid) {
-    url.searchParams.append(
-      "callback",
-      encodeURIComponent(
-        JSON.stringify({
-          authority: "tabbyml.pochi",
-          query: `task=${uid}`,
-        }),
-      ),
-    );
-  } else {
-    url.searchParams.append("folder", SandboxPath.project);
-  }
-  return url.toString();
 }
 
 export const minionService = new MinionService();
