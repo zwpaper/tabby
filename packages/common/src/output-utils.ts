@@ -1,7 +1,8 @@
 /**
  * Fixes common issues in AI-generated text content
  */
-const TrimStrings = ["\\\n", "\\", "```", "'''", '"""'];
+const TrimStrings = ["\\\n", "\\"];
+const WrapStrings = ["```", "'''", '"""'];
 
 export function fixCodeGenerationOutput(text: string): string {
   if (!text) {
@@ -17,6 +18,15 @@ export function fixCodeGenerationOutput(text: string): string {
     }
     if (processed.endsWith(str)) {
       processed = processed.substring(0, processed.length - str.length);
+    }
+  }
+
+  for (const str of WrapStrings) {
+    if (processed.startsWith(str) && processed.endsWith(str)) {
+      processed = processed.substring(
+        str.length,
+        processed.length - str.length,
+      );
     }
   }
 

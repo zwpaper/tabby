@@ -136,7 +136,7 @@ export class DiffView implements vscode.Disposable {
       // This is necessary (as compared to inserting one line at a time) to handle cases where html tags on previous lines are auto closed for example
       const edit = new vscode.WorkspaceEdit();
       const rangeToReplace = new vscode.Range(0, 0, currentLine + 1, 0);
-      const contentToReplace = `${accumulatedLines.slice(0, currentLine + 1).join("\n")}\n`;
+      const contentToReplace = `${accumulatedLines.slice(0, currentLine + 1).join("\n")}`;
       edit.replace(document.uri, rangeToReplace, contentToReplace);
       await vscode.workspace.applyEdit(edit);
 
