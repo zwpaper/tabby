@@ -8,7 +8,7 @@ import { useEffect } from "react";
  * @param user The user object to check.
  * @returns true if the user is approved for the waitlist.
  */
-function isUserWaitlistApproved(user: User | null | undefined): boolean {
+export function isUserWaitlistApproved(user: User | null | undefined): boolean {
   if (!user) return false;
   return user.isWaitlistApproved || isTabbyEmployee(user);
 }
