@@ -49,7 +49,7 @@ export function TaskRow({ task, fuzzyResult }: TaskRowProps) {
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
               {task?.updatedAt && (
                 <div className="flex items-center gap-1.5 text-muted-foreground text-xs sm:text-sm">
-                  <Calendar className="h-3 w-3 opacity-70 sm:h-3.5 sm:w-3.5" />
+                  <Calendar className="h-3 w-3 shrink-0 opacity-70 sm:h-3.5 sm:w-3.5" />
                   <span className="font-medium">
                     {formatRelativeTime(task.updatedAt, "Updated")}
                   </span>
