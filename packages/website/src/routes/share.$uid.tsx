@@ -54,17 +54,16 @@ function ThemeWrapped() {
 function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const { theme } = useTheme();
-
   return (
     <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8">
       {/* Task header */}
       <TaskHeader>
-        <TaskHeader.Title title={loaderData?.title}>
+        <TaskHeader.Title title={loaderData.title}>
           <ThemeToggle />
         </TaskHeader.Title>
         <TaskHeader.Subtitle
-          updatedAt={loaderData?.updatedAt}
-          git={loaderData?.git}
+          updatedAt={loaderData.updatedAt}
+          git={loaderData.git}
         >
           <WaitlistButton />
         </TaskHeader.Subtitle>

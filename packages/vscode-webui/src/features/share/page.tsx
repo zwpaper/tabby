@@ -14,6 +14,7 @@ export function SharePage() {
   const logo = searchParams.get("logo") ?? undefined;
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [isInitialized, setIsInitialized] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [user, setUser] = useState<{ name: string; image?: string | null }>();
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -25,6 +26,7 @@ export function SharePage() {
         setMessages(shareMessage.messages);
         setUser(shareMessage.user);
         setTodos(shareMessage.todos);
+        setIsInitialized(true);
       }
     };
     window.addEventListener("message", handler);
@@ -32,6 +34,17 @@ export function SharePage() {
       window.removeEventListener("message", handler);
     };
   }, []);
+
+  useEffect(() => {
+    if (isInitialized) {
+      window.parent.postMessage(
+        {
+          type: "messagesLoaded",
+        },
+        "*",
+      );
+    }
+  }, [isInitialized]);
 
   // Set up ResizeObserver to monitor content height and send updates to parent
   useEffect(() => {
@@ -61,7 +74,6 @@ export function SharePage() {
   }, []);
 
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
-
   return (
     <VSCodeWebProvider>
       <ChatContextProvider>

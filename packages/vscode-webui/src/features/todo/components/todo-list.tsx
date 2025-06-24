@@ -146,10 +146,10 @@ function TodoListHeader({
   );
 
   useEffect(() => {
-    if (pendingTodosNum === 0 && todos.length > 0) {
+    if (pendingTodosNum === 0 && todos.length > 0 && !disableCollapse) {
       setIsCollapsed(true);
     }
-  }, [pendingTodosNum, todos, setIsCollapsed]);
+  }, [pendingTodosNum, todos, setIsCollapsed, disableCollapse]);
 
   const toggleCollapse = () => {
     if (disableCollapse) return;

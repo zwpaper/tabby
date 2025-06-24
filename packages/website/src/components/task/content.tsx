@@ -43,7 +43,7 @@ function TaskContent({
   const [loaded, setLoaded] = useState(false);
   const [iframeError, setIframeError] = useState<Error | undefined>(undefined);
   const [iframeHeight, setIframeHeight] = useState<number>(600); // Default height
-  const [isMessageReady, setIsMessageReady] = useState(false);
+  const [isIframeInitialized, setIsIframeInitialized] = useState(false);
 
   const displayError = iframeError;
 
@@ -89,6 +89,10 @@ function TaskContent({
       if (isDEV && event.origin !== webviewOrigin) return;
       if (!isDEV && event.origin !== window.location.origin) return;
 
+      if (event.data?.type === "messagesLoaded") {
+        setIsIframeInitialized(true);
+      }
+
       if (
         event.data?.type === "resize" &&
         typeof event.data.height === "number"
@@ -114,25 +118,23 @@ function TaskContent({
           targetOrigin: isDEV ? webviewOrigin : "/",
         },
       );
-      setTimeout(() => {
-        setIsMessageReady(true);
-      }, 50);
     }
   }, [conversation, todos, user, loaded]);
 
   return (
     <div className={cn("flex flex-1 flex-col", className)} {...props}>
       {/* Skeleton Loader */}
-      {!isMessageReady && !displayError && <MessageContentSkeleton />}
+      {!isIframeInitialized && !displayError && <MessageContentSkeleton />}
       {/* Error states */}
       {!!displayError && <ErrorDisplay taskError={null} className="h-full" />}
       <iframe
         ref={iframeRef}
         className={cn("w-full", {
-          hidden: !isMessageReady || displayError,
+          hidden: !isIframeInitialized || displayError,
         })}
         style={{
-          height: isMessageReady && !displayError ? `${iframeHeight}px` : 0,
+          height:
+            isIframeInitialized && !displayError ? `${iframeHeight}px` : 0,
         }}
         title="task"
         src={iframeUrl}
