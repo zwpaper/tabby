@@ -42,7 +42,6 @@ import {
   listWorkspaceFiles,
 } from "@ragdoll/common/node";
 import type { Environment } from "@ragdoll/db";
-import type { TaskRunnerState } from "@ragdoll/runner";
 import {
   type PreviewToolFunctionType,
   ServerToolApproved,
@@ -55,6 +54,7 @@ import type {
   ResourceURI,
   SessionState,
   TaskRunnerOptions,
+  TaskRunnerState,
   VSCodeHostApi,
 } from "@ragdoll/vscode-webui-bridge";
 import type { Tool } from "ai";
@@ -360,7 +360,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   }
 
   runTask = async (uid: string, options?: TaskRunnerOptions) => {
-    this.taskRunnerManager.startTask(uid, options);
+    this.taskRunnerManager.runTask(uid, options);
   };
 
   readTaskRunners = async (): Promise<

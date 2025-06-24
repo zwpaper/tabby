@@ -247,7 +247,7 @@ function Tasks({ cwd, minionId }: { cwd: string; minionId?: string }) {
                     key={task.uid}
                     task={task}
                     runningInBackground={
-                      taskRunners[task.uid]?.state === "running"
+                      taskRunners[task.uid]?.status === "running"
                     }
                   />
                 ))}

@@ -4,8 +4,10 @@ import {
   type ThreadSignalSerialization,
   threadSignal,
 } from "@quilted/threads/signals";
-import type { TaskRunnerState } from "@ragdoll/runner";
-import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
+import type {
+  ExecuteCommandResult,
+  TaskRunnerState,
+} from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import Emittery from "emittery";
 
@@ -14,10 +16,11 @@ type ExecuteCommandReturnType = {
   output: ThreadSignalSerialization<ExecuteCommandResult>;
   detach: () => void;
 };
+type ExecuteReturnType = ExecuteCommandReturnType | unknown;
+
 type NewTaskReturnType = {
-  result: ThreadSignalSerialization<TaskRunnerState>;
+  result: ThreadSignalSerialization<{ [taskUid: string]: TaskRunnerState }>;
 };
-type ExecuteReturnType = ExecuteCommandReturnType | NewTaskReturnType | unknown;
 
 type ToolCallState =
   | {
@@ -176,7 +179,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       .catch((err) => ({
         error: `Failed to execute tool: ${err.message}`,
       }))
-      .then((result) => this.onExecuteDone(result));
+      .then((result) => this.onExecuteDone(result, args));
 
     this.transitTo("ready", {
       type: "execute",
@@ -207,7 +210,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
     });
   }
 
-  private onExecuteDone(result: ExecuteReturnType) {
+  private onExecuteDone(result: ExecuteReturnType, args: unknown) {
     const execute = this.checkState("onExecuteDone", "execute");
     if (
       this.toolName === "executeCommand" &&
@@ -222,7 +225,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       result !== null &&
       "result" in result
     ) {
-      this.onExecuteNewTask(result as NewTaskReturnType);
+      this.onExecuteNewTask(result as NewTaskReturnType, args);
     } else {
       this.transitTo("execute", {
         type: "complete",
@@ -290,7 +293,14 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
     });
   }
 
-  private onExecuteNewTask(result: NewTaskReturnType) {
+  private onExecuteNewTask(result: NewTaskReturnType, args: unknown) {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    const uid = (args as any)?._meta?.uid;
+    if (!uid) {
+      throw new Error(
+        `[${this.toolName}:${this.toolCallId}] newTask requires a valid UID in args._meta.uid`,
+      );
+    }
     const signal = threadSignal(result.result);
     const { abortController } = this.checkState("onExecuteNewTask", "execute");
     this.transitTo("execute", {
@@ -298,17 +308,26 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       abortController,
       streamingResult: {
         toolName: "newTask",
-        result: signal.value,
+        result: signal.value[uid] ?? {
+          status: "running",
+        },
       },
     });
 
-    const unsubscribe = signal.subscribe((runnerState) => {
-      if (runnerState.state === "stopped" || runnerState.state === "error") {
-        const result =
-          runnerState.state === "stopped"
-            ? { result: runnerState.result }
-            : { error: runnerState.error.message };
+    const unsubscribe = signal.subscribe((status) => {
+      const state = status[uid];
+      if (state?.status === "stopped") {
+        const result: { result?: string; error?: string } = {};
+        if (state.progress?.type === "runner-stopped") {
+          result.result = state.progress.result;
+          if (state.progress.error) {
+            result.error = `Task runner stopped: ${state.progress.error}`;
+          }
+        }
 
+        if (state.error) {
+          result.error = `Run Task Failed: ${state.error}`;
+        }
         this.transitTo("execute:streaming", {
           type: "complete",
           result,
@@ -323,7 +342,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
           abortController,
           streamingResult: {
             toolName: "newTask",
-            result: runnerState,
+            result: state,
           },
         });
       }

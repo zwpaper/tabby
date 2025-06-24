@@ -1,1 +1,1 @@
-export { TaskRunner } from "./task-runner";
+export { TaskRunner, type TaskRunnerProgress } from "./task-runner";

@@ -1,7 +1,9 @@
 import { type Signal, signal } from "@preact/signals-core";
-import type { TaskRunnerState } from "@ragdoll/runner";
 import { TaskRunner } from "@ragdoll/runner/node";
-import type { TaskRunnerOptions } from "@ragdoll/vscode-webui-bridge";
+import type {
+  TaskRunnerOptions,
+  TaskRunnerState,
+} from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import type { ApiClient } from "./auth-client";
@@ -15,7 +17,8 @@ const logger = getLogger("TaskRunnerManager");
 @injectable()
 @singleton()
 export class TaskRunnerManager implements vscode.Disposable {
-  private taskRunnerMap: Map<string, TaskRunner> = new Map();
+  private taskRunners: Map<string, TaskRunnerState> = new Map();
+  private taskRunnersStop: Map<string, () => void> = new Map();
   readonly status: Signal<ReturnType<typeof this.buildStatus>>;
 
   constructor(
@@ -27,49 +30,54 @@ export class TaskRunnerManager implements vscode.Disposable {
     this.status = signal(this.buildStatus());
   }
 
-  startTask(uid: string, option?: TaskRunnerOptions): Signal<TaskRunnerState> {
-    const existingRunner = this.taskRunnerMap.get(uid);
-    if (existingRunner) {
-      if (existingRunner.state.value.state === "running") {
-        logger.debug(`Task runner ${uid} is already running.`);
-      } else {
-        existingRunner.start();
+  async runTask(uid: string, option?: TaskRunnerOptions) {
+    const stopTask = () => {
+      logger.debug(`Task ${uid} aborted.`);
+      this.taskRunnersStop.get(uid)?.();
+      this.taskRunnersStop.delete(uid);
+    };
+    option?.abortSignal?.addEventListener("abort", stopTask);
+    if (this.taskRunners.has(uid)) {
+      const existingRunner = this.taskRunners.get(uid);
+      if (existingRunner?.status === "running") {
+        logger.debug(`Task ${uid} is already running.`);
+        return;
       }
-      return existingRunner.state;
     }
 
-    logger.debug(`Starting task runner ${uid}`);
-    const taskRunner = new TaskRunner({
-      uid,
-      apiClient: this.apiClient,
-      pochiEvents: this.pochiEvents,
-      cwd: getWorkspaceFolder().uri.fsPath,
-      rg: vscodeRipgrepPath,
-      ...option,
-    });
-    this.taskRunnerMap.set(uid, taskRunner);
-    this.updateStatus();
-
-    taskRunner.start();
-    taskRunner.state.subscribe((runnerState) => {
-      logger.trace(
-        `Task runner ${uid} state updated: ${JSON.stringify(runnerState)}`,
-      );
+    const taskState: TaskRunnerState = {
+      status: "running",
+    };
+    try {
+      logger.debug(`Starting task ${uid}`);
+      const taskRunner = new TaskRunner(this.apiClient, this.pochiEvents, uid, {
+        cwd: getWorkspaceFolder().uri.fsPath,
+        rg: vscodeRipgrepPath,
+        ...option,
+      });
+      this.taskRunners.set(uid, taskState);
+      this.taskRunnersStop.set(uid, () => taskRunner.stop());
       this.updateStatus();
-    });
 
-    return taskRunner.state;
-  }
-
-  stopTask(uid: string) {
-    const taskRunner = this.taskRunnerMap.get(uid);
-    if (taskRunner) {
-      logger.debug(`Stopping task runner ${uid}`);
-      taskRunner.stop();
-      this.taskRunnerMap.delete(uid);
+      for await (const progress of taskRunner.start()) {
+        logger.trace(`Task ${uid} progress:`, progress);
+        // FIXME(zhiming): If progress is trying to run a toolcall which is not auto-approved, throw an error.
+        taskState.progress = progress;
+        if (progress.type === "loading-task" && progress.phase === "end") {
+          taskState.task = progress.task;
+        }
+        this.updateStatus();
+      }
+      logger.debug(`Task ${uid} completed successfully.`);
+    } catch (error) {
+      logger.debug(`Task ${uid} failed:`, error);
+      taskState.error =
+        error instanceof Error ? error.message : JSON.stringify(error);
+    } finally {
+      taskState.status = "stopped";
+      option?.abortSignal?.removeEventListener("abort", stopTask);
+      this.taskRunnersStop.delete(uid);
       this.updateStatus();
-    } else {
-      logger.warn(`Task runner ${uid} not found.`);
     }
   }
 
@@ -78,11 +86,7 @@ export class TaskRunnerManager implements vscode.Disposable {
   }
 
   private buildStatus() {
-    return Object.fromEntries(
-      this.taskRunnerMap
-        .entries()
-        .map(([uid, runner]) => [uid, runner.state.value]),
-    );
+    return Object.fromEntries(this.taskRunners.entries());
   }
 
   dispose() {

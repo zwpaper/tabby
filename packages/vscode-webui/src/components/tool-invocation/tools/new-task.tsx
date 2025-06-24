@@ -2,6 +2,7 @@ import { MessageMarkdown } from "@/components/message";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToolCallLifeCycle } from "@/features/chat";
 import { TodoList } from "@/features/todo";
+import { apiClient } from "@/lib/auth-client";
 import type { Todo } from "@ragdoll/db";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useEffect, useState } from "react";
@@ -21,6 +22,13 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   const { description, prompt } = tool.args || {};
   const [todos, setTodos] = useState<Todo[]>([]);
 
+  const taskUid = tool.args?._meta?.uid;
+  if (!taskUid) {
+    throw new Error(
+      "The 'newTask' tool must have a task UID in its arguments (_meta.uid).",
+    );
+  }
+
   let result = undefined;
   if (tool.state === "result" && "result" in tool.result) {
     result = tool.result.result;
@@ -30,6 +38,23 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     error = tool.result.error;
   }
 
+  useEffect(() => {
+    if (result || error) {
+      apiClient.api.tasks[":uid"]
+        .$get({
+          param: {
+            uid: taskUid,
+          },
+        })
+        .then(async (response) => {
+          const task = await response.json();
+          if (task) {
+            setTodos(task.todos || []);
+          }
+        });
+    }
+  }, [result, error, taskUid]);
+
   const { streamingResult } = lifecycle;
 
   if (streamingResult && streamingResult.toolName !== "newTask") {
@@ -37,11 +62,11 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   }
 
   useEffect(() => {
-    const runnerState = streamingResult?.result;
-    if (runnerState && runnerState.state !== "initial") {
-      setTodos(runnerState.todos);
+    const todos = streamingResult?.result?.task?.todos;
+    if (todos) {
+      setTodos(todos);
     }
-  }, [streamingResult?.result]);
+  }, [streamingResult?.result?.task?.todos]);
 
   const title = (
     <>

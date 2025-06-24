@@ -21,7 +21,7 @@ export function useToolAutoApproval(
   ) {
     const uid = pendingApproval.tool.args._meta?.uid;
     const runnerState = runners[uid];
-    if (runnerState) {
+    if (runnerState && runnerState.status === "running") {
       return true;
     }
   }

@@ -6,9 +6,7 @@ import type { RunnerContext } from "../task-runner";
  * Finds files matching a glob pattern within the specified directory
  */
 export const globFiles =
-  (
-    context: Pick<RunnerContext, "cwd">,
-  ): ToolFunctionType<ClientToolsType["globFiles"]> =>
+  (context: RunnerContext): ToolFunctionType<ClientToolsType["globFiles"]> =>
   async ({ path: searchPath, globPattern }, { abortSignal }) => {
     return globFilesImpl({
       cwd: context.cwd,

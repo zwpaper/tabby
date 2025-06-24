@@ -1,12 +1,12 @@
 import type { ThreadAbortSignalSerialization } from "@quilted/threads";
 import type { ThreadSignalSerialization } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/db";
-import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
   McpStatus,
   ResourceURI,
   SessionState,
+  TaskRunnerState,
   VSCodeHostApi,
 } from "./index";
 
