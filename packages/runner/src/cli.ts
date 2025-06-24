@@ -5,7 +5,7 @@ import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
 import * as commander from "commander";
 import { findRipgrep } from "./lib/find-ripgrep";
-import { TaskRunner, type TaskRunnerProgress } from "./task-runner";
+import { TaskRunner, type TaskRunnerState } from "./task-runner";
 
 const program = new Command();
 program.name("pochi-runner").description("Pochi cli runner");
@@ -64,70 +64,69 @@ program
     );
 
     // Use existing task ID mode
-    const runner = new TaskRunner(apiClient, pochiEvents, uid, {
+    const runner = new TaskRunner({
+      uid,
+      apiClient,
+      pochiEvents,
       cwd: options.cwd,
       rg: options.rg,
     });
 
-    for await (const progress of runner.start()) {
-      writeLog(progress);
-    }
+    runner.state.subscribe((runnerState) => {
+      trackRunnerState(runnerState);
+    });
 
-    process.exit(0);
+    runner.start();
   });
 
-function writeLog(progress: TaskRunnerProgress) {
+function trackRunnerState(runnerState: TaskRunnerState) {
   const output = logger;
-  switch (progress.type) {
-    case "loading-task":
-      if (progress.phase === "begin") {
-        output.debug(`[Step ${progress.step}] Loading task...`);
-      }
-      if (progress.phase === "end") {
-        output.debug(`[Step ${progress.step}] Task loaded successfully.`);
-      }
-      break;
-    case "executing-tool-call":
-      if (progress.phase === "begin") {
-        return output.info(
-          `[Step ${progress.step}] Executing tool: ${progress.toolName}`,
-        );
-      }
-      if (progress.phase === "end") {
-        const error =
-          typeof progress.toolResult === "object" &&
-          progress.toolResult !== null &&
-          "error" in progress.toolResult &&
-          progress.toolResult.error
-            ? progress.toolResult.error
-            : undefined;
-        if (error) {
-          output.error(
-            `[Step ${progress.step}] Tool ${progress.toolName} ✗ (${error})`,
-          );
-        } else {
-          output.info(`[Step ${progress.step}] Tool ${progress.toolName} ✓`);
+  if (runnerState.state === "running") {
+    const progress = runnerState.progress;
+    switch (progress.type) {
+      case "loading-task":
+        if (progress.phase === "begin") {
+          output.debug(`[Step ${progress.step}] Loading task...`);
+        } else if (progress.phase === "end") {
+          output.debug(`[Step ${progress.step}] Task loaded successfully.`);
         }
-      }
-      break;
-    case "sending-result":
-      if (progress.phase === "begin") {
-        output.debug(`[Step ${progress.step}] Sending result...`);
-      }
-      if (progress.phase === "end") {
-        output.debug(`[Step ${progress.step}] Result sent successfully.`);
-      }
-      break;
-    case "step-completed":
-      return output.debug(
-        `[Step ${progress.step}] Step completed with status: ${progress.status}`,
-      );
-    case "runner-stopped":
-      return output.info(
-        `Task runner stopped with final status: ${progress.status}`,
-      );
-    default:
-      return "";
+        break;
+      case "executing-tool-call":
+        if (progress.phase === "begin") {
+          output.info(
+            `[Step ${progress.step}] Executing tool: ${progress.toolName}`,
+          );
+        } else if (progress.phase === "end") {
+          const error =
+            typeof progress.toolResult === "object" &&
+            progress.toolResult !== null &&
+            "error" in progress.toolResult &&
+            progress.toolResult.error
+              ? progress.toolResult.error
+              : undefined;
+          if (error) {
+            output.error(
+              `[Step ${progress.step}] Tool ${progress.toolName} ✗ (${error})`,
+            );
+          } else {
+            output.info(`[Step ${progress.step}] Tool ${progress.toolName} ✓`);
+          }
+        }
+        break;
+      case "sending-message":
+        if (progress.phase === "begin") {
+          output.debug(`[Step ${progress.step}] Sending messsage...`);
+        } else if (progress.phase === "end") {
+          output.debug(`[Step ${progress.step}] Messsage sent successfully.`);
+        }
+        break;
+    }
+  } else if (runnerState.state === "stopped") {
+    output.info("Task runner stopped with result: ", runnerState.result);
+    process.exit(0); // exit with code 0 to indicate success
+  } else if (runnerState.state === "error") {
+    output.error("Task runner failed with error: ", runnerState.error);
+    throw runnerState.error; // rethrow the error to exit the process with a non-zero code
   }
 }
 

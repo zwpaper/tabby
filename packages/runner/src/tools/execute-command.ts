@@ -9,7 +9,7 @@ const execCommand = promisify(exec);
 
 export const executeCommand =
   (
-    context: RunnerContext,
+    context: Pick<RunnerContext, "cwd">,
   ): ToolFunctionType<ClientToolsType["executeCommand"]> =>
   async (
     { command, cwd = ".", isDevServer, timeout = 60 },

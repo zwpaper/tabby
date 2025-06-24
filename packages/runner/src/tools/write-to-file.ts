@@ -9,7 +9,9 @@ import type { RunnerContext } from "../task-runner";
  * Writes content to a specified file, creating directories if needed.
  */
 export const writeToFile =
-  (context: RunnerContext): ToolFunctionType<ClientToolsType["writeToFile"]> =>
+  (
+    context: Pick<RunnerContext, "cwd">,
+  ): ToolFunctionType<ClientToolsType["writeToFile"]> =>
   async ({ path, content }) => {
     const fileUri = nodePath.join(context.cwd, path);
     const processedContent = fixCodeGenerationOutput(content);

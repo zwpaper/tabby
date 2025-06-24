@@ -6,6 +6,7 @@ import {
   prepareAttachmentsForRequest,
   updateToolCallResult,
 } from "@ai-sdk/ui-utils";
+import { type Signal, signal } from "@preact/signals-core";
 import {
   fromUIMessage,
   getLogger,
@@ -19,13 +20,12 @@ import {
   prepareLastMessageForRetry,
 } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
-import type { DB, Environment, TaskEvent, Todo } from "@ragdoll/db";
+import type { Environment, TaskEvent, Todo } from "@ragdoll/db";
 import type { AppType, PochiEventSource } from "@ragdoll/server";
 import {
   ServerToolApproved,
   ServerTools,
   type ToolFunctionType,
-  isUserInputTool,
 } from "@ragdoll/tools";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
@@ -40,21 +40,41 @@ import { searchFiles } from "./tools/search-files";
 import { todoWrite } from "./tools/todo-write";
 import { writeToFile } from "./tools/write-to-file";
 
-type TaskStatus = DB["task"]["status"]["__select__"];
-export type Task = Awaited<ReturnType<TaskRunner["loadTask"]>>;
+type ApiClient = ReturnType<typeof hc<AppType>>;
+
+export type Task = Awaited<
+  ReturnType<
+    Awaited<ReturnType<ApiClient["api"]["tasks"][":uid"]["$get"]>>["json"]
+  >
+>;
 
 export interface RunnerContext {
+  /**
+   * The uid of the task to run.
+   */
+  uid: string;
+
+  /**
+   * This is the API client used to communicate with the server.
+   */
+  apiClient: ApiClient;
+
+  /**
+   * This is used to subscribe to task events and receive updates.
+   */
+  pochiEvents: PochiEventSource;
+
+  /**
+   * The llm model to use for the task runner.
+   */
+  model?: string;
+
   /**
    * The current working directory for the task runner.
    * This is used to determine where to read/write files and execute commands.
    * It should be an absolute path.
    */
   cwd: string;
-
-  /**
-   * The llm model to use for the task runner.
-   */
-  model?: string;
 
   /**
    * The path to the ripgrep executable.
@@ -65,35 +85,7 @@ export interface RunnerContext {
   // e.g., environment variables, workspace settings, etc.
 }
 
-const ToolMap: Record<
-  string,
-  // biome-ignore lint/suspicious/noExplicitAny: ToolFunctionType requires any for generic tool parameters
-  (context: RunnerContext) => ToolFunctionType<any>
-> = {
-  readFile,
-  applyDiff,
-  globFiles,
-  listFiles,
-  multiApplyDiff,
-  todoWrite,
-  writeToFile,
-  searchFiles,
-  executeCommand,
-};
-
-const logger = getLogger("TaskRunner");
-
-function safeCall<T>(x: Promise<T>) {
-  return x.catch((e) => {
-    return {
-      error: e.message as string,
-    };
-  });
-}
-
-type ApiClient = ReturnType<typeof hc<AppType>>;
-
-type TaskStepProgress =
+type TaskRunnerProgress = { step: number } & (
   | {
       type: "loading-task";
       phase: "begin";
@@ -118,39 +110,363 @@ type TaskStepProgress =
       toolResult: unknown;
     }
   | {
-      type: "sending-result";
+      type: "sending-message";
       phase: "begin";
       message: UIMessage;
     }
   | {
-      type: "sending-result";
+      type: "sending-message";
       phase: "end";
     }
-  | {
-      type: "step-completed";
-      status: TaskStatus;
-    }
-  | {
-      type: "runner-stopped";
-      status: TaskStatus | undefined;
-      result?: string;
-      error?: string;
-    };
+);
 
-export type TaskRunnerProgress = TaskStepProgress & { step: number };
+export type TaskRunnerState =
+  | {
+      state: "initial";
+    }
+  | ((
+      | {
+          state: "running";
+          progress: TaskRunnerProgress;
+        }
+      | {
+          state: "stopped";
+          result: string;
+        }
+      | {
+          state: "error";
+          error: Error;
+        }
+    ) & {
+      task?: Task;
+      messages: UIMessage[];
+      todos: Todo[];
+    });
+
+const ToolMap: Record<
+  string,
+  // biome-ignore lint/suspicious/noExplicitAny: ToolFunctionType requires any for generic tool parameters
+  (context: RunnerContext) => ToolFunctionType<any>
+> = {
+  readFile,
+  applyDiff,
+  globFiles,
+  listFiles,
+  multiApplyDiff,
+  todoWrite,
+  writeToFile,
+  searchFiles,
+  executeCommand,
+};
+
+// Force stop after ${MaxSteps} steps.
+// If a task cannot be completed in ${MaxSteps} steps, it is likely stuck in an infinite loop.
+const MaxSteps = 100;
 
 export class TaskRunner {
+  readonly state: Signal<TaskRunnerState>;
+
+  private task?: Task;
+  private messages: UIMessage[] = [];
   private todos: Todo[] = [];
-  private readonly retryLimit = 5;
-  private retryCount = 0;
+
+  private readonly logger: ReturnType<typeof getLogger>;
+  private stepCount = 0;
   private abortController?: AbortController;
 
-  constructor(
-    private readonly apiClient: ApiClient,
-    private readonly pochiEvents: PochiEventSource,
-    private readonly uid: string,
-    private readonly context: RunnerContext,
-  ) {}
+  constructor(readonly context: RunnerContext) {
+    this.logger = getLogger(`TaskRunner-${context.uid}`);
+    this.state = signal({
+      state: "initial",
+    });
+  }
+
+  start() {
+    if (this.abortController !== undefined) {
+      throw new Error("TaskRunner is already running.");
+    }
+    this.logger.trace("Start.");
+    this.run();
+  }
+
+  stop(): void {
+    if (this.abortController !== undefined) {
+      this.logger.trace("Stop.");
+      this.abortController.abort();
+    } else {
+      throw new Error("TaskRunner is not running.");
+    }
+  }
+
+  private async run(): Promise<void> {
+    const abortController = new AbortController();
+    this.abortController = abortController;
+
+    try {
+      this.logger.trace("Start step loop.");
+      while (await this.step()) {
+        this.stepCount++;
+      }
+
+      const task = this.getTaskOrThrow();
+      const result = extractTaskResult(task);
+      this.logger.trace("Completed with result:", result);
+      this.updateState({
+        state: "stopped",
+        result,
+      });
+    } catch (e) {
+      const error = toError(e);
+      this.logger.error("Failed:", error);
+      this.updateState({
+        state: "error",
+        error,
+      });
+    } finally {
+      if (this.abortController === abortController) {
+        this.abortController = undefined;
+      }
+    }
+  }
+
+  /**
+   * @returns {boolean} - Returns true if next step is ready to be executed, false if the task is completed.
+   * @throws {Error} - Throws an error if this step is failed.
+   */
+  private async step(): Promise<boolean> {
+    if (this.stepCount >= MaxSteps) {
+      throw new Error(`TaskRunner reached maximum steps (${MaxSteps}).`);
+    }
+
+    await this.loadTask();
+
+    const shouldSendMessage = await this.processMessage();
+    if (!shouldSendMessage) {
+      return false;
+    }
+
+    await this.sendMessage();
+    return true;
+  }
+
+  private async loadTask() {
+    const signal = this.abortController?.signal;
+    signal?.throwIfAborted();
+
+    this.logger.trace("Loading task:", this.context.uid);
+    this.updateState({
+      state: "running",
+      progress: {
+        step: this.stepCount,
+        type: "loading-task",
+        phase: "begin",
+      },
+    });
+
+    const task = await loadTaskAndWaitStreaming(this.context, signal);
+    this.task = task;
+
+    this.messages = toUIMessages(task.conversation?.messages ?? []);
+    const lastMessage = this.getLastMessageOrThrow();
+
+    this.todos = mergeTodos(
+      mergeTodos(this.todos, task.todos ?? []),
+      findTodos(lastMessage) ?? [],
+    );
+
+    this.logger.trace("Task loaded:", task);
+    this.updateState({
+      state: "running",
+      progress: {
+        step: this.stepCount,
+        type: "loading-task",
+        phase: "end",
+        task,
+      },
+    });
+  }
+
+  /**
+   * @returns {boolean} - Returns true if the last message was processed and ready to be sent, false if no more steps to process.
+   */
+  private async processMessage(): Promise<boolean> {
+    const signal = this.abortController?.signal;
+    signal?.throwIfAborted();
+
+    const task = this.getTaskOrThrow();
+    const lastMessage = this.getLastMessageOrThrow();
+
+    if (
+      (task.status === "completed" || task.status === "pending-input") &&
+      isResultMessage(lastMessage)
+    ) {
+      this.logger.trace(
+        "Task is completed or pending input, no more steps to process.",
+      );
+      return false;
+    }
+
+    if (lastMessage.role === "assistant") {
+      if (isAssistantMessageWithNoToolCalls(lastMessage)) {
+        this.logger.trace(
+          "Last message is assistant with no tool calls, sending a new user reminder.",
+        );
+        const message = await createUIMessage({
+          role: "user",
+          content: prompts.createUserReminder(
+            "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
+          ),
+        });
+        this.messages.push(message);
+      } else if (
+        isAssistantMessageWithEmptyParts(lastMessage) ||
+        isAssistantMessageWithPartialToolCalls(lastMessage) ||
+        isAssistantMessageWithCompletedToolCalls(lastMessage)
+      ) {
+        this.logger.trace(
+          "Last message is assistant with empty parts or partial/completed tool calls, resending it to trigger generating new messages.",
+        );
+        const processed = prepareLastMessageForRetry(lastMessage);
+        if (processed) {
+          this.messages.splice(-1, 1, processed);
+        } else {
+          // skip, the last message is ready to be resent
+        }
+      } else {
+        this.logger.trace("Processing tool calls in the last message.");
+        let toolCall = findNextToolCall(lastMessage);
+        while (toolCall) {
+          signal?.throwIfAborted();
+
+          this.logger.trace(
+            `Found tool call: ${toolCall.toolName} with args: ${JSON.stringify(
+              toolCall.args,
+            )}`,
+          );
+          this.updateState({
+            state: "running",
+            progress: {
+              step: this.stepCount,
+              type: "executing-tool-call",
+              phase: "begin",
+              toolName: toolCall.toolName,
+              toolCallId: toolCall.toolCallId,
+              toolArgs: toolCall.args,
+            },
+          });
+
+          const toolResult = await executeToolCall(
+            toolCall,
+            this.context,
+            this.abortController?.signal,
+          );
+
+          updateToolCallResult({
+            messages: this.messages,
+            toolCallId: toolCall.toolCallId,
+            toolResult,
+          });
+
+          this.logger.trace(`Tool call result: ${JSON.stringify(toolResult)}`);
+          this.updateState({
+            state: "running",
+            progress: {
+              step: this.stepCount,
+              type: "executing-tool-call",
+              phase: "end",
+              toolName: toolCall.toolName,
+              toolCallId: toolCall.toolCallId,
+              toolResult,
+            },
+          });
+
+          toolCall = findNextToolCall(lastMessage);
+        }
+        this.logger.trace("All tool calls processed in the last message.");
+      }
+    } else {
+      this.logger.trace(
+        "Last message is not assistant, continue resending it.",
+      );
+      // nothing to process, just resend the last message
+    }
+    return true;
+  }
+
+  private async sendMessage() {
+    const signal = this.abortController?.signal;
+    signal?.throwIfAborted();
+
+    const lastMessage = this.getLastMessageOrThrow();
+
+    this.logger.trace("Sending message:", lastMessage);
+    this.updateState({
+      state: "running",
+      progress: {
+        step: this.stepCount,
+        type: "sending-message",
+        phase: "begin",
+        message: lastMessage,
+      },
+    });
+
+    const environment = await this.buildEnvironment();
+
+    await withAttempts(async () => {
+      const resp = await this.context.apiClient.api.chat.stream.$post(
+        {
+          json: {
+            id: this.context.uid,
+            message: fromUIMessage(lastMessage),
+            environment,
+            model: this.context.model,
+          },
+        },
+        {
+          init: {
+            signal,
+          },
+        },
+      );
+      if (!resp.ok) {
+        const error = await resp.text();
+        throw new Error(`Failed to send message: ${resp.statusText}: ${error}`);
+      }
+    });
+
+    this.logger.trace("Message sent successfully.");
+    this.updateState({
+      state: "running",
+      progress: {
+        step: this.stepCount,
+        type: "sending-message",
+        phase: "end",
+      },
+    });
+  }
+
+  private updateState(
+    state:
+      | {
+          state: "running";
+          progress: TaskRunnerProgress;
+        }
+      | {
+          state: "stopped";
+          result: string;
+        }
+      | {
+          state: "error";
+          error: Error;
+        },
+  ) {
+    this.state.value = {
+      ...state,
+      task: this.task,
+      messages: this.messages,
+      todos: this.todos,
+    };
+  }
 
   private async buildEnvironment(): Promise<Environment> {
     const environment = await readEnvironment(this.context);
@@ -160,371 +476,183 @@ export class TaskRunner {
     };
   }
 
-  private updateTodos(todos: Todo[] = []) {
-    // Update the context todos with the new todos
-    this.todos = mergeTodos(this.todos, todos);
+  private getTaskOrThrow() {
+    if (!this.task) {
+      throw new Error("Task is not loaded.");
+    }
+    return this.task;
   }
 
-  private async *retry(
-    messages: UIMessage[],
-  ): AsyncGenerator<TaskStepProgress> {
-    if (this.retryCount >= this.retryLimit) {
-      logger.error(
-        "Retry limit reached for task",
-        this.uid,
-        "with messages",
-        messages,
-      );
-      return yield {
-        type: "step-completed",
-        status: "failed",
-      };
+  private getLastMessageOrThrow(): UIMessage {
+    const lastMessage = this.messages.at(-1);
+    if (!lastMessage) {
+      throw new Error("No messages found in the task.");
     }
-    this.retryCount++;
-
-    logger.trace("Retrying task", this.uid, "with messages", messages);
-    const reload = async function* (
-      this: TaskRunner,
-    ): AsyncGenerator<TaskStepProgress> {
-      // Remove last assistant message and retry last user message.
-      const lastMessage = getLastMessage(messages);
-      const newMessages =
-        lastMessage.role === "assistant" ? messages.slice(0, -1) : messages;
-      return yield* this.streamMessage(newMessages);
-    }.bind(this);
-
-    const append = async function* (
-      this: TaskRunner,
-      message: Message | CreateMessage,
-    ): AsyncGenerator<TaskStepProgress> {
-      const attachmentsForRequest = await prepareAttachmentsForRequest(
-        message.experimental_attachments,
-      );
-      const lastMessage = {
-        ...message,
-        id: message.id ?? generateId(),
-        createdAt: message.createdAt ?? new Date(),
-        experimental_attachments:
-          attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
-        parts: getMessageParts(message),
-      };
-      return yield* this.streamMessage([...messages, lastMessage]);
-    }.bind(this);
-
-    const lastMessage = getLastMessage(messages);
-    if (lastMessage.role !== "assistant") {
-      return yield* reload();
-    }
-
-    if (isAssistantMessageWithNoToolCalls(lastMessage)) {
-      return yield* append({
-        role: "user",
-        content: prompts.createUserReminder(
-          "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
-        ),
-      });
-    }
-
-    const lastMessageForRetry = prepareLastMessageForRetry(lastMessage);
-    if (lastMessageForRetry != null) {
-      return yield* append(lastMessageForRetry);
-    }
-
-    return yield* reload();
+    return lastMessage;
   }
+}
 
-  private async *streamMessage(
-    messages: UIMessage[],
-  ): AsyncGenerator<TaskStepProgress> {
-    const lastMessage = getLastMessage(messages);
-    const streamDone = new Promise<TaskStatus>((resolve) => {
-      let streamingStarted = false;
-      const unsubscribe = this.pochiEvents.subscribe<TaskEvent>(
-        "task:status-changed",
-        ({ data }) => {
-          if (data.uid !== this.uid) {
-            return;
-          }
+const PollTaskStatusInterval = 10_000; // 10 seconds
+const WaitTaskStreamingTimeout = 120_000; // 120 seconds
 
-          if (data.status === "streaming" && !streamingStarted) {
-            streamingStarted = true;
-            return;
-          }
-
-          if (data.status !== "streaming" && streamingStarted) {
-            unsubscribe();
-            resolve(data.status);
-            return;
-          }
-
-          throw new Error(
-            `Unexpected task status change: ${data.status} for task ${data.uid}`,
-          );
+/**
+ * Loads the task and waits for it to be in a non-streaming state.
+ */
+async function loadTaskAndWaitStreaming(
+  context: RunnerContext,
+  abortSignal?: AbortSignal,
+): Promise<Task> {
+  const loadTask = async () => {
+    return await withAttempts(async () => {
+      const resp = await context.apiClient.api.tasks[":uid"].$get(
+        {
+          param: {
+            uid: context.uid,
+          },
+        },
+        {
+          init: {
+            signal: abortSignal,
+          },
         },
       );
+      if (!resp.ok) {
+        const error = await resp.text();
+        throw new Error(`Failed to fetch task: ${resp.statusText}: ${error}`);
+      }
+      return await resp.json();
     });
+  };
 
-    const environment = await this.buildEnvironment();
-    logger.debug("Starting streaming for task", this.uid);
-
-    yield { type: "sending-result", phase: "begin", message: lastMessage };
-    const resp = await this.apiClient.api.chat.stream.$post(
-      {
-        json: {
-          id: this.uid,
-          message: fromUIMessage(lastMessage),
-          environment,
-          model: this.context.model,
-        },
-      },
-      {
-        init: {
-          signal: this.abortController?.signal,
-        },
-      },
-    );
-
-    if (!resp.ok) {
-      const error = await resp.text();
-      logger.error(`Failed to start streaming ${resp.statusText}: ${error}`);
-      return yield* this.retry(messages);
-    }
-    yield { type: "sending-result", phase: "end" };
-
-    const status = await streamDone;
-    yield {
-      type: "step-completed",
-      status,
+  return new Promise<Task>((resolve, reject) => {
+    const cleanups: (() => void)[] = [];
+    const cleanupAndResolve = (task: Task | Promise<Task>) => {
+      for (const cleanup of cleanups) {
+        cleanup();
+      }
+      resolve(task);
     };
-  }
-
-  private async executeToolCall(
-    tool: ToolInvocation,
-    abortSignal?: AbortSignal,
-  ) {
-    if (tool.toolName in ServerTools) {
-      return ServerToolApproved;
-    }
-    if (tool.state !== "call") {
-      throw new Error(`Tool invocation is not in call state: ${tool.state}`);
-    }
-    const toolFunction = ToolMap[tool.toolName];
-    if (!toolFunction) {
-      return {
-        error: `Tool ${tool.toolName} not found.`,
-      };
-    }
-
-    logger.trace(
-      "Executing tool",
-      tool.toolName,
-      "with args",
-      tool.args,
-      "in cwd",
-      this.context.cwd,
-    );
-
-    return await safeCall(
-      toolFunction(this.context)(tool.args, {
-        messages: [],
-        toolCallId: tool.toolCallId,
-        abortSignal,
-      }),
-    );
-  }
-
-  /**
-   * @yields {@link TaskStepProgress} - Progress updates
-   * @throws {@link Error} if the task is in an invalid state, or any error occurs during execution
-   */
-  private async *step(): AsyncGenerator<TaskStepProgress> {
-    yield { type: "loading-task", phase: "begin" };
-    let task = await this.loadTask();
-
-    if (task.status === "streaming") {
-      task = await this.waitAndReloadTask();
-    }
-    yield { type: "loading-task", phase: "end", task };
-
-    if (task.status === "completed") {
-      yield {
-        type: "runner-stopped",
-        status: "completed",
-        result: getTaskResult(task),
-      };
-      return;
-    }
-
-    // We're only abled to handle "error" / tool-call
-    const messages = toUIMessages(task.conversation?.messages || []);
-    const lastMessage = getLastMessage(messages);
-
-    if (hasUserInputTool(lastMessage) && task.status === "pending-input") {
-      yield { type: "runner-stopped", status: "pending-input" };
-      return;
-    }
-
-    if (isReadyForRetry(lastMessage)) {
-      return yield* this.retry(messages);
-    }
-
-    if (lastMessage.parts !== undefined) {
-      const todos = findTodos(lastMessage);
-      this.updateTodos(todos);
-    }
-
-    while (
-      lastMessage.role === "assistant" &&
-      !isAssistantMessageWithCompletedToolCalls(lastMessage)
-    ) {
-      const nextToolCall = findNextToolCall(lastMessage);
-      if (!nextToolCall) {
-        throw new Error("No tool call found");
+    const cleanupAndReject = (error: Error) => {
+      for (const cleanup of cleanups) {
+        cleanup();
       }
+      reject(error);
+    };
 
-      yield {
-        type: "executing-tool-call",
-        phase: "begin",
-        toolName: nextToolCall.toolName,
-        toolCallId: nextToolCall.toolCallId,
-        toolArgs: nextToolCall.args,
-      };
-      const toolResult = await this.executeToolCall(
-        nextToolCall,
-        this.abortController?.signal,
-      );
-
-      yield {
-        type: "executing-tool-call",
-        phase: "end",
-        toolName: nextToolCall.toolName,
-        toolCallId: nextToolCall.toolCallId,
-        toolResult,
-      };
-      updateToolCallResult({
-        messages,
-        toolCallId: nextToolCall.toolCallId,
-        toolResult,
+    // Try load the task directly
+    loadTask()
+      .then((task) => {
+        if (task.status !== "streaming") {
+          cleanupAndResolve(task);
+        } else {
+          // we need to wait for the task to finish streaming
+        }
+      })
+      .catch((error) => {
+        cleanupAndReject(error);
       });
-    }
 
-    // last message is ready to be sent to llm.
-    return yield* this.streamMessage(messages);
-  }
-
-  /**
-   * Start the task runner and yield progress updates
-   * @yields {@link TaskRunnerProgress} - Progress updates throughout task execution
-   */
-  async *start(): AsyncGenerator<TaskRunnerProgress> {
-    this.abortController = new AbortController();
-    let step = 0;
-    while (true) {
-      for await (const progress of this.step()) {
-        if (this.abortController.signal.aborted) {
-          yield {
-            type: "runner-stopped",
-            status: "failed",
-            error: "Task execution aborted by user",
-            step,
-          };
+    // Subscribe to task status changes
+    const unsubscribe = context.pochiEvents.subscribe<TaskEvent>(
+      "task:status-changed",
+      ({ data }) => {
+        if (data.uid !== context.uid) {
           return;
         }
-        if (progress.type === "runner-stopped") {
-          yield {
-            ...progress,
-            step,
-          };
-          return;
+
+        if (data.status !== "streaming") {
+          cleanupAndResolve(loadTask());
         }
-        yield { ...progress, step };
-      }
-      step++;
-    }
-  }
-
-  stop() {
-    this.abortController?.abort();
-  }
-
-  private async loadTask() {
-    const resp = await this.apiClient.api.tasks[":uid"].$get({
-      param: {
-        uid: this.uid,
       },
-    });
+    );
+    cleanups.push(unsubscribe);
 
-    if (!resp.ok) {
-      throw new Error(`Failed to fetch task: ${resp.statusText}`);
-    }
-
-    return await resp.json();
-  }
-
-  private async waitAndReloadTask() {
-    return new Promise<Task>((resolve, reject) => {
-      const cleanups: (() => void)[] = [];
-      const cleanupAndResolve = (task: Task | Promise<Task>) => {
-        for (const cleanup of cleanups) {
-          cleanup();
-        }
-        resolve(task);
-      };
-      const cleanupAndReject = (error: Error) => {
-        for (const cleanup of cleanups) {
-          cleanup();
-        }
-        reject(error);
-      };
-
-      // Try reloading the task directly
-      this.loadTask()
+    // Set a timer to poll the task status, this is a fallback in case the event subscription does not work
+    const timer = setInterval(() => {
+      loadTask()
         .then((task) => {
           if (task.status !== "streaming") {
             cleanupAndResolve(task);
           }
         })
-        .catch(() => {
-          // ignore
+        .catch((error) => {
+          cleanupAndReject(error);
         });
-
-      // Subscribe to task status changes
-      const unsubscribe = this.pochiEvents.subscribe<TaskEvent>(
-        "task:status-changed",
-        ({ data }) => {
-          if (data.uid !== this.uid) {
-            return;
-          }
-
-          if (data.status !== "streaming") {
-            cleanupAndResolve(this.loadTask());
-          }
-        },
-      );
-      cleanups.push(unsubscribe);
-
-      // Set a timeout to reload the task and reject if it is still streaming
-      const timer = setTimeout(() => {
-        unsubscribe();
-        this.loadTask()
-          .then((task) => {
-            if (task.status !== "streaming") {
-              cleanupAndResolve(task);
-            } else {
-              cleanupAndReject(
-                new Error(`Task ${this.uid} is still streaming after timeout.`),
-              );
-            }
-          })
-          .catch((error) => {
-            cleanupAndReject(error);
-          });
-      }, 120_000); // 120 seconds timeout
-      cleanups.push(() => {
-        clearTimeout(timer);
-      });
+    }, PollTaskStatusInterval);
+    cleanups.push(() => {
+      clearInterval(timer);
     });
+
+    // Set a timeout to reject if the task is still streaming after 120 seconds
+    const timeout = setTimeout(() => {
+      unsubscribe();
+      loadTask()
+        .then((task) => {
+          if (task.status !== "streaming") {
+            cleanupAndResolve(task);
+          } else {
+            cleanupAndReject(
+              new Error(
+                `Task ${context.uid} is still streaming after timeout.`,
+              ),
+            );
+          }
+        })
+        .catch((error) => {
+          cleanupAndReject(error);
+        });
+    }, WaitTaskStreamingTimeout);
+    cleanups.push(() => {
+      clearTimeout(timeout);
+    });
+  });
+}
+
+// Max attempts for each http request.
+const MaxRequestAttempts = 3;
+
+async function withAttempts<T>(
+  run: () => Promise<T>,
+  maxAttemps: number = MaxRequestAttempts,
+  interval: (attempt: number) => number = (attempt) => {
+    if (attempt <= 1) {
+      return 1000; // 1 second for the first attempt
+    }
+    return 10 * 1000; // 10 seconds for subsequent attempts
+  },
+): Promise<T> {
+  let error: Error | undefined;
+  for (let attempt = 1; attempt <= maxAttemps; attempt++) {
+    try {
+      return await run();
+    } catch (e) {
+      error = toError(e);
+    }
+    if (attempt < maxAttemps) {
+      const waitTime = interval(attempt);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
   }
+  throw new Error(
+    `Failed after ${maxAttemps} attempts: ${error?.message || "Unknown error"}`,
+    { cause: error },
+  );
+}
+
+async function createUIMessage(
+  message: Message | CreateMessage,
+): Promise<UIMessage> {
+  const attachmentsForRequest = await prepareAttachmentsForRequest(
+    message.experimental_attachments,
+  );
+  return {
+    ...message,
+    id: message.id ?? generateId(),
+    createdAt: message.createdAt ?? new Date(),
+    experimental_attachments:
+      attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
+    parts: getMessageParts(message),
+  };
 }
 
 function findNextToolCall(message: UIMessage): ToolInvocation | undefined {
@@ -538,61 +666,101 @@ function findNextToolCall(message: UIMessage): ToolInvocation | undefined {
   }
 }
 
-function getLastMessage(messages: UIMessage[]): UIMessage {
-  const lastMessage = messages.at(-1);
-  if (!lastMessage) {
-    throw new Error("No messages found");
+async function executeToolCall(
+  tool: ToolInvocation,
+  context: RunnerContext,
+  abortSignal?: AbortSignal,
+) {
+  if (tool.toolName in ServerTools) {
+    return ServerToolApproved;
   }
-  return lastMessage;
+
+  const toolFunction = ToolMap[tool.toolName];
+  if (!toolFunction) {
+    return {
+      error: `Tool ${tool.toolName} not found.`,
+    };
+  }
+
+  try {
+    return await toolFunction(context)(tool.args, {
+      messages: [],
+      toolCallId: tool.toolCallId,
+      abortSignal,
+    });
+  } catch (e) {
+    return {
+      error: toErrorString(e),
+    };
+  }
 }
 
-function isReadyForRetry(lastMessage: UIMessage): boolean {
+function isResultMessage(message: Message): boolean {
   return (
-    lastMessage.role === "user" ||
-    isAssistantMessageWithNoToolCalls(lastMessage) ||
-    isAssistantMessageWithEmptyParts(lastMessage) ||
-    isAssistantMessageWithPartialToolCalls(lastMessage) ||
-    isAssistantMessageWithCompletedToolCalls(lastMessage)
+    message.role === "assistant" &&
+    (message.parts?.some(
+      (part) =>
+        part.type === "tool-invocation" &&
+        (part.toolInvocation.toolName === "attemptCompletion" ||
+          part.toolInvocation.toolName === "askFollowupQuestion"),
+    ) ??
+      false)
   );
 }
 
-function hasUserInputTool(message: Message): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      isUserInputTool(part.toolInvocation.toolName),
-  );
-}
-
-/**
- * Get task execution result from last attemptCompletion tool args
- * @param messages task messages
- * @returns
- */
-export function getTaskResult(task: Task) {
+export function extractTaskResult(task: Task): string {
   const messages = toUIMessages(task.conversation?.messages || []);
   const lastMessage = messages.at(-1);
   if (!lastMessage) {
-    return;
+    throw new Error("No messages found in the task.");
   }
 
   if (lastMessage.role !== "assistant") {
-    return;
+    throw new Error(
+      `Last message is not an assistant message, got: ${lastMessage.role}`,
+    );
   }
-  const part = lastMessage.parts.findLast(
-    (
-      part,
-    ): part is ToolInvocationUIPart & {
-      toolInvocation: { state: "result" };
-    } =>
+
+  const attempCompletionPart = lastMessage.parts.findLast(
+    (part): part is ToolInvocationUIPart =>
       part.type === "tool-invocation" &&
       part.toolInvocation.toolName === "attemptCompletion",
   );
-  if (part) {
-    return part.toolInvocation.args.result;
+  if (attempCompletionPart) {
+    return attempCompletionPart.toolInvocation.args.result;
   }
+
+  const askFollowupQuestionPart = lastMessage.parts.findLast(
+    (part): part is ToolInvocationUIPart =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation.toolName === "askFollowupQuestion",
+  );
+  if (askFollowupQuestionPart) {
+    return JSON.stringify({
+      question: askFollowupQuestionPart.toolInvocation.args.question,
+      followUp: askFollowupQuestionPart.toolInvocation.args.followUp,
+    });
+  }
+
+  throw new Error("No result found in the last message.");
+}
+
+function toError(e: unknown): Error {
+  if (e instanceof Error) {
+    return e;
+  }
+  if (typeof e === "string") {
+    return new Error(e);
+  }
+  return new Error(JSON.stringify(e));
+}
+
+function toErrorString(e: unknown): string {
+  if (e instanceof Error) {
+    return e.message;
+  }
+  if (typeof e === "string") {
+    return e;
+  }
+  return JSON.stringify(e);
 }

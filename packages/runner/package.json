@@ -17,6 +17,7 @@
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",
     "@commander-js/extra-typings": "^14.0.0",
+    "@preact/signals-core": "^1.6.2",
     "@ragdoll/common": "workspace:*",
     "@ragdoll/server": "workspace:*",
     "ai": "catalog:",

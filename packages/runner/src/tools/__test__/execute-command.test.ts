@@ -3,9 +3,8 @@ import { executeCommand } from "../execute-command";
 import type { RunnerContext } from "../../task-runner";
 
 describe("executeCommand", () => {
-  const mockContext: RunnerContext = {
+  const mockContext: Pick<RunnerContext, "cwd"> = {
     cwd: process.cwd(),
-    rg: "rg", // Mock ripgrep path
   };
 
   const mockToolExecutionOptions = {

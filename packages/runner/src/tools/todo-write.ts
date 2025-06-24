@@ -6,7 +6,9 @@ import type { RunnerContext } from "../task-runner";
  * Currently a no-op implementation that just returns success.
  */
 export const todoWrite =
-  (_context: RunnerContext): ToolFunctionType<ClientToolsType["todoWrite"]> =>
+  (
+    _context: Pick<RunnerContext, never>,
+  ): ToolFunctionType<ClientToolsType["todoWrite"]> =>
   async () => {
     return {
       success: true,
