@@ -17,6 +17,10 @@ export type TaskCreateEvent =
         channel: string;
         ts: string;
         prompt: string;
+        githubRepository?: {
+          owner: string;
+          repo: string;
+        };
       };
     }
   | {

@@ -1,10 +1,7 @@
 import type { DBMessage, TaskCreateEvent, Todo } from "@ragdoll/db";
 import type { AnyBlock, WebClient } from "@slack/web-api";
 
-import {
-  parseGitOriginUrl,
-  parseOwnerAndRepo,
-} from "@ragdoll/common/git-utils";
+import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
 import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { slackService } from "../slack";
@@ -95,7 +92,6 @@ class SlackTaskService {
         }
       }
       case "streaming":
-      case "pending-model":
       case "pending-tool": {
         blocks = slackRichTextRenderer.renderTaskRunning(
           headerInfo.prompt,
@@ -108,6 +104,9 @@ class SlackTaskService {
         );
         text = "Task running";
         break;
+      }
+      case "pending-model": {
+        return;
       }
       default: {
         throw task.status satisfies never;
@@ -229,6 +228,7 @@ class SlackTaskService {
         ts: slackInfo.ts,
         prompt: taskPrompt,
         slackUserId: slackUserId,
+        githubRepository: parsedCommand.githubRepository,
       },
     };
 
@@ -384,48 +384,26 @@ class SlackTaskService {
       channel?: string;
       ts?: string;
       slackUserId?: string;
+      githubRepository: {
+        owner: string;
+        repo: string;
+      };
     };
   }
 
   /**
    * Extract header info from task data instead of Slack API
    */
-  private extractHeaderInfoFromTask(task: Task | null): {
+  private extractHeaderInfoFromTask(task: Task): {
     prompt: string;
     githubRepository: { owner: string; repo: string };
     slackUserId: string;
   } {
-    if (!task) {
-      return {
-        prompt: "Work on repository",
-        githubRepository: { owner: "user", repo: "repo" },
-        slackUserId: "FAKE_USER_ID",
-      };
-    }
-
-    let prompt = "Work on repository";
-
     const eventData = this.extractSlackDataFromTask(task);
-    if (eventData.prompt) {
-      prompt = eventData.prompt;
-    }
-
-    // Get repository from task.git.origin using parseGitOriginUrl
-    let githubRepository = { owner: "user", repo: "repo" };
-    if (task.git) {
-      const gitInfo = parseGitOriginUrl(task.git.origin);
-      if (gitInfo) {
-        githubRepository = { owner: gitInfo.owner, repo: gitInfo.repo };
-      }
-    }
-
-    // Get slackUserId from event data or fallback to fake ID
-    const slackUserId = eventData.slackUserId || "FAKE_USER_ID";
-
     return {
-      prompt,
-      githubRepository,
-      slackUserId,
+      prompt: eventData.prompt || "Work on repository",
+      githubRepository: eventData.githubRepository,
+      slackUserId: eventData.slackUserId || "FAKE_USER_ID",
     };
   }
 
