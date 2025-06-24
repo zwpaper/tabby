@@ -39,6 +39,7 @@ export function Home({
 }: { initialInput?: string; className?: string; titleVisible?: boolean }) {
   const { data: auth } = useSession();
   const isMobileDevice = useIsMobile();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
   const [creationMode, setCreationMode] = useState<"remote" | "local">(
     "remote",
@@ -332,8 +333,11 @@ export function Home({
         </h1>
       )}
       <form
-        className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80"
+        className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80 dark:bg-input/30"
         onSubmit={handleSubmit}
+        onClick={() => {
+          textareaRef.current?.focus();
+        }}
       >
         {files.length > 0 && (
           <ImagePreviewList
@@ -343,6 +347,7 @@ export function Home({
           />
         )}
         <Textarea
+          ref={textareaRef}
           disabled={isSubmitting}
           onKeyDown={submitOnEnter}
           onFocus={handleTextareaFocus}
@@ -350,12 +355,15 @@ export function Home({
             handlePasteImage(e);
           }}
           placeholder="Ask pochi to build..."
-          className="mb-4 min-h-10 w-full resize-none border-none bg-transparent text-black text-lg placeholder-gray-400 shadow-none focus-visible:ring-0 dark:text-white dark:placeholder-gray-500"
+          className="!bg-transparent mb-4 min-h-10 w-full resize-none border-none text-black text-lg placeholder-gray-400 shadow-none focus-visible:ring-0 dark:text-white dark:placeholder-gray-500"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1 rounded-lg bg-gray-200/50 p-1 dark:bg-gray-700/50">
+          <div
+            className="flex items-center space-x-1 rounded-lg bg-gray-200/50 p-1 dark:bg-gray-700/50"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Button
               type="button"
               variant={isRemoteMode ? "default" : "ghost"}
@@ -381,7 +389,10 @@ export function Home({
               Local
             </Button>
           </div>
-          <div className="flex items-center space-x-2">
+          <div
+            className="flex items-center space-x-2"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Button
               variant="ghost"
               size="icon"
