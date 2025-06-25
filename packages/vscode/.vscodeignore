@@ -8,3 +8,4 @@ tsconfig.test.json
 .vscode-test/**
 *.vsix
 turbo.json
+.turbo/**
