@@ -6,7 +6,10 @@
     {
       "type": "shell",
       "label": "dev:vscode",
-      "command": "cd packages/vscode && bun run watch",
+      "command": "bun run watch",
+      "options": {
+        "cwd": "packages/vscode"
+      },
       "group": {
         "kind": "none",
         "isDefault": true
@@ -16,7 +19,10 @@
     {
       "type": "shell",
       "label": "dev:vscode-local",
-      "command": "cd packages/vscode && POCHI_LOCAL_SERVER=true bun run watch",
+      "command": "POCHI_LOCAL_SERVER=true bun run watch",
+      "options": {
+        "cwd": "packages/vscode"
+      },
       "group": {
         "kind": "none",
         "isDefault": true
@@ -26,7 +32,10 @@
     {
       "type": "shell",
       "label": "dev:server-server",
-      "command": "cd packages/server && bun run dev:server",
+      "command": "bun run dev:server",
+      "options": {
+        "cwd": "packages/server"
+      },
       "group": {
         "kind": "none",
         "isDefault": true
@@ -53,7 +62,10 @@
     {
       "type": "shell",
       "label": "dev:server-website",
-      "command": "cd packages/website && bun run dev:server",
+      "command": "bun run dev:server",
+      "options": {
+        "cwd": "packages/website"
+      },
       "group": {
         "kind": "none",
         "isDefault": true
