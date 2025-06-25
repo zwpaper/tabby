@@ -314,17 +314,17 @@ class TaskService {
 
     if (cwd) {
       totalCountQuery = totalCountQuery.where(
-        sql`environment->'info'->'cwd'`,
-        "@>",
-        `"${cwd}"`,
+        sql`environment->'info'->>'cwd'`,
+        "=",
+        cwd,
       );
     }
 
     if (minionId) {
       totalCountQuery = totalCountQuery.where(
-        sql`environment->'info'->'minionId'`,
-        "@>",
-        `"${minionId}"`,
+        sql`environment->'info'->>'minionId'`,
+        "=",
+        minionId,
       );
     }
 
@@ -364,15 +364,11 @@ class TaskService {
       .offset(offset);
 
     if (cwd) {
-      query = query.where(sql`environment->'info'->'cwd'`, "@>", `"${cwd}"`);
+      query = query.where(sql`environment->'info'->>'cwd'`, "=", cwd);
     }
 
     if (minionId) {
-      query = query.where(
-        sql`environment->'info'->'minionId'`,
-        "@>",
-        `"${minionId}"`,
-      );
+      query = query.where(sql`environment->'info'->>'minionId'`, "=", minionId);
     }
 
     query = applyEventFilter(query, eventFilter);
