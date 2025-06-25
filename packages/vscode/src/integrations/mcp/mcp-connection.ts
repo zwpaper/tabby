@@ -1,11 +1,14 @@
 import { getCwd } from "@/lib/env";
 import { getLogger } from "@/lib/logger";
+import {
+  StdioClientTransport,
+  getDefaultEnvironment,
+} from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { type Signal, signal } from "@preact/signals-core";
 import type { McpToolStatus } from "@ragdoll/vscode-webui-bridge";
 import { createMachine, interpret } from "@xstate/fsm";
 import { type ToolSet, experimental_createMCPClient as createClient } from "ai";
-import { Experimental_StdioMCPTransport as StdioMCPTransport } from "ai/mcp-stdio";
 import type * as vscode from "vscode";
 import {
   type McpServerConfig,
@@ -272,8 +275,13 @@ export class McpConnection implements vscode.Disposable {
       if (isStdioTransport(this.config)) {
         this.logger.debug("Connecting using Stdio transport.");
         client = await createClient({
-          transport: new StdioMCPTransport({
-            ...this.config,
+          transport: new StdioClientTransport({
+            command: this.config.command,
+            args: this.config.args,
+            env: {
+              ...getDefaultEnvironment(),
+              ...this.config.env,
+            },
             cwd: getCwd(),
           }),
           name: this.extensionContext.extension.id,
