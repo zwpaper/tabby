@@ -34,9 +34,9 @@
       }
     ],
     "views": {
-      "ragdoll": [
+      "pochi": [
         {
-          "id": "ragdollWebui",
+          "id": "pochiWebui",
           "type": "webview",
           "name": "Pochi"
         }
@@ -45,7 +45,7 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "ragdoll",
+          "id": "pochi",
           "title": "Pochi",
           "icon": "assets/icons/terminal.svg"
         }
@@ -53,60 +53,60 @@
     },
     "commands": [
       {
-        "command": "ragdoll.openLoginPage",
+        "command": "pochi.openLoginPage",
         "title": "Open Login Page",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.logout",
+        "command": "pochi.logout",
         "title": "Logout",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.editWorkspaceRules",
+        "command": "pochi.editWorkspaceRules",
         "title": "Edit Workspace Rules",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.webui.navigate.newTask",
+        "command": "pochi.webui.navigate.newTask",
         "title": "New Task",
         "icon": "$(add)",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.webui.navigate.taskList",
+        "command": "pochi.webui.navigate.taskList",
         "title": "Show All Tasks",
         "icon": "$(history)",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.webui.navigate.settings",
+        "command": "pochi.webui.navigate.settings",
         "title": "Settings",
         "icon": "$(gear)",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.openSettings",
+        "command": "pochi.openSettings",
         "title": "Open Settings",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.mcp.addServer",
+        "command": "pochi.mcp.addServer",
         "title": "Add MCP Server",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.mcp.openServerSettings",
+        "command": "pochi.mcp.openServerSettings",
         "title": "Open MCP Server Settings (JSON)",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.mcp.serverControl",
+        "command": "pochi.mcp.serverControl",
         "title": "MCP Server Control",
         "category": "Pochi"
       },
       {
-        "command": "ragdoll.mcp.toggleToolEnabled",
+        "command": "pochi.mcp.toggleToolEnabled",
         "title": "Toggle MCP Tool Enabled",
         "category": "Pochi"
       }
@@ -114,55 +114,55 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "ragdoll.openLoginPage",
+          "command": "pochi.openLoginPage",
           "when": "false"
         },
         {
-          "command": "ragdoll.logout",
+          "command": "pochi.logout",
           "when": "false"
         },
         {
-          "command": "ragdoll.webui.navigate.newTask",
+          "command": "pochi.webui.navigate.newTask",
           "when": "false"
         },
         {
-          "command": "ragdoll.webui.navigate.taskList",
+          "command": "pochi.webui.navigate.taskList",
           "when": "false"
         },
         {
-          "command": "ragdoll.webui.navigate.settings",
+          "command": "pochi.webui.navigate.settings",
           "when": "false"
         },
         {
-          "command": "ragdoll.mcp.serverControl",
+          "command": "pochi.mcp.serverControl",
           "when": "false"
         },
         {
-          "command": "ragdoll.mcp.toggleToolEnabled",
+          "command": "pochi.mcp.toggleToolEnabled",
           "when": "false"
         }
       ],
       "view/title": [
         {
-          "command": "ragdoll.webui.navigate.newTask",
-          "when": "view == ragdollWebui",
+          "command": "pochi.webui.navigate.newTask",
+          "when": "view == pochiWebui",
           "group": "navigation@0"
         },
         {
-          "command": "ragdoll.webui.navigate.taskList",
-          "when": "view == ragdollWebui",
+          "command": "pochi.webui.navigate.taskList",
+          "when": "view == pochiWebui",
           "group": "navigation@1"
         },
         {
-          "command": "ragdoll.webui.navigate.settings",
-          "when": "view == ragdollWebui",
+          "command": "pochi.webui.navigate.settings",
+          "when": "view == pochiWebui",
           "group": "navigation@2"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "ragdoll.toggleFocus",
+        "command": "pochi.toggleFocus",
         "key": "ctrl+l",
         "mac": "cmd+l"
       }

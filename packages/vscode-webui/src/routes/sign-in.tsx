@@ -41,7 +41,7 @@ function SignInPage() {
       </p>
       <a
         className={cn(buttonVariants({ variant: "ghost" }), "mb-4")}
-        href="command:ragdoll.openLoginPage"
+        href="command:pochi.openLoginPage"
         target="_blank"
         rel="noopener noreferrer"
       >

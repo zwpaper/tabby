@@ -367,7 +367,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     const workspaceRuleExists = await isFileExists(getWorkspaceRulesFileUri());
     const copyRules = async () => {
       await copyThirdPartyRules();
-      await vscode.commands.executeCommand("ragdoll.editWorkspaceRules");
+      await vscode.commands.executeCommand("pochi.editWorkspaceRules");
     };
     return { rulePaths, workspaceRuleExists, copyRules };
   };

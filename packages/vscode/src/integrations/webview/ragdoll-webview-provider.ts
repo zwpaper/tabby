@@ -18,7 +18,7 @@ import * as vscode from "vscode";
 export class RagdollWebviewProvider
   implements vscode.WebviewViewProvider, vscode.Disposable
 {
-  public static readonly viewType = "ragdollWebui";
+  public static readonly viewType = "pochiWebui";
 
   private view?: vscode.WebviewView;
   private webviewHost?: WebviewHostApi;

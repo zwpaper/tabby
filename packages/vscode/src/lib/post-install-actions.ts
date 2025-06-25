@@ -87,9 +87,9 @@ class OpenTaskFromEnvAction implements Action {
     const uid = process.env.POCHI_TASK_ID;
     if (uid) {
       logger.info(`Opening task from POCHI_TASK_ID: ${uid}`);
-      await vscode.commands.executeCommand("ragdollWebui.focus");
+      await vscode.commands.executeCommand("pochiWebui.focus");
       await new Promise((resolve) => setTimeout(resolve, 500));
-      await vscode.commands.executeCommand("ragdoll.openTask", uid);
+      await vscode.commands.executeCommand("pochi.openTask", uid);
     }
   }
 }

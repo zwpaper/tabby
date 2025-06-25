@@ -26,7 +26,7 @@ export const WorkspaceRulesSection: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <a
-            href="command:ragdoll.editWorkspaceRules"
+            href="command:pochi.editWorkspaceRules"
             target="_blank"
             rel="noopener noreferrer"
           >

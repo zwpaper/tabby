@@ -36,12 +36,12 @@ export class CommandPalette {
       },
       {
         label: "Settings",
-        command: "ragdoll.openSettings",
+        command: "pochi.openSettings",
         iconPath: new vscode.ThemeIcon("settings"),
       },
       {
         label: "Show Logs",
-        command: "ragdoll.outputPanel.focus",
+        command: "pochi.outputPanel.focus",
         iconPath: new vscode.ThemeIcon("output"),
       },
     ];
@@ -94,7 +94,7 @@ export class CommandPalette {
       const logoutButton: PochiQuickPickButton = {
         tooltip: "Logout",
         iconPath: new vscode.ThemeIcon("sign-out"),
-        command: "ragdoll.logout",
+        command: "pochi.logout",
       };
       accountItem = {
         ...this.accountQuickPickItem,
@@ -105,7 +105,7 @@ export class CommandPalette {
       accountItem = {
         ...this.accountQuickPickItem,
         description: "You're not logged-in, click to login",
-        command: "ragdoll.openLoginPage",
+        command: "pochi.openLoginPage",
       };
     }
     this.quickPick.busy = false;

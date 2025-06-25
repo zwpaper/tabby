@@ -57,7 +57,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
   }
 
   private async handleUriImpl(uri: vscode.Uri) {
-    await vscode.commands.executeCommand("ragdollWebui.focus");
+    await vscode.commands.executeCommand("pochiWebui.focus");
 
     const searchParams = new URLSearchParams(uri.query);
     const token = searchParams.get("token");
@@ -84,7 +84,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
 
       const task = await taskResponse.json();
       const openTask = () =>
-        vscode.commands.executeCommand("ragdoll.openTask", uid);
+        vscode.commands.executeCommand("pochi.openTask", uid);
       const isNewTask = task?.conversation?.messages.length === 1;
       if (isNewTask) {
         switch (task?.event?.type) {
@@ -115,7 +115,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       if (createdProject) {
         await this.workspaceJobQueue.push({
           workspaceUri: createdProject.toString(),
-          command: "ragdollWebui.focus",
+          command: "pochiWebui.focus",
           args: [],
           expiresAt: Date.now() + 1000 * 60,
         });
@@ -142,7 +142,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     // push a global job to create task after the new workspace is opened
     await this.workspaceJobQueue.push({
       workspaceUri: newWorkspaceUri.toString(),
-      command: "ragdoll.createProject",
+      command: "pochi.createProject",
       args: [task],
       expiresAt: Date.now() + 1000 * 60,
     });
@@ -163,7 +163,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     // Push job to prepare the evaluation project and open the existing task
     await this.workspaceJobQueue.push({
       workspaceUri: evaluationProjectDir.toString(),
-      command: "ragdoll.prepareEvaluationProject",
+      command: "pochi.prepareEvaluationProject",
       args: [
         {
           uid: task.uid,

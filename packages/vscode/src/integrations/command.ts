@@ -46,7 +46,7 @@ export class CommandManager implements vscode.Disposable {
     openTaskParams: TaskIdParams,
     requestId?: string,
   ) {
-    await vscode.commands.executeCommand("ragdollWebui.focus");
+    await vscode.commands.executeCommand("pochiWebui.focus");
 
     if (githubTemplateUrl) {
       await prepareProject(workspaceUri, githubTemplateUrl, progress);
@@ -62,7 +62,7 @@ export class CommandManager implements vscode.Disposable {
 
   private registerCommands() {
     this.disposables.push(
-      vscode.commands.registerCommand("ragdoll.openLoginPage", async () => {
+      vscode.commands.registerCommand("pochi.openLoginPage", async () => {
         vscode.env.openExternal(
           vscode.Uri.parse(
             `${getServerBaseUrl()}/auth/vscode-link?uriScheme=${vscode.env.uriScheme}`,
@@ -70,7 +70,7 @@ export class CommandManager implements vscode.Disposable {
         );
       }),
 
-      vscode.commands.registerCommand("ragdoll.logout", async () => {
+      vscode.commands.registerCommand("pochi.logout", async () => {
         const selection = await vscode.window.showInformationMessage(
           "Are you sure you want to logout?",
           { modal: true },
@@ -83,40 +83,36 @@ export class CommandManager implements vscode.Disposable {
         }
       }),
 
-      vscode.commands.registerCommand(
-        "ragdoll.editWorkspaceRules",
-        async () => {
+      vscode.commands.registerCommand("pochi.editWorkspaceRules", async () => {
+        try {
+          const workspaceRulesUri = getWorkspaceRulesFileUri();
+          let textDocument: vscode.TextDocument;
+
           try {
-            const workspaceRulesUri = getWorkspaceRulesFileUri();
-            let textDocument: vscode.TextDocument;
-
-            try {
-              textDocument =
-                await vscode.workspace.openTextDocument(workspaceRulesUri);
-            } catch (error) {
-              const fileContent =
-                "<!-- Add your custom workspace rules here -->";
-              await vscode.workspace.fs.writeFile(
-                workspaceRulesUri,
-                Buffer.from(fileContent, "utf8"),
-              );
-              textDocument =
-                await vscode.workspace.openTextDocument(workspaceRulesUri);
-            }
-
-            await vscode.window.showTextDocument(textDocument);
+            textDocument =
+              await vscode.workspace.openTextDocument(workspaceRulesUri);
           } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : "Unknown error";
-            vscode.window.showErrorMessage(
-              `Pochi: Failed to open workspace rules. ${errorMessage}`,
+            const fileContent = "<!-- Add your custom workspace rules here -->";
+            await vscode.workspace.fs.writeFile(
+              workspaceRulesUri,
+              Buffer.from(fileContent, "utf8"),
             );
+            textDocument =
+              await vscode.workspace.openTextDocument(workspaceRulesUri);
           }
-        },
-      ),
+
+          await vscode.window.showTextDocument(textDocument);
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+          vscode.window.showErrorMessage(
+            `Pochi: Failed to open workspace rules. ${errorMessage}`,
+          );
+        }
+      }),
 
       vscode.commands.registerCommand(
-        "ragdoll.createProject",
+        "pochi.createProject",
         async (task: NewProjectTask) => {
           const params = task.event.data;
           const currentWorkspace = vscode.workspace.workspaceFolders?.[0].uri;
@@ -154,7 +150,7 @@ export class CommandManager implements vscode.Disposable {
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.prepareEvaluationProject",
+        "pochi.prepareEvaluationProject",
         async (params: {
           uid: string;
           batchId: string;
@@ -198,29 +194,26 @@ export class CommandManager implements vscode.Disposable {
         },
       ),
 
-      vscode.commands.registerCommand(
-        "ragdoll.openTask",
-        async (uid: string) => {
-          vscode.window.withProgress(
-            {
-              location: vscode.ProgressLocation.Notification,
-              cancellable: false,
-            },
-            async (progress) => {
-              progress.report({ message: "Pochi: Opening task..." });
-              await vscode.commands.executeCommand("ragdollWebui.focus");
-              const webviewHost =
-                await this.ragdollWebviewProvider.retrieveWebviewHost();
-              webviewHost.openTask({ uid });
-            },
-          );
-        },
-      ),
+      vscode.commands.registerCommand("pochi.openTask", async (uid: string) => {
+        vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            cancellable: false,
+          },
+          async (progress) => {
+            progress.report({ message: "Pochi: Opening task..." });
+            await vscode.commands.executeCommand("pochiWebui.focus");
+            const webviewHost =
+              await this.ragdollWebviewProvider.retrieveWebviewHost();
+            webviewHost.openTask({ uid });
+          },
+        );
+      }),
 
       vscode.commands.registerCommand(
-        "ragdoll.webui.navigate.newTask",
+        "pochi.webui.navigate.newTask",
         async () => {
-          await vscode.commands.executeCommand("ragdollWebui.focus");
+          await vscode.commands.executeCommand("pochiWebui.focus");
           const webviewHost =
             await this.ragdollWebviewProvider.retrieveWebviewHost();
           webviewHost.openTask({ uid: undefined });
@@ -228,9 +221,9 @@ export class CommandManager implements vscode.Disposable {
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.webui.navigate.taskList",
+        "pochi.webui.navigate.taskList",
         async () => {
-          await vscode.commands.executeCommand("ragdollWebui.focus");
+          await vscode.commands.executeCommand("pochiWebui.focus");
           const webviewHost =
             await this.ragdollWebviewProvider.retrieveWebviewHost();
           webviewHost.openTaskList();
@@ -238,16 +231,16 @@ export class CommandManager implements vscode.Disposable {
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.webui.navigate.settings",
+        "pochi.webui.navigate.settings",
         async () => {
-          await vscode.commands.executeCommand("ragdollWebui.focus");
+          await vscode.commands.executeCommand("pochiWebui.focus");
           const webviewHost =
             await this.ragdollWebviewProvider.retrieveWebviewHost();
           webviewHost.openSettings();
         },
       ),
 
-      vscode.commands.registerCommand("ragdoll.openSettings", async () => {
+      vscode.commands.registerCommand("pochi.openSettings", async () => {
         vscode.commands.executeCommand(
           "workbench.action.openSettings",
           "@ext:tabbyml.pochi",
@@ -255,17 +248,17 @@ export class CommandManager implements vscode.Disposable {
       }),
 
       vscode.commands.registerCommand(
-        "ragdoll.showCommandPalette",
+        "pochi.showCommandPalette",
         this.commandPalette.show.bind(this.commandPalette),
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.outputPanel.focus",
+        "pochi.outputPanel.focus",
         showOutputPanel,
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.mcp.addServer",
+        "pochi.mcp.addServer",
         async (name?: string, recommendedServer?: McpServerConfig) => {
           this.mcpHub.addServer(name, recommendedServer);
           vscode.commands.executeCommand("workbench.action.openSettingsJson", {
@@ -275,7 +268,7 @@ export class CommandManager implements vscode.Disposable {
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.mcp.openServerSettings",
+        "pochi.mcp.openServerSettings",
         async () => {
           vscode.commands.executeCommand("workbench.action.openSettingsJson", {
             revealSetting: { key: "pochi.mcpServers" },
@@ -284,7 +277,7 @@ export class CommandManager implements vscode.Disposable {
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.mcp.serverControl",
+        "pochi.mcp.serverControl",
         async (action: string, serverName: string) => {
           switch (action) {
             case "start":
@@ -305,13 +298,13 @@ export class CommandManager implements vscode.Disposable {
       ),
 
       vscode.commands.registerCommand(
-        "ragdoll.mcp.toggleToolEnabled",
+        "pochi.mcp.toggleToolEnabled",
         async (serverName: string, toolName: string) => {
           this.mcpHub.toggleToolEnabled(serverName, toolName);
         },
       ),
 
-      vscode.commands.registerCommand("ragdoll.toggleFocus", async () => {
+      vscode.commands.registerCommand("pochi.toggleFocus", async () => {
         const webviewHost =
           await this.ragdollWebviewProvider.retrieveWebviewHost();
         if (await webviewHost.isFocused()) {
@@ -321,7 +314,7 @@ export class CommandManager implements vscode.Disposable {
           );
         } else {
           logger.debug("Focused on webui");
-          await vscode.commands.executeCommand("ragdollWebui.focus");
+          await vscode.commands.executeCommand("pochiWebui.focus");
         }
       }),
     );

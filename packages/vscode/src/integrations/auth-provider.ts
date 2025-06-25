@@ -110,7 +110,7 @@ export class PochiAuthenticationProvider
    * @returns
    */
   public async createSession(): Promise<AuthenticationSession> {
-    await commands.executeCommand("ragdoll.openLoginPage");
+    await commands.executeCommand("pochi.openLoginPage");
     return new Promise((resolve, reject) => {
       const disposable = this.authEvents.loginEvent.event(() => {
         disposable.dispose();
@@ -143,7 +143,7 @@ export class PochiAuthenticationProvider
     if (!session) {
       throw new Error(`Session with id ${sessionId} not found`);
     }
-    await commands.executeCommand("ragdoll.logout");
+    await commands.executeCommand("pochi.logout");
     this.sessionChangeEmitter.fire({
       added: [],
       removed: [session],

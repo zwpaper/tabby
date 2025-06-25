@@ -271,7 +271,7 @@ function commandForMcp(
     args = [serverName, recommendedServer];
   }
 
-  return `command:ragdoll.mcp.${cmd}?${encodeURIComponent(JSON.stringify(args))}`;
+  return `command:pochi.mcp.${cmd}?${encodeURIComponent(JSON.stringify(args))}`;
 }
 
 interface RecommendedMcpCardProps {

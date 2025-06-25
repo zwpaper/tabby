@@ -44,7 +44,7 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ user }) => {
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild className="cursor-pointer">
             <a
-              href="command:ragdoll.logout"
+              href="command:pochi.logout"
               target="_blank"
               rel="noopener noreferrer"
             >
