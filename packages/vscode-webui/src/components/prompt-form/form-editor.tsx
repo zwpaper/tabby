@@ -27,6 +27,7 @@ import {
 import "./prompt-form.css";
 import { cn } from "@/lib/utils";
 import type { MentionListActions } from "./shared";
+import { SubmitHistoryExtension } from "./submit-history-extension";
 import {
   PromptFormWorkflowExtension,
   workflowMentionPluginKey,
@@ -73,6 +74,7 @@ interface FormEditorProps {
   children?: React.ReactNode;
   onError?: (e: Error) => void;
   onPaste?: (e: ClipboardEvent) => void;
+  enableSubmitHistory?: boolean;
 }
 
 export function FormEditor({
@@ -85,6 +87,7 @@ export function FormEditor({
   editorRef,
   autoFocus = true,
   onPaste,
+  enableSubmitHistory = true,
 }: FormEditorProps) {
   const internalFormRef = useRef<HTMLFormElement>(null);
   const formRef = externalFormRef || internalFormRef;
@@ -283,6 +286,7 @@ export function FormEditor({
         History.configure({
           depth: 20,
         }),
+        ...(enableSubmitHistory ? [SubmitHistoryExtension] : []),
       ],
       editorProps: {
         attributes: {
@@ -296,6 +300,18 @@ export function FormEditor({
         });
         if (text !== input) {
           setInput(text);
+        }
+
+        // Update current draft if we have submit history enabled
+        if (
+          enableSubmitHistory &&
+          props.editor.extensionManager.extensions.find(
+            (ext) => ext.name === "submitHistory",
+          )
+        ) {
+          props.editor.commands.updateCurrentDraft(
+            JSON.stringify(props.editor.getJSON()),
+          );
         }
 
         // Save content when changes
@@ -383,10 +399,21 @@ export function FormEditor({
     };
   }, [focusEditor]);
 
+  // Handle form submission to record submit history
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      if (enableSubmitHistory && editor && !editor.isDestroyed) {
+        editor.commands.addToSubmitHistory(JSON.stringify(editor.getJSON()));
+      }
+      onSubmit(e);
+    },
+    [enableSubmitHistory, editor, onSubmit],
+  );
+
   return (
     <form
       ref={formRef}
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       className={cn(
         "relative rounded-sm border border-[var(--input-border)] bg-input p-1 transition-color duration-300 focus-within:border-ring",
         {

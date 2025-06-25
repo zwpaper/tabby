@@ -56,10 +56,11 @@ import type {
   TaskRunnerOptions,
   TaskRunnerState,
   VSCodeHostApi,
+  WorkspaceState,
 } from "@ragdoll/vscode-webui-bridge";
 import type { Tool } from "ai";
 import * as runExclusive from "run-exclusive";
-import { injectable, singleton } from "tsyringe";
+import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { type FileSelection, TabState } from "../editor/tab-state";
@@ -77,6 +78,8 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   private disposables: vscode.Disposable[] = [];
 
   constructor(
+    @inject("vscode.ExtensionContext")
+    private readonly context: vscode.ExtensionContext,
     private readonly tokenStorage: TokenStorage,
     private readonly tabState: TabState,
     private readonly posthog: PostHog,
@@ -122,6 +125,20 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   setSessionState = async (state: Partial<SessionState>): Promise<void> => {
     Object.assign(this.sessionState, state);
+  };
+
+  getWorkspaceState = async <K extends keyof WorkspaceState>(
+    key: K,
+    defaultValue?: WorkspaceState[K],
+  ): Promise<WorkspaceState[K]> => {
+    return this.context.workspaceState.get(key, defaultValue);
+  };
+
+  setWorkspaceState = async <K extends keyof WorkspaceState>(
+    key: K,
+    value: WorkspaceState[K],
+  ): Promise<void> => {
+    return this.context.workspaceState.update(key, value);
   };
 
   readEnvironment = async (): Promise<Environment> => {

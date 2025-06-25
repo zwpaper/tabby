@@ -26,6 +26,10 @@ export interface SessionState {
   input?: string | undefined;
 }
 
+export interface WorkspaceState {
+  chatInputSubmitHistory?: string[];
+}
+
 export interface TaskIdParams {
   uid: string;
 }

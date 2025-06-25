@@ -36,6 +36,7 @@ export function ChatInputForm({
       isLoading={isLoading}
       editorRef={editorRef}
       onPaste={onPaste}
+      enableSubmitHistory={true}
     >
       <ActiveSelectionBadge
         onClick={() => {

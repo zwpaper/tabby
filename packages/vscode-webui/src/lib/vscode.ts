@@ -56,6 +56,8 @@ function createVSCodeHost(): VSCodeHostApi {
         "readToken",
         "getSessionState",
         "setSessionState",
+        "getWorkspaceState",
+        "setWorkspaceState",
         "readEnvironment",
         "executeToolCall",
         "listFilesInWorkspace",

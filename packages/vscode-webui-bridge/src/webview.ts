@@ -10,6 +10,7 @@ import type {
   TaskIdParams,
   TaskRunnerOptions,
   TaskRunnerState,
+  WorkspaceState,
 } from "./index"; // Adjusted to import from index.ts
 
 export interface VSCodeHostApi {
@@ -21,6 +22,16 @@ export interface VSCodeHostApi {
     keys?: K[],
   ): Promise<Pick<SessionState, K>>;
   setSessionState(state: Partial<SessionState>): Promise<void>;
+
+  getWorkspaceState<K extends keyof WorkspaceState>(
+    key: K,
+    defaultValue?: WorkspaceState[K],
+  ): Promise<WorkspaceState[K]>;
+
+  setWorkspaceState<K extends keyof WorkspaceState>(
+    key: K,
+    value: WorkspaceState[K],
+  ): Promise<void>;
 
   readEnvironment(): Promise<Environment>;
 

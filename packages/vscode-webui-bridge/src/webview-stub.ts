@@ -8,6 +8,7 @@ import type {
   SessionState,
   TaskRunnerState,
   VSCodeHostApi,
+  WorkspaceState,
 } from "./index";
 
 const VSCodeHostStub = {
@@ -26,6 +27,17 @@ const VSCodeHostStub = {
     return Promise.resolve({} as Pick<SessionState, K>);
   },
   setSessionState: (_state: Partial<SessionState>): Promise<void> => {
+    return Promise.resolve();
+  },
+  getWorkspaceState: <K extends keyof WorkspaceState>(
+    _key: K,
+  ): Promise<WorkspaceState[K]> => {
+    return Promise.resolve({} as WorkspaceState[K]);
+  },
+  setWorkspaceState: <K extends keyof WorkspaceState>(
+    _key: K,
+    _value: WorkspaceState[K],
+  ): Promise<void> => {
     return Promise.resolve();
   },
   readEnvironment: (): Promise<Environment> => {
