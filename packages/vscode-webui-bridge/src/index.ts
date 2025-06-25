@@ -1,6 +1,3 @@
-import type { Task, TaskRunnerProgress } from "@ragdoll/runner";
-import type { RunnerContext } from "@ragdoll/runner";
-
 export type {
   VSCodeHostApi,
   WebviewHostApi,
@@ -45,15 +42,8 @@ export interface ExecuteCommandResult {
   error?: string; // Optional error message if the execution aborted / failed
 }
 
-export interface TaskRunnerState {
-  status: "running" | "stopped";
-  progress?: TaskRunnerProgress;
-  error?: string;
-  task?: Task;
-}
-
-export type TaskRunnerOptions = Omit<RunnerContext, "cwd" | "rg"> & {
-  abortSignal?: AbortSignal;
+export type TaskRunnerOptions = {
+  model?: string;
 };
 
 const DevBaseUrl = "http://localhost:4113";

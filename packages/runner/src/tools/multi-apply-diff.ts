@@ -11,7 +11,7 @@ import type { RunnerContext } from "../task-runner";
  */
 export const multiApplyDiff =
   (
-    context: RunnerContext,
+    context: Pick<RunnerContext, "cwd">,
   ): ToolFunctionType<ClientToolsType["multiApplyDiff"]> =>
   async ({ path, edits }) => {
     const fileUri = nodePath.join(context.cwd, path);

@@ -6,7 +6,9 @@ import type { RunnerContext } from "../task-runner";
  * Lists files and directories within the specified path
  */
 export const listFiles =
-  (context: RunnerContext): ToolFunctionType<ClientToolsType["listFiles"]> =>
+  (
+    context: Pick<RunnerContext, "cwd">,
+  ): ToolFunctionType<ClientToolsType["listFiles"]> =>
   async ({ path: dirPath, recursive }, { abortSignal }) => {
     return listFilesImpl({
       cwd: context.cwd,

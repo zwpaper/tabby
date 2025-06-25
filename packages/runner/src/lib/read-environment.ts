@@ -11,7 +11,7 @@ import type { RunnerContext } from "../task-runner";
  * Read the environment for the task runner
  */
 export const readEnvironment = async (
-  context: RunnerContext,
+  context: Pick<RunnerContext, "cwd">,
 ): Promise<Environment> => {
   const { cwd } = context;
 

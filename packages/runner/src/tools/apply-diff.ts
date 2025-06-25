@@ -10,7 +10,9 @@ import type { RunnerContext } from "../task-runner";
  * Apply a diff to a file using DiffView
  */
 export const applyDiff =
-  (context: RunnerContext): ToolFunctionType<ClientToolsType["applyDiff"]> =>
+  (
+    context: Pick<RunnerContext, "cwd">,
+  ): ToolFunctionType<ClientToolsType["applyDiff"]> =>
   async ({ path, searchContent, replaceContent, expectedReplacements }) => {
     const fileUri = nodePath.join(context.cwd, path);
     await ensureFileDirectoryExists(fileUri);
