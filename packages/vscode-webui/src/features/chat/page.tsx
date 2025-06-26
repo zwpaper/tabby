@@ -328,7 +328,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     setMessages: setMessages,
   });
 
-  useHandleChatEvents(isLoading ? undefined : append);
+  useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
 
   return (
     <div className="flex h-screen flex-col">

@@ -1,10 +1,11 @@
 import { useSendMessage } from "@/features/chat";
+import { cn } from "@/lib/utils";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { ToolProps } from "../types";
 
 export const AskFollowupQuestionTool: React.FC<
   ToolProps<ClientToolsType["askFollowupQuestion"]>
-> = ({ tool: toolCall }) => {
+> = ({ tool: toolCall, isLoading }) => {
   const sendMessage = useSendMessage();
   const { question, followUp } = toolCall.args || {};
 
@@ -17,11 +18,15 @@ export const AskFollowupQuestionTool: React.FC<
             {followUp.map((followUpText, index) => (
               <li
                 key={index}
-                className="cursor-pointer text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <button
                   type="button"
-                  className="inline-flex text-left"
+                  className={cn("w-full text-left", {
+                    "cursor-pointer": !isLoading,
+                    "cursor-wait": isLoading,
+                  })}
+                  disabled={isLoading}
                   onClick={() =>
                     sendMessage({
                       prompt: followUpText,
