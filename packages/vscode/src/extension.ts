@@ -1,4 +1,6 @@
 import "reflect-metadata";
+// FIXME(wei): required for vscode version <= 1.100, update vscode version to remove this polyfill
+import "iterator-helpers-polyfill";
 
 import RagdollUriHandler from "@/integrations/uri-handler";
 import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
