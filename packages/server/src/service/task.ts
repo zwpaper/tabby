@@ -707,7 +707,7 @@ class TaskService {
           .doUpdateSet({
             updatedAt: sql`CURRENT_TIMESTAMP`,
           })
-          .whereRef("id", "=", "excluded.id"),
+          .where("taskLock.id", "=", lockId),
       )
       .executeTakeFirst();
 
