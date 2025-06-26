@@ -1,6 +1,7 @@
 import type { Message } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import { prompts } from "@ragdoll/common";
+import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Todo } from "@ragdoll/db";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -101,6 +102,7 @@ export function useTodos({
   );
 
   const lastMessage = messages.at(-1);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef.current): todosRef is a ref
   useEffect(() => {
     if (
@@ -109,6 +111,27 @@ export function useTodos({
       lastMessage.parts !== undefined
     ) {
       updateTodos(lastMessage as UIMessage);
+
+      // Auto-mark todos as completed if this message has attempt completion
+      if (hasAttemptCompletion(lastMessage as UIMessage)) {
+        const currentTodos = todosRef.current || [];
+        if (currentTodos.length > 0) {
+          const updatedTodos = currentTodos.map((todo) => {
+            if (todo.status !== "cancelled") {
+              return { ...todo, status: "completed" as const };
+            }
+            return todo;
+          });
+
+          const hasChanges = updatedTodos.some(
+            (todo, index) => todo.status !== currentTodos[index]?.status,
+          );
+
+          if (hasChanges) {
+            setTodos(updatedTodos);
+          }
+        }
+      }
     }
 
     if (

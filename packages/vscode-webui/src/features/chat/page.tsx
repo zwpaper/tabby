@@ -34,9 +34,9 @@ import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { vscodeHost } from "@/lib/vscode";
+import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 
-import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { useSettingsStore } from "../settings/store";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";

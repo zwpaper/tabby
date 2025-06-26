@@ -135,6 +135,30 @@ class TaskService {
         updatedAt: sql`CURRENT_TIMESTAMP`,
         // Clear error on successful completion
         error: null,
+        // Update pending/in-progress todos to completed status when task is completed
+        environment: sql`
+          CASE
+            WHEN ${status} = 'completed' THEN
+              jsonb_set(
+                COALESCE(environment, '{}'),
+                '{todos}',
+                COALESCE(
+                  (
+                    SELECT jsonb_agg(
+                      CASE
+                        WHEN todo_item->>'status' != 'cancelled' THEN
+                          jsonb_set(todo_item, '{status}', '"completed"')
+                        ELSE todo_item
+                      END
+                    )
+                    FROM jsonb_array_elements(COALESCE(environment->'todos', '[]'::jsonb)) AS todo_item
+                  ),
+                  '[]'::jsonb
+                )
+              )
+            ELSE environment
+          END
+        `,
       })
       .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
