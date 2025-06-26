@@ -13,6 +13,10 @@ function Privacy() {
       title: "Personal Information We Collect",
     },
     {
+      id: "information-we-do-not-collect",
+      title: "Information We Do Not Collect",
+    },
+    {
       id: "how-we-use-information",
       title: "How We Use Your Personal Information",
     },
@@ -114,6 +118,18 @@ function Privacy() {
             are talking both about Device Information and Order Information.
           </p>
         </div>
+      </section>
+
+      {/* Information We Do Not Collect */}
+      <section id="information-we-do-not-collect" className="space-y-4">
+        <h2 className="font-semibold text-foreground text-xl">
+          Information We Do Not Collect
+        </h2>
+        <p className="text-muted-foreground leading-relaxed">
+          We do not collect or store the content of your conversations with
+          Pochi, your code, or any files you share with the Service unless you
+          explicitly choose to share them with us for support purposes.
+        </p>
       </section>
 
       {/* How We Use Your Personal Information */}
@@ -224,4 +240,3 @@ function Privacy() {
     </LegalPage>
   );
 }
-    </LegalPage>
