@@ -230,6 +230,24 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     todosRef,
   });
 
+  const isLoading = status === "streaming" || status === "submitted";
+
+  const {
+    isExecuting,
+    isSubmitDisabled,
+    showStopButton,
+    showEditTodos,
+    showPreview,
+    showApproval,
+  } = useChatStatus({
+    isTaskLoading,
+    isModelsLoading,
+    isLoading,
+    isInputEmpty: !input.trim(),
+    isFilesEmpty: files.length === 0,
+    isUploadingImages,
+  });
+
   useAutoResume({
     autoResume:
       !isTaskLoading &&
@@ -260,29 +278,13 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     reload,
     experimental_resume,
     latestHttpCode,
+    showApproval,
   });
 
   usePendingModelAutoStart({
     enabled: status === "ready" && messages.length === 1 && !isTaskLoading,
     task: task,
     retry,
-  });
-
-  const isLoading = status === "streaming" || status === "submitted";
-
-  const {
-    isExecuting,
-    isSubmitDisabled,
-    showStopButton,
-    showEditTodos,
-    showPreview,
-  } = useChatStatus({
-    isTaskLoading,
-    isModelsLoading,
-    isLoading,
-    isInputEmpty: !input.trim(),
-    isFilesEmpty: files.length === 0,
-    isUploadingImages,
   });
 
   const { handleSubmit, handleStop } = useChatSubmit({

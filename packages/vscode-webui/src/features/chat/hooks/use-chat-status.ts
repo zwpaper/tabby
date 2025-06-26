@@ -30,6 +30,9 @@ export function useChatStatus({
   const showStopButton = isExecuting || isLoading || isUploadingImages;
 
   const showPreview = !isBusyCore;
+
+  const showApproval = !(isLoading || isTaskLoading);
+
   return {
     isExecuting,
     isBusyCore,
@@ -37,5 +40,6 @@ export function useChatStatus({
     isSubmitDisabled,
     showStopButton,
     showPreview,
+    showApproval,
   };
 }

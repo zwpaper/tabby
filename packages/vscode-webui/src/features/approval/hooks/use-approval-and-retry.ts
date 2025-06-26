@@ -15,6 +15,7 @@ export function useApprovalAndRetry({
   reload,
   experimental_resume,
   latestHttpCode,
+  showApproval,
 }: {
   error: Error | undefined;
   messages: UIMessage[];
@@ -24,6 +25,7 @@ export function useApprovalAndRetry({
   reload: UseChatHelpers["reload"];
   experimental_resume: UseChatHelpers["experimental_resume"];
   latestHttpCode: MutableRefObject<number | undefined>;
+  showApproval: boolean;
 }) {
   const { pendingApproval, increaseRetryCount } = usePendingApproval({
     error: useMixinReadyForRetryError(messages, error),
@@ -47,6 +49,13 @@ export function useApprovalAndRetry({
     },
     [retryImpl, increaseRetryCount],
   );
+
+  if (!showApproval) {
+    return {
+      pendingApproval: undefined,
+      retry: () => {},
+    };
+  }
 
   return { pendingApproval, retry };
 }
