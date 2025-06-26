@@ -82,10 +82,11 @@ export interface ExternalIntegration {
 
 export interface Minion {
   createdAt: Generated<Timestamp>;
-  e2bSandboxId: string;
+  e2bSandboxId: string | null;
   id: Generated<number>;
+  sandboxId: string | null;
   updatedAt: Generated<Timestamp>;
-  url: string;
+  url: string | null;
   userId: string;
 }
 
@@ -201,3 +202,4 @@ export interface DB {
   user: User;
   verification: Verification;
 }
+

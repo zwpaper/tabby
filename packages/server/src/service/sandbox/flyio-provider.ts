@@ -39,10 +39,19 @@ export class FlyioSandboxProvider implements SandboxProvider {
   }
 
   async create(options: CreateSandboxOptions): Promise<SandboxInfo> {
-    const { uid, githubAccessToken, githubRepository, envs = {} } = options;
+    const {
+      minionId,
+      uid,
+      githubAccessToken,
+      githubRepository,
+      envs = {},
+    } = options;
 
     const sandboxEnvs: Record<string, string> = {
       ...envs,
+
+      POCHI_MINION_ID: minionId,
+
       GITHUB_TOKEN: githubAccessToken,
       GH_TOKEN: githubAccessToken,
     };
@@ -171,8 +180,7 @@ export class FlyioSandboxProvider implements SandboxProvider {
   }
 
   getUrl(sandboxId: string, uid?: string): string {
-    // Fly.io machines get URLs like: https://{app-name}.fly.dev
-    // We need to get the app name from the machine
+    // Fly.io get URLs like: https://{app-name}.fly.dev
     const url = new URL(`https://${sandboxId}.fly.dev`);
 
     if (uid) {
@@ -208,22 +216,6 @@ export class FlyioSandboxProvider implements SandboxProvider {
 
   getProviderType(): string {
     return "flyio";
-  }
-
-  async runInitScript(
-    sandboxId: string,
-    _envs: Record<string, string>,
-    _minionId: string,
-  ): Promise<void> {
-    // Execute the init script in the Fly.io machine
-    const appName = await this.getAppNameForMachine(sandboxId);
-    await this.client.execInMachine(appName, sandboxId, {
-      command: [
-        "/bin/bash",
-        "-c",
-        `${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
-      ],
-    });
   }
 
   private async getAppNameForMachine(machineId: string): Promise<string> {

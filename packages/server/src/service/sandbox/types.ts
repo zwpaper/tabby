@@ -10,6 +10,7 @@ export interface SandboxLogs {
 }
 
 export interface CreateSandboxOptions {
+  minionId: string;
   userId: string;
   uid: string;
   githubAccessToken: string;

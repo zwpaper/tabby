@@ -14,6 +14,7 @@ const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 export class E2BSandboxProvider implements SandboxProvider {
   async create(options: CreateSandboxOptions): Promise<SandboxInfo> {
     const {
+      minionId,
       uid,
       githubAccessToken,
       githubRepository,
@@ -44,7 +45,7 @@ export class E2BSandboxProvider implements SandboxProvider {
       {
         envs: {
           ...envs,
-          // POCHI_MINION_ID: minionIdCoder.encode(res.id),
+          POCHI_MINION_ID: minionId,
         },
         background: true,
         cwd: SandboxPath.home,
@@ -118,11 +119,7 @@ export class E2BSandboxProvider implements SandboxProvider {
   }
 
   getUrl(sandboxId: string, uid?: string): string {
-    // Create a temporary sandbox object to get the host
-    const sandbox = {
-      getHost: (port: number) => `${sandboxId}.e2b.app:${port}`,
-    };
-    const url = new URL(`https://${sandbox.getHost(9080)}`);
+    const url = new URL(`https://9080-${sandboxId}.e2b.app`);
 
     if (uid) {
       url.searchParams.append(
@@ -155,25 +152,5 @@ export class E2BSandboxProvider implements SandboxProvider {
 
   getProviderType(): string {
     return "e2b";
-  }
-
-  async runInitScript(
-    sandboxId: string,
-    envs: Record<string, string>,
-    minionId: string,
-  ): Promise<void> {
-    const sandbox = await Sandbox.connect(sandboxId);
-
-    sandbox.commands.run(
-      `${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
-      {
-        envs: {
-          ...envs,
-          POCHI_MINION_ID: minionId,
-        },
-        background: true,
-        cwd: SandboxPath.home,
-      },
-    );
   }
 }

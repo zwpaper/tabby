@@ -54,7 +54,16 @@ class MinionService {
       envs.GH_REPO = `${githubRepository.owner}/${githubRepository.repo}`;
     }
 
+    const res = await db
+      .insertInto("minion")
+      .values({
+        userId,
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow();
+
     const opts: CreateSandboxOptions = {
+      minionId: minionIdCoder.encode(res.id),
       userId,
       uid,
       githubAccessToken,
@@ -67,17 +76,17 @@ class MinionService {
       envs: envs,
       timeoutMs: SandboxTimeoutMs,
     };
-
     const sandbox = await this.sandboxProvider.create(opts);
-    const res = await db
-      .insertInto("minion")
-      .values({
-        userId,
-        e2bSandboxId: sandbox.id,
-        url: this.sandboxProvider.getUrl(sandbox.id, uid),
+
+    // Update the minion with the sandbox ID
+    await db
+      .updateTable("minion")
+      .where("id", "=", res.id)
+      .set({
+        sandboxId: sandbox.id,
+        url: sandbox.url,
       })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+      .execute();
 
     signalKeepAliveSandbox({ sandboxId: sandbox.id });
     return { ...res, id: minionIdCoder.encode(res.id) };
@@ -85,7 +94,12 @@ class MinionService {
 
   async signalKeepAliveMinion(userId: string, minionId: string) {
     const minion = await this.getMinion(userId, minionId);
-    signalKeepAliveSandbox({ sandboxId: minion.e2bSandboxId });
+    if (!minion.sandboxId) {
+      throw new HTTPException(404, {
+        message: "Minion not found or does not have a sandbox",
+      });
+    }
+    signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
   }
 
   async list(userId: string, page: number, limit: number) {
@@ -136,7 +150,12 @@ class MinionService {
 
   private async getSandbox(userId: string, minionId: string) {
     const minion = await this.getMinion(userId, minionId);
-    const sandbox = await this.sandboxProvider.connect(minion.e2bSandboxId);
+    if (!minion.sandboxId) {
+      throw new HTTPException(404, {
+        message: "Minion not found or does not have a sandbox",
+      });
+    }
+    const sandbox = await this.sandboxProvider.connect(minion.sandboxId);
     return { minion, sandbox };
   }
 
@@ -160,6 +179,12 @@ class MinionService {
 
   async redirect(userId: string, minionId: string) {
     const { minion, sandbox } = await this.getSandbox(userId, minionId);
+    if (!minion.sandboxId) {
+      throw new HTTPException(404, {
+        message: "Sandbox has not been created or is not available",
+      });
+    }
+
     if (!sandbox.isRunning) {
       try {
         await this.sandboxProvider.resume(sandbox.id, SandboxTimeoutMs);
@@ -172,7 +197,7 @@ class MinionService {
       }
     }
 
-    signalKeepAliveSandbox({ sandboxId: minion.e2bSandboxId });
+    signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
 
     const url = this.sandboxProvider.getUrl(sandbox.id);
     await verifyMinionUrl(url);
