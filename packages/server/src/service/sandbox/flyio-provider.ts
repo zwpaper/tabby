@@ -45,6 +45,7 @@ export class FlyioSandboxProvider implements SandboxProvider {
       githubAccessToken,
       githubRepository,
       envs = {},
+      timeoutMs = SandboxTimeoutMs,
     } = options;
 
     const sandboxEnvs: Record<string, string> = {
@@ -80,6 +81,7 @@ export class FlyioSandboxProvider implements SandboxProvider {
         env: sandboxEnvs,
         services: [
           {
+            autostart: false,
             ports: [
               {
                 port: 443,
@@ -101,6 +103,9 @@ export class FlyioSandboxProvider implements SandboxProvider {
         },
       },
       region: this.region,
+      stop_config: {
+        timeout: timeoutMs / 1000, // Fly.io uses seconds for timeout
+      },
     });
 
     await this.client.allocateIp({ appId: appName });
@@ -115,23 +120,23 @@ export class FlyioSandboxProvider implements SandboxProvider {
   }
 
   async connect(sandboxId: string): Promise<SandboxInfo> {
-    const app = await this.client.getApp(sandboxId);
     const url = this.getUrl(sandboxId);
+    const isRunning = await this.isRunning(sandboxId);
 
     return {
       id: sandboxId,
       url,
-      isRunning: app.status === "deployed",
+      isRunning,
     };
   }
 
   async isRunning(sandboxId: string): Promise<boolean> {
-    try {
-      const app = await this.client.getApp(sandboxId);
-      return app.status === "deployed";
-    } catch (error) {
+    const machines = await this.client.listMachines(sandboxId);
+    if (machines.length === 0) {
       return false;
     }
+
+    return machines[0].state === "started";
   }
 
   async resume(
@@ -139,8 +144,8 @@ export class FlyioSandboxProvider implements SandboxProvider {
     _timeoutMs = SandboxTimeoutMs,
   ): Promise<void> {
     try {
-      const appName = await this.getAppNameForMachine(sandboxId);
-      await this.client.startMachine(appName, sandboxId);
+      const machineId = await this.getMachineForApp(sandboxId);
+      await this.client.startMachine(sandboxId, machineId);
     } catch (error) {
       if (error instanceof Error && error.message.includes("not found")) {
         throw new HTTPException(404, {
@@ -152,8 +157,12 @@ export class FlyioSandboxProvider implements SandboxProvider {
   }
 
   async pause(sandboxId: string): Promise<void> {
-    const appName = await this.getAppNameForMachine(sandboxId);
-    await this.client.stopMachine(appName, sandboxId);
+    try {
+      const machineId = await this.getMachineForApp(sandboxId);
+      await this.client.suspendMachine(sandboxId, machineId);
+    } catch (error) {
+      console.error(`Failed to pause sandbox ${sandboxId}:`, error);
+    }
   }
 
   async getLogs(sandboxId: string): Promise<SandboxLogs | null> {
@@ -202,55 +211,54 @@ export class FlyioSandboxProvider implements SandboxProvider {
 
   async list(): Promise<{ sandboxId: string }[]> {
     const appsResponse = await this.client.listApps(this.orgSlug);
-    const machines: { sandboxId: string }[] = [];
+    const sandboxes: { sandboxId: string }[] = [];
 
     for (const app of appsResponse.apps || []) {
       if (app.name?.startsWith("pochi-")) {
-        const appMachines = await this.client.listMachines(app.name);
-        machines.push(...appMachines.map((m) => ({ sandboxId: m.id || "" })));
+        sandboxes.push({ sandboxId: app.name || "" });
       }
     }
 
-    return machines;
+    return sandboxes;
   }
 
   getProviderType(): string {
     return "flyio";
   }
 
-  private async getAppNameForMachine(machineId: string): Promise<string> {
-    const appsResponse = await this.client.listApps(this.orgSlug);
-
-    for (const app of appsResponse.apps || []) {
-      if (app.name?.startsWith("pochi-")) {
-        try {
-          const machines = await this.client.listMachines(app.name);
-          if (machines.some((m) => m.id === machineId)) {
-            return app.name;
-          }
-        } catch (error) {
-          // Continue searching
-        }
+  private async getMachineForApp(appName: string): Promise<string> {
+    try {
+      const machines = await this.client.listMachines(appName);
+      if (machines.length === 0) {
+        throw new Error(`No machines found for app ${appName}`);
       }
+      // Return the first machine ID (assuming one machine per app for pochi sandboxes)
+      const machineId = machines[0].id;
+      if (!machineId) {
+        throw new Error(`Machine ID not found for app ${appName}`);
+      }
+      return machineId;
+    } catch (error) {
+      console.log(`Error getting machine for app ${appName}:`, error);
+      throw new Error(`Failed to get machine for app ${appName}: ${error}`);
     }
-
-    throw new Error(`App for machine ${machineId} not found`);
   }
 
   private async readFileFromMachine(
-    machineId: string,
+    appName: string,
     filePath: string,
   ): Promise<string> {
-    // This would need to be implemented using exec to cat the file
-    // For now, return empty string as placeholder
     try {
-      const appName = await this.getAppNameForMachine(machineId);
-      await this.client.execInMachine(appName, machineId, {
+      const machineId = await this.getMachineForApp(appName);
+      const output = await this.client.execInMachine(appName, machineId, {
         command: ["cat", filePath],
       });
-      // In a real implementation, you'd capture the output
-      return "";
+      return output.stdout || "";
     } catch (error) {
+      console.log(
+        `Error reading file from machine ${appName}:${filePath}:`,
+        error,
+      );
       return "";
     }
   }

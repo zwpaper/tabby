@@ -1,9 +1,10 @@
-import { Sandbox } from "@e2b/code-interpreter";
 import { Queue, Worker } from "bullmq";
+import { getSandboxProvider } from "../sandbox";
 import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
 const QueueName = "pause-inactive-sandbox";
+const sandboxProvider = getSandboxProvider();
 
 interface PauseInactiveSandboxData {
   sandboxId: string;
@@ -37,9 +38,11 @@ export function createPauseInactiveSandboxWorker() {
       const { sandboxId } = job.data;
       logger.debug(`Pausing sandbox ${sandboxId}`);
       try {
-        const sandbox = await Sandbox.connect(sandboxId);
-        await sandbox.pause();
-        logger.debug(`Sandbox ${sandboxId} paused`);
+        const status = await sandboxProvider.connect(sandboxId);
+        if (status.isRunning) {
+          await sandboxProvider.pause(sandboxId);
+          logger.debug(`Sandbox ${sandboxId} paused`);
+        }
       } catch (error) {
         logger.debug(`Failed to pause sandbox ${sandboxId}`, error);
       }
@@ -49,11 +52,8 @@ export function createPauseInactiveSandboxWorker() {
 }
 
 async function init() {
-  const paginator = Sandbox.list();
-  while (paginator.hasNext) {
-    const sandboxes = await paginator.nextItems();
-    for (const sandbox of sandboxes) {
-      signalKeepAliveSandbox({ sandboxId: sandbox.sandboxId });
-    }
+  const sandboxes = await sandboxProvider.list();
+  for (const sandbox of sandboxes) {
+    signalKeepAliveSandbox({ sandboxId: sandbox.sandboxId });
   }
 }

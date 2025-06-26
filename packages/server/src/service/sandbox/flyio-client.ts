@@ -49,6 +49,7 @@ export interface CreateMachineRequest {
     image?: string;
     env?: Record<string, string>;
     services?: Array<{
+      autostart?: boolean;
       ports?: Array<{
         port?: number;
         handlers?: string[];
@@ -69,11 +70,10 @@ export interface CreateMachineRequest {
   name?: string;
   region?: string;
   lease_ttl?: number;
-  lsvd?: boolean;
-  min_secrets_version?: number;
-  skip_launch?: boolean;
-  skip_secrets?: boolean;
-  skip_service_registration?: boolean;
+  stop_config?: {
+    signal?: string;
+    timeout?: number;
+  };
 }
 
 export interface CreateAppRequest {
