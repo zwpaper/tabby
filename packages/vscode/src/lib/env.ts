@@ -71,7 +71,7 @@ export async function collectCustomRules(
 }
 
 /**
- * Collects all workflow files from .pochirules/workflows directory
+ * Collects all workflow files from .pochi/workflows directory
  * @returns Array of workflow file paths
  */
 export async function collectWorkflows(): Promise<
@@ -90,7 +90,7 @@ export async function collectWorkflows(): Promise<
 
       const content = await readFileContent(absolutePath);
 
-      // e.g., ".pochirules/workflows/workflow1.md" -> "workflow1.md"
+      // e.g., ".pochi/workflows/workflow1.md" -> "workflow1.md"
       const fileName = file.split("/").pop()?.replace(/\.md$/, "") || file;
 
       return {

@@ -209,7 +209,7 @@ export class McpHub implements vscode.Disposable {
     const toolset = Object.entries(connections).reduce<
       Record<string, McpTool & McpToolExecutable>
     >((acc, [, connection]) => {
-      if (connection.status === "ready") {
+      if (connection.status === "ready" && connection.tools) {
         const tools = Object.entries(connection.tools).reduce<
           Record<string, McpTool & McpToolExecutable>
         >((toolAcc, [toolName, tool]) => {
@@ -270,7 +270,7 @@ export class McpHub implements vscode.Disposable {
     }
     this.listeners = [];
 
-    for (const connection of Object.values(this.connections)) {
+    for (const connection of this.connections.values()) {
       connection.listener.dispose();
       connection.instance.dispose();
     }
