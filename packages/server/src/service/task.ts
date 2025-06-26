@@ -30,7 +30,7 @@ import {
 } from "ai";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
-import { DatabaseError } from "pg";
+import moment from "moment";
 import type { z } from "zod";
 import { db, uidCoder } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
@@ -181,6 +181,11 @@ class TaskService {
       .executeTakeFirstOrThrow();
 
     this.verifyEnvironment(environment, taskEnvironment);
+
+    // Lock the task given sessionId.
+    if (request.sessionId) {
+      await this.lock(uid, userId, request.sessionId);
+    }
 
     if (status === "streaming") {
       throw new HTTPException(409, {
@@ -670,35 +675,50 @@ class TaskService {
     return { uid, minion };
   }
 
-  async lock(uid: string, userId: string) {
-    try {
-      const newLock = await db
-        .insertInto("taskLock")
-        .columns(["id", "taskId"])
-        .expression((eb) =>
-          eb
-            .selectFrom("task")
-            .select([sql<string>`'${generateId()}'`.as("id"), "id as taskId"])
-            .where("id", "=", uidCoder.decode(uid))
-            .where("userId", "=", userId),
-        )
-        .returning(["id"])
-        .executeTakeFirst();
+  async lock(uid: string, userId: string, lockId: string) {
+    const task = await db
+      .selectFrom("task")
+      .select(["id"])
+      .where("id", "=", uidCoder.decode(uid))
+      .where("userId", "=", userId)
+      .executeTakeFirst();
 
-      if (!newLock) {
-        throw new HTTPException(404, { message: "Task not found" });
-      }
-
-      return newLock.id;
-    } catch (e) {
-      if (e instanceof DatabaseError && e.code === "23505") {
-        // unique_violation
-        throw new HTTPException(409, {
-          message: "Task is locked by other session",
-        });
-      }
-      throw e;
+    if (!task) {
+      throw new HTTPException(404, { message: "Task not found" });
     }
+
+    // Clean up old locks older than 30 minutes
+    const thirtyMinutesAgo = moment().subtract(30, "minutes").toDate();
+    await db
+      .deleteFrom("taskLock")
+      .where("taskId", "=", task.id)
+      .where("updatedAt", "<", thirtyMinutesAgo)
+      .execute();
+
+    const lockResult = await db
+      .insertInto("taskLock")
+      .values({
+        id: lockId,
+        taskId: task.id,
+      })
+      .onConflict((oc) =>
+        oc
+          .column("taskId")
+          .doUpdateSet({
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          })
+          .whereRef("id", "=", "excluded.id"),
+      )
+      .executeTakeFirst();
+
+    if (lockResult) {
+      return;
+    }
+
+    // Task exists, so it must be a lock conflict.
+    throw new HTTPException(409, {
+      message: "Task is locked by other session",
+    });
   }
 
   async releaseLock(uid: string, userId: string, lockId: string) {
@@ -715,27 +735,6 @@ class TaskService {
       .executeTakeFirst();
 
     if (result.numDeletedRows === 0n) {
-      throw new HTTPException(404, {
-        message: "Lock not found or task not found",
-      });
-    }
-  }
-
-  async refreshLock(uid: string, userId: string, lockId: string) {
-    const result = await db
-      .updateTable("taskLock")
-      .set({ updatedAt: sql`CURRENT_TIMESTAMP` })
-      .where("id", "=", lockId)
-      .where("taskId", "in", (eb) =>
-        eb
-          .selectFrom("task as t")
-          .select("t.id")
-          .where("t.id", "=", uidCoder.decode(uid))
-          .where("t.userId", "=", userId),
-      )
-      .executeTakeFirst();
-
-    if (result.numUpdatedRows === 0n) {
       throw new HTTPException(404, {
         message: "Lock not found or task not found",
       });

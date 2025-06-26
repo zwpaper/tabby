@@ -1,7 +1,9 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "tasks": {
-    "tsc": {},
+    "tsc": {
+      "dependsOn": ["^tsc"]
+    },
     "test": {},
     "build": {
       "dependsOn": ["tsc"],

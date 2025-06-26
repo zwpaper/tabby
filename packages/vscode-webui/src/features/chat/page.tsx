@@ -6,10 +6,17 @@ import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { formatters, prompts, toUIMessages } from "@ragdoll/common";
 import type { Environment, Todo } from "@ragdoll/db";
-import type { UIMessage } from "ai";
+import { type UIMessage, generateId } from "ai";
 import type { InferResponseType } from "hono/client";
 import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { ErrorMessage } from "@/components/error-message";
@@ -70,6 +77,7 @@ interface ChatProps {
 function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const autoApproveGuard = useAutoApproveGuard();
   const uid = useRef<string | undefined>(task?.uid);
+  const sessionId = useSessionId(uid);
   const [totalTokens, setTotalTokens] = useState<number>(
     task?.totalTokens || 0,
   );
@@ -173,7 +181,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       }
     },
     experimental_prepareRequestBody: (req) =>
-      prepareRequestBody(uid, req, selectedModel?.id),
+      prepareRequestBody(uid, sessionId, req, selectedModel?.id),
     fetch: async (url, options) => {
       // Clear the data when a new request is made
       setData(undefined);
@@ -496,4 +504,55 @@ function useTaskError(status: UseChatHelpers["status"], task?: Task | null) {
     }
   }, [status, taskError]);
   return taskError;
+}
+
+function useSessionId(uid: RefObject<string | undefined>) {
+  const sessionId = useRef<string>(generateId());
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies(uid.current): uid is ref
+  useEffect(() => {
+    const refreshLock = async (uid: string, lockId: string) => {
+      apiClient.api.tasks[":uid"].lock[":lockId"]
+        .$post({
+          param: {
+            uid,
+            lockId,
+          },
+        })
+        .catch((err) => {
+          console.error("Failed to refresh session lock:", err);
+        });
+    };
+
+    if (uid.current) {
+      refreshLock(uid.current, sessionId.current);
+    }
+
+    const refreshJob = setInterval(
+      () => {
+        if (!uid.current) return;
+        refreshLock(uid.current, sessionId.current);
+      },
+      1000 * 60 * 5,
+    ); // Refresh every 5 minutes
+
+    return () => {
+      clearInterval(refreshJob);
+
+      if (!uid.current) return;
+
+      apiClient.api.tasks[":uid"].lock[":lockId"]
+        .$delete({
+          param: {
+            uid: uid.current,
+            lockId: sessionId.current,
+          },
+        })
+        .catch((err) => {
+          console.error("Failed to release session lock:", err);
+        });
+    };
+  }, []);
+
+  return sessionId;
 }

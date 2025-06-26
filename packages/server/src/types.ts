@@ -7,26 +7,32 @@ export const ZodMessageType: z.ZodType<DBMessage> = z.any();
 const ZodEventType: z.ZodType<TaskCreateEvent> = z.any();
 
 export const ZodChatRequestType = z.object({
-  id: z.string().optional(),
-  model: z.string().optional(), // Added model field
-  event: ZodEventType.optional(),
-  message: ZodMessageType,
+  id: z.string().optional().describe("Task uid."),
+  sessionId: z
+    .string()
+    .optional()
+    .describe("Session uid, used to lock the task."),
+  model: z.string().optional().describe("Model to use for this request."),
+  event: ZodEventType.optional().describe("Associated event for the task."),
+  message: ZodMessageType.describe("Message payload for the chat request."),
   mcpToolSet: z
     .record(
-      z.string().describe("The name of the MCP tool."),
-      ZodMcpToolType.describe("The MCP tool definition."),
+      z.string().describe("Name of the MCP tool."),
+      ZodMcpToolType.describe("Definition of the MCP tool."),
     )
     .optional()
-    .describe("MCP tools to use with this request"),
-  environment: ZodEnvironment.optional(),
+    .describe("MCP tools available for this request."),
+  environment: ZodEnvironment.optional().describe(
+    "Execution environment settings.",
+  ),
   enableNewTask: z
     .boolean()
     .optional()
-    .describe("Enable the newTask tool for this request"),
+    .describe("Enable the newTask tool for this request."),
   enableGeminiCustomToolCalls: z
     .boolean()
     .optional()
-    .describe("Enable custom tool calls for Gemini models"),
+    .describe("Enable custom tool calls for Gemini models."),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;
