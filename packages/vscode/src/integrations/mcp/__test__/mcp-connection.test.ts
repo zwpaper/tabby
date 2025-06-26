@@ -50,8 +50,8 @@ describe("McpConnection", () => {
       "ai": {
         experimental_createMCPClient: mockCreateClient,
       },
-      "ai/mcp-stdio": {
-        Experimental_StdioMCPTransport: mockStdioTransport,
+      "@modelcontextprotocol/sdk/client/stdio.js": {
+        StdioClientTransport: mockStdioTransport,
       },
       "@modelcontextprotocol/sdk/client/streamableHttp.js": {
         StreamableHTTPClientTransport: mockStreamableTransport,
@@ -175,7 +175,7 @@ describe("McpConnection", () => {
       const shouldRestartStub = sandbox.stub().returns(true);
       McpConnection = proxyquire("../mcp-connection", {
         "ai": { experimental_createMCPClient: mockCreateClient },
-        "ai/mcp-stdio": { Experimental_StdioMCPTransport: mockStdioTransport },
+        "@modelcontextprotocol/sdk/client/stdio.js": { StdioClientTransport: mockStdioTransport },
         "@modelcontextprotocol/sdk/client/streamableHttp.js": { StreamableHTTPClientTransport: mockStreamableTransport },
         "./utils": {
           checkUrlIsSseServer: mockCheckUrlIsSseServer,
@@ -254,12 +254,11 @@ describe("McpConnection", () => {
       assert.ok(mockStdioTransport.called);
 
       const transportCall = mockStdioTransport.getCall(0);
-      assert.deepStrictEqual(transportCall.args[0], {
-        command: "node",
-        args: ["server.js"],
-        cwd: "/test/cwd",
-        disabled: false,
-      });
+      const transportArgs = transportCall.args[0];
+      assert.strictEqual(transportArgs.command, "node");
+      assert.deepStrictEqual(transportArgs.args, ["server.js"]);
+      assert.strictEqual(transportArgs.cwd, "/test/cwd");
+      assert.ok(transportArgs.env); // Should have environment variables
     });
 
     it("should pass environment variables to stdio transport", async () => {
@@ -276,7 +275,12 @@ describe("McpConnection", () => {
       await new Promise(resolve => setTimeout(resolve, 10));
 
       const transportCall = mockStdioTransport.getCall(0);
-      assert.deepStrictEqual(transportCall.args[0].env, { DEBUG: "1", NODE_ENV: "test" });
+      const env = transportCall.args[0].env;
+      assert.strictEqual(env.DEBUG, "1");
+      assert.strictEqual(env.NODE_ENV, "test");
+      // Should also have default environment variables
+      assert.ok(env.PATH);
+      assert.ok(env.HOME || env.USERPROFILE); // HOME on Unix, USERPROFILE on Windows
     });
   });
 
