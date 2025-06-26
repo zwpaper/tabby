@@ -60,10 +60,11 @@ export interface CreateMachineRequest {
     restart?: {
       policy?: string;
     };
-  };
-  guest?: {
-    cpus?: number;
-    memory_mb?: number;
+    guest?: {
+      cpu_kind?: "shared" | "performance";
+      cpus?: number;
+      memory_mb?: number;
+    };
   };
   name?: string;
   region?: string;
@@ -311,10 +312,6 @@ export class FlyioClient {
       method: "POST",
       body: JSON.stringify(request),
     });
-  }
-
-  async getMachine(appName: string, machineId: string): Promise<Machine> {
-    return this.request(`/apps/${appName}/machines/${machineId}`);
   }
 
   async updateMachine(

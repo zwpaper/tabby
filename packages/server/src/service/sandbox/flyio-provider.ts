@@ -1,7 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import {
   type FlyioClient,
-  type Machine,
   createAuthenticatedFlyioClient,
 } from "./flyio-client";
 import type {
@@ -15,10 +14,10 @@ import { SandboxPath } from "./types";
 // Remove interfaces as they are now imported from flyio-client
 
 const FlyApiToken = process.env.FLY_API_TOKEN;
-const FlyOrgSlug = process.env.FLY_ORG_SLUG || "kw-353";
+const FlyOrgSlug = process.env.FLY_ORG_SLUG || "tabbyml";
 const FlyImage =
-  process.env.FLY_SANDBOX_IMAGE || "ghcr.io/kweizh/pochi-minion:base";
-const FlyRegion = process.env.FLY_REGION || "nrt";
+  process.env.FLY_SANDBOX_IMAGE || "ghcr.io/kweizh/pochi-minion:v0.2.0";
+const FlyRegion = process.env.FLY_REGION || "lax";
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 
 export class FlyioSandboxProvider implements SandboxProvider {
@@ -86,12 +85,13 @@ export class FlyioSandboxProvider implements SandboxProvider {
         restart: {
           policy: "no",
         },
+        guest: {
+          cpu_kind: "shared",
+          cpus: 2,
+          memory_mb: 2048,
+        },
       },
       region: this.region,
-      guest: {
-        cpus: 2,
-        memory_mb: 1024,
-      },
     });
 
     await this.client.allocateIp({ appId: appName });
@@ -106,20 +106,20 @@ export class FlyioSandboxProvider implements SandboxProvider {
   }
 
   async connect(sandboxId: string): Promise<SandboxInfo> {
-    const machine = await this.getMachine(sandboxId);
+    const app = await this.client.getApp(sandboxId);
     const url = this.getUrl(sandboxId);
 
     return {
       id: sandboxId,
       url,
-      isRunning: machine.state === "started",
+      isRunning: app.status === "deployed",
     };
   }
 
   async isRunning(sandboxId: string): Promise<boolean> {
     try {
-      const machine = await this.getMachine(sandboxId);
-      return machine.state === "started";
+      const app = await this.client.getApp(sandboxId);
+      return app.status === "deployed";
     } catch (error) {
       return false;
     }
@@ -224,29 +224,6 @@ export class FlyioSandboxProvider implements SandboxProvider {
         `${SandboxPath.init} 2>&1 | tee ${SandboxPath.initLog}`,
       ],
     });
-  }
-
-  // Private helper methods
-  private async getMachine(machineId: string): Promise<Machine> {
-    // We need to find which app this machine belongs to
-    // This is a limitation of Fly.io API - we need the app name to get machine details
-    const appsResponse = await this.client.listApps(this.orgSlug);
-
-    for (const app of appsResponse.apps || []) {
-      if (app.name?.startsWith("pochi-")) {
-        try {
-          const machines = await this.client.listMachines(app.name);
-          const machine = machines.find((m) => m.id === machineId);
-          if (machine) {
-            return machine;
-          }
-        } catch (error) {
-          // Continue searching in other apps
-        }
-      }
-    }
-
-    throw new Error(`Machine ${machineId} not found`);
   }
 
   private async getAppNameForMachine(machineId: string): Promise<string> {
