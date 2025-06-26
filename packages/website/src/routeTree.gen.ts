@@ -12,8 +12,8 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as WaitlistImport } from './routes/waitlist'
-import { Route as TermsImport } from './routes/terms'
-import { Route as PrivacyImport } from './routes/privacy'
+import { Route as TermOfServiceImport } from './routes/term-of-service'
+import { Route as PrivacyPolicyImport } from './routes/privacy-policy'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
 import { Route as ShareUidImport } from './routes/share.$uid'
@@ -47,15 +47,15 @@ const WaitlistRoute = WaitlistImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const TermsRoute = TermsImport.update({
-  id: '/terms',
-  path: '/terms',
+const TermOfServiceRoute = TermOfServiceImport.update({
+  id: '/term-of-service',
+  path: '/term-of-service',
   getParentRoute: () => rootRoute,
 } as any)
 
-const PrivacyRoute = PrivacyImport.update({
-  id: '/privacy',
-  path: '/privacy',
+const PrivacyPolicyRoute = PrivacyPolicyImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -232,18 +232,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImport
       parentRoute: typeof rootRoute
     }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyImport
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyImport
       parentRoute: typeof rootRoute
     }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsImport
+    '/term-of-service': {
+      id: '/term-of-service'
+      path: '/term-of-service'
+      fullPath: '/term-of-service'
+      preLoaderRoute: typeof TermOfServiceImport
       parentRoute: typeof rootRoute
     }
     '/waitlist': {
@@ -506,8 +506,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/terms': typeof TermsRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
@@ -534,8 +534,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/terms': typeof TermsRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
@@ -563,8 +563,8 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/terms': typeof TermsRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/_authenticated/_base': typeof AuthenticatedBaseRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -595,8 +595,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | ''
-    | '/privacy'
-    | '/terms'
+    | '/privacy-policy'
+    | '/term-of-service'
     | '/waitlist'
     | '/admin'
     | '/redirect-vscode'
@@ -622,8 +622,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | ''
-    | '/privacy'
-    | '/terms'
+    | '/privacy-policy'
+    | '/term-of-service'
     | '/waitlist'
     | '/admin'
     | '/redirect-vscode'
@@ -649,8 +649,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/privacy'
-    | '/terms'
+    | '/privacy-policy'
+    | '/term-of-service'
     | '/waitlist'
     | '/_authenticated/_base'
     | '/_authenticated/admin'
@@ -680,8 +680,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  PrivacyRoute: typeof PrivacyRoute
-  TermsRoute: typeof TermsRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  TermOfServiceRoute: typeof TermOfServiceRoute
   WaitlistRoute: typeof WaitlistRoute
   AuthPathnameRoute: typeof AuthPathnameRoute
   ShareUidRoute: typeof ShareUidRoute
@@ -690,8 +690,8 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  PrivacyRoute: PrivacyRoute,
-  TermsRoute: TermsRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
+  TermOfServiceRoute: TermOfServiceRoute,
   WaitlistRoute: WaitlistRoute,
   AuthPathnameRoute: AuthPathnameRoute,
   ShareUidRoute: ShareUidRoute,
@@ -709,8 +709,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/_authenticated",
-        "/privacy",
-        "/terms",
+        "/privacy-policy",
+        "/term-of-service",
         "/waitlist",
         "/auth/$pathname",
         "/share/$uid"
@@ -730,11 +730,11 @@ export const routeTree = rootRoute
         "/_authenticated/auth/vscode-link"
       ]
     },
-    "/privacy": {
-      "filePath": "privacy.tsx"
+    "/privacy-policy": {
+      "filePath": "privacy-policy.tsx"
     },
-    "/terms": {
-      "filePath": "terms.tsx"
+    "/term-of-service": {
+      "filePath": "term-of-service.tsx"
     },
     "/waitlist": {
       "filePath": "waitlist.tsx"
