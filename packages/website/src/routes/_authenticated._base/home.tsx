@@ -10,8 +10,8 @@ export const Route = createFileRoute("/_authenticated/_base/home")({
 
 function RouteComponent() {
   return (
-    <div className="container mx-auto flex max-h-[1080px] max-w-7xl flex-1 items-start px-4 pt-16 sm:px-6 lg:items-center lg:px-8 lg:pt-0">
-      <div className="space-y-8 pb-4">
+    <div className="container mx-auto flex max-w-7xl flex-1 items-start px-4 pt-16 sm:px-6 lg:items-center lg:px-8 lg:pt-0">
+      <div className="space-y-8 sm:pb-4">
         <div className="space-y-4 text-center">
           <h1 className="font-bold text-3xl text-foreground tracking-tight">
             Get Started with Pochi

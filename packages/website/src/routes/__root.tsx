@@ -1,8 +1,10 @@
+import { Footer } from "@/components/footer";
 import type { authClient } from "@/lib/auth-client";
 import {
   HeadContent,
   Outlet,
   createRootRouteWithContext,
+  useLocation,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
@@ -23,11 +25,19 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     ],
   }),
 
-  component: () => (
-    <>
-      <HeadContent />
-      <Outlet />
-      <TanStackRouterDevtools position="bottom-right" />
-    </>
-  ),
+  component: () => {
+    const location = useLocation();
+    const isAuthPage = location.pathname.startsWith("/auth");
+
+    return (
+      <>
+        <HeadContent />
+        <div className={`min-h-screen ${!isAuthPage ? "pb-16" : ""}`}>
+          <Outlet />
+        </div>
+        {!isAuthPage && <Footer />}
+        <TanStackRouterDevtools position="bottom-right" />
+      </>
+    );
+  },
 });
