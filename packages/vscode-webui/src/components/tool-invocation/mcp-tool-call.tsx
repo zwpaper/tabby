@@ -1,5 +1,4 @@
 import { CodeBlock, MessageMarkdown } from "@/components/message";
-import { ScrollArea } from "../ui/scroll-area";
 import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";
 import { ExpandableToolContainer } from "./tool-container";
@@ -94,9 +93,7 @@ function ContentResult({ content }: { content: any[] }) {
         if (item.type === "text") {
           return (
             <div key={index}>
-              <ScrollArea className="p-4" viewportClassname="max-h-52">
-                <MessageMarkdown isMinimalView>{item.text}</MessageMarkdown>
-              </ScrollArea>
+              <MessageMarkdown isMinimalView>{item.text}</MessageMarkdown>
             </div>
           );
         }
