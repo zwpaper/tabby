@@ -9,7 +9,7 @@ import { parseGitOriginUrl } from "@ragdoll/common/git-utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { go as fuzzy } from "fuzzysort";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { z } from "zod";
 
 const taskSearchSchema = z.object({
@@ -131,37 +131,46 @@ function TaskPage() {
   const totalPages = Math.ceil(filteredTasks.length / pageSize);
   const tasks = filteredTasks.slice((page - 1) * pageSize, page * pageSize);
 
-  const onFilterChange = (newFilters: FilterValues) => {
-    router.navigate({
-      to: "/tasks",
-      search: (prev) => ({
-        ...newFilters,
-        page: 1,
-        pageSize: prev.pageSize ?? 20,
-      }),
-      replace: true,
-    });
-  };
+  const onFilterChange = useCallback(
+    (newFilters: FilterValues) => {
+      router.navigate({
+        to: "/tasks",
+        search: (prev) => ({
+          ...newFilters,
+          page: 1,
+          pageSize: prev.pageSize ?? 20,
+        }),
+        replace: true,
+      });
+    },
+    [router],
+  );
 
-  const onPageChange = (page: number) => {
-    router.navigate({
-      to: "/tasks",
-      search: (prev) => ({ ...prev, page, pageSize: prev.pageSize ?? 20 }),
-      replace: true,
-    });
-  };
+  const onPageChange = useCallback(
+    (page: number) => {
+      router.navigate({
+        to: "/tasks",
+        search: (prev) => ({ ...prev, page, pageSize: prev.pageSize ?? 20 }),
+        replace: true,
+      });
+    },
+    [router],
+  );
 
-  const onPageSizeChange = (newPageSize: number) => {
-    router.navigate({
-      to: "/tasks",
-      search: (prev) => ({
-        ...prev,
-        pageSize: newPageSize,
-        page: 1,
-      }),
-      replace: true,
-    });
-  };
+  const onPageSizeChange = useCallback(
+    (newPageSize: number) => {
+      router.navigate({
+        to: "/tasks",
+        search: (prev) => ({
+          ...prev,
+          pageSize: newPageSize,
+          page: 1,
+        }),
+        replace: true,
+      });
+    },
+    [router],
+  );
 
   if (isLoading) {
     const loadingRepositories: Repository[] = [];

@@ -55,7 +55,7 @@ export function TaskFilters({
   const [filters, dispatch] = useReducer(filterReducer, {
     repository: initialValues.repository,
     branch: initialValues.branch,
-    q: initialValues.q ?? "",
+    q: initialValues.q,
   });
 
   useEffect(() => {
