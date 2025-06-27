@@ -34,8 +34,8 @@ export function DataTablePagination({
       <div className="flex-1 text-muted-foreground text-sm">
         {/* We can add total count here if needed */}
       </div>
-      <div className="flex items-center space-x-6 lg:space-x-8">
-        <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-4 lg:space-x-8">
+        <div className="flex hidden items-center space-x-2 md:block">
           <p className="font-medium text-sm">Rows per page</p>
           <Select
             value={`${pageSize}`}
@@ -61,7 +61,7 @@ export function DataTablePagination({
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
+            className="h-8 w-8 p-0"
             onClick={() => onPageChange(1)}
             disabled={page <= 1}
           >
@@ -88,7 +88,7 @@ export function DataTablePagination({
           </Button>
           <Button
             variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
+            className="h-8 w-8 p-0"
             onClick={() => onPageChange(totalPages)}
             disabled={page >= totalPages}
           >

@@ -85,18 +85,14 @@ export function SharePage() {
             </div>
           ) : (
             <div
-              className={cn(
-                "grid gap-3",
-                todos && todos.length > 0
-                  ? "grid-cols-1 md:grid-cols-4"
-                  : "md:grid-cols-1",
-              )}
+              className={cn("grid grid-cols-1 gap-3", {
+                "md:grid-cols-4": todos && todos.length > 0,
+              })}
             >
               <div
-                className={cn(
-                  "order-1 md:order-1",
-                  todos && todos.length > 0 ? "md:col-span-3" : "md:col-span-1",
-                )}
+                className={cn("col-span-1", {
+                  "md:col-span-3": todos && todos.length > 0,
+                })}
               >
                 <MessageList
                   logo={logo}
@@ -106,7 +102,7 @@ export function SharePage() {
                 />
               </div>
               {todos && todos.length > 0 && (
-                <div className="order-2 md:order-2 md:col-span-1">
+                <div className="col-span-1">
                   <TodoList
                     todos={todos}
                     className="[&>.todo-border]:!hidden px-4 md:px-0"
