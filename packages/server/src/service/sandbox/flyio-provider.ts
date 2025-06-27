@@ -19,6 +19,7 @@ const FlyImage =
   process.env.FLY_SANDBOX_IMAGE || "ghcr.io/kweizh/pochi-minion:v0.2.0";
 const FlyRegion = process.env.FLY_REGION || "lax";
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
+const RunPochiDomain = process.env.RUN_POCHI_DOMAIN || "runpochi.com";
 
 export class FlyioSandboxProvider implements SandboxProvider {
   private client: FlyioClient;
@@ -48,10 +49,18 @@ export class FlyioSandboxProvider implements SandboxProvider {
       timeoutMs = SandboxTimeoutMs,
     } = options;
 
+    // Create a unique app name for this sandbox
+    const uuid = crypto.randomUUID();
+    if (!uuid) {
+      throw new Error("Failed to generate unique identifier for Fly app");
+    }
+    const appName = `pochi-${uuid.slice(0, 18)}`;
+
     const sandboxEnvs: Record<string, string> = {
       ...envs,
 
       POCHI_MINION_ID: minionId,
+      POCHI_SANDBOX_HOST: `${appName}.${RunPochiDomain}`,
 
       GITHUB_TOKEN: githubAccessToken,
       GH_TOKEN: githubAccessToken,
@@ -60,13 +69,6 @@ export class FlyioSandboxProvider implements SandboxProvider {
     if (githubRepository) {
       sandboxEnvs.GH_REPO = `${githubRepository.owner}/${githubRepository.repo}`;
     }
-
-    // Create a unique app name for this sandbox
-    const uuid = crypto.randomUUID();
-    if (!uuid) {
-      throw new Error("Failed to generate unique identifier for Fly app");
-    }
-    const appName = `pochi-${uuid.slice(0, 18)}`;
 
     // Create Fly app
     await this.client.createApp({
