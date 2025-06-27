@@ -326,7 +326,7 @@ class SlackTaskService {
         await webClient.chat.postEphemeral({
           channel: channelId,
           user: slackUserId,
-          text: "❌ Invalid repository format. Expected: owner/repo",
+          text: `💬 Input: \`${commandText}\`\n\n❌ Invalid repository format. Expected: owner/repo`,
         });
         return null;
       }
@@ -342,7 +342,7 @@ class SlackTaskService {
         await webClient.chat.postEphemeral({
           channel: channelId,
           user: slackUserId,
-          text: "❌ No repository specified. Either:\n• Use format: `/newtask [owner/repo] description`\n• Or set a channel topic with format: `[repo:owner/repo]`\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set topic: `Project discussion [repo:TabbyML/tabby]`",
+          text: `💬 Input: \`${commandText}\`\n\n❌ No repository specified. Either:\n• Use format: \`/newtask [owner/repo] description\`\n• Or set a channel topic with format: \`[repo:owner/repo]\`\n\nExample: \`/newtask [TabbyML/tabby] fix the login issue\`\nOr set topic: \`Project discussion [repo:TabbyML/tabby]\``,
         });
         return null;
       }
@@ -360,7 +360,7 @@ class SlackTaskService {
       await webClient.chat.postEphemeral({
         channel: channelId,
         user: slackUserId,
-        text: `❌ Failed to validate GitHub repo: ${owner}/${repo}. Please check if the repository exists and you have access to it.`,
+        text: `💬 Input: \`${commandText}\`\n\n❌ Failed to validate GitHub repo: ${owner}/${repo}. Please check if the repository exists and you have access to it.`,
       });
       return null;
     }

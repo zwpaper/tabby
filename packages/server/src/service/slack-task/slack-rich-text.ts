@@ -58,7 +58,7 @@ class SlackRichTextRenderer {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "*🟡 Running*",
+          text: "*🟢 Running*",
         },
       },
     ];
