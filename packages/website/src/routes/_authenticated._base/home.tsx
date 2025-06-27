@@ -17,8 +17,9 @@ function RouteComponent() {
             Get Started with Pochi
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            Onboard your Pochi teammate on your existing dev tools - Slack for
-            team collaboration, and VSCode for hands-on coding
+            Bring your AI teammate into the tools you already use. Delegate
+            tasks to your AI teammate and jump in when needed. Build and ship
+            faster with full visibility and control.
           </p>
         </div>
         <InstallPanel />
@@ -30,7 +31,7 @@ const editors = [
   {
     name: "Slack",
     description:
-      "Assign tasks to AI and get a fully remote agent running in the cloud. Jump into a cloud VSCode environment to take over when needed.",
+      "Assign tasks with a message. Pochi runs in the cloud, executes the work, and keeps your team in the loop. Jump into a cloud VS Code instance when hands-on help is needed.",
     popularity: "Research Preview",
     setupTime: "5 minutes",
     icon: (
@@ -44,15 +45,15 @@ const editors = [
       "Assign coding tasks directly from Slack messages",
       "Fully autonomous AI agent runs in secure cloud environment",
       "Real-time progress updates and notifications in Slack",
-      "Seamless handoff to cloud VSCode when AI needs help",
-      "Complete task execution without local setup",
+      "One-click access to cloud-hosted VS Code for manual intervention",
+      "Zero local dependencies or environment setup required",
     ],
     capabilities: [
-      "Natural language task assignment",
-      "Cloud-based code execution and testing",
-      "Automatic progress reporting",
-      "Human takeover when needed",
-      "Team collaboration and visibility",
+      "Assign tasks in natural language",
+      "Run code and tests in the cloud",
+      "Auto-post progress updates",
+      "Step in any time with manual control",
+      "Shared visibility for your whole team",
     ],
     installLink: "/slack/installation",
     callToAction: "Add to Slack ↗",
@@ -60,7 +61,7 @@ const editors = [
   {
     name: "VS Code",
     description:
-      "A coding agent that lives in your sidebar, ready to help with any development task directly in your workspace.",
+      "An AI coding agent embedded in your sidebar. Always on, always in context. It understands your codebase and works directly within your existing workflow.",
     popularity: "Research Preview",
     setupTime: "1 minute",
     icon: (
@@ -71,18 +72,17 @@ const editors = [
       />
     ),
     features: [
-      "AI coding agent integrated in your sidebar",
-      "Context-aware assistance with your current project",
-      "Direct file editing and code generation",
-      "Automated testing and debugging support",
-      "Works with your existing VSCode workflow",
+      "Fully compatible with your VSCode workflow",
+      "Real-time, context-aware coding assistance",
+      "Modifies project files without leaving your editor",
+      "Automates routine dev tasks like testing and building",
     ],
     capabilities: [
       "Understands your entire codebase",
       "Executes commands in your terminal",
-      "Creates and modifies files directly",
-      "Runs tests and builds automatically",
-      "Provides real-time coding assistance",
+      "Edits, creates, and organizes files in real time",
+      "Automates test runs, builds, and script execution",
+      "AI agent integrated in your VSCode sidebar",
     ],
     installLink:
       "https://marketplace.visualstudio.com/items?itemName=TabbyML.pochi",
