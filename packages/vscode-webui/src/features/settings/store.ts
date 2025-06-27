@@ -17,7 +17,7 @@ export interface SettingsState {
   autoApproveSettings: AutoApprove;
 
   isDevMode: boolean;
-  allowEditTodos: boolean;
+
   enableNewTask: boolean | undefined;
   enableGeminiCustomToolCalls: boolean;
 
@@ -25,7 +25,7 @@ export interface SettingsState {
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
-  updateAllowEditTodos: (value: boolean) => void;
+
   updateEnableNewTask: (value: boolean) => void;
   updateEnableGeminiCustomToolCalls: (value: boolean) => void;
 }
@@ -44,7 +44,7 @@ export const useSettingsStore = create<SettingsState>()(
         mcp: false,
       },
       isDevMode: false,
-      allowEditTodos: true,
+
       enableNewTask: undefined,
       enableGeminiCustomToolCalls: false,
 
@@ -60,8 +60,7 @@ export const useSettingsStore = create<SettingsState>()(
         set(() => ({ autoApproveActive: value })),
 
       updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
-      updateAllowEditTodos: (value: boolean) =>
-        set(() => ({ allowEditTodos: value })),
+
       updateEnableNewTask: (value: boolean) =>
         set(() => ({ enableNewTask: value })),
       updateEnableGeminiCustomToolCalls: (value: boolean) =>

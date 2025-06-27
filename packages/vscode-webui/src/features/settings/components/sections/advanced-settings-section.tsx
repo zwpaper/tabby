@@ -6,8 +6,7 @@ export const AdvancedSettingsSection: React.FC = () => {
   const {
     isDevMode,
     updateIsDevMode,
-    allowEditTodos,
-    updateAllowEditTodos,
+
     enableNewTask,
     updateEnableNewTask,
     enableGeminiCustomToolCalls,
@@ -27,14 +26,6 @@ export const AdvancedSettingsSection: React.FC = () => {
             }}
           />
         )}
-        <SettingsCheckboxOption
-          id="allow-edit-todos"
-          label="Allow Edit Todos"
-          checked={allowEditTodos}
-          onCheckedChange={(checked) => {
-            updateAllowEditTodos(!!checked);
-          }}
-        />
         {isDevMode && (
           <>
             <SettingsCheckboxOption

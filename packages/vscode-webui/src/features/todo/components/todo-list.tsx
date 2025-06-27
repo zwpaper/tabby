@@ -12,7 +12,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAllowEditTodos } from "@/features/settings";
 import { cn } from "@/lib/utils";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Todo } from "@ragdoll/db";
@@ -252,7 +251,7 @@ function TodoListEditActions({
     updateTodoStatus,
   ]);
 
-  const showEditTodos = useAllowEditTodos() && showEdit;
+  const showEditTodos = showEdit;
 
   const handleSave = () => {
     saveTodos();
