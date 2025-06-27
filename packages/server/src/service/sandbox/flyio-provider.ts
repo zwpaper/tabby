@@ -97,9 +97,9 @@ export class FlyioSandboxProvider implements SandboxProvider {
           policy: "no",
         },
         guest: {
-          cpu_kind: "shared",
-          cpus: 2,
-          memory_mb: 2048,
+          cpu_kind: "performance",
+          cpus: 8,
+          memory_mb: 16 * 1024,
         },
       },
       region: this.region,
