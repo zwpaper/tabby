@@ -181,15 +181,15 @@ class SlackTaskService {
    * Create a GitHub repository task with cloud runner (E2B)
    */
   async createTaskWithCloudRunner(
-    userId: string,
+    user: { id: string; name: string; email: string },
     command: { channel_id: string; user_id: string; text?: string },
     taskText: string,
     slackUserId: string,
   ) {
-    const webClient = await slackService.getWebClientByUser(userId);
+    const webClient = await slackService.getWebClientByUser(user.id);
     if (!webClient) return;
 
-    const githubToken = await githubService.getAccessToken(userId);
+    const githubToken = await githubService.getAccessToken(user.id);
     if (!githubToken) {
       return;
     }
@@ -209,7 +209,7 @@ class SlackTaskService {
     const taskPrompt = parsedCommand.description;
 
     const slackInfo = await this.sendCreatedTaskMessage(
-      userId,
+      user.id,
       taskPrompt,
       parsedCommand.githubRepository,
       command.channel_id,
@@ -233,17 +233,17 @@ class SlackTaskService {
     };
 
     const { uid } = await taskService.createWithRunner({
-      userId,
+      user,
       prompt: taskPrompt,
       githubRepository: parsedCommand.githubRepository,
       event: slackEvent,
     });
 
     // Get the created task to retrieve todos
-    const task = await taskService.get(uid, userId);
+    const task = await taskService.get(uid, user.id);
 
     await this.sendTaskStarting({
-      userId,
+      userId: user.id,
       prompt: taskPrompt,
       event: slackEvent,
       slackUserId,

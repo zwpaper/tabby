@@ -71,8 +71,7 @@ const tasks = new Hono()
     let url: string | undefined;
     if (remote && event?.type === "website:new-project") {
       const { uid: remoteUid, minion } = await taskService.createWithRunner({
-        userId: user.id,
-        userEmail: user.email,
+        user,
         prompt,
         event,
       });

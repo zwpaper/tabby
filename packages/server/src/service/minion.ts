@@ -7,7 +7,7 @@ import { type CreateSandboxOptions, getSandboxProvider } from "./sandbox";
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 
 interface CreateMinionOptions {
-  userId: string;
+  user: { id: string; name: string; email: string };
   uid: string;
   githubAccessToken: string;
   githubRepository?: {
@@ -24,14 +24,14 @@ class MinionService {
   }
 
   async create({
-    userId,
+    user,
     uid,
     githubAccessToken,
     githubRepository,
   }: CreateMinionOptions) {
     const apiKey = await auth.api.createApiKey({
       body: {
-        userId,
+        userId: user.id,
         name: `API Key for task ${uid}`,
         expiresIn: 60 * 60 * 24 * 30, // 30 days, match with the sandbox timeout
         prefix: "pk_minion_",
@@ -46,6 +46,11 @@ class MinionService {
       POCHI_SESSION_TOKEN: apiKey.key,
       POCHI_TASK_ID: uid,
 
+      GIT_AUTHOR_NAME: user.name || "Pochi",
+      GIT_AUTHOR_EMAIL: user.email || "noreply@getpochi.com",
+      GIT_COMMITTER_NAME: "Pochi",
+      GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
+
       GITHUB_TOKEN: githubAccessToken,
       GH_TOKEN: githubAccessToken,
     };
@@ -57,14 +62,14 @@ class MinionService {
     const res = await db
       .insertInto("minion")
       .values({
-        userId,
+        userId: user.id,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
 
     const opts: CreateSandboxOptions = {
       minionId: minionIdCoder.encode(res.id),
-      userId,
+      userId: user.id,
       uid,
       githubAccessToken,
       githubRepository: githubRepository

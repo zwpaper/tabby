@@ -669,18 +669,21 @@ class TaskService {
   }
 
   async createWithRunner({
-    userId,
+    user,
     prompt,
     event,
     githubRepository,
   }: {
-    userId: string;
-    userEmail?: string;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+    };
     prompt: string;
     event: TaskCreateEvent;
     githubRepository?: { owner: string; repo: string };
   }) {
-    const githubAccessToken = await githubService.getAccessToken(userId);
+    const githubAccessToken = await githubService.getAccessToken(user.id);
 
     if (!githubAccessToken) {
       throw new HTTPException(401, {
@@ -688,9 +691,9 @@ class TaskService {
       });
     }
 
-    const uid = await this.createWithUserMessage(userId, prompt, event);
+    const uid = await this.createWithUserMessage(user.id, prompt, event);
     const minion = await minionService.create({
-      userId,
+      user,
       uid,
       githubAccessToken,
       githubRepository,

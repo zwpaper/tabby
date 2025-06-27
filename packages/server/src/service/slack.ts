@@ -247,7 +247,7 @@ class SlackService {
 
       try {
         await slackTaskService.createTaskWithCloudRunner(
-          targetUser.id,
+          targetUser,
           command,
           taskText,
           command.user_id,
