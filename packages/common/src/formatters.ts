@@ -152,6 +152,30 @@ function removeToolCallResultMetadata(messages: UIMessage[]): UIMessage[] {
   });
 }
 
+function removeInvalidCharForStorage(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => {
+    message.parts = message.parts.map((part) => {
+      if (
+        part.type === "tool-invocation" &&
+        part.toolInvocation.toolName === "executeCommand" &&
+        "result" in part.toolInvocation
+      ) {
+        const result = part.toolInvocation.result;
+        if (
+          typeof result === "object" &&
+          "output" in result &&
+          typeof result.output === "string"
+        ) {
+          // biome-ignore lint/suspicious/noControlCharactersInRegex: remove invalid characters
+          result.output = result.output.replace(/\u0000/g, "");
+        }
+      }
+      return part;
+    });
+    return message;
+  });
+}
+
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
 const LLMFormatOps: FormatOp[] = [
   removeEmptyMessages,
@@ -173,6 +197,7 @@ const StorageFormatOps = [
   removeDeprecatedToolInvocations,
   removeContentInMessages,
   removeEmptyMessages,
+  removeInvalidCharForStorage,
 ];
 
 function formatMessages(messages: UIMessage[], ops: FormatOp[]): UIMessage[] {
