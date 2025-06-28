@@ -1,6 +1,6 @@
 import type { DB, TaskCreateEvent } from "@ragdoll/db";
-import { publishTaskEvent } from "../server";
 import { slackTaskService } from "../service/slack-task";
+import { taskEvents } from "../service/task-events";
 import { uidCoder } from "./id-coders";
 import { pool } from "./pool";
 
@@ -32,7 +32,7 @@ export async function startListenDBEvents() {
         eventType,
       });
 
-      publishTaskEvent(userId, {
+      taskEvents.publish({
         type: "task:status-changed",
         data: {
           uid,

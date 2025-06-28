@@ -23,6 +23,8 @@
     "ai": "catalog:",
     "better-auth": "catalog:",
     "bullmq": "^5.53.2",
+    "emittery": "catalog:",
+    "eventsource": "^4.0.0",
     "hono": "catalog:",
     "ioredis": "^5.6.1",
     "kysely": "catalog:",
@@ -37,9 +39,8 @@
     "slackify-markdown": "^4.4.0",
     "sqids": "^0.3.0",
     "stripe": "17",
-    "ws": "^8.18.1",
-    "zod": "catalog:",
-    "tslog": "catalog:"
+    "tslog": "catalog:",
+    "zod": "catalog:"
   },
   "scripts": {
     "tsc": "tsc --noEmit",

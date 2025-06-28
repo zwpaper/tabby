@@ -1,11 +1,14 @@
 import { zValidator } from "@hono/zod-validator";
-import type { TaskCreateEvent } from "@ragdoll/db";
+import type { TaskCreateEvent, TaskEvent } from "@ragdoll/db";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { optionalAuth, requireAuth } from "../auth";
 import { parseEventFilter } from "../lib/event-filter";
+import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task"; // Added import
+import { taskEvents } from "../service/task-events";
 import { ZodMessageType } from "../types";
 
 // Define validation schemas
@@ -120,6 +123,47 @@ const tasks = new Hono()
       const task = await taskService.get(uid, user.id);
 
       return c.json(task); // task already includes id
+    },
+  )
+
+  // Get task events
+  .get(
+    "/:uid/events",
+    zValidator("param", TaskUidParamsSchema),
+    requireAuth(),
+    async (c) => {
+      const { uid } = c.req.valid("param");
+      const user = c.get("user");
+
+      const task = await taskService.get(uid, user.id);
+
+      return streamSSE(c, async (stream) => {
+        const unsubscribe = taskEvents.subscribe(uid, (e) => {
+          stream.writeSSE({
+            data: JSON.stringify(e),
+          });
+        });
+
+        stream.onAbort(() => {
+          unsubscribe();
+        });
+
+        // Send initial task data
+        await stream.writeSSE({
+          data: JSON.stringify({
+            type: "task:status-changed",
+            data: {
+              uid,
+              status: task.status,
+            },
+          } satisfies TaskEvent),
+        });
+
+        while (true) {
+          setIdleTimeout(c.req.raw, 120);
+          await new Promise((resolve) => setTimeout(resolve, 60 * 1000));
+        }
+      });
     },
   )
 

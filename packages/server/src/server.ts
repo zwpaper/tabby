@@ -1,6 +1,5 @@
 import "./lib/laminar";
 
-import type { TaskEvent } from "@ragdoll/db";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { etag } from "hono/etag";
@@ -127,14 +126,6 @@ const server = Bun.serve({
   websocket,
 });
 console.log(`Listening on http://localhost:${server.port} ...`);
-
-export function getTaskEventChannel(userId: string) {
-  return `task-events:${userId}`;
-}
-
-export function publishTaskEvent(userId: string, event: TaskEvent) {
-  server.publish(getTaskEventChannel(userId), JSON.stringify(event));
-}
 
 export function after(_promise: Promise<unknown>): void {}
 

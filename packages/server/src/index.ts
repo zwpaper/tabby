@@ -1,5 +1,5 @@
 export type { TaskEvent, TaskCreateEvent } from "@ragdoll/db";
-import { WebSocket } from "ws";
+import { EventSource } from "eventsource";
 export type * from "./types";
 export type { AppType } from "./server";
 export { deviceLinkClient } from "./lib/device-link/client";
@@ -15,32 +15,38 @@ export interface PochiEventSource {
   dispose(): void;
 }
 
-export function createPochiEventSource(baseUrl?: string, token?: string) {
-  return new PochiEventSourceImpl(baseUrl, token);
+export function createPochiEventSource(
+  uid: string,
+  baseUrl?: string,
+  token?: string,
+) {
+  return new PochiEventSourceImpl(uid, baseUrl, token);
 }
 
 class PochiEventSourceImpl implements PochiEventSource {
-  private ws: WebSocket;
+  private es: EventSource;
 
-  constructor(baseUrl?: string, token?: string) {
-    const url = `${baseUrl || ""}/api/events`;
-    this.ws = new WebSocket(
-      url,
-      token
-        ? {
-            headers: {
-              authorization: `Bearer ${token}`,
-            },
-          }
+  constructor(uid: string, baseUrl?: string, token?: string) {
+    const url = `${baseUrl || ""}/api/tasks/${uid}/events`;
+    this.es = new EventSource(url, {
+      fetch: token
+        ? (input, init) =>
+            fetch(input, {
+              ...init,
+              headers: {
+                ...init.headers,
+                Authorization: `Bearer ${token}`,
+              },
+            })
         : undefined,
-    );
+    });
   }
 
   subscribe<T extends { type: string }>(
     type: string,
     listener: (data: T) => void,
   ) {
-    const callback = (message: WebSocket.MessageEvent) => {
+    const callback = (message: MessageEvent) => {
       try {
         if (typeof message.data !== "string") return;
         const data = JSON.parse(message.data) as T;
@@ -57,14 +63,14 @@ class PochiEventSourceImpl implements PochiEventSource {
       }
     };
 
-    this.ws.addEventListener("message", callback);
+    this.es.addEventListener("message", callback);
 
     return () => {
-      this.ws.removeEventListener("message", callback);
+      this.es.removeEventListener("message", callback);
     };
   }
 
   dispose() {
-    this.ws.close();
+    this.es.close();
   }
 }

@@ -40,8 +40,6 @@ program
       },
     });
 
-    const pochiEvents = createPochiEventSource(options.url, options.token);
-
     let uid = options.task;
     if (prompt) {
       const response = await apiClient.api.tasks.$post({
@@ -62,6 +60,8 @@ program
     logger.info(
       `You can visit ${options.url}/share/${uid} to see the task progress.`,
     );
+
+    const pochiEvents = createPochiEventSource(uid, options.url, options.token);
 
     // Use existing task ID mode
     const runner = new TaskRunner({

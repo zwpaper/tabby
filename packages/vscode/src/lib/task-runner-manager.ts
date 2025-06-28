@@ -1,14 +1,18 @@
 import { type Signal, signal } from "@preact/signals-core";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import { TaskRunner } from "@ragdoll/runner/node";
-import type { TaskRunnerOptions } from "@ragdoll/vscode-webui-bridge";
+import { createPochiEventSource } from "@ragdoll/server";
+import {
+  type TaskRunnerOptions,
+  getServerBaseUrl,
+} from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import type { ApiClient } from "./auth-client";
 import { getWorkspaceFolder, vscodeRipgrepPath } from "./fs";
 import { getLogger } from "./logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { PochiEvents } from "./pochi-events";
+import { TokenStorage } from "./token-storage";
 
 const logger = getLogger("TaskRunnerManager");
 
@@ -24,7 +28,7 @@ export class TaskRunnerManager implements vscode.Disposable {
   constructor(
     @inject("ApiClient")
     private readonly apiClient: ApiClient,
-    private readonly pochiEvents: PochiEvents,
+    private readonly tokenStorage: TokenStorage,
   ) {
     logger.debug("TaskRunnerManager created.");
     this.status = signal(this.buildStatus());
@@ -43,11 +47,17 @@ export class TaskRunnerManager implements vscode.Disposable {
       return existingRunner.state;
     }
 
+    const pochiEvents = createPochiEventSource(
+      uid,
+      getServerBaseUrl(),
+      this.tokenStorage.token.value,
+    );
+
     logger.debug(`Starting task runner ${uid}`);
     const taskRunner = new TaskRunner({
       uid,
       apiClient: this.apiClient,
-      pochiEvents: this.pochiEvents,
+      pochiEvents,
       cwd: getWorkspaceFolder().uri.fsPath,
       rg: vscodeRipgrepPath,
       ...option,
