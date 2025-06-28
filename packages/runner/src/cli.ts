@@ -4,11 +4,15 @@ import { hc } from "hono/client";
 import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
 import * as commander from "commander";
+import packageJson from "../package.json";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { TaskRunner, type TaskRunnerState } from "./task-runner";
 
 const program = new Command();
-program.name("pochi-runner").description("Pochi cli runner");
+program
+  .name("pochi-runner")
+  .description("Pochi cli runner")
+  .version(packageJson.version, "-V, --version", "output the current version");
 
 const logger = getLogger("Pochi");
 
