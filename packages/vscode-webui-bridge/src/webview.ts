@@ -164,6 +164,19 @@ export interface VSCodeHostApi {
   readTaskRunners(): Promise<
     ThreadSignalSerialization<Record<string, TaskRunnerState>>
   >;
+
+  /**
+   * Saves a checkpoint for the given tool call ID.
+   * @param toolCallId  - The ID of the tool call to save the checkpoint for.
+   * @returns The commit hash of the created checkpoint.
+   */
+  saveCheckpoint(toolCallId: string): Promise<string>;
+
+  /**
+   * Restores the checkpoint to the latest commit or a specific commit hash.
+   * @param commitHash - The commit hash to restore to. If not provided, restores to the latest checkpoint.
+   */
+  restoreCheckpoint(commitHash?: string): Promise<void>;
 }
 
 export interface WebviewHostApi {

@@ -62,6 +62,8 @@ import * as runExclusive from "run-exclusive";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
+import { CheckpointService } from "../checkpoint/checkpoint-service";
+// biome-ignore lint/style/useImportType: needed for dependency injection
 import { type FileSelection, TabState } from "../editor/tab-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "../mcp/mcp-hub";
@@ -84,6 +86,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly posthog: PostHog,
     private readonly mcpHub: McpHub,
     private readonly taskRunnerManager: TaskRunnerManager,
+    private readonly checkpointService: CheckpointService,
   ) {}
 
   listWorkflowsInWorkspace = (): Promise<
@@ -396,6 +399,14 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     ThreadSignalSerialization<Record<string, TaskRunnerState>>
   > => {
     return ThreadSignal.serialize(this.taskRunnerManager.status);
+  };
+
+  saveCheckpoint = async (toolCallId: string): Promise<string> => {
+    return await this.checkpointService.saveCheckpoint(toolCallId);
+  };
+
+  restoreCheckpoint = async (commitHash?: string): Promise<void> => {
+    await this.checkpointService.restoreCheckpoint(commitHash);
   };
 
   dispose() {

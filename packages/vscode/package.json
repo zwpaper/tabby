@@ -236,6 +236,7 @@
     "project-name-generator": "^2.1.9",
     "reflect-metadata": "^0.2.2",
     "run-exclusive": "^2.2.19",
+    "simple-git": "^3.28.0",
     "tsyringe": "^4.10.0"
   },
   "devDependencies": {
