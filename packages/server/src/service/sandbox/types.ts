@@ -10,7 +10,6 @@ export interface SandboxLogs {
 }
 
 export interface CreateSandboxOptions {
-  minionId: string;
   uid: string;
   envs: Record<string, string>;
 }

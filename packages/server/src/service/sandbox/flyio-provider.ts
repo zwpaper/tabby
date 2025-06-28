@@ -38,10 +38,11 @@ export class FlyioSandboxProvider implements SandboxProvider {
   }
 
   async create(options: CreateSandboxOptions): Promise<SandboxInfo> {
-    const { minionId, uid, envs = {} } = options;
+    const { uid, envs = {} } = options;
 
     // Create a unique app name for this sandbox
-    const appName = `minion-${minionId}`;
+    const uuid = crypto.randomUUID();
+    const appName = `pochi-${uuid.slice(0, 18)}`;
 
     const sandboxEnvs: Record<string, string> = {
       ...envs,

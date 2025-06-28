@@ -64,7 +64,6 @@ class MinionService {
     };
 
     const opts: CreateSandboxOptions = {
-      minionId,
       uid,
       envs,
     };
