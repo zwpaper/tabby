@@ -128,6 +128,7 @@ function TodoListHeader({
 }: TodoListHeaderProps) {
   const { todos, isCollapsed, setIsCollapsed, editState } =
     useTodoListContext();
+  const isEditMode = editState?.isEditMode || false;
 
   // Use draftTodos when in edit mode, otherwise use todos
   const displayTodos = editState?.isEditMode
@@ -145,10 +146,15 @@ function TodoListHeader({
   );
 
   useEffect(() => {
-    if (pendingTodosNum === 0 && todos.length > 0 && !disableCollapse) {
+    if (
+      pendingTodosNum === 0 &&
+      todos.length > 0 &&
+      !disableCollapse &&
+      !isEditMode
+    ) {
       setIsCollapsed(true);
     }
-  }, [pendingTodosNum, todos, setIsCollapsed, disableCollapse]);
+  }, [pendingTodosNum, todos, setIsCollapsed, disableCollapse, isEditMode]);
 
   const toggleCollapse = () => {
     if (disableCollapse) return;

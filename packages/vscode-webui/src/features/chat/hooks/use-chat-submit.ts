@@ -89,7 +89,7 @@ export function useChatSubmit({
       autoApproveGuard.current = true;
       e?.preventDefault();
 
-      if (isSubmitDisabled) {
+      if (isSubmitDisabled && !prompt) {
         return;
       }
 
