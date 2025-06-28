@@ -1,3 +1,5 @@
+import type { ThreadAbortSignalSerialization } from "@quilted/threads";
+
 export type {
   VSCodeHostApi,
   WebviewHostApi,
@@ -44,6 +46,7 @@ export interface ExecuteCommandResult {
 
 export type TaskRunnerOptions = {
   model?: string;
+  abortSignal?: ThreadAbortSignalSerialization;
 };
 
 const DevBaseUrl = "http://localhost:4113";

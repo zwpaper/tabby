@@ -23,7 +23,6 @@ import {
   multiApplyDiff,
   previewMultiApplyDiff,
 } from "@/tools/multi-apply-diff";
-import { newTask } from "@/tools/new-task";
 import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
 import { todoWrite } from "@/tools/todo-write";
@@ -376,9 +375,22 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     await vscode.env.openExternal(vscode.Uri.parse(uri));
   }
 
-  runTask = async (uid: string, options?: TaskRunnerOptions) => {
-    this.taskRunnerManager.startTask(uid, options);
-  };
+  runTask = runExclusive.build(
+    this.toolCallGroup,
+    async (uid: string, options?: TaskRunnerOptions) => {
+      if (options?.abortSignal) {
+        const abortSignal = new ThreadAbortSignal(options.abortSignal);
+        abortSignal.throwIfAborted();
+        abortSignal.addEventListener("abort", () => {
+          this.taskRunnerManager.stopTask(uid);
+        });
+      }
+
+      const runnerState = this.taskRunnerManager.startTask(uid, options);
+      const result = ThreadSignal.serialize(runnerState);
+      return { result };
+    },
+  );
 
   readTaskRunners = async (): Promise<
     ThreadSignalSerialization<Record<string, TaskRunnerState>>
@@ -416,7 +428,6 @@ const ToolMap: Record<
   applyDiff,
   todoWrite,
   multiApplyDiff,
-  newTask,
 };
 
 const ToolPreviewMap: Record<

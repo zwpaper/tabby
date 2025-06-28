@@ -1,19 +1,25 @@
 import { vscodeHost } from "@/lib/vscode";
-import { ThreadAbortSignal } from "@quilted/threads";
+import {
+  ThreadAbortSignal,
+  type ThreadAbortSignalSerialization,
+} from "@quilted/threads";
 import {
   type ThreadSignalSerialization,
   threadSignal,
 } from "@quilted/threads/signals";
 import type { TaskRunnerState } from "@ragdoll/runner";
+import type { ClientToolsType } from "@ragdoll/tools";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import Emittery from "emittery";
+import type z from "zod";
 
 type PreviewReturnType = { error: string } | undefined;
 type ExecuteCommandReturnType = {
   output: ThreadSignalSerialization<ExecuteCommandResult>;
   detach: () => void;
 };
+type NewTaskParameterType = z.infer<ClientToolsType["newTask"]["parameters"]>;
 type NewTaskReturnType = {
   result: ThreadSignalSerialization<TaskRunnerState>;
 };
@@ -166,13 +172,24 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
     }
   }
 
-  execute(args: unknown) {
+  execute(args: unknown, options: { model?: string }) {
     const abortController = new AbortController();
-    const executeJob = vscodeHost
-      .executeToolCall(this.toolName, args, {
+    const abortSignal = ThreadAbortSignal.serialize(abortController.signal);
+    let executePromise: Promise<unknown>;
+    if (this.toolName === "newTask") {
+      executePromise = this.runNewTask(
+        args as NewTaskParameterType,
+        abortSignal,
+        options.model,
+      );
+    } else {
+      executePromise = vscodeHost.executeToolCall(this.toolName, args, {
         toolCallId: this.toolCallId,
-        abortSignal: ThreadAbortSignal.serialize(abortController.signal),
-      })
+        abortSignal,
+      });
+    }
+
+    const executeJob = executePromise
       .catch((err) => ({
         error: `Failed to execute tool: ${err.message}`,
       }))
@@ -182,6 +199,21 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       type: "execute",
       executeJob,
       abortController,
+    });
+  }
+
+  private runNewTask(
+    args: NewTaskParameterType,
+    abortSignal: ThreadAbortSignalSerialization,
+    model?: string,
+  ) {
+    const uid = args._meta?.uid;
+    if (!uid) {
+      throw new Error("Missing uid in newTask arguments");
+    }
+    return vscodeHost.runTask(uid, {
+      abortSignal,
+      model,
     });
   }
 
