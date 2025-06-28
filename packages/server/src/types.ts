@@ -8,10 +8,7 @@ const ZodEventType: z.ZodType<TaskCreateEvent> = z.any();
 
 export const ZodChatRequestType = z.object({
   id: z.string().optional().describe("Task uid."),
-  sessionId: z
-    .string()
-    .optional()
-    .describe("Session uid, used to lock the task."),
+  sessionId: z.string().describe("Session uid, used to lock the task."),
   model: z.string().optional().describe("Model to use for this request."),
   event: ZodEventType.optional().describe("Associated event for the task."),
   message: ZodMessageType.describe("Message payload for the chat request."),

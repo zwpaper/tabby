@@ -181,7 +181,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       }
     },
     experimental_prepareRequestBody: (req) =>
-      prepareRequestBody(uid, sessionId, req, selectedModel?.id),
+      prepareRequestBody(uid, sessionId.current, req, selectedModel?.id),
     fetch: async (url, options) => {
       // Clear the data when a new request is made
       setData(undefined);

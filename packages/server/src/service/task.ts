@@ -207,9 +207,7 @@ class TaskService {
     this.verifyEnvironment(environment, taskEnvironment);
 
     // Lock the task given sessionId.
-    if (request.sessionId) {
-      await this.lock(uid, userId, request.sessionId);
-    }
+    await this.lock(uid, userId, request.sessionId);
 
     if (status === "streaming") {
       throw new HTTPException(409, {
