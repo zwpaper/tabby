@@ -33,6 +33,7 @@ export class DiffView implements vscode.Disposable {
   private disposables: vscode.Disposable[] = [];
 
   private constructor(
+    private readonly id: string,
     public readonly fileUri: vscode.Uri,
     private readonly fileExists: boolean,
     private readonly originalContent: string,
@@ -58,6 +59,15 @@ export class DiffView implements vscode.Disposable {
           }
         },
       ),
+    );
+  }
+
+  async focus() {
+    await runVSCodeDiff(
+      this.id,
+      this.originalContent,
+      this.fileExists,
+      this.fileUri,
     );
   }
 
@@ -268,6 +278,11 @@ export class DiffView implements vscode.Disposable {
       );
     }
 
+    setTimeout(() => {
+      // Focus remaining diff views after a short delay to ensure the editor is ready
+      focusDiffViews();
+    }, 200);
+
     return {
       userEdits,
       autoFormattingEdits,
@@ -345,7 +360,13 @@ export class DiffView implements vscode.Disposable {
       fileExists,
       originalContent,
     );
-    return new DiffView(fileUri, fileExists, originalContent, activeDiffEditor);
+    return new DiffView(
+      id,
+      fileUri,
+      fileExists,
+      originalContent,
+      activeDiffEditor,
+    );
   }
 
   private static readonly diffViewGetGroup = runExclusive.createGroupRef();
@@ -397,7 +418,15 @@ async function openDiffEditor(
     }
   }
 
-  // Open new diff editor
+  return runVSCodeDiff(id, originalContent, fileExists, fileUri);
+}
+
+function runVSCodeDiff(
+  id: string,
+  originalContent: string | undefined,
+  fileExists: boolean,
+  fileUri: vscode.Uri,
+): Promise<vscode.TextEditor> {
   logger.debug("Opening new diff editor", fileUri.fsPath);
   return new Promise<vscode.TextEditor>((resolve, reject) => {
     const fileName = path.basename(fileUri.fsPath);
@@ -441,6 +470,12 @@ async function closeAllNonDirtyDiffViews() {
     if (!tab.isDirty) {
       await vscode.window.tabGroups.close(tab);
     }
+  }
+}
+
+async function focusDiffViews() {
+  for (const diffView of DiffViewMap.values()) {
+    await diffView.focus();
   }
 }
 
