@@ -25,7 +25,7 @@ export function MinionRow({ minion }: { minion: Minion }) {
             <div className="flex min-h-4 flex-col gap-3 text-muted-foreground text-xs md:mt-3 md:flex-row md:items-center">
               <div className="flex items-center gap-1">
                 <HardDrive className="h-4 w-4" />
-                <span>{minion.e2bSandboxId}</span>
+                <span>{minion.sandboxId}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />

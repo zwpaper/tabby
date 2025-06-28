@@ -2,7 +2,7 @@ import { HTTPException } from "hono/http-exception";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
 import { signalKeepAliveSandbox } from "./background-job";
-import { type CreateSandboxOptions, getSandboxProvider } from "./sandbox";
+import { type CreateSandboxOptions, sandboxService } from "./sandbox";
 
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 
@@ -17,12 +17,6 @@ interface CreateMinionOptions {
 }
 
 class MinionService {
-  private sandboxProvider: ReturnType<typeof getSandboxProvider>;
-
-  constructor() {
-    this.sandboxProvider = getSandboxProvider();
-  }
-
   async create({
     user,
     uid,
@@ -42,23 +36,6 @@ class MinionService {
       },
     });
 
-    const envs: Record<string, string> = {
-      POCHI_SESSION_TOKEN: apiKey.key,
-      POCHI_TASK_ID: uid,
-
-      GIT_AUTHOR_NAME: user.name || "Pochi",
-      GIT_AUTHOR_EMAIL: user.email || "noreply@getpochi.com",
-      GIT_COMMITTER_NAME: "Pochi",
-      GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
-
-      GITHUB_TOKEN: githubAccessToken,
-      GH_TOKEN: githubAccessToken,
-    };
-
-    if (githubRepository) {
-      envs.GH_REPO = `${githubRepository.owner}/${githubRepository.repo}`;
-    }
-
     const res = await db
       .insertInto("minion")
       .values({
@@ -67,21 +44,31 @@ class MinionService {
       .returningAll()
       .executeTakeFirstOrThrow();
 
-    const opts: CreateSandboxOptions = {
-      minionId: minionIdCoder.encode(res.id),
-      userId: user.id,
-      uid,
-      githubAccessToken,
-      githubRepository: githubRepository
-        ? {
-            owner: githubRepository.owner,
-            repo: githubRepository.repo,
-          }
-        : undefined,
-      envs: envs,
-      timeoutMs: SandboxTimeoutMs,
+    const minionId = minionIdCoder.encode(res.id);
+
+    const envs: Record<string, string> = {
+      POCHI_SESSION_TOKEN: apiKey.key,
+      POCHI_TASK_ID: uid,
+      POCHI_MINION_ID: minionId,
+
+      GIT_AUTHOR_NAME: user.name || "Pochi",
+      GIT_AUTHOR_EMAIL: user.email || "noreply@getpochi.com",
+      GIT_COMMITTER_NAME: "Pochi",
+      GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
+
+      GITHUB_TOKEN: githubAccessToken,
+      GH_TOKEN: githubAccessToken,
+      GH_REPO: githubRepository
+        ? `${githubRepository.owner}/${githubRepository.repo}`
+        : "",
     };
-    const sandbox = await this.sandboxProvider.create(opts);
+
+    const opts: CreateSandboxOptions = {
+      minionId,
+      uid,
+      envs,
+    };
+    const sandbox = await sandboxService.create(opts);
 
     // Update the minion with the sandbox ID
     await db
@@ -89,7 +76,6 @@ class MinionService {
       .where("id", "=", res.id)
       .set({
         sandboxId: sandbox.id,
-        url: sandbox.url,
       })
       .execute();
 
@@ -160,7 +146,7 @@ class MinionService {
         message: "Minion not found or does not have a sandbox",
       });
     }
-    const sandbox = await this.sandboxProvider.connect(minion.sandboxId);
+    const sandbox = await sandboxService.connect(minion.sandboxId);
     return { minion, sandbox };
   }
 
@@ -172,7 +158,7 @@ class MinionService {
       id: minionIdCoder.encode(minion.id),
       sandbox: sandbox.isRunning
         ? await (async () => {
-            const logs = await this.sandboxProvider.getLogs(sandbox.id);
+            const logs = await sandboxService.getLogs(sandbox.id);
             return {
               initLog: logs ? logs.initLog : "",
               runnerLog: logs ? logs.runnerLog : "",
@@ -192,7 +178,7 @@ class MinionService {
 
     if (!sandbox.isRunning) {
       try {
-        await this.sandboxProvider.resume(sandbox.id, SandboxTimeoutMs);
+        await sandboxService.resume(sandbox.id, SandboxTimeoutMs);
       } catch (err) {
         if (err instanceof Error && err.name === "NotFoundError") {
           throw new HTTPException(404, {
@@ -204,7 +190,7 @@ class MinionService {
 
     signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
 
-    const url = this.sandboxProvider.getUrl(sandbox.id);
+    const url = sandboxService.getUrl(sandbox.id);
     await verifyMinionUrl(url);
 
     return url;

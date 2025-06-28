@@ -4,7 +4,7 @@ import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";
 import type { DBMessage, TaskCreateEvent, TaskError } from "./types";
 
-export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
+export type DB = Omit<DbImpl, "externalIntegration" | "task" | "minion"> & {
   externalIntegration: Omit<DbImpl["externalIntegration"], "vendorData"> & {
     vendorData: JSONColumnType<ExternalIntegrationVendorData>;
   };
@@ -35,6 +35,8 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task"> & {
     // Make taskId writeable only for refactoring.
     taskId: ColumnType<never, number, never>;
   };
+
+  minion: Omit<DbImpl["minion"], "e2bSandboxId" | "url">;
 };
 
 export type { DBMessage, TaskError, TaskCreateEvent, TaskEvent } from "./types";

@@ -1,10 +1,9 @@
 import { Queue, Worker } from "bullmq";
-import { getSandboxProvider } from "../sandbox";
+import { sandboxService } from "../sandbox";
 import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
 const QueueName = "pause-inactive-sandbox";
-const sandboxProvider = getSandboxProvider();
 
 interface PauseInactiveSandboxData {
   sandboxId: string;
@@ -38,9 +37,9 @@ export function createPauseInactiveSandboxWorker() {
       const { sandboxId } = job.data;
       logger.debug(`Pausing sandbox ${sandboxId}`);
       try {
-        const status = await sandboxProvider.connect(sandboxId);
+        const status = await sandboxService.connect(sandboxId);
         if (status.isRunning) {
-          await sandboxProvider.pause(sandboxId);
+          await sandboxService.pause(sandboxId);
           logger.debug(`Sandbox ${sandboxId} paused`);
         }
       } catch (error) {
@@ -52,7 +51,7 @@ export function createPauseInactiveSandboxWorker() {
 }
 
 async function init() {
-  const sandboxes = await sandboxProvider.list();
+  const sandboxes = await sandboxService.list();
   for (const sandbox of sandboxes) {
     signalKeepAliveSandbox({ sandboxId: sandbox.sandboxId });
   }

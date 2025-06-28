@@ -11,20 +11,14 @@ export interface SandboxLogs {
 
 export interface CreateSandboxOptions {
   minionId: string;
-  userId: string;
   uid: string;
-  githubAccessToken: string;
-  githubRepository?: {
-    owner: string;
-    repo: string;
-  };
-  envs?: Record<string, string>;
-  timeoutMs?: number;
+  envs: Record<string, string>;
 }
 
 const SandboxHome = "/home/user";
 const SandboxLogDir = `${SandboxHome}/.log`;
 const RemotePochiHome = `${SandboxHome}/.remote-pochi`;
+
 export const SandboxPath = {
   home: SandboxHome,
   project: `${SandboxHome}/project`,

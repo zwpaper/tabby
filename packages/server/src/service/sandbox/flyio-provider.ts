@@ -11,8 +11,6 @@ import type {
 } from "./types";
 import { SandboxPath } from "./types";
 
-// Remove interfaces as they are now imported from flyio-client
-
 const FlyApiToken = process.env.FLY_API_TOKEN;
 const FlyOrgSlug = process.env.FLY_ORG_SLUG || "tabbyml";
 const FlyImage =
@@ -40,35 +38,16 @@ export class FlyioSandboxProvider implements SandboxProvider {
   }
 
   async create(options: CreateSandboxOptions): Promise<SandboxInfo> {
-    const {
-      minionId,
-      uid,
-      githubAccessToken,
-      githubRepository,
-      envs = {},
-      timeoutMs = SandboxTimeoutMs,
-    } = options;
+    const { minionId, uid, envs = {} } = options;
 
     // Create a unique app name for this sandbox
-    const uuid = crypto.randomUUID();
-    if (!uuid) {
-      throw new Error("Failed to generate unique identifier for Fly app");
-    }
-    const appName = `pochi-${uuid.slice(0, 18)}`;
+    const appName = `minion-${minionId}`;
 
     const sandboxEnvs: Record<string, string> = {
       ...envs,
 
-      POCHI_MINION_ID: minionId,
       POCHI_SANDBOX_HOST: `${appName}.${RunPochiDomain}`,
-
-      GITHUB_TOKEN: githubAccessToken,
-      GH_TOKEN: githubAccessToken,
     };
-
-    if (githubRepository) {
-      sandboxEnvs.GH_REPO = `${githubRepository.owner}/${githubRepository.repo}`;
-    }
 
     // Create Fly app
     await this.client.createApp({
@@ -106,7 +85,7 @@ export class FlyioSandboxProvider implements SandboxProvider {
       },
       region: this.region,
       stop_config: {
-        timeout: timeoutMs / 1000, // Fly.io uses seconds for timeout
+        timeout: SandboxTimeoutMs / 1000, // Fly.io uses seconds for timeout
       },
     });
 
