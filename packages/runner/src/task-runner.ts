@@ -163,6 +163,8 @@ const ToolMap: Record<
 // If a task cannot be completed in ${MaxSteps} steps, it is likely stuck in an infinite loop.
 const MaxSteps = 100;
 
+const logger = getLogger("TaskRunner");
+
 export class TaskRunner {
   readonly state: Signal<TaskRunnerState>;
 
@@ -171,11 +173,15 @@ export class TaskRunner {
   private todos: Todo[] = [];
 
   private readonly logger: ReturnType<typeof getLogger>;
+  private readonly sessionId: string;
   private stepCount = 0;
   private abortController?: AbortController;
 
   constructor(readonly context: RunnerContext) {
-    this.logger = getLogger(`TaskRunner-${context.uid}`);
+    this.sessionId = generateId();
+    this.logger = logger.getSubLogger({
+      name: `task-${context.uid}`,
+    });
     this.state = signal({
       state: "initial",
     });
@@ -202,7 +208,16 @@ export class TaskRunner {
     const abortController = new AbortController();
     this.abortController = abortController;
 
+    const refreshJob = setInterval(
+      () => {
+        this.refreshSessionLock();
+      },
+      1000 * 60 * 5,
+    ); // Refresh every 5 minutes
+
     try {
+      await this.refreshSessionLock();
+
       this.logger.trace("Start step loop.");
       this.stepCount = 0;
       while (await this.step()) {
@@ -224,6 +239,9 @@ export class TaskRunner {
         error,
       });
     } finally {
+      clearInterval(refreshJob);
+      await this.releaseSessionLock();
+
       if (this.abortController === abortController) {
         this.abortController = undefined;
       }
@@ -418,6 +436,7 @@ export class TaskRunner {
         {
           json: {
             id: this.context.uid,
+            sessionId: this.sessionId,
             message: fromUIMessage(lastMessage),
             environment,
             model: this.context.model,
@@ -475,6 +494,34 @@ export class TaskRunner {
       ...environment,
       todos: this.todos,
     };
+  }
+
+  private async refreshSessionLock() {
+    this.logger.trace("Acquiring session lock", this.sessionId);
+    try {
+      await this.context.apiClient.api.tasks[":uid"].lock[":lockId"].$post({
+        param: {
+          uid: this.context.uid,
+          lockId: this.sessionId,
+        },
+      });
+    } catch (err) {
+      this.logger.error("Failed to refresh session lock:", err);
+    }
+  }
+
+  private async releaseSessionLock() {
+    this.logger.trace("Releasing session lock", this.sessionId);
+    try {
+      await this.context.apiClient.api.tasks[":uid"].lock[":lockId"].$delete({
+        param: {
+          uid: this.context.uid,
+          lockId: this.sessionId,
+        },
+      });
+    } catch (err) {
+      this.logger.error("Failed to release session lock:", err);
+    }
   }
 
   private getTaskOrThrow() {

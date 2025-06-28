@@ -738,12 +738,12 @@ class TaskService {
       )
       .executeTakeFirst();
 
-    if (lockResult) {
+    if (lockResult.numInsertedOrUpdatedRows) {
       return;
     }
 
     // Task exists, so it must be a lock conflict.
-    throw new HTTPException(409, {
+    throw new HTTPException(423, {
       message: "Task is locked by other session",
     });
   }

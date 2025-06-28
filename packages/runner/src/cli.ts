@@ -58,7 +58,7 @@ program
     }
 
     logger.info(
-      `You can visit ${options.url}/share/${uid} to see the task progress.`,
+      `You can visit ${options.url}/tasks/${uid} to see the task progress.`,
     );
 
     const pochiEvents = createPochiEventSource(uid, options.url, options.token);
