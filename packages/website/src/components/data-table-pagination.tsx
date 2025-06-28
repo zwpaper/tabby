@@ -35,7 +35,7 @@ export function DataTablePagination({
         {/* We can add total count here if needed */}
       </div>
       <div className="flex items-center space-x-4 lg:space-x-8">
-        <div className="flex hidden items-center space-x-2 md:block">
+        <div className="hidden items-center space-x-2 md:flex">
           <p className="font-medium text-sm">Rows per page</p>
           <Select
             value={`${pageSize}`}
