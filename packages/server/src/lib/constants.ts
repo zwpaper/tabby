@@ -68,7 +68,7 @@ export interface MiddlewareContext {
 export function getModel(
   modelId: AvailableModelId,
   middlewareContext: MiddlewareContext = {},
-  enableGeminiCustomToolCalls = false,
+  enableGeminiCustomToolCalls = true,
 ): LanguageModelV1 {
   const model = getModelById(modelId);
 
@@ -95,9 +95,9 @@ function getModelById(modelId: AvailableModelId): LanguageModelV1 {
     case "anthropic/claude-4-sonnet":
       return anthropic("claude-4-sonnet-20250514");
     case "google/gemini-2.5-pro":
-      return google("gemini-2.5-pro-preview-06-05");
+      return google("gemini-2.5-pro");
     case "google/gemini-2.5-flash":
-      return google("gemini-2.5-flash-preview-04-17");
+      return google("gemini-2.5-flash");
   }
 }
 

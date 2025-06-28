@@ -46,7 +46,7 @@ export const useSettingsStore = create<SettingsState>()(
       isDevMode: false,
 
       enableNewTask: undefined,
-      enableGeminiCustomToolCalls: false,
+      enableGeminiCustomToolCalls: true,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
