@@ -1,12 +1,10 @@
 import { MessageMarkdown } from "@/components/message";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useToolCallLifeCycle } from "@/features/chat";
-import { TodoList } from "@/features/todo";
+import { cn } from "@/lib/utils";
 import type { Todo } from "@ragdoll/db";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useEffect, useState } from "react";
-import { HighlightedText } from "../highlight-text";
-import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
@@ -18,7 +16,7 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     tool.toolName,
     tool.toolCallId,
   );
-  const { description, prompt } = tool.args || {};
+  const { description } = tool.args || {};
   const [todos, setTodos] = useState<Todo[]>([]);
 
   let result = undefined;
@@ -44,42 +42,47 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   }, [streamingResult?.result]);
 
   const title = (
-    <>
-      <StatusIcon isExecuting={isExecuting} tool={tool} />
-      <span className="ml-2">
-        Task
-        <HighlightedText>{description}</HighlightedText>
-      </span>
-    </>
+    <span className={cn("flex items-center gap-2")}>
+      <p>
+        <Badge
+          variant="secondary"
+          className={cn("px-1 py-0", {
+            "animate-pulse": isExecuting,
+          })}
+        >
+          Subtask
+        </Badge>
+        <span className="ml-2">{description}</span>
+      </p>
+    </span>
   );
 
   return (
     <ExpandableToolContainer
       title={title}
       expandableDetail={
-        <div className="overflow-hidden rounded-lg border bg-[var(--vscode-editor-background)]">
-          <ScrollArea className="p-4" viewportClassname="max-h-100">
-            <ScrollArea
-              className="mb-2 rounded-lg bg-card p-4"
-              viewportClassname="max-h-52"
-            >
-              <MessageMarkdown isMinimalView>{prompt || ""}</MessageMarkdown>
-            </ScrollArea>
-            {todos && todos.length > 0 && (
-              <TodoList todos={todos} className="[&>.todo-border]:!hidden">
-                <TodoList.Header
-                  disableCollapse={false}
-                  disableInProgressTodoTitle={true}
-                />
-                <TodoList.Items className="py-0" />
-              </TodoList>
-            )}
-            {(result || error) && (
-              <MessageMarkdown isMinimalView>
-                {result || error || ""}
-              </MessageMarkdown>
-            )}
-          </ScrollArea>
+        <div className="overflow-hidden rounded-lg">
+          {todos && todos.length > 0 && (
+            <div className="my-1 flex flex-col rounded-sm border px-2 py-1">
+              {todos
+                .filter((x) => x.status !== "cancelled")
+                .map((todo) => (
+                  <span
+                    key={todo.id}
+                    className={cn("text-sm", {
+                      "line-through": todo.status === "completed",
+                    })}
+                  >
+                    • {todo.content}
+                  </span>
+                ))}
+            </div>
+          )}
+          {(result || error) && (
+            <MessageMarkdown isMinimalView>
+              {result || error || ""}
+            </MessageMarkdown>
+          )}
         </div>
       }
     />

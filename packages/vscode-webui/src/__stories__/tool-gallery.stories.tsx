@@ -41,6 +41,7 @@ type AskFollowupQuestionProp = ToolProps<
   ClientToolsType["askFollowupQuestion"]
 >;
 type AttemptCompletionProp = ToolProps<ClientToolsType["attemptCompletion"]>;
+type NewTaskProp = ToolProps<ClientToolsType["newTask"]>;
 
 // FIXME(Meng): adding a type helper for ServerToolsType
 type WebFetchProp = ToolProps<{
@@ -283,6 +284,21 @@ const attemptCompletionProps: AttemptCompletionProp["tool"] = {
   },
 };
 
+const newTaskProps: NewTaskProp["tool"] = {
+  state: "result",
+  step: 0,
+  toolCallId: "tool_new_task_1",
+  toolName: "newTask",
+  args: {
+    description: "Find the relevant file to update for the user's request",
+    prompt:
+      "The user wants to add a new tool to the storybook gallery. Find the relevant file to update.",
+  },
+  result: {
+    result: "This is a great day",
+  },
+};
+
 const webFetchProps: WebFetchProp["tool"] = {
   state: "result",
   step: 0,
@@ -372,6 +388,7 @@ const mcpToolProps3: McpToolProp["tool"] = {
 export const Tools: Story = {
   args: {
     tools: [
+      newTaskProps,
       searchProps,
       searchProps2,
       readProps,
