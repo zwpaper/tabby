@@ -90,7 +90,7 @@ app.use(
       return undefined;
     },
     allowHeaders: ["Content-Type", "Authorization"],
-    allowMethods: ["POST", "GET", "PATCH", "OPTIONS"],
+    allowMethods: ["POST", "GET", "PATCH", "OPTIONS", "DELETE"],
     credentials: true,
   }),
 );
