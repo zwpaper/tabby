@@ -132,7 +132,11 @@ function createToolCallTransformStream(
           });
         }
 
-        controller.enqueue(chunk);
+        controller.enqueue({
+          ...chunk,
+          finishReason:
+            streamingToolCalls.length > 0 ? "tool-calls" : chunk.finishReason,
+        });
         return;
       }
 
