@@ -179,6 +179,32 @@ describe("formatters individual ops", () => {
       const result = stripKnownXMLTags(messages);
       expect(result).toEqual(expectedMessages);
     });
+
+    it("should not strip unknown <user-reminder> tags", () => {
+      const messages: UIMessage[] = [
+        {
+          id: "1",
+          role: "user",
+          content: "",
+          parts: [
+            {
+              type: "text",
+              text: "<user-reminder>this is a reminder</user-reminder>",
+            },
+          ],
+        },
+      ];
+      const expectedMessages: UIMessage[] = [
+        {
+          id: "1",
+          role: "user",
+          content: "",
+          parts: [{ type: "text", text: "<user-reminder>this is a reminder</user-reminder>" }],
+        },
+      ];
+      const result = stripKnownXMLTags(messages);
+      expect(result).toEqual(expectedMessages);
+    });
   });
 
   describe("removeUserReminderMessage", () => {
