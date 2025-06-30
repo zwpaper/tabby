@@ -22,6 +22,19 @@ function parseMcpTool(name: string, mcpTool: McpTool): Tool {
   let toToolResultContent: Tool["experimental_toToolResultContent"];
   if (name === "browser_take_screenshot") {
     toToolResultContent = (result) => {
+      if (Array.isArray(result.content)) {
+        const content: ReturnType<
+          NonNullable<Tool["experimental_toToolResultContent"]>
+        > = result.content;
+        return content.map((x) => {
+          if (x.type === "image") {
+            // FIXME(jueliang): should replace with an S3 image URL
+            return { type: "text", text: "This is the screenshot placeholder" };
+          }
+          return x;
+        });
+      }
+
       return result.content;
     };
   }

@@ -112,6 +112,12 @@ const chat = new Hono<{ Variables: ContextVariables }>()
           stream,
         );
 
+        const tools = {
+          ...enabledClientTools,
+          ...enabledServerTools,
+          ...parsedMcpTools,
+        };
+
         const providerOptions = getProviderOptionsById(requestedModelId);
         const result = Laminar.withSession(`${user.id}-${uid}`, () =>
           streamText({
@@ -131,13 +137,9 @@ const chat = new Hono<{ Variables: ContextVariables }>()
                     } satisfies CoreMessage,
                   ]
                 : []),
-              ...formatters.llm(preparedMessages),
+              ...formatters.llm(preparedMessages, { tools }),
             ],
-            tools: {
-              ...enabledClientTools,
-              ...enabledServerTools,
-              ...parsedMcpTools,
-            },
+            tools,
             providerOptions,
             onFinish: async ({
               usage,

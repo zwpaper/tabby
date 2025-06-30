@@ -1,5 +1,5 @@
 import { isAutoApproveTool, isUserInputTool } from "@ragdoll/tools";
-import { type UIMessage, convertToCoreMessages } from "ai";
+import { type ToolSet, type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
 import { prompts } from "./prompts";
@@ -210,9 +210,15 @@ export const formatters = {
   ui: (messages: UIMessage[]) => formatMessages(messages, UIFormatOps),
 
   // Format messages before sending them to the LLM.
-  llm: (messages: UIMessage[]) => {
+  llm: (
+    messages: UIMessage[],
+    options?: {
+      tools?: ToolSet;
+    },
+  ) => {
     const coreMessages = convertToCoreMessages(
       formatMessages(messages, LLMFormatOps),
+      options,
     );
     const environmentDetailIndex = coreMessages.findIndex(
       (message) =>
