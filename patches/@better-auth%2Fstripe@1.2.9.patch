@@ -1,0 +1,26 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 02e094e0acc61a3cb8bf090d285f9b7e78cb13fb..57fcd80ac5530759583d81de4f3c6cbba57d9252 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -521,7 +521,10 @@ const stripe = (options) => {
+                 items: [
+                   {
+                     id: activeSubscription.items.data[0]?.id,
+-                    quantity: ctx.body.seats || 1,
++                    // Only include quantity for non-metered plans
++											...(plan.metered
++												? {}
++												: { quantity: ctx.body.seats || 1 }),
+                     price: ctx.body.annual ? plan.annualDiscountPriceId : plan.priceId
+                   }
+                 ]
+@@ -607,7 +610,8 @@ const stripe = (options) => {
+             line_items: [
+               {
+                 price: priceIdToUse,
+-                quantity: ctx.body.seats || 1
++                // Only include quantity for non-metered plans
++								...(plan.metered ? {} : { quantity: ctx.body.seats || 1 }),
+               }
+             ],
+             subscription_data: {

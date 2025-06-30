@@ -42,6 +42,34 @@ export const AvailableModels: {
   },
 ];
 
+// Returns the cost credit for a usage.
+// 1 USD = 10M credits.
+export function computeCreditCost(
+  modelId: string,
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+  },
+) {
+  const { promptTokens, completionTokens } = usage;
+  switch (modelId) {
+    case "google/gemini-2.5-pro":
+      // Ref: https://ai.google.dev/gemini-api/docs/pricing
+      if (promptTokens <= 200_000) {
+        return promptTokens * 12 + completionTokens * 100;
+      }
+      return promptTokens * 25 + completionTokens * 150;
+    case "google/gemini-2.5-flash":
+      // Ref: https://ai.google.dev/gemini-api/docs/pricing
+      return promptTokens * 3 + completionTokens * 25;
+    case "anthropic/claude-4-sonnet":
+      // https://www.anthropic.com/pricing#api
+      return promptTokens * 30 + completionTokens * 150;
+    default:
+      throw new Error(`Unknown model ID: ${modelId}`);
+  }
+}
+
 export const StripePlans = [
   {
     name: "Community",
@@ -52,8 +80,8 @@ export const StripePlans = [
   },
   {
     name: "Pro",
-    priceId: "price_1RApQzDZw4FSeDxlCtidLAf5",
-    annualDiscountPriceId: "price_1RApRUDZw4FSeDxlDrULHG4Z",
+    priceId: "price_1Rfat9DZw4FSeDxlqF0jcbGH",
+    metered: true,
     limits: {
       basic: 5_000,
       premium: 500,

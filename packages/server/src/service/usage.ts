@@ -5,7 +5,8 @@ import moment from "moment";
 import type { User } from "../auth";
 import { db } from "../db";
 import { readActiveSubscriptionLimits } from "../lib/billing";
-import { AvailableModels } from "../lib/constants";
+import { AvailableModels, computeCreditCost } from "../lib/constants";
+import { stripeClient } from "../lib/stripe";
 
 export class UsageService {
   async trackUsage(
@@ -13,6 +14,8 @@ export class UsageService {
     modelId: string,
     usage: LanguageModelUsage,
   ): Promise<void> {
+    await this.meterCreditCost(user, modelId, usage);
+
     // Track individual completion details
     await db
       .insertInto("chatCompletion")
@@ -125,6 +128,29 @@ export class UsageService {
       usages,
       limits,
     };
+  }
+
+  private async meterCreditCost(
+    user: User,
+    modelId: string,
+    usage: LanguageModelUsage,
+  ) {
+    const creditCost = computeCreditCost(modelId, usage);
+
+    if (!user.stripeCustomerId) {
+      console.warn(
+        "User does not have a Stripe customer ID, skipping billing event.",
+      );
+      return;
+    }
+
+    await stripeClient.billing.meterEvents.create({
+      event_name: "credit",
+      payload: {
+        value: creditCost.toString(),
+        stripe_customer_id: user.stripeCustomerId,
+      },
+    });
   }
 }
 
