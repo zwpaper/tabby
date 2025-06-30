@@ -1,3 +1,8 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -9,17 +14,28 @@ interface Props {
 export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
   const percentage = Math.ceil((totalTokens / contextWindow) * 100);
 
+  if (percentage < 60) {
+    return null;
+  }
+
   return (
-    <div
-      className={cn(
-        "overflow-x-hidden text-muted-foreground text-xs",
-        className,
-      )}
-    >
-      <span className="select-none whitespace-nowrap font-medium">
-        {percentage}% of {formatTokens(contextWindow)} tokens
-      </span>
-    </div>
+    <Tooltip>
+      <TooltipTrigger>
+        <div
+          className={cn(
+            "overflow-x-hidden text-muted-foreground text-xs",
+            className,
+          )}
+        >
+          <span className="select-none whitespace-nowrap font-medium">
+            {percentage}% of {formatTokens(contextWindow)} tokens
+          </span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        The context window is nearing its limit. Consider starting a new task.
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
