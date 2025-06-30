@@ -16,6 +16,8 @@ program
 
 const logger = getLogger("Pochi");
 
+const sigtermError = new Error("SIGTERM received.");
+
 program
   .argument("[prompt]", "Creating a new task with the given prompt")
   .option("--url <url>", "Pochi server url", "https://app.getpochi.com")
@@ -80,6 +82,15 @@ program
       trackRunnerState(runnerState);
     });
 
+    // Handle graceful shutdown
+    const handleShutdown = (signal: "SIGTERM") => {
+      logger.info(`Received ${signal}, shutting down gracefully...`);
+      runner.stop(sigtermError);
+    };
+
+    process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+
+    // Start runner
     runner.start();
   });
 
@@ -129,8 +140,13 @@ function trackRunnerState(runnerState: TaskRunnerState) {
     output.info("Task runner stopped with result: ", runnerState.result);
     process.exit(0); // exit with code 0 to indicate success
   } else if (runnerState.state === "error") {
-    output.error("Task runner failed with error: ", runnerState.error);
-    throw runnerState.error; // rethrow the error to exit the process with a non-zero code
+    if (runnerState.error === sigtermError) {
+      output.info(`Task runner exited: ${sigtermError.message}`);
+      process.exit(143);
+    } else {
+      output.error("Task runner failed with error: ", runnerState.error);
+      throw runnerState.error; // rethrow the error to exit the process with a non-zero code
+    }
   }
 }
 

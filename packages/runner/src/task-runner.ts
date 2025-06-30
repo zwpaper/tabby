@@ -195,10 +195,10 @@ export class TaskRunner {
     this.run();
   }
 
-  stop(): void {
+  stop(reason?: Error) {
     if (this.abortController !== undefined) {
       this.logger.trace("Stop.");
-      this.abortController.abort();
+      this.abortController.abort(reason);
     } else {
       throw new Error("TaskRunner is not running.");
     }
@@ -215,6 +215,27 @@ export class TaskRunner {
       1000 * 60 * 5,
     ); // Refresh every 5 minutes
 
+    const finishWithState = async (
+      state:
+        | {
+            state: "stopped";
+            result: string;
+          }
+        | {
+            state: "error";
+            error: Error;
+          },
+    ) => {
+      clearInterval(refreshJob);
+      await this.releaseSessionLock();
+
+      if (this.abortController === abortController) {
+        this.abortController = undefined;
+      }
+
+      this.updateState(state);
+    };
+
     try {
       await this.refreshSessionLock();
 
@@ -227,24 +248,19 @@ export class TaskRunner {
       const task = this.getTaskOrThrow();
       const result = extractTaskResult(task);
       this.logger.trace("Completed with result:", result);
-      this.updateState({
+
+      await finishWithState({
         state: "stopped",
         result,
       });
     } catch (e) {
       const error = toError(e);
-      this.logger.error("Failed:", error);
-      this.updateState({
+      this.logger.trace("Failed:", error);
+
+      await finishWithState({
         state: "error",
         error,
       });
-    } finally {
-      clearInterval(refreshJob);
-      await this.releaseSessionLock();
-
-      if (this.abortController === abortController) {
-        this.abortController = undefined;
-      }
     }
   }
 
@@ -678,7 +694,7 @@ async function loadTaskAndWaitStreaming(
 const MaxRequestAttempts = 3;
 
 async function withAttempts<T>(
-  run: () => Promise<T>,
+  execute: () => Promise<T>,
   options?: {
     maxAttempts?: number;
     interval?: (attempt: number) => number;
@@ -699,7 +715,7 @@ async function withAttempts<T>(
   let error: Error | undefined;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await run();
+      return await execute();
     } catch (e) {
       if (
         e instanceof Error &&
