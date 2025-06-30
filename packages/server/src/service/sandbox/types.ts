@@ -14,7 +14,7 @@ export interface CreateSandboxOptions {
   envs: Record<string, string>;
 }
 
-const SandboxHome = "/home/user";
+const SandboxHome = "/home/pochi";
 const SandboxLogDir = `${SandboxHome}/.log`;
 const RemotePochiHome = `${SandboxHome}/.remote-pochi`;
 
