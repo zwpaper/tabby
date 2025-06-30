@@ -22,7 +22,7 @@ function TaskHeaderRoot({
   ...props
 }: HeaderProps) {
   return (
-    <div className={cn("space-y-4 px-4 pt-2", className)} {...props}>
+    <div className={cn("space-y-4 px-4", className)} {...props}>
       <div className="grid grid-cols-4 gap-3">
         <div className="col-span-4 flex flex-col space-y-3 overflow-hidden md:col-span-3">
           {children}

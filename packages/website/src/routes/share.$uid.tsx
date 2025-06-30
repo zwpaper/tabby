@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+const Skeleton = () => <TaskPageSkeleton className="mt-4 md:mt-6" />;
+
 export const Route = createFileRoute("/share/$uid")({
   component: ThemeWrapped,
   loader: async ({ params }) => {
@@ -40,7 +42,7 @@ export const Route = createFileRoute("/share/$uid")({
       },
     ],
   }),
-  pendingComponent: TaskPageSkeleton,
+  pendingComponent: Skeleton,
 });
 
 function ThemeWrapped() {
@@ -55,7 +57,7 @@ function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const { theme } = useTheme();
   return (
-    <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8">
+    <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8 md:mt-6">
       {/* Task header */}
       <TaskHeader>
         <TaskHeader.Title title={loaderData.title}>
