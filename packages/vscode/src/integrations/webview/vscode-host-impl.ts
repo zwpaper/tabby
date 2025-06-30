@@ -384,9 +384,13 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       if (options?.abortSignal) {
         const abortSignal = new ThreadAbortSignal(options.abortSignal);
         abortSignal.throwIfAborted();
-        abortSignal.addEventListener("abort", () => {
-          this.taskRunnerManager.stopTask(uid);
-        });
+        abortSignal.addEventListener(
+          "abort",
+          () => {
+            this.taskRunnerManager.stopTask(uid);
+          },
+          { once: true },
+        );
       }
 
       const runnerState = this.taskRunnerManager.startTask(uid, options);

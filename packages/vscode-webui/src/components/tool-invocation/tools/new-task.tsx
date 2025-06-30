@@ -1,10 +1,11 @@
 import { MessageMarkdown } from "@/components/message";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useToolCallLifeCycle } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@ragdoll/db";
 import type { ClientToolsType } from "@ragdoll/tools";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
@@ -16,6 +17,10 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     tool.toolName,
     tool.toolCallId,
   );
+  const abort = useCallback(() => {
+    lifecycle.abort();
+  }, [lifecycle.abort]);
+
   const { description } = tool.args || {};
   const [todos, setTodos] = useState<Todo[]>([]);
 
@@ -34,12 +39,13 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     throw new Error("Unexpected streaming result for newTask tool");
   }
 
+  const runnerState = streamingResult?.state;
+
   useEffect(() => {
-    const runnerState = streamingResult?.result;
     if (runnerState && runnerState.state !== "initial") {
       setTodos(runnerState.todos);
     }
-  }, [streamingResult?.result]);
+  }, [runnerState]);
 
   const title = (
     <span className={cn("flex items-center gap-2")}>
@@ -54,6 +60,14 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
         </Badge>
         <span className="ml-2">{description}</span>
       </p>
+      {
+        // FIXME(zhiming): move the stop button into expandable detail instead of in title
+        runnerState?.state === "running" && (
+          <Button size="xs" variant="ghost" onClick={abort}>
+            STOP
+          </Button>
+        )
+      }
     </span>
   );
 

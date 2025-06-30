@@ -58,7 +58,7 @@ type ToolCallState =
           }
         | {
             toolName: "newTask";
-            result: TaskRunnerState;
+            state: TaskRunnerState;
           };
     }
   | {
@@ -330,7 +330,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
       abortController,
       streamingResult: {
         toolName: "newTask",
-        result: signal.value,
+        state: signal.value,
       },
     });
 
@@ -355,7 +355,7 @@ export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
           abortController,
           streamingResult: {
             toolName: "newTask",
-            result: runnerState,
+            state: runnerState,
           },
         });
       }

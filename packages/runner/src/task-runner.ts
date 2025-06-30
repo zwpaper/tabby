@@ -270,7 +270,6 @@ export class TaskRunner {
 
   private async loadTask() {
     const signal = this.abortController?.signal;
-    signal?.throwIfAborted();
 
     this.logger.trace("Loading task:", this.context.uid);
     this.updateState({
@@ -281,6 +280,7 @@ export class TaskRunner {
         phase: "begin",
       },
     });
+    signal?.throwIfAborted();
 
     const task = await loadTaskAndWaitStreaming(this.context, signal);
     this.task = task;
@@ -303,6 +303,7 @@ export class TaskRunner {
         task,
       },
     });
+    signal?.throwIfAborted();
   }
 
   /**
@@ -355,8 +356,6 @@ export class TaskRunner {
         this.logger.trace("Processing tool calls in the last message.");
         let toolCall = findNextToolCall(lastMessage);
         while (toolCall) {
-          signal?.throwIfAborted();
-
           this.logger.trace(
             `Found tool call: ${toolCall.toolName} with args: ${JSON.stringify(
               toolCall.args,
@@ -373,11 +372,12 @@ export class TaskRunner {
               toolArgs: toolCall.args,
             },
           });
+          signal?.throwIfAborted();
 
           const toolResult = await executeToolCall(
             toolCall,
             this.context,
-            this.abortController?.signal,
+            signal,
           );
 
           updateToolCallResult({
@@ -398,6 +398,7 @@ export class TaskRunner {
               toolResult,
             },
           });
+          signal?.throwIfAborted();
 
           toolCall = findNextToolCall(lastMessage);
         }
@@ -409,12 +410,13 @@ export class TaskRunner {
       );
       // nothing to process, just resend the last message
     }
+
+    signal?.throwIfAborted();
     return true;
   }
 
   private async sendMessage() {
     const signal = this.abortController?.signal;
-    signal?.throwIfAborted();
 
     const lastMessage = this.getLastMessageOrThrow();
 
@@ -428,31 +430,41 @@ export class TaskRunner {
         message: lastMessage,
       },
     });
+    signal?.throwIfAborted();
 
-    const environment = await this.buildEnvironment();
+    const environment = await buildEnvironment(
+      this.context,
+      this.todos,
+      signal,
+    );
 
-    await withAttempts(async () => {
-      const resp = await this.context.apiClient.api.chat.stream.$post(
-        {
-          json: {
-            id: this.context.uid,
-            sessionId: this.sessionId,
-            message: fromUIMessage(lastMessage),
-            environment,
-            model: this.context.model,
+    await withAttempts(
+      async () => {
+        const resp = await this.context.apiClient.api.chat.stream.$post(
+          {
+            json: {
+              id: this.context.uid,
+              sessionId: this.sessionId,
+              message: fromUIMessage(lastMessage),
+              environment,
+              model: this.context.model,
+            },
           },
-        },
-        {
-          init: {
-            signal,
+          {
+            init: {
+              signal,
+            },
           },
-        },
-      );
-      if (!resp.ok) {
-        const error = await resp.text();
-        throw new Error(`Failed to send message: ${resp.statusText}: ${error}`);
-      }
-    });
+        );
+        if (!resp.ok) {
+          const error = await resp.text();
+          throw new Error(
+            `Failed to send message: ${resp.statusText}: ${error}`,
+          );
+        }
+      },
+      { abortSignal: signal },
+    );
 
     this.logger.trace("Message sent successfully.");
     this.updateState({
@@ -463,6 +475,7 @@ export class TaskRunner {
         phase: "end",
       },
     });
+    signal?.throwIfAborted();
   }
 
   private updateState(
@@ -484,14 +497,6 @@ export class TaskRunner {
       ...state,
       task: this.task,
       messages: this.messages,
-      todos: this.todos,
-    };
-  }
-
-  private async buildEnvironment(): Promise<Environment> {
-    const environment = await readEnvironment(this.context);
-    return {
-      ...environment,
       todos: this.todos,
     };
   }
@@ -551,25 +556,28 @@ async function loadTaskAndWaitStreaming(
   abortSignal?: AbortSignal,
 ): Promise<Task> {
   const loadTask = async () => {
-    return await withAttempts(async () => {
-      const resp = await context.apiClient.api.tasks[":uid"].$get(
-        {
-          param: {
-            uid: context.uid,
+    return await withAttempts(
+      async () => {
+        const resp = await context.apiClient.api.tasks[":uid"].$get(
+          {
+            param: {
+              uid: context.uid,
+            },
           },
-        },
-        {
-          init: {
-            signal: abortSignal,
+          {
+            init: {
+              signal: abortSignal,
+            },
           },
-        },
-      );
-      if (!resp.ok) {
-        const error = await resp.text();
-        throw new Error(`Failed to fetch task: ${resp.statusText}: ${error}`);
-      }
-      return await resp.json();
-    });
+        );
+        if (!resp.ok) {
+          const error = await resp.text();
+          throw new Error(`Failed to fetch task: ${resp.statusText}: ${error}`);
+        }
+        return await resp.json();
+      },
+      { abortSignal },
+    );
   };
 
   return new Promise<Task>((resolve, reject) => {
@@ -653,6 +661,16 @@ async function loadTaskAndWaitStreaming(
     cleanups.push(() => {
       clearTimeout(timeout);
     });
+
+    if (abortSignal) {
+      abortSignal.addEventListener(
+        "abort",
+        () => {
+          cleanupAndReject(abortSignal.reason);
+        },
+        { once: true },
+      );
+    }
   });
 }
 
@@ -661,30 +679,72 @@ const MaxRequestAttempts = 3;
 
 async function withAttempts<T>(
   run: () => Promise<T>,
-  maxAttemps: number = MaxRequestAttempts,
-  interval: (attempt: number) => number = (attempt) => {
-    if (attempt <= 1) {
-      return 1000; // 1 second for the first attempt
-    }
-    return 10 * 1000; // 10 seconds for subsequent attempts
+  options?: {
+    maxAttempts?: number;
+    interval?: (attempt: number) => number;
+    abortSignal?: AbortSignal;
   },
 ): Promise<T> {
+  const {
+    maxAttempts = MaxRequestAttempts,
+    interval = (attempt: number) => {
+      if (attempt <= 1) {
+        return 1000; // 1 second for the first attempt
+      }
+      return 10 * 1000; // 10 seconds for subsequent attempts
+    },
+    abortSignal,
+  } = options ?? {};
+
   let error: Error | undefined;
-  for (let attempt = 1; attempt <= maxAttemps; attempt++) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       return await run();
     } catch (e) {
+      if (
+        e instanceof Error &&
+        e.name === "AbortError" &&
+        abortSignal?.aborted
+      ) {
+        // If the error is an AbortError and the abort signal is triggered, rethrow it.
+        throw e;
+      }
       error = toError(e);
     }
-    if (attempt < maxAttemps) {
+    if (attempt < maxAttempts) {
       const waitTime = interval(attempt);
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      await sleep(waitTime, abortSignal);
     }
   }
   throw new Error(
-    `Failed after ${maxAttemps} attempts: ${error?.message || "Unknown error"}`,
+    `Failed after ${maxAttempts} attempts: ${error?.message || "Unknown error"}`,
     { cause: error },
   );
+}
+
+async function buildEnvironment(
+  context: RunnerContext,
+  todos: Todo[],
+  signal?: AbortSignal,
+): Promise<Environment> {
+  return new Promise<Environment>((resolve, reject) => {
+    readEnvironment(context).then((environment) => {
+      resolve({
+        ...environment,
+        todos,
+      });
+    });
+
+    if (signal) {
+      signal.addEventListener(
+        "abort",
+        () => {
+          reject(signal.reason);
+        },
+        { once: true },
+      );
+    }
+  });
 }
 
 async function createUIMessage(
@@ -769,13 +829,13 @@ export function extractTaskResult(task: Task): string {
     );
   }
 
-  const attempCompletionPart = lastMessage.parts.findLast(
+  const attemptCompletionPart = lastMessage.parts.findLast(
     (part): part is ToolInvocationUIPart =>
       part.type === "tool-invocation" &&
       part.toolInvocation.toolName === "attemptCompletion",
   );
-  if (attempCompletionPart) {
-    return attempCompletionPart.toolInvocation.args.result;
+  if (attemptCompletionPart) {
+    return attemptCompletionPart.toolInvocation.args.result;
   }
 
   const askFollowupQuestionPart = lastMessage.parts.findLast(
@@ -791,6 +851,22 @@ export function extractTaskResult(task: Task): string {
   }
 
   throw new Error("No result found in the last message.");
+}
+
+async function sleep(ms: number, abortSignal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    if (abortSignal) {
+      abortSignal.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(timer);
+          reject(abortSignal.reason);
+        },
+        { once: true },
+      );
+    }
+  });
 }
 
 function toError(e: unknown): Error {
