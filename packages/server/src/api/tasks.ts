@@ -58,6 +58,10 @@ const TaskPatchSchema = z.object({
   messages: z.array(ZodMessageType),
 });
 
+const AppendMessageSchema = z.object({
+  prompt: z.string().min(1, "Prompt is required"),
+});
+
 // Create a tasks router with authentication
 const tasks = new Hono()
   .post("/", zValidator("json", TaskCreateSchema), requireAuth(), async (c) => {
@@ -244,6 +248,20 @@ const tasks = new Hono()
       if (!updated) {
         throw new HTTPException(404, { message: "Task not found" });
       }
+      return c.json({ success: true });
+    },
+  )
+  .post(
+    "/:uid/append-user-message",
+    zValidator("param", TaskUidParamsSchema),
+    zValidator("json", AppendMessageSchema),
+    requireAuth(),
+    async (c) => {
+      const { uid } = c.req.valid("param");
+      const { prompt } = c.req.valid("json");
+      const user = c.get("user");
+
+      await taskService.appendUserMessage(user.id, uid, prompt);
       return c.json({ success: true });
     },
   )

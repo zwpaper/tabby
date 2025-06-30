@@ -4,7 +4,7 @@ export const sandboxService = new FlyioSandboxProvider();
 
 // Re-export types for convenience
 export type {
+  CreateSandboxOptions,
   SandboxInfo,
   SandboxLogs,
-  CreateSandboxOptions,
 } from "./types";

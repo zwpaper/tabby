@@ -700,6 +700,44 @@ class TaskService {
     return { uid, minion };
   }
 
+  async appendUserMessage(userId: string, uid: string, prompt: string) {
+    const userMessage: DBMessage = {
+      id: generateId(),
+      createdAt: new Date().toISOString(),
+      role: "user",
+      parts: [
+        {
+          type: "text",
+          text: prompt,
+        },
+      ],
+    };
+    const task = await this.get(uid, userId);
+    if (!task || task.status !== "pending-input") {
+      throw new HTTPException(400, {
+        message: "Task is not in pending-input state",
+      });
+    }
+    const messagesToSave = [
+      ...(task.conversation?.messages || []),
+      userMessage,
+    ];
+
+    await db
+      .updateTable("task")
+      .set({
+        status: "pending-model",
+        conversation: {
+          messages: messagesToSave,
+        },
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("id", "=", uidCoder.decode(uid))
+      .where("userId", "=", userId)
+      .where("status", "=", "pending-input")
+      .executeTakeFirstOrThrow();
+  }
+
   async lock(uid: string, userId: string, lockId: string) {
     const task = await db
       .selectFrom("task")
