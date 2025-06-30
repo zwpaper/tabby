@@ -12,11 +12,11 @@ function TaskPageSkeleton({ className }: { className?: string }) {
     >
       {/* Task header Skeleton */}
       <div className="animate-pulse space-y-4 px-4">
-        <div className="mt-1 flex items-start gap-3">
+        <div className="flex items-start gap-3">
           <div className="flex flex-1 flex-col space-y-3 overflow-hidden pr-8">
-            <span className="flex items-center gap-2">
-              <Skeleton className="h-8 w-3/5 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
+            <span className="flex items-center gap-2 py-0.5">
+              <Skeleton className="h-7 w-3/5 rounded-md" />
+              <Skeleton className="h-7 w-7 rounded-md" />
             </span>
             <div className="flex min-h-5 flex-col gap-3 text-sm md:flex-row">
               <div className="flex items-center gap-1.5">
