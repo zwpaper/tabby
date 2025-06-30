@@ -539,7 +539,7 @@ function RouteComponent() {
         <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
           <CardContent className="p-4">
             <div className="space-y-6">
-              <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+              <div className="grid grid-cols-2 items-start gap-8">
                 {/* Stats Section */}
                 <StatItem
                   label="TASKS"
