@@ -96,7 +96,7 @@ export function InstallPanel() {
 
   return (
     <Card className="rounded-lg border shadow-sm">
-      <CardContent className="min-h-150 p-0">
+      <CardContent className="min-h-155 p-0">
         <div className="grid grid-cols-1 gap-0 lg:grid-cols-4">
           {/* Editor Selection Sidebar */}
           <div className="border-b lg:col-span-1 lg:border-r lg:border-b-0">
