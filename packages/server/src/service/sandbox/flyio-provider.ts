@@ -14,7 +14,7 @@ import { SandboxPath } from "./types";
 const FlyApiToken = process.env.FLY_API_TOKEN;
 const FlyOrgSlug = process.env.FLY_ORG_SLUG || "tabbyml";
 const FlyImage =
-  process.env.FLY_SANDBOX_IMAGE || "ghcr.io/kweizh/pochi-minion:v0.2.0";
+  process.env.FLY_SANDBOX_IMAGE || "ghcr.io/tabbyml/pochi-minion:latest";
 const FlyRegion = process.env.FLY_REGION || "lax";
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 const RunPochiDomain = process.env.RUN_POCHI_DOMAIN || "runpochi.com";
