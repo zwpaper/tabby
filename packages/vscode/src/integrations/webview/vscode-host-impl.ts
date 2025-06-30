@@ -413,6 +413,10 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     await this.checkpointService.restoreCheckpoint(commitHash);
   };
 
+  readExtensionVersion = async () => {
+    return this.context.extension.packageJSON.version;
+  };
+
   dispose() {
     for (const disposable of this.disposables) {
       disposable.dispose();

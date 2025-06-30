@@ -177,6 +177,8 @@ export interface VSCodeHostApi {
    * @param commitHash - The commit hash to restore to. If not provided, restores to the latest checkpoint.
    */
   restoreCheckpoint(commitHash?: string): Promise<void>;
+
+  readExtensionVersion(): Promise<string>;
 }
 
 export interface WebviewHostApi {

@@ -436,6 +436,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                     disabled={isTaskLoading || isModelsLoading}
                     uid={uid.current}
                     onError={setAutoDismissError}
+                    modelId={selectedModel?.id}
                   />
                 )}
                 <Button

@@ -78,6 +78,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "readMinionId",
         "saveCheckpoint",
         "restoreCheckpoint",
+        "readExtensionVersion",
       ],
       exports: {
         openTask(params) {

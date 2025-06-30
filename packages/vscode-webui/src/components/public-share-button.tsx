@@ -10,14 +10,21 @@ import { apiClient } from "@/lib/auth-client";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
 import { useMutation } from "@tanstack/react-query";
-import { CheckIcon, CopyIcon, Loader2, Share2Icon } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  CheckIcon,
+  CopyIcon,
+  Loader2,
+  MessageSquareShare,
+  Share2Icon,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface PublicShareButtonProps {
   isPublicShared: boolean;
   disabled?: boolean;
   uid: string | undefined;
   onError?: (e: Error) => void;
+  modelId?: string;
 }
 
 export function PublicShareButton({
@@ -25,14 +32,16 @@ export function PublicShareButton({
   disabled,
   uid,
   onError,
+  modelId,
 }: PublicShareButtonProps) {
+  const menuItemRef = useRef<"share" | "support">();
   const [isPublicShared, setIsPublicShared] = useState(initialIsPublicShared);
   const [open, setOpen] = useState(false);
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
 
-  const copyShareLink = () => {
-    if (isCopied || !uid) return;
-    copyToClipboard(`https://app.getpochi.com/share/${uid}`);
+  const doCopy = (content: string) => {
+    if (isCopied) return;
+    copyToClipboard(content);
     setTimeout(() => {
       setOpen(false);
     }, 1000);
@@ -99,8 +108,21 @@ export function PublicShareButton({
 
   const handleCopyLink: React.MouseEventHandler<HTMLDivElement> = (e) => {
     if (!uid) return;
+    menuItemRef.current = "share";
     e.preventDefault();
-    copyShareLink();
+    doCopy(`https://app.getpochi.com/share/${uid}`);
+  };
+
+  const handleShareSupport: React.MouseEventHandler<HTMLDivElement> = async (
+    e,
+  ) => {
+    if (!uid) return;
+    menuItemRef.current = "support";
+    e.preventDefault();
+    const version = await vscodeHost.readExtensionVersion();
+    doCopy(`Extension version: ${version}
+Model            : ${modelId}
+Link        : https://app.getpochi.com/share/${uid}`);
   };
 
   return (
@@ -170,12 +192,29 @@ export function PublicShareButton({
           disabled={shareToggleMutation.isPending || !uid}
           className="cursor-pointer"
         >
-          {isCopied ? (
+          {menuItemRef.current === "share" && isCopied ? (
             <CheckIcon className="mr-2 size-4 text-success" />
           ) : (
             <CopyIcon className="mr-2 size-4" />
           )}
           Copy link
+          {!uid && (
+            <span className="ml-2 text-muted-foreground text-xs">
+              (Share first)
+            </span>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleShareSupport}
+          disabled={shareToggleMutation.isPending || !uid}
+          className="cursor-pointer"
+        >
+          {menuItemRef.current === "support" && isCopied ? (
+            <CheckIcon className="mr-2 size-4 text-success" />
+          ) : (
+            <MessageSquareShare className="mr-2 size-4" />
+          )}
+          Share with Support
           {!uid && (
             <span className="ml-2 text-muted-foreground text-xs">
               (Share first)

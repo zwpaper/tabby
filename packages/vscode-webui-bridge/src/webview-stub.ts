@@ -139,6 +139,9 @@ const VSCodeHostStub = {
   restoreCheckpoint: async (): Promise<void> => {
     return Promise.resolve();
   },
+  readExtensionVersion: () => {
+    return Promise.resolve("");
+  },
 } satisfies VSCodeHostApi;
 
 export function createVscodeHostStub(overrides?: Partial<VSCodeHostApi>) {
