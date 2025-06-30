@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { User } from "@/lib/auth-client";
 import { ChevronsUpDown, LogOut } from "lucide-react";
-import { Quota } from "../ui/quota";
 import { Section } from "../ui/section";
 
 interface AccountSectionProps {
@@ -54,7 +53,6 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ user }) => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Quota />
     </Section>
   );
 };

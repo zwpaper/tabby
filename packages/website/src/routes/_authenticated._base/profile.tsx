@@ -1,4 +1,3 @@
-import { QuotaDisplay } from "@/components/settings/quota-display";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +14,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
+import { CreditCard as IconCreditCard } from "lucide-react";
 import moment from "moment";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -53,7 +53,7 @@ const fetchTaskCount = async () => {
 // Reusable StatItem component
 interface StatItemProps {
   label: string;
-  value: number;
+  value: number | string;
   isLoading: boolean;
   isError: boolean;
   className?: string;
@@ -66,18 +66,20 @@ function StatItem({
   isError,
   className,
 }: StatItemProps) {
+  const displayValue =
+    typeof value === "number" ? value.toLocaleString() : value;
   return (
     <div className={cn("space-y-2 text-center", className)}>
       <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
         {label}
       </div>
       {isLoading ? (
-        <Skeleton className="mx-auto h-8 w-16" />
+        <Skeleton className="mx-auto h-9 w-16" />
       ) : isError ? (
         <div className="font-bold text-2xl text-destructive lg:text-3xl">—</div>
       ) : (
         <div className="font-bold text-2xl text-foreground lg:text-3xl">
-          {value.toLocaleString()}
+          {displayValue}
         </div>
       )}
     </div>
@@ -347,6 +349,117 @@ function SlackWorkspaceCard({
   );
 }
 
+function BillingCard({
+  queryClient,
+}: {
+  queryClient: ReturnType<typeof useQueryClient>;
+}) {
+  const subscriptionQuery = useQuery({
+    queryKey: ["subscription"],
+    queryFn: async () => {
+      const { data, error } = await authClient.subscription.list();
+      if (error) {
+        throw new Error(error.message);
+      }
+      return data;
+    },
+  });
+
+  const billingQuotaQuery = useQuery({
+    queryKey: ["billingQuota"],
+    queryFn: async () => {
+      const res = await apiClient.api.billing.quota.me.$get();
+      if (!res.ok) {
+        throw new Error("Failed to fetch quota");
+      }
+      return await res.json();
+    },
+  });
+
+  const subscription = subscriptionQuery.data?.[0];
+  const subscriptionMutation = useMutation({
+    mutationFn: async (isSubscribing: boolean) => {
+      if (isSubscribing) {
+        if (subscription?.cancelAtPeriodEnd) {
+          return authClient.subscription.restore();
+        }
+        return authClient.subscription.upgrade({
+          annual: false,
+          plan: "pro",
+          successUrl: window.location.href,
+          cancelUrl: window.location.href,
+        });
+      }
+      return authClient.subscription.cancel({
+        returnUrl: window.location.href,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
+    },
+    onError: (error) => {
+      toast.error("Failed to update subscription", {
+        description: error.message,
+      });
+    },
+  });
+
+  const isPro = (subscription?.plan || "free") === "pro";
+  const isEffectivelyActive = isPro && !subscription?.cancelAtPeriodEnd;
+
+  return (
+    <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2 md:ml-2">
+            <div className="flex items-center gap-3">
+              <IconCreditCard size={20} className="text-foreground" />
+              <span className="font-medium text-base">Stripe</span>
+              {subscriptionQuery.isLoading ? (
+                <Skeleton className="h-6 w-12 rounded-lg" />
+              ) : (
+                <Switch
+                  checked={isEffectivelyActive}
+                  onCheckedChange={subscriptionMutation.mutate}
+                  disabled={
+                    subscriptionMutation.isPending ||
+                    subscriptionQuery.isLoading
+                  }
+                />
+              )}
+            </div>
+            {subscription && (
+              <div className="ml-2 flex flex-col justify-center text-muted-foreground text-xs">
+                {subscription.periodEnd && (
+                  <span>
+                    {subscription.cancelAtPeriodEnd
+                      ? "Expires on "
+                      : "Renews on "}
+                    {moment(subscription.periodEnd).format("MMMM D, YYYY")}
+                  </span>
+                )}
+                {subscription.cancelAtPeriodEnd && (
+                  <span>
+                    Your plan will be canceled at the end of the current billing
+                    period.
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <StatItem
+            label="CURRENT SPENDING"
+            value={formatCreditToDollars(billingQuotaQuery.data?.credit || 0)}
+            isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
+            isError={billingQuotaQuery.isError}
+            className="md:mr-4"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function RouteComponent() {
   const { data: session } = useSession();
   const userId = session?.user.id;
@@ -426,34 +539,20 @@ function RouteComponent() {
         <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
           <CardContent className="p-4">
             <div className="space-y-6">
-              <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-5">
-                {/* Quota Display Section */}
-                <div className="lg:col-span-3">
-                  <div className="space-y-3">
-                    <QuotaDisplay
-                      classNames={{
-                        title: "text-xs uppercase font-semibold",
-                        bar: "h-2",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 lg:col-span-2">
-                  {/* Stats Section */}
-                  <StatItem
-                    label="TASKS"
-                    value={taskCountQuery.data?.summary?.taskCount || 0}
-                    isLoading={taskCountQuery.isLoading && !taskCountQuery.data}
-                    isError={taskCountQuery.isError}
-                  />
-                  <StatItem
-                    label="MESSAGES"
-                    value={taskCountQuery.data?.summary?.completionCount || 0}
-                    isLoading={taskCountQuery.isLoading && !taskCountQuery.data}
-                    isError={taskCountQuery.isError}
-                  />
-                </div>
+              <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+                {/* Stats Section */}
+                <StatItem
+                  label="TASKS"
+                  value={taskCountQuery.data?.summary?.taskCount || 0}
+                  isLoading={taskCountQuery.isLoading && !taskCountQuery.data}
+                  isError={taskCountQuery.isError}
+                />
+                <StatItem
+                  label="MESSAGES"
+                  value={taskCountQuery.data?.summary?.completionCount || 0}
+                  isLoading={taskCountQuery.isLoading && !taskCountQuery.data}
+                  isError={taskCountQuery.isError}
+                />
               </div>
             </div>
           </CardContent>
@@ -494,6 +593,26 @@ function RouteComponent() {
           queryClient={queryClient}
         />
       </div>
+
+      {/* Billing Section, only display to internal user for now */}
+      {session?.user?.email.endsWith("@tabbyml.com") && (
+        <div className="space-y-4">
+          <div className="mx-4 space-y-1">
+            <h2 className="font-semibold text-base text-foreground">Billing</h2>
+            <p className="text-muted-foreground text-xs">
+              Manage your billing and subscription details
+            </p>
+          </div>
+          <BillingCard queryClient={queryClient} />
+        </div>
+      )}
     </div>
   );
+}
+
+function formatCreditToDollars(credit: number): string {
+  return (credit / 10_000_000).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
 }

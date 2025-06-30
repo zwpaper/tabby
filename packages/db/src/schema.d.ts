@@ -66,6 +66,7 @@ export interface Apikey {
 export interface ChatCompletion {
   completionTokens: number;
   createdAt: Generated<Timestamp>;
+  credit: Generated<number>;
   id: Generated<number>;
   modelId: string;
   promptTokens: number;
@@ -92,6 +93,7 @@ export interface Minion {
 
 export interface MonthlyUsage {
   count: Generated<number>;
+  credit: Generated<number>;
   id: Generated<number>;
   modelId: string;
   startDayOfMonth: Timestamp;
@@ -202,4 +204,3 @@ export interface DB {
   user: User;
   verification: Verification;
 }
-

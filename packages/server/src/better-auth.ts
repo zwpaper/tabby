@@ -107,6 +107,9 @@ export const auth = betterAuth({
         enabled: true,
         plans: StripePlans,
       },
+      billingPortal: {
+        returnUrl: "/profile",
+      },
     }),
     apiKey({
       enableMetadata: true,

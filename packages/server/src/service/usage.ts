@@ -14,7 +14,7 @@ export class UsageService {
     modelId: string,
     usage: LanguageModelUsage,
   ): Promise<void> {
-    await this.meterCreditCost(user, modelId, usage);
+    const credit = await this.meterCreditCost(user, modelId, usage);
 
     // Track individual completion details
     await db
@@ -24,6 +24,7 @@ export class UsageService {
         userId: user.id,
         promptTokens: usage.promptTokens,
         completionTokens: usage.completionTokens,
+        credit: credit,
       })
       .execute();
 
@@ -38,12 +39,14 @@ export class UsageService {
         modelId,
         startDayOfMonth,
         count: 1, // Start count at 1 for a new entry
+        credit,
       })
       .onConflict((oc) =>
         oc
           .columns(["userId", "startDayOfMonth", "modelId"])
           .doUpdateSet((eb) => ({
             count: eb("monthlyUsage.count", "+", 1),
+            credit: eb("monthlyUsage.credit", "+", credit),
           })),
       )
       .execute();
@@ -105,18 +108,20 @@ export class UsageService {
     // Ensure the timestamp comparison works correctly with the database timezone (assuming UTC)
     const results = await db
       .selectFrom("monthlyUsage")
-      .select(["modelId", "count"])
+      .select(["modelId", "count", "credit"])
       .where("userId", "=", user.id)
       // Compare the timestamp column directly with the Date object
       .where(sql`"startDayOfMonth"`, "=", startOfMonth)
       .execute(); // Use executeTakeFirstOrThrow() if you expect a result or want an error
 
+    let credit = 0;
     const usages = {
       basic: 0,
       premium: 0,
     };
 
     for (const x of results) {
+      credit += x.credit;
       const model = AvailableModels.find((m) => m.id === x.modelId);
       if (model) {
         usages[model.costType] += x.count;
@@ -127,6 +132,7 @@ export class UsageService {
       plan,
       usages,
       limits,
+      credit,
     };
   }
 
@@ -151,6 +157,8 @@ export class UsageService {
         stripe_customer_id: user.stripeCustomerId,
       },
     });
+
+    return creditCost;
   }
 }
 
