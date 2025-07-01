@@ -9,13 +9,13 @@ type LinkToHandle = vscode.TerminalLink & {
 @injectable()
 @singleton()
 export class TerminalLinkProvider implements vscode.Disposable {
-  private registeration: vscode.Disposable | undefined;
+  private registration: vscode.Disposable | undefined;
 
   constructor() {
     const sandboxHost = process.env.POCHI_SANDBOX_HOST;
 
     if (sandboxHost) {
-      this.registeration = vscode.window.registerTerminalLinkProvider({
+      this.registration = vscode.window.registerTerminalLinkProvider({
         provideTerminalLinks: (
           context: vscode.TerminalLinkContext,
         ): LinkToHandle[] => {
@@ -41,6 +41,6 @@ export class TerminalLinkProvider implements vscode.Disposable {
   }
 
   dispose() {
-    this.registeration?.dispose();
+    this.registration?.dispose();
   }
 }
