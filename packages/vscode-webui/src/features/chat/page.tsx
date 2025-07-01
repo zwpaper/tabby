@@ -463,7 +463,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                   }}
                 >
                   {showStopButton ? (
-                    <StopCircleIcon className="size-4 animate-pulse transition-transform duration-1500 hover:scale-110" />
+                    <StopCircleIcon className="size-4" />
                   ) : (
                     <SendHorizonal className="size-4" />
                   )}

@@ -39,7 +39,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
 
   const acceptText = ToolAcceptText[pendingApproval.name] || "Accept";
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
-  const abortText = ToolAbortText[pendingApproval.name] || null;
+  const abortText = ToolAbortText[pendingApproval.name] || "Stop";
 
   const onAccept = useCallback(async () => {
     if (lifecycle.status !== "ready") {
@@ -75,7 +75,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     }
   }, [isAutoApproved, onAccept]);
 
-  const [showAbort, setShowAbort] = useDebounceState(false, 1_000); // 3 seconds
+  const [showAbort, setShowAbort] = useDebounceState(false, 1_000); // 1 seconds
   useEffect(() => {
     if (lifecycle.status.startsWith("execute")) {
       setShowAbort(true);
@@ -97,6 +97,12 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     );
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies(autoApproveGuard): autoApproveGuard is a ref, so it won't change
+  const abort = useCallback(() => {
+    autoApproveGuard.current = false;
+    lifecycle.abort();
+  }, [lifecycle]);
+
   if (showAbort && abortText && lifecycle.status.startsWith("execute")) {
     /*
     Only display the abort button if:
@@ -104,11 +110,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     2. The abort text is provided
     3. The showAbort flag is true (delayed for a bit to avoid flashing)
     */
-    return (
-      <Button onClick={() => lifecycle.abort()} variant="secondary">
-        {abortText}
-      </Button>
-    );
+    return <Button onClick={abort}>{abortText}</Button>;
   }
 
   return null;
