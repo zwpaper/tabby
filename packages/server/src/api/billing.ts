@@ -19,6 +19,19 @@ const UserIdParamSchema = z.object({
 });
 
 const billing = new Hono()
+  .get("/portal", requireAuth(), async (c) => {
+    const user = c.get("user");
+    if (!user.stripeCustomerId) {
+      throw new HTTPException(400, { message: "User is not a customer." });
+    }
+
+    const url = new URL(c.req.url);
+    const session = await stripeClient.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: `${url.origin}/profile`,
+    });
+    return c.redirect(session.url, 303);
+  })
   .get(
     "/history",
     requireAuth(),

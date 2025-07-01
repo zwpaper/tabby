@@ -390,9 +390,10 @@ function BillingCard({
           cancelUrl: window.location.href,
         });
       }
-      return authClient.subscription.cancel({
-        returnUrl: window.location.href,
-      });
+      window.location.href = "/api/billing/portal";
+      // return authClient.subscription.cancel({
+      //   returnUrl: window.location.href,
+      // });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription"] });

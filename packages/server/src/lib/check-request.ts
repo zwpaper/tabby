@@ -14,7 +14,10 @@ export function checkModel(modelId: string): AvailableModelId {
   return modelId as AvailableModelId;
 }
 
-export function checkWaitlist(user: User, errorMessage = "Internal user only") {
+export function checkWaitlist(
+  user: User,
+  errorMessage = "Your waitlist request is still pending. Please wait for approval before using this feature.",
+) {
   if (!user.email.endsWith("@tabbyml.com") && !user.isWaitlistApproved) {
     throw new HTTPException(400, { message: errorMessage });
   }
