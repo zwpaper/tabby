@@ -41,7 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
         read: true,
         write: true,
         execute: true,
-        retry: false,
+        retry: true,
         maxRetryLimit: 3,
         mcp: false,
       },
