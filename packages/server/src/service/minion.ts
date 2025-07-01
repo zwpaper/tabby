@@ -260,7 +260,7 @@ async function verifyMinionUrl(url: string) {
             message: "Service Unavailable, please try again later",
           }),
         ),
-      9 * 1000,
+      25 * 1000,
     ),
   );
 

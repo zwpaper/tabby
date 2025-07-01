@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { requireAuth } from "../auth";
+import { setIdleTimeout } from "../server";
 import { minionService } from "../service/minion";
 
 const PaginationSchema = z.object({
@@ -26,6 +27,7 @@ const minions = new Hono()
     });
   })
   .get("/:id/redirect", async (c) => {
+    setIdleTimeout(c.req.raw, 60); // 60 seconds idle timeout
     const user = c.get("user");
     const { id } = c.req.param();
     const url = await minionService.redirect(user.id, id);
