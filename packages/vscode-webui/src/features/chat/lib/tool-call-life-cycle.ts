@@ -25,6 +25,24 @@ type NewTaskReturnType = {
 };
 type ExecuteReturnType = ExecuteCommandReturnType | NewTaskReturnType | unknown;
 
+type StreamingResult =
+  | {
+      toolName: "executeCommand";
+      output: ExecuteCommandResult;
+      detach: () => void;
+    }
+  | {
+      toolName: "newTask";
+      state: TaskRunnerState;
+    };
+
+type CompleteReason =
+  | "execute-finish"
+  | "user-reject"
+  | "preview-reject"
+  | "user-detach"
+  | "user-abort";
+
 type ToolCallState =
   | {
       // Represents preview runs at toolCall.state === "partial-call"
@@ -50,26 +68,12 @@ type ToolCallState =
   | {
       type: "execute:streaming";
       abortController: AbortController;
-      streamingResult:
-        | {
-            toolName: "executeCommand";
-            detach: () => void;
-            output: ExecuteCommandResult;
-          }
-        | {
-            toolName: "newTask";
-            state: TaskRunnerState;
-          };
+      streamingResult: StreamingResult;
     }
   | {
       type: "complete";
       result: unknown;
-      reason:
-        | "execute-finish"
-        | "user-reject"
-        | "preview-reject"
-        | "user-detach"
-        | "user-abort";
+      reason: CompleteReason;
     }
   | {
       type: "dispose";
@@ -79,14 +83,65 @@ type ToolCallLifeCycleEvents = {
   [K in ToolCallState["type"]]: Extract<ToolCallState, { type: K }>;
 };
 
-export class ToolCallLifeCycle extends Emittery<ToolCallLifeCycleEvents> {
+export interface ToolCallLifeCycle {
+  readonly toolName: string;
+  readonly toolCallId: string;
+
+  readonly status: ToolCallState["type"];
+
+  /**
+   * Streaming result data if available.
+   * Returns undefined if not in streaming state.
+   */
+  readonly streamingResult: StreamingResult | undefined;
+
+  /**
+   * Completion result and reason.
+   * Should only be accessed when the lifecycle is in complete state.
+   */
+  readonly complete: {
+    result: unknown;
+    reason: CompleteReason;
+  };
+
+  dispose(): void;
+
+  /**
+   * Preview the tool call with given arguments and state.
+   * @param args - Tool call arguments
+   * @param state - Current tool invocation state
+   */
+  preview(args: unknown, state: ToolInvocation["state"]): void;
+
+  /**
+   * Execute the tool call with given arguments and options.
+   * @param args - Tool call arguments
+   * @param options - Execution options including model selection
+   */
+  execute(args: unknown, options: { model?: string }): void;
+
+  /**
+   * Abort the currently executing tool call.
+   */
+  abort(): void;
+
+  /**
+   * Reject the tool call, preventing execution.
+   */
+  reject(): void;
+}
+
+export class ManagedToolCallLifeCycle
+  extends Emittery<ToolCallLifeCycleEvents>
+  implements ToolCallLifeCycle
+{
   private state: ToolCallState = {
     type: "init",
     previewJob: Promise.resolve(undefined),
   };
 
   constructor(
-    private readonly toolName: string,
+    readonly toolName: string,
     readonly toolCallId: string,
     private enableCheckpoint: boolean,
   ) {

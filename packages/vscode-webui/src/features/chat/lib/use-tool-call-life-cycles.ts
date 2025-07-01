@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useSettingsStore } from "../../settings/store";
-import { ToolCallLifeCycle } from "./tool-call-life-cycle";
+import { ManagedToolCallLifeCycle } from "./tool-call-life-cycle";
 
 // Hook to manage tool call states
 export function useToolCallLifeCycles() {
   const [toolCallLifeCycles, setToolCallLifeCycles] = useState<
-    Map<string, ToolCallLifeCycle>
+    Map<string, ManagedToolCallLifeCycle>
   >(new Map());
 
   const { enableCheckpoint } = useSettingsStore();
@@ -39,14 +39,14 @@ export function useToolCallLifeCycles() {
   }, []);
 
   // Ref to track latest status for immediate access
-  const toolCallLifeCyclesRef = useRef<Map<string, ToolCallLifeCycle>>(
+  const toolCallLifeCyclesRef = useRef<Map<string, ManagedToolCallLifeCycle>>(
     new Map(),
   );
 
   const getToolCallLifeCycle = useCallback(
     (toolName: string, toolCallId: string) => {
       if (!toolCallLifeCyclesRef.current.has(toolCallId)) {
-        const lifecycle = new ToolCallLifeCycle(
+        const lifecycle = new ManagedToolCallLifeCycle(
           toolName,
           toolCallId,
           enableCheckpoint,
@@ -65,7 +65,7 @@ export function useToolCallLifeCycles() {
       return toolCallLifeCyclesRef.current.get(
         toolCallId,
         // Guaranteed to exist because we just set it above
-      ) as ToolCallLifeCycle;
+      ) as ManagedToolCallLifeCycle;
     },
     [reloadToolCallLifeCycles, enableCheckpoint],
   );
@@ -76,5 +76,3 @@ export function useToolCallLifeCycles() {
     completeToolCalls,
   };
 }
-
-export type { ToolCallLifeCycle };

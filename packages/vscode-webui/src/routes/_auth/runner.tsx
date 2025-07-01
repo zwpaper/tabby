@@ -1,14 +1,11 @@
-import { MessageList } from "@/components/message/message-list";
+import { TaskThread } from "@/components/task-thread";
 import { buttonVariants } from "@/components/ui/button";
 import { ChatContextProvider } from "@/features/chat";
-import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
-import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Bot } from "lucide-react";
-import { useEffect, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -31,44 +28,9 @@ export const Route = createFileRoute("/_auth/runner")({
 
 function RunnerComponent() {
   const { uid } = Route.useSearch();
-  const resourceUri = useResourceURI();
   const { auth: authData } = Route.useRouteContext();
   const taskRunners = useTaskRunners();
   const taskRunner = taskRunners[uid];
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<UIMessage[]>([]);
-
-  useEffect(() => {
-    if (taskRunner) {
-      if (taskRunner.state !== "initial") {
-        setMessages(taskRunner.messages);
-      }
-
-      if (taskRunner.state === "running") {
-        const progress = taskRunner.progress;
-        if (progress.type === "loading-task") {
-          if (progress.phase === "begin") {
-            setIsLoading(true);
-          } else if (progress.phase === "end") {
-            setIsLoading(false);
-          }
-        } else if (progress.type === "executing-tool-call") {
-          if (progress.phase === "begin") {
-            // FIXME(zhiming): update UI toolcall status icon: isExecuting = true
-          } else if (progress.phase === "end") {
-            // FIXME(zhiming): update UI toolcall status icon: isExecuting = false
-          }
-        } else if (progress.type === "sending-message") {
-          if (progress.phase === "begin") {
-            setIsLoading(true);
-          } else if (progress.phase === "end") {
-            setIsLoading(false);
-          }
-        }
-      }
-    }
-  }, [taskRunner]);
 
   if (!taskRunner) {
     return (
@@ -80,12 +42,7 @@ function RunnerComponent() {
 
   return (
     <div className="flex h-screen flex-col">
-      <MessageList
-        messages={messages}
-        user={authData?.user}
-        logo={resourceUri?.logo128}
-        isLoading={isLoading}
-      />
+      <TaskThread user={authData?.user} taskSource={{ runner: taskRunner }} />
       <div className="flex items-center justify-between border-t p-4">
         <div className="flex">
           <Bot

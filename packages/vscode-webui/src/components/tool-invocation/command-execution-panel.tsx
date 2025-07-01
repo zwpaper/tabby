@@ -21,7 +21,7 @@ export interface ExecutionPanelProps {
   command: string;
   output: string;
   onStop: () => void;
-  onDetach: () => void;
+  onDetach?: () => void;
   completed: boolean;
   isExecuting: boolean;
   className?: string;
@@ -106,7 +106,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
               STOP
             </Button>
           )}
-          {showButton && (
+          {showButton && handleDetach !== undefined && (
             <Button size="xs" variant="ghost" onClick={handleDetach}>
               DETACH
             </Button>

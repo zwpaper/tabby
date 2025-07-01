@@ -56,9 +56,11 @@ export const executeCommandTool: React.FC<
     completed = true;
   }
 
-  const onDetach = () => {
-    streamingResult?.detach();
-  };
+  const onDetach = streamingResult
+    ? () => {
+        streamingResult.detach();
+      }
+    : undefined;
 
   return (
     <ExpandableToolContainer

@@ -1,0 +1,47 @@
+import type { ToolInvocation } from "ai";
+import type { ToolCallLifeCycle } from "./tool-call-life-cycle";
+
+export class FixedStateToolCallLifeCycle implements ToolCallLifeCycle {
+  constructor(
+    readonly toolName: string,
+    readonly toolCallId: string,
+    readonly status: "execute" | "dispose",
+  ) {}
+
+  get streamingResult() {
+    // streaming result is unsupported in FixedStateToolCallLifeCycle
+    return undefined;
+  }
+
+  get complete(): { result: unknown; reason: "execute-finish" | "user-abort" } {
+    throw new Error(
+      "Method 'get complete()' should not be called on FixedStateToolCallLifeCycle.",
+    );
+  }
+
+  dispose() {
+    // no-op
+  }
+
+  preview(_args: unknown, _state: ToolInvocation["state"]) {
+    // no-op for preview tool call on FixedStateToolCallLifeCycle
+  }
+
+  execute(_args: unknown, _options: { model?: string }) {
+    throw new Error(
+      "Method 'execute()' should not be called on FixedStateToolCallLifeCycle.",
+    );
+  }
+
+  abort() {
+    throw new Error(
+      "Method 'abort()' should not be called on FixedStateToolCallLifeCycle.",
+    );
+  }
+
+  reject() {
+    throw new Error(
+      "Method 'reject()' should not be called on FixedStateToolCallLifeCycle.",
+    );
+  }
+}
