@@ -15,7 +15,7 @@ interface ToolCallApprovalButtonProps {
 // Component
 export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
-  saveCheckpoint,
+  // saveCheckpoint,
 }) => {
   const autoApproveGuard = useAutoApproveGuard();
 
@@ -43,12 +43,12 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const rejectText = ToolRejectText[pendingApproval.name] || "Reject";
   const abortText = ToolAbortText[pendingApproval.name] || "Stop";
 
-  const onAccept = useCallback(async () => {
+  const onAccept = useCallback(() => {
     if (lifecycle.status !== "ready") {
       return;
     }
 
-    await saveCheckpoint(pendingApproval.tool.toolCallId);
+    // await saveCheckpoint(pendingApproval.tool.toolCallId);
     lifecycle.execute(pendingApproval.tool.args, {
       model: selectedModel?.id,
     });
@@ -57,7 +57,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     lifecycle.status,
     lifecycle.execute,
     selectedModel?.id,
-    saveCheckpoint,
+    // saveCheckpoint,
   ]);
 
   const onReject = useCallback(() => {

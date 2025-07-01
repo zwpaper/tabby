@@ -227,7 +227,7 @@ export class ManagedToolCallLifeCycle
     }
   }
 
-  async execute(args: unknown, options: { model?: string }) {
+  execute(args: unknown, options: { model?: string }) {
     const abortController = new AbortController();
     const abortSignal = ThreadAbortSignal.serialize(abortController.signal);
     let executePromise: Promise<unknown>;
