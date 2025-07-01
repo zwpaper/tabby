@@ -5,7 +5,7 @@ import { getLogger } from "@ragdoll/common";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import { ShadowGitRepo } from "./shadow-git-repo";
-import { Deferred, hashWorkingDir as hashDir, toErrorMessage } from "./util";
+import { Deferred, toErrorMessage } from "./util";
 
 const logger = getLogger("CheckpointService");
 
@@ -15,10 +15,6 @@ export class CheckpointService implements vscode.Disposable {
   private shadowGit: ShadowGitRepo | undefined;
   private readyDefer = new Deferred<void>();
   private initialized = false;
-
-  private get cwdHash() {
-    return hashDir(getWorkspaceFolder().uri.fsPath);
-  }
 
   constructor(
     @inject("vscode.ExtensionContext")
@@ -71,7 +67,7 @@ export class CheckpointService implements vscode.Disposable {
 
     try {
       await this.shadowGit.stageAll();
-      const commitMessage = `checkpoint-${this.cwdHash}-${message}`;
+      const commitMessage = `checkpoint-${message}`;
       const commitHash = await this.shadowGit.commit(commitMessage);
       logger.trace(
         `Successfully saved checkpoint with message: ${message}, commit hash: ${commitHash}`,
@@ -80,7 +76,7 @@ export class CheckpointService implements vscode.Disposable {
     } catch (error) {
       const errorMessage = toErrorMessage(error);
       const fullErrorMessage = `Failed to save checkpoint with message: ${message}: ${errorMessage}`;
-      logger.error(fullErrorMessage, { error, cwdHash: this.cwdHash });
+      logger.error(fullErrorMessage, { error });
       throw new Error(fullErrorMessage);
     }
   };
@@ -102,15 +98,13 @@ export class CheckpointService implements vscode.Disposable {
   };
 
   private async getShadowGitPath() {
-    const globalStoragePath = this.context.globalStorageUri.fsPath;
-    const checkpointsDir = path.join(
-      globalStoragePath,
-      "checkpoints",
-      this.cwdHash,
-    );
-    await mkdir(checkpointsDir, { recursive: true });
-    const gitPath = path.join(checkpointsDir, ".git");
-    return gitPath;
+    if (!this.context.storageUri) {
+      throw new Error("Extension storage URI is not available");
+    }
+    const storagePath = this.context.storageUri.fsPath;
+    const checkpointDir = path.join(storagePath, "checkpoint");
+    await mkdir(checkpointDir, { recursive: true });
+    return checkpointDir;
   }
 
   dispose() {

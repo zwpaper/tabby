@@ -50,26 +50,42 @@ export class ShadowGitRepo implements vscode.Disposable {
     private gitPath: string,
     private workspaceDir: string,
   ) {
+    // For bare repository, we initialize simple-git with the bare repository directory
     this.git = simpleGit(this.gitPath);
   }
 
   async init() {
     try {
-      const exists = await isFileExists(this.gitPath);
+      // Check if bare repository already exists by looking for git files
+      const headFile = path.join(this.gitPath, "HEAD");
+      const exists = await isFileExists(headFile);
+
       if (exists) {
         logger.trace(
           `Shadow Git repository already exists at ${this.gitPath}.`,
         );
-        const worktree = await this.git.getConfig("core.worktree");
-        // Handle case where worktree is not set or is null
-        if (worktree.value && worktree.value !== this.workspaceDir) {
-          throw new Error(
-            `The worktree for the repository at ${this.gitPath} is already set to ${worktree.value}, but expected ${this.workspaceDir}.`,
-          );
-        }
-        // If worktree is not set or is null, set it to the expected workspace directory
-        if (!worktree.value) {
-          await this.git.addConfig("core.worktree", this.workspaceDir);
+        // For bare repository, check worktree config
+        try {
+          const worktreeResult = await this.git.raw([
+            "config",
+            "core.worktree",
+          ]);
+          const currentWorktree = worktreeResult.trim();
+          if (currentWorktree && currentWorktree !== this.workspaceDir) {
+            throw new Error(
+              `The worktree for the repository at ${this.gitPath} is already set to ${currentWorktree}, but expected ${this.workspaceDir}.`,
+            );
+          }
+          // If worktree is not set, set it
+          if (!currentWorktree) {
+            await this.git.raw(["config", "core.worktree", this.workspaceDir]);
+            logger.trace(
+              `Set worktree to ${this.workspaceDir} for existing repository.`,
+            );
+          }
+        } catch (configError) {
+          // If config doesn't exist, set it
+          await this.git.raw(["config", "core.worktree", this.workspaceDir]);
           logger.trace(
             `Set worktree to ${this.workspaceDir} for existing repository.`,
           );
@@ -78,13 +94,18 @@ export class ShadowGitRepo implements vscode.Disposable {
         return;
       }
 
-      // TODO: Check nested git repositories
-
+      // Initialize bare repository
       await this.git.init(["--bare"]);
-      await this.git.addConfig("core.worktree", this.workspaceDir);
-      await this.git.addConfig("commit.gpgSign", "false");
-      await this.git.addConfig("user.name", "Pochi Checkpoint");
-      await this.git.addConfig("user.email", "pochi-checkpoint@tabbyml.com");
+
+      // Configure the bare repository
+      await this.git.raw(["config", "core.worktree", this.workspaceDir]);
+      await this.git.raw(["config", "commit.gpgSign", "false"]);
+      await this.git.raw(["config", "user.name", "Pochi Checkpoint"]);
+      await this.git.raw([
+        "config",
+        "user.email",
+        "pochi-checkpoint@tabbyml.com",
+      ]);
 
       logger.trace(`Initialized shadow Git repository at ${this.gitPath}.`);
 
@@ -113,7 +134,14 @@ export class ShadowGitRepo implements vscode.Disposable {
       if (!this.git) {
         throw new Error("Git instance is not initialized");
       }
-      await this.git.add([".", "--ignore-errors"]);
+      // For bare repository with worktree, use --work-tree flag
+      await this.git.raw([
+        "--work-tree",
+        this.workspaceDir,
+        "add",
+        ".",
+        "--ignore-errors",
+      ]);
       logger.trace(`Staged all changes in the repository at ${this.gitPath}.`);
       return true;
     } catch (error) {
@@ -133,14 +161,25 @@ export class ShadowGitRepo implements vscode.Disposable {
       if (!this.git) {
         throw new Error("Git instance is not initialized");
       }
-      const result = await this.git.commit(commitMessage, {
-        "--allow-empty": null,
-        "--no-verify": null,
-      });
+      // For bare repository with worktree, use --work-tree flag
+      const result = await this.git.raw([
+        "--work-tree",
+        this.workspaceDir,
+        "commit",
+        "-m",
+        commitMessage,
+        "--allow-empty",
+        "--no-verify",
+      ]);
+
+      // Extract commit hash from the output
+      const commitHashMatch = result.match(/\[[\w\s]+ ([a-f0-9]+)\]/);
+      const commitHash = commitHashMatch ? commitHashMatch[1] : "";
+
       logger.trace(
         `Committed changes in the repository at ${this.gitPath} with message: ${commitMessage}`,
       );
-      return result.commit;
+      return commitHash;
     } catch (error) {
       const errorMessage = toErrorMessage(error);
       const message = `Failed to commit changes in the repository at ${this.gitPath}: ${errorMessage}`;
@@ -159,7 +198,14 @@ export class ShadowGitRepo implements vscode.Disposable {
       if (!this.git) {
         throw new Error("Git instance is not initialized");
       }
-      await this.git.reset(["--hard", commitHash]);
+      // For bare repository with worktree, use --work-tree flag
+      await this.git.raw([
+        "--work-tree",
+        this.workspaceDir,
+        "reset",
+        "--hard",
+        commitHash,
+      ]);
     } catch (error) {
       const errorMessage = toErrorMessage(error);
       logger.error(
