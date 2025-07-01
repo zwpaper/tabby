@@ -1,3 +1,4 @@
+import { SandboxPath } from "@ragdoll/common";
 import { HTTPException } from "hono/http-exception";
 import {
   type FlyioClient,
@@ -9,7 +10,6 @@ import type {
   SandboxLogs,
   SandboxProvider,
 } from "./types";
-import { SandboxPath } from "./types";
 
 const FlyApiToken = process.env.FLY_API_TOKEN;
 const FlyOrgSlug = process.env.FLY_ORG_SLUG || "tabbyml";

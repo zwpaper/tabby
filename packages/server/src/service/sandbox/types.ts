@@ -15,18 +15,6 @@ export interface CreateSandboxOptions {
   envs: Record<string, string>;
 }
 
-const SandboxHome = "/home/pochi";
-const SandboxLogDir = `${SandboxHome}/.log`;
-const RemotePochiHome = `${SandboxHome}/.remote-pochi`;
-
-export const SandboxPath = {
-  home: SandboxHome,
-  project: `${SandboxHome}/project`,
-  init: `${RemotePochiHome}/init.sh`,
-  initLog: `${SandboxLogDir}/init.log`,
-  runnerLog: `${SandboxLogDir}/runner.log`,
-};
-
 export interface SandboxProvider {
   /**
    * Create a new sandbox instance

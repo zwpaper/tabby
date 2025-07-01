@@ -1,5 +1,6 @@
 import * as os from "node:os";
 import { getLogger } from "@/lib/logger";
+import { SandboxPath } from "@ragdoll/common";
 import * as jszip from "jszip";
 import generate from "project-name-generator";
 import * as vscode from "vscode";
@@ -113,6 +114,10 @@ export async function showInputBox(
 export async function createNewWorkspace(
   namePlaceholder?: string | undefined,
 ): Promise<vscode.Uri | undefined> {
+  if (process.env.POCHI_MINION_ID) {
+    return vscode.Uri.parse(SandboxPath.project);
+  }
+
   await createDirectoryIfNotExists(baseUri);
 
   const { dashed } = generate();
