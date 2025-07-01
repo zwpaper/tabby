@@ -11,6 +11,8 @@ export const AdvancedSettingsSection: React.FC = () => {
     updateEnableNewTask,
     enableGeminiCustomToolCalls,
     updateEnableGeminiCustomToolCalls,
+    enableCheckpoint,
+    updateEnableCheckpoint,
   } = useSettingsStore();
 
   return (
@@ -42,6 +44,14 @@ export const AdvancedSettingsSection: React.FC = () => {
               checked={!!enableNewTask}
               onCheckedChange={(checked) => {
                 updateEnableNewTask(!!checked);
+              }}
+            />
+            <SettingsCheckboxOption
+              id="enable-checkpoint"
+              label="Enable Checkpoint"
+              checked={enableCheckpoint}
+              onCheckedChange={(checked) => {
+                updateEnableCheckpoint(!!checked);
               }}
             />
           </>

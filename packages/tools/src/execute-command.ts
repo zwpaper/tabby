@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CheckpointSchema } from "./constants";
 import { defineClientTool } from "./types";
 
 export const executeCommand = defineClientTool({
@@ -102,5 +103,14 @@ Important:
       .boolean()
       .optional()
       .describe("Whether the output was truncated"),
+
+    _meta: z
+      .object({
+        checkpoint: CheckpointSchema,
+      })
+      .optional()
+      .describe(
+        "Metadata that would be removed before sending to the LLM (e.g. UI specific data).",
+      ),
   }),
 });

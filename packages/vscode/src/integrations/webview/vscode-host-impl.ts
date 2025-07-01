@@ -405,11 +405,11 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return ThreadSignal.serialize(this.taskRunnerManager.status);
   };
 
-  saveCheckpoint = async (toolCallId: string): Promise<string> => {
-    return await this.checkpointService.saveCheckpoint(toolCallId);
+  saveCheckpoint = async (message: string): Promise<string> => {
+    return await this.checkpointService.saveCheckpoint(message);
   };
 
-  restoreCheckpoint = async (commitHash?: string): Promise<void> => {
+  restoreCheckpoint = async (commitHash: string): Promise<void> => {
     await this.checkpointService.restoreCheckpoint(commitHash);
   };
 

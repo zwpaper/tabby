@@ -38,22 +38,30 @@ export class CheckpointService implements vscode.Disposable {
   }
 
   private async init() {
-    const gitPath = await this.getShadowGitPath();
-    this.shadowGit = await ShadowGitRepo.getOrCreate(
-      gitPath,
-      getWorkspaceFolder().uri.fsPath,
-    );
-    logger.trace("Shadow Git repository initialized at", gitPath);
-    this.readyDefer.resolve();
+    try {
+      const gitPath = await this.getShadowGitPath();
+      this.shadowGit = await ShadowGitRepo.getOrCreate(
+        gitPath,
+        getWorkspaceFolder().uri.fsPath,
+      );
+      logger.trace("Shadow Git repository initialized at", gitPath);
+      this.readyDefer.resolve();
+    } catch (error) {
+      const errorMessage = toErrorMessage(error);
+      logger.error("Failed to initialize Shadow Git repository:", errorMessage);
+      this.readyDefer.reject(
+        new Error(`Failed to initialize checkpoint service: ${errorMessage}`),
+      );
+    }
   }
 
   /**
-   * Saves a checkpoint for the given tool call ID.
-   * @param toolCallId The ID of the tool call to save the checkpoint for.
+   * Saves a checkpoint for the current workspace.
+   * @param message A message to associate with the checkpoint.
    * @returns The commit hash of the created checkpoint.
    */
-  saveCheckpoint = async (toolCallId: string): Promise<string> => {
-    logger.trace(`Saving checkpoint for tool call ID: ${toolCallId}`);
+  saveCheckpoint = async (message: string): Promise<string> => {
+    logger.trace(`Saving checkpoint with message: ${message}`);
 
     await this.ensureInitialized();
 
@@ -63,37 +71,34 @@ export class CheckpointService implements vscode.Disposable {
 
     try {
       await this.shadowGit.stageAll();
-      const commitMessage = `checkpoint-${this.cwdHash}-${toolCallId}`;
+      const commitMessage = `checkpoint-${this.cwdHash}-${message}`;
       const commitHash = await this.shadowGit.commit(commitMessage);
       logger.trace(
-        `Successfully saved checkpoint for tool call ID: ${toolCallId}, commit hash: ${commitHash}`,
+        `Successfully saved checkpoint with message: ${message}, commit hash: ${commitHash}`,
       );
       return commitHash;
     } catch (error) {
       const errorMessage = toErrorMessage(error);
-      const message = `Failed to save checkpoint for tool call ID: ${toolCallId}: ${errorMessage}`;
-      logger.error(message, { error, toolCallId, cwdHash: this.cwdHash });
-      throw new Error(message);
+      const fullErrorMessage = `Failed to save checkpoint with message: ${message}: ${errorMessage}`;
+      logger.error(fullErrorMessage, { error, cwdHash: this.cwdHash });
+      throw new Error(fullErrorMessage);
     }
   };
 
   /**
-   * @param commitHash  - The commit hash to restore to. If not provided, restores to the latest checkpoint.
+   * Restores a checkpoint for the current workspace.
+   * @param commitHash The commit hash to restore the checkpoint from.
+   * @returns A promise that resolves when the checkpoint is restored.
    */
-  restoreCheckpoint = async (commitHash?: string): Promise<void> => {
-    logger.trace(
-      `Restoring checkpoint for commit hash: ${commitHash ?? "latest"}`,
-    );
+  restoreCheckpoint = async (commitHash: string): Promise<void> => {
+    logger.trace(`Restoring checkpoint for commit hash: ${commitHash}`);
     await this.ensureInitialized();
 
     if (!this.shadowGit) {
       throw new Error("Shadow Git repository not initialized");
     }
 
-    if (commitHash) {
-      return await this.shadowGit.reset(commitHash);
-    }
-    return await this.shadowGit.resetLatest();
+    await this.shadowGit.reset(commitHash);
   };
 
   private async getShadowGitPath() {

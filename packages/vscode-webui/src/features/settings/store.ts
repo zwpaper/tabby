@@ -20,6 +20,7 @@ export interface SettingsState {
 
   enableNewTask: boolean | undefined;
   enableGeminiCustomToolCalls: boolean;
+  enableCheckpoint: boolean;
 
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
@@ -28,6 +29,7 @@ export interface SettingsState {
 
   updateEnableNewTask: (value: boolean) => void;
   updateEnableGeminiCustomToolCalls: (value: boolean) => void;
+  updateEnableCheckpoint: (value: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -47,6 +49,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       enableNewTask: undefined,
       enableGeminiCustomToolCalls: true,
+      enableCheckpoint: false,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
@@ -65,6 +68,8 @@ export const useSettingsStore = create<SettingsState>()(
         set(() => ({ enableNewTask: value })),
       updateEnableGeminiCustomToolCalls: (value: boolean) =>
         set(() => ({ enableGeminiCustomToolCalls: value })),
+      updateEnableCheckpoint: (value: boolean) =>
+        set(() => ({ enableCheckpoint: value })),
     }),
     {
       name: "ragdoll-settings-storage",

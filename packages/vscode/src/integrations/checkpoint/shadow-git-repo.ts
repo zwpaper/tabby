@@ -45,12 +45,12 @@ export class ShadowGitRepo implements vscode.Disposable {
 
   constructor(
     /**
-     * Path to the .git directory for the shadow repository.
+     * Path to the bare git repository directory for the shadow repository.
      */
     private gitPath: string,
     private workspaceDir: string,
   ) {
-    this.git = simpleGit(path.dirname(this.gitPath));
+    this.git = simpleGit(this.gitPath);
   }
 
   async init() {
@@ -61,9 +61,17 @@ export class ShadowGitRepo implements vscode.Disposable {
           `Shadow Git repository already exists at ${this.gitPath}.`,
         );
         const worktree = await this.git.getConfig("core.worktree");
-        if (worktree.value !== this.workspaceDir) {
+        // Handle case where worktree is not set or is null
+        if (worktree.value && worktree.value !== this.workspaceDir) {
           throw new Error(
             `The worktree for the repository at ${this.gitPath} is already set to ${worktree.value}, but expected ${this.workspaceDir}.`,
+          );
+        }
+        // If worktree is not set or is null, set it to the expected workspace directory
+        if (!worktree.value) {
+          await this.git.addConfig("core.worktree", this.workspaceDir);
+          logger.trace(
+            `Set worktree to ${this.workspaceDir} for existing repository.`,
           );
         }
         await writeExcludesFile(this.gitPath, this.workspaceDir);
@@ -72,7 +80,7 @@ export class ShadowGitRepo implements vscode.Disposable {
 
       // TODO: Check nested git repositories
 
-      await this.git.init();
+      await this.git.init(["--bare"]);
       await this.git.addConfig("core.worktree", this.workspaceDir);
       await this.git.addConfig("commit.gpgSign", "false");
       await this.git.addConfig("user.name", "Pochi Checkpoint");

@@ -7,6 +7,7 @@ import {
 import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
+import { vscodeHost } from "@/lib/vscode";
 import type { ToolInvocation } from "ai";
 import {
   Check,
@@ -17,6 +18,7 @@ import {
   Pause,
   X,
 } from "lucide-react";
+import { useSettingsStore } from "../../features/settings/store";
 
 interface StatusIconProps {
   tool: ToolInvocation;
@@ -26,6 +28,7 @@ interface StatusIconProps {
 
 export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
   const [isDevMode] = useIsDevMode();
+  const { enableCheckpoint } = useSettingsStore();
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
   let error: string | undefined;
   if (
@@ -35,6 +38,29 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
     typeof tool.result.error === "string"
   ) {
     error = tool.result.error;
+  }
+
+  const tooltipContent = [];
+
+  let commitHash: string | undefined;
+  if (
+    tool.state === "result" &&
+    typeof tool.result === "object" &&
+    "_meta" in tool.result
+  ) {
+    commitHash = tool.result._meta?.checkpoint?.after;
+  }
+
+  if (enableCheckpoint && commitHash) {
+    const restoreCheckpoint = (
+      <span
+        onClick={() => vscodeHost.restoreCheckpoint(commitHash)}
+        className="my-1 flex cursor-pointer items-center rounded px-2 py-1 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+      >
+        Restore Checkpoint
+      </span>
+    );
+    tooltipContent.push(restoreCheckpoint);
   }
 
   const devButton = (
@@ -50,8 +76,6 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
       <span className="ml-2 text-sm">Copy Tool Result</span>
     </span>
   );
-
-  const tooltipContent = [];
 
   if (isDevMode) {
     tooltipContent.push(devButton);
