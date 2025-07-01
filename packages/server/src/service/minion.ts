@@ -78,6 +78,7 @@ class MinionService {
 
     const url = new URL(`https://${sandboxHost}`);
 
+    url.searchParams.append("folder", sandbox.projectDir);
     if (uid) {
       url.searchParams.append(
         "callback",
@@ -88,8 +89,6 @@ class MinionService {
           }),
         ),
       );
-    } else {
-      url.searchParams.append("folder", sandbox.projectDir);
     }
 
     // Update the minion with the sandbox ID
