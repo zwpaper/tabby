@@ -8,7 +8,7 @@ import {
   threadSignal,
 } from "@quilted/threads/signals";
 import type { TaskRunnerState } from "@ragdoll/runner";
-import { type ClientToolsType, ToolsByPermission } from "@ragdoll/tools";
+import type { ClientToolsType } from "@ragdoll/tools";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import Emittery from "emittery";
@@ -143,7 +143,6 @@ export class ManagedToolCallLifeCycle
   constructor(
     readonly toolName: string,
     readonly toolCallId: string,
-    private enableCheckpoint: boolean,
   ) {
     super();
   }
@@ -229,8 +228,6 @@ export class ManagedToolCallLifeCycle
   }
 
   async execute(args: unknown, options: { model?: string }) {
-    const commitHash = await this.saveCheckpoint();
-
     const abortController = new AbortController();
     const abortSignal = ThreadAbortSignal.serialize(abortController.signal);
     let executePromise: Promise<unknown>;
@@ -253,9 +250,6 @@ export class ManagedToolCallLifeCycle
         error: `Failed to execute tool: ${err.message}`,
       }))
       .then((result) => {
-        if (commitHash && typeof result === "object" && result !== null) {
-          addCheckpointToOutput(result, "before", commitHash);
-        }
         this.onExecuteDone(result);
       });
 
@@ -303,18 +297,6 @@ export class ManagedToolCallLifeCycle
     });
   }
 
-  async saveCheckpoint() {
-    if (!this.enableCheckpoint) {
-      return;
-    }
-    if (
-      ToolsByPermission.write.includes(this.toolName) ||
-      this.toolName === "executeCommand"
-    ) {
-      return await vscodeHost.saveCheckpoint(this.toolCallId);
-    }
-  }
-
   private onExecuteDone(result: ExecuteReturnType) {
     const execute = this.checkState("onExecuteDone", "execute");
     if (
@@ -332,17 +314,12 @@ export class ManagedToolCallLifeCycle
     ) {
       this.onExecuteNewTask(result as NewTaskReturnType);
     } else {
-      this.saveCheckpoint().then((commitHash) => {
-        if (commitHash && typeof result === "object" && result !== null) {
-          addCheckpointToOutput(result, "after", commitHash);
-        }
-        this.transitTo("execute", {
-          type: "complete",
-          result,
-          reason: execute.abortController.signal.aborted
-            ? "user-abort"
-            : "execute-finish",
-        });
+      this.transitTo("execute", {
+        type: "complete",
+        result,
+        reason: execute.abortController.signal.aborted
+          ? "user-abort"
+          : "execute-finish",
       });
     }
   }
@@ -379,20 +356,14 @@ export class ManagedToolCallLifeCycle
         if (output.error) {
           result.error = output.error;
         }
-        this.saveCheckpoint().then((commitHash) => {
-          if (commitHash && typeof result === "object" && result !== null) {
-            addCheckpointToOutput(result, "after", commitHash);
-          }
-
-          this.transitTo("execute:streaming", {
-            type: "complete",
-            result,
-            reason: isUserDetached
-              ? "user-detach"
-              : abortController.signal.aborted
-                ? "user-abort"
-                : "execute-finish",
-          });
+        this.transitTo("execute:streaming", {
+          type: "complete",
+          result,
+          reason: isUserDetached
+            ? "user-detach"
+            : abortController.signal.aborted
+              ? "user-abort"
+              : "execute-finish",
         });
         unsubscribe();
       } else {
@@ -480,25 +451,4 @@ export class ManagedToolCallLifeCycle
 
     this.emit(this.state.type, this.state);
   }
-}
-
-interface OutputWithCheckpoint {
-  _meta?: {
-    checkpoint?: {
-      before?: string;
-      after?: string;
-    };
-  };
-}
-
-function addCheckpointToOutput(
-  output: OutputWithCheckpoint,
-  type: "before" | "after",
-  commitHash: string,
-) {
-  if (!output._meta) {
-    output._meta = {};
-  }
-  output._meta.checkpoint = output._meta.checkpoint || {};
-  output._meta.checkpoint[type] = commitHash;
 }

@@ -6,6 +6,7 @@ export {
   toUIMessages,
   type DataPart,
   type DBMessage,
+  type ExtendedStepStartPart,
 } from "./message";
 
 export { formatters } from "./formatters";

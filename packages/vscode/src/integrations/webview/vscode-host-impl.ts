@@ -413,6 +413,10 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     await this.checkpointService.restoreCheckpoint(commitHash);
   };
 
+  readCheckpointPath = async (): Promise<string | undefined> => {
+    return this.checkpointService.getShadowGitPath();
+  };
+
   readExtensionVersion = async () => {
     return this.context.extension.packageJSON.version;
   };

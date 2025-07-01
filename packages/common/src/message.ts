@@ -1,10 +1,44 @@
 import type { DataStreamWriter, LanguageModelUsage, UIMessage } from "ai";
 
+export type ExtendedStepStartPart = {
+  type: "step-start";
+  checkpoint?: {
+    commit: string; // The commit hash or identifier for the checkpoint
+  };
+};
+
+export type ExtendedUIMessage = UIMessage & {
+  parts: Array<UIMessage["parts"][number] | ExtendedStepStartPart>;
+};
+
+/**
+ * Check if a message is a ExtendedUIMessage which contains step-start parts with checkpoints.
+ * @param message - The message to check.
+ * @returns True if the message is an ExtendedUIMessage, false otherwise.
+ */
+export const isExtendedUIMessage = (
+  message: UIMessage,
+): message is ExtendedUIMessage => {
+  return (
+    "parts" in message &&
+    Array.isArray(message.parts) &&
+    message.parts.some(
+      (part) =>
+        part.type === "step-start" &&
+        "checkpoint" in part &&
+        typeof part.checkpoint === "object" &&
+        part.checkpoint !== null &&
+        "commit" in part.checkpoint &&
+        typeof part.checkpoint.commit === "string",
+    )
+  );
+};
+
 export type DBMessage = {
   id: string;
   createdAt: string;
   role: UIMessage["role"];
-  parts: Array<Exclude<UIMessage["parts"][number], { type: "source" }>>;
+  parts: Array<Exclude<ExtendedUIMessage["parts"][number], { type: "source" }>>;
   experimental_attachments?: UIMessage["experimental_attachments"];
 };
 

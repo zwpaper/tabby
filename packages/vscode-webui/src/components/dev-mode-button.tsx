@@ -95,6 +95,15 @@ export function DevModeButton({
     navigate({ to: "/runner", replace: true, search: { uid } });
   }, [uid, navigate, selectedModel]);
 
+  const getCheckpintCommand = useCallback(async () => {
+    const checkpointPath = await vscodeHost.readCheckpointPath();
+    if (!checkpointPath) {
+      return "No checkpoint available";
+    }
+    const workspaceFolder = await vscodeHost.readCurrentWorkspace();
+    return `alias pgit="git --git-dir=\\"${checkpointPath}\\" --work-tree=\\"${workspaceFolder}\\""`;
+  }, []);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -124,6 +133,10 @@ export function DevModeButton({
           <CopyMenuItem
             fetchContent={getEnvironmentContent}
             text="Copy Environment"
+          />
+          <CopyMenuItem
+            fetchContent={getCheckpintCommand}
+            text="Copy Checkpoint Command"
           />
           <CopyMenuItem fetchContent={getTodosContent} text="Copy TODOs" />
           {uid && (

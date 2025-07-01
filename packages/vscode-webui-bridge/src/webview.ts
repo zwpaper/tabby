@@ -178,6 +178,8 @@ export interface VSCodeHostApi {
    */
   restoreCheckpoint(commitHash?: string): Promise<void>;
 
+  readCheckpointPath(): Promise<string | undefined>;
+
   readExtensionVersion(): Promise<string>;
 }
 

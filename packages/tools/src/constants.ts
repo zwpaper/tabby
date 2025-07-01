@@ -7,16 +7,6 @@ export const EditFileResultPrompt =
 - newProblems: If any new problems are found after the edit, this field will contain information about them.
 `.trim();
 
-export const CheckpointSchema = z
-  .object({
-    before: z.string().describe("The commit hash before executing tool call."),
-    after: z.string().describe("The commit hash after executing tool call."),
-  })
-  .optional()
-  .describe(
-    "Metadata about the checkpoint created before and after executing tool call. This is used to restore the file to its previous state if needed.",
-  );
-
 export const EditFileOutputSchema = z.object({
   success: z
     .boolean()
@@ -52,7 +42,6 @@ export const EditFileOutputSchema = z.object({
         })
         .optional()
         .describe("A summary of the edits made to the file."),
-      checkpoint: CheckpointSchema,
     })
     .optional()
     .describe(

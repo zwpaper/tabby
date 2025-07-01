@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { StepStartPartUI } from "../step-start-part";
 import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
 
@@ -115,7 +116,7 @@ function Part({
   }
 
   if (part.type === "step-start") {
-    return null;
+    return <StepStartPartUI part={part} />;
   }
 
   if (part.type === "tool-invocation") {

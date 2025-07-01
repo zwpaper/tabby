@@ -44,6 +44,7 @@ import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
 import { useNewTaskHandler } from "./hooks/use-new-task-handler";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
+import { useSaveCheckpoint } from "./hooks/use-save-checkpoint";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useTokenUsageUpdater } from "./hooks/use-token-usage-updater";
 import { useHandleChatEvents } from "./lib/chat-events";
@@ -338,6 +339,8 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
 
+  const saveCheckpoint = useSaveCheckpoint(messages, setMessages, uid);
+
   return (
     <div className="flex h-screen flex-col">
       {showPreview && <PreviewTool messages={renderMessages} />}
@@ -361,6 +364,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
               pendingApproval={pendingApproval}
               retry={retry}
               allowAddToolResult={allowAddToolResult}
+              saveCheckpoint={saveCheckpoint}
             />
             {todos && todos.length > 0 && (
               <LegacyTodoList

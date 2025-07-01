@@ -97,7 +97,7 @@ export class CheckpointService implements vscode.Disposable {
     await this.shadowGit.reset(commitHash);
   };
 
-  private async getShadowGitPath() {
+  async getShadowGitPath() {
     if (!this.context.storageUri) {
       throw new Error("Extension storage URI is not available");
     }
