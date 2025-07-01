@@ -43,10 +43,11 @@ export class FlyioSandboxProvider implements SandboxProvider {
       ...envs,
     };
 
-    // Create Fly app
+    // Create Fly app with custom private network
     await this.client.createApp({
       app_name: id,
       org_slug: this.orgSlug,
+      network: `${id}-network`,
     });
 
     // Create machine in the app
