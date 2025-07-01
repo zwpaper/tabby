@@ -87,6 +87,12 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     }
   }, [setShowAbort, lifecycle.status]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies(autoApproveGuard): autoApproveGuard is a ref, so it won't change
+  const abort = useCallback(() => {
+    autoApproveGuard.current = false;
+    lifecycle.abort();
+  }, [lifecycle]);
+
   const showAccept = !isAutoApproved && lifecycle.status === "ready";
   if (showAccept) {
     return (
@@ -100,12 +106,6 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
       </>
     );
   }
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies(autoApproveGuard): autoApproveGuard is a ref, so it won't change
-  const abort = useCallback(() => {
-    autoApproveGuard.current = false;
-    lifecycle.abort();
-  }, [lifecycle]);
 
   if (showAbort && abortText && lifecycle.status.startsWith("execute")) {
     /*
