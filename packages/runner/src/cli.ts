@@ -36,7 +36,7 @@ program
     "Pochi session token",
     process.env.POCHI_SESSION_TOKEN,
   )
-  .requiredOption(
+  .option(
     "--max-steps <number>",
     "Force stop the runner after max steps reached",
   )
@@ -101,7 +101,10 @@ program
     supervisor.start();
   });
 
-function parseIntOrUndefined(str: string): number | undefined {
+function parseIntOrUndefined(str: string | undefined): number | undefined {
+  if (!str) {
+    return undefined;
+  }
   const result = Number.parseInt(str, 10);
   return Number.isNaN(result) ? undefined : result;
 }
