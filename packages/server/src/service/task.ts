@@ -712,19 +712,22 @@ class TaskService {
         },
       ],
     };
+
     const task = await this.get(uid, userId);
     if (!task || task.status !== "pending-input") {
       throw new HTTPException(400, {
         message: "Task is not in pending-input state",
       });
     }
+
     const messagesToSave = [
       ...(task.conversation?.messages || []),
       userMessage,
     ];
 
-    await db
+    const result = await db
       .updateTable("task")
+      .leftJoin("taskLock", "task.id", "taskLock.taskId")
       .set({
         status: "pending-model",
         conversation: {
@@ -732,10 +735,17 @@ class TaskService {
         },
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
-      .where("id", "=", uidCoder.decode(uid))
-      .where("userId", "=", userId)
-      .where("status", "=", "pending-input")
-      .executeTakeFirstOrThrow();
+      .where("task.id", "=", uidCoder.decode(uid))
+      .where("task.userId", "=", userId)
+      .where("task.status", "=", "pending-input")
+      .where("taskLock.id", "is", null)
+      .execute();
+
+    if (result.length === 0 || result[0].numUpdatedRows === 0n) {
+      throw new HTTPException(423, {
+        message: "Task is locked by another session",
+      });
+    }
   }
 
   async lock(uid: string, userId: string, lockId: string) {
