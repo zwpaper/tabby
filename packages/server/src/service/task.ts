@@ -466,20 +466,15 @@ class TaskService {
     };
   }
 
-  async getPublic(uid: string, userId?: string) {
-    const taskQuery = db
+  async getPublic(
+    uid: string,
+    userId: string | undefined,
+    isInternalUser: boolean,
+  ) {
+    let taskQuery = db
       .selectFrom("task")
       .innerJoin("user", "task.userId", "user.id")
       .where("task.id", "=", uidCoder.decode(uid))
-      .where((eb) => {
-        if (userId !== undefined) {
-          return eb.or([
-            eb("task.isPublicShared", "=", true),
-            eb("task.userId", "=", userId),
-          ]);
-        }
-        return eb("task.isPublicShared", "=", true);
-      })
       .select([
         "task.createdAt",
         "task.updatedAt",
@@ -493,6 +488,17 @@ class TaskService {
         sql<Todo[] | null>`task.environment->'todos'`.as("todos"),
       ]);
 
+    if (!isInternalUser) {
+      taskQuery = taskQuery.where((eb) => {
+        if (userId !== undefined) {
+          return eb.or([
+            eb("task.isPublicShared", "=", true),
+            eb("task.userId", "=", userId),
+          ]);
+        }
+        return eb("task.isPublicShared", "=", true);
+      });
+    }
     const task = await taskQuery.executeTakeFirst();
 
     if (!task) {

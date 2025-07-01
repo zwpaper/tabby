@@ -223,7 +223,8 @@ const tasks = new Hono()
       const { uid } = c.req.valid("param");
       const user = c.get("user");
 
-      const task = await taskService.getPublic(uid, user?.id);
+      const isInternalUser = user?.email?.endsWith("@tabbyml.com");
+      const task = await taskService.getPublic(uid, user?.id, !!isInternalUser);
 
       if (!task) {
         throw new HTTPException(404, { message: "Task not found" });
