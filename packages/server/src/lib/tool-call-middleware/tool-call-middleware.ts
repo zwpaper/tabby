@@ -84,12 +84,6 @@ For each api request respone, you are only allowed to return the arguments in JS
   ]
 }
 </api-request>
-
-====
-
-MESSAGE FORMAT
-
-You must use API request tags to at end of your response. Specifically, you must use the attemptCompletion tool to present the result of the task to the user. NEVER end your response with plain text without wrapping it in an api-request tag.
 `;
 
 // Extract tool call processing logic for wrapGenerate
