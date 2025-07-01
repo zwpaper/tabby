@@ -6,7 +6,8 @@ import { getLogger } from "@ragdoll/common";
 import * as commander from "commander";
 import packageJson from "../package.json";
 import { findRipgrep } from "./lib/find-ripgrep";
-import { TaskRunner, type TaskRunnerState } from "./task-runner";
+import { TaskRunner } from "./task-runner";
+import { TaskRunnerSupervisor } from "./task-runner-supervisor";
 
 const program = new Command();
 program
@@ -16,12 +17,14 @@ program
 
 const logger = getLogger("Pochi");
 
-const sigtermError = new Error("SIGTERM received.");
-
 program
   .argument("[prompt]", "Creating a new task with the given prompt")
   .option("--url <url>", "Pochi server url", "https://app.getpochi.com")
   .option("--task <uid>", "Task uid to execute", process.env.POCHI_TASK_ID)
+  .option(
+    "--daemon",
+    "Run in daemon mode with supervisor that monitors and restarts runners",
+  )
   .requiredOption("--cwd <cwd>", "Current working directory", process.cwd())
   .requiredOption(
     "--rg <path>",
@@ -85,77 +88,18 @@ program
       maxSteps,
     });
 
-    runner.state.subscribe((runnerState) => {
-      trackRunnerState(runnerState);
-    });
+    const supervisor = new TaskRunnerSupervisor(runner, options.daemon);
 
-    // Handle graceful shutdown
-    const handleShutdown = (signal: "SIGTERM") => {
-      logger.info(`Received ${signal}, shutting down gracefully...`);
-      runner.stop(sigtermError);
+    const handleShutdown = (signal: "SIGTERM" | "SIGINT") => {
+      logger.info(`Received ${signal}, shutting down supervisor gracefully...`);
+      supervisor.stop(signal);
     };
 
     process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+    process.on("SIGINT", () => handleShutdown("SIGINT"));
 
-    // Start runner
-    runner.start();
+    supervisor.start();
   });
-
-function trackRunnerState(runnerState: TaskRunnerState) {
-  const output = logger;
-  if (runnerState.state === "running") {
-    const progress = runnerState.progress;
-    switch (progress.type) {
-      case "loading-task":
-        if (progress.phase === "begin") {
-          output.debug(`[Step ${progress.step}] Loading task...`);
-        } else if (progress.phase === "end") {
-          output.debug(`[Step ${progress.step}] Task loaded successfully.`);
-        }
-        break;
-      case "executing-tool-call":
-        if (progress.phase === "begin") {
-          output.info(
-            `[Step ${progress.step}] Executing tool: ${progress.toolName}`,
-          );
-        } else if (progress.phase === "end") {
-          const error =
-            typeof progress.toolResult === "object" &&
-            progress.toolResult !== null &&
-            "error" in progress.toolResult &&
-            progress.toolResult.error
-              ? progress.toolResult.error
-              : undefined;
-          if (error) {
-            output.error(
-              `[Step ${progress.step}] Tool ${progress.toolName} ✗ (${error})`,
-            );
-          } else {
-            output.info(`[Step ${progress.step}] Tool ${progress.toolName} ✓`);
-          }
-        }
-        break;
-      case "sending-message":
-        if (progress.phase === "begin") {
-          output.debug(`[Step ${progress.step}] Sending message...`);
-        } else if (progress.phase === "end") {
-          output.debug(`[Step ${progress.step}] Message sent successfully.`);
-        }
-        break;
-    }
-  } else if (runnerState.state === "stopped") {
-    output.info("Task runner stopped with result: ", runnerState.result);
-    process.exit(0); // exit with code 0 to indicate success
-  } else if (runnerState.state === "error") {
-    if (runnerState.error === sigtermError) {
-      output.info(`Task runner exited: ${sigtermError.message}`);
-      process.exit(143);
-    } else {
-      output.error("Task runner failed with error: ", runnerState.error);
-      throw runnerState.error; // rethrow the error to exit the process with a non-zero code
-    }
-  }
-}
 
 function parseIntOrUndefined(str: string): number | undefined {
   const result = Number.parseInt(str, 10);
