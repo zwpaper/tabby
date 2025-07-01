@@ -166,8 +166,8 @@ class SlackRichTextRenderer {
     return blocks;
   }
 
-  renderWaitlistApprovalRequired(): AnyBlock[] {
-    return [
+  renderWaitlistApprovalRequired(userEmail?: string): AnyBlock[] {
+    const blocks: AnyBlock[] = [
       {
         type: "header",
         text: {
@@ -196,27 +196,41 @@ class SlackRichTextRenderer {
           text: "⚡ *Quick start:* Sign up takes less than 2 minutes, then come back and try that command again!",
         },
       },
-      {
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "🚀 Get Started Now",
-              emoji: true,
-            },
-            style: "primary",
-            url: "https://app.getpochi.com",
-            action_id: "get_started_button",
-          },
-        ],
-      },
     ];
+
+    // Add email information if provided
+    if (userEmail) {
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `📧 Use \`${userEmail}\` to sign up and get started.`,
+        },
+      });
+    }
+
+    blocks.push({
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "🚀 Get Started Now",
+            emoji: true,
+          },
+          style: "primary",
+          url: "https://app.getpochi.com",
+          action_id: "get_started_button",
+        },
+      ],
+    });
+
+    return blocks;
   }
 
-  renderGitHubConnectionRequired(): AnyBlock[] {
-    return [
+  renderGitHubConnectionRequired(userEmail?: string): AnyBlock[] {
+    const blocks: AnyBlock[] = [
       {
         type: "header",
         text: {
@@ -245,27 +259,41 @@ class SlackRichTextRenderer {
           text: "⚡ *Takes 30 seconds:* Connect GitHub, then come back and try your command again!",
         },
       },
-      {
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "🔗 Connect GitHub",
-              emoji: true,
-            },
-            style: "primary",
-            url: "https://app.getpochi.com/integrations",
-            action_id: "connect_github_button",
-          },
-        ],
-      },
     ];
+
+    // Add email information naturally if provided
+    if (userEmail) {
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `💡 *Having trouble connecting?* You're currently signed in with \`${userEmail}\`. Make sure this email matches the one you use in GitHub, as email mismatches are a common cause of connection issues.`,
+        },
+      });
+    }
+
+    blocks.push({
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "🔗 Connect GitHub",
+            emoji: true,
+          },
+          style: "primary",
+          url: "https://app.getpochi.com/integrations",
+          action_id: "connect_github_button",
+        },
+      ],
+    });
+
+    return blocks;
   }
 
-  renderWaitlistPendingApproval(): AnyBlock[] {
-    return [
+  renderWaitlistPendingApproval(userEmail?: string): AnyBlock[] {
+    const blocks: AnyBlock[] = [
       {
         type: "header",
         text: {
@@ -287,7 +315,20 @@ class SlackRichTextRenderer {
           text: "I can see you're eager to start coding with AI assistance – that's awesome! 🚀\n\n*What happens next:*\n• Our team will review your application shortly\n• You'll get notified once approved\n• Then you can use all Pochi features including this command!\n• Average approval time: 24-48 hours",
         },
       },
+    ];
 
+    // Add email information if provided
+    if (userEmail) {
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `📧 Your account \`${userEmail}\` is in the queue for approval.`,
+        },
+      });
+    }
+
+    blocks.push(
       {
         type: "section",
         text: {
@@ -304,7 +345,9 @@ class SlackRichTextRenderer {
           },
         ],
       },
-    ];
+    );
+
+    return blocks;
   }
 
   private renderHeaderBlock(

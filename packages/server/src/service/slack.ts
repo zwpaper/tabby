@@ -196,7 +196,8 @@ class SlackService {
 
       if (!targetUser) {
         await respond({
-          blocks: slackRichTextRenderer.renderWaitlistApprovalRequired(),
+          blocks:
+            slackRichTextRenderer.renderWaitlistApprovalRequired(userEmail),
           response_type: "ephemeral",
         });
         return;
@@ -204,7 +205,8 @@ class SlackService {
 
       if (!targetUser.isWaitlistApproved) {
         await respond({
-          blocks: slackRichTextRenderer.renderWaitlistPendingApproval(),
+          blocks:
+            slackRichTextRenderer.renderWaitlistPendingApproval(userEmail),
           response_type: "ephemeral",
         });
         return;
@@ -215,7 +217,8 @@ class SlackService {
       );
       if (!hasGithubConnection) {
         await respond({
-          blocks: slackRichTextRenderer.renderGitHubConnectionRequired(),
+          blocks:
+            slackRichTextRenderer.renderGitHubConnectionRequired(userEmail),
           response_type: "ephemeral",
         });
         return;
