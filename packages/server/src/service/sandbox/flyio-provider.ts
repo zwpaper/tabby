@@ -17,7 +17,6 @@ const FlyImage =
   process.env.FLY_SANDBOX_IMAGE || "ghcr.io/tabbyml/pochi-minion:latest";
 const FlyRegion = process.env.FLY_REGION || "lax";
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
-const RunPochiDomain = process.env.RUN_POCHI_DOMAIN || "runpochi.com";
 
 export class FlyioSandboxProvider implements SandboxProvider {
   private client: FlyioClient;
@@ -38,26 +37,20 @@ export class FlyioSandboxProvider implements SandboxProvider {
   }
 
   async create(options: CreateSandboxOptions): Promise<SandboxInfo> {
-    const { uid, envs = {} } = options;
-
-    // Create a unique app name for this sandbox
-    const uuid = crypto.randomUUID();
-    const appName = `pochi-${uuid.slice(0, 18)}`;
+    const { id, envs = {} } = options;
 
     const sandboxEnvs: Record<string, string> = {
       ...envs,
-
-      POCHI_SANDBOX_HOST: `${appName}.${RunPochiDomain}`,
     };
 
     // Create Fly app
     await this.client.createApp({
-      app_name: appName,
+      app_name: id,
       org_slug: this.orgSlug,
     });
 
     // Create machine in the app
-    const machine = await this.client.createMachine(appName, {
+    const machine = await this.client.createMachine(id, {
       config: {
         image: this.image,
         env: sandboxEnvs,
@@ -90,24 +83,21 @@ export class FlyioSandboxProvider implements SandboxProvider {
       },
     });
 
-    await this.client.allocateIp({ appId: appName });
-
-    const url = this.getUrl(appName, uid);
+    await this.client.allocateIp({ appId: id });
 
     return {
-      id: appName,
-      url,
+      id,
+      projectDir: `${SandboxPath.project}`,
       isRunning: machine.state === "started",
     };
   }
 
   async connect(sandboxId: string): Promise<SandboxInfo> {
-    const url = this.getUrl(sandboxId);
     const isRunning = await this.isRunning(sandboxId);
 
     return {
       id: sandboxId,
-      url,
+      projectDir: `${SandboxPath.project}`,
       isRunning,
     };
   }
@@ -168,27 +158,6 @@ export class FlyioSandboxProvider implements SandboxProvider {
       // If files don't exist or can't be read, return empty logs
       return { initLog: "", runnerLog: "" };
     }
-  }
-
-  getUrl(sandboxId: string, uid?: string): string {
-    // Fly.io get URLs like: https://{app-name}.fly.dev
-    const url = new URL(`https://${sandboxId}.fly.dev`);
-
-    if (uid) {
-      url.searchParams.append(
-        "callback",
-        encodeURIComponent(
-          JSON.stringify({
-            authority: "tabbyml.pochi",
-            query: `task=${uid}`,
-          }),
-        ),
-      );
-    } else {
-      url.searchParams.append("folder", SandboxPath.project);
-    }
-
-    return url.toString();
   }
 
   async list(): Promise<{ sandboxId: string }[]> {

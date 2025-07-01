@@ -36,7 +36,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task" | "minion"> & {
     taskId: ColumnType<never, number, never>;
   };
 
-  minion: Omit<DbImpl["minion"], "e2bSandboxId" | "url">;
+  minion: Omit<DbImpl["minion"], "e2bSandboxId">;
 };
 
 export type { DBMessage, TaskError, TaskCreateEvent, TaskEvent } from "./types";

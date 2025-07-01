@@ -1,6 +1,6 @@
 export interface SandboxInfo {
   id: string;
-  url: string;
+  projectDir: string;
   isRunning: boolean;
 }
 
@@ -10,6 +10,7 @@ export interface SandboxLogs {
 }
 
 export interface CreateSandboxOptions {
+  id: string;
   uid: string;
   envs: Record<string, string>;
 }
@@ -56,11 +57,6 @@ export interface SandboxProvider {
    * Get sandbox logs
    */
   getLogs(sandboxId: string): Promise<SandboxLogs | null>;
-
-  /**
-   * Get sandbox URL for access
-   */
-  getUrl(sandboxId: string, uid?: string): string;
 
   /**
    * List all sandboxes (for cleanup/management)

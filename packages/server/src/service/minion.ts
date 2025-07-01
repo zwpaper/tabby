@@ -5,6 +5,7 @@ import { signalKeepAliveSandbox } from "./background-job";
 import { type CreateSandboxOptions, sandboxService } from "./sandbox";
 
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
+const MinionDomain = process.env.POCHI_MINION_DOMAIN || "runpochi.com";
 
 interface CreateMinionOptions {
   user: { id: string; name: string; email: string };
@@ -46,10 +47,15 @@ class MinionService {
 
     const minionId = minionIdCoder.encode(res.id);
 
+    const uuid = crypto.randomUUID();
+    const sandboxId = `pochi-${uuid.slice(0, 18)}`;
+    const sandboxHost = `${sandboxId}.${MinionDomain}`;
+
     const envs: Record<string, string> = {
       POCHI_SESSION_TOKEN: apiKey.key,
       POCHI_TASK_ID: uid,
       POCHI_MINION_ID: minionId,
+      POCHI_SANDBOX_HOST: `${sandboxHost}`,
 
       GIT_AUTHOR_NAME: user.name || "Pochi",
       GIT_AUTHOR_EMAIL: user.email || "noreply@getpochi.com",
@@ -64,10 +70,27 @@ class MinionService {
     };
 
     const opts: CreateSandboxOptions = {
+      id: sandboxId,
       uid,
       envs,
     };
     const sandbox = await sandboxService.create(opts);
+
+    const url = new URL(`https://${sandboxHost}`);
+
+    if (uid) {
+      url.searchParams.append(
+        "callback",
+        encodeURIComponent(
+          JSON.stringify({
+            authority: "tabbyml.pochi",
+            query: `task=${uid}`,
+          }),
+        ),
+      );
+    } else {
+      url.searchParams.append("folder", sandbox.projectDir);
+    }
 
     // Update the minion with the sandbox ID
     await db
@@ -75,6 +98,7 @@ class MinionService {
       .where("id", "=", res.id)
       .set({
         sandboxId: sandbox.id,
+        url: url.toString(),
       })
       .execute();
 
@@ -189,10 +213,15 @@ class MinionService {
 
     signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
 
-    const url = sandboxService.getUrl(sandbox.id);
-    await verifyMinionUrl(url);
+    if (!minion.url) {
+      throw new HTTPException(404, {
+        message: "Minion URL is not available",
+      });
+    }
 
-    return url;
+    await verifyMinionUrl(minion.url);
+
+    return minion.url;
   }
 }
 
