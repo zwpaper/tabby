@@ -222,6 +222,33 @@ class MinionService {
 
     return minion.url;
   }
+
+  async resumeMinion(userId: string, minionId: string) {
+    const { minion, sandbox } = await this.getSandbox(userId, minionId);
+
+    if (!minion.sandboxId) {
+      throw new HTTPException(404, {
+        message: "Sandbox has not been created or is not available",
+      });
+    }
+
+    // Resume the sandbox if it's not running
+    if (!sandbox.isRunning) {
+      try {
+        await sandboxService.resume(sandbox.id);
+      } catch (err) {
+        if (err instanceof Error && err.name === "NotFoundError") {
+          throw new HTTPException(404, {
+            message: "Minion not found or expired",
+          });
+        }
+      }
+    }
+    signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
+    return {
+      success: true,
+    };
+  }
 }
 
 async function verifyMinionUrl(url: string) {

@@ -756,6 +756,11 @@ class TaskService {
         message: "Task is locked by another session",
       });
     }
+
+    // if task is slack event we need resume the minion
+    if (task.event?.type === "slack:new-task" && task.minionId) {
+      minionService.resumeMinion(userId, task.minionId);
+    }
   }
 
   async lock(uid: string, userId: string, lockId: string) {
