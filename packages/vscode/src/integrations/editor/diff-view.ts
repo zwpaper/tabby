@@ -236,6 +236,8 @@ export class DiffView implements vscode.Disposable {
       preview: false,
       preserveFocus: false,
     });
+
+    needFocusDiffViews = true;
     await closeAllNonDirtyDiffViews();
 
     await this.waitForDiagnostic();
@@ -277,11 +279,6 @@ export class DiffView implements vscode.Disposable {
         normalizedPostSaveContent,
       );
     }
-
-    setTimeout(() => {
-      // Focus remaining diff views after a short delay to ensure the editor is ready
-      focusDiffViews();
-    }, 200);
 
     return {
       userEdits,
@@ -473,6 +470,8 @@ async function closeAllNonDirtyDiffViews() {
   }
 }
 
+let needFocusDiffViews = false;
+
 async function focusDiffViews() {
   for (const diffView of DiffViewMap.values()) {
     await diffView.focus();
@@ -530,6 +529,12 @@ function handleTabChanges(e: vscode.TabChangeEvent) {
     logger.debug("Disposing diff view hook");
     DiffViewDisposable.dispose();
     DiffViewDisposable = undefined;
+  }
+
+  if (needFocusDiffViews) {
+    logger.debug("Focusing remaining diff views");
+    needFocusDiffViews = false;
+    focusDiffViews();
   }
 }
 
