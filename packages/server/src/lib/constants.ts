@@ -2,17 +2,7 @@
 
 import { anthropic } from "@ai-sdk/anthropic";
 import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
-import {
-  type LanguageModelV1,
-  type LanguageModelV1Middleware,
-  wrapLanguageModel,
-} from "ai";
-import { createBatchCallMiddleware } from "./batch-call-middleware";
-import {
-  type NewTaskMiddlewareContext,
-  createNewTaskMiddleware,
-} from "./new-task-middleware";
-import { createToolMiddleware } from "./tool-call-middleware";
+import type { LanguageModelV1 } from "ai";
 
 // Define available models
 export type AvailableModelId =
@@ -89,36 +79,7 @@ export const StripePlans = [
   },
 ];
 
-export interface MiddlewareContext {
-  newTask?: NewTaskMiddlewareContext;
-}
-
-export function getModel(
-  modelId: AvailableModelId,
-  middlewareContext: MiddlewareContext = {},
-  enableGeminiCustomToolCalls = true,
-): LanguageModelV1 {
-  const model = getModelById(modelId);
-
-  // Create middlewares
-  const middleware: LanguageModelV1Middleware[] = [];
-
-  middleware.push(createBatchCallMiddleware());
-
-  if (middlewareContext.newTask) {
-    middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
-  }
-
-  if (enableGeminiCustomToolCalls && modelId.includes("google/gemini-2.5")) {
-    middleware.push(createToolMiddleware());
-  }
-  return wrapLanguageModel({
-    model,
-    middleware,
-  });
-}
-
-function getModelById(modelId: AvailableModelId): LanguageModelV1 {
+export function getModelById(modelId: AvailableModelId): LanguageModelV1 {
   switch (modelId) {
     case "anthropic/claude-4-sonnet":
       return anthropic("claude-4-sonnet-20250514");

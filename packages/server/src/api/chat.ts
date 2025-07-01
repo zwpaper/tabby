@@ -14,12 +14,15 @@ import {
   type CoreMessage,
   type DataStreamWriter,
   type LanguageModel,
+  type LanguageModelV1,
+  type LanguageModelV1Middleware,
   NoSuchToolError,
   type UIMessage,
   appendResponseMessages,
   createDataStream,
   generateObject,
   streamText,
+  wrapLanguageModel,
 } from "ai";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -27,12 +30,22 @@ import { stream } from "hono/streaming";
 import { createResumableStreamContext } from "resumable-stream";
 import { z } from "zod";
 import { type User, requireAuth } from "../auth";
+import { createBatchCallMiddleware } from "../lib/batch-call-middleware";
 import {
   checkModel,
   checkUserQuota,
   checkWaitlist,
 } from "../lib/check-request";
-import { getModel, getProviderOptionsById } from "../lib/constants";
+import {
+  type AvailableModelId,
+  getModelById,
+  getProviderOptionsById,
+} from "../lib/constants";
+import {
+  type NewTaskMiddlewareContext,
+  createNewTaskMiddleware,
+} from "../lib/new-task-middleware";
+import { createToolMiddleware } from "../lib/tool-call-middleware";
 import { resolveServerTools } from "../lib/tools";
 import { after, setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
@@ -93,7 +106,8 @@ const chat = new Hono<{ Variables: ContextVariables }>()
     const middlewareContext = {
       newTask: enableNewTask ? { userId: user.id, parentId: uid } : undefined,
     };
-    const selectedModel = getModel(
+
+    const selectedModel = createModel(
       validModelId,
       middlewareContext,
       enableGeminiCustomToolCalls,
@@ -223,7 +237,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
               }
 
               const { object: repairedArgs } = await generateObject({
-                model: google("gemini-2.5-flash-preview-04-17"),
+                model: google("gemini-2.5-flash"),
                 schema: jsonSchema(parameterSchema(toolCall)),
                 prompt: [
                   `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
@@ -344,3 +358,32 @@ async function prepareMessages(
 }
 
 export default chat;
+
+interface MiddlewareContext {
+  newTask?: NewTaskMiddlewareContext;
+}
+
+function createModel(
+  modelId: AvailableModelId,
+  middlewareContext: MiddlewareContext,
+  enableGeminiCustomToolCalls: boolean,
+): LanguageModelV1 {
+  const model = getModelById(modelId);
+
+  // Create middlewares
+  const middleware: LanguageModelV1Middleware[] = [];
+
+  middleware.push(createBatchCallMiddleware());
+
+  if (middlewareContext.newTask) {
+    middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
+  }
+
+  if (enableGeminiCustomToolCalls && modelId.includes("google/gemini-2.5")) {
+    middleware.push(createToolMiddleware());
+  }
+  return wrapLanguageModel({
+    model,
+    middleware,
+  });
+}
