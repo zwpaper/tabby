@@ -107,6 +107,19 @@ export const auth = betterAuth({
         enabled: true,
         plans: StripePlans,
       },
+      onEvent: async (event) => {
+        if (
+          event.type === "customer.subscription.created" ||
+          event.type === "customer.subscription.resumed"
+        ) {
+          await stripeClient.subscriptions.update(event.data.object.id, {
+            billing_thresholds: {
+              amount_gte: 1000, // Set the threshold to $10.00
+              reset_billing_cycle_anchor: false,
+            },
+          });
+        }
+      },
       billingPortal: {
         returnUrl: "/profile",
       },

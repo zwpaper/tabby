@@ -70,7 +70,7 @@ export const StripePlans = [
   },
   {
     name: "Pro",
-    priceId: "price_1Rfat9DZw4FSeDxlqF0jcbGH",
+    priceId: "price_1Rfx2QDZw4FSeDxl2aSzsoB0",
     metered: true,
     limits: {
       basic: 5_000,
