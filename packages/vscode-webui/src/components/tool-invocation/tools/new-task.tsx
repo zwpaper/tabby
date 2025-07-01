@@ -1,10 +1,12 @@
 import { TaskThread } from "@/components/task-thread";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/auth-client";
+import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
@@ -35,6 +37,43 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     enabled: shouldLoadCompletedTask,
   });
 
+  const [expanded, setExpanded] = useState(false);
+  const newTaskContainer = useRef<HTMLDivElement>(null);
+  const { isAtBottom, scrollToBottom } = useIsAtBottom(newTaskContainer);
+  const isAtBottomRef = useRef(isAtBottom);
+
+  useEffect(() => {
+    isAtBottomRef.current = isAtBottom;
+  }, [isAtBottom]);
+
+  // Scroll to bottom when the message list height changes
+  useEffect(() => {
+    if (!expanded) {
+      return;
+    }
+    const container = newTaskContainer.current;
+    if (!container?.children[0]) {
+      return;
+    }
+    const resizeObserver = new ResizeObserver(() => {
+      if (isAtBottomRef.current) {
+        requestAnimationFrame(() => scrollToBottom());
+      }
+    });
+    resizeObserver.observe(container);
+    resizeObserver.observe(container.children[0]);
+    return () => {
+      resizeObserver.disconnect();
+    }; // clean up
+  }, [scrollToBottom, expanded]);
+
+  // Initial scroll to bottom once when component mounts (without smooth behavior)
+  useLayoutEffect(() => {
+    if (newTaskContainer.current) {
+      scrollToBottom(false); // false = not smooth
+    }
+  }, [scrollToBottom]);
+
   const title = (
     <span className={cn("flex items-center gap-2")}>
       <p>
@@ -60,9 +99,15 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   return (
     <ExpandableToolContainer
       title={title}
+      onToggle={(expand: boolean) => {
+        setExpanded(expand);
+      }}
       expandableDetail={
         taskSource ? (
-          <div className="max-h-[300px] overflow-y-auto rounded-lg border">
+          <div
+            className="max-h-[300px] overflow-y-auto rounded-lg border"
+            ref={newTaskContainer}
+          >
             <TaskThread
               user={{ name: "Runner" }} // FIXME(zhiming): remove the display of user name
               taskSource={taskSource}
