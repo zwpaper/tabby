@@ -712,7 +712,6 @@ class TaskService {
         },
       ],
     };
-
     const task = await this.get(uid, userId);
     if (!task || task.status !== "pending-input") {
       throw new HTTPException(400, {
@@ -725,9 +724,10 @@ class TaskService {
       userMessage,
     ];
 
+    // Use a subquery with leftJoin to check for locks atomically
+    const taskId = uidCoder.decode(uid);
     const result = await db
       .updateTable("task")
-      .leftJoin("taskLock", "task.id", "taskLock.taskId")
       .set({
         status: "pending-model",
         conversation: {
@@ -735,13 +735,17 @@ class TaskService {
         },
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
-      .where("task.id", "=", uidCoder.decode(uid))
-      .where("task.userId", "=", userId)
-      .where("task.status", "=", "pending-input")
-      .where("taskLock.id", "is", null)
-      .execute();
+      .where("id", "=", taskId)
+      .where("userId", "=", userId)
+      .where("status", "=", "pending-input")
+      .where(
+        "id",
+        "not in",
+        db.selectFrom("taskLock").select("taskId").where("taskId", "=", taskId),
+      )
+      .executeTakeFirst();
 
-    if (result.length === 0 || result[0].numUpdatedRows === 0n) {
+    if (!result || result.numUpdatedRows === 0n) {
       throw new HTTPException(423, {
         message: "Task is locked by another session",
       });
