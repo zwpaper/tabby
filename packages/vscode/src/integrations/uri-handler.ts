@@ -83,8 +83,6 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       }
 
       const task = await taskResponse.json();
-      const openTask = () =>
-        vscode.commands.executeCommand("pochi.openTask", uid);
       const isNewTask = task?.conversation?.messages.length === 1;
       if (isNewTask) {
         switch (task?.event?.type) {
@@ -93,13 +91,12 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
             break;
           case "website:new-project":
             await this.handleNewProjectTask(task as NewProjectTask);
-            break;
+            return;
           default:
             break;
         }
       }
-
-      await openTask();
+      await vscode.commands.executeCommand("pochi.openTask", uid);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       vscode.window.showErrorMessage(`Task ${uid} failed: ${message}`);
