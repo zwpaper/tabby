@@ -13,7 +13,6 @@ import {
 import {
   type CoreMessage,
   type DataStreamWriter,
-  type LanguageModel,
   type LanguageModelV1,
   type LanguageModelV1Middleware,
   NoSuchToolError,
@@ -56,13 +55,9 @@ const streamContext = createResumableStreamContext({
   waitUntil: after,
 });
 
-export type ContextVariables = {
-  model?: LanguageModel;
-};
-
 const EnableInterleavedThinking = false;
 
-const chat = new Hono<{ Variables: ContextVariables }>()
+const chat = new Hono()
   .use(requireAuth())
   .post("/stream", zValidator("json", ZodChatRequestType), async (c) => {
     setIdleTimeout(c.req.raw, 120);
@@ -138,7 +133,7 @@ const chat = new Hono<{ Variables: ContextVariables }>()
             abortSignal: c.req.raw.signal,
             temperature: 0.2,
             toolCallStreaming: true,
-            model: c.get("model") || selectedModel,
+            model: selectedModel,
             messages: [
               ...(environment?.info
                 ? [
