@@ -65,11 +65,6 @@ export interface RunnerContext {
   pochiEvents: PochiEventSource;
 
   /**
-   * The llm model to use for the task runner.
-   */
-  model?: string;
-
-  /**
    * The current working directory for the task runner.
    * This is used to determine where to read/write files and execute commands.
    * It should be an absolute path.
@@ -81,6 +76,18 @@ export interface RunnerContext {
    * This is used for searching files in the task runner.
    */
   rg: string;
+
+  /**
+   * The llm model to use for the task runner.
+   */
+  model?: string;
+
+  /**
+   * Force stop the runner after max steps reached.
+   * If a task cannot be completed in max steps, it is likely stuck in an infinite loop.
+   */
+  maxSteps?: number;
+
   // Add more context properties here as needed in the future
   // e.g., environment variables, workspace settings, etc.
 }
@@ -159,9 +166,7 @@ const ToolMap: Record<
   executeCommand,
 };
 
-// Force stop after ${MaxSteps} steps.
-// If a task cannot be completed in ${MaxSteps} steps, it is likely stuck in an infinite loop.
-const MaxSteps = 100;
+const DefaultMaxSteps = 24;
 
 const logger = getLogger("TaskRunner");
 
@@ -269,8 +274,9 @@ export class TaskRunner {
    * @throws {Error} - Throws an error if this step is failed.
    */
   private async step(): Promise<boolean> {
-    if (this.stepCount >= MaxSteps) {
-      throw new Error(`TaskRunner reached maximum steps (${MaxSteps}).`);
+    const maxStep = this.context.maxSteps ?? DefaultMaxSteps;
+    if (this.stepCount >= maxStep) {
+      throw new Error(`TaskRunner reached maximum steps (${maxStep}).`);
     }
 
     await this.loadTask();

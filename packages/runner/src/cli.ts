@@ -33,6 +33,10 @@ program
     "Pochi session token",
     process.env.POCHI_SESSION_TOKEN,
   )
+  .requiredOption(
+    "--max-steps <number>",
+    "Force stop the runner after max steps reached",
+  )
   .action(async (prompt, options) => {
     if (!options.task && !prompt) {
       throw new commander.InvalidArgumentError(
@@ -69,6 +73,8 @@ program
 
     const pochiEvents = createPochiEventSource(uid, options.url, options.token);
 
+    const maxSteps = parseIntOrUndefined(options.maxSteps);
+
     // Use existing task ID mode
     const runner = new TaskRunner({
       uid,
@@ -76,6 +82,7 @@ program
       pochiEvents,
       cwd: options.cwd,
       rg: options.rg,
+      maxSteps,
     });
 
     runner.state.subscribe((runnerState) => {
@@ -148,6 +155,11 @@ function trackRunnerState(runnerState: TaskRunnerState) {
       throw runnerState.error; // rethrow the error to exit the process with a non-zero code
     }
   }
+}
+
+function parseIntOrUndefined(str: string): number | undefined {
+  const result = Number.parseInt(str, 10);
+  return Number.isNaN(result) ? undefined : result;
 }
 
 program.parse();
