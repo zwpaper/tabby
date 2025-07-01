@@ -13,7 +13,8 @@ export class PostInstallActions {
     @inject("vscode.ExtensionContext") private context: vscode.ExtensionContext,
   ) {
     this.actions.push(new SetRemoteDefaultExtensionAction(this.context));
-    this.actions.push(new OpenTaskFromEnvAction());
+
+    false && this.actions.push(new OpenTaskFromEnvAction());
 
     this.runActions();
   }
