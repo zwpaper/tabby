@@ -730,9 +730,12 @@ class TaskService {
       ],
     };
     const task = await this.get(uid, userId);
-    if (!task || task.status !== "pending-input") {
+    if (
+      !task ||
+      (task.status !== "pending-input" && task.status !== "completed")
+    ) {
       throw new HTTPException(400, {
-        message: "Task is not in pending-input state",
+        message: "Task is not in pending-input or completed state",
       });
     }
 
@@ -754,7 +757,12 @@ class TaskService {
       })
       .where("id", "=", taskId)
       .where("userId", "=", userId)
-      .where("status", "=", "pending-input")
+      .where((eb) =>
+        eb.or([
+          eb("status", "=", "pending-input"),
+          eb("status", "=", "completed"),
+        ]),
+      )
       .where(
         "id",
         "not in",
