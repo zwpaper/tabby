@@ -266,11 +266,16 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         }),
       );
 
+      const durationMs = Date.now() - toolCallStart;
+      logger.debug(
+        `executeToolCall: ${toolName}(${options.toolCallId}) took ${durationMs}ms => ${result.error ? "error" : "success"}`,
+      );
+
       this.capture({
         event: "executeToolCall",
         properties: {
           toolName,
-          durationMs: Date.now() - toolCallStart,
+          durationMs,
           status: abortSignal.aborted
             ? "aborted"
             : result.error
