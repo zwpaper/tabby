@@ -11,8 +11,7 @@ export const uidCoder = (() => {
 })();
 
 export const minionIdCoder = (() => {
-  const alphabet =
-    "iMypeAm79qGcLfO8jtXTk1d5xPE2bUW0H6awuYoCgzVlhQnBsF3ZRJDvKN4IrS";
+  const alphabet = "vec4mzptidk51qw26h9gj7xfro80yunba3ls";
   const coder = new Sqids({ minLength: 8, alphabet });
   return {
     encode: (id: number) => coder.encode([id]),

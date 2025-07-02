@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
@@ -6,6 +7,8 @@ import { type CreateSandboxOptions, sandboxService } from "./sandbox";
 
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 const MinionDomain = process.env.POCHI_MINION_DOMAIN || "runpochi.com";
+
+const CUSTOM_ALPHABET = "pmykc65zfntd7ah2js90o83igxr1eu4vwlqb";
 
 interface CreateMinionOptions {
   user: { id: string; name: string; email: string };
@@ -46,16 +49,18 @@ class MinionService {
       .executeTakeFirstOrThrow();
 
     const minionId = minionIdCoder.encode(res.id);
+    const sandboxId = this.hashMinionIdToSandboxId(minionId);
 
-    const uuid = crypto.randomUUID();
-    const sandboxId = `pochi-${uuid.slice(0, 18)}`;
-    const sandboxHost = `${sandboxId}.${MinionDomain}`;
+    // we do not want to expose the fly.io app id to public
+    // so we use the minion ID as the sandbox host for port forwarding,
+    // then user can share the port-forwarded URL with others
+    const sandboxHostForPortForward = `${minionId}.${MinionDomain}`;
 
     const envs: Record<string, string> = {
       POCHI_SESSION_TOKEN: apiKey.key,
       POCHI_TASK_ID: uid,
       POCHI_MINION_ID: minionId,
-      POCHI_SANDBOX_HOST: `${sandboxHost}`,
+      POCHI_SANDBOX_HOST: `${sandboxHostForPortForward}`,
 
       GIT_AUTHOR_NAME: user.name || "Pochi",
       GIT_AUTHOR_EMAIL: user.email || "noreply@getpochi.com",
@@ -76,7 +81,7 @@ class MinionService {
     };
     const sandbox = await sandboxService.create(opts);
 
-    const url = new URL(`https://${sandboxHost}`);
+    const url = new URL(`https://${sandboxId}.${MinionDomain}`);
 
     if (uid) {
       url.searchParams.append(
@@ -109,6 +114,25 @@ class MinionService {
 
     signalKeepAliveSandbox({ sandboxId: sandbox.id });
     return { ...res, id: minionIdCoder.encode(res.id) };
+  }
+
+  private hashMinionIdToSandboxId(minionId: string) {
+    // Create a SHA-256 hash of the minion ID
+    // add a prefix as a salt.
+    const hash = createHash("sha256").update(`P0ch1-${minionId}`).digest();
+
+    // Convert hash bytes to a big integer
+    let value = BigInt(`0x${hash.toString("hex")}`);
+    const base = BigInt(CUSTOM_ALPHABET.length);
+    let result = "";
+
+    while (result.length < 32) {
+      const remainder = Number(value % base);
+      result += CUSTOM_ALPHABET[remainder];
+      value = value / base;
+    }
+
+    return `pochi-${result}`;
   }
 
   async signalKeepAliveMinion(userId: string, minionId: string) {
