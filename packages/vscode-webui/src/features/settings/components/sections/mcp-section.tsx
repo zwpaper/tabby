@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { cn } from "@/lib/utils";
 import type { McpConnection } from "@ragdoll/vscode-webui-bridge";
-import { ChevronsUpDown, Dot, Github, RotateCw } from "lucide-react";
+import { ChevronsUpDown, Dot, Github, Plus, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { SubSection } from "../ui/section";
 import { ToolBadge } from "../ui/tool-badge";
@@ -41,7 +41,13 @@ export const McpSection: React.FC = () => {
         <Plus className="size-4" />
         Add
       </a> */}
-      <a href={commandForMcp("openServerSettings")}>MCP Servers</a>
+      <a
+        href={commandForMcp("openServerSettings")}
+        className="flex items-center gap-1"
+      >
+        MCP Servers
+        <Plus className="size-4" />
+      </a>
     </div>
   );
 
