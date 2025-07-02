@@ -3,7 +3,7 @@ import { getLogger } from "./logger";
 const logger = getLogger("diffUtils");
 
 function normalize(content: string): string {
-  return content.replace(/\r\n/g, "\n").replace(/[ \t]+$/gm, "");
+  return content.replace(/\r\n/g, "\n").trimEnd();
 }
 
 export class DiffError extends Error {
