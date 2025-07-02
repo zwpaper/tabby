@@ -1,13 +1,11 @@
 import { vscodeHost } from "@/lib/vscode";
 import type { ExtendedPartMixin } from "@ragdoll/common";
-import { GitCommitVertical, RotateCcw } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Check, GitCommitVertical, Loader2 } from "lucide-react";
 import { useSettingsStore } from "../features/settings/store";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
+
+import { useState } from "react";
+import { Button } from "./ui/button";
 
 export const CheckpointUI: React.FC<{
   checkpoint: NonNullable<ExtendedPartMixin["checkpoint"]>;
@@ -19,32 +17,47 @@ export const CheckpointUI: React.FC<{
     return null;
   }
 
+  const [showSuccessIcon, setShowSuccessIcon] = useState(false);
+
+  const { mutate: restoreCheckpoint, isPending } = useMutation({
+    mutationFn: async (commitId: string) => {
+      await Promise.all([
+        vscodeHost.restoreCheckpoint(commitId),
+        new Promise((resolve) => setTimeout(resolve, 1000)),
+      ]);
+    },
+    onSuccess: () => {
+      setShowSuccessIcon(true);
+      setTimeout(() => setShowSuccessIcon(false), 2000);
+    },
+  });
+
   const handleRestoreCheckpoint = () => {
-    vscodeHost.restoreCheckpoint(commit);
+    restoreCheckpoint(commit);
   };
 
   return (
-    <div className="group flex min-h-5 w-full select-none items-center text-xs">
+    <div className="group flex min-h-5 w-full select-none items-center text-sm">
       <Border />
-      <span className="flex items-center text-muted-foreground group-hover:text-foreground ">
-        <GitCommitVertical className="mr-0.5 size-4 text-muted-foreground/80" />
-        <span className="hidden items-center group-hover:flex">
-          Checkpoint
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleRestoreCheckpoint}
-                  className="ml-1 rounded-md bg-transparent p-1 hover:bg-accent"
-                  type="button"
-                >
-                  <RotateCcw className="size-3" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Restore to this checkpoint</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </span>
+      <span className="flex items-center px-2 text-muted-foreground/80 group-hover:text-foreground">
+        {isPending ? (
+          <Loader2 className="size-3 animate-spin " />
+        ) : showSuccessIcon ? (
+          <Check className="size-4 text-emerald-700 dark:text-emerald-300" />
+        ) : (
+          <GitCommitVertical className="size-4 " />
+        )}
+        {!showSuccessIcon && (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={isPending}
+            onClick={handleRestoreCheckpoint}
+            className="hidden h-5 items-center gap-1 rounded-md px-1 py-0.5 hover:bg-transparent group-hover:flex dark:hover:bg-transparent"
+          >
+            {isPending ? "Restoring..." : "Restore Checkpoint"}
+          </Button>
+        )}
       </span>
       <Border />
     </div>
@@ -52,7 +65,5 @@ export const CheckpointUI: React.FC<{
 };
 
 function Border() {
-  return (
-    <div className="flex-1 border-border border-t transition-colors duration-200 group-hover:border-foreground/50" />
-  );
+  return <div className="flex-1 border-border border-t" />;
 }
