@@ -88,23 +88,15 @@ export class TaskRunnerSupervisor {
     } else if (runnerState.state === "stopped") {
       logger.info("Task runner stopped with result: ", runnerState.result);
       if (this.isDaemon) {
-        // Check if the task stopped due to askFollowupQuestion (pending-input)
-        const isAskFollowupQuestion = this.isAskFollowupQuestionResult(
-          runnerState.result,
+        // In daemon mode, always wait for status change when stopped
+        logger.info(
+          "Task stopped in daemon mode, monitoring for pending-model status...",
         );
-        if (isAskFollowupQuestion) {
-          logger.info(
-            "Task stopped due to askFollowupQuestion, monitoring for pending-model status...",
-          );
-          try {
-            await this.waitForPendingModelStatus();
-            this.startRunner();
-          } catch (_erorr) {
-            // ignore
-          }
-        } else {
-          logger.info("Task completed normally in daemon mode, exiting...");
-          process.exit(0);
+        try {
+          await this.waitForPendingModelStatus();
+          this.startRunner();
+        } catch (_erorr) {
+          // ignore
         }
       } else {
         // In non-daemon mode, exit with success
@@ -159,21 +151,5 @@ export class TaskRunnerSupervisor {
         });
       }
     });
-  }
-
-  private isAskFollowupQuestionResult(result: string): boolean {
-    try {
-      // Try to parse as JSON (askFollowupQuestion results are JSON)
-      const parsed = JSON.parse(result);
-      return (
-        parsed &&
-        typeof parsed === "object" &&
-        "question" in parsed &&
-        "followUp" in parsed
-      );
-    } catch {
-      // If it's not JSON, it's likely an attemptCompletion result
-      return false;
-    }
   }
 }
