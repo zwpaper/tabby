@@ -46,29 +46,50 @@ export async function parseDiffAndApply(
   }
 
   // Count occurrences of searchContent in fileContent
-  const occurrences = countOccurrences(
+  const matches = searchContentExact(
     normalizedFileContent,
     normalizedSearchContent,
   );
-  logger.trace(`Found ${occurrences} occurrences of search content`);
 
-  if (occurrences === 0) {
+  if (matches.length < expectedReplacements) {
+    matches.push(
+      ...searchContentWithLineTrimmed(
+        normalizedFileContent,
+        normalizedSearchContent,
+      ),
+    );
+
+    logger.trace(
+      `Found ${matches.length} matches after line trimming search strategy`,
+    );
+  }
+
+  if (matches.length < expectedReplacements) {
+    matches.push(
+      ...searchContentByBlockAnchor(
+        normalizedFileContent,
+        normalizedSearchContent,
+      ),
+    );
+    logger.trace(
+      `Found ${matches.length} matches after block anchor search strategy`,
+    );
+  }
+
+  if (matches.length === 0) {
     throw new DiffError(
       "Search content does not match the file content. Try to reread the file for the latest content.",
     );
   }
 
-  if (occurrences !== expectedReplacements) {
+  if (matches.length !== expectedReplacements) {
     throw new DiffError(
-      `Expected ${expectedReplacements} occurrences but found ${occurrences}. Please verify the search content and expectedReplacements parameter.`,
+      `Expected ${expectedReplacements} occurrences but found ${matches.length}. Please verify the search content and expectedReplacements parameter.`,
     );
   }
 
   // Replace all occurrences
-  const result = normalizedFileContent.replaceAll(
-    normalizedSearchContent,
-    replaceContent,
-  );
+  const result = replaceMatches(normalizedFileContent, matches, replaceContent);
   logger.trace("Successfully applied diff");
 
   if (isCRLF) {
@@ -104,23 +125,287 @@ export async function processMultipleDiffs(
 }
 
 /**
- * Count occurrences of searchContent in text
+ * Levenshtein distance algorithm implementation
  */
-function countOccurrences(text: string, searchContent: string): number {
-  if (searchContent === "") return 0;
+function levenshtein(a: string, b: string): number {
+  // Handle empty strings
+  if (a === "" || b === "") {
+    return Math.max(a.length, b.length);
+  }
+  const matrix = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) =>
+      i === 0 ? j : j === 0 ? i : 0,
+    ),
+  );
 
-  const normalizedText = normalize(text);
-  const normalizedSearchContent = normalize(searchContent);
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost,
+      );
+    }
+  }
+  return matrix[a.length][b.length];
+}
 
-  let count = 0;
+type ContentMatch = {
+  start: number;
+  end: number;
+};
+
+type SearchContent = (
+  originalContent: string,
+  searchContent: string,
+) => ContentMatch[];
+
+/**
+ * Find the all exact matches of searchContent in originalContent
+ * @param originalContent The original content to search within
+ * @param searchContent The content to search for
+ */
+const searchContentExact: SearchContent = (
+  originalContent: string,
+  searchContent: string,
+) => {
+  const normalizedOriginal = normalize(originalContent);
+  const normalizedSearch = normalize(searchContent);
+
+  if (normalizedSearch === "") return [];
+
+  const matches: ContentMatch[] = [];
   let position = 0;
 
   while (true) {
-    position = normalizedText.indexOf(normalizedSearchContent, position);
+    position = normalizedOriginal.indexOf(normalizedSearch, position);
     if (position === -1) break;
-    count++;
-    position += normalizedSearchContent.length;
+    matches.push({ start: position, end: position + normalizedSearch.length });
+    position += normalizedSearch.length; // Move past this match
   }
 
-  return count;
-}
+  return matches;
+};
+
+/**
+ * Find all matches of searchContent in originalContent, ignoring leading and trailing whitespace.
+ * For multiple lines, it trims each line before searching.
+ * @param originalContent The original content to search within
+ * @param searchContent The content to search for
+ */
+const searchContentWithLineTrimmed: SearchContent = (
+  originalContent: string,
+  searchContent: string,
+) => {
+  // Split both contents into lines
+  const originalLines = originalContent.split("\n");
+  const searchLines = searchContent.split("\n");
+
+  const matches: ContentMatch[] = [];
+
+  // Trim trailing empty line if exists (from the trailing \n in searchContent)
+  if (searchLines[searchLines.length - 1] === "") {
+    searchLines.pop();
+  }
+
+  // For each possible starting position in original content
+  for (let i = 0; i <= originalLines.length - searchLines.length; i++) {
+    let hasMatches = true;
+
+    // Try to match all search lines from this position
+    for (let j = 0; j < searchLines.length; j++) {
+      const originalTrimmed = originalLines[i + j].trim();
+      const searchTrimmed = searchLines[j].trim();
+
+      if (originalTrimmed !== searchTrimmed) {
+        hasMatches = false;
+        break;
+      }
+    }
+
+    // If we found a match, calculate the exact character positions
+    if (hasMatches) {
+      // Find start character index
+      let matchStartIndex = 0;
+      for (let k = 0; k < i; k++) {
+        matchStartIndex += originalLines[k].length + 1; // +1 for \n
+      }
+
+      // Find end character index
+      let matchEndIndex = matchStartIndex;
+      for (let k = 0; k < searchLines.length; k++) {
+        matchEndIndex += originalLines[i + k].length + 1; // +1 for \n
+      }
+
+      matches.push({ start: matchStartIndex, end: matchEndIndex });
+    }
+  }
+
+  return matches;
+};
+
+// Similarity thresholds for block anchor fallback matching
+const SINGLE_CANDIDATE_SIMILARITY_THRESHOLD = 0.0;
+const MULTIPLE_CANDIDATES_SIMILARITY_THRESHOLD = 0.0;
+
+/**
+ * Attempts to match blocks of code by using the first and last lines as anchors,
+ * with similarity checking to prevent false positives.
+ * This is a third-tier fallback strategy that helps match blocks where we can identify
+ * the correct location by matching the beginning and end, even if the exact content
+ * differs slightly.
+ *
+ * The matching strategy:
+ * 1. Only attempts to match blocks of 3 or more lines to avoid false positives
+ * 2. Extracts from the search content:
+ *    - First line as the "start anchor"
+ *    - Last line as the "end anchor"
+ * 3. Collects all candidate positions where both anchors match
+ * 4. Uses levenshtein distance to calculate similarity of middle lines
+ * 5. Returns match only if similarity meets threshold requirements
+ *
+ * This approach is particularly useful for matching blocks of code where:
+ * - The exact content might have minor differences
+ * - The beginning and end of the block are distinctive enough to serve as anchors
+ * - The overall structure (number of lines) remains the same
+ * - The middle content is reasonably similar (prevents false positives)
+ *
+ * @param originalContent The original content to search within
+ * @param searchContent The content to search for
+ * @returns An array of content matches
+ */
+const searchContentByBlockAnchor: SearchContent = (
+  originalContent: string,
+  searchContent: string,
+) => {
+  const originalLines = originalContent.split("\n");
+  const searchLines = searchContent.split("\n");
+  const matches: ContentMatch[] = [];
+
+  // Only use this approach for blocks of 3+ lines
+  if (searchLines.length < 3) {
+    return matches;
+  }
+
+  // Trim trailing empty line if exists
+  if (searchLines[searchLines.length - 1] === "") {
+    searchLines.pop();
+  }
+
+  const firstLineSearch = searchLines[0].trim();
+  const lastLineSearch = searchLines[searchLines.length - 1].trim();
+  const searchBlockSize = searchLines.length;
+
+  // Collect all candidate positions
+  const candidates: number[] = [];
+  for (let i = 0; i <= originalLines.length - searchBlockSize; i++) {
+    if (
+      originalLines[i].trim() === firstLineSearch &&
+      originalLines[i + searchBlockSize - 1].trim() === lastLineSearch
+    ) {
+      candidates.push(i);
+    }
+  }
+
+  // Return immediately if no candidates
+  if (candidates.length === 0) {
+    return matches;
+  }
+
+  // Handle single candidate scenario (using relaxed threshold)
+  if (candidates.length === 1) {
+    const i = candidates[0];
+    let similarity = 0;
+    const linesToCheck = searchBlockSize - 2;
+
+    for (let j = 1; j < searchBlockSize - 1; j++) {
+      const originalLine = originalLines[i + j].trim();
+      const searchLine = searchLines[j].trim();
+      const maxLen = Math.max(originalLine.length, searchLine.length);
+      if (maxLen === 0) {
+        continue;
+      }
+      const distance = levenshtein(originalLine, searchLine);
+      similarity += (1 - distance / maxLen) / linesToCheck;
+
+      // Exit early when threshold is reached
+      if (similarity >= SINGLE_CANDIDATE_SIMILARITY_THRESHOLD) {
+        break;
+      }
+    }
+
+    if (similarity >= SINGLE_CANDIDATE_SIMILARITY_THRESHOLD) {
+      let matchStartIndex = 0;
+      for (let k = 0; k < i; k++) {
+        matchStartIndex += originalLines[k].length + 1;
+      }
+      let matchEndIndex = matchStartIndex;
+      for (let k = 0; k < searchBlockSize; k++) {
+        matchEndIndex += originalLines[i + k].length + 1;
+      }
+      matches.push({ start: matchStartIndex, end: matchEndIndex });
+    }
+    return matches;
+  }
+
+  // Calculate similarity for multiple candidates
+  let bestMatchIndex = -1;
+  let maxSimilarity = -1;
+
+  for (const i of candidates) {
+    let similarity = 0;
+    for (let j = 1; j < searchBlockSize - 1; j++) {
+      const originalLine = originalLines[i + j].trim();
+      const searchLine = searchLines[j].trim();
+      const maxLen = Math.max(originalLine.length, searchLine.length);
+      if (maxLen === 0) {
+        continue;
+      }
+      const distance = levenshtein(originalLine, searchLine);
+      similarity += 1 - distance / maxLen;
+    }
+    similarity /= searchBlockSize - 2; // Average similarity
+
+    if (similarity > maxSimilarity) {
+      maxSimilarity = similarity;
+      bestMatchIndex = i;
+    }
+  }
+
+  // Threshold judgment
+  if (maxSimilarity >= MULTIPLE_CANDIDATES_SIMILARITY_THRESHOLD) {
+    const i = bestMatchIndex;
+    let matchStartIndex = 0;
+    for (let k = 0; k < i; k++) {
+      matchStartIndex += originalLines[k].length + 1;
+    }
+    let matchEndIndex = matchStartIndex;
+    for (let k = 0; k < searchBlockSize; k++) {
+      matchEndIndex += originalLines[i + k].length + 1;
+    }
+    matches.push({ start: matchStartIndex, end: matchEndIndex });
+  }
+  return matches;
+};
+
+const replaceMatches = (
+  originalContent: string,
+  matches: ContentMatch[],
+  replaceContent: string,
+): string => {
+  let updatedContent = originalContent;
+  let offset = 0;
+
+  for (const match of matches) {
+    const start = match.start + offset;
+    const end = match.end + offset;
+    updatedContent =
+      updatedContent.slice(0, start) +
+      replaceContent +
+      updatedContent.slice(end);
+    offset += replaceContent.length - (end - start);
+  }
+
+  return updatedContent;
+};
