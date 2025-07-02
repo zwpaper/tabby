@@ -89,3 +89,14 @@ export const selectServerTools = (tools: string[]) => {
 };
 
 export { BatchCallTools } from "./batch-call";
+
+export const selectClientTools = (enableNewTask: boolean) => {
+  if (enableNewTask) {
+    return {
+      ...ClientTools,
+    };
+  }
+
+  const { newTask, ...rest } = ClientTools;
+  return rest;
+};

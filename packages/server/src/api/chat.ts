@@ -5,8 +5,8 @@ import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import {
-  ClientTools,
   parseMcpToolSet,
+  selectClientTools,
   selectServerTools,
 } from "@ragdoll/tools";
 import {
@@ -79,18 +79,16 @@ const chat = new Hono()
 
     checkWaitlist(user);
 
-    const enabledClientTools = { ...ClientTools };
+    const { streamId, messages, uid, isSubTask } =
+      await taskService.startStreaming(user.id, req);
+
+    const enabledClientTools = selectClientTools(!isSubTask);
 
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(["webFetch", "batchCall"]);
 
-    const { streamId, messages, uid } = await taskService.startStreaming(
-      user.id,
-      req,
-    );
-
     const middlewareContext = {
-      newTask: { userId: user.id, parentId: uid },
+      newTask: isSubTask ? undefined : { userId: user.id, parentId: uid },
     };
 
     const selectedModel = createModel(validModelId, middlewareContext);
@@ -342,7 +340,7 @@ async function prepareMessages(
 export default chat;
 
 interface MiddlewareContext {
-  newTask: NewTaskMiddlewareContext;
+  newTask?: NewTaskMiddlewareContext;
 }
 
 function createModel(
@@ -356,7 +354,9 @@ function createModel(
 
   middleware.push(createBatchCallMiddleware());
 
-  middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
+  if (middlewareContext.newTask) {
+    middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
+  }
 
   if (modelId.includes("google/gemini-2.5")) {
     middleware.push(createToolMiddleware());

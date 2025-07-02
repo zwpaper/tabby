@@ -71,7 +71,10 @@ class TaskService {
     request: z.infer<typeof ZodChatRequestType>,
   ) {
     const streamId = generateId();
-    const { conversation, uid } = await this.prepareTask(userId, request);
+    const { conversation, uid, parentId } = await this.prepareTask(
+      userId,
+      request,
+    );
     const streamingTask = new StreamingTask(streamId, userId, uid);
     this.streamingTasks.set(streamingTask.key, streamingTask);
 
@@ -112,6 +115,7 @@ class TaskService {
       streamId,
       messages,
       uid,
+      isSubTask: parentId !== null,
     };
   }
 
@@ -199,7 +203,14 @@ class TaskService {
       ...data
     } = await db
       .selectFrom("task")
-      .select(["conversation", "event", "environment", "status", "id"])
+      .select([
+        "conversation",
+        "event",
+        "environment",
+        "status",
+        "id",
+        "parentId",
+      ])
       .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
