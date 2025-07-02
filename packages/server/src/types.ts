@@ -25,7 +25,7 @@ export const ZodChatRequestType = z.object({
   enableNewTask: z
     .boolean()
     .optional()
-    .describe("Enable the newTask tool for this request."),
+    .describe("This option is deprecated. The newTask tool is always enabled."), // FIXME(zhiming): remove this option in the future
   enableGeminiCustomToolCalls: z
     .boolean()
     .optional()

@@ -7,8 +7,6 @@ export const AdvancedSettingsSection: React.FC = () => {
     isDevMode,
     updateIsDevMode,
 
-    enableNewTask,
-    updateEnableNewTask,
     enableGeminiCustomToolCalls,
     updateEnableGeminiCustomToolCalls,
     enableCheckpoint,
@@ -36,14 +34,6 @@ export const AdvancedSettingsSection: React.FC = () => {
               checked={enableGeminiCustomToolCalls}
               onCheckedChange={(checked) => {
                 updateEnableGeminiCustomToolCalls(!!checked);
-              }}
-            />
-            <SettingsCheckboxOption
-              id="enable-tool-new-task"
-              label="Enable Tool: newTask"
-              checked={!!enableNewTask}
-              onCheckedChange={(checked) => {
-                updateEnableNewTask(!!checked);
               }}
             />
             <SettingsCheckboxOption

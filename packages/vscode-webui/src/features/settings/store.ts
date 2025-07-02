@@ -18,7 +18,6 @@ export interface SettingsState {
 
   isDevMode: boolean;
 
-  enableNewTask: boolean | undefined;
   enableGeminiCustomToolCalls: boolean;
   enableCheckpoint: boolean;
 
@@ -27,7 +26,6 @@ export interface SettingsState {
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
 
-  updateEnableNewTask: (value: boolean) => void;
   updateEnableGeminiCustomToolCalls: (value: boolean) => void;
   updateEnableCheckpoint: (value: boolean) => void;
 }
@@ -47,7 +45,6 @@ export const useSettingsStore = create<SettingsState>()(
       },
       isDevMode: false,
 
-      enableNewTask: undefined,
       enableGeminiCustomToolCalls: true,
       enableCheckpoint: false,
 
@@ -64,8 +61,6 @@ export const useSettingsStore = create<SettingsState>()(
 
       updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
 
-      updateEnableNewTask: (value: boolean) =>
-        set(() => ({ enableNewTask: value })),
       updateEnableGeminiCustomToolCalls: (value: boolean) =>
         set(() => ({ enableGeminiCustomToolCalls: value })),
       updateEnableCheckpoint: (value: boolean) =>

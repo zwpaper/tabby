@@ -67,7 +67,6 @@ const chat = new Hono()
       environment,
       mcpToolSet,
       model: requestedModelId = "google/gemini-2.5-pro",
-      enableNewTask = false,
       enableGeminiCustomToolCalls = true,
     } = req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
@@ -82,6 +81,7 @@ const chat = new Hono()
 
     checkWaitlist(user);
 
+    const enableNewTask = true; // Force enable newTask tool for now
     const experimentalClientTools = enableNewTask
       ? selectExperimentalClientTools(["newTask"])
       : {};
