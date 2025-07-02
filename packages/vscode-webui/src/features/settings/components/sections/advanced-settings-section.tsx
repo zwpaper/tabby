@@ -6,9 +6,6 @@ export const AdvancedSettingsSection: React.FC = () => {
   const {
     isDevMode,
     updateIsDevMode,
-
-    enableGeminiCustomToolCalls,
-    updateEnableGeminiCustomToolCalls,
     enableCheckpoint,
     updateEnableCheckpoint,
   } = useSettingsStore();
@@ -27,24 +24,14 @@ export const AdvancedSettingsSection: React.FC = () => {
           />
         )}
         {isDevMode && (
-          <>
-            <SettingsCheckboxOption
-              id="enable-gemini-custom-tool-calls"
-              label="Enable Gemini Custom Tool Calls"
-              checked={enableGeminiCustomToolCalls}
-              onCheckedChange={(checked) => {
-                updateEnableGeminiCustomToolCalls(!!checked);
-              }}
-            />
-            <SettingsCheckboxOption
-              id="enable-checkpoint"
-              label="Enable Checkpoint"
-              checked={enableCheckpoint}
-              onCheckedChange={(checked) => {
-                updateEnableCheckpoint(!!checked);
-              }}
-            />
-          </>
+          <SettingsCheckboxOption
+            id="enable-checkpoint"
+            label="Enable Checkpoint"
+            checked={enableCheckpoint}
+            onCheckedChange={(checked) => {
+              updateEnableCheckpoint(!!checked);
+            }}
+          />
         )}
       </div>
     </AccordionSection>

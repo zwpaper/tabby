@@ -35,11 +35,9 @@ import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { vscodeHost } from "@/lib/vscode";
 import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
-import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
-
-import { useSettingsStore } from "../settings/store";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
+import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
 import { useNewTaskHandler } from "./hooks/use-new-task-handler";
@@ -136,7 +134,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   }, []);
 
   const { toolset: mcpToolSet } = useMcp();
-  const { enableGeminiCustomToolCalls } = useSettingsStore();
 
   const latestHttpCode = useRef<number | undefined>(undefined);
   const chat = useChat({
@@ -196,7 +193,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
             environment: await buildEnvironment(),
             // Inject the mcp tool set into the request body
             mcpToolSet,
-            enableGeminiCustomToolCalls,
           }),
       });
       // If the task is already streaming, resume the stream
