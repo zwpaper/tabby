@@ -9,7 +9,7 @@ class CheckpointManager {
   // Mapping from a unique key to a checkpoint info
   private checkpoints: Map<string, CheckpointInfo> = new Map();
 
-  async checkpointIfNeeded(opts: { messageId: string; step: number }) {
+  async checkpointStepIfNeeded(opts: { messageId: string; step: number }) {
     const key = checkpointKey(opts);
     if (!this.checkpoints.has(key)) {
       const commit = await vscodeHost.saveCheckpoint(

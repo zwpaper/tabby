@@ -10,8 +10,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
+import { hasExtendedPartMixin } from "@ragdoll/common";
 import { useEffect } from "react";
-import { StepStartPartUI } from "../step-start-part";
+import { CheckpointUI } from "../checkpoint-ui";
 import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
 
@@ -119,7 +120,10 @@ function Part({
   }
 
   if (part.type === "step-start") {
-    return <StepStartPartUI part={part} />;
+    if (hasExtendedPartMixin(part)) {
+      return <CheckpointUI checkpoint={part.checkpoint} />;
+    }
+    return null;
   }
 
   if (part.type === "tool-invocation") {

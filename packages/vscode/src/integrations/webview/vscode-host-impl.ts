@@ -76,6 +76,7 @@ const logger = getLogger("VSCodeHostImpl");
 @singleton()
 export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   private toolCallGroup = runExclusive.createGroupRef();
+  private checkpointGroup = runExclusive.createGroupRef();
   private sessionState: SessionState = {};
   private disposables: vscode.Disposable[] = [];
 
@@ -418,13 +419,19 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return ThreadSignal.serialize(this.taskRunnerManager.status);
   };
 
-  saveCheckpoint = async (message: string): Promise<string> => {
-    return await this.checkpointService.saveCheckpoint(message);
-  };
+  saveCheckpoint = runExclusive.build(
+    this.checkpointGroup,
+    async (message: string): Promise<string> => {
+      return await this.checkpointService.saveCheckpoint(message);
+    },
+  );
 
-  restoreCheckpoint = async (commitHash: string): Promise<void> => {
-    await this.checkpointService.restoreCheckpoint(commitHash);
-  };
+  restoreCheckpoint = runExclusive.build(
+    this.checkpointGroup,
+    async (commitHash: string): Promise<void> => {
+      await this.checkpointService.restoreCheckpoint(commitHash);
+    },
+  );
 
   readCheckpointPath = async (): Promise<string | undefined> => {
     return this.checkpointService.getShadowGitPath();

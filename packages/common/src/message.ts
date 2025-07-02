@@ -1,17 +1,22 @@
 import type { DataStreamWriter, LanguageModelUsage, UIMessage } from "ai";
 
-export type ExtendedStepStartPart = {
-  type: "step-start";
+export type ExtendedPartMixin = {
   checkpoint?: {
     commit: string; // The commit hash or identifier for the checkpoint
   };
 };
 
+export function hasExtendedPartMixin(
+  part: UIMessage["parts"][number],
+): part is UIMessage["parts"][number] &
+  ExtendedPartMixin & {
+    checkpoint: NonNullable<ExtendedPartMixin["checkpoint"]>;
+  } {
+  return "checkpoint" in part && typeof part.checkpoint === "object";
+}
+
 export type ExtendedUIMessage = UIMessage & {
-  parts: Array<
-    | Exclude<UIMessage["parts"][number], { type: "step-start" }>
-    | ExtendedStepStartPart
-  >;
+  parts: Array<UIMessage["parts"][number] & ExtendedPartMixin>;
 };
 
 export type DBMessage = {

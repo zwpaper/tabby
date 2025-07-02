@@ -4,10 +4,11 @@ export {
   fromUIMessages,
   toUIMessage,
   toUIMessages,
+  hasExtendedPartMixin,
   type ExtendedUIMessage,
+  type ExtendedPartMixin,
   type DataPart,
   type DBMessage,
-  type ExtendedStepStartPart,
 } from "./message";
 
 export { formatters } from "./formatters";

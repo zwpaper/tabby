@@ -212,7 +212,7 @@ export class ManagedToolCallLifeCycle
       });
     previewJob = previewJob.then(async (result) => {
       if (step !== undefined) {
-        await checkpointManager.checkpointIfNeeded({
+        await checkpointManager.checkpointStepIfNeeded({
           messageId: this.messageId,
           step,
         });
