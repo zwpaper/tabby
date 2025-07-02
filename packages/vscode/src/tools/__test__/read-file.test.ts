@@ -269,5 +269,23 @@ describe("readFile Tool", () => {
       );
     }
   });
+
+  it("should handle absolute paths", async () => {
+    const fileContent = "Absolute path test\nLine 2\nLine 3";
+    const absoluteFilePath = _path.join(currentTestTempDirUri.fsPath, "absolute-test.txt");
+    const fileUri = vscode.Uri.file(absoluteFilePath);
+    await createFile(fileUri, fileContent);
+
+    const result = await readFileWithMock(
+      { path: absoluteFilePath },
+      dummyToolOptions,
+    );
+
+    assert.strictEqual(
+      result.content,
+      "1 | Absolute path test\n2 | Line 2\n3 | Line 3"
+    );
+    assert.strictEqual(result.isTruncated, false);
+  });
 });
 

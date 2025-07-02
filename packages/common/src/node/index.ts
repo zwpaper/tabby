@@ -3,6 +3,7 @@ export { ignoreWalk } from "./ignore-walk";
 export {
   validateTextFile,
   selectFileContent,
+  resolvePath,
 } from "./fs";
 export { listFiles, listWorkspaceFiles } from "./list-files";
 export { globFiles } from "./glob-files";

@@ -1,6 +1,9 @@
 import * as fs from "node:fs/promises";
-import * as nodePath from "node:path";
-import { selectFileContent, validateTextFile } from "@ragdoll/common/node";
+import {
+  resolvePath,
+  selectFileContent,
+  validateTextFile,
+} from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import type { RunnerContext } from "../task-runner";
 
@@ -9,7 +12,8 @@ export const readFile =
     context: Pick<RunnerContext, "cwd">,
   ): ToolFunctionType<ClientToolsType["readFile"]> =>
   async ({ path, startLine, endLine }) => {
-    const fileBuffer = await fs.readFile(nodePath.join(context.cwd, path));
+    const resolvedPath = resolvePath(path, context.cwd);
+    const fileBuffer = await fs.readFile(resolvedPath);
     await validateTextFile(fileBuffer);
 
     const fileContent = fileBuffer.toString();

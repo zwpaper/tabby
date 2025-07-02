@@ -68,3 +68,12 @@ export function validateRelativePath(inputPath: string): void {
     );
   }
 }
+
+/**
+ * Resolves a path that can be either absolute or relative.
+ * If the path is absolute, returns it as-is.
+ * If the path is relative, joins it with the provided working directory.
+ */
+export function resolvePath(inputPath: string, cwd: string): string {
+  return path.isAbsolute(inputPath) ? inputPath : path.join(cwd, inputPath);
+}

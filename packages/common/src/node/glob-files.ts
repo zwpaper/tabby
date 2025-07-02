@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import { minimatch } from "minimatch";
 import { getLogger } from "..";
-import { validateRelativePath } from "./fs";
+import { resolvePath, validateRelativePath } from "./fs";
 import { ignoreWalk } from "./ignore-walk";
 import { MaxGlobFileItems } from "./limits";
 
@@ -42,14 +42,18 @@ export async function globFiles(
     globPattern,
   );
 
-  validateRelativePath(searchPath);
+  // Resolve path (absolute or relative)
+  const dir = resolvePath(searchPath, cwd);
+
+  // Only validate relative paths
+  if (!path.isAbsolute(searchPath)) {
+    validateRelativePath(searchPath);
+  }
 
   const files: string[] = [];
   let isTruncated = false;
 
   try {
-    const dir = path.join(cwd, searchPath);
-
     const allFiles = await ignoreWalk({
       dir,
       recursive: true,

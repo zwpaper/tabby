@@ -1,6 +1,6 @@
 import path from "node:path";
 import { getLogger } from "..";
-import { validateRelativePath } from "./fs";
+import { resolvePath, validateRelativePath } from "./fs";
 import { ignoreWalk } from "./ignore-walk";
 import { MaxListFileItems } from "./limits";
 
@@ -40,11 +40,15 @@ export async function listFiles(
     recursive,
   );
 
-  validateRelativePath(dirPath);
+  // Resolve path (absolute or relative)
+  const dir = resolvePath(dirPath, cwd);
+
+  // Only validate relative paths
+  if (!path.isAbsolute(dirPath)) {
+    validateRelativePath(dirPath);
+  }
 
   try {
-    const dir = path.join(cwd, dirPath);
-
     const fileResults = await ignoreWalk({
       dir,
       recursive: !!recursive,

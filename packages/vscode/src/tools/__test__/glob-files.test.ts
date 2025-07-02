@@ -154,17 +154,19 @@ describe("globFiles Tool", () => {
     assert.strictEqual(result.isTruncated, false);
   });
 
-  it("should throw an error for absolute paths", async () => {
-    const absolutePath = _path.resolve(currentTestTempDirUri.fsPath);
-    try {
-      await globFiles({ path: absolutePath, globPattern: "*.txt" }, dummyToolOptions);
-      assert.fail("Should have thrown an error for absolute path");
-    } catch (error: any) {
-      assert.ok(
-        error.message.includes("Absolute paths are not supported"),
-        `Unexpected error message: ${error.message}`,
-      );
-    }
+  it("should handle absolute paths", async () => {
+    const fileContent = "Absolute path test content";
+    const fileName = "absolute-test.txt";
+    await createFile(vscode.Uri.joinPath(currentTestTempDirUri, fileName), fileContent);
+    
+    const absolutePath = currentTestTempDirUri.fsPath;
+    const result = await globFiles(
+      { path: absolutePath, globPattern: "*.txt" },
+      dummyToolOptions,
+    );
+    
+    assert.ok(result.files.includes(fileName));
+    assert.strictEqual(result.isTruncated, false);
   });
 
   it("should handle abort signal", async () => {
