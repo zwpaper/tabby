@@ -133,7 +133,7 @@ class SlackRichTextRenderer {
       },
     });
 
-    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
+    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens, true);
 
     return blocks;
   }
@@ -369,6 +369,7 @@ class SlackRichTextRenderer {
     taskId: string,
     requestsCount?: number,
     totalTokens?: number,
+    showReplyButton?: boolean,
   ) {
     const statsTexts: string[] = [];
 
@@ -396,20 +397,36 @@ class SlackRichTextRenderer {
       });
     }
 
+    const actionElements = [];
+
+    // Add reply button if requested
+    if (showReplyButton) {
+      actionElements.push({
+        type: "button" as const,
+        text: {
+          type: "plain_text" as const,
+          text: "💬 Reply",
+        },
+        action_id: `followup_${taskId}_custom`,
+        style: "primary" as const,
+      });
+    }
+
+    // Always add see details button
+    actionElements.push({
+      type: "button" as const,
+      text: {
+        type: "plain_text" as const,
+        text: "📄 See details",
+      },
+      url: `https://app.getpochi.com/tasks/${taskId}`,
+      style: "primary" as const,
+      action_id: "view_task_button",
+    });
+
     dst.push({
       type: "actions",
-      elements: [
-        {
-          type: "button" as const,
-          text: {
-            type: "plain_text" as const,
-            text: "📄 See details",
-          },
-          url: `https://app.getpochi.com/tasks/${taskId}`,
-          style: "primary" as const,
-          action_id: "view_task_button",
-        },
-      ],
+      elements: actionElements,
     });
   }
 
