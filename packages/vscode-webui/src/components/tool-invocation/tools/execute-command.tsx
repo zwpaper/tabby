@@ -9,11 +9,12 @@ import type { ToolProps } from "../types";
 
 export const executeCommandTool: React.FC<
   ToolProps<ClientToolsType["executeCommand"]>
-> = ({ tool, isExecuting }) => {
-  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle(
-    tool.toolName,
-    tool.toolCallId,
-  );
+> = ({ tool, isExecuting, messageId }) => {
+  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
+    toolName: tool.toolName,
+    toolCallId: tool.toolCallId,
+    messageId,
+  });
   const abortTool = useCallback(() => {
     lifecycle.abort();
   }, [lifecycle.abort]);

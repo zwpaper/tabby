@@ -6,6 +6,7 @@ import { useMemo } from "react";
 export interface PendingToolCallApproval {
   name: keyof ClientToolsType;
   tool: ToolInvocation;
+  messageId: string;
 }
 
 export function usePendingToolCallApproval({
@@ -31,6 +32,7 @@ export function usePendingToolCallApproval({
         return {
           name: part.toolInvocation.toolName as keyof ClientToolsType,
           tool: part.toolInvocation,
+          messageId: lastMessage.id,
         };
       }
     }

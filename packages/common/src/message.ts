@@ -8,30 +8,10 @@ export type ExtendedStepStartPart = {
 };
 
 export type ExtendedUIMessage = UIMessage & {
-  parts: Array<UIMessage["parts"][number] | ExtendedStepStartPart>;
-};
-
-/**
- * Check if a message is a ExtendedUIMessage which contains step-start parts with checkpoints.
- * @param message - The message to check.
- * @returns True if the message is an ExtendedUIMessage, false otherwise.
- */
-export const isExtendedUIMessage = (
-  message: UIMessage,
-): message is ExtendedUIMessage => {
-  return (
-    "parts" in message &&
-    Array.isArray(message.parts) &&
-    message.parts.some(
-      (part) =>
-        part.type === "step-start" &&
-        "checkpoint" in part &&
-        typeof part.checkpoint === "object" &&
-        part.checkpoint !== null &&
-        "commit" in part.checkpoint &&
-        typeof part.checkpoint.commit === "string",
-    )
-  );
+  parts: Array<
+    | Exclude<UIMessage["parts"][number], { type: "step-start" }>
+    | ExtendedStepStartPart
+  >;
 };
 
 export type DBMessage = {

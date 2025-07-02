@@ -17,6 +17,7 @@ const ToolsGallery: React.FC<{
           key={tool.toolCallId + index}
           tool={tool}
           isLoading={false}
+          messageId={"messageId"}
         />
       ))}
     </div>

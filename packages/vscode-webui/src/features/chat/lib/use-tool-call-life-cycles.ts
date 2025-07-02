@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
+import type { ToolCallLifeCycleKey } from "./chat-state/types";
 import { ManagedToolCallLifeCycle } from "./tool-call-life-cycle";
 
 // Hook to manage tool call states
@@ -41,10 +42,10 @@ export function useToolCallLifeCycles() {
   );
 
   const getToolCallLifeCycle = useCallback(
-    (toolName: string, toolCallId: string) => {
-      if (!toolCallLifeCyclesRef.current.has(toolCallId)) {
-        const lifecycle = new ManagedToolCallLifeCycle(toolName, toolCallId);
-        toolCallLifeCyclesRef.current.set(toolCallId, lifecycle);
+    (key: ToolCallLifeCycleKey) => {
+      if (!toolCallLifeCyclesRef.current.has(key.toolCallId)) {
+        const lifecycle = new ManagedToolCallLifeCycle(key);
+        toolCallLifeCyclesRef.current.set(key.toolCallId, lifecycle);
         const unsubscribe = lifecycle.onAny((name) => {
           reloadToolCallLifeCycles();
 
@@ -56,7 +57,7 @@ export function useToolCallLifeCycles() {
       }
 
       return toolCallLifeCyclesRef.current.get(
-        toolCallId,
+        key.toolCallId,
         // Guaranteed to exist because we just set it above
       ) as ManagedToolCallLifeCycle;
     },

@@ -4,6 +4,7 @@ export {
   fromUIMessages,
   toUIMessage,
   toUIMessages,
+  type ExtendedUIMessage,
   type DataPart,
   type DBMessage,
   type ExtendedStepStartPart,

@@ -1,7 +1,11 @@
 import type { TaskRunnerState } from "@ragdoll/runner";
 import { type ReactNode, useCallback, useMemo, useRef } from "react";
 import { FixedStateToolCallLifeCycle } from "../fixed-state-tool-call-life-cycle";
-import { ChatContext, type ChatState } from "./types";
+import {
+  ChatContext,
+  type ChatState,
+  type ToolCallLifeCycleKey,
+} from "./types";
 
 interface FixedStateChatContextProviderProps {
   taskRunnerState?: TaskRunnerState | undefined;
@@ -30,11 +34,18 @@ export function FixedStateChatContextProvider({
   }, [taskRunnerState]);
 
   const getToolCallLifeCycle = useCallback(
-    (toolName: string, toolCallId: string) => {
-      if (lifecycleExecuting && lifecycleExecuting.toolCallId === toolCallId) {
+    (key: ToolCallLifeCycleKey) => {
+      if (
+        lifecycleExecuting &&
+        lifecycleExecuting.toolCallId === key.toolCallId
+      ) {
         return lifecycleExecuting;
       }
-      return new FixedStateToolCallLifeCycle(toolName, toolCallId, "dispose");
+      return new FixedStateToolCallLifeCycle(
+        key.toolName,
+        key.toolCallId,
+        "dispose",
+      );
     },
     [lifecycleExecuting],
   );

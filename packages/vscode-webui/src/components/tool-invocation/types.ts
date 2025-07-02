@@ -24,6 +24,7 @@ export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
   >;
   isExecuting: boolean;
   isLoading: boolean;
+  messageId: string;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: external function def.

@@ -42,10 +42,10 @@ import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
 import { useNewTaskHandler } from "./hooks/use-new-task-handler";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
-import { useSaveCheckpoint } from "./hooks/use-save-checkpoint";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useTokenUsageUpdater } from "./hooks/use-token-usage-updater";
 import { useHandleChatEvents } from "./lib/chat-events";
+import checkpointManager from "./lib/checkpoint-manager";
 import { prepareRequestBody } from "./lib/prepare-request-body";
 
 export function ChatPage({
@@ -332,9 +332,15 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     setMessages: setMessages,
   });
 
-  useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
+  useEffect(() => {
+    if (!allowAddToolResult) return;
+    if (checkpointManager.fillCheckpoint(messages)) {
+      // If the checkpoint is filled, we need to update the messages
+      setMessages(messages);
+    }
+  }, [messages, setMessages, allowAddToolResult]);
 
-  const saveCheckpoint = useSaveCheckpoint(messages, setMessages, uid);
+  useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
 
   return (
     <div className="flex h-screen flex-col">
@@ -359,7 +365,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
               pendingApproval={pendingApproval}
               retry={retry}
               allowAddToolResult={allowAddToolResult}
-              saveCheckpoint={saveCheckpoint}
             />
             {todos && todos.length > 0 && (
               <LegacyTodoList

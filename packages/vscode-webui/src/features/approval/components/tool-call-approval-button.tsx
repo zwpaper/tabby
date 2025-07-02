@@ -9,20 +9,19 @@ import type { PendingToolCallApproval } from "../hooks/use-pending-tool-call-app
 
 interface ToolCallApprovalButtonProps {
   pendingApproval: PendingToolCallApproval;
-  saveCheckpoint: (toolCallId: string) => Promise<void>;
 }
 
 // Component
 export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
-  // saveCheckpoint,
 }) => {
   const autoApproveGuard = useAutoApproveGuard();
 
-  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle(
-    pendingApproval.tool.toolName,
-    pendingApproval.tool.toolCallId,
-  );
+  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
+    toolName: pendingApproval.tool.toolName,
+    toolCallId: pendingApproval.tool.toolCallId,
+    messageId: pendingApproval.messageId,
+  });
 
   const { selectedModel } = useSelectedModels();
 
@@ -48,7 +47,6 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
       return;
     }
 
-    // await saveCheckpoint(pendingApproval.tool.toolCallId);
     lifecycle.execute(pendingApproval.tool.args, {
       model: selectedModel?.id,
     });
@@ -57,7 +55,6 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     lifecycle.status,
     lifecycle.execute,
     selectedModel?.id,
-    // saveCheckpoint,
   ]);
 
   const onReject = useCallback(() => {

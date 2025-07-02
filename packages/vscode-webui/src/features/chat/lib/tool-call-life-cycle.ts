@@ -14,6 +14,8 @@ import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import Emittery from "emittery";
 import type z from "zod";
+import type { ToolCallLifeCycleKey } from "./chat-state/types";
+import checkpointManager from "./checkpoint-manager";
 
 type PreviewReturnType = { error: string } | undefined;
 type ExecuteCommandReturnType = {
@@ -112,7 +114,7 @@ export interface ToolCallLifeCycle {
    * @param args - Tool call arguments
    * @param state - Current tool invocation state
    */
-  preview(args: unknown, state: ToolInvocation["state"]): void;
+  preview(args: unknown, state: ToolInvocation["state"], step?: number): void;
 
   /**
    * Execute the tool call with given arguments and options.
@@ -143,11 +145,16 @@ export class ManagedToolCallLifeCycle
     previewJob: Promise.resolve(undefined),
   };
 
-  constructor(
-    readonly toolName: string,
-    readonly toolCallId: string,
-  ) {
+  readonly toolName: string;
+  readonly toolCallId: string;
+
+  private readonly messageId: string;
+
+  constructor(key: ToolCallLifeCycleKey) {
     super();
+    this.toolName = key.toolName;
+    this.toolCallId = key.toolCallId;
+    this.messageId = key.messageId;
   }
 
   get status() {
@@ -172,11 +179,11 @@ export class ManagedToolCallLifeCycle
     this.transitTo("complete", { type: "dispose" });
   }
 
-  preview(args: unknown, state: ToolInvocation["state"]) {
+  preview(args: unknown, state: ToolInvocation["state"], step?: number) {
     if (this.status === "ready") {
       this.previewReady(args, state);
     } else {
-      this.previewInit(args, state);
+      this.previewInit(args, state, step);
     }
   }
 
@@ -189,7 +196,11 @@ export class ManagedToolCallLifeCycle
     });
   }
 
-  private previewInit(args: unknown, state: ToolInvocation["state"]) {
+  private previewInit(
+    args: unknown,
+    state: ToolInvocation["state"],
+    step?: number,
+  ) {
     let { previewJob } = this.checkState("Preview", "init");
     const previewToolCall = (abortSignal?: AbortSignal) =>
       vscodeHost.previewToolCall(this.toolName, args, {
@@ -199,6 +210,15 @@ export class ManagedToolCallLifeCycle
           ? ThreadAbortSignal.serialize(abortSignal)
           : undefined,
       });
+    previewJob = previewJob.then(async (result) => {
+      if (step !== undefined) {
+        await checkpointManager.checkpointIfNeeded({
+          messageId: this.messageId,
+          step,
+        });
+      }
+      return result;
+    });
 
     if (state === "partial-call") {
       previewJob = previewJob.then(() => previewToolCall());

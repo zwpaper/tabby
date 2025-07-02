@@ -5,7 +5,10 @@ import { funnel } from "remeda";
 
 export function PreviewTool({ messages }: { messages: UIMessage[] }) {
   const lastMessage = messages.at(-1);
-  const components = lastMessage?.parts?.map((part) => {
+  if (!lastMessage) {
+    return null;
+  }
+  const components = lastMessage.parts?.map((part) => {
     if (
       part.type === "tool-invocation" &&
       part.toolInvocation.state !== "result"
@@ -14,6 +17,7 @@ export function PreviewTool({ messages }: { messages: UIMessage[] }) {
         <PreviewOneTool
           key={part.toolInvocation.toolCallId}
           tool={part.toolInvocation}
+          messageId={lastMessage.id}
         />
       );
     }
@@ -21,16 +25,22 @@ export function PreviewTool({ messages }: { messages: UIMessage[] }) {
   return <>{components}</>;
 }
 
-function PreviewOneTool({ tool }: { tool: ToolInvocation }) {
+function PreviewOneTool({
+  tool,
+  messageId,
+}: { tool: ToolInvocation; messageId: string }) {
   const { getToolCallLifeCycle } = useToolCallLifeCycle();
-  const { toolName, toolCallId } = tool;
   const debouncedPreview = useMemo(
     () =>
       funnel(
         (tool: ToolInvocation) => {
-          const lifecycle = getToolCallLifeCycle(toolName, toolCallId);
+          const lifecycle = getToolCallLifeCycle({
+            toolName: tool.toolName,
+            toolCallId: tool.toolCallId,
+            messageId,
+          });
           if (lifecycle.status === "init") {
-            lifecycle.preview(tool.args, tool.state);
+            lifecycle.preview(tool.args, tool.state, tool.step);
           }
         },
         {
@@ -38,7 +48,7 @@ function PreviewOneTool({ tool }: { tool: ToolInvocation }) {
           reducer: (_, rhs: ToolInvocation) => rhs,
         },
       ),
-    [toolName, toolCallId, getToolCallLifeCycle],
+    [getToolCallLifeCycle, messageId],
   );
   useEffect(() => {
     debouncedPreview.call(tool);
