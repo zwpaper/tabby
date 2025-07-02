@@ -92,7 +92,7 @@ class SlackRichTextRenderer {
       },
     ];
 
-    this.renderFollowUpSuggestionsBlock(blocks, followUpSuggestions);
+    this.renderFollowUpSuggestionsBlock(blocks, followUpSuggestions, taskId);
 
     this.renderTodoListBlock(blocks, todos);
 
@@ -452,22 +452,100 @@ class SlackRichTextRenderer {
   private renderFollowUpSuggestionsBlock(
     dst: AnyBlock[],
     suggestions?: string[],
+    taskId?: string,
   ) {
-    if (!suggestions || suggestions.length === 0) {
+    // If no taskId, we can't create action buttons
+    if (!taskId) {
       return;
     }
 
-    const suggestionText = suggestions
-      .map((suggestion, index) => `${index + 1}. ${suggestion}`)
-      .join("\n");
+    // Add suggestion text block only if there are suggestions
+    if (suggestions && suggestions.length > 0) {
+      const suggestionText = suggestions
+        .map((suggestion, index) => `${index + 1}. ${suggestion}`)
+        .join("\n");
 
+      dst.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*💡 Suggested answers:*\n${suggestionText}`,
+        },
+      });
+    }
+
+    // Always add action buttons (suggestions + reply button)
+    const elements: {
+      type: "button";
+      text: { type: "plain_text"; text: string };
+      action_id: string;
+      style?: "primary";
+    }[] = [];
+
+    // Add suggestion buttons if there are suggestions
+    if (suggestions && suggestions.length > 0) {
+      const suggestionButtons = suggestions.map((suggestion, index) => {
+        // Encode suggestion content in base64 to avoid special characters in action_id
+        const encodedSuggestion = Buffer.from(suggestion).toString("base64");
+        return {
+          type: "button" as const,
+          text: {
+            type: "plain_text" as const,
+            text: `${index + 1}`,
+          },
+          action_id: `followup_${taskId}_direct_${encodedSuggestion}`,
+          style: "primary" as const,
+        };
+      });
+      elements.push(...suggestionButtons);
+    }
+
+    // Always add the custom reply button
+    const customButton = {
+      type: "button" as const,
+      text: {
+        type: "plain_text" as const,
+        text: "Reply",
+      },
+      action_id: `followup_${taskId}_custom`,
+    };
+    elements.push(customButton);
+
+    // Add the actions block with all buttons
     dst.push({
+      type: "actions",
+      elements,
+    });
+  }
+
+  renderUserAnswerBlock(answer: string): AnyBlock {
+    return {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*💡 Suggested answers:*\n${suggestionText}`,
+        text: `👤 *Your answer:* ${answer}`,
       },
-    });
+    };
+  }
+
+  updateMessageWithUserAnswer(blocks: AnyBlock[], answer: string): AnyBlock[] {
+    const updatedBlocks = [...blocks];
+    const userAnswerBlock = this.renderUserAnswerBlock(answer);
+
+    // Find the last actions block and insert the answer before it
+    const actionsIndices = updatedBlocks
+      .map((block, index) => (block.type === "actions" ? index : -1))
+      .filter((index) => index !== -1);
+
+    if (actionsIndices.length > 0) {
+      const lastActionsIndex = actionsIndices[actionsIndices.length - 1];
+      updatedBlocks.splice(lastActionsIndex, 0, userAnswerBlock);
+    } else {
+      // If no actions block found, just append
+      updatedBlocks.push(userAnswerBlock);
+    }
+
+    return updatedBlocks;
   }
 
   /**

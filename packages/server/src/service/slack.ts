@@ -1,5 +1,6 @@
 import type { Server } from "node:http";
 import type { DB } from "@ragdoll/db";
+import type { ButtonAction } from "@slack/bolt";
 import { App, type Installation } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
 import { sql } from "kysely";
@@ -8,6 +9,7 @@ import { db } from "../db";
 import { connectToWeb } from "../lib/connect";
 import { githubService } from "./github";
 import { slackTaskService } from "./slack-task";
+import { slackModalViewRenderer } from "./slack-task/slack-modal-view";
 import { slackRichTextRenderer } from "./slack-task/slack-rich-text";
 
 class SlackService {
@@ -267,6 +269,141 @@ class SlackService {
     this.app.action("view_task_button", ({ ack }) => ack());
     this.app.action("get_started_button", ({ ack }) => ack());
     this.app.action("connect_github_button", ({ ack }) => ack());
+
+    // Unified followup/message action handler
+    this.app.action(
+      /^followup_(.+)$/,
+      async ({ action, ack, body, context, client }) => {
+        await ack();
+
+        if (action.type !== "button") return;
+
+        const buttonAction = action as ButtonAction;
+        const match = buttonAction.action_id.match(/^followup_(.+)$/);
+        if (!match) return;
+
+        const [, payload] = match;
+
+        // Parse the payload
+        const parsed = slackTaskService.parseFollowupActionPayload(payload);
+        if (!parsed) return;
+
+        const { taskId, type, encodedContent } = parsed;
+
+        const vendorIntegrationId = context.teamId || context.enterpriseId;
+        if (!vendorIntegrationId) return;
+
+        // Get the user info and find the corresponding user in our system
+        const webClient =
+          await this.getWebClientByIntegration(vendorIntegrationId);
+        if (!webClient) return;
+
+        const userInfo = await webClient.users.info({
+          user: body.user.id,
+        });
+
+        if (!userInfo.ok || !userInfo.user?.profile?.email) return;
+
+        const targetUser = await db
+          .selectFrom("user")
+          .select(["id"])
+          .where("email", "=", userInfo.user.profile.email)
+          .executeTakeFirst();
+
+        if (!targetUser) return;
+
+        const metadata = {
+          channel: body.channel?.id || "",
+          messageTs: "message" in body && body.message ? body.message.ts : "",
+        };
+
+        if (type === "custom") {
+          await client.views.open({
+            trigger_id: (body as { trigger_id: string }).trigger_id,
+            view: slackModalViewRenderer.renderFollowupModal(taskId, metadata),
+          });
+        } else if (type === "direct") {
+          if (!encodedContent) return;
+
+          const content = slackTaskService.decodeContent(encodedContent);
+          if (!content) return;
+
+          // Open a modal with prefilled suggestion content
+          await client.views.open({
+            trigger_id: (body as { trigger_id: string }).trigger_id,
+            view: slackModalViewRenderer.renderFollowupModal(
+              taskId,
+              metadata,
+              content,
+            ),
+          });
+        }
+      },
+    );
+
+    // Handle followup modal submission (both numbered and custom)
+    this.app.view(
+      /^submit_followup_(.+)$/,
+      async ({ ack, body, view, context }) => {
+        await ack();
+
+        const match = view.callback_id.match(/^submit_followup_(.+)$/);
+        if (!match) return;
+
+        const [, taskId] = match;
+        const vendorIntegrationId = context.teamId || context.enterpriseId;
+        if (!vendorIntegrationId) return;
+
+        // Get the answer from the modal
+        const answer = view.state.values.answer_block.answer_input.value;
+        if (!answer) return;
+
+        // Get the user info and find the corresponding user in our system
+        const webClient =
+          await this.getWebClientByIntegration(vendorIntegrationId);
+        if (!webClient) return;
+
+        const userInfo = await webClient.users.info({
+          user: body.user.id,
+        });
+
+        if (!userInfo.ok || !userInfo.user?.profile?.email) return;
+
+        const targetUser = await db
+          .selectFrom("user")
+          .select(["id"])
+          .where("email", "=", userInfo.user.profile.email)
+          .executeTakeFirst();
+
+        if (!targetUser) return;
+
+        // Parse metadata from modal
+        const metadata = view.private_metadata
+          ? JSON.parse(view.private_metadata)
+          : null;
+
+        // Handle the followup action
+        const result = await slackTaskService.handleFollowupAction({
+          taskId,
+          content: answer,
+          userId: targetUser.id,
+          channel: metadata?.channel,
+          messageTs: metadata?.messageTs,
+        });
+
+        // Send confirmation message
+        const channelId = metadata?.channel || context.channelId;
+        if (channelId) {
+          await webClient.chat.postEphemeral({
+            channel: channelId,
+            user: body.user.id,
+            text: result.success
+              ? `✅ Submitted answer: "${answer}"`
+              : `❌ Failed to submit: ${result.error}`,
+          });
+        }
+      },
+    );
   }
 
   async handler(req: Request) {

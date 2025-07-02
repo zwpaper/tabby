@@ -235,8 +235,8 @@ class SlackTaskService {
     const { uid } = await taskService.createWithRunner({
       user,
       prompt: taskPrompt,
-      githubRepository: parsedCommand.githubRepository,
       event: slackEvent,
+      githubRepository: parsedCommand.githubRepository,
     });
 
     // Get the created task to retrieve todos
@@ -573,6 +573,107 @@ class SlackTaskService {
   }) {
     if (!shouldNotifyForEvent(eventType)) return;
     enqueueNotifyTaskSlack({ userId, uid });
+  }
+
+  /**
+   * Handle followup action from Slack button
+   */
+  async handleFollowupAction(params: {
+    taskId: string;
+    content: string;
+    userId: string;
+    channel?: string;
+    messageTs?: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Submit the answer using taskService
+      await taskService.appendUserMessage(
+        params.userId,
+        params.taskId,
+        params.content,
+      );
+
+      // Update the original message if we have the info
+      if (params.channel && params.messageTs) {
+        // Get the task to find the Slack user ID
+        const task = await taskService.get(params.taskId, params.userId);
+        const slackEventData = task
+          ? this.extractSlackDataFromTask(task)
+          : null;
+
+        await this.updateMessageWithUserAnswer(
+          params.userId,
+          params.channel,
+          params.messageTs,
+          params.content,
+          slackEventData?.slackUserId,
+        );
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Failed to handle followup action:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Show user's answer with a simple ephemeral message
+   */
+  private async updateMessageWithUserAnswer(
+    userId: string,
+    channel: string,
+    messageTs: string,
+    answer: string,
+    slackUserId?: string,
+  ): Promise<void> {
+    const webClient = await slackService.getWebClientByUser(userId);
+    if (!webClient || !slackUserId) return;
+
+    try {
+      // Post a simple ephemeral confirmation message instead of updating the original
+      await webClient.chat.postEphemeral({
+        channel,
+        user: slackUserId,
+        text: `✅ Your answer submitted: "${answer}"`,
+        thread_ts: messageTs, // Reply in thread if possible
+      });
+    } catch (error) {
+      console.error("Failed to show user answer confirmation:", error);
+    }
+  }
+
+  /**
+   * Parse followup action payload
+   */
+  parseFollowupActionPayload(payload: string): {
+    taskId: string;
+    type: string;
+    encodedContent?: string;
+  } | null {
+    const parts = payload.split("_");
+    if (parts.length < 2) return null;
+
+    return {
+      taskId: parts[0],
+      type: parts[1],
+      encodedContent: parts.slice(2).join("_"), // Handle cases where content might contain underscores
+    };
+  }
+
+  /**
+   * Decode base64 content
+   */
+  decodeContent(encodedContent: string): string | null {
+    try {
+      return Buffer.from(encodedContent, "base64").toString("utf-8");
+    } catch (error) {
+      console.error("Failed to decode content:", error);
+      return null;
+    }
   }
 }
 
