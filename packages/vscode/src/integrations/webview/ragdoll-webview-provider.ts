@@ -12,6 +12,8 @@ import {
 } from "@ragdoll/vscode-webui-bridge";
 import { container, inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { PochiConfiguration } from "../configuration";
 
 @injectable()
 @singleton()
@@ -28,6 +30,7 @@ export class RagdollWebviewProvider
     @inject("vscode.ExtensionContext")
     private readonly context: vscode.ExtensionContext,
     private readonly events: AuthEvents,
+    private readonly pochiConfiguration: PochiConfiguration,
   ) {}
 
   private disposables: vscode.Disposable[] = [
@@ -152,6 +155,10 @@ export class RagdollWebviewProvider
       }
     </style>`;
 
+    const webuiLoggingScript = `<script type="module">window.POCHI_LOG = "${this.pochiConfiguration.webui.value.POCHI_LOG || ""}";</script>`;
+    const webuiLoggingHash =
+      "sha256-droQu+3vZK1UeaO+ojGIph4AhUvK17d3hKVX6323MFk=";
+
     if (isProd) {
       const nonce = getNonce();
 
@@ -174,14 +181,17 @@ export class RagdollWebviewProvider
       const csp = [
         `default-src 'none';`,
         `img-src ${webview.cspSource} https://* blob: data:`,
-        `script-src 'nonce-${nonce}'`,
+        `script-src 'nonce-${nonce}' '${webuiLoggingHash}'`,
         `style-src ${webview.cspSource} 'unsafe-inline'`,
         `font-src ${webview.cspSource}`,
         `connect-src ${getServerBaseUrl()}`,
       ];
       const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
-      return this.buildHtml([cspHeader, style, setiFontStyle], [script]);
+      return this.buildHtml(
+        [cspHeader, style, setiFontStyle],
+        [webuiLoggingScript, script],
+      );
     }
 
     const devWebUIPort = "4112";
@@ -208,14 +218,17 @@ export class RagdollWebviewProvider
     const csp = [
       `default-src 'none';`,
       `img-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} https://* blob: data:`,
-      `script-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} '${reactRefreshHash}' 'unsafe-eval'`,
+      `script-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} '${reactRefreshHash}' '${webuiLoggingHash}' 'unsafe-eval'`,
       `style-src ${webview.cspSource} 'self' 'unsafe-inline'`,
       `font-src ${webview.cspSource}`,
       `connect-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} ${devWebUIWsBaseUrl} ${devWebUIWsBaseUrlIp} ${getServerBaseUrl()}`,
     ];
     const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
-    return this.buildHtml([cspHeader, setiFontStyle], [reactRefresh, script]);
+    return this.buildHtml(
+      [cspHeader, setiFontStyle],
+      [webuiLoggingScript, reactRefresh, script],
+    );
   }
 
   private buildHtml(headElements: string[], bodyElements: string[]): string {

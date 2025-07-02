@@ -40,12 +40,21 @@ function stringToLogLevel(level: string) {
   }
 }
 
+function getPochiLogLevel() {
+  if ("POCHI_LOG" in globalThis) {
+    // biome-ignore lint/suspicious/noExplicitAny: accessing global variable
+    return (globalThis as any).POCHI_LOG as string;
+  }
+
+  return process.env.POCHI_LOG || "";
+}
+
 function parseLogMinLevelAndType(name: string) {
   if (isVSCodeEnvironment()) {
     return 0;
   }
 
-  const config = process.env.POCHI_LOG || "";
+  const config = getPochiLogLevel();
   // POCHI_LOG=debug
   if (!config.includes("=")) {
     return stringToLogLevel(config);

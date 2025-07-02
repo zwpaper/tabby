@@ -7,6 +7,7 @@ import {
   type ThreadSignalSerialization,
   threadSignal,
 } from "@quilted/threads/signals";
+import { getLogger } from "@ragdoll/common";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
@@ -131,6 +132,8 @@ export interface ToolCallLifeCycle {
   reject(): void;
 }
 
+const logger = getLogger("ToolCallLifeCycle");
+
 export class ManagedToolCallLifeCycle
   extends Emittery<ToolCallLifeCycleEvents>
   implements ToolCallLifeCycle
@@ -210,6 +213,7 @@ export class ManagedToolCallLifeCycle
       );
       previewJob.then((result) => {
         if (result?.error) {
+          logger.debug("Tool call preview rejected:", result.error);
           this.transitTo("pending", {
             type: "complete",
             result,
@@ -449,6 +453,9 @@ export class ManagedToolCallLifeCycle
 
     this.state = newState;
 
+    logger.debug(
+      `${this.toolName}:${this.toolCallId} transitioned to ${newState.type}`,
+    );
     this.emit(this.state.type, this.state);
   }
 }

@@ -11,6 +11,8 @@ export class PochiConfiguration implements vscode.Disposable {
   // isDevMode = signal(getPochiAdvanceSettings().isDevMode ?? false);
   readonly mcpServers = signal(getPochiMcpServersSettings());
 
+  readonly webui = signal(getPochiWebviewLogSettings());
+
   constructor() {
     // const settings = getPochiAdvanceSettings();
     // this.isDevMode.value = settings.isDevMode ?? false;
@@ -24,6 +26,11 @@ export class PochiConfiguration implements vscode.Disposable {
         if (e.affectsConfiguration("pochi.mcpServers")) {
           const settings = getPochiMcpServersSettings();
           this.mcpServers.value = settings;
+        }
+
+        if (e.affectsConfiguration("pochi.webui")) {
+          const settings = getPochiWebviewLogSettings();
+          this.webui.value = settings;
         }
       }),
     );
@@ -77,4 +84,14 @@ async function updatePochiMcpServersSettings(value: PochiMcpServersSettings) {
   return vscode.workspace
     .getConfiguration("pochi")
     .update("mcpServers", value, true);
+}
+
+interface PochiWebUISettings {
+  POCHI_LOG?: string;
+}
+
+function getPochiWebviewLogSettings() {
+  return vscode.workspace
+    .getConfiguration("pochi")
+    .get("webui", {}) as PochiWebUISettings;
 }
