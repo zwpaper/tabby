@@ -1,5 +1,6 @@
 import { TaskThread } from "@/components/task-thread";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
@@ -104,15 +105,12 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
       }}
       expandableDetail={
         taskSource ? (
-          <div
-            className="max-h-[300px] overflow-y-auto rounded-lg border"
-            ref={newTaskContainer}
-          >
+          <ScrollArea viewportClassname="max-h-[300px]" ref={newTaskContainer}>
             <TaskThread
               user={{ name: "Runner" }} // FIXME(zhiming): remove the display of user name
               taskSource={taskSource}
             />
-          </div>
+          </ScrollArea>
         ) : undefined
       }
     />
