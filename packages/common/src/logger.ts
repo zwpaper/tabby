@@ -10,6 +10,10 @@ const isVSCodeEnvironment = () => {
     if (process.env.VSCODE_SERVER_PORT) {
       return true;
     }
+
+    if (process.env.VSCODE_CWD) {
+      return true;
+    }
   }
 
   return false;
