@@ -153,7 +153,6 @@ export function Home({
     stop: stopUpload,
     error: uploadImageError,
   } = useUploadImage({
-    token: auth?.session?.token || "",
     files,
   });
 

@@ -1,12 +1,12 @@
+import { apiClient } from "@/lib/auth-client";
 import { generateFileId } from "@/lib/utils/image";
 import type { Attachment } from "ai";
 import { useEffect, useRef, useState } from "react";
 interface UseUploadImageOptions {
-  token: string;
   files: File[] | undefined;
 }
 
-export function useUploadImage({ token, files }: UseUploadImageOptions) {
+export function useUploadImage({ files }: UseUploadImageOptions) {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [uploadingFilesMap, setUploadingFilesMap] = useState<
     Record<string, boolean>
@@ -49,24 +49,22 @@ export function useUploadImage({ token, files }: UseUploadImageOptions) {
         files.map(async (file) => {
           const fileId = generateFileId(file);
           try {
-            const formData = new FormData();
-            formData.append("image", file);
-            const response = await fetch("/api/upload", {
-              method: "POST",
-              body: formData,
-              signal,
-              headers: {
-                Authorization: `Bearer ${token}`,
+            const response = await apiClient.api.upload.$post({
+              form: {
+                image: file,
               },
             });
 
             if (!response.ok) {
-              setUploadResults((prev) => ({ ...prev, [fileId]: "error" }));
               throw new Error(`Upload failed: ${response.statusText}`);
             }
 
-            setUploadResults((prev) => ({ ...prev, [fileId]: "success" }));
             const data = await response.json();
+            if (!data.image) {
+              throw new Error("Failed to upload images");
+            }
+
+            setUploadResults((prev) => ({ ...prev, [fileId]: "success" }));
             const result: Attachment = {
               name: file.name || "unnamed-image",
               contentType: file.type,
@@ -74,6 +72,7 @@ export function useUploadImage({ token, files }: UseUploadImageOptions) {
             };
             return result;
           } catch (error) {
+            setUploadResults((prev) => ({ ...prev, [fileId]: "error" }));
             if (signal.aborted) {
               throw new DOMException("Aborted", "AbortError");
             }

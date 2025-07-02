@@ -5,14 +5,11 @@ import type { Attachment } from "ai";
 import { useRef, useState } from "react";
 
 interface UseImageUploadOptions {
-  token: string;
   maxImages?: number;
 }
 
-export function useImageUpload({
-  token,
-  maxImages = MaxImages,
-}: UseImageUploadOptions) {
+export function useImageUpload(options?: UseImageUploadOptions) {
+  const maxImages = options?.maxImages ?? MaxImages;
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<Error | undefined>(undefined);
@@ -136,16 +133,11 @@ export function useImageUpload({
 
     try {
       const uploadPromises = files.map(async (file) => {
-        const formData = new FormData();
-        formData.append("image", file);
-
-        const response = await fetch(apiClient.api.upload.$url().toString(), {
-          method: "POST",
-          body: formData,
-          signal,
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const response = await apiClient.api.upload.$post({
+          form: {
+            image: file,
           },
+          signal,
         });
 
         if (!response.ok) {
@@ -153,6 +145,11 @@ export function useImageUpload({
         }
 
         const data = await response.json();
+
+        if (!data.image) {
+          throw new Error("Failed to upload images");
+        }
+
         return {
           name: file.name || "unnamed-image",
           contentType: file.type,

@@ -1,3 +1,4 @@
+import { uploadBase64EncodedImage } from "@/lib/utils/upload";
 import { vscodeHost } from "@/lib/vscode";
 import {
   ThreadAbortSignal,
@@ -11,7 +12,7 @@ import { getLogger } from "@ragdoll/common";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import type { ClientToolsType } from "@ragdoll/tools";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
-import type { ToolInvocation } from "ai";
+import type { Tool, ToolInvocation } from "ai";
 import Emittery from "emittery";
 import type z from "zod";
 import type { ToolCallLifeCycleKey } from "./chat-state/types";
@@ -27,6 +28,10 @@ type NewTaskReturnType = {
   result: ThreadSignalSerialization<TaskRunnerState>;
 };
 type ExecuteReturnType = ExecuteCommandReturnType | NewTaskReturnType | unknown;
+
+type BrowserTakeScreenshotReturnType = {
+  content: ReturnType<NonNullable<Tool["experimental_toToolResultContent"]>>;
+};
 
 type StreamingResult =
   | {
@@ -337,6 +342,16 @@ export class ManagedToolCallLifeCycle
       "result" in result
     ) {
       this.onExecuteNewTask(result as NewTaskReturnType);
+    } else if (
+      this.toolName === "browser_take_screenshot" &&
+      typeof result === "object" &&
+      result !== null &&
+      "content" in result
+    ) {
+      this.onExecuteBrowserTakeScreenshot(
+        result as BrowserTakeScreenshotReturnType,
+        execute.abortController,
+      );
     } else {
       this.transitTo("execute", {
         type: "complete",
@@ -444,6 +459,21 @@ export class ManagedToolCallLifeCycle
     });
   }
 
+  private onExecuteBrowserTakeScreenshot(
+    result: BrowserTakeScreenshotReturnType,
+    abortController: AbortController,
+  ) {
+    overrideScreenshotResult(result, abortController).then(() => {
+      this.transitTo("execute", {
+        type: "complete",
+        result,
+        reason: abortController.signal.aborted
+          ? "user-abort"
+          : "execute-finish",
+      });
+    });
+  }
+
   private checkState<T extends ToolCallState["type"]>(
     op: string,
     expectedState: T,
@@ -477,5 +507,38 @@ export class ManagedToolCallLifeCycle
       `${this.toolName}:${this.toolCallId} transitioned to ${newState.type}`,
     );
     this.emit(this.state.type, this.state);
+  }
+}
+
+async function overrideScreenshotResult(
+  result: BrowserTakeScreenshotReturnType,
+  abortController: AbortController,
+) {
+  if (!Array.isArray(result?.content)) return;
+  const content: ReturnType<
+    NonNullable<Tool["experimental_toToolResultContent"]>
+  > = result.content;
+  try {
+    const uploadPromises = content.map(async (item) => {
+      if (item.type === "image") {
+        const url = await uploadBase64EncodedImage({
+          base64: item.data,
+          mimeType: item.mimeType ?? "",
+          abortController,
+        });
+        if (url) {
+          return {
+            ...item,
+            data: url,
+          };
+        }
+      }
+      return item;
+    });
+
+    const newContent = await Promise.all(uploadPromises);
+    result.content = newContent;
+  } catch (e) {
+    // Do not modify the content if upload fails.
   }
 }

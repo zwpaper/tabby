@@ -119,10 +119,13 @@ function ImageResult({
   data,
   mimeType,
 }: { type: "image"; data: string; mimeType: string }) {
+  const src = data.startsWith("https://")
+    ? data
+    : `data:${mimeType};base64,${data}`;
   return (
     <div className="bg-[var(--vscode-editor-background)]">
       <img
-        src={`data:${mimeType};base64,${data}`}
+        src={src}
         alt="MCP tool response snapshot"
         className="h-auto w-full shadow-sm"
       />

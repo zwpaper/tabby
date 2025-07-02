@@ -112,9 +112,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     useAutoDismissError();
 
   // Use the unified image upload hook
-  const imageUpload = useImageUpload({
-    token: auth.session.token,
-  });
+  const imageUpload = useImageUpload();
   const {
     files,
     isUploading: isUploadingImages,
