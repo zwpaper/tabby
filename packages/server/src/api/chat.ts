@@ -7,7 +7,6 @@ import type { Environment } from "@ragdoll/db";
 import {
   ClientTools,
   parseMcpToolSet,
-  selectExperimentalClientTools,
   selectServerTools,
 } from "@ragdoll/tools";
 import {
@@ -67,7 +66,6 @@ const chat = new Hono()
       environment,
       mcpToolSet,
       model: requestedModelId = "google/gemini-2.5-pro",
-      enableGeminiCustomToolCalls = true,
     } = req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
@@ -81,14 +79,7 @@ const chat = new Hono()
 
     checkWaitlist(user);
 
-    const enableNewTask = true; // Force enable newTask tool for now
-    const experimentalClientTools = enableNewTask
-      ? selectExperimentalClientTools(["newTask"])
-      : {};
-    const enabledClientTools = {
-      ...ClientTools,
-      ...experimentalClientTools,
-    };
+    const enabledClientTools = { ...ClientTools };
 
     // Prepare the tools to be used in the streamText call
     const enabledServerTools = selectServerTools(["webFetch", "batchCall"]);
@@ -99,14 +90,10 @@ const chat = new Hono()
     );
 
     const middlewareContext = {
-      newTask: enableNewTask ? { userId: user.id, parentId: uid } : undefined,
+      newTask: { userId: user.id, parentId: uid },
     };
 
-    const selectedModel = createModel(
-      validModelId,
-      middlewareContext,
-      enableGeminiCustomToolCalls,
-    );
+    const selectedModel = createModel(validModelId, middlewareContext);
 
     const dataStream = createDataStream({
       execute: async (stream) => {
@@ -355,13 +342,12 @@ async function prepareMessages(
 export default chat;
 
 interface MiddlewareContext {
-  newTask?: NewTaskMiddlewareContext;
+  newTask: NewTaskMiddlewareContext;
 }
 
 function createModel(
   modelId: AvailableModelId,
   middlewareContext: MiddlewareContext,
-  enableGeminiCustomToolCalls: boolean,
 ): LanguageModelV1 {
   const model = getModelById(modelId);
 
@@ -370,11 +356,9 @@ function createModel(
 
   middleware.push(createBatchCallMiddleware());
 
-  if (middlewareContext.newTask) {
-    middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
-  }
+  middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
 
-  if (enableGeminiCustomToolCalls && modelId.includes("google/gemini-2.5")) {
+  if (modelId.includes("google/gemini-2.5")) {
     middleware.push(createToolMiddleware());
   }
   return wrapLanguageModel({

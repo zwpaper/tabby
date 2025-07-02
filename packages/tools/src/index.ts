@@ -44,24 +44,17 @@ export const ClientTools = {
   searchFiles,
   todoWrite,
   writeToFile,
-};
-
-export const ExperimentalClientTools = {
   newTask,
 };
 
-export type ClientToolsType = typeof ClientTools &
-  typeof ExperimentalClientTools;
+export type ClientToolsType = typeof ClientTools;
 
 export const ServerTools = {
   webFetch,
   batchCall,
 };
 
-type ToolName =
-  | keyof typeof ClientTools
-  | keyof typeof ServerTools
-  | keyof typeof ExperimentalClientTools;
+type ToolName = keyof typeof ClientTools | keyof typeof ServerTools;
 
 export const ToolsByPermission = {
   read: [
@@ -90,20 +83,6 @@ export const selectServerTools = (tools: string[]) => {
     }
 
     ret[tool] = ServerTools[tool as keyof typeof ServerTools];
-  }
-
-  return ret;
-};
-
-export const selectExperimentalClientTools = (tools: string[]) => {
-  const ret: Record<string, Tool> = {};
-  for (const tool of tools) {
-    if (!(tool in ExperimentalClientTools)) {
-      throw new Error(`Tool ${tool} not found`);
-    }
-
-    ret[tool] =
-      ExperimentalClientTools[tool as keyof typeof ExperimentalClientTools];
   }
 
   return ret;

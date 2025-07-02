@@ -22,14 +22,6 @@ export const ZodChatRequestType = z.object({
   environment: ZodEnvironment.optional().describe(
     "Execution environment settings.",
   ),
-  enableNewTask: z
-    .boolean()
-    .optional()
-    .describe("This option is deprecated. The newTask tool is always enabled."), // FIXME(zhiming): remove this option in the future
-  enableGeminiCustomToolCalls: z
-    .boolean()
-    .optional()
-    .describe("Enable custom tool calls for Gemini models."),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;
