@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { User } from "@/lib/auth-client";
-import { ChevronsUpDown, LogOut, UserIcon } from "lucide-react";
+import { ChevronsUpDown, HelpCircle, LogOut, UserIcon } from "lucide-react";
 import { Section } from "../ui/section";
 
 interface AccountSectionProps {
@@ -49,6 +49,16 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ user }) => {
             >
               <UserIcon className="size-4" />
               Account
+            </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <a
+              href="https://docs.getpochi.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <HelpCircle className="size-4" />
+              Help
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer">

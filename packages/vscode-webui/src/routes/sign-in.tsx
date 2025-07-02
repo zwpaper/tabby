@@ -47,6 +47,17 @@ function SignInPage() {
       >
         <LogInIcon className="mr-2 size-4" /> Sign In
       </a>
+
+      <div className="absolute bottom-6">
+        <a
+          className="text-muted-foreground text-sm underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          href="https://docs.getpochi.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Need help? View documentation
+        </a>
+      </div>
     </div>
   );
 }
