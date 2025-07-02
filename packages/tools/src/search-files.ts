@@ -5,7 +5,7 @@ export const searchFiles = defineClientTool({
   description: `
 - Fast content search tool that works with any codebase size
 - Searches file contents using regular expressions
-- Supports full regex syntax (eg. "log.*Error", "function\s+\w+", etc.)
+- Supports Rust regex syntax (eg. "log.*Error", "function\s+\w+", etc.)
 - Filter files by pattern with the include parameter (eg. "*.js", "*.{ts,tsx}")
 - Returns file paths with at least one match sorted by modification time
 - Use this tool when you need to find files containing specific patterns
@@ -19,7 +19,7 @@ export const searchFiles = defineClientTool({
     regex: z
       .string()
       .describe(
-        "The regular expression pattern to search for in file contents",
+        "The regular expression pattern to search for in file contents. Uses Rust regex syntax.",
       ),
     filePattern: z
       .string()
