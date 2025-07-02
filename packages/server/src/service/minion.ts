@@ -78,7 +78,6 @@ class MinionService {
 
     const url = new URL(`https://${sandboxHost}`);
 
-    url.searchParams.append("folder", sandbox.projectDir);
     if (uid) {
       url.searchParams.append(
         "callback",
@@ -91,13 +90,20 @@ class MinionService {
       );
     }
 
+    let urlString = url.toString();
+    if (url.search) {
+      urlString += `&folder=${sandbox.projectDir}`;
+    } else {
+      urlString += `?folder=${sandbox.projectDir}`;
+    }
+
     // Update the minion with the sandbox ID
     await db
       .updateTable("minion")
       .where("id", "=", res.id)
       .set({
         sandboxId: sandbox.id,
-        url: url.toString(),
+        url: urlString,
       })
       .execute();
 
