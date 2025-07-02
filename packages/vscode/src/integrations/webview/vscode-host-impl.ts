@@ -276,6 +276,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         properties: {
           toolName,
           durationMs,
+          batched: options.toolCallId.startsWith("batch-"),
           status: abortSignal.aborted
             ? "aborted"
             : result.error

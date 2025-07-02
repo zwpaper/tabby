@@ -22,6 +22,7 @@ export type CaptureEvent =
       properties: {
         toolName: string;
         durationMs: number;
+        batched: boolean;
         status: "success" | "error" | "aborted";
       };
     }

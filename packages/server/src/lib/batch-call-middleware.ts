@@ -44,7 +44,7 @@ function createBatchCallTransformStream(): TransformStream<
         controller.enqueue({
           type: "tool-call",
           toolCallType: "function",
-          toolCallId: `${chunk.toolCallId}-${index}`,
+          toolCallId: `batch-${chunk.toolCallId}-${index}`,
           args: JSON.stringify(invocation.args),
           toolName: invocation.toolName,
         });
