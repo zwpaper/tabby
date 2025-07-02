@@ -49,6 +49,13 @@ export type TaskRunnerOptions = {
   abortSignal?: ThreadAbortSignalSerialization;
 };
 
+export type SaveCheckpointOptions = {
+  /**
+   * If true, will only save a checkpoint if there are changes, defaults to true
+   */
+  requireChange?: boolean;
+};
+
 const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";
 

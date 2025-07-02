@@ -14,7 +14,13 @@ class CheckpointManager {
     if (!this.checkpoints.has(key)) {
       const commit = await vscodeHost.saveCheckpoint(
         `task-${opts.messageId}-${opts.step}`,
+        {
+          requireChange: opts.step !== 0, //Save checkpoint on step 0 even if no changes
+        },
       );
+      if (!commit) {
+        return;
+      }
       this.checkpoints.set(key, { commit });
       return commit;
     }

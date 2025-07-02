@@ -52,6 +52,7 @@ import type {
   CaptureEvent,
   McpStatus,
   ResourceURI,
+  SaveCheckpointOptions,
   SessionState,
   TaskRunnerOptions,
   VSCodeHostApi,
@@ -421,8 +422,11 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   saveCheckpoint = runExclusive.build(
     this.checkpointGroup,
-    async (message: string): Promise<string> => {
-      return await this.checkpointService.saveCheckpoint(message);
+    async (
+      message: string,
+      options?: SaveCheckpointOptions,
+    ): Promise<string | undefined> => {
+      return await this.checkpointService.saveCheckpoint(message, options);
     },
   );
 

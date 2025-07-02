@@ -133,7 +133,7 @@ const VSCodeHostStub = {
   readMinionId: async () => {
     return Promise.resolve(undefined);
   },
-  saveCheckpoint: async (): Promise<string> => {
+  saveCheckpoint: async (): Promise<string | undefined> => {
     return "";
   },
   restoreCheckpoint: async (): Promise<void> => {

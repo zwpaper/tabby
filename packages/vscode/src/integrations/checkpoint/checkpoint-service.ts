@@ -2,6 +2,7 @@ import { mkdir } from "node:fs/promises";
 import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@ragdoll/common";
+import type { SaveCheckpointOptions } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import { ShadowGitRepo } from "./shadow-git-repo";
@@ -54,9 +55,12 @@ export class CheckpointService implements vscode.Disposable {
   /**
    * Saves a checkpoint for the current workspace.
    * @param message A message to associate with the checkpoint.
-   * @returns The commit hash of the created checkpoint.
+   * @returns The commit hash of the created checkpoint. If the repository is clean, returns undefined.
    */
-  saveCheckpoint = async (message: string): Promise<string> => {
+  saveCheckpoint = async (
+    message: string,
+    options: SaveCheckpointOptions = { requireChange: true },
+  ): Promise<string | undefined> => {
     logger.trace(`Saving checkpoint with message: ${message}`);
 
     await this.ensureInitialized();
@@ -66,6 +70,10 @@ export class CheckpointService implements vscode.Disposable {
     }
 
     try {
+      const status = await this.shadowGit.status();
+      if (status.isClean && options.requireChange) {
+        return;
+      }
       await this.shadowGit.stageAll();
       const commitMessage = `checkpoint-${message}`;
       const commitHash = await this.shadowGit.commit(commitMessage);

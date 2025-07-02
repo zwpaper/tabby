@@ -7,6 +7,7 @@ import type {
   McpStatus,
   NewTaskParams,
   ResourceURI,
+  SaveCheckpointOptions,
   SessionState,
   TaskIdParams,
   TaskRunnerOptions,
@@ -168,9 +169,12 @@ export interface VSCodeHostApi {
   /**
    * Saves a checkpoint with the given message.
    * @param message - The message to save as a checkpoint.
-   * @returns A promise that resolves to a commit hash representing the saved checkpoint.
+   * @returns A promise that resolves to a commit hash representing the saved checkpoint. If the repository is clean, it returns undefined.
    */
-  saveCheckpoint(message: string): Promise<string>;
+  saveCheckpoint(
+    message: string,
+    options?: SaveCheckpointOptions,
+  ): Promise<string | undefined>;
 
   /**
    * Restores the checkpoint to the latest commit or a specific commit hash.

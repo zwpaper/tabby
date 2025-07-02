@@ -129,6 +129,66 @@ export class ShadowGitRepo implements vscode.Disposable {
     }
   }
 
+  async status() {
+    try {
+      if (!this.git) {
+        throw new Error("Git instance is not initialized");
+      }
+      // For bare repository with worktree, use --work-tree flag
+      const statusOutput = await this.git.raw([
+        "--work-tree",
+        this.workspaceDir,
+        "status",
+        "--porcelain",
+        "--ignore-submodules=all",
+      ]);
+
+      // Parse the raw output to match StatusResult format
+      const files = statusOutput
+        .trim()
+        .split("\n")
+        .filter((line) => line.length > 0)
+        .map((line) => {
+          const status = line.substring(0, 2);
+          const path = line.substring(3);
+          return { path, index: status[0], working_dir: status[1] };
+        });
+
+      const status = {
+        not_added: files.filter(
+          (f) => f.index === "?" && f.working_dir === "?",
+        ),
+        conflicted: files.filter(
+          (f) => f.index === "U" || f.working_dir === "U",
+        ),
+        created: files.filter((f) => f.index === "A"),
+        deleted: files.filter((f) => f.index === "D"),
+        modified: files.filter((f) => f.index === "M"),
+        renamed: files.filter((f) => f.index === "R"),
+        files: files.map((f) => f.path),
+        staged: files.filter((f) => f.index !== " " && f.index !== "?"),
+        ahead: 0,
+        behind: 0,
+        current: null,
+        tracking: null,
+        detached: false,
+        isClean: files.length === 0,
+      };
+
+      logger.trace(`Retrieved status for the repository at ${this.gitPath}.`);
+      return status;
+    } catch (error) {
+      const errorMessage = toErrorMessage(error);
+      const message = `Failed to get status of the repository at ${this.gitPath}: ${errorMessage}`;
+      logger.error(message, {
+        error,
+        gitPath: this.gitPath,
+        workspaceDir: this.workspaceDir,
+      });
+      throw new Error(message);
+    }
+  }
+
   async stageAll() {
     try {
       if (!this.git) {
