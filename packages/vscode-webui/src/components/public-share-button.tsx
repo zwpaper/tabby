@@ -120,9 +120,17 @@ export function PublicShareButton({
     menuItemRef.current = "support";
     e.preventDefault();
     const version = await vscodeHost.readExtensionVersion();
-    doCopy(`Extension version: ${version}
-Model            : ${modelId}
-Link        : https://app.getpochi.com/share/${uid}`);
+    doCopy(
+      JSON.stringify(
+        {
+          "Extension version": version ?? "",
+          Model: modelId ?? "",
+          Link: `https://app.getpochi.com/share/${uid}`,
+        },
+        null,
+        2,
+      ),
+    );
   };
 
   return (
