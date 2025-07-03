@@ -548,7 +548,7 @@ class TaskService {
     return result.numUpdatedRows > 0;
   }
 
-  async appendMessages(
+  async patchMessages(
     uid: string,
     userId: string,
     messages: DBMessage[],
@@ -565,19 +565,35 @@ class TaskService {
       return false;
     }
 
-    const existingMessages = toUIMessages(task.conversation?.messages ?? []);
-    const existingMessageIds = new Set(existingMessages.map((m) => m.id));
-    const newMessages = toUIMessages(
-      messages.filter((m) => !existingMessageIds.has(m.id)),
-    );
+    const existingMessages = task.conversation?.messages ?? [];
+    const messageIds = [
+      ...existingMessages.map((m) => m.id),
+      ...messages.map((m) => m.id),
+    ];
 
-    if (newMessages.length === 0) {
-      return true;
+    const processedMessageIds = new Set<string>();
+    const allMessages: UIMessage[] = [];
+    for (const id of messageIds) {
+      if (processedMessageIds.has(id)) {
+        continue; // Skip if already processed to dedupe.
+      }
+
+      processedMessageIds.add(id);
+
+      // Prefer new messages over existing ones
+      const newMessage = messages.find((m) => m.id === id);
+      if (newMessage) {
+        allMessages.push(toUIMessage(newMessage));
+      } else {
+        // If the new message is not found, use the existing one
+        const existingMessage = existingMessages.find((m) => m.id === id);
+        if (existingMessage) {
+          allMessages.push(toUIMessage(existingMessage));
+        }
+      }
     }
 
-    const allMessages = [...existingMessages, ...newMessages];
     const messagesToSave = formatters.storage(allMessages);
-
     const result = await db
       .updateTable("task")
       .set({

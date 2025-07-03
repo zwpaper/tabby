@@ -245,7 +245,7 @@ const tasks = new Hono()
       const { uid } = c.req.valid("param");
       const { messages } = c.req.valid("json");
       const user = c.get("user");
-      const updated = await taskService.appendMessages(uid, user.id, messages);
+      const updated = await taskService.patchMessages(uid, user.id, messages);
       if (!updated) {
         throw new HTTPException(404, { message: "Task not found" });
       }
