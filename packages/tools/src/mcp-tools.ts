@@ -22,23 +22,6 @@ function parseMcpTool(name: string, mcpTool: McpTool): Tool {
   let toToolResultContent: Tool["experimental_toToolResultContent"];
   if (name === "browser_take_screenshot") {
     toToolResultContent = (result) => {
-      if (Array.isArray(result.content)) {
-        const content: ReturnType<
-          NonNullable<Tool["experimental_toToolResultContent"]>
-        > = result.content;
-        return content.map((x) => {
-          // When data is not a https url, it is a base64 encoded image.
-          // Replace it with a placeholder to prevent the window context from overflowing.
-          if (x.type === "image" && x.data && !x.data.startsWith("https://")) {
-            return {
-              type: "text",
-              text: "This is a placeholder for the screenshot, as the original base64 encoded image is too large to be displayed.",
-            };
-          }
-          return x;
-        });
-      }
-
       return result.content;
     };
   }

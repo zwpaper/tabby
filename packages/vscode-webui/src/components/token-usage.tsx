@@ -14,10 +14,6 @@ interface Props {
 export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
   const percentage = Math.ceil((totalTokens / contextWindow) * 100);
 
-  if (percentage < 60) {
-    return null;
-  }
-
   return (
     <Tooltip>
       <TooltipTrigger>

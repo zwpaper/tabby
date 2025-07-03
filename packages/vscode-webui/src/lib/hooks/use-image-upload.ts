@@ -4,6 +4,8 @@ import { createImageFileName, validateImage } from "@/lib/utils/image";
 import type { Attachment } from "ai";
 import { useRef, useState } from "react";
 
+const UseDataURI = true;
+
 interface UseImageUploadOptions {
   maxImages?: number;
 }
@@ -129,31 +131,15 @@ export function useImageUpload(options?: UseImageUploadOptions) {
 
     // Create new abort controller for this upload
     abortController.current = new AbortController();
-    const { signal } = abortController.current;
 
     try {
       const uploadPromises = files.map(async (file) => {
-        const response = await apiClient.api.upload.$post({
-          form: {
-            image: file,
-          },
-          signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Upload failed: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        if (!data.image) {
-          throw new Error("Failed to upload images");
-        }
-
         return {
           name: file.name || "unnamed-image",
           contentType: file.type,
-          url: data.image,
+          url: UseDataURI
+            ? await fileToDataUri(file)
+            : await fileToRemoteUri(file, abortController.current?.signal),
         };
       });
 
@@ -202,4 +188,34 @@ export function useImageUpload(options?: UseImageUploadOptions) {
     handleFileSelect,
     handlePaste,
   };
+}
+
+function fileToDataUri(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function fileToRemoteUri(file: File, signal?: AbortSignal) {
+  const response = await apiClient.api.upload.$post({
+    form: {
+      image: file,
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upload failed: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.image) {
+    throw new Error("Failed to upload images");
+  }
+
+  return data.image;
 }

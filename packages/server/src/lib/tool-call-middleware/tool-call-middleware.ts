@@ -352,22 +352,11 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
           };
         }
         if (message.role === "tool") {
-          return {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: message.content
-                  .map(
-                    (content) =>
-                      `${toolResponseTagTemplate(content.toolName)}${JSON.stringify(
-                        content.result,
-                      )}${toolResponseEndTag}`,
-                  )
-                  .join("\n"),
-              },
-            ],
-          };
+          return processToolResult(
+            message,
+            toolResponseTagTemplate,
+            toolResponseEndTag,
+          );
         }
 
         return message;
@@ -409,5 +398,42 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
         prompt: promptWithTools,
       };
     },
+  };
+}
+
+function processToolResult(
+  tool: Extract<LanguageModelV1Prompt[number], { role: "tool" }>,
+  toolResponseTagTemplate: (name: string) => string,
+  toolResponseEndTag: string,
+) {
+  const content: Extract<
+    LanguageModelV1Prompt[number],
+    { role: "user" }
+  >["content"] = [];
+
+  for (const x of tool.content) {
+    if (x.content && x.content.length > 0) {
+      for (const part of x.content || []) {
+        if (part.type === "image") {
+          content.push({
+            type: "image",
+            mimeType: part.mimeType,
+            image: Uint8Array.fromBase64(part.data),
+          });
+        } else {
+          content.push(part as (typeof content)[number]);
+        }
+      }
+    } else {
+      content.push({
+        type: "text",
+        text: `${toolResponseTagTemplate(x.toolName)}${JSON.stringify(x.result)}${toolResponseEndTag}`,
+      });
+    }
+  }
+
+  return {
+    role: "user",
+    content,
   };
 }
