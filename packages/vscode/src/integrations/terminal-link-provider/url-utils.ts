@@ -65,7 +65,7 @@ function parseAuthority(authority: string): { host: string; port?: string } {
  */
 function isLocalUrl(url: vscode.Uri): boolean {
   const { host } = parseAuthority(url.authority);
-  return host === "localhost" || host === "127.0.0.1";
+  return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
 }
 
 /**
