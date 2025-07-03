@@ -236,6 +236,7 @@
     "hono": "catalog:",
     "iterator-helpers-polyfill": "^3.0.1",
     "jszip": "^3.10.1",
+    "linkify-it": "^5.0.0",
     "posthog-node": "^4.17.2",
     "project-name-generator": "^2.1.9",
     "reflect-metadata": "^0.2.2",

@@ -1,3 +1,4 @@
+import LinkifyIt from "linkify-it";
 import * as vscode from "vscode";
 
 /**
@@ -16,24 +17,19 @@ import * as vscode from "vscode";
 function extractHttpUrls(
   line: string,
 ): { start: number; length: number; url: vscode.Uri }[] {
-  const urlRegex =
-    /https?:\/\/[\w\-\.\:]+(?:\/[\w\-\.\/%\?&=#@~\+\!\$\*'\(\),;:]*)?/g;
-  const results: { start: number; length: number; url: vscode.Uri }[] = [];
-  let match: RegExpExecArray | null = urlRegex.exec(line);
-  while (match !== null) {
-    const matchedUrl = match[0];
-    // Remove trailing punctuation that is not a valid URL character
-    const trimmedUrl = matchedUrl.replace(/[:;,\.]+$/g, "");
-    try {
-      results.push({
-        start: match.index,
-        length: trimmedUrl.length,
-        url: vscode.Uri.parse(trimmedUrl),
-      });
-    } catch {}
-    match = urlRegex.exec(line);
+  const linkify = new LinkifyIt();
+  const matches = linkify.match(line);
+  if (!matches) {
+    return [];
   }
-  return results;
+
+  return matches
+    .filter((match) => match.schema === "http:" || match.schema === "https:")
+    .map((match) => ({
+      start: match.index,
+      length: match.lastIndex - match.index,
+      url: vscode.Uri.parse(match.url),
+    }));
 }
 
 /**

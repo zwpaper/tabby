@@ -77,14 +77,27 @@ describe('extractHttpUrls', () => {
     assert.strictEqual(result[2].start, 55);
     assert.strictEqual(result[2].length, expectedUrlString3.length);
   });
+
+  it('should not include trailing brackets "()"', () => {
+    const line = 'Check this link (http://localhost:8080/) for details';
+    const result = extractHttpUrls(line);
+    const expectedUrlString = 'http://localhost:8080/';
+    const expectedUrl = vscode.Uri.parse(expectedUrlString);
+    assert.strictEqual(result.length, 1);
+    assert.deepStrictEqual(result[0].url.toJSON(), expectedUrl.toJSON());
+    assert.strictEqual(result[0].start, 17);
+    assert.strictEqual(result[0].length, expectedUrlString.length);
+  });
 });
 
 describe('isLocalUrl', () => {
   it('should detect localhost', () => {
     const url1 = vscode.Uri.parse('http://localhost');
     const url2 = vscode.Uri.parse('http://127.0.0.1:8080/path');
+    const url3 = vscode.Uri.parse('http://0.0.0.0');
     assert.strictEqual(isLocalUrl(url1), true);
     assert.strictEqual(isLocalUrl(url2), true);
+    assert.strictEqual(isLocalUrl(url3), true);
   });
   it('should not detect remote hosts', () => {
     const url1 = vscode.Uri.parse('http://example.com');
