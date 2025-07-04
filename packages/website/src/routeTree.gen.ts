@@ -28,10 +28,10 @@ import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.
 import { Route as AuthenticatedAdminPromptEvaluationImport } from './routes/_authenticated.admin/prompt-evaluation'
 import { Route as AuthenticatedBaseProfileImport } from './routes/_authenticated._base/profile'
 import { Route as AuthenticatedBaseHomeImport } from './routes/_authenticated._base/home'
+import { Route as AuthenticatedBaseCreateImport } from './routes/_authenticated._base/create'
 import { Route as AuthenticatedBaseSettingsRouteImport } from './routes/_authenticated._base/_settings/route'
 import { Route as AuthenticatedBaseTasksIndexImport } from './routes/_authenticated._base/tasks/index'
 import { Route as AuthenticatedBaseMinionsIndexImport } from './routes/_authenticated._base/minions/index'
-import { Route as AuthenticatedBaseTasksCreateImport } from './routes/_authenticated._base/tasks/create'
 import { Route as AuthenticatedBaseTasksUidImport } from './routes/_authenticated._base/tasks/$uid'
 import { Route as AuthenticatedBaseSettingsUsageImport } from './routes/_authenticated._base/_settings/usage'
 import { Route as AuthenticatedBaseSettingsModelImport } from './routes/_authenticated._base/_settings/model'
@@ -146,6 +146,12 @@ const AuthenticatedBaseHomeRoute = AuthenticatedBaseHomeImport.update({
   getParentRoute: () => AuthenticatedBaseRouteRoute,
 } as any)
 
+const AuthenticatedBaseCreateRoute = AuthenticatedBaseCreateImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AuthenticatedBaseRouteRoute,
+} as any)
+
 const AuthenticatedBaseSettingsRouteRoute =
   AuthenticatedBaseSettingsRouteImport.update({
     id: '/_settings',
@@ -163,13 +169,6 @@ const AuthenticatedBaseMinionsIndexRoute =
   AuthenticatedBaseMinionsIndexImport.update({
     id: '/minions/',
     path: '/minions/',
-    getParentRoute: () => AuthenticatedBaseRouteRoute,
-  } as any)
-
-const AuthenticatedBaseTasksCreateRoute =
-  AuthenticatedBaseTasksCreateImport.update({
-    id: '/tasks/create',
-    path: '/tasks/create',
     getParentRoute: () => AuthenticatedBaseRouteRoute,
   } as any)
 
@@ -302,6 +301,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseSettingsRouteImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
+    '/_authenticated/_base/create': {
+      id: '/_authenticated/_base/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof AuthenticatedBaseCreateImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
     '/_authenticated/_base/home': {
       id: '/_authenticated/_base/home'
       path: '/home'
@@ -386,13 +392,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseTasksUidImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
-    '/_authenticated/_base/tasks/create': {
-      id: '/_authenticated/_base/tasks/create'
-      path: '/tasks/create'
-      fullPath: '/tasks/create'
-      preLoaderRoute: typeof AuthenticatedBaseTasksCreateImport
-      parentRoute: typeof AuthenticatedBaseRouteImport
-    }
     '/_authenticated/_base/minions/': {
       id: '/_authenticated/_base/minions/'
       path: '/minions'
@@ -439,10 +438,10 @@ const AuthenticatedBaseSettingsRouteRouteWithChildren =
 
 interface AuthenticatedBaseRouteRouteChildren {
   AuthenticatedBaseSettingsRouteRoute: typeof AuthenticatedBaseSettingsRouteRouteWithChildren
+  AuthenticatedBaseCreateRoute: typeof AuthenticatedBaseCreateRoute
   AuthenticatedBaseHomeRoute: typeof AuthenticatedBaseHomeRoute
   AuthenticatedBaseProfileRoute: typeof AuthenticatedBaseProfileRoute
   AuthenticatedBaseTasksUidRoute: typeof AuthenticatedBaseTasksUidRoute
-  AuthenticatedBaseTasksCreateRoute: typeof AuthenticatedBaseTasksCreateRoute
   AuthenticatedBaseMinionsIndexRoute: typeof AuthenticatedBaseMinionsIndexRoute
   AuthenticatedBaseTasksIndexRoute: typeof AuthenticatedBaseTasksIndexRoute
 }
@@ -451,10 +450,10 @@ const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
   {
     AuthenticatedBaseSettingsRouteRoute:
       AuthenticatedBaseSettingsRouteRouteWithChildren,
+    AuthenticatedBaseCreateRoute: AuthenticatedBaseCreateRoute,
     AuthenticatedBaseHomeRoute: AuthenticatedBaseHomeRoute,
     AuthenticatedBaseProfileRoute: AuthenticatedBaseProfileRoute,
     AuthenticatedBaseTasksUidRoute: AuthenticatedBaseTasksUidRoute,
-    AuthenticatedBaseTasksCreateRoute: AuthenticatedBaseTasksCreateRoute,
     AuthenticatedBaseMinionsIndexRoute: AuthenticatedBaseMinionsIndexRoute,
     AuthenticatedBaseTasksIndexRoute: AuthenticatedBaseTasksIndexRoute,
   }
@@ -514,6 +513,7 @@ export interface FileRoutesByFullPath {
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
+  '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
   '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
@@ -526,7 +526,6 @@ export interface FileRoutesByFullPath {
   '/model': typeof AuthenticatedBaseSettingsModelRoute
   '/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
-  '/tasks/create': typeof AuthenticatedBaseTasksCreateRoute
   '/minions': typeof AuthenticatedBaseMinionsIndexRoute
   '/tasks': typeof AuthenticatedBaseTasksIndexRoute
 }
@@ -542,6 +541,7 @@ export interface FileRoutesByTo {
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
+  '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
   '/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
@@ -554,7 +554,6 @@ export interface FileRoutesByTo {
   '/model': typeof AuthenticatedBaseSettingsModelRoute
   '/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
-  '/tasks/create': typeof AuthenticatedBaseTasksCreateRoute
   '/minions': typeof AuthenticatedBaseMinionsIndexRoute
   '/tasks': typeof AuthenticatedBaseTasksIndexRoute
 }
@@ -573,6 +572,7 @@ export interface FileRoutesById {
   '/auth/$pathname': typeof AuthPathnameRoute
   '/share/$uid': typeof ShareUidRoute
   '/_authenticated/_base/_settings': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
+  '/_authenticated/_base/create': typeof AuthenticatedBaseCreateRoute
   '/_authenticated/_base/home': typeof AuthenticatedBaseHomeRoute
   '/_authenticated/_base/profile': typeof AuthenticatedBaseProfileRoute
   '/_authenticated/admin/prompt-evaluation': typeof AuthenticatedAdminPromptEvaluationRoute
@@ -585,7 +585,6 @@ export interface FileRoutesById {
   '/_authenticated/_base/_settings/model': typeof AuthenticatedBaseSettingsModelRoute
   '/_authenticated/_base/_settings/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/_authenticated/_base/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
-  '/_authenticated/_base/tasks/create': typeof AuthenticatedBaseTasksCreateRoute
   '/_authenticated/_base/minions/': typeof AuthenticatedBaseMinionsIndexRoute
   '/_authenticated/_base/tasks/': typeof AuthenticatedBaseTasksIndexRoute
 }
@@ -603,6 +602,7 @@ export interface FileRouteTypes {
     | '/stop-impersonating'
     | '/auth/$pathname'
     | '/share/$uid'
+    | '/create'
     | '/home'
     | '/profile'
     | '/admin/prompt-evaluation'
@@ -615,7 +615,6 @@ export interface FileRouteTypes {
     | '/model'
     | '/usage'
     | '/tasks/$uid'
-    | '/tasks/create'
     | '/minions'
     | '/tasks'
   fileRoutesByTo: FileRoutesByTo
@@ -630,6 +629,7 @@ export interface FileRouteTypes {
     | '/stop-impersonating'
     | '/auth/$pathname'
     | '/share/$uid'
+    | '/create'
     | '/home'
     | '/profile'
     | '/admin/prompt-evaluation'
@@ -642,7 +642,6 @@ export interface FileRouteTypes {
     | '/model'
     | '/usage'
     | '/tasks/$uid'
-    | '/tasks/create'
     | '/minions'
     | '/tasks'
   id:
@@ -659,6 +658,7 @@ export interface FileRouteTypes {
     | '/auth/$pathname'
     | '/share/$uid'
     | '/_authenticated/_base/_settings'
+    | '/_authenticated/_base/create'
     | '/_authenticated/_base/home'
     | '/_authenticated/_base/profile'
     | '/_authenticated/admin/prompt-evaluation'
@@ -671,7 +671,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_base/_settings/model'
     | '/_authenticated/_base/_settings/usage'
     | '/_authenticated/_base/tasks/$uid'
-    | '/_authenticated/_base/tasks/create'
     | '/_authenticated/_base/minions/'
     | '/_authenticated/_base/tasks/'
   fileRoutesById: FileRoutesById
@@ -744,10 +743,10 @@ export const routeTree = rootRoute
       "parent": "/_authenticated",
       "children": [
         "/_authenticated/_base/_settings",
+        "/_authenticated/_base/create",
         "/_authenticated/_base/home",
         "/_authenticated/_base/profile",
         "/_authenticated/_base/tasks/$uid",
-        "/_authenticated/_base/tasks/create",
         "/_authenticated/_base/minions/",
         "/_authenticated/_base/tasks/"
       ]
@@ -784,6 +783,10 @@ export const routeTree = rootRoute
         "/_authenticated/_base/_settings/model",
         "/_authenticated/_base/_settings/usage"
       ]
+    },
+    "/_authenticated/_base/create": {
+      "filePath": "_authenticated._base/create.tsx",
+      "parent": "/_authenticated/_base"
     },
     "/_authenticated/_base/home": {
       "filePath": "_authenticated._base/home.tsx",
@@ -831,10 +834,6 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_base/tasks/$uid": {
       "filePath": "_authenticated._base/tasks/$uid.tsx",
-      "parent": "/_authenticated/_base"
-    },
-    "/_authenticated/_base/tasks/create": {
-      "filePath": "_authenticated._base/tasks/create.tsx",
       "parent": "/_authenticated/_base"
     },
     "/_authenticated/_base/minions/": {

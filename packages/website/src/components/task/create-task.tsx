@@ -24,26 +24,23 @@ import {
   ImageIcon,
   Loader2Icon,
   SparklesIcon,
-  Terminal,
 } from "lucide-react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { HomeBackgroundGradient } from "./constants";
+import { HomeBackgroundGradient } from "../home/constants";
 
 export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at once
 
-export function Home({
+export function CreateTask({
   initialInput,
   className,
-  titleVisible = true,
-}: { initialInput?: string; className?: string; titleVisible?: boolean }) {
+}: { initialInput?: string; className?: string }) {
   const { data: auth } = useSession();
   const isMobileDevice = useIsMobile();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
-  const [creationMode, setCreationMode] = useState<"remote" | "local">(
-    "remote",
-  );
+  const isRemote = true;
+
   const { enhancePrompt, isPending: isEnhancing } = useEnhancingPrompt();
 
   const [inputValue, setInputValue] = useState(() => {
@@ -202,7 +199,7 @@ export function Home({
         const taskResponse = await apiClient.api.tasks.$post({
           json: {
             prompt: input,
-            remote: creationMode === "remote",
+            remote: isRemote,
             event: {
               type: "website:new-project",
               data: {
@@ -315,8 +312,6 @@ export function Home({
     }
   };
 
-  const isRemoteMode = creationMode === "remote";
-
   return (
     <div
       className={cn(
@@ -325,12 +320,6 @@ export function Home({
         className,
       )}
     >
-      {titleVisible && (
-        <h1 className="mb-12 flex gap-4 font-bold text-3xl tracking-tight md:text-5xl">
-          <Terminal className="hidden size-12 animate-[spin_6s_linear_infinite] md:block" />
-          What can I help you ship?
-        </h1>
-      )}
       <form
         className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80 dark:bg-input/30"
         onSubmit={handleSubmit}
@@ -353,41 +342,12 @@ export function Home({
           onPaste={(e) => {
             handlePasteImage(e);
           }}
-          placeholder="Ask pochi to build..."
+          placeholder="Ask Pochi to build..."
           className="!bg-transparent mb-4 min-h-10 w-full resize-none border-none text-black text-lg placeholder-gray-400 shadow-none focus-visible:ring-0 dark:text-white dark:placeholder-gray-500"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
-        <div className="flex items-center justify-between">
-          <div
-            className="flex items-center space-x-1 rounded-lg bg-gray-200/50 p-1 dark:bg-gray-700/50"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Button
-              type="button"
-              variant={isRemoteMode ? "default" : "ghost"}
-              size="sm"
-              className={cn("h-6 rounded-sm text-xs", {
-                "text-white": isRemoteMode,
-                "text-gray-500 dark:text-gray-400": !isRemoteMode,
-              })}
-              onClick={() => setCreationMode("remote")}
-            >
-              Remote
-            </Button>
-            <Button
-              type="button"
-              variant={!isRemoteMode ? "default" : "ghost"}
-              size="sm"
-              className={cn("h-6 rounded-sm text-xs", {
-                "text-white": !isRemoteMode,
-                "text-gray-500 dark:text-gray-400": isRemoteMode,
-              })}
-              onClick={() => setCreationMode("local")}
-            >
-              Local
-            </Button>
-          </div>
+        <div className="flex items-center justify-end">
           <div
             className="flex items-center space-x-2"
             onClick={(e) => e.stopPropagation()}
