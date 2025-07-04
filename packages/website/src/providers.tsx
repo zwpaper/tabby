@@ -9,6 +9,8 @@ import type { Router } from "@/main";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "./components/theme-provider";
 
+const isDEV = import.meta.env.DEV;
+
 export function Providers({
   router,
   children,
@@ -35,7 +37,7 @@ export function Providers({
           }}
           avatar
           credentials={false}
-          magicLink={true}
+          magicLink={isDEV}
         >
           <ThemeProvider>{children}</ThemeProvider>
           <Toaster richColors offset={{ bottom: 16 }} />
