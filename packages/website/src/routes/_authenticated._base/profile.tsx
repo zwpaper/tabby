@@ -452,51 +452,52 @@ function BillingCard({
     0,
     freeCreditInDollars - totalSpendingInDollars,
   );
+  const spentInDollars = Math.max(
+    0,
+    totalSpendingInDollars - freeCreditInDollars,
+  );
 
   return (
     <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
       <CardContent
         className={cn("p-4", {
-          "p-0": !!subscription,
+          "pb-0": !!subscription,
         })}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2 md:ml-2">
-            <div className="flex items-center gap-3">
-              <IconCreditCard size={20} className="text-foreground" />
-              <span className="font-medium text-base">Stripe</span>
-              {subscriptionQuery.isLoading ? (
-                <Skeleton className="h-6 w-12 rounded-lg" />
-              ) : (
-                <Switch
-                  checked={isEffectivelyActive}
-                  onCheckedChange={subscriptionMutation.mutate}
-                  disabled={
-                    subscriptionMutation.isPending ||
-                    subscriptionQuery.isLoading
-                  }
-                />
-              )}
-            </div>
-            {subscription && (
-              <div className="ml-2 flex flex-col justify-center text-muted-foreground text-xs">
-                {subscription.periodEnd && (
-                  <span>
-                    {subscription.cancelAtPeriodEnd
-                      ? "Expires on "
-                      : "Renews on "}
-                    {moment(subscription.periodEnd).format("MMMM D, YYYY")}
-                  </span>
-                )}
-                {subscription.cancelAtPeriodEnd && (
-                  <span>
-                    Your plan will be canceled at the end of the current billing
-                    period.
-                  </span>
-                )}
-              </div>
+        <div className="flex items-center gap-2 md:ml-2">
+          <div className="flex shrink-0 items-center gap-3">
+            <IconCreditCard size={20} className="text-foreground" />
+            <span className="font-medium text-base">Stripe</span>
+            {subscriptionQuery.isLoading ? (
+              <Skeleton className="h-6 w-12 rounded-lg" />
+            ) : (
+              <Switch
+                checked={isEffectivelyActive}
+                onCheckedChange={subscriptionMutation.mutate}
+                disabled={
+                  subscriptionMutation.isPending || subscriptionQuery.isLoading
+                }
+              />
             )}
           </div>
+          {subscription && (
+            <div className="ml-2 flex flex-col justify-center text-muted-foreground text-xs">
+              {subscription.periodEnd && (
+                <span>
+                  {subscription.cancelAtPeriodEnd
+                    ? "Expires on "
+                    : "Renews on "}
+                  {moment(subscription.periodEnd).format("MMMM D, YYYY")}
+                </span>
+              )}
+              {subscription.cancelAtPeriodEnd && (
+                <span>
+                  Your plan will be canceled at the end of the current billing
+                  period.
+                </span>
+              )}
+            </div>
+          )}
         </div>
         {isCreditLimitReached && (
           <Alert variant="destructive" className="mt-4 border-0">
@@ -508,10 +509,10 @@ function BillingCard({
           </Alert>
         )}
         <div className="mt-4 mb-8 border-border/50 border-t" />
-        <div className="mb-2 grid grid-cols-2 items-start gap-8">
+        <div className="mb-4 grid grid-cols-2 items-start gap-8">
           <StatItem
-            label="CURRENT SPENDING"
-            value={totalSpendingInDollars.toLocaleString("en-US", {
+            label="FREE CREDIT REMAINING"
+            value={freeCreditRemaining.toLocaleString("en-US", {
               style: "currency",
               currency: "USD",
             })}
@@ -519,8 +520,8 @@ function BillingCard({
             isError={billingQuotaQuery.isError}
           />
           <StatItem
-            label="FREE CREDIT REMAINING"
-            value={freeCreditRemaining.toLocaleString("en-US", {
+            label="CURRENT SPENDING"
+            value={spentInDollars.toLocaleString("en-US", {
               style: "currency",
               currency: "USD",
             })}
