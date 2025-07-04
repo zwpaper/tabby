@@ -174,7 +174,7 @@ export interface VSCodeHostApi {
   saveCheckpoint(
     message: string,
     options?: SaveCheckpointOptions,
-  ): Promise<string | undefined>;
+  ): Promise<string | null>;
 
   /**
    * Restores the checkpoint to the latest commit or a specific commit hash.

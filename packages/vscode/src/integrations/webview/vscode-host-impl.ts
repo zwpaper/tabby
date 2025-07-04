@@ -425,7 +425,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     async (
       message: string,
       options?: SaveCheckpointOptions,
-    ): Promise<string | undefined> => {
+    ): Promise<string | null> => {
       return await this.checkpointService.saveCheckpoint(message, options);
     },
   );

@@ -8,9 +8,14 @@ import { ExpandableToolContainer } from "./tool-invocation/tool-container";
 interface ReasoningPartUIProps {
   isLoading: boolean;
   part: ReasoningUIPart;
+  className?: string;
 }
 
-export function ReasoningPartUI({ part, isLoading }: ReasoningPartUIProps) {
+export function ReasoningPartUI({
+  className,
+  part,
+  isLoading,
+}: ReasoningPartUIProps) {
   const iconClass = tw`text-blue-700 dark:text-blue-300`;
   const title = (
     <span className="flex items-center gap-2">
@@ -30,5 +35,9 @@ export function ReasoningPartUI({ part, isLoading }: ReasoningPartUIProps) {
 
   const detail = <MessageMarkdown>{part.reasoning}</MessageMarkdown>;
 
-  return <ExpandableToolContainer title={title} expandableDetail={detail} />;
+  return (
+    <div className={className}>
+      <ExpandableToolContainer title={title} expandableDetail={detail} />
+    </div>
+  );
 }

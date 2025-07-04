@@ -1,4 +1,5 @@
 import { useToolCallLifeCycle } from "@/features/chat";
+import { cn } from "@/lib/utils";
 import type { ToolInvocation } from "ai";
 import { McpToolCall } from "./mcp-tool-call";
 import { applyDiffTool } from "./tools/apply-diff";
@@ -20,10 +21,12 @@ export function ToolInvocationPart({
   tool,
   isLoading,
   messageId,
+  className,
 }: {
   tool: ToolInvocation;
   isLoading: boolean;
   messageId: string;
+  className?: string;
 }) {
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: tool.toolName,
@@ -34,7 +37,7 @@ export function ToolInvocationPart({
   const C = Tools[tool.toolName];
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className={cn("flex flex-col gap-1", className)}>
       {C ? (
         <C
           tool={tool}

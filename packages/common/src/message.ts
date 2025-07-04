@@ -2,7 +2,7 @@ import type { DataStreamWriter, LanguageModelUsage, UIMessage } from "ai";
 
 export type ExtendedPartMixin = {
   checkpoint?: {
-    commit: string; // The commit hash or identifier for the checkpoint
+    commit: string | null; // The commit hash or identifier for the checkpoint
   };
 };
 

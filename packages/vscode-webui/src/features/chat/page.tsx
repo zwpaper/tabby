@@ -4,7 +4,12 @@ import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
 import { useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
-import { formatters, prompts, toUIMessages } from "@ragdoll/common";
+import {
+  formatters,
+  fromUIMessages,
+  prompts,
+  toUIMessages,
+} from "@ragdoll/common";
 import type { Environment, Todo } from "@ragdoll/db";
 import { type UIMessage, generateId } from "ai";
 import type { InferResponseType } from "hono/client";
@@ -50,7 +55,7 @@ import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useTokenUsageUpdater } from "./hooks/use-token-usage-updater";
 import { useHandleChatEvents } from "./lib/chat-events";
-import checkpointManager from "./lib/checkpoint-manager";
+import { useStoreCheckpointsIntoMessages } from "./lib/chat-state";
 import { prepareRequestBody } from "./lib/prepare-request-body";
 
 export function ChatPage({
@@ -335,13 +340,15 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     setMessages: setMessages,
   });
 
+  const storeCheckpointsIntoMessages = useStoreCheckpointsIntoMessages();
+
   useEffect(() => {
     if (!allowAddToolResult) return;
-    if (checkpointManager.fillCheckpoint(messages)) {
-      // If the checkpoint is filled, we need to update the messages
+    if (storeCheckpointsIntoMessages(messages)) {
       setMessages(messages);
     }
-  }, [messages, setMessages, allowAddToolResult]);
+  }, [messages, setMessages, allowAddToolResult, storeCheckpointsIntoMessages]);
+  useSaveMessages({ messages, uid });
 
   useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
 
@@ -512,6 +519,30 @@ function useTaskError(status: UseChatHelpers["status"], task?: Task | null) {
     }
   }, [status, taskError]);
   return taskError;
+}
+
+function useSaveMessages({
+  messages,
+  uid,
+}: {
+  messages: UIMessage[];
+  uid: RefObject<string | undefined>;
+}) {
+  // biome-ignore lint/correctness/useExhaustiveDependencies(uid.current): uid is ref
+  useEffect(() => {
+    return () => {
+      const lastMessage = messages.at(-1);
+      if (!uid.current || !lastMessage) return;
+      apiClient.api.tasks[":uid"].messages.$patch({
+        param: {
+          uid: uid.current,
+        },
+        json: {
+          messages: fromUIMessages([lastMessage]),
+        },
+      });
+    };
+  }, [messages]);
 }
 
 function useSessionId(uid: RefObject<string | undefined>) {

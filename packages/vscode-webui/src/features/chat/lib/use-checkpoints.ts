@@ -1,0 +1,130 @@
+import { vscodeHost } from "@/lib/vscode";
+import type { ExtendedUIMessage } from "@ragdoll/common";
+import { useCallback, useMemo, useRef, useState } from "react";
+
+type CheckpointState =
+  | {
+      type: "init";
+    }
+  | {
+      type: "saving";
+      job: Promise<unknown>;
+    }
+  | {
+      type: "saved";
+      commit: string | null;
+    };
+
+class Checkpoint {
+  state: CheckpointState = { type: "init" };
+
+  constructor(
+    private readonly message: string,
+    private readonly requireChange: boolean,
+  ) {}
+
+  async saveIfNeeded(onSaved: () => void) {
+    if (this.state.type === "init") {
+      this.state = {
+        type: "saving",
+        job: vscodeHost
+          .saveCheckpoint(this.message, {
+            requireChange: this.requireChange,
+          })
+          .then((commit) => {
+            this.state = {
+              type: "saved",
+              commit,
+            };
+            onSaved();
+          }),
+      };
+    }
+
+    if (this.state.type === "saving") {
+      // Wait for the saving job to complete
+      await this.state.job;
+    }
+  }
+}
+
+export function useCheckpoints() {
+  const [checkpoints, setCheckpoints] = useState<Map<string, Checkpoint>>(
+    new Map(),
+  );
+
+  const completedCheckpoints = useMemo(() => {
+    const completed = new Map<string, string | null>();
+    for (const [k, x] of checkpoints.entries()) {
+      if (x.state.type === "saved") {
+        completed.set(k, x.state.commit);
+      }
+    }
+    return completed;
+  }, [checkpoints]);
+
+  const checkpointsRef = useRef<Map<string, Checkpoint>>(new Map());
+  const reloadCheckpoints = useCallback(() => {
+    setCheckpoints(new Map(checkpointsRef.current));
+  }, []);
+
+  const getCheckpoint = useCallback(
+    (key: { messageId: string; step: number }) => {
+      let checkpoint = checkpointsRef.current.get(checkpointKey(key));
+      if (!checkpoint) {
+        checkpoint = new Checkpoint(key.messageId, key.step !== 0);
+        checkpointsRef.current.set(checkpointKey(key), checkpoint);
+        return checkpoint;
+      }
+      return checkpoint;
+    },
+    [],
+  );
+
+  const checkpoint = useCallback(
+    (key: { messageId: string; step: number }) => {
+      const checkpoint = getCheckpoint(key);
+      return checkpoint.saveIfNeeded(reloadCheckpoints);
+    },
+    [getCheckpoint, reloadCheckpoints],
+  );
+
+  const storeCheckpointsIntoMessages = useCallback(
+    (messages: ExtendedUIMessage[]) => {
+      let isDirty = false;
+      for (const message of messages) {
+        let step = 0;
+        for (const part of message.parts) {
+          if (part.type === "step-start" && !part.checkpoint) {
+            const commit = completedCheckpoints.get(
+              checkpointKey({ messageId: message.id, step }),
+            );
+
+            if (commit === undefined) {
+              continue; // Not yet saved
+            }
+
+            part.checkpoint = { commit };
+            isDirty = true;
+          }
+
+          if (part.type === "step-start") {
+            step++;
+          }
+        }
+      }
+
+      return isDirty;
+    },
+    [completedCheckpoints],
+  );
+
+  return {
+    checkpoint,
+    storeCheckpointsIntoMessages,
+  };
+}
+
+function checkpointKey(key: { messageId: string; step: number }): string {
+  return `ckpt-${key.messageId}-${key.step}`;
+}

@@ -1,3 +1,4 @@
+import type { ExtendedUIMessage } from "@ragdoll/common";
 import { createContext } from "react";
 import type { ToolCallLifeCycle } from "../tool-call-life-cycle";
 
@@ -6,6 +7,7 @@ export interface ChatState {
   getToolCallLifeCycle: (key: ToolCallLifeCycleKey) => ToolCallLifeCycle;
   executingToolCalls: ToolCallLifeCycle[];
   completeToolCalls: ToolCallLifeCycle[];
+  storeCheckpointsIntoMessages: (messages: ExtendedUIMessage[]) => boolean;
 }
 
 export interface ToolCallLifeCycleKey {

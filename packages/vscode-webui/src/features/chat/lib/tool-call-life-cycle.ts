@@ -15,7 +15,6 @@ import type { ToolInvocation } from "ai";
 import Emittery from "emittery";
 import type z from "zod";
 import type { ToolCallLifeCycleKey } from "./chat-state/types";
-import checkpointManager from "./checkpoint-manager";
 
 type PreviewReturnType = { error: string } | undefined;
 type ExecuteCommandReturnType = {
@@ -150,7 +149,13 @@ export class ManagedToolCallLifeCycle
 
   private readonly messageId: string;
 
-  constructor(key: ToolCallLifeCycleKey) {
+  constructor(
+    key: ToolCallLifeCycleKey,
+    private readonly checkpoint: (key: {
+      messageId: string;
+      step: number;
+    }) => Promise<void>,
+  ) {
     super();
     this.toolName = key.toolName;
     this.toolCallId = key.toolCallId;
@@ -212,7 +217,7 @@ export class ManagedToolCallLifeCycle
       });
     previewJob = previewJob.then(async (result) => {
       if (step !== undefined) {
-        await checkpointManager.checkpointStepIfNeeded({
+        await this.checkpoint({
           messageId: this.messageId,
           step,
         });

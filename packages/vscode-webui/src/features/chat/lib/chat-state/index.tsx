@@ -23,5 +23,9 @@ export function useToolCallLifeCycle() {
   };
 }
 
+export function useStoreCheckpointsIntoMessages() {
+  return useChatState().storeCheckpointsIntoMessages;
+}
+
 export { ChatContextProvider } from "./chat";
 export { FixedStateChatContextProvider } from "./fixed-state";

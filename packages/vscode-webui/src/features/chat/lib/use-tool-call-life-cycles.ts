@@ -3,7 +3,11 @@ import type { ToolCallLifeCycleKey } from "./chat-state/types";
 import { ManagedToolCallLifeCycle } from "./tool-call-life-cycle";
 
 // Hook to manage tool call states
-export function useToolCallLifeCycles() {
+export function useToolCallLifeCycles({
+  checkpoint,
+}: {
+  checkpoint: (key: { messageId: string; step: number }) => Promise<void>;
+}) {
   const [toolCallLifeCycles, setToolCallLifeCycles] = useState<
     Map<string, ManagedToolCallLifeCycle>
   >(new Map());
@@ -44,7 +48,7 @@ export function useToolCallLifeCycles() {
   const getToolCallLifeCycle = useCallback(
     (key: ToolCallLifeCycleKey) => {
       if (!toolCallLifeCyclesRef.current.has(key.toolCallId)) {
-        const lifecycle = new ManagedToolCallLifeCycle(key);
+        const lifecycle = new ManagedToolCallLifeCycle(key, checkpoint);
         toolCallLifeCyclesRef.current.set(key.toolCallId, lifecycle);
         const unsubscribe = lifecycle.onAny((name) => {
           reloadToolCallLifeCycles();
@@ -61,7 +65,7 @@ export function useToolCallLifeCycles() {
         // Guaranteed to exist because we just set it above
       ) as ManagedToolCallLifeCycle;
     },
-    [reloadToolCallLifeCycles],
+    [reloadToolCallLifeCycles, checkpoint],
   );
 
   return {

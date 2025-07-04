@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
-import { hasExtendedPartMixin } from "@ragdoll/common";
+import type { ExtendedPartMixin } from "@ragdoll/common";
 import { useEffect } from "react";
 import { CheckpointUI } from "../checkpoint-ui";
 import { MessageAttachments } from "./attachments";
@@ -65,7 +65,7 @@ export const MessageList: React.FC<{
               )}
               <strong>{m.role === "user" ? user?.name : "Pochi"}</strong>
             </div>
-            <div className="mt-3 ml-1 flex flex-col gap-2">
+            <div className="mt-3 ml-1 flex flex-col">
               {m.parts.map((part, index) => (
                 <Part
                   key={index}
@@ -73,6 +73,7 @@ export const MessageList: React.FC<{
                     index === m.parts.length - 1 &&
                     messageIndex === renderMessages.length - 1
                   }
+                  partIndex={index}
                   part={part}
                   isLoading={isLoading}
                   messageId={m.id}
@@ -102,33 +103,45 @@ export const MessageList: React.FC<{
 
 function Part({
   part,
+  partIndex,
   isLastPartInMessages,
   isLoading,
   messageId,
 }: {
+  partIndex: number;
   part: NonNullable<UIMessage["parts"]>[number];
   isLastPartInMessages: boolean;
   isLoading: boolean;
   messageId: string;
 }) {
+  const paddingClass = partIndex === 0 ? "" : "mt-2";
   if (part.type === "text") {
-    return <TextPartUI part={part} />;
+    return <TextPartUI className={paddingClass} part={part} />;
   }
 
   if (part.type === "reasoning") {
-    return <ReasoningPartUI part={part} isLoading={isLastPartInMessages} />;
+    return (
+      <ReasoningPartUI
+        className={paddingClass}
+        part={part}
+        isLoading={isLastPartInMessages}
+      />
+    );
   }
 
   if (part.type === "step-start") {
-    if (hasExtendedPartMixin(part)) {
-      return <CheckpointUI checkpoint={part.checkpoint} />;
-    }
-    return null;
+    return (
+      <CheckpointUI
+        checkpoint={(part as ExtendedPartMixin).checkpoint}
+        isLoading={isLoading}
+      />
+    );
   }
 
   if (part.type === "tool-invocation") {
     return (
       <ToolInvocationPart
+        className={paddingClass}
         tool={part.toolInvocation}
         isLoading={isLoading}
         messageId={messageId}
@@ -139,6 +152,9 @@ function Part({
   return <div>{JSON.stringify(part)}</div>;
 }
 
-function TextPartUI({ part }: { part: TextPart }) {
-  return <MessageMarkdown>{part.text}</MessageMarkdown>;
+function TextPartUI({
+  className,
+  part,
+}: { part: TextPart; className?: string }) {
+  return <MessageMarkdown className={className}>{part.text}</MessageMarkdown>;
 }
