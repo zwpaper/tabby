@@ -91,12 +91,28 @@ export interface Minion {
   userId: string;
 }
 
+export interface MonthlyCreditLimit {
+  createdAt: Generated<Timestamp>;
+  id: Generated<number>;
+  limit: number;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+}
+
 export interface MonthlyUsage {
   count: Generated<number>;
   credit: Generated<number>;
   id: Generated<number>;
   modelId: string;
   startDayOfMonth: Timestamp;
+  userId: string;
+}
+
+export interface MonthlyUsageLimit {
+  createdAt: Generated<Timestamp>;
+  id: Generated<number>;
+  limit: number;
+  updatedAt: Generated<Timestamp>;
   userId: string;
 }
 
@@ -194,7 +210,9 @@ export interface DB {
   chatCompletion: ChatCompletion;
   externalIntegration: ExternalIntegration;
   minion: Minion;
+  monthlyCreditLimit: MonthlyCreditLimit;
   monthlyUsage: MonthlyUsage;
+  monthlyUsageLimit: MonthlyUsageLimit;
   session: Session;
   slackConnect: SlackConnect;
   subscription: Subscription;

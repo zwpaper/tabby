@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { sql } from "kysely";
 import Stripe from "stripe";
 import { z } from "zod";
 import { type User, requireAuth } from "../auth";
@@ -85,7 +86,6 @@ const billing = new Hono()
     zValidator("param", UserIdParamSchema),
     async (c) => {
       const { userId } = c.req.valid("param");
-
       const targetUser = await db
         .selectFrom("user")
         .selectAll()
@@ -102,6 +102,34 @@ const billing = new Hono()
         c.req,
       );
       return c.json(usage);
+    },
+  )
+  .put(
+    "/quota/me/usage",
+    requireAuth(),
+    zValidator(
+      "json",
+      z.object({
+        limit: z.number().int().min(10).max(2000),
+      }),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const { limit } = c.req.valid("json");
+      await db
+        .insertInto("monthlyCreditLimit")
+        .values({
+          userId: user.id,
+          limit,
+        })
+        .onConflict((oc) =>
+          oc
+            .column("userId")
+            .doUpdateSet({ limit, updatedAt: sql`CURRENT_TIMESTAMP` }),
+        )
+        .execute();
+
+      return c.json({ success: true });
     },
   );
 

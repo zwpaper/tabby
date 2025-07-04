@@ -8,7 +8,12 @@ import { formatters, prompts, toUIMessages } from "@ragdoll/common";
 import type { Environment, Todo } from "@ragdoll/db";
 import { type UIMessage, generateId } from "ai";
 import type { InferResponseType } from "hono/client";
-import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
+import {
+  ExternalLinkIcon,
+  ImageIcon,
+  SendHorizonal,
+  StopCircleIcon,
+} from "lucide-react";
 import {
   type RefObject,
   useCallback,
@@ -351,7 +356,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         messagesContainerRef={messagesContainerRef}
       />
       <div className="flex flex-col px-4">
-        <ErrorMessage error={displayError} />
+        <ErrorMessageView error={displayError} />
         {!isWorkspaceActive ? (
           <WorkspaceRequiredPlaceholder
             isFetching={isFetching}
@@ -558,4 +563,32 @@ function useSessionId(uid: RefObject<string | undefined>) {
   }, []);
 
   return sessionId;
+}
+
+function ErrorMessageView({ error }: { error: TaskError | undefined }) {
+  return (
+    <ErrorMessage
+      error={error}
+      formatter={(e) => {
+        if (e.message === "REACHED_CREDIT_LIMIT") {
+          return (
+            <span>
+              You have reached the credit limit.{" "}
+              <a
+                href="https://app.getpochi.com/profile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!underline py-1"
+              >
+                <ExternalLinkIcon className="mx-0.5 inline size-4" />
+                See more
+              </a>
+            </span>
+          );
+        }
+
+        return e.message;
+      }}
+    />
+  );
 }

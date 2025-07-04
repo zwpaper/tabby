@@ -8,6 +8,8 @@ import { readActiveSubscriptionLimits } from "../lib/billing";
 import { AvailableModels, computeCreditCost } from "../lib/constants";
 import { stripeClient } from "../lib/stripe";
 
+const FreeCreditInDollars = 20;
+
 export class UsageService {
   async trackUsage(
     user: User,
@@ -114,25 +116,42 @@ export class UsageService {
       .where(sql`"startDayOfMonth"`, "=", startOfMonth)
       .execute(); // Use executeTakeFirstOrThrow() if you expect a result or want an error
 
-    let credit = 0;
+    const monthlyCreditLimitResult = await db
+      .selectFrom("monthlyCreditLimit")
+      .select(["limit"])
+      .where("userId", "=", user.id)
+      .executeTakeFirst();
+
+    const monthlyCreditLimit = monthlyCreditLimitResult?.limit;
+
+    let spentCredit = 0;
     const usages = {
       basic: 0,
       premium: 0,
     };
 
     for (const x of results) {
-      credit += x.credit;
+      spentCredit += x.credit;
       const model = AvailableModels.find((m) => m.id === x.modelId);
       if (model) {
         usages[model.costType] += x.count;
       }
     }
 
+    const isLimitReached =
+      creditToDollars(spentCredit) - FreeCreditInDollars >
+      // default monthly credit limit is $10
+      (monthlyCreditLimit ?? 10);
+
     return {
       plan,
       usages,
       limits,
-      credit,
+      credit: {
+        spent: spentCredit,
+        limit: monthlyCreditLimit,
+        isLimitReached,
+      },
     };
   }
 
@@ -160,6 +179,10 @@ export class UsageService {
 
     return creditCost;
   }
+}
+
+function creditToDollars(credit: number): number {
+  return credit / 10_000_000;
 }
 
 export const usageService = new UsageService();

@@ -1,5 +1,6 @@
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { ReachedCreditLimitErrorMessage } from "..";
 import type { User } from "../auth";
 import { usageService } from "../service/usage";
 import { type AvailableModelId, AvailableModels } from "./constants";
@@ -38,6 +39,12 @@ export async function checkUserQuota(user: User, c: Context, modelId: string) {
 
   if (!modelCostType) {
     throw new HTTPException(400, { message: "Invalid model" });
+  }
+
+  if (quota.credit.isLimitReached) {
+    throw new HTTPException(400, {
+      message: ReachedCreditLimitErrorMessage,
+    });
   }
 
   if (quota.limits[modelCostType] - quota.usages[modelCostType] <= 0) {

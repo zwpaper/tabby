@@ -1,3 +1,11 @@
+import { SpendingLimitForm } from "@/components/profile/spending-limit-form";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,7 +22,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
-import { CreditCard as IconCreditCard } from "lucide-react";
+import { AlertTriangle, CreditCard as IconCreditCard } from "lucide-react";
 import moment from "moment";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -57,6 +65,7 @@ interface StatItemProps {
   isLoading: boolean;
   isError: boolean;
   className?: string;
+  description?: string;
 }
 
 function StatItem({
@@ -65,6 +74,7 @@ function StatItem({
   isLoading,
   isError,
   className,
+  description,
 }: StatItemProps) {
   const displayValue =
     typeof value === "number" ? value.toLocaleString() : value;
@@ -78,8 +88,15 @@ function StatItem({
       ) : isError ? (
         <div className="font-bold text-2xl text-destructive lg:text-3xl">—</div>
       ) : (
-        <div className="font-bold text-2xl text-foreground lg:text-3xl">
-          {displayValue}
+        <div>
+          <div className="font-bold text-2xl text-foreground lg:text-3xl">
+            {displayValue}
+          </div>
+          {description && (
+            <div className="mt-0.5 text-muted-foreground text-xs">
+              {description}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -376,6 +393,25 @@ function BillingCard({
     },
   });
 
+  const monthlyUsageLimitMutation = useMutation({
+    mutationFn: async (limit: number) => {
+      const res = await apiClient.api.billing.quota.me.usage.$put({
+        json: { limit },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update monthly credit limit");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast.success("Monthly credit limit updated successfully");
+      // queryClient.invalidateQueries({ queryKey: ["monthlyCreditLimit"] });
+    },
+    onError: () => {
+      toast.error("Failed to update monthly credit limit");
+    },
+  });
+
   const subscription = subscriptionQuery.data?.[0];
   const subscriptionMutation = useMutation({
     mutationFn: async (isSubscribing: boolean) => {
@@ -408,9 +444,22 @@ function BillingCard({
   const isPro = (subscription?.plan || "free") === "pro";
   const isEffectivelyActive = isPro && !subscription?.cancelAtPeriodEnd;
 
+  const totalCredit = billingQuotaQuery.data?.credit?.spent || 0;
+  const isCreditLimitReached = billingQuotaQuery.data?.credit?.isLimitReached;
+  const totalSpendingInDollars = creditToDollars(totalCredit);
+  const freeCreditInDollars = 20;
+  const freeCreditRemaining = Math.max(
+    0,
+    freeCreditInDollars - totalSpendingInDollars,
+  );
+
   return (
     <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
-      <CardContent className="p-4">
+      <CardContent
+        className={cn("p-4", {
+          "p-0": !!subscription,
+        })}
+      >
         <div className="flex items-center justify-between">
           <div className="flex gap-2 md:ml-2">
             <div className="flex items-center gap-3">
@@ -448,14 +497,63 @@ function BillingCard({
               </div>
             )}
           </div>
+        </div>
+        {isCreditLimitReached && (
+          <Alert variant="destructive" className="mt-4 border-0">
+            <AlertTriangle />
+            <AlertTitle>Credit Limit Reached</AlertTitle>
+            <AlertDescription>
+              You have reached your monthly credit limit.
+            </AlertDescription>
+          </Alert>
+        )}
+        <div className="mt-4 mb-8 border-border/50 border-t" />
+        <div className="mb-2 grid grid-cols-2 items-start gap-8">
           <StatItem
             label="CURRENT SPENDING"
-            value={formatCreditToDollars(billingQuotaQuery.data?.credit || 0)}
+            value={totalSpendingInDollars.toLocaleString("en-US", {
+              style: "currency",
+              currency: "USD",
+            })}
             isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
             isError={billingQuotaQuery.isError}
-            className="md:mr-4"
+          />
+          <StatItem
+            label="FREE CREDIT REMAINING"
+            value={freeCreditRemaining.toLocaleString("en-US", {
+              style: "currency",
+              currency: "USD",
+            })}
+            isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
+            isError={billingQuotaQuery.isError}
           />
         </div>
+        {!!subscription && (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="spending-limit">
+              <AccordionTrigger className="flex-none px-1 font-medium md:px-2">
+                Billing Settings
+              </AccordionTrigger>
+              <AccordionContent className="px-1 md:px-2">
+                {billingQuotaQuery.isLoading && !billingQuotaQuery.data ? (
+                  <Skeleton className="h-24 w-full" />
+                ) : (
+                  <SpendingLimitForm
+                    defaultValues={{
+                      monthlyCreditLimit: billingQuotaQuery.data?.credit?.limit,
+                    }}
+                    onSubmit={(values) => {
+                      monthlyUsageLimitMutation.mutate(
+                        values.monthlyCreditLimit,
+                      );
+                    }}
+                    isSubmitting={monthlyUsageLimitMutation.isPending}
+                  />
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
       </CardContent>
     </Card>
   );
@@ -611,9 +709,6 @@ function RouteComponent() {
   );
 }
 
-function formatCreditToDollars(credit: number): string {
-  return (credit / 10_000_000).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
+function creditToDollars(credit: number): number {
+  return credit / 10_000_000;
 }
