@@ -57,7 +57,8 @@ export class FlyioSandboxProvider implements SandboxProvider {
         env: sandboxEnvs,
         services: [
           {
-            autostart: false,
+            autostart: true,
+            autostop: "suspend",
             ports: [
               {
                 port: 443,

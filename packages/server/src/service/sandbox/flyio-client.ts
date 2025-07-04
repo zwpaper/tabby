@@ -50,6 +50,7 @@ export interface CreateMachineRequest {
     env?: Record<string, string>;
     services?: Array<{
       autostart?: boolean;
+      autostop?: "off" | "stop" | "suspend";
       ports?: Array<{
         port?: number;
         handlers?: string[];
