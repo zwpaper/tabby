@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@ragdoll/db";
+import type { UIMessage } from "ai";
 import {
   type ComponentProps,
   useCallback,
@@ -9,11 +10,6 @@ import {
   useRef,
   useState,
 } from "react";
-
-// FIXME: move to a shared package
-interface Conversation {
-  messages: unknown[];
-}
 
 // FIXME: move to a shared package
 interface User {
@@ -25,14 +21,14 @@ const isDEV = import.meta.env.DEV;
 const webviewOrigin = "http://localhost:4112";
 
 interface ContentProps extends ComponentProps<"div"> {
-  conversation?: Conversation | null;
+  messages?: UIMessage[] | null;
   todos?: Todo[] | null;
   user?: User | null;
   theme?: string;
 }
 
 function TaskContent({
-  conversation,
+  messages,
   todos,
   user,
   theme,
@@ -110,7 +106,7 @@ function TaskContent({
       iframeRef.current.contentWindow?.postMessage(
         {
           type: "share",
-          messages: conversation?.messages,
+          messages,
           user,
           todos,
         },
@@ -119,7 +115,7 @@ function TaskContent({
         },
       );
     }
-  }, [conversation, todos, user, loaded]);
+  }, [messages, todos, user, loaded]);
 
   return (
     <div className={cn("flex flex-1 flex-col", className)} {...props}>

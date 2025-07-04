@@ -6,7 +6,10 @@ import { TaskPageSkeleton } from "@/components/task/skeleton";
 import { useTheme } from "@/components/theme-provider";
 import { apiClient } from "@/lib/auth-client";
 import { normalizeApiError, toHttpError } from "@/lib/error";
+import { inlineSubTasks } from "@/lib/inline-sub-task";
+import { toUIMessages } from "@ragdoll/common";
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
 
 export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
   component: RouteComponent,
@@ -17,6 +20,9 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
       const resp = await apiClient.api.tasks[":uid"].$get({
         param: {
           uid,
+        },
+        query: {
+          includeSubTasks: "true",
         },
       });
 
@@ -45,6 +51,12 @@ function RouteComponent() {
   const { auth } = Route.useRouteContext();
   const { theme } = useTheme();
 
+  const renderMessages = useMemo(() => {
+    const dbMessages = loaderData.conversation?.messages ?? [];
+    const subtasks = loaderData.subtasks ?? [];
+    return inlineSubTasks(toUIMessages(dbMessages), subtasks);
+  }, [loaderData]);
+
   return (
     <div className="mx-auto flex max-w-6xl flex-1 flex-col space-y-8">
       <TaskHeader
@@ -69,7 +81,7 @@ function RouteComponent() {
       </TaskHeader>
 
       <TaskContent
-        conversation={loaderData.conversation}
+        messages={renderMessages}
         todos={loaderData.todos}
         user={auth.user}
         theme={theme}

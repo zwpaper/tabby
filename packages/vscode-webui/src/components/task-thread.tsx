@@ -1,31 +1,45 @@
 import { MessageList } from "@/components/message/message-list";
-import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { cn } from "@/lib/utils";
-import { toUIMessages } from "@ragdoll/common";
 import type { Todo } from "@ragdoll/db";
-import type { Task, TaskRunnerState } from "@ragdoll/runner";
+import type { TaskRunnerState } from "@ragdoll/runner";
 import type { UIMessage } from "ai";
 import { useEffect, useState } from "react";
 import { FixedStateChatContextProvider } from "../features/chat/lib/chat-state";
 
+export type TaskThreadSource =
+  | {
+      type: "task";
+      messages: UIMessage[];
+      todos: Todo[];
+      isLoading?: boolean;
+    }
+  | {
+      type: "taskRunner";
+      runner: TaskRunnerState;
+    };
+
 export const TaskThread: React.FC<{
+  source: TaskThreadSource;
   user?: { name: string; image?: string | null };
-  taskSource:
-    | {
-        task?: Task;
-        isLoading?: boolean;
-      }
-    | {
-        runner: TaskRunnerState;
-      };
-}> = ({ user, taskSource }) => {
-  const resourceUri = useResourceURI();
+  logo?: string;
+}> = ({ source, user, logo }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [todos, setTodos] = useState<Todo[]>([]);
 
+  const sourceTask = source.type === "task" ? source : undefined;
+  useEffect(() => {
+    if (!sourceTask) {
+      return;
+    }
+
+    setIsLoading(sourceTask.isLoading ?? false);
+    setMessages(sourceTask.messages);
+    setTodos(sourceTask.todos);
+  }, [sourceTask]);
+
   const sourceTaskRunner =
-    "runner" in taskSource ? taskSource.runner : undefined;
+    source.type === "taskRunner" ? source.runner : undefined;
   useEffect(() => {
     if (!sourceTaskRunner) {
       return;
@@ -50,20 +64,6 @@ export const TaskThread: React.FC<{
     }
   }, [sourceTaskRunner]);
 
-  const sourceTaskLoader = "task" in taskSource ? taskSource : undefined;
-  useEffect(() => {
-    if (!sourceTaskLoader) {
-      return;
-    }
-
-    setIsLoading(sourceTaskLoader.isLoading ?? false);
-    if (sourceTaskLoader.task) {
-      const task = sourceTaskLoader.task;
-      setMessages(toUIMessages(task.conversation?.messages ?? []));
-      setTodos(task.todos ?? []);
-    }
-  }, [sourceTaskLoader]);
-
   return (
     <FixedStateChatContextProvider taskRunnerState={sourceTaskRunner}>
       <div className="flex flex-col">
@@ -86,7 +86,7 @@ export const TaskThread: React.FC<{
         <MessageList
           messages={messages}
           user={user}
-          logo={resourceUri?.logo128}
+          logo={logo}
           isLoading={isLoading}
           containerRef={undefined}
         />

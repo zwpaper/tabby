@@ -135,6 +135,22 @@ function removeToolCallArgumentMetadata(messages: UIMessage[]): UIMessage[] {
   });
 }
 
+function removeToolCallArgumentTransientData(
+  messages: UIMessage[],
+): UIMessage[] {
+  return messages.map((message) => {
+    message.parts = message.parts.map((part) => {
+      if (part.type === "tool-invocation") {
+        if (part.toolInvocation.args._transient) {
+          part.toolInvocation.args._transient = undefined;
+        }
+      }
+      return part;
+    });
+    return message;
+  });
+}
+
 function removeToolCallResultMetadata(messages: UIMessage[]): UIMessage[] {
   return messages.map((message) => {
     message.parts = message.parts.map((part) => {
@@ -184,6 +200,7 @@ const LLMFormatOps: FormatOp[] = [
   stripKnownXMLTags,
   removeToolCallResultMetadata,
   removeToolCallArgumentMetadata,
+  removeToolCallArgumentTransientData,
 ];
 const UIFormatOps = [
   prompts.stripEnvironmentDetails,
@@ -198,6 +215,7 @@ const StorageFormatOps = [
   removeContentInMessages,
   removeEmptyMessages,
   removeInvalidCharForStorage,
+  removeToolCallArgumentTransientData,
 ];
 
 function formatMessages(messages: UIMessage[], ops: FormatOp[]): UIMessage[] {

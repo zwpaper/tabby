@@ -1,10 +1,11 @@
-import { TaskThread } from "@/components/task-thread";
+import { TaskThread, type TaskThreadSource } from "@/components/task-thread";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToolCallLifeCycle } from "@/features/chat";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
-import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
+import { toUIMessages } from "@ragdoll/common";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -14,6 +15,7 @@ import type { ToolProps } from "../types";
 export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   tool,
   isExecuting,
+  messageId,
 }) => {
   const uid = tool.args?._meta?.uid;
   const description = tool.args?.description ?? "";
@@ -21,11 +23,27 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   if (!uid) {
     throw new Error("Missing task UID");
   }
-  const taskRunners = useTaskRunners();
-  const taskRunner = uid in taskRunners ? taskRunners[uid] : undefined;
 
-  const shouldLoadCompletedTask = tool.state === "result" && !taskRunner;
-  const { data: task, isFetching: isTaskLoading } = useQuery({
+  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
+    toolName: tool.toolName,
+    toolCallId: tool.toolCallId,
+    messageId,
+  });
+
+  const lifecycleStreamingResult = lifecycle.streamingResult;
+  if (
+    lifecycleStreamingResult &&
+    lifecycleStreamingResult.toolName !== "newTask"
+  ) {
+    throw new Error("Unexpected streaming result for newTask tool");
+  }
+
+  const taskRunnerState = lifecycleStreamingResult?.state;
+  const inlinedTask = tool.args?._transient?.task;
+
+  const shouldQueryTask =
+    tool.state !== "partial-call" && !inlinedTask && !taskRunnerState;
+  const { data: loadedTask, isFetching: isTaskLoading } = useQuery({
     queryKey: ["task", uid],
     queryFn: async () => {
       const resp = await apiClient.api.tasks[":uid"].$get({
@@ -35,7 +53,7 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
       });
       return resp.json();
     },
-    enabled: shouldLoadCompletedTask,
+    enabled: shouldQueryTask,
   });
 
   const [expanded, setExpanded] = useState(false);
@@ -91,11 +109,28 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     </span>
   );
 
-  const taskSource = taskRunner
-    ? { runner: taskRunner } // found background runner, task is running or completed in the current session
-    : shouldLoadCompletedTask
-      ? { task, isLoading: isTaskLoading } // load completed task, no background runner will be started
-      : undefined; // no task source available, which means the task is not approved to start yet
+  const taskSource: TaskThreadSource | undefined = taskRunnerState
+    ? {
+        // found background runner, task is running or completed in the current session
+        type: "taskRunner",
+        runner: taskRunnerState,
+      }
+    : inlinedTask
+      ? {
+          // inlined subtask, no need to query
+          type: "task",
+          messages: toUIMessages(inlinedTask.conversation?.messages ?? []),
+          todos: inlinedTask.todos ?? [],
+        }
+      : shouldQueryTask
+        ? {
+            // query task
+            type: "task",
+            messages: toUIMessages(loadedTask?.conversation?.messages ?? []),
+            todos: loadedTask?.todos ?? [],
+            isLoading: isTaskLoading,
+          }
+        : undefined;
 
   return (
     <ExpandableToolContainer
@@ -106,10 +141,7 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
       expandableDetail={
         taskSource ? (
           <ScrollArea viewportClassname="max-h-[300px]" ref={newTaskContainer}>
-            <TaskThread
-              user={{ name: "Runner" }} // FIXME(zhiming): remove the display of user name
-              taskSource={taskSource}
-            />
+            <TaskThread source={taskSource} />
           </ScrollArea>
         ) : undefined
       }

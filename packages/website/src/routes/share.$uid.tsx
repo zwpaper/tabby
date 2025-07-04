@@ -7,9 +7,11 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { apiClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { normalizeApiError, toHttpError } from "@/lib/error";
+import { inlineSubTasks } from "@/lib/inline-sub-task";
 import { cn } from "@/lib/utils";
+import { toUIMessages } from "@ragdoll/common";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const Skeleton = () => <TaskPageSkeleton className="mt-4 md:mt-6" />;
 
@@ -56,6 +58,13 @@ function ThemeWrapped() {
 function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const { theme } = useTheme();
+
+  const renderMessages = useMemo(() => {
+    const dbMessages = loaderData.conversation?.messages ?? [];
+    const subtasks = loaderData.subtasks ?? [];
+    return inlineSubTasks(toUIMessages(dbMessages), subtasks);
+  }, [loaderData]);
+
   return (
     <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8 md:mt-6">
       {/* Task header */}
@@ -72,7 +81,7 @@ function RouteComponent() {
       </TaskHeader>
 
       <TaskContent
-        conversation={loaderData.conversation}
+        messages={renderMessages}
         todos={loaderData.todos}
         user={loaderData.user}
         theme={theme}

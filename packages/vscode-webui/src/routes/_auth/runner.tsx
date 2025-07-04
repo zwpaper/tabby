@@ -1,6 +1,7 @@
 import { TaskThread } from "@/components/task-thread";
 import { buttonVariants } from "@/components/ui/button";
 import { ChatContextProvider } from "@/features/chat";
+import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
 import type { TaskRunnerState } from "@ragdoll/runner";
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/_auth/runner")({
 function RunnerComponent() {
   const { uid } = Route.useSearch();
   const { auth: authData } = Route.useRouteContext();
+  const resourceUri = useResourceURI();
   const taskRunners = useTaskRunners();
   const taskRunner = taskRunners[uid];
 
@@ -42,7 +44,11 @@ function RunnerComponent() {
 
   return (
     <div className="flex h-screen flex-col">
-      <TaskThread user={authData?.user} taskSource={{ runner: taskRunner }} />
+      <TaskThread
+        user={authData?.user}
+        logo={resourceUri?.logo128}
+        source={{ type: "taskRunner", runner: taskRunner }}
+      />
       <div className="flex items-center justify-between border-t p-4">
         <div className="flex">
           <Bot

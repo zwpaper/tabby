@@ -4,6 +4,7 @@ import { ChatContextProvider } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import { formatters } from "@ragdoll/common";
 import type { Todo } from "@ragdoll/db";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { UIMessage } from "ai";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +19,8 @@ export function SharePage() {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [user, setUser] = useState<{ name: string; image?: string | null }>();
   const [todos, setTodos] = useState<Todo[]>([]);
+
+  const queryClient = useMemo(() => new QueryClient(), []);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -77,47 +80,49 @@ export function SharePage() {
   return (
     <VSCodeWebProvider>
       <ChatContextProvider>
-        <div ref={containerRef}>
-          {/* todo skeleton outside? */}
-          {messages.length === 0 ? (
-            <div className="flex min-h-screen items-center justify-center">
-              <Loader2 className="size-6 animate-spin" />
-            </div>
-          ) : (
-            <div
-              className={cn("grid grid-cols-1 gap-3", {
-                "md:grid-cols-4": todos && todos.length > 0,
-              })}
-            >
+        <QueryClientProvider client={queryClient}>
+          <div ref={containerRef}>
+            {/* todo skeleton outside? */}
+            {messages.length === 0 ? (
+              <div className="flex min-h-screen items-center justify-center">
+                <Loader2 className="size-6 animate-spin" />
+              </div>
+            ) : (
               <div
-                className={cn("col-span-1", {
-                  "md:col-span-3": todos && todos.length > 0,
+                className={cn("grid grid-cols-1 gap-3", {
+                  "md:grid-cols-4": todos && todos.length > 0,
                 })}
               >
-                <MessageList
-                  logo={logo}
-                  user={user}
-                  messages={renderMessages}
-                  isLoading={false}
-                />
-              </div>
-              {todos && todos.length > 0 && (
-                <div className="col-span-1">
-                  <TodoList
-                    todos={todos}
-                    className="[&>.todo-border]:!hidden px-4 md:px-0"
-                  >
-                    <TodoList.Header
-                      disableCollapse={true}
-                      disableInProgressTodoTitle={true}
-                    />
-                    <TodoList.Items />
-                  </TodoList>
+                <div
+                  className={cn("col-span-1", {
+                    "md:col-span-3": todos && todos.length > 0,
+                  })}
+                >
+                  <MessageList
+                    logo={logo}
+                    user={user}
+                    messages={renderMessages}
+                    isLoading={false}
+                  />
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+                {todos && todos.length > 0 && (
+                  <div className="col-span-1">
+                    <TodoList
+                      todos={todos}
+                      className="[&>.todo-border]:!hidden px-4 md:px-0"
+                    >
+                      <TodoList.Header
+                        disableCollapse={true}
+                        disableInProgressTodoTitle={true}
+                      />
+                      <TodoList.Items />
+                    </TodoList>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </QueryClientProvider>
       </ChatContextProvider>
     </VSCodeWebProvider>
   );

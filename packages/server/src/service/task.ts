@@ -436,10 +436,12 @@ class TaskService {
     };
   }
 
-  async get(uid: string, userId: string) {
+  async get(uid: string, userId: string, includeSubTasks = false) {
+    const taskId = uidCoder.decode(uid);
     const taskQuery = db
       .selectFrom("task")
       .select([
+        "id",
         "createdAt",
         "updatedAt",
         "conversation",
@@ -455,17 +457,27 @@ class TaskService {
         minionIdSelect,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
       ])
-      .where("id", "=", uidCoder.decode(uid));
+      .where((eb) => {
+        if (includeSubTasks) {
+          return eb.or([eb("id", "=", taskId), eb("parentId", "=", taskId)]);
+        }
+        return eb("id", "=", taskId);
+      });
 
-    const task = await taskQuery.executeTakeFirst();
-
-    if (!task) {
+    const tasks = await taskQuery.execute();
+    if (!tasks || tasks.length === 0) {
       throw new HTTPException(404, { message: "Task not found" });
     }
 
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) {
+      throw new HTTPException(404, { message: "Task not found" });
+    }
     if (userId !== task.userId) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
+
+    const subtasks = tasks.filter((t) => t.id !== taskId);
 
     return {
       ...task,
@@ -474,6 +486,12 @@ class TaskService {
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
       title: parseTitle(task.title),
+      subtasks: subtasks.map((subtask) => ({
+        uid: uidCoder.encode(subtask.id),
+        status: subtask.status,
+        conversation: subtask.conversation,
+        todos: subtask.todos || undefined,
+      })),
     };
   }
 
@@ -482,11 +500,18 @@ class TaskService {
     userId: string | undefined,
     isInternalUser: boolean,
   ) {
+    const taskId = uidCoder.decode(uid);
     let taskQuery = db
       .selectFrom("task")
       .innerJoin("user", "task.userId", "user.id")
-      .where("task.id", "=", uidCoder.decode(uid))
+      .where((eb) => {
+        return eb.or([
+          eb("task.id", "=", taskId),
+          eb("task.parentId", "=", taskId),
+        ]);
+      })
       .select([
+        "task.id",
         "task.createdAt",
         "task.updatedAt",
         "task.conversation",
@@ -510,11 +535,17 @@ class TaskService {
         return eb("task.isPublicShared", "=", true);
       });
     }
-    const task = await taskQuery.executeTakeFirst();
 
+    const tasks = await taskQuery.execute();
+    if (!tasks || tasks.length === 0) {
+      return null;
+    }
+
+    const task = tasks.find((t) => t.id === taskId);
     if (!task) {
       return null;
     }
+    const subtasks = tasks.filter((t) => t.id !== taskId);
 
     const { userName, userImage, ...data } = task;
 
@@ -528,6 +559,12 @@ class TaskService {
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
       title: parseTitle(task.title),
+      subtasks: subtasks.map((subtask) => ({
+        uid: uidCoder.encode(subtask.id),
+        status: subtask.status,
+        conversation: subtask.conversation,
+        todos: subtask.todos || undefined,
+      })),
     };
   }
 

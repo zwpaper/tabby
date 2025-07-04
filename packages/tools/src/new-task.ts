@@ -1,5 +1,12 @@
+import type { DBMessage, Todo } from "@ragdoll/db";
 import { z } from "zod";
 import { defineClientTool } from "./types";
+
+export type SubTask = {
+  uid: string;
+  conversation?: { messages?: DBMessage[] } | null;
+  todos?: Todo[];
+};
 
 export const newTask = defineClientTool({
   description:
@@ -31,6 +38,11 @@ Usage notes:
     _meta: z
       .object({
         uid: z.string().describe("A unique identifier for the task."),
+      })
+      .optional(),
+    _transient: z
+      .object({
+        task: z.custom<SubTask>().describe("The inlined subtask result."),
       })
       .optional(),
   }),

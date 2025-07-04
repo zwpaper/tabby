@@ -19,6 +19,7 @@ export type { PreviewToolFunctionType, ToolFunctionType } from "./types";
 import type { Tool } from "ai";
 import { webFetch } from "./web-fetch";
 import { writeToFile } from "./write-to-file";
+export type { SubTask } from "./new-task";
 
 export function isUserInputTool(toolName: string): boolean {
   const userInputTools: string[] = [

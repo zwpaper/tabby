@@ -33,6 +33,12 @@ const TaskUidParamsSchema = z.object({
   uid: z.string(),
 });
 
+const TaskUidQuerySchema = z
+  .object({
+    includeSubTasks: z.coerce.boolean().optional(),
+  })
+  .optional();
+
 const TaskLockParamsSchema = z.object({
   uid: z.string(),
   lockId: z.string(),
@@ -119,12 +125,13 @@ const tasks = new Hono()
   .get(
     "/:uid",
     zValidator("param", TaskUidParamsSchema),
+    zValidator("query", TaskUidQuerySchema),
     requireAuth(),
     async (c) => {
       const { uid } = c.req.valid("param") || {};
+      const { includeSubTasks } = c.req.valid("query") || {};
       const user = c.get("user");
-
-      const task = await taskService.get(uid, user.id);
+      const task = await taskService.get(uid, user.id, includeSubTasks);
 
       return c.json(task); // task already includes id
     },
