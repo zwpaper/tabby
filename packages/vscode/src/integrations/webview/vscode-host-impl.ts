@@ -65,6 +65,8 @@ import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { CheckpointService } from "../checkpoint/checkpoint-service";
 // biome-ignore lint/style/useImportType: needed for dependency injection
+import { PochiConfiguration } from "../configuration";
+// biome-ignore lint/style/useImportType: needed for dependency injection
 import { type FileSelection, TabState } from "../editor/tab-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "../mcp/mcp-hub";
@@ -90,6 +92,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly mcpHub: McpHub,
     private readonly taskRunnerManager: TaskRunnerManager,
     private readonly checkpointService: CheckpointService,
+    private readonly pochiConfiguration: PochiConfiguration,
   ) {}
 
   listWorkflowsInWorkspace = (): Promise<
@@ -443,6 +446,12 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   readExtensionVersion = async () => {
     return this.context.extension.packageJSON.version;
+  };
+
+  readAutoSaveDisabled = async (): Promise<
+    ThreadSignalSerialization<boolean>
+  > => {
+    return ThreadSignal.serialize(this.pochiConfiguration.autoSaveDisabled);
   };
 
   dispose() {

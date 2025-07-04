@@ -13,6 +13,8 @@ export class PochiConfiguration implements vscode.Disposable {
 
   readonly webui = signal(getPochiWebviewLogSettings());
 
+  readonly autoSaveDisabled = signal(getAutoSaveDisabled());
+
   constructor() {
     // const settings = getPochiAdvanceSettings();
     // this.isDevMode.value = settings.isDevMode ?? false;
@@ -31,6 +33,10 @@ export class PochiConfiguration implements vscode.Disposable {
         if (e.affectsConfiguration("pochi.webui")) {
           const settings = getPochiWebviewLogSettings();
           this.webui.value = settings;
+        }
+
+        if (e.affectsConfiguration("files.autoSave")) {
+          this.autoSaveDisabled.value = getAutoSaveDisabled();
         }
       }),
     );
@@ -94,4 +100,12 @@ function getPochiWebviewLogSettings() {
   return vscode.workspace
     .getConfiguration("pochi")
     .get("webui", {}) as PochiWebUISettings;
+}
+
+function getAutoSaveDisabled() {
+  const autoSave = vscode.workspace
+    .getConfiguration("files")
+    .get<string>("autoSave", "off");
+
+  return autoSave === "off";
 }

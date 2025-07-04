@@ -145,6 +145,9 @@ const VSCodeHostStub = {
   readExtensionVersion: () => {
     return Promise.resolve("");
   },
+  readAutoSaveDisabled: () => {
+    return Promise.resolve({} as ThreadSignalSerialization<boolean>);
+  },
 } satisfies VSCodeHostApi;
 
 export function createVscodeHostStub(overrides?: Partial<VSCodeHostApi>) {

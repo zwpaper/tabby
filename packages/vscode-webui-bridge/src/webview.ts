@@ -185,6 +185,8 @@ export interface VSCodeHostApi {
   readCheckpointPath(): Promise<string | undefined>;
 
   readExtensionVersion(): Promise<string>;
+
+  readAutoSaveDisabled(): Promise<ThreadSignalSerialization<boolean>>;
 }
 
 export interface WebviewHostApi {

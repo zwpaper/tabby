@@ -80,6 +80,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "restoreCheckpoint",
         "readCheckpointPath",
         "readExtensionVersion",
+        "readAutoSaveDisabled",
       ],
       exports: {
         openTask(params) {
