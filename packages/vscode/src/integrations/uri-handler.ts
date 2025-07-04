@@ -107,12 +107,12 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     const { data: params } = task.event;
     const { requestId, name } = params;
 
-    logger.debug(`Handling new project task: ${JSON.stringify(params)}`);
+    logger.info(`Handling new project task: ${JSON.stringify(params)}`);
 
     if (requestId) {
       const createdProject = this.newProjectRegistry.get(requestId);
       if (createdProject) {
-        logger.debug(
+        logger.info(
           `Found existing project for requestId ${requestId}: ${createdProject}`,
         );
 
@@ -142,7 +142,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       return;
     }
 
-    logger.debug(
+    logger.info(
       `Created new workspace: ${newWorkspaceUri}, here is user's POCHI_MINION_ID: ${process.env.POCHI_MINION_ID}. Pushing to queue now`,
     );
     // push a global job to create task after the new workspace is opened
@@ -153,7 +153,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       expiresAt: Date.now() + 1000 * 60,
     });
 
-    logger.debug(`Pushed job to queue for workspace: ${newWorkspaceUri}`);
+    logger.info(`Pushed job to queue for workspace: ${newWorkspaceUri}`);
 
     // open the new workspace
     await vscode.commands.executeCommand("vscode.openFolder", newWorkspaceUri, {
