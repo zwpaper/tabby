@@ -34,13 +34,17 @@ export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at
 export function CreateTask({
   initialInput,
   className,
-}: { initialInput?: string; className?: string }) {
+  enableLocalCreation,
+}: {
+  initialInput?: string;
+  className?: string;
+  enableLocalCreation?: boolean;
+}) {
+  const isRemote = !enableLocalCreation;
   const { data: auth } = useSession();
   const isMobileDevice = useIsMobile();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
-  const isRemote = true;
-
   const { enhancePrompt, isPending: isEnhancing } = useEnhancingPrompt();
 
   const [inputValue, setInputValue] = useState(() => {
