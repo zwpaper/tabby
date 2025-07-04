@@ -40,6 +40,12 @@ export const executeCommand =
         timeout: timeout * 1000, // Convert to milliseconds
         cwd: resolvedCwd,
         signal: abortSignal,
+        env: {
+          ...process.env,
+          GIT_COMMITTER_NAME: "Pochi",
+          GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
+          GH_PAGER: "",
+        },
       });
       // need CRLF ('\r\n') as line separator, '\n' only moves the cursor one line down but not to the beginning
       const fullOutput = (stdout + stderr).replace(/(?<!\r)\n/g, "\r\n");

@@ -68,6 +68,9 @@ export class TerminalJob implements vscode.Disposable {
       cwd: config.cwd,
       env: {
         PAGER: "", // Disable pager for better output handling
+        GIT_COMMITTER_NAME: "Pochi",
+        GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
+        GH_PAGER: "",
       },
       iconPath: new vscode.ThemeIcon("piano"),
       hideFromUser: true,

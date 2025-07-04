@@ -120,4 +120,14 @@ describe("executeCommand", () => {
       )
     ).rejects.toThrow("Command execution failed:");
   });
+
+  it("should set GIT_COMMITTER environment variables", async () => {
+    const result = await executeCommand(mockContext)(
+      { command: "echo $GIT_COMMITTER_NAME $GIT_COMMITTER_EMAIL" },
+      mockToolExecutionOptions,
+    );
+
+    expect(result.output).toContain("Pochi");
+    expect(result.output).toContain("noreply@getpochi.com");
+  });
 });
