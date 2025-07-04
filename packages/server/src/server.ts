@@ -7,6 +7,7 @@ import { logger } from "hono/logger";
 import admin from "./api/admin";
 import billing from "./api/billing";
 import chat from "./api/chat";
+import code from "./api/code";
 import enhance from "./api/enhance";
 import events, { websocket } from "./api/events";
 import integrations from "./api/integrations";
@@ -107,6 +108,7 @@ const route = api
   .route("/events", events)
   .route("/models", models)
   .route("/chat", chat)
+  .route("/code", code)
   .route("/usages", usages)
   .route("/billing", billing)
   .route("/tasks", tasks)
