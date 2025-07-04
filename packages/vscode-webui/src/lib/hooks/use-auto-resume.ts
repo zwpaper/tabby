@@ -1,6 +1,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
-import type { DataPart } from "@ragdoll/common";
+import { type DataPart, toUIMessage } from "@ragdoll/common";
+import type { DBMessage } from "@ragdoll/db";
 import { type Message, type UIMessage, appendClientMessage } from "ai";
 import { useEffect, useRef } from "react";
 
@@ -42,10 +43,13 @@ export function useAutoResume({
 
     for (const part of dataParts) {
       if (part.type === "append-message") {
-        const message = JSON.parse(part.message) as Message;
+        const message = JSON.parse(part.message) as DBMessage;
         setMessages(
           // appendClientMessage will handle the case where the message is already in the list
-          appendClientMessage({ messages: initialMessages, message }),
+          appendClientMessage({
+            messages: initialMessages,
+            message: toUIMessage(message),
+          }),
         );
         return;
       }
