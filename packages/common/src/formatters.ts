@@ -141,7 +141,7 @@ function removeToolCallArgumentTransientData(
   return messages.map((message) => {
     message.parts = message.parts.map((part) => {
       if (part.type === "tool-invocation") {
-        if (part.toolInvocation.args._transient) {
+        if (part.toolInvocation.args?._transient) {
           part.toolInvocation.args._transient = undefined;
         }
       }
