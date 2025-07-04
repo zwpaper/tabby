@@ -28,7 +28,7 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ user }) => {
               </Avatar>
               <div className="flex flex-col">
                 <span className="font-semibold">
-                  {user.name || `USER-${user.id}`}
+                  {user.name || user.email || `USER-${user.id}`}
                 </span>
                 {user.email && (
                   <span className="text-muted-foreground text-sm">
