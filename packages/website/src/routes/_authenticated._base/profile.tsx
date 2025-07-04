@@ -399,16 +399,16 @@ function BillingCard({
         json: { limit },
       });
       if (!res.ok) {
-        throw new Error("Failed to update monthly credit limit");
+        throw new Error("Failed to update monthly limit");
       }
       return await res.json();
     },
     onSuccess: () => {
-      toast.success("Monthly credit limit updated successfully");
+      toast.success("Monthly limit updated successfully");
       // queryClient.invalidateQueries({ queryKey: ["monthlyCreditLimit"] });
     },
     onError: () => {
-      toast.error("Failed to update monthly credit limit");
+      toast.error("Failed to update monthly limit");
     },
   });
 
@@ -529,11 +529,11 @@ function BillingCard({
             isError={billingQuotaQuery.isError}
           />
         </div>
-        {!!subscription && (
+        {
           <Accordion type="single" collapsible>
             <AccordionItem value="spending-limit">
               <AccordionTrigger className="flex-none px-1 font-medium md:px-2">
-                Billing Settings
+                Spending Settings
               </AccordionTrigger>
               <AccordionContent className="px-1 md:px-2">
                 {billingQuotaQuery.isLoading && !billingQuotaQuery.data ? (
@@ -554,7 +554,7 @@ function BillingCard({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-        )}
+        }
       </CardContent>
     </Card>
   );

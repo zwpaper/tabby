@@ -60,29 +60,30 @@ export function SpendingLimitForm({
           name="monthlyCreditLimit"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Monthly Credit Limit ($)</FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  placeholder="10"
-                  className="w-full md:w-[300px]"
-                  step="1"
-                  {...field}
-                  value={field.value ?? ""}
-                  onChange={(e) => {
-                    const num = e.target.valueAsNumber;
-                    if (Number.isNaN(num)) {
-                      return field.onChange(null);
-                    }
-                    return field.onChange(Math.trunc(num));
-                  }}
-                />
+                <span className="flex gap-2">
+                  <FormLabel>Monthly Limit ($)</FormLabel>
+                  <Input
+                    type="number"
+                    placeholder="10"
+                    className="h-6 w-full md:w-[120px]"
+                    step="1"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const num = e.target.valueAsNumber;
+                      if (Number.isNaN(num)) {
+                        return field.onChange(null);
+                      }
+                      return field.onChange(Math.trunc(num));
+                    }}
+                  />
+                </span>
               </FormControl>
               <FormMessage />
               <FormDescription className="text-xs">
-                Set a monthly credit limit to control your spending (between $10
-                and $2000). If the limit is reached, your account will be
-                temporarily suspended.
+                Set a monthly limit to control your spending (between $10 and
+                $2000).
               </FormDescription>
             </FormItem>
           )}
