@@ -184,11 +184,11 @@
           "pochi.webui": {
             "default": {},
             "description": "Pochi webview UI settings"
+          },
+          "pochi.mcpServers": {
+            "default": {},
+            "description": "MCP servers configuration"
           }
-        },
-        "pochi.mcpServers": {
-          "default": {},
-          "description": "MCP servers configuration"
         }
       }
     ]
