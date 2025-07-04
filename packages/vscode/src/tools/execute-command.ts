@@ -7,7 +7,7 @@ import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
 > = async (
-  { command, cwd = ".", isDevServer, timeout = 60 },
+  { command, cwd = ".", isDevServer, timeout = 15 },
   { abortSignal },
 ) => {
   if (!command) {

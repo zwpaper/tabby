@@ -12,7 +12,7 @@ export const executeCommand =
     context: Pick<RunnerContext, "cwd">,
   ): ToolFunctionType<ClientToolsType["executeCommand"]> =>
   async (
-    { command, cwd = ".", isDevServer, timeout = 60 },
+    { command, cwd = ".", isDevServer, timeout = 15 },
     { abortSignal },
   ) => {
     if (!command) {

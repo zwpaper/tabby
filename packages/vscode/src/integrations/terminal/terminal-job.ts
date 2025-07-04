@@ -158,7 +158,7 @@ export class TerminalJob implements vscode.Disposable {
 
       const timeoutError = new ExecutionError(
         false,
-        `Command execution timed out after ${this.config.timeout} seconds`,
+        `Command execution timed out after ${this.config.timeout} seconds, if it's used as background task, please consider use isDevServer=true to run it as a dev server.`,
       );
 
       // Check if already aborted
