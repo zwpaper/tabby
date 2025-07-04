@@ -51,6 +51,8 @@ export class WorkspaceJobQueue implements vscode.Disposable {
       [],
     );
 
+    logger.trace(`Running workspace job queue with ${jobs.length} jobs.`);
+
     // extract the current workspace job
     const currentWorkspaceJob = jobs.filter(
       (job) =>

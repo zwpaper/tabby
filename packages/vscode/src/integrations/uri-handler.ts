@@ -143,8 +143,27 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     }
 
     logger.info(
-      `Created new workspace: ${newWorkspaceUri}, here is user's POCHI_MINION_ID: ${process.env.POCHI_MINION_ID}. Pushing to queue now`,
+      `Created new workspace: ${newWorkspaceUri}, current workspace: ${vscode.workspace.workspaceFolders?.[0]?.uri}, POCHI_MINION_ID: ${process.env.POCHI_MINION_ID}`,
     );
+
+    // In remote environments, check if we're already in the target workspace
+    const isRemoteEnv = !!process.env.POCHI_MINION_ID;
+    const currentWorkspace = vscode.workspace.workspaceFolders?.[0]?.uri;
+
+    // TODO(sma1lboy): temp solution for remote env for testing
+    if (
+      isRemoteEnv &&
+      currentWorkspace?.toString() === newWorkspaceUri.toString()
+    ) {
+      logger.info(
+        "Already in target workspace, executing createProject directly",
+      );
+
+      // Execute the command directly instead of queueing it
+      await vscode.commands.executeCommand("pochi.createProject", task);
+      return;
+    }
+
     // push a global job to create task after the new workspace is opened
     await this.workspaceJobQueue.push({
       workspaceUri: newWorkspaceUri.toString(),
@@ -156,9 +175,28 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     logger.info(`Pushed job to queue for workspace: ${newWorkspaceUri}`);
 
     // open the new workspace
-    await vscode.commands.executeCommand("vscode.openFolder", newWorkspaceUri, {
-      forceReuseWindow: true,
-    });
+    // TODO(sma1lboy): remove this, just test to see if it works
+    try {
+      logger.info("Attempting to open workspace folder...");
+      await vscode.commands.executeCommand(
+        "vscode.openFolder",
+        newWorkspaceUri,
+        {
+          forceReuseWindow: true,
+        },
+      );
+      logger.info("vscode.openFolder command completed");
+    } catch (error) {
+      logger.error("Failed to open workspace folder", error);
+
+      // If opening folder fails in remote env, try to execute the command directly
+      if (isRemoteEnv) {
+        logger.info(
+          "Attempting to execute createProject directly after folder open failure",
+        );
+        await vscode.commands.executeCommand("pochi.createProject", task);
+      }
+    }
   }
 
   private async handleEvaluationTask(task: EvaluationTask) {
