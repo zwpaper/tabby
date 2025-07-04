@@ -1,3 +1,5 @@
+import { useDebounceState } from "@/lib/hooks/use-debounce-state";
+import { useEffect } from "react";
 import { useToolCallLifeCycle } from "../lib/chat-state";
 
 interface UseChatStatusProps {
@@ -31,7 +33,15 @@ export function useChatStatus({
 
   const showPreview = !isBusyCore;
 
+  const [debouncedShowApproval, setDebouncedShowApproval] = useDebounceState(
+    false,
+    300,
+  );
+
   const showApproval = !(isLoading || isTaskLoading);
+  useEffect(() => {
+    setDebouncedShowApproval(showApproval);
+  }, [showApproval, setDebouncedShowApproval]);
 
   return {
     isExecuting,
@@ -40,6 +50,6 @@ export function useChatStatus({
     isSubmitDisabled,
     showStopButton,
     showPreview,
-    showApproval,
+    showApproval: debouncedShowApproval,
   };
 }
