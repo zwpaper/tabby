@@ -113,7 +113,14 @@ export interface ToolCallLifeCycle {
    * @param args - Tool call arguments
    * @param state - Current tool invocation state
    */
-  preview(args: unknown, state: ToolInvocation["state"], step?: number): void;
+  preview(
+    args: unknown,
+    state: ToolInvocation["state"],
+    opts?: {
+      isFirstAssistantMessage: boolean;
+      step: number;
+    },
+  ): void;
 
   /**
    * Execute the tool call with given arguments and options.
@@ -154,6 +161,7 @@ export class ManagedToolCallLifeCycle
     private readonly checkpoint: (key: {
       messageId: string;
       step: number;
+      isFirstAssistantMessage: boolean;
     }) => Promise<void>,
   ) {
     super();
@@ -184,11 +192,18 @@ export class ManagedToolCallLifeCycle
     this.transitTo("complete", { type: "dispose" });
   }
 
-  preview(args: unknown, state: ToolInvocation["state"], step?: number) {
+  preview(
+    args: unknown,
+    state: ToolInvocation["state"],
+    opts?: {
+      isFirstAssistantMessage: boolean;
+      step: number;
+    },
+  ) {
     if (this.status === "ready") {
       this.previewReady(args, state);
     } else {
-      this.previewInit(args, state, step);
+      this.previewInit(args, state, opts);
     }
   }
 
@@ -204,7 +219,10 @@ export class ManagedToolCallLifeCycle
   private previewInit(
     args: unknown,
     state: ToolInvocation["state"],
-    step?: number,
+    opts?: {
+      isFirstAssistantMessage: boolean;
+      step: number;
+    },
   ) {
     let { previewJob } = this.checkState("Preview", "init");
     const previewToolCall = (abortSignal?: AbortSignal) =>
@@ -216,10 +234,10 @@ export class ManagedToolCallLifeCycle
           : undefined,
       });
     previewJob = previewJob.then(async (result) => {
-      if (step !== undefined) {
+      if (opts !== undefined) {
         await this.checkpoint({
           messageId: this.messageId,
-          step,
+          ...opts,
         });
       }
       return result;

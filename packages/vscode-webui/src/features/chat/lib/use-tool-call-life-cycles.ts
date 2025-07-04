@@ -6,7 +6,11 @@ import { ManagedToolCallLifeCycle } from "./tool-call-life-cycle";
 export function useToolCallLifeCycles({
   checkpoint,
 }: {
-  checkpoint: (key: { messageId: string; step: number }) => Promise<void>;
+  checkpoint: (key: {
+    messageId: string;
+    step: number;
+    isFirstAssistantMessage: boolean;
+  }) => Promise<void>;
 }) {
   const [toolCallLifeCycles, setToolCallLifeCycles] = useState<
     Map<string, ManagedToolCallLifeCycle>

@@ -69,10 +69,17 @@ export function useCheckpoints() {
   }, []);
 
   const getCheckpoint = useCallback(
-    (key: { messageId: string; step: number }) => {
+    (key: {
+      messageId: string;
+      step: number;
+      isFirstAssistantMessage: boolean;
+    }) => {
       let checkpoint = checkpointsRef.current.get(checkpointKey(key));
       if (!checkpoint) {
-        checkpoint = new Checkpoint(key.messageId, key.step !== 0);
+        checkpoint = new Checkpoint(
+          key.messageId,
+          !(key.isFirstAssistantMessage && key.step === 0),
+        );
         checkpointsRef.current.set(checkpointKey(key), checkpoint);
         return checkpoint;
       }
@@ -82,7 +89,11 @@ export function useCheckpoints() {
   );
 
   const checkpoint = useCallback(
-    (key: { messageId: string; step: number }) => {
+    (key: {
+      messageId: string;
+      step: number;
+      isFirstAssistantMessage: boolean;
+    }) => {
       const checkpoint = getCheckpoint(key);
       return checkpoint.saveIfNeeded(reloadCheckpoints);
     },

@@ -8,6 +8,8 @@ export function PreviewTool({ messages }: { messages: UIMessage[] }) {
   if (!lastMessage) {
     return null;
   }
+  const isFirstAssistantMessage =
+    lastMessage.role === "assistant" && messages.length === 2;
   const components = lastMessage.parts?.map((part) => {
     if (
       part.type === "tool-invocation" &&
@@ -18,6 +20,7 @@ export function PreviewTool({ messages }: { messages: UIMessage[] }) {
           key={part.toolInvocation.toolCallId}
           tool={part.toolInvocation}
           messageId={lastMessage.id}
+          isFirstAssistantMessage={isFirstAssistantMessage}
         />
       );
     }
@@ -28,7 +31,12 @@ export function PreviewTool({ messages }: { messages: UIMessage[] }) {
 function PreviewOneTool({
   tool,
   messageId,
-}: { tool: ToolInvocation; messageId: string }) {
+  isFirstAssistantMessage,
+}: {
+  tool: ToolInvocation;
+  messageId: string;
+  isFirstAssistantMessage: boolean;
+}) {
   const { getToolCallLifeCycle } = useToolCallLifeCycle();
   const debouncedPreview = useMemo(
     () =>
@@ -40,7 +48,16 @@ function PreviewOneTool({
             messageId,
           });
           if (lifecycle.status === "init") {
-            lifecycle.preview(tool.args, tool.state, tool.step);
+            lifecycle.preview(
+              tool.args,
+              tool.state,
+              tool.step !== undefined
+                ? {
+                    isFirstAssistantMessage,
+                    step: tool.step,
+                  }
+                : undefined,
+            );
           }
         },
         {
@@ -48,7 +65,7 @@ function PreviewOneTool({
           reducer: (_, rhs: ToolInvocation) => rhs,
         },
       ),
-    [getToolCallLifeCycle, messageId],
+    [getToolCallLifeCycle, messageId, isFirstAssistantMessage],
   );
   useEffect(() => {
     debouncedPreview.call(tool);

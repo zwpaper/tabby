@@ -1,7 +1,7 @@
 import { vscodeHost } from "@/lib/vscode";
 import type { ExtendedPartMixin } from "@ragdoll/common";
 import { useMutation } from "@tanstack/react-query";
-import { Check, GitCommitVertical, Loader2 } from "lucide-react";
+import { Check, GitCommitHorizontal, Loader2 } from "lucide-react";
 import { useSettingsStore } from "../features/settings/store";
 
 import { cn } from "@/lib/utils";
@@ -46,7 +46,7 @@ export const CheckpointUI: React.FC<{
     >
       <div
         className={cn(
-          "-translate-x-1/2 -top-1 group absolute left-1/2 mx-auto flex min-h-5 w-full max-w-[64px] select-none items-center hover:max-w-full",
+          "-translate-x-1/2 -top-1 group absolute left-1/2 mx-auto flex min-h-5 w-full max-w-[72px] select-none items-center hover:max-w-full",
           isLoading && "pointer-events-none",
         )}
       >
@@ -58,7 +58,7 @@ export const CheckpointUI: React.FC<{
             ) : showSuccessIcon ? (
               <Check className="size-4 text-emerald-700 dark:text-emerald-300" />
             ) : (
-              <GitCommitVertical className="size-4" />
+              <GitCommitHorizontal className="size-5" />
             )}
             {!showSuccessIcon && (
               <Button
