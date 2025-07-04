@@ -41,15 +41,16 @@ export async function checkUserQuota(user: User, c: Context, modelId: string) {
     throw new HTTPException(400, { message: "Invalid model" });
   }
 
-  if (quota.credit.isLimitReached) {
-    throw new HTTPException(400, {
-      message: ReachedCreditLimitErrorMessage,
-    });
-  }
-
   if (quota.limits[modelCostType] - quota.usages[modelCostType] <= 0) {
     throw new HTTPException(400, {
       message: `You have reached the quota limit for ${modelCostType}. Please upgrade your plan or try again later.`,
+    });
+  }
+
+  // biome-ignore lint/correctness/noConstantCondition: disable this check for now
+  if (false && quota.credit.isLimitReached) {
+    throw new HTTPException(400, {
+      message: ReachedCreditLimitErrorMessage,
     });
   }
 }
