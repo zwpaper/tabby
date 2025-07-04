@@ -22,12 +22,16 @@ export const MessageList: React.FC<{
   logo?: string;
   isLoading: boolean;
   containerRef?: React.RefObject<HTMLDivElement>;
+  showUserAvatar?: boolean;
+  className?: string;
 }> = ({
   messages: renderMessages,
   isLoading,
   user = { name: "You" },
   logo,
   containerRef,
+  showUserAvatar = true,
+  className,
 }) => {
   const [debouncedIsLoading, setDebouncedIsLoading] = useDebounceState(
     isLoading,
@@ -39,33 +43,38 @@ export const MessageList: React.FC<{
   }, [isLoading, setDebouncedIsLoading]);
 
   return (
-    <ScrollArea className="mb-2 flex-1 overflow-y-auto px-4" ref={containerRef}>
+    <ScrollArea
+      className={cn("mb-2 flex-1 overflow-y-auto px-4", className)}
+      ref={containerRef}
+    >
       {renderMessages.map((m, messageIndex) => (
         <div key={m.id} className="flex flex-col">
-          <div className="rounded-lg py-2">
-            <div className="flex items-center gap-2">
-              {m.role === "user" ? (
-                <Avatar className="size-7">
-                  <AvatarImage src={user?.image ?? undefined} />
-                  <AvatarFallback
-                    className={cn(
-                      "bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)] text-xs uppercase",
-                    )}
-                  >
-                    {user?.name.slice(0, 2) || (
-                      <UserIcon className={cn("size-[50%]")} />
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-              ) : (
-                <Avatar className="size-7">
-                  <AvatarImage src={logo} className="scale-110" />
-                  <AvatarFallback className="bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)]" />
-                </Avatar>
-              )}
-              <strong>{m.role === "user" ? user?.name : "Pochi"}</strong>
-            </div>
-            <div className="mt-3 ml-1 flex flex-col">
+          <div className={cn(showUserAvatar && "py-2")}>
+            {showUserAvatar && (
+              <div className="flex items-center gap-2">
+                {m.role === "user" ? (
+                  <Avatar className="size-7">
+                    <AvatarImage src={user?.image ?? undefined} />
+                    <AvatarFallback
+                      className={cn(
+                        "bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)] text-xs uppercase",
+                      )}
+                    >
+                      {user?.name.slice(0, 2) || (
+                        <UserIcon className={cn("size-[50%]")} />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Avatar className="size-7">
+                    <AvatarImage src={logo} className="scale-110" />
+                    <AvatarFallback className="bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)]" />
+                  </Avatar>
+                )}
+                <strong>{m.role === "user" ? user?.name : "Pochi"}</strong>
+              </div>
+            )}
+            <div className={cn("ml-1 flex flex-col", showUserAvatar && "mt-3")}>
               {m.parts.map((part, index) => (
                 <Part
                   key={index}
@@ -156,5 +165,8 @@ function TextPartUI({
   className,
   part,
 }: { part: TextPart; className?: string }) {
+  if (part.text.trim().length === 0) {
+    return null; // Skip empty text parts
+  }
   return <MessageMarkdown className={className}>{part.text}</MessageMarkdown>;
 }

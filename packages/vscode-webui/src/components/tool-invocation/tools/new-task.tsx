@@ -9,7 +9,8 @@ import { toUIMessages } from "@ragdoll/common";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ExpandableToolContainer } from "../tool-container";
+import { StatusIcon } from "../status-icon";
+import { ExpandIcon, ToolTitle } from "../tool-container";
 import type { ToolProps } from "../types";
 
 export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
@@ -56,7 +57,7 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     enabled: shouldQueryTask,
   });
 
-  const [expanded, setExpanded] = useState(false);
+  const [showMessageList, setShowMessageList] = useState(false);
   const newTaskContainer = useRef<HTMLDivElement>(null);
   const { isAtBottom, scrollToBottom } = useIsAtBottom(newTaskContainer);
   const isAtBottomRef = useRef(isAtBottom);
@@ -67,7 +68,7 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
 
   // Scroll to bottom when the message list height changes
   useEffect(() => {
-    if (!expanded) {
+    if (!showMessageList) {
       return;
     }
     const container = newTaskContainer.current;
@@ -84,7 +85,7 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
     return () => {
       resizeObserver.disconnect();
     }; // clean up
-  }, [scrollToBottom, expanded]);
+  }, [scrollToBottom, showMessageList]);
 
   // Initial scroll to bottom once when component mounts (without smooth behavior)
   useLayoutEffect(() => {
@@ -92,22 +93,6 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
       scrollToBottom(false); // false = not smooth
     }
   }, [scrollToBottom]);
-
-  const title = (
-    <span className={cn("flex items-center gap-2")}>
-      <p>
-        <Badge
-          variant="secondary"
-          className={cn("px-1 py-0", {
-            "animate-pulse": isExecuting,
-          })}
-        >
-          Subtask
-        </Badge>
-        <span className="ml-2">{description}</span>
-      </p>
-    </span>
-  );
 
   const taskSource: TaskThreadSource | undefined = taskRunnerState
     ? {
@@ -133,18 +118,32 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
         : undefined;
 
   return (
-    <ExpandableToolContainer
-      title={title}
-      onToggle={(expand: boolean) => {
-        setExpanded(expand);
-      }}
-      expandableDetail={
-        taskSource ? (
-          <ScrollArea viewportClassname="max-h-[300px]" ref={newTaskContainer}>
-            <TaskThread source={taskSource} />
-          </ScrollArea>
-        ) : undefined
-      }
-    />
+    <div>
+      <ToolTitle>
+        <span className={cn("flex items-center gap-2")}>
+          <div>
+            <StatusIcon tool={tool} isExecuting={isExecuting} />
+            <Badge variant="secondary" className={cn("mr-1 ml-2 py-0")}>
+              Subtask
+            </Badge>
+            <span className="ml-2">{description}</span>
+          </div>
+        </span>
+        <ExpandIcon
+          className="cursor-pointer"
+          isExpanded={showMessageList}
+          onClick={() => setShowMessageList(!showMessageList)}
+        />
+      </ToolTitle>
+      {taskSource && (
+        <ScrollArea viewportClassname="max-h-[300px]" ref={newTaskContainer}>
+          <TaskThread
+            user={{ name: "Runner" }} // FIXME(zhiming): remove the display of user name
+            source={taskSource}
+            showMessageList={showMessageList}
+          />
+        </ScrollArea>
+      )}
+    </div>
   );
 };

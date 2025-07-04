@@ -8,7 +8,7 @@ const ToolContainer: React.FC<{ children: React.ReactNode }> = ({
   return <div className="flex flex-col gap-1 text-sm">{children}</div>;
 };
 
-const ToolTitle: React.FC<{
+export const ToolTitle: React.FC<{
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
@@ -23,7 +23,7 @@ const ToolTitle: React.FC<{
   );
 };
 
-const ExpandIcon: React.FC<{
+export const ExpandIcon: React.FC<{
   isExpanded: boolean;
   onClick?: () => void;
   className?: string;

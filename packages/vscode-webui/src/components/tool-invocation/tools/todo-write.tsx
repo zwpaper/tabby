@@ -1,4 +1,3 @@
-import { useIsDevMode } from "@/features/settings";
 import type { ClientToolsType } from "@ragdoll/tools";
 import { Bug } from "lucide-react";
 import { StatusIcon } from "../status-icon";
@@ -8,9 +7,6 @@ import type { ToolProps } from "../types";
 export const todoWriteTool: React.FC<
   ToolProps<ClientToolsType["todoWrite"]>
 > = ({ tool, isExecuting }) => {
-  const [isDevMode] = useIsDevMode();
-  if (!isDevMode) return null;
-
   const title = (
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
