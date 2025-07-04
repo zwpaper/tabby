@@ -8,9 +8,11 @@ import { vscodeHost } from "@/lib/vscode";
 export function useNewTaskHandler({
   data,
   uid,
+  updateTaskLock,
 }: {
   data: unknown[] | undefined;
   uid: React.MutableRefObject<string | undefined>;
+  updateTaskLock: () => void;
 }) {
   const queryClient = useQueryClient();
 
@@ -24,6 +26,7 @@ export function useNewTaskHandler({
           event: "newTask",
         });
         uid.current = part.uid;
+        updateTaskLock();
 
         queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
@@ -32,5 +35,5 @@ export function useNewTaskHandler({
         });
       }
     }
-  }, [data, queryClient, uid]);
+  }, [data, queryClient, uid, updateTaskLock]);
 }

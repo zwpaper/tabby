@@ -1,9 +1,7 @@
 import type { ServerWebSocket } from "bun";
 import { Hono } from "hono";
-import { createBunWebSocket } from "hono/bun";
 import { type User, requireAuth } from "../auth";
-
-const { upgradeWebSocket, websocket } = createBunWebSocket();
+import { upgradeWebSocket } from "../lib/websocket";
 
 const events = new Hono().get(
   "/",
@@ -25,4 +23,3 @@ const events = new Hono().get(
 );
 
 export default events;
-export { websocket };

@@ -1,7 +1,10 @@
 import { createAuthHooks } from "@daveyplate/better-auth-tanstack";
 import { threadSignal } from "@quilted/threads/signals";
 import type { AppType } from "@ragdoll/server";
-import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
+import {
+  getServerBaseUrl,
+  getServerWebSocketBaseUrl,
+} from "@ragdoll/vscode-webui-bridge";
 import {
   type ResponseContext,
   createAuthClient as createAuthClientImpl,
@@ -54,3 +57,9 @@ function createApiClient() {
 }
 
 export const apiClient = createApiClient();
+
+export async function buildWebSocketUrl(path: string) {
+  const baseUrl = getServerWebSocketBaseUrl();
+  const token = (await tokenPromise).value;
+  return `${baseUrl}${path}?accessToken=${token}`;
+}

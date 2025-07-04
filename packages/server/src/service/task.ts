@@ -217,8 +217,8 @@ class TaskService {
 
     this.verifyEnvironment(environment, taskEnvironment);
 
-    // Lock the task given sessionId.
-    await this.lock(uid, userId, request.sessionId);
+    // Ensure the task is not locked by another session
+    await this.checkLock(uid, userId, request.sessionId);
 
     if (status === "streaming") {
       throw new HTTPException(409, {
@@ -835,7 +835,7 @@ class TaskService {
     }
   }
 
-  async lock(uid: string, userId: string, lockId: string) {
+  private async ensureTask(uid: string, userId: string) {
     const task = await db
       .selectFrom("task")
       .select(["id"])
@@ -847,19 +847,46 @@ class TaskService {
       throw new HTTPException(404, { message: "Task not found" });
     }
 
+    return task.id;
+  }
+
+  private async cleanUpOldLocks(taskId: number) {
     // Clean up old locks older than 30 minutes
     const thirtyMinutesAgo = moment().subtract(30, "minutes").toDate();
     await db
       .deleteFrom("taskLock")
-      .where("taskId", "=", task.id)
+      .where("taskId", "=", taskId)
       .where("updatedAt", "<", thirtyMinutesAgo)
       .execute();
+  }
+
+  async checkLock(uid: string, userId: string, lockId: string) {
+    const taskId = await this.ensureTask(uid, userId);
+    await this.cleanUpOldLocks(taskId);
+
+    const otherLock = await db
+      .selectFrom("taskLock")
+      .where("taskId", "=", taskId)
+      .where("id", "!=", lockId)
+      .select(["id"])
+      .executeTakeFirst();
+
+    if (otherLock) {
+      throw new HTTPException(423, {
+        message: "Task is locked by another session",
+      });
+    }
+  }
+
+  async lock(uid: string, userId: string, lockId: string) {
+    const taskId = await this.ensureTask(uid, userId);
+    await this.cleanUpOldLocks(taskId);
 
     const lockResult = await db
       .insertInto("taskLock")
       .values({
         id: lockId,
-        taskId: task.id,
+        taskId,
       })
       .onConflict((oc) =>
         oc

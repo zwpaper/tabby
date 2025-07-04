@@ -2,7 +2,11 @@ import { ModelSelect } from "@/components/model-select";
 import { Button } from "@/components/ui/button";
 import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
 import { useSelectedModels } from "@/features/settings";
-import { apiClient, type authClient } from "@/lib/auth-client";
+import {
+  apiClient,
+  type authClient,
+  buildWebSocketUrl,
+} from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import {
   formatters,
@@ -20,6 +24,7 @@ import {
   StopCircleIcon,
 } from "lucide-react";
 import {
+  type MutableRefObject,
   type RefObject,
   useCallback,
   useEffect,
@@ -86,7 +91,7 @@ interface ChatProps {
 function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const autoApproveGuard = useAutoApproveGuard();
   const uid = useRef<string | undefined>(task?.uid);
-  const sessionId = useSessionId(uid);
+  const [sessionId, updateTaskLock] = useSessionId(uid);
   const [totalTokens, setTotalTokens] = useState<number>(
     task?.totalTokens || 0,
   );
@@ -95,10 +100,11 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   useEffect(() => {
     uid.current = task?.uid;
+    updateTaskLock();
     if (task) {
       setTotalTokens(task.totalTokens || 0);
     }
-  }, [task]);
+  }, [task, updateTaskLock]);
 
   useEffect(() => {
     if (isBatchEvaluationTask) {
@@ -272,7 +278,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     data,
   });
 
-  useNewTaskHandler({ data, uid });
+  useNewTaskHandler({ data, uid, updateTaskLock });
 
   useTokenUsageUpdater({
     data,
@@ -545,55 +551,54 @@ function useSaveMessages({
   }, [messages]);
 }
 
-function useSessionId(uid: RefObject<string | undefined>) {
+function useSessionId(
+  uid: RefObject<string | undefined>,
+): [MutableRefObject<string>, () => void] {
   const sessionId = useRef<string>(generateId());
+  const lockingConnection = useRef<Promise<WebSocket | null> | null>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies(uid.current): uid is ref
-  useEffect(() => {
-    const refreshLock = async (uid: string, lockId: string) => {
-      apiClient.api.tasks[":uid"].lock[":lockId"]
-        .$post({
-          param: {
-            uid,
-            lockId,
-          },
-        })
-        .catch((err) => {
-          console.error("Failed to refresh session lock:", err);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: uid is ref
+  const createLockingConnection = useCallback(() => {
+    if (!uid.current) {
+      lockingConnection.current = null;
+    } else {
+      lockingConnection.current = buildWebSocketUrl(
+        `/api/tasks/${uid.current}/lock/${sessionId.current}`,
+      ).then((url) => {
+        const ws = new WebSocket(url);
+        ws.addEventListener("error", (error) => {
+          console.warn("Task locking connection error", error);
+          // FIXME(zhiming): reconnect when unexpected disconnected
         });
-    };
-
-    if (uid.current) {
-      refreshLock(uid.current, sessionId.current);
+        return ws;
+      });
     }
-
-    const refreshJob = setInterval(
-      () => {
-        if (!uid.current) return;
-        refreshLock(uid.current, sessionId.current);
-      },
-      1000 * 60 * 5,
-    ); // Refresh every 5 minutes
-
-    return () => {
-      clearInterval(refreshJob);
-
-      if (!uid.current) return;
-
-      apiClient.api.tasks[":uid"].lock[":lockId"]
-        .$delete({
-          param: {
-            uid: uid.current,
-            lockId: sessionId.current,
-          },
-        })
-        .catch((err) => {
-          console.error("Failed to release session lock:", err);
-        });
-    };
   }, []);
 
-  return sessionId;
+  const disposeLockingConnection = useCallback(() => {
+    if (lockingConnection.current) {
+      lockingConnection.current.then((ws) => {
+        if (ws) {
+          ws.close();
+        }
+      });
+      lockingConnection.current = null;
+    }
+  }, []);
+
+  const updateTaskLock = useCallback(() => {
+    disposeLockingConnection();
+    createLockingConnection();
+  }, [createLockingConnection, disposeLockingConnection]);
+
+  useEffect(() => {
+    createLockingConnection();
+    return () => {
+      disposeLockingConnection();
+    };
+  }, [createLockingConnection, disposeLockingConnection]);
+
+  return [sessionId, updateTaskLock];
 }
 
 function ErrorMessageView({ error }: { error: TaskError | undefined }) {

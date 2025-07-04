@@ -5,7 +5,9 @@ import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { optionalAuth, requireAuth } from "../auth";
+import { auth } from "../better-auth";
 import { parseEventFilter } from "../lib/event-filter";
+import { upgradeWebSocket } from "../lib/websocket";
 import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task"; // Added import
 import { taskEvents } from "../service/task-events";
@@ -66,6 +68,10 @@ const TaskPatchSchema = z.object({
 
 const AppendMessageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
+});
+
+const WebSocketTokenSchema = z.object({
+  accessToken: z.string(),
 });
 
 // Create a tasks router with authentication
@@ -294,6 +300,68 @@ const tasks = new Hono()
       await taskService.releaseLock(uid, user.id, lockId);
       return c.json({ success: true });
     },
+  )
+  .get(
+    "/:uid/lock/:lockId",
+    zValidator("param", TaskLockParamsSchema),
+    upgradeWebSocket(async (c) => {
+      const params = TaskLockParamsSchema.parse(c.req.param());
+      const { uid, lockId } = params;
+
+      const { accessToken } = WebSocketTokenSchema.parse(c.req.query());
+      const headers = new Headers(c.req.raw.headers);
+      headers.delete("authorization");
+      headers.set("Authorization", `Bearer ${encodeURIComponent(accessToken)}`);
+
+      const session = await auth.api.getSession({
+        headers,
+        query: {
+          disableRefresh: true,
+        },
+      });
+      if (!session) {
+        throw new HTTPException(401, {
+          message: "Unauthorized",
+        });
+      }
+      const user = session.user;
+      await taskService.checkLock(uid, user.id, lockId);
+
+      let refreshLockTimer: ReturnType<typeof setInterval> | undefined =
+        undefined;
+
+      const handleOpen = async () => {
+        const refreshLock = async () => {
+          try {
+            await taskService.lock(uid, user.id, lockId);
+          } catch (error) {
+            console.error(`Failed to refresh ${uid} lockId: ${lockId}:`, error);
+          }
+        };
+        refreshLock();
+        refreshLockTimer = setInterval(refreshLock, 5 * 60 * 1000);
+      };
+
+      const handleClose = async () => {
+        // Stop refreshing the lock
+        if (refreshLockTimer) {
+          clearInterval(refreshLockTimer);
+        }
+
+        // Release the lock when the WebSocket connection is closed
+        try {
+          await taskService.releaseLock(uid, user.id, lockId);
+        } catch (error) {
+          console.error(`Failed to release ${uid} lockId: ${lockId}:`, error);
+        }
+      };
+
+      return {
+        onOpen: handleOpen,
+        onClose: handleClose,
+        onError: handleClose,
+      };
+    }),
   );
 
 export default tasks;
