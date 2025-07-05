@@ -319,11 +319,14 @@ export function CreateTask({
   return (
     <div
       className={cn(
-        "relative flex min-h-screen flex-col items-center p-4 pt-8 text-black dark:text-white",
+        "relative flex flex-col items-center p-4 pt-8 text-black dark:text-white",
         HomeBackgroundGradient,
         className,
       )}
     >
+      <h2 className="mt-[10vh] mb-6 flex gap-4 font-bold text-3xl tracking-tight md:mt-[18vh] md:mb-12 md:text-5xl">
+        What can I help you ship?
+      </h2>
       <form
         className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80 dark:bg-input/30"
         onSubmit={handleSubmit}
