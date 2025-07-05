@@ -1,5 +1,4 @@
 import { vscodeHost } from "@/lib/vscode";
-import type { ExtendedUIMessage } from "@ragdoll/common";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 type CheckpointState =
@@ -63,6 +62,9 @@ export function useCheckpoints() {
     return completed;
   }, [checkpoints]);
 
+  // remove unused
+  completedCheckpoints;
+
   const checkpointsRef = useRef<Map<string, Checkpoint>>(new Map());
   const reloadCheckpoints = useCallback(() => {
     setCheckpoints(new Map(checkpointsRef.current));
@@ -100,39 +102,8 @@ export function useCheckpoints() {
     [getCheckpoint, reloadCheckpoints],
   );
 
-  const storeCheckpointsIntoMessages = useCallback(
-    (messages: ExtendedUIMessage[]) => {
-      let isDirty = false;
-      for (const message of messages) {
-        let step = 0;
-        for (const part of message.parts) {
-          if (part.type === "step-start" && !part.checkpoint) {
-            const commit = completedCheckpoints.get(
-              checkpointKey({ messageId: message.id, step }),
-            );
-
-            if (commit === undefined) {
-              continue; // Not yet saved
-            }
-
-            part.checkpoint = { commit };
-            isDirty = true;
-          }
-
-          if (part.type === "step-start") {
-            step++;
-          }
-        }
-      }
-
-      return isDirty;
-    },
-    [completedCheckpoints],
-  );
-
   return {
     checkpoint,
-    storeCheckpointsIntoMessages,
   };
 }
 
