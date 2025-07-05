@@ -138,6 +138,11 @@ export class UsageService {
       }
     }
 
+    const remainingFreeCredit = Math.max(
+      FreeCreditInDollars - creditToDollars(spentCredit),
+      0,
+    );
+
     const isLimitReached =
       creditToDollars(spentCredit) - FreeCreditInDollars >
       // default monthly credit limit is $10
@@ -151,6 +156,7 @@ export class UsageService {
         spent: spentCredit,
         limit: monthlyCreditLimit,
         isLimitReached,
+        remainingFreeCredit,
       },
     };
   }

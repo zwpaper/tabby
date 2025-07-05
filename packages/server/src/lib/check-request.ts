@@ -55,7 +55,11 @@ export async function checkUserQuota(user: User, c: Context, modelId: string) {
   const isInternalUser =
     user.email.endsWith("@tabbyml.com") && user.emailVerified;
 
-  if (!isInternalUser && quota.credit.isLimitReached) {
+  if (
+    !isInternalUser &&
+    (quota.credit.isLimitReached ||
+      (quota.credit.remainingFreeCredit <= 0 && quota.plan === "Community"))
+  ) {
     throw new HTTPException(400, {
       message: ServerErrors.ReachedCreditLimit,
     });
