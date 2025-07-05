@@ -19,7 +19,6 @@ export function PreviewTool({ messages }: { messages: UIMessage[] }) {
         <PreviewOneTool
           key={part.toolInvocation.toolCallId}
           tool={part.toolInvocation}
-          messageId={lastMessage.id}
           isFirstAssistantMessage={isFirstAssistantMessage}
         />
       );
@@ -30,11 +29,9 @@ export function PreviewTool({ messages }: { messages: UIMessage[] }) {
 
 function PreviewOneTool({
   tool,
-  messageId,
   isFirstAssistantMessage,
 }: {
   tool: ToolInvocation;
-  messageId: string;
   isFirstAssistantMessage: boolean;
 }) {
   const { getToolCallLifeCycle } = useToolCallLifeCycle();
@@ -45,7 +42,6 @@ function PreviewOneTool({
           const lifecycle = getToolCallLifeCycle({
             toolName: tool.toolName,
             toolCallId: tool.toolCallId,
-            messageId,
           });
           if (lifecycle.status === "init") {
             lifecycle.preview(
@@ -65,7 +61,7 @@ function PreviewOneTool({
           reducer: (_, rhs: ToolInvocation) => rhs,
         },
       ),
-    [getToolCallLifeCycle, messageId, isFirstAssistantMessage],
+    [getToolCallLifeCycle, isFirstAssistantMessage],
   );
   useEffect(() => {
     debouncedPreview.call(tool);

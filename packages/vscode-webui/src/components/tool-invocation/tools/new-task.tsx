@@ -16,7 +16,6 @@ import type { ToolProps } from "../types";
 export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   tool,
   isExecuting,
-  messageId,
 }) => {
   const uid = tool.args?._meta?.uid;
   const description = tool.args?.description ?? "";
@@ -28,7 +27,6 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: tool.toolName,
     toolCallId: tool.toolCallId,
-    messageId,
   });
 
   const lifecycleStreamingResult = lifecycle.streamingResult;

@@ -60,7 +60,6 @@ import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useTokenUsageUpdater } from "./hooks/use-token-usage-updater";
 import { useHandleChatEvents } from "./lib/chat-events";
-import { useStoreCheckpointsIntoMessages } from "./lib/chat-state";
 import { prepareRequestBody } from "./lib/prepare-request-body";
 
 export function ChatPage({
@@ -346,15 +345,8 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     setMessages: setMessages,
   });
 
-  const storeCheckpointsIntoMessages = useStoreCheckpointsIntoMessages();
-
-  useEffect(() => {
-    if (!allowAddToolResult) return;
-    if (storeCheckpointsIntoMessages(messages)) {
-      setMessages(messages);
-    }
-  }, [messages, setMessages, allowAddToolResult, storeCheckpointsIntoMessages]);
-  useSaveMessages({ messages, uid });
+  // FIXME(meng): Re-enable saving messages when checkpoint is stored in messages
+  false && useSaveMessages({ messages, uid });
 
   useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
 

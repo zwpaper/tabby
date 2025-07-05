@@ -21,18 +21,15 @@ import type { ToolProps } from "./types";
 export function ToolInvocationPart({
   tool,
   isLoading,
-  messageId,
   className,
 }: {
   tool: ToolInvocation;
   isLoading: boolean;
-  messageId: string;
   className?: string;
 }) {
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: tool.toolName,
     toolCallId: tool.toolCallId,
-    messageId,
   });
   const isExecuting = lifecycle.status.startsWith("execute");
   const C = Tools[tool.toolName];
@@ -44,12 +41,7 @@ export function ToolInvocationPart({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       {C ? (
-        <C
-          tool={tool}
-          isExecuting={isExecuting}
-          isLoading={isLoading}
-          messageId={messageId}
-        />
+        <C tool={tool} isExecuting={isExecuting} isLoading={isLoading} />
       ) : (
         <McpToolCall tool={tool} isExecuting={isExecuting} />
       )}

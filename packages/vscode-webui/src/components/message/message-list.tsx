@@ -85,7 +85,6 @@ export const MessageList: React.FC<{
                   partIndex={index}
                   part={part}
                   isLoading={isLoading}
-                  messageId={m.id}
                 />
               ))}
             </div>
@@ -115,13 +114,11 @@ function Part({
   partIndex,
   isLastPartInMessages,
   isLoading,
-  messageId,
 }: {
   partIndex: number;
   part: NonNullable<UIMessage["parts"]>[number];
   isLastPartInMessages: boolean;
   isLoading: boolean;
-  messageId: string;
 }) {
   const paddingClass = partIndex === 0 ? "" : "mt-2";
   if (part.type === "text") {
@@ -153,7 +150,6 @@ function Part({
         className={paddingClass}
         tool={part.toolInvocation}
         isLoading={isLoading}
-        messageId={messageId}
       />
     );
   }

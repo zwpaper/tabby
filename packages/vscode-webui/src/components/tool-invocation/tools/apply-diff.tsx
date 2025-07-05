@@ -10,12 +10,11 @@ import { UserEdits } from "../user-edits";
 
 export const applyDiffTool: React.FC<
   ToolProps<ClientToolsType["applyDiff"]>
-> = ({ tool, isExecuting, messageId }) => {
+> = ({ tool, isExecuting }) => {
   const { path } = tool.args || {};
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: tool.toolName,
     toolCallId: tool.toolCallId,
-    messageId,
   });
   const handleClick = useCallback(() => {
     lifecycle.preview(tool.args, tool.state);

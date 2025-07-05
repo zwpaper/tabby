@@ -154,20 +154,10 @@ export class ManagedToolCallLifeCycle
   readonly toolName: string;
   readonly toolCallId: string;
 
-  private readonly messageId: string;
-
-  constructor(
-    key: ToolCallLifeCycleKey,
-    private readonly checkpoint: (key: {
-      messageId: string;
-      step: number;
-      isFirstAssistantMessage: boolean;
-    }) => Promise<void>,
-  ) {
+  constructor(key: ToolCallLifeCycleKey) {
     super();
     this.toolName = key.toolName;
     this.toolCallId = key.toolCallId;
-    this.messageId = key.messageId;
   }
 
   get status() {
@@ -192,18 +182,11 @@ export class ManagedToolCallLifeCycle
     this.transitTo("complete", { type: "dispose" });
   }
 
-  preview(
-    args: unknown,
-    state: ToolInvocation["state"],
-    opts?: {
-      isFirstAssistantMessage: boolean;
-      step: number;
-    },
-  ) {
+  preview(args: unknown, state: ToolInvocation["state"]) {
     if (this.status === "ready") {
       this.previewReady(args, state);
     } else {
-      this.previewInit(args, state, opts);
+      this.previewInit(args, state);
     }
   }
 
@@ -216,14 +199,7 @@ export class ManagedToolCallLifeCycle
     });
   }
 
-  private previewInit(
-    args: unknown,
-    state: ToolInvocation["state"],
-    opts?: {
-      isFirstAssistantMessage: boolean;
-      step: number;
-    },
-  ) {
+  private previewInit(args: unknown, state: ToolInvocation["state"]) {
     let { previewJob } = this.checkState("Preview", "init");
     const previewToolCall = (abortSignal?: AbortSignal) =>
       vscodeHost.previewToolCall(this.toolName, args, {
@@ -233,15 +209,6 @@ export class ManagedToolCallLifeCycle
           ? ThreadAbortSignal.serialize(abortSignal)
           : undefined,
       });
-    previewJob = previewJob.then(async (result) => {
-      if (opts !== undefined) {
-        await this.checkpoint({
-          messageId: this.messageId,
-          ...opts,
-        });
-      }
-      return result;
-    });
 
     if (state === "partial-call") {
       previewJob = previewJob.then(() => previewToolCall());

@@ -20,7 +20,6 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: pendingApproval.tool.toolName,
     toolCallId: pendingApproval.tool.toolCallId,
-    messageId: pendingApproval.messageId,
   });
 
   const { selectedModel } = useSelectedModels();

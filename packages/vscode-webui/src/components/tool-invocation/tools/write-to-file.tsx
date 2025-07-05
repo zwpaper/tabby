@@ -10,11 +10,10 @@ import { UserEdits } from "../user-edits";
 
 export const writeToFileTool: React.FC<
   ToolProps<ClientToolsType["writeToFile"]>
-> = ({ tool, isExecuting, messageId }) => {
+> = ({ tool, isExecuting }) => {
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: tool.toolName,
     toolCallId: tool.toolCallId,
-    messageId,
   });
   const handleClick = useCallback(() => {
     lifecycle.preview(tool.args, tool.state);

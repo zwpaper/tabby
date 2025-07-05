@@ -61,10 +61,6 @@ export function FixedStateChatContextProvider({
     getToolCallLifeCycle,
     executingToolCalls,
     completeToolCalls,
-    storeCheckpointsIntoMessages: () => {
-      // In fixed state, we don't store checkpoints into messages
-      return false;
-    },
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

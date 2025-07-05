@@ -10,17 +10,16 @@ interface ChatContextProviderProps {
 export function ChatContextProvider({ children }: ChatContextProviderProps) {
   const autoApproveGuard = useRef(false);
 
-  const { checkpoint, storeCheckpointsIntoMessages } = useCheckpoints();
+  useCheckpoints();
 
   const { executingToolCalls, getToolCallLifeCycle, completeToolCalls } =
-    useToolCallLifeCycles({ checkpoint });
+    useToolCallLifeCycles();
 
   const value: ChatState = {
     autoApproveGuard,
     getToolCallLifeCycle,
     executingToolCalls,
     completeToolCalls,
-    storeCheckpointsIntoMessages,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
