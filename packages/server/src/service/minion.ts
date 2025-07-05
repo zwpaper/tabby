@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import { HTTPException } from "hono/http-exception";
+import { v5 as uuidv5 } from "uuid";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
 import { signalKeepAliveSandbox } from "./background-job";
@@ -8,7 +8,9 @@ import { type CreateSandboxOptions, sandboxService } from "./sandbox";
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 const MinionDomain = process.env.POCHI_MINION_DOMAIN || "runpochi.com";
 
-const CUSTOM_ALPHABET = "pmykc65zfntd7ah2js90o83igxr1eu4vwlqb";
+// UUID namespace for generating port forward IDs from minion IDs
+const PORT_FORWARD_NAMESPACE = "25dc4800-5b85-4f19-a88a-9c5934adb535";
+const SANDBOX_ID_NAMESPACE = "53b1e0a9-b6c6-4e42-8354-ae76cec87cbd";
 
 interface CreateMinionOptions {
   user: { id: string; name: string; email: string };
@@ -49,12 +51,13 @@ class MinionService {
       .executeTakeFirstOrThrow();
 
     const minionId = minionIdCoder.encode(res.id);
-    const sandboxId = this.hashMinionIdToSandboxId(minionId);
 
     // we do not want to expose the fly.io app id to public
-    // so we use the minion ID as the sandbox host for port forwarding,
+    // so we use a hashed port forward ID as the sandbox host for port forwarding,
     // then user can share the port-forwarded URL with others
-    const sandboxHostForPortForward = `${minionId}.${MinionDomain}`;
+    const portForwardId = this.hashMinionIdToPortForwardId(minionId);
+    const sandboxHostForPortForward = `${portForwardId}.${MinionDomain}`;
+    const sandboxId = this.hashPortForwardIdToSandboxId(portForwardId);
 
     const envs: Record<string, string> = {
       POCHI_SESSION_TOKEN: apiKey.key,
@@ -116,23 +119,16 @@ class MinionService {
     return { ...res, id: minionIdCoder.encode(res.id) };
   }
 
-  private hashMinionIdToSandboxId(minionId: string) {
-    // Create a SHA-256 hash of the minion ID
-    // add a prefix as a salt.
-    const hash = createHash("sha256").update(`P0ch1-${minionId}`).digest();
+  private hashMinionIdToPortForwardId(minionId: string) {
+    return this.uuidv5Id(minionId, PORT_FORWARD_NAMESPACE);
+  }
 
-    // Convert hash bytes to a big integer
-    let value = BigInt(`0x${hash.toString("hex")}`);
-    const base = BigInt(CUSTOM_ALPHABET.length);
-    let result = "";
+  private hashPortForwardIdToSandboxId(portForwardId: string) {
+    return `pochi-${this.uuidv5Id(portForwardId, SANDBOX_ID_NAMESPACE)}`;
+  }
 
-    while (result.length < 32) {
-      const remainder = Number(value % base);
-      result += CUSTOM_ALPHABET[remainder];
-      value = value / base;
-    }
-
-    return `pochi-${result}`;
+  private uuidv5Id(minionId: string, namespace: string) {
+    return uuidv5(minionId, namespace).replace(/-/g, "");
   }
 
   async signalKeepAliveMinion(userId: string, minionId: string) {

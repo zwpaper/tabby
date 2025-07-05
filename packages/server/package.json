@@ -20,6 +20,7 @@
     "@ragdoll/tools": "workspace:*",
     "@slack/bolt": "catalog:",
     "@slack/web-api": "^7.9.2",
+    "@types/uuid": "^10.0.0",
     "ai": "catalog:",
     "better-auth": "catalog:",
     "bullmq": "^5.53.2",
@@ -40,6 +41,7 @@
     "sqids": "^0.3.0",
     "stripe": "17",
     "tslog": "catalog:",
+    "uuid": "^11.1.0",
     "zod": "catalog:"
   },
   "scripts": {
