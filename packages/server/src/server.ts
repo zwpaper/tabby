@@ -25,6 +25,7 @@ import { queuedash } from "./queuedash";
 import { startWorkers } from "./service/background-job";
 import { slackService } from "./service/slack";
 import { taskService } from "./service/task";
+import { taskLockService } from "./service/task-lock";
 
 export const app = new Hono().use(authRequest);
 
@@ -138,6 +139,7 @@ export function setIdleTimeout(request: Request, secs: number) {
 process.on("SIGTERM", async () => {
   console.log("SIGTERM received, shutting down...");
   await taskService.gracefulShutdown();
+  await taskLockService.gracefulShutdown();
 
   console.log("Shutdown complete, exiting...");
   process.exit(143);

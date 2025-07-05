@@ -1,5 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import type { TaskCreateEvent, TaskEvent } from "@ragdoll/db";
+import type { ServerWebSocket } from "bun";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
@@ -11,6 +12,7 @@ import { upgradeWebSocket } from "../lib/websocket";
 import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task"; // Added import
 import { taskEvents } from "../service/task-events";
+import { taskLockService } from "../service/task-lock";
 import { ZodMessageType } from "../types";
 
 // Define validation schemas
@@ -327,39 +329,17 @@ const tasks = new Hono()
       const user = session.user;
       await taskService.checkLock(uid, user.id, lockId);
 
-      let refreshLockTimer: ReturnType<typeof setInterval> | undefined =
-        undefined;
-
-      const handleOpen = async () => {
-        const refreshLock = async () => {
-          try {
-            await taskService.lock(uid, user.id, lockId);
-          } catch (error) {
-            console.error(`Failed to refresh ${uid} lockId: ${lockId}:`, error);
-          }
-        };
-        refreshLock();
-        refreshLockTimer = setInterval(refreshLock, 5 * 60 * 1000);
-      };
-
-      const handleClose = async () => {
-        // Stop refreshing the lock
-        if (refreshLockTimer) {
-          clearInterval(refreshLockTimer);
-        }
-
-        // Release the lock when the WebSocket connection is closed
-        try {
-          await taskService.releaseLock(uid, user.id, lockId);
-        } catch (error) {
-          console.error(`Failed to release ${uid} lockId: ${lockId}:`, error);
-        }
-      };
-
       return {
-        onOpen: handleOpen,
-        onClose: handleClose,
-        onError: handleClose,
+        onOpen: async (_, ws) => {
+          const raw = ws.raw as ServerWebSocket;
+          await taskLockService.lockTask(uid, user.id, lockId, raw);
+        },
+        onClose: async () => {
+          await taskLockService.unlockTask(uid, user.id, lockId);
+        },
+        onError: async () => {
+          await taskLockService.unlockTask(uid, user.id, lockId);
+        },
       };
     }),
   );
