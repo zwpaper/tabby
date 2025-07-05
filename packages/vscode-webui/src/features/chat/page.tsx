@@ -50,6 +50,7 @@ import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { vscodeHost } from "@/lib/vscode";
 import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
+import { ServerErrors } from "@ragdoll/server";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
@@ -598,10 +599,10 @@ function ErrorMessageView({ error }: { error: TaskError | undefined }) {
     <ErrorMessage
       error={error}
       formatter={(e) => {
-        if (e.message === "REACHED_CREDIT_LIMIT") {
+        if (e.message === ServerErrors.ReachedCreditLimit) {
           return (
             <span>
-              You have reached the credit limit.{" "}
+              You have reached the spending limit.{" "}
               <a
                 href="https://app.getpochi.com/profile"
                 target="_blank"

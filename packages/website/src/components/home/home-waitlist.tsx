@@ -146,7 +146,7 @@ export function HomeWaitlist() {
               size="lg"
               className="w-full bg-amber-600 px-8 py-6 font-medium text-lg text-white transition-all hover:bg-amber-700"
             >
-              Join the Waitlist 🚀
+              Register Now ⚡
             </Button>
           </motion.div>
         </motion.div>

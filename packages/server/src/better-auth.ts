@@ -31,7 +31,7 @@ export const auth = betterAuth({
     additionalFields: {
       isWaitlistApproved: {
         type: "boolean",
-        default: false,
+        default: true,
         required: false,
         input: false,
       },

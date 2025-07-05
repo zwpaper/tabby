@@ -101,11 +101,7 @@ export class ShadowGitRepo implements vscode.Disposable {
       await this.git.raw(["config", "core.worktree", this.workspaceDir]);
       await this.git.raw(["config", "commit.gpgSign", "false"]);
       await this.git.raw(["config", "user.name", "Pochi Checkpoint"]);
-      await this.git.raw([
-        "config",
-        "user.email",
-        "pochi-checkpoint@tabbyml.com",
-      ]);
+      await this.git.raw(["config", "user.email", "noreply@getpochi.com"]);
 
       logger.trace(`Initialized shadow Git repository at ${this.gitPath}.`);
 

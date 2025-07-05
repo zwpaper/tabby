@@ -75,4 +75,6 @@ class PochiEventSourceImpl implements PochiEventSource {
   }
 }
 
-export const ReachedCreditLimitErrorMessage = "REACHED_CREDIT_LIMIT";
+export const ServerErrors = {
+  ReachedCreditLimit: "REACHED_CREDIT_LIMIT",
+};

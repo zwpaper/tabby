@@ -15,7 +15,7 @@ export function startWorkers() {
   createNotifyTaskSlackWorker();
   if (process.env.NODE_ENV === "production") {
     createPauseInactiveSandboxWorker();
-    createDisapproveInactiveUsersWorker();
+    false && createDisapproveInactiveUsersWorker();
   }
 }
 

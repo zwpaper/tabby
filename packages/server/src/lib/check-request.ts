@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { ReachedCreditLimitErrorMessage } from "..";
+import { ServerErrors } from "..";
 import type { User } from "../auth";
 import { usageService } from "../service/usage";
 import { type AvailableModelId, AvailableModels } from "./constants";
@@ -33,6 +33,7 @@ export async function checkUserQuota(user: User, c: Context, modelId: string) {
 
   // Check quota
   const quota = await usageService.readCurrentMonthQuota(user, c.req);
+
   const modelCostType = AvailableModels.find(
     (model) => model.id === modelId,
   )?.costType;
@@ -41,16 +42,22 @@ export async function checkUserQuota(user: User, c: Context, modelId: string) {
     throw new HTTPException(400, { message: "Invalid model" });
   }
 
-  if (quota.limits[modelCostType] - quota.usages[modelCostType] <= 0) {
+  const reachQuotaLimit =
+    quota.limits[modelCostType] - quota.usages[modelCostType] <= 0;
+
+  // biome-ignore lint/correctness/noConstantCondition: disable this check for now
+  if (false && reachQuotaLimit) {
     throw new HTTPException(400, {
       message: `You have reached the quota limit for ${modelCostType}. Please upgrade your plan or try again later.`,
     });
   }
 
-  // biome-ignore lint/correctness/noConstantCondition: disable this check for now
-  if (false && quota.credit.isLimitReached) {
+  const isInternalUser =
+    user.email.endsWith("@tabbyml.com") && user.emailVerified;
+
+  if (!isInternalUser && quota.credit.isLimitReached) {
     throw new HTTPException(400, {
-      message: ReachedCreditLimitErrorMessage,
+      message: ServerErrors.ReachedCreditLimit,
     });
   }
 }

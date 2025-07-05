@@ -4,7 +4,7 @@ import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
 const QueueName = "pause-inactive-sandbox";
-const POCHI_PAUSE_SANDBOX = (process.env.POCHI_PAUSE_SANDBOX || "") !== "";
+const EnablePauseSandboxWorker = !!process.env.ENABLE_PAUSE_SANDBOX_WORKER;
 
 interface PauseInactiveSandboxData {
   sandboxId: string;
@@ -16,7 +16,7 @@ export const queue = new Queue<PauseInactiveSandboxData>(
 );
 
 export async function signalKeepAliveSandbox(data: PauseInactiveSandboxData) {
-  if (!POCHI_PAUSE_SANDBOX) {
+  if (!EnablePauseSandboxWorker) {
     return;
   }
 
@@ -33,7 +33,7 @@ export async function signalKeepAliveSandbox(data: PauseInactiveSandboxData) {
 }
 
 export function createPauseInactiveSandboxWorker() {
-  if (!POCHI_PAUSE_SANDBOX) {
+  if (!EnablePauseSandboxWorker) {
     return;
   }
 

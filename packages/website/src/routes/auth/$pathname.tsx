@@ -11,14 +11,7 @@ function Auth() {
     case "sign-up":
       return (
         <div className="flex size-full min-h-screen grow flex-col items-center justify-center gap-3">
-          <AuthCard
-            view="SIGN_UP"
-            localization={{
-              SIGN_UP: "Register for waitlist 👋",
-              SIGN_UP_DESCRIPTION: "Fill in your details to join our waitlist",
-              EMAIL: "Email",
-            }}
-          />
+          <AuthCard view="SIGN_UP" />
 
           {/* Terms and Privacy links above the form */}
           <div className="mb-4 flex items-center gap-6">

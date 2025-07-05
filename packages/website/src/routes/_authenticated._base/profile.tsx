@@ -694,18 +694,15 @@ function RouteComponent() {
         />
       </div>
 
-      {/* Billing Section, only display to internal user for now */}
-      {session?.user?.email.endsWith("@tabbyml.com") && (
-        <div className="space-y-4">
-          <div className="mx-4 space-y-1">
-            <h2 className="font-semibold text-base text-foreground">Billing</h2>
-            <p className="text-muted-foreground text-xs">
-              Manage your billing and subscription details
-            </p>
-          </div>
-          <BillingCard queryClient={queryClient} />
+      <div className="space-y-4">
+        <div className="mx-4 space-y-1">
+          <h2 className="font-semibold text-base text-foreground">Billing</h2>
+          <p className="text-muted-foreground text-xs">
+            Manage your billing and subscription details
+          </p>
         </div>
-      )}
+        <BillingCard queryClient={queryClient} />
+      </div>
     </div>
   );
 }
