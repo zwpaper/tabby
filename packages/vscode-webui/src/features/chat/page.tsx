@@ -616,6 +616,24 @@ function ErrorMessageView({ error }: { error: TaskError | undefined }) {
           );
         }
 
+        if (e.message === ServerErrors.RequireSubscription) {
+          return (
+            <span>
+              You've used all your free credits. To continue, please subscribe
+              to Pochi's usage-based plan.{" "}
+              <a
+                href="https://app.getpochi.com/profile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!underline py-1"
+              >
+                <ExternalLinkIcon className="mx-0.5 inline size-4" />
+                Subscribe
+              </a>
+            </span>
+          );
+        }
+
         return e.message;
       }}
     />
