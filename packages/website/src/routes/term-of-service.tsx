@@ -14,7 +14,8 @@ function Terms() {
     { id: "operational-data", title: "Operational and Technical Data" },
     { id: "privacy", title: "Privacy" },
     { id: "confidentiality", title: "Confidentiality" },
-    { id: "term-access-limits", title: "Term and Access Limits" },
+    { id: "term-access-payment", title: "Term, Access, and Payment" },
+    { id: "cancellation-termination", title: "Cancellation and Termination" },
     { id: "disclaimer-warranties", title: "Disclaimer of Warranties" },
     { id: "limitation-liability", title: "Limitation of Liability" },
     {
@@ -29,7 +30,7 @@ function Terms() {
   return (
     <LegalPage
       title="Pochi – Research Preview Terms of Use"
-      lastModified="Last Modified: 2025 / 06 / 26"
+      lastModified="Last Modified: 2025 / 07 / 05"
       sections={sections}
     >
       {/* Introduction */}
@@ -144,25 +145,56 @@ function Terms() {
         </p>
       </section>
 
-      {/* 8. Term and Access Limits */}
-      <section id="term-access-limits" className="space-y-4">
+      {/* 8. Term, Access, and Payment */}
+      <section id="term-access-payment" className="space-y-4">
         <h2 className="font-semibold text-foreground text-xl">
-          8. Term and Access Limits
+          8. Term, Access, and Payment
         </h2>
         <p className="text-muted-foreground leading-relaxed">
-          Unless otherwise arranged in writing, use of the Service during the
-          research preview is free of charge and may be limited in
-          functionality, duration, or usage volume. This Agreement is effective
-          as long as you use the Service or until we end the preview, whichever
-          comes first. We reserve the right to introduce credits, quotas, or
-          fees for extended access.
+          Access to the Service is available on a usage-based paid model with
+          monthly free credits. Upon signing up, each user receives $20 of free
+          usage credits per month, which automatically renew at the start of
+          each billing cycle.
+        </p>
+        <p className="text-muted-foreground leading-relaxed">
+          Your usage is calculated based on the token costs of the large
+          language models (LLMs) you use through the Service. These costs are
+          passed directly through to you without additional markup.
+        </p>
+        <p className="text-muted-foreground leading-relaxed">
+          If your outstanding balance exceeds $10 at any time, we will
+          automatically charge your payment method on file. If your balance
+          remains under $10, we will charge you at the end of your monthly
+          billing cycle for any amount owed.
+        </p>
+        <p className="text-muted-foreground leading-relaxed">
+          You may also set a monthly spending limit in your account settings at
+          /profile to help you manage your costs.
+        </p>
+        <p className="text-muted-foreground leading-relaxed">
+          We may introduce additional features, quotas, or fees in the future
+          and will notify you in advance if pricing structures change.
         </p>
       </section>
 
-      {/* 9. Disclaimer of Warranties */}
+      {/* 9. Cancellation and Termination */}
+      <section id="cancellation-termination" className="space-y-4">
+        <h2 className="font-semibold text-foreground text-xl">
+          9. Cancellation and Termination
+        </h2>
+        <p className="text-muted-foreground leading-relaxed">
+          You may cancel your account or your paid access at any time through
+          your account settings. Cancellation will apply to future billing
+          cycles. You will retain access through the end of your current billing
+          cycle. If payment is not successfully processed when due, we may
+          suspend or terminate your access to the Service.
+        </p>
+      </section>
+
+      {/* 10. Disclaimer of Warranties */}
       <section id="disclaimer-warranties" className="space-y-4">
         <h2 className="font-semibold text-foreground text-xl">
-          9. Disclaimer of Warranties
+          10. Disclaimer of Warranties
         </h2>
         <p className="text-muted-foreground leading-relaxed">
           The Service is provided "as is" for experimental and feedback
@@ -173,10 +205,10 @@ function Terms() {
         </p>
       </section>
 
-      {/* 10. Limitation of Liability */}
+      {/* 11. Limitation of Liability */}
       <section id="limitation-liability" className="space-y-4">
         <h2 className="font-semibold text-foreground text-xl">
-          10. Limitation of Liability
+          11. Limitation of Liability
         </h2>
         <p className="text-muted-foreground leading-relaxed">
           To the fullest extent permitted by law, we won't be liable for any
@@ -185,10 +217,10 @@ function Terms() {
         </p>
       </section>
 
-      {/* 11. Your Responsibility and Indemnity */}
+      {/* 12. Your Responsibility and Indemnity */}
       <section id="responsibility-indemnity" className="space-y-4">
         <h2 className="font-semibold text-foreground text-xl">
-          11. Your Responsibility and Indemnity
+          12. Your Responsibility and Indemnity
         </h2>
         <p className="text-muted-foreground leading-relaxed">
           You are solely responsible for how you use the Service and the content
@@ -198,10 +230,10 @@ function Terms() {
         </p>
       </section>
 
-      {/* 12. Changes to Terms */}
+      {/* 13. Changes to Terms */}
       <section id="changes-terms" className="space-y-4">
         <h2 className="font-semibold text-foreground text-xl">
-          12. Changes to Terms
+          13. Changes to Terms
         </h2>
         <p className="text-muted-foreground leading-relaxed">
           We may update these terms at any time. If changes are material, we'll
@@ -210,10 +242,10 @@ function Terms() {
         </p>
       </section>
 
-      {/* 13. Legal Terms */}
+      {/* 14. Legal Terms */}
       <section id="legal-terms" className="space-y-4">
         <h2 className="font-semibold text-foreground text-xl">
-          13. Legal Terms
+          14. Legal Terms
         </h2>
         <div className="space-y-4">
           <div>
@@ -280,10 +312,10 @@ function Terms() {
         </div>
       </section>
 
-      {/* 14. Contact Information and Disclosures */}
+      {/* 15. Contact Information and Disclosures */}
       <section id="contact-information" className="space-y-4">
         <h2 className="font-semibold text-foreground text-xl">
-          14. Contact Information and Disclosures
+          15. Contact Information and Disclosures
         </h2>
         <div className="space-y-2">
           <p className="text-muted-foreground leading-relaxed">
