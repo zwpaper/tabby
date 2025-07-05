@@ -230,7 +230,7 @@ export class TerminalJob implements vscode.Disposable {
    * Wait for shell integration to become available
    */
   private async waitForShellIntegration(
-    timeoutMs = 5000,
+    timeoutMs = 15000,
   ): Promise<vscode.TerminalShellIntegration> {
     if (this.terminal.shellIntegration) {
       this.shellIntegration = this.terminal.shellIntegration;
