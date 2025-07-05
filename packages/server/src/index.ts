@@ -78,4 +78,5 @@ class PochiEventSourceImpl implements PochiEventSource {
 export const ServerErrors = {
   RequireSubscription: "REQUIRE_SUBSCRIPTION",
   ReachedCreditLimit: "REACHED_CREDIT_LIMIT",
+  RequireGithubIntegration: "REQUIRE_GITHUB_INTEGRATION",
 };

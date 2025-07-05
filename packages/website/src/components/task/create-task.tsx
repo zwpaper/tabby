@@ -17,7 +17,8 @@ import {
   validateImages,
 } from "@/lib/utils/image";
 import { AuthCard } from "@daveyplate/better-auth-ui";
-import { useRouter } from "@tanstack/react-router";
+import { ServerErrors } from "@ragdoll/server";
+import { Link, useRouter } from "@tanstack/react-router";
 import type { Attachment } from "ai";
 import {
   ArrowUpIcon,
@@ -60,7 +61,7 @@ export function CreateTask({
 
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<Error | undefined>();
   const [files, setFiles] = useState<File[]>([]);
   const [imageSelectionError, setImageSelectionError] = useState<
     Error | undefined
@@ -184,7 +185,7 @@ export function CreateTask({
       setShowMobileWarning(true);
       return;
     }
-    setSubmitError(null);
+    setSubmitError(undefined);
     if (auth === null) {
       setShowAuthDialog(true);
     } else {
@@ -236,7 +237,9 @@ export function CreateTask({
         return;
       } catch (error) {
         setSubmitError(
-          error instanceof Error ? error.message : "An unknown error occurred",
+          error instanceof Error
+            ? error
+            : new Error("An unknown error occurred"),
         );
       } finally {
         setIsSubmitting(false);
@@ -315,6 +318,9 @@ export function CreateTask({
       setShowMobileWarning(true);
     }
   };
+
+  // Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. submitError
+  const displayError = imageSelectionError || uploadImageError || submitError;
 
   return (
     <div
@@ -419,10 +425,7 @@ export function CreateTask({
         isSubmitting={isSubmitting}
       />
       <div className="mt-4 text-right font-medium text-destructive text-sm">
-        {/* Display errors with priority: 1. imageSelectionError, 2. uploadImageError, 3. submitError */}
-        {imageSelectionError?.message ||
-          uploadImageError?.message ||
-          submitError}
+        <ErrorMessage error={displayError} />
       </div>
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="sm:max-w-[425px]">
@@ -443,4 +446,22 @@ export function CreateTask({
       />
     </div>
   );
+}
+
+function ErrorMessage({ error }: { error: Error | undefined }) {
+  if (!error) return;
+
+  if (error.message === ServerErrors.RequireGithubIntegration) {
+    return (
+      <span>
+        GitHub integration is required. Please connect your GitHub account on{" "}
+        <Link to="/profile" className="underline">
+          the profile page
+        </Link>
+        .
+      </span>
+    );
+  }
+
+  return error.message;
 }

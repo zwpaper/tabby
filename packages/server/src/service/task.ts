@@ -32,6 +32,7 @@ import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import moment from "moment";
 import type { z } from "zod";
+import { ServerErrors } from "..";
 import { db, uidCoder } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
 import type { ZodChatRequestType } from "../types";
@@ -755,7 +756,7 @@ class TaskService {
 
     if (!githubAccessToken) {
       throw new HTTPException(401, {
-        message: "GitHub access token is required to create a runner task",
+        message: ServerErrors.RequireGithubIntegration,
       });
     }
 
