@@ -1,3 +1,4 @@
+import { Laminar } from "@lmnr-ai/lmnr";
 import {
   type LanguageModelV1Middleware,
   type LanguageModelV1Prompt,
@@ -389,6 +390,13 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
               ...processedPrompt,
             ];
 
+      const span = Laminar.startSpan({ name: "transformParams" });
+      await Laminar.withSpan(span, async () => {
+        Laminar.setSpanOutput({
+          prompt: promptWithTools,
+        });
+      });
+      span.end();
       return {
         ...params,
         mode: {
