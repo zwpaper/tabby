@@ -4,7 +4,11 @@ import moment from "moment";
 import type { User } from "../auth";
 import { db } from "../db";
 import { readActiveSubscriptionLimits } from "../lib/billing";
-import { AvailableModels, computeCreditCost } from "../lib/constants";
+import {
+  AvailableModels,
+  type CreditCostInput,
+  computeCreditCost,
+} from "../lib/constants";
 import { stripeClient } from "../lib/stripe";
 
 const FreeCreditInDollars = 20;
@@ -14,8 +18,9 @@ export class UsageService {
     user: User,
     modelId: string,
     usage: LanguageModelUsage,
+    creditCostInput: CreditCostInput,
   ): Promise<void> {
-    const credit = await this.meterCreditCost(user, modelId, usage);
+    const credit = await this.meterCreditCost(user, creditCostInput);
 
     // Track individual completion details
     await db
@@ -157,12 +162,8 @@ export class UsageService {
     };
   }
 
-  private async meterCreditCost(
-    user: User,
-    modelId: string,
-    usage: LanguageModelUsage,
-  ) {
-    const creditCost = computeCreditCost(modelId, usage);
+  private async meterCreditCost(user: User, creditCostInput: CreditCostInput) {
+    const creditCost = computeCreditCost(creditCostInput);
 
     if (!user.stripeCustomerId) {
       console.warn(

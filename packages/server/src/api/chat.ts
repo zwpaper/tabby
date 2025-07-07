@@ -36,6 +36,7 @@ import {
 } from "../lib/check-request";
 import {
   type AvailableModelId,
+  type CreditCostInput,
   getModelById,
   getModelOptions,
 } from "../lib/constants";
@@ -152,15 +153,56 @@ const chat = new Hono()
                 messages: preparedMessages,
                 responseMessages: response.messages,
               }) as UIMessage[];
+              let creditCostInput: CreditCostInput | undefined;
               if (providerMetadata?.anthropic) {
-                const { cacheReadInputTokens } = providerMetadata.anthropic;
-                if (typeof cacheReadInputTokens === "number") {
-                  usage = {
-                    promptTokens: cacheReadInputTokens + usage.promptTokens,
-                    completionTokens: usage.completionTokens,
-                    totalTokens: cacheReadInputTokens + usage.totalTokens,
-                  };
-                }
+                const cacheCreationInputTokens =
+                  (providerMetadata.anthropic.cacheCreationInputTokens as
+                    | number
+                    | undefined) || 0;
+                const cacheReadInputTokens =
+                  (providerMetadata.anthropic.cacheReadInputTokens as
+                    | number
+                    | undefined) || 0;
+                creditCostInput = {
+                  type: "anthropic",
+                  modelId: "claude-4-sonnet",
+                  cacheWriteInputTokens: cacheCreationInputTokens,
+                  cacheReadInputTokens,
+                  inputTokens: usage.promptTokens,
+                  outputTokens: usage.completionTokens,
+                };
+
+                const promptTokens =
+                  (cacheReadInputTokens || cacheCreationInputTokens) +
+                  usage.promptTokens;
+                usage = {
+                  promptTokens,
+                  completionTokens: usage.completionTokens,
+                  totalTokens: promptTokens + usage.completionTokens,
+                };
+              }
+
+              if (providerMetadata?.google) {
+                const cacheReadInputTokens =
+                  (providerMetadata.google.cachedContentTokenCount as
+                    | number
+                    | undefined) || 0;
+                creditCostInput = {
+                  type: "google",
+                  modelId:
+                    validModelId === "google/gemini-2.5-pro"
+                      ? "gemini-2.5-pro"
+                      : "gemini-2.5-flash",
+                  cacheReadInputTokens,
+                  inputTokens: usage.promptTokens - cacheReadInputTokens,
+                  outputTokens: usage.completionTokens,
+                };
+              }
+
+              if (!creditCostInput) {
+                throw new Error(
+                  "Failed to determine credit cost input for usage tracking.",
+                );
               }
 
               const isUsageValid = !Number.isNaN(usage.totalTokens);
@@ -174,7 +216,12 @@ const chat = new Hono()
               );
 
               if (isUsageValid) {
-                await usageService.trackUsage(user, requestedModelId, usage);
+                await usageService.trackUsage(
+                  user,
+                  requestedModelId,
+                  usage,
+                  creditCostInput,
+                );
 
                 appendDataPart(
                   {

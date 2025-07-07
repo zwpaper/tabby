@@ -1,0 +1,40 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 4813b7949fbba1baef4c94f5e2d88462d0902da1..6c33c8ce246e4b2b9c842ed70a3b54abd63332fa 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -601,6 +601,7 @@ var GoogleGenerativeAILanguageModel = class {
+       completionTokens: Number.NaN
+     };
+     let providerMetadata = void 0;
++    let cachedContentTokenCount;
+     const generateId2 = this.config.generateId;
+     let hasToolCalls = false;
+     return {
+@@ -615,6 +616,7 @@ var GoogleGenerativeAILanguageModel = class {
+             const value = chunk.value;
+             const usageMetadata = value.usageMetadata;
+             if (usageMetadata != null) {
++              cachedContentTokenCount = usageMetadata.cachedContentTokenCount || undefined;
+               usage = {
+                 promptTokens: (_a = usageMetadata.promptTokenCount) != null ? _a : NaN,
+                 completionTokens: (_b = usageMetadata.candidatesTokenCount) != null ? _b : NaN
+@@ -693,7 +695,8 @@ var GoogleGenerativeAILanguageModel = class {
+               providerMetadata = {
+                 google: {
+                   groundingMetadata: (_e = candidate.groundingMetadata) != null ? _e : null,
+-                  safetyRatings: (_f = candidate.safetyRatings) != null ? _f : null
++                  safetyRatings: (_f = candidate.safetyRatings) != null ? _f : null,
++                  cachedContentTokenCount 
+                 }
+               };
+             }
+@@ -848,7 +851,8 @@ var chunkSchema = z2.object({
+   usageMetadata: z2.object({
+     promptTokenCount: z2.number().nullish(),
+     candidatesTokenCount: z2.number().nullish(),
+-    totalTokenCount: z2.number().nullish()
++    totalTokenCount: z2.number().nullish(),
++    cachedContentTokenCount: z2.number().nullish()
+   }).nullish()
+ });
+ var googleGenerativeAIProviderOptionsSchema = z2.object({

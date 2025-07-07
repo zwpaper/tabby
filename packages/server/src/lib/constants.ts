@@ -32,31 +32,117 @@ export const AvailableModels: {
   },
 ];
 
+export type CreditCostInput =
+  | {
+      type: "anthropic";
+      modelId: "claude-4-sonnet";
+      cacheWriteInputTokens: number;
+      cacheReadInputTokens: number;
+      inputTokens: number;
+      outputTokens: number;
+    }
+  | {
+      type: "google";
+      modelId: "gemini-2.5-pro" | "gemini-2.5-flash";
+      cacheReadInputTokens: number;
+      inputTokens: number;
+      outputTokens: number;
+    };
+
+const PriceByModel = {
+  anthropic: {
+    "claude-4-sonnet": {
+      cacheWrite: 37,
+      cacheRead: 3,
+      input: 30,
+      output: 150,
+    },
+  },
+  google: {
+    "gemini/2.5-flash": {
+      cacheRead: 1,
+      input: 3,
+      output: 25,
+    },
+    "gemini/2.5-pro": {
+      base: {
+        cacheRead: 3,
+        input: 12,
+        output: 100,
+      },
+      above200k: {
+        cacheRead: 6,
+        input: 25,
+        output: 150,
+      },
+    },
+  },
+} as const;
+
+// Ref: https://ai.google.dev/gemini-api/docs/pricing
+function computeCreditCostForGoogle(
+  input: Extract<CreditCostInput, { type: "google" }>,
+): number {
+  if (input.modelId === "gemini-2.5-pro") {
+    const { inputTokens, outputTokens, cacheReadInputTokens } = input;
+    const { base, above200k } = PriceByModel.google["gemini/2.5-pro"];
+    const promptTokens = inputTokens + cacheReadInputTokens;
+    if (promptTokens <= 200_000) {
+      return (
+        inputTokens * base.input +
+        outputTokens * base.output +
+        cacheReadInputTokens * base.cacheRead
+      );
+    }
+
+    return (
+      inputTokens * above200k.input +
+      outputTokens * above200k.output +
+      cacheReadInputTokens * above200k.cacheRead
+    );
+  }
+
+  if (input.modelId === "gemini-2.5-flash") {
+    const { inputTokens, outputTokens, cacheReadInputTokens } = input;
+    const price = PriceByModel.google["gemini/2.5-flash"];
+    return (
+      inputTokens * price.input +
+      outputTokens * price.output +
+      cacheReadInputTokens * price.cacheRead
+    );
+  }
+
+  throw new Error(`Unknown Google model ID: ${input.modelId}`);
+}
+
+// https://www.anthropic.com/pricing#api
+function computeCreditCostForAnthropic(
+  input: Extract<CreditCostInput, { type: "anthropic" }>,
+): number {
+  const {
+    modelId,
+    cacheWriteInputTokens,
+    cacheReadInputTokens,
+    inputTokens,
+    outputTokens,
+  } = input;
+  const price = PriceByModel.anthropic[modelId];
+  return (
+    cacheWriteInputTokens * price.cacheWrite +
+    cacheReadInputTokens * price.cacheRead +
+    inputTokens * price.input +
+    outputTokens * price.output
+  );
+}
+
 // Returns the cost credit for a usage.
 // 1 USD = 10M credits.
-export function computeCreditCost(
-  modelId: string,
-  usage: {
-    promptTokens: number;
-    completionTokens: number;
-  },
-) {
-  const { promptTokens, completionTokens } = usage;
-  switch (modelId) {
-    case "google/gemini-2.5-pro":
-      // Ref: https://ai.google.dev/gemini-api/docs/pricing
-      if (promptTokens <= 200_000) {
-        return promptTokens * 12 + completionTokens * 100;
-      }
-      return promptTokens * 25 + completionTokens * 150;
-    case "google/gemini-2.5-flash":
-      // Ref: https://ai.google.dev/gemini-api/docs/pricing
-      return promptTokens * 3 + completionTokens * 25;
-    case "anthropic/claude-4-sonnet":
-      // https://www.anthropic.com/pricing#api
-      return promptTokens * 30 + completionTokens * 150;
-    default:
-      throw new Error(`Unknown model ID: ${modelId}`);
+export function computeCreditCost(input: CreditCostInput): number {
+  switch (input.type) {
+    case "google":
+      return computeCreditCostForGoogle(input);
+    case "anthropic":
+      return computeCreditCostForAnthropic(input);
   }
 }
 
