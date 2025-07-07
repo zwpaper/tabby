@@ -22,12 +22,20 @@ import { Link, useRouter } from "@tanstack/react-router";
 import type { Attachment } from "ai";
 import {
   ArrowUpIcon,
+  GlobeIcon,
   ImageIcon,
   Loader2Icon,
+  MonitorIcon,
   SparklesIcon,
 } from "lucide-react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { HomeBackgroundGradient } from "../home/constants";
 
 export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at once
@@ -35,14 +43,17 @@ export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at
 export function CreateTask({
   initialInput,
   className,
-  enableLocalCreation,
+  initialRemote,
 }: {
   initialInput?: string;
   className?: string;
-  enableLocalCreation?: boolean;
+  initialRemote?: boolean;
 }) {
-  const isRemote = !enableLocalCreation;
+  const [isRemote, setIsRemote] = useState(initialRemote ?? true); // Default to remote
   const { data: auth } = useSession();
+  const isInternalUser = useCallback(() => {
+    return auth?.user?.email?.endsWith("@tabbyml.com") ?? false;
+  }, [auth?.user?.email]);
   const isMobileDevice = useIsMobile();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
@@ -370,9 +381,35 @@ export function CreateTask({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {isInternalUser() && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full border-gray-300 bg-white/90 px-3 py-1 font-medium text-xs backdrop-blur-sm transition-all duration-200 hover:border-gray-400 hover:bg-white hover:shadow-md dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-gray-500 dark:hover:bg-gray-800"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsRemote(!isRemote);
+                }}
+              >
+                {isRemote ? (
+                  <>
+                    <GlobeIcon className="mr-1 h-3 w-3" />
+                    Remote
+                  </>
+                ) : (
+                  <>
+                    <MonitorIcon className="mr-1 h-3 w-3" />
+                    Local
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
           <div
-            className="flex items-center space-x-2"
+            className="flex items-center gap-2"
             onClick={(e) => e.stopPropagation()}
           >
             <Button
@@ -403,6 +440,7 @@ export function CreateTask({
               size="icon"
               className="rounded-full transition-colors"
               onClick={(e) => {
+                e.stopPropagation(); // Prevent event bubbling to form's onClick
                 if (isSubmitting || isUploadingImages) {
                   e.preventDefault();
                   handleStop();

@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
 const createSearchSchema = z.object({
-  enableLocalCreation: z.boolean().optional(),
+  remote: z.boolean().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/_base/create")({
@@ -12,6 +12,6 @@ export const Route = createFileRoute("/_authenticated/_base/create")({
 });
 
 function RouteComponent() {
-  const { enableLocalCreation } = Route.useSearch();
-  return <CreateTask enableLocalCreation={enableLocalCreation} />;
+  const { remote } = Route.useSearch();
+  return <CreateTask initialRemote={remote} />;
 }
