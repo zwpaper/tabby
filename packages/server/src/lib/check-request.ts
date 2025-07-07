@@ -1,4 +1,3 @@
-import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { ServerErrors } from "..";
 import type { User } from "../auth";
@@ -25,14 +24,14 @@ export function checkWaitlist(
   return true;
 }
 
-export async function checkUserQuota(user: User, c: Context, modelId: string) {
+export async function checkUserQuota(user: User, modelId: string) {
   // Skip quota check for test environment
   if (process.env.NODE_ENV === "test") {
     return;
   }
 
   // Check quota
-  const quota = await usageService.readCurrentMonthQuota(user, c.req);
+  const quota = await usageService.readCurrentMonthQuota(user);
 
   const modelCostType = AvailableModels.find(
     (model) => model.id === modelId,

@@ -1,5 +1,4 @@
 import type { LanguageModelUsage } from "ai";
-import type { HonoRequest } from "hono";
 import { sql } from "kysely";
 import moment from "moment";
 import type { User } from "../auth";
@@ -57,7 +56,6 @@ export class UsageService {
   async readCurrentMonthUsage(
     userId: string,
     targetUser: User,
-    req: HonoRequest,
   ): Promise<{
     userId: string;
     limit: number;
@@ -84,10 +82,8 @@ export class UsageService {
       .groupBy("modelId")
       .execute();
 
-    const { limits: userLimits } = await readActiveSubscriptionLimits(
-      targetUser,
-      req,
-    );
+    const { limits: userLimits } =
+      await readActiveSubscriptionLimits(targetUser);
 
     return {
       userId,
@@ -99,12 +95,12 @@ export class UsageService {
     };
   }
 
-  async readCurrentMonthQuota(user: User, r: HonoRequest) {
+  async readCurrentMonthQuota(user: User) {
     // Calculate the start of the current month (UTC)
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();
 
-    const { plan, limits } = await readActiveSubscriptionLimits(user, r);
+    const { plan, limits } = await readActiveSubscriptionLimits(user);
 
     // Query the total usage count for the current month.
     // Ensure the timestamp comparison works correctly with the database timezone (assuming UTC)

@@ -74,10 +74,7 @@ const billing = new Hono()
     },
   )
   .get("/quota/me", requireAuth(), async (c) => {
-    const usage = await usageService.readCurrentMonthQuota(
-      c.get("user"),
-      c.req,
-    );
+    const usage = await usageService.readCurrentMonthQuota(c.get("user"));
     return c.json(usage);
   })
   .get(
@@ -99,7 +96,6 @@ const billing = new Hono()
       const usage = await usageService.readCurrentMonthUsage(
         userId,
         targetUser as User,
-        c.req,
       );
       return c.json(usage);
     },

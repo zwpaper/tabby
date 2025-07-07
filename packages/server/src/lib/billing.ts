@@ -1,20 +1,19 @@
-import type { HonoRequest } from "hono";
 import type { User } from "../auth";
-import { auth } from "../better-auth";
+import { db } from "../db";
 import { StripePlans } from "./constants";
 
-export async function readActiveSubscriptionLimits(user: User, r: HonoRequest) {
-  const activeSubscription = await auth.api
-    .listActiveSubscriptions({
-      query: {
-        referenceId: user.id,
-      },
-      headers: r.raw.headers,
-    })
-    .then((r) => r[0]);
+export async function readActiveSubscriptionLimits(user: User) {
+  const activeSubscription = await db
+    .selectFrom("subscription")
+    .select(["id", "plan"])
+    .where("referenceId", "=", user.id)
+    .where("status", "=", "active")
+    .executeTakeFirst();
 
   const planId = activeSubscription?.plan ?? StripePlans[0].name.toLowerCase();
-  let limits = activeSubscription?.limits ?? StripePlans[0].limits;
+  let limits =
+    StripePlans.find((p) => p.name.toLowerCase() === planId)?.limits ||
+    StripePlans[0].limits;
   if (user.email.endsWith("@tabbyml.com")) {
     limits = {
       basic: 100_000,

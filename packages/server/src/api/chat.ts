@@ -74,7 +74,7 @@ const chat = new Hono()
 
     const user = c.get("user");
 
-    await checkUserQuota(user, c, requestedModelId);
+    await checkUserQuota(user, requestedModelId);
     const validModelId = checkModel(requestedModelId);
 
     checkWaitlist(user);
