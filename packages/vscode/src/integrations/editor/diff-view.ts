@@ -234,7 +234,7 @@ export class DiffView implements vscode.Disposable {
     const document = await vscode.workspace.openTextDocument(this.fileUri);
     await vscode.window.showTextDocument(document, {
       preview: false,
-      preserveFocus: false,
+      preserveFocus: true,
     });
 
     needFocusDiffViews = true;
