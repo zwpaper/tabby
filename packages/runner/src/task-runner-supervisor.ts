@@ -103,6 +103,7 @@ export class TaskRunnerSupervisor {
         process.exit(0);
       }
     } else if (runnerState.state === "error") {
+      // except sigterm and sigint error, other error from taskrunner should hang rather then throw
       if (runnerState.error === sigtermError) {
         logger.info(`Task runner exited: ${sigtermError.message}`);
         process.exit(143);
@@ -111,7 +112,21 @@ export class TaskRunnerSupervisor {
         process.exit(130);
       } else {
         logger.error("Task runner failed with error: ", runnerState.error);
-        throw runnerState.error; // rethrow the error to exit the process with a non-zero code
+        if (this.isDaemon) {
+          // In daemon mode, try to restart the runner and ignore errors
+          try {
+            await this.waitForPendingModelStatus();
+            this.startRunner();
+          } catch (error) {
+            logger.error(
+              "Failed to restart runner after error, continuing to monitor...",
+              error,
+            );
+          }
+        } else {
+          // In non-daemon mode, rethrow the error to exit the process
+          throw runnerState.error;
+        }
       }
     }
   }
