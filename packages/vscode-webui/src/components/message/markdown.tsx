@@ -10,6 +10,7 @@ import { FileBadge } from "../tool-invocation/file-badge";
 import { CodeBlock } from "./code-block";
 import { customStripTagsPlugin } from "./custom-strip-tags-plugin";
 import "./markdown.css";
+import { vscodeHost } from "@/lib/vscode";
 
 type CustomTag = (typeof CustomHtmlTags)[number];
 
@@ -159,15 +160,22 @@ export function MessageMarkdown({
             );
           },
           a({ href, children, ...props }) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // biome-ignore lint/suspicious/noExplicitAny: props from react-markdown contains a `node` property that is not a valid DOM attribute
+            const { node, ...rest } = props as any;
             return (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                {...props}
+              <button
+                type="button"
+                className="inline cursor-pointer appearance-none border-none bg-transparent p-0 text-left font-sans underline"
+                onClick={() => {
+                  if (href) {
+                    vscodeHost.openExternal(href);
+                  }
+                }}
+                {...rest}
               >
                 {children}
-              </a>
+              </button>
             );
           },
           hr() {
