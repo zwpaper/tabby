@@ -4,15 +4,13 @@ import { parseDiffAndApply } from "@ragdoll/common/diff-utils";
 import { validateTextFile } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { ensureFileDirectoryExists } from "../lib/fs";
-import type { RunnerContext } from "../task-runner";
+import type { ToolCallOptions } from "../types";
 
 /**
  * Apply a diff to a file using DiffView
  */
 export const applyDiff =
-  (
-    context: Pick<RunnerContext, "cwd">,
-  ): ToolFunctionType<ClientToolsType["applyDiff"]> =>
+  (context: ToolCallOptions): ToolFunctionType<ClientToolsType["applyDiff"]> =>
   async ({ path, searchContent, replaceContent, expectedReplacements }) => {
     const fileUri = nodePath.join(context.cwd, path);
     await ensureFileDirectoryExists(fileUri);

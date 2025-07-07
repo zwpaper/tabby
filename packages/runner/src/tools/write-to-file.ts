@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
 import { fixCodeGenerationOutput } from "@ragdoll/common/output-utils";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import type { RunnerContext } from "../task-runner";
+import type { ToolCallOptions } from "../types";
 
 /**
  * Implements the writeToFile tool for runner.
@@ -10,7 +10,7 @@ import type { RunnerContext } from "../task-runner";
  */
 export const writeToFile =
   (
-    context: Pick<RunnerContext, "cwd">,
+    context: ToolCallOptions,
   ): ToolFunctionType<ClientToolsType["writeToFile"]> =>
   async ({ path, content }) => {
     const fileUri = nodePath.join(context.cwd, path);

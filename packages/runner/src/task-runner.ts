@@ -40,6 +40,7 @@ import { readFile } from "./tools/read-file";
 import { searchFiles } from "./tools/search-files";
 import { todoWrite } from "./tools/todo-write";
 import { writeToFile } from "./tools/write-to-file";
+import type { ToolCallOptions } from "./types";
 
 type ApiClient = ReturnType<typeof hc<AppType>>;
 
@@ -49,7 +50,7 @@ export type Task = Awaited<
   >
 >;
 
-export interface RunnerContext {
+export interface RunnerOptions {
   /**
    * The uid of the task to run.
    */
@@ -159,7 +160,7 @@ export type TaskRunnerState =
 const ToolMap: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: ToolFunctionType requires any for generic tool parameters
-  (context: RunnerContext) => ToolFunctionType<any>
+  (options: ToolCallOptions) => ToolFunctionType<any>
 > = {
   readFile,
   applyDiff,
@@ -188,15 +189,20 @@ export class TaskRunner {
   private stepCount = 0;
   private abortController?: AbortController;
   private lockingConnection?: WebSocket;
+  private toolCallOptions: ToolCallOptions;
 
-  constructor(readonly context: RunnerContext) {
+  constructor(readonly options: RunnerOptions) {
     this.sessionId = generateId();
     this.logger = logger.getSubLogger({
-      name: `task-${context.uid}`,
+      name: `task-${options.uid}`,
     });
     this.state = signal({
       state: "initial",
     });
+    this.toolCallOptions = {
+      cwd: options.cwd,
+      rg: options.rg,
+    };
   }
 
   start() {
@@ -273,7 +279,7 @@ export class TaskRunner {
    * @throws {Error} - Throws an error if this step is failed.
    */
   private async step(): Promise<boolean> {
-    const maxStep = this.context.maxSteps ?? DefaultMaxSteps;
+    const maxStep = this.options.maxSteps ?? DefaultMaxSteps;
     if (this.stepCount >= maxStep) {
       throw new Error(`TaskRunner reached maximum steps (${maxStep}).`);
     }
@@ -292,7 +298,7 @@ export class TaskRunner {
   private async loadTask() {
     const signal = this.abortController?.signal;
 
-    this.logger.trace("Loading task:", this.context.uid);
+    this.logger.trace("Loading task:", this.options.uid);
     this.updateState({
       state: "running",
       progress: {
@@ -303,7 +309,7 @@ export class TaskRunner {
     });
     signal?.throwIfAborted();
 
-    const task = await loadTaskAndWaitStreaming(this.context, signal);
+    const task = await loadTaskAndWaitStreaming(this.options, signal);
     this.task = task;
 
     this.messages = toUIMessages(task.conversation?.messages ?? []);
@@ -397,7 +403,7 @@ export class TaskRunner {
 
           const toolResult = await executeToolCall(
             toolCall,
-            this.context,
+            this.toolCallOptions,
             signal,
           );
 
@@ -454,21 +460,21 @@ export class TaskRunner {
     signal?.throwIfAborted();
 
     const environment = await buildEnvironment(
-      this.context,
+      this.options,
       this.todos,
       signal,
     );
 
     await withAttempts(
       async () => {
-        const resp = await this.context.apiClient.api.chat.stream.$post(
+        const resp = await this.options.apiClient.api.chat.stream.$post(
           {
             json: {
-              id: this.context.uid,
+              id: this.options.uid,
               sessionId: this.sessionId,
               message: fromUIMessage(lastMessage),
               environment,
-              model: this.context.model,
+              model: this.options.model,
             },
           },
           {
@@ -531,12 +537,12 @@ export class TaskRunner {
     }
 
     // we don't have access to the full URL, so we need to construct it
-    const url = this.context.apiClient.api.tasks[":uid"].lock[":lockId"].$url({
-      param: { uid: this.context.uid, lockId: this.sessionId },
+    const url = this.options.apiClient.api.tasks[":uid"].lock[":lockId"].$url({
+      param: { uid: this.options.uid, lockId: this.sessionId },
     });
     url.searchParams.set(
       "accessToken",
-      decodeURIComponent(this.context.accessToken),
+      decodeURIComponent(this.options.accessToken),
     );
     url.protocol = url.protocol.replace("http", "ws");
     const ws = new WebSocket(url);
@@ -591,7 +597,7 @@ const WaitTaskStreamingTimeout = 120_000; // 120 seconds
  * Loads the task and waits for it to be in a non-streaming state.
  */
 async function loadTaskAndWaitStreaming(
-  context: RunnerContext,
+  context: RunnerOptions,
   abortSignal?: AbortSignal,
 ): Promise<Task> {
   const loadTask = async () => {
@@ -762,7 +768,7 @@ async function withAttempts<T>(
 }
 
 async function buildEnvironment(
-  context: RunnerContext,
+  context: RunnerOptions,
   todos: Todo[],
   signal?: AbortSignal,
 ): Promise<Environment> {
@@ -815,7 +821,7 @@ function findNextToolCall(message: UIMessage): ToolInvocation | undefined {
 
 async function executeToolCall(
   tool: ToolInvocation,
-  context: RunnerContext,
+  options: ToolCallOptions,
   abortSignal?: AbortSignal,
 ) {
   if (tool.toolName in ServerTools) {
@@ -830,7 +836,7 @@ async function executeToolCall(
   }
 
   try {
-    return await toolFunction(context)(tool.args, {
+    return await toolFunction(options)(tool.args, {
       messages: [],
       toolCallId: tool.toolCallId,
       abortSignal,

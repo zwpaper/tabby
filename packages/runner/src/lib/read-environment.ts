@@ -5,13 +5,13 @@ import {
   listWorkspaceFiles,
 } from "@ragdoll/common/node";
 import type { Environment } from "@ragdoll/db";
-import type { RunnerContext } from "../task-runner";
+import type { RunnerOptions } from "../task-runner";
 
 /**
  * Read the environment for the task runner
  */
 export const readEnvironment = async (
-  context: Pick<RunnerContext, "cwd">,
+  context: Pick<RunnerOptions, "cwd">,
 ): Promise<Environment> => {
   const { cwd } = context;
 

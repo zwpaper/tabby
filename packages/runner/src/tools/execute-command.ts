@@ -3,13 +3,13 @@ import * as path from "node:path";
 import { promisify } from "node:util";
 import { MaxTerminalOutputSize } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import type { RunnerContext } from "../task-runner";
+import type { ToolCallOptions } from "../types";
 
 const execCommand = promisify(exec);
 
 export const executeCommand =
   (
-    context: Pick<RunnerContext, "cwd">,
+    context: ToolCallOptions,
   ): ToolFunctionType<ClientToolsType["executeCommand"]> =>
   async (
     { command, cwd = ".", isDevServer, timeout = 15 },

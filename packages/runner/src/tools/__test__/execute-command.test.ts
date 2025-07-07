@@ -1,10 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { executeCommand } from "../execute-command";
-import type { RunnerContext } from "../../task-runner";
+import type { ToolCallOptions } from "../../types";
 
 describe("executeCommand", () => {
-  const mockContext: Pick<RunnerContext, "cwd"> = {
+  const mockContext: ToolCallOptions = {
     cwd: process.cwd(),
+    rg: "",
   };
 
   const mockToolExecutionOptions = {

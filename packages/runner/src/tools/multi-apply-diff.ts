@@ -4,14 +4,14 @@ import { processMultipleDiffs } from "@ragdoll/common/diff-utils";
 import { validateTextFile } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import { ensureFileDirectoryExists } from "../lib/fs";
-import type { RunnerContext } from "../task-runner";
+import type { ToolCallOptions } from "../types";
 
 /**
  * Apply multiple diff operations to a file using DiffView
  */
 export const multiApplyDiff =
   (
-    context: Pick<RunnerContext, "cwd">,
+    context: ToolCallOptions,
   ): ToolFunctionType<ClientToolsType["multiApplyDiff"]> =>
   async ({ path, edits }) => {
     const fileUri = nodePath.join(context.cwd, path);

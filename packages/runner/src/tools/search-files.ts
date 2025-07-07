@@ -2,13 +2,13 @@ import * as fs from "node:fs";
 import { getLogger } from "@ragdoll/common";
 import { searchFilesWithRipgrep } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import type { RunnerContext } from "../task-runner";
+import type { ToolCallOptions } from "../types";
 
 const logger = getLogger("searchFiles");
 
 export const searchFiles =
   (
-    context: Pick<RunnerContext, "cwd" | "rg">,
+    context: ToolCallOptions,
   ): ToolFunctionType<ClientToolsType["searchFiles"]> =>
   async ({ path, regex, filePattern }, { abortSignal }) => {
     const rgPath = context.rg;

@@ -5,12 +5,10 @@ import {
   validateTextFile,
 } from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
-import type { RunnerContext } from "../task-runner";
+import type { ToolCallOptions } from "../types";
 
 export const readFile =
-  (
-    context: Pick<RunnerContext, "cwd">,
-  ): ToolFunctionType<ClientToolsType["readFile"]> =>
+  (context: ToolCallOptions): ToolFunctionType<ClientToolsType["readFile"]> =>
   async ({ path, startLine, endLine }) => {
     const resolvedPath = resolvePath(path, context.cwd);
     const fileBuffer = await fs.readFile(resolvedPath);

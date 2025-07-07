@@ -1,1 +1,5 @@
-export type { TaskRunnerState, RunnerContext, Task } from "./task-runner";
+export type {
+  TaskRunnerState,
+  RunnerOptions as RunnerContext,
+  Task,
+} from "./task-runner";

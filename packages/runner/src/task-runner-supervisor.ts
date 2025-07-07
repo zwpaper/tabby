@@ -119,10 +119,10 @@ export class TaskRunnerSupervisor {
   private async waitForPendingModelStatus(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       // Only use pochi event to avoid any conflicts
-      const unsubscribe = this.runner.context.pochiEvents.subscribe<TaskEvent>(
+      const unsubscribe = this.runner.options.pochiEvents.subscribe<TaskEvent>(
         "task:status-changed",
         async ({ data }) => {
-          if (data.uid !== this.runner.context.uid) {
+          if (data.uid !== this.runner.options.uid) {
             return;
           }
 

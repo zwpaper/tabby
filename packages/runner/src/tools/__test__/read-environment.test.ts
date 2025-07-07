@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { readEnvironment } from "../../lib/read-environment";
-import type { RunnerContext } from "../../task-runner";
+import type { RunnerOptions } from "../../task-runner";
 
 describe("readEnvironment", () => {
   it("should return environment data for task runner", async () => {
-    const context: Pick<RunnerContext, "cwd"> = {
+    const context: Pick<RunnerOptions, "cwd"> = {
       cwd: process.cwd(),
     };
 
@@ -23,7 +23,7 @@ describe("readEnvironment", () => {
   });
 
   it("should include git status if repository exists", async () => {
-    const context: Pick<RunnerContext, "cwd"> = {
+    const context: Pick<RunnerOptions, "cwd"> = {
       cwd: process.cwd(), // This should be a git repository
     };
 
@@ -39,7 +39,7 @@ describe("readEnvironment", () => {
   });
 
   it("should not include VSCode-specific data", async () => {
-    const context: Pick<RunnerContext, "cwd"> = {
+    const context: Pick<RunnerOptions, "cwd"> = {
       cwd: process.cwd(),
     };
 
