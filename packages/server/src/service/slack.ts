@@ -2,10 +2,10 @@ import type { Server } from "node:http";
 import type { DB } from "@ragdoll/db";
 import type { ButtonAction } from "@slack/bolt";
 import { App, type Installation } from "@slack/bolt";
-import { WebClient } from "@slack/web-api";
+import { type AnyBlock, WebClient } from "@slack/web-api";
 import { sql } from "kysely";
 import { auth } from "../better-auth";
-import { db } from "../db";
+import { db, uidCoder } from "../db";
 import { connectToWeb } from "../lib/connect";
 import { githubService } from "./github";
 import { slackTaskService } from "./slack-task";
@@ -176,51 +176,21 @@ class SlackService {
 
       if (!webClient) return;
 
-      const userInfo = await webClient.users.info({
-        user: command.user_id,
-      });
-
-      if (!userInfo.ok || !userInfo.user?.profile?.email) {
+      // Validate user
+      const validation = await this.validateUser(webClient, command.user_id);
+      if (!validation.success) {
         await respond({
-          text: "❌ Unable to get your email from Slack. Please ensure your email is set in your Slack profile.",
-          response_type: "ephemeral",
-        });
-        return;
-      }
-      const userEmail = userInfo.user.profile.email;
-
-      // get the target email of the user
-      const targetUser = await db
-        .selectFrom("user")
-        .select(["id", "email", "name", "isWaitlistApproved"])
-        .where("email", "=", userEmail)
-        .executeTakeFirst();
-
-      if (!targetUser) {
-        await respond({
-          blocks:
-            slackRichTextRenderer.renderWaitlistApprovalRequired(userEmail),
+          text: validation.error,
+          blocks: validation.blocks || [],
           response_type: "ephemeral",
         });
         return;
       }
 
-      if (!targetUser.isWaitlistApproved) {
+      const { user } = validation;
+      if (!user) {
         await respond({
-          blocks:
-            slackRichTextRenderer.renderWaitlistPendingApproval(userEmail),
-          response_type: "ephemeral",
-        });
-        return;
-      }
-
-      const hasGithubConnection = await githubService.checkConnection(
-        targetUser.id,
-      );
-      if (!hasGithubConnection) {
-        await respond({
-          blocks:
-            slackRichTextRenderer.renderGitHubConnectionRequired(userEmail),
+          text: "❌ User validation failed",
           response_type: "ephemeral",
         });
         return;
@@ -239,7 +209,7 @@ class SlackService {
       await db
         .insertInto("slackConnect")
         .values({
-          userId: targetUser.id,
+          userId: user.id,
           vendorIntegrationId,
         })
         .onConflict((oc) =>
@@ -252,7 +222,7 @@ class SlackService {
 
       try {
         await slackTaskService.createTaskWithCloudRunner(
-          targetUser,
+          user,
           command,
           taskText,
           command.user_id,
@@ -293,24 +263,50 @@ class SlackService {
         const vendorIntegrationId = context.teamId || context.enterpriseId;
         if (!vendorIntegrationId) return;
 
-        // Get the user info and find the corresponding user in our system
         const webClient =
           await this.getWebClientByIntegration(vendorIntegrationId);
         if (!webClient) return;
 
-        const userInfo = await webClient.users.info({
-          user: body.user.id,
-        });
+        // Validate user (full validation for actions)
+        const validation = await this.validateUser(webClient, body.user.id);
+        if (!validation.success) {
+          await webClient.chat.postEphemeral({
+            channel: body.channel?.id || "",
+            user: body.user.id,
+            text: validation.error || "❌ User validation failed",
+            blocks: validation.blocks,
+          });
+          return;
+        }
 
-        if (!userInfo.ok || !userInfo.user?.profile?.email) return;
+        const { user: targetUser } = validation;
+        if (!targetUser) {
+          await webClient.chat.postEphemeral({
+            channel: body.channel?.id || "",
+            user: body.user.id,
+            text: "❌ User validation failed",
+          });
+          return;
+        }
 
-        const targetUser = await db
-          .selectFrom("user")
-          .select(["id"])
-          .where("email", "=", userInfo.user.profile.email)
+        // Get task belong to current user
+        const decodedTaskId = uidCoder.decode(taskId);
+        const task = await db
+          .selectFrom("task")
+          .select(["userId"])
+          .where("id", "=", decodedTaskId)
           .executeTakeFirst();
 
-        if (!targetUser) return;
+        if (!task) return;
+
+        if (task.userId !== targetUser.id) {
+          await webClient.chat.postEphemeral({
+            channel: body.channel?.id || "",
+            user: body.user.id,
+            text: "❌ You can only reply to your own tasks. This task belongs to another user.",
+          });
+          return;
+        }
 
         const metadata = {
           channel: body.channel?.id || "",
@@ -358,24 +354,38 @@ class SlackService {
         const answer = view.state.values.answer_block.answer_input.value;
         if (!answer) return;
 
-        // Get the user info and find the corresponding user in our system
+        // Get the user info and validate user
         const webClient =
           await this.getWebClientByIntegration(vendorIntegrationId);
         if (!webClient) return;
 
-        const userInfo = await webClient.users.info({
-          user: body.user.id,
-        });
+        // Validate user (full validation for modal submissions)
+        const validation = await this.validateUser(webClient, body.user.id);
+        if (!validation.success) {
+          // For modal submissions, we can't show blocks, so just show text error
+          const channelId = context.channelId;
+          if (channelId) {
+            await webClient.chat.postEphemeral({
+              channel: channelId,
+              user: body.user.id,
+              text: validation.error || "❌ User validation failed",
+            });
+          }
+          return;
+        }
 
-        if (!userInfo.ok || !userInfo.user?.profile?.email) return;
-
-        const targetUser = await db
-          .selectFrom("user")
-          .select(["id"])
-          .where("email", "=", userInfo.user.profile.email)
-          .executeTakeFirst();
-
-        if (!targetUser) return;
+        const { user: targetUser } = validation;
+        if (!targetUser) {
+          const channelId = context.channelId;
+          if (channelId) {
+            await webClient.chat.postEphemeral({
+              channel: channelId,
+              user: body.user.id,
+              text: "❌ User validation failed",
+            });
+          }
+          return;
+        }
 
         // Parse metadata from modal
         const metadata = view.private_metadata
@@ -391,16 +401,16 @@ class SlackService {
           messageTs: metadata?.messageTs,
         });
 
-        // Send confirmation message
-        const channelId = metadata?.channel || context.channelId;
-        if (channelId) {
-          await webClient.chat.postEphemeral({
-            channel: channelId,
-            user: body.user.id,
-            text: result.success
-              ? `✅ Submitted answer: "${answer}"`
-              : `❌ Failed to submit: ${result.error}`,
-          });
+        // Send error message if submission failed (success messages are handled in SlackTaskService)
+        if (!result.success) {
+          const channelId = metadata?.channel || context.channelId;
+          if (channelId) {
+            await webClient.chat.postEphemeral({
+              channel: channelId,
+              user: body.user.id,
+              text: `❌ Failed to submit: ${result.error}`,
+            });
+          }
         }
       },
     );
@@ -475,6 +485,75 @@ class SlackService {
     if (!installation) return null;
 
     return this.getWebClient(installation);
+  }
+
+  /**
+   * Validates user existence, waitlist approval, and GitHub connection
+   */
+  private async validateUser(
+    webClient: WebClient,
+    userId: string,
+  ): Promise<{
+    success: boolean;
+    user?: {
+      id: string;
+      email: string;
+      name: string;
+      isWaitlistApproved: boolean | null;
+    };
+    userEmail?: string;
+    error?: string;
+    blocks?: AnyBlock[];
+  }> {
+    const userInfo = await webClient.users.info({ user: userId });
+
+    if (!userInfo.ok || !userInfo.user?.profile?.email) {
+      return {
+        success: false,
+        error:
+          "❌ Unable to get your email from Slack. Please ensure your email is set in your Slack profile.",
+      };
+    }
+    const userEmail = userInfo.user.profile.email;
+
+    // Check if user exists in database
+    const targetUser = await db
+      .selectFrom("user")
+      .select(["id", "email", "name", "isWaitlistApproved"])
+      .where("email", "=", userEmail)
+      .executeTakeFirst();
+
+    if (!targetUser) {
+      return {
+        success: false,
+        blocks: slackRichTextRenderer.renderWaitlistApprovalRequired(userEmail),
+      };
+    }
+
+    // Check waitlist approval
+    if (!targetUser.isWaitlistApproved) {
+      return {
+        success: false,
+        blocks: slackRichTextRenderer.renderWaitlistPendingApproval(userEmail),
+      };
+    }
+
+    // Check GitHub connection
+    const hasGithubConnection = await githubService.checkConnection(
+      targetUser.id,
+    );
+    if (!hasGithubConnection) {
+      return {
+        success: false,
+        blocks: slackRichTextRenderer.renderGitHubConnectionRequired(userEmail),
+      };
+    }
+
+    return {
+      success: true,
+      user: targetUser,
+      userEmail,
+    };
   }
 }
 
