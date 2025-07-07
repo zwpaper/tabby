@@ -281,28 +281,7 @@ const tasks = new Hono()
       return c.json({ success: true });
     },
   )
-  .post(
-    "/:uid/lock/:lockId",
-    zValidator("param", TaskLockParamsSchema),
-    requireAuth(),
-    async (c) => {
-      const { uid, lockId } = c.req.valid("param");
-      const user = c.get("user");
-      await taskService.lock(uid, user.id, lockId);
-      return c.json({ success: true });
-    },
-  )
-  .delete(
-    "/:uid/lock/:lockId",
-    zValidator("param", TaskLockParamsSchema),
-    requireAuth(),
-    async (c) => {
-      const { uid, lockId } = c.req.valid("param");
-      const user = c.get("user");
-      await taskService.releaseLock(uid, user.id, lockId);
-      return c.json({ success: true });
-    },
-  )
+
   .get(
     "/:uid/lock/:lockId",
     zValidator("param", TaskLockParamsSchema),
