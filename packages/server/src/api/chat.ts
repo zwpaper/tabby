@@ -37,7 +37,7 @@ import {
 import {
   type AvailableModelId,
   getModelById,
-  getProviderOptionsById,
+  getModelOptions,
 } from "../lib/constants";
 import {
   type NewTaskMiddlewareContext,
@@ -54,7 +54,7 @@ const streamContext = createResumableStreamContext({
   waitUntil: after,
 });
 
-const EnableInterleavedThinking = false;
+const EnableInterleavedThinking = true;
 
 const chat = new Hono()
   .use(requireAuth())
@@ -112,9 +112,10 @@ const chat = new Hono()
           ...parsedMcpTools,
         };
 
-        const providerOptions = getProviderOptionsById(requestedModelId);
+        const modelOptions = getModelOptions(validModelId);
         const result = Laminar.withSession(`${user.id}-${uid}`, () =>
           streamText({
+            ...modelOptions,
             abortSignal: c.req.raw.signal,
             temperature: 0.8,
             toolCallStreaming: true,
@@ -134,7 +135,6 @@ const chat = new Hono()
               ...formatters.llm(preparedMessages, { tools }),
             ],
             tools,
-            providerOptions,
             onFinish: async ({
               usage,
               finishReason,
@@ -203,9 +203,6 @@ const chat = new Hono()
 
             // Disable retries as we handle them ourselves.
             maxRetries: 0,
-
-            // 62k tokens. (Claude max = 64000)
-            maxTokens: 1024 * 62,
 
             experimental_repairToolCall: async ({
               toolCall,

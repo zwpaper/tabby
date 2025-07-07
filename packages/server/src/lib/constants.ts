@@ -1,8 +1,8 @@
 // packages/server/src/lib/constants.ts
 
-import { anthropic } from "@ai-sdk/anthropic";
+import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
 import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
-import type { LanguageModelV1 } from "ai";
+import type { LanguageModelV1, streamText } from "ai";
 
 // Define available models
 export type AvailableModelId =
@@ -90,25 +90,35 @@ export function getModelById(modelId: AvailableModelId): LanguageModelV1 {
   }
 }
 
-export function getProviderOptionsById(modelId: string) {
+export function getModelOptions(
+  modelId: AvailableModelId,
+): Partial<Parameters<typeof streamText>["0"]> {
   switch (modelId) {
+    case "google/gemini-2.5-flash":
     case "google/gemini-2.5-pro":
       return {
-        google: {
-          thinkingConfig: {
-            includeThoughts: true,
-          },
-        } satisfies GoogleGenerativeAIProviderOptions,
+        maxTokens: 1024 * 64, // 64k tokens
+        providerOptions: {
+          google: {
+            thinkingConfig: {
+              includeThoughts: true,
+            },
+          } satisfies GoogleGenerativeAIProviderOptions,
+        },
       };
-    case "google/gemini-2.5-flash":
+    case "anthropic/claude-4-sonnet":
       return {
-        google: {
-          thinkingConfig: {
-            includeThoughts: true,
-          },
-        } satisfies GoogleGenerativeAIProviderOptions,
+        maxTokens: 1024 * 58, // 55k tokens
+        providerOptions: {
+          anthropic: {
+            thinking: {
+              type: "enabled",
+              budgetTokens: 1024,
+            },
+          } satisfies AnthropicProviderOptions,
+        },
       };
     default:
-      return undefined;
+      return {};
   }
 }

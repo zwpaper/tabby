@@ -138,9 +138,14 @@ export function injectEnvironmentDetails(
       return part.type === "step-start" ? index : lastIndex;
     }, -1);
 
+    const insertIndex =
+      parts[lastStepStartIndex + 1].type === "reasoning"
+        ? lastStepStartIndex + 2
+        : lastStepStartIndex + 1;
+
     // insert textPart after stepStart
     if (lastStepStartIndex !== -1) {
-      parts.splice(lastStepStartIndex + 1, 0, textPart);
+      parts.splice(insertIndex, 0, textPart);
     } else {
       parts.unshift(textPart);
     }
