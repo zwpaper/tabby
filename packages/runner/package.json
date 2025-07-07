@@ -22,7 +22,8 @@
     "@ragdoll/server": "workspace:*",
     "ai": "catalog:",
     "commander": "^14.0.0",
-    "hono": "catalog:"
+    "hono": "catalog:",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@ragdoll/db": "workspace:*",

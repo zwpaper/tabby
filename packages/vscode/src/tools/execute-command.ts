@@ -7,7 +7,7 @@ import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
 > = async ({ command, cwd = ".", isDevServer, timeout }, { abortSignal }) => {
-  const defaultTimeout = isDevServer ? 60 : 15; // 60 seconds for dev server, 15 seconds otherwise
+  const defaultTimeout = isDevServer ? 60 : 30; // 60 seconds for dev server, 30 seconds otherwise
   if (!command) {
     throw new Error("Command is required to execute.");
   }

@@ -55,6 +55,7 @@ export class TaskRunnerManager implements vscode.Disposable {
 
     logger.debug(`Starting task runner ${uid}`);
     const taskRunner = new TaskRunner({
+      accessToken: this.tokenStorage.token.value || "",
       uid,
       apiClient: this.apiClient,
       pochiEvents,

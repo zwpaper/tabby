@@ -29,6 +29,7 @@ import {
 } from "@ragdoll/tools";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
+import WebSocket from "ws";
 import { readEnvironment } from "./lib/read-environment";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
@@ -53,6 +54,11 @@ export interface RunnerContext {
    * The uid of the task to run.
    */
   uid: string;
+
+  /**
+   * Access token to authenticate the task runner with the server.
+   */
+  accessToken: string;
 
   /**
    * This is the API client used to communicate with the server.
@@ -181,6 +187,7 @@ export class TaskRunner {
   private readonly sessionId: string;
   private stepCount = 0;
   private abortController?: AbortController;
+  private lockingConnection?: WebSocket;
 
   constructor(readonly context: RunnerContext) {
     this.sessionId = generateId();
@@ -213,13 +220,6 @@ export class TaskRunner {
     const abortController = new AbortController();
     this.abortController = abortController;
 
-    const refreshJob = setInterval(
-      () => {
-        this.refreshSessionLock();
-      },
-      1000 * 60 * 5,
-    ); // Refresh every 5 minutes
-
     const finishWithState = async (
       state:
         | {
@@ -231,8 +231,7 @@ export class TaskRunner {
             error: Error;
           },
     ) => {
-      clearInterval(refreshJob);
-      await this.releaseSessionLock();
+      this.releaseSessionLock();
 
       if (this.abortController === abortController) {
         this.abortController = undefined;
@@ -242,7 +241,7 @@ export class TaskRunner {
     };
 
     try {
-      await this.refreshSessionLock();
+      await this.initSessionLock();
 
       this.logger.trace("Start step loop.");
       this.stepCount = 0;
@@ -523,31 +522,49 @@ export class TaskRunner {
     };
   }
 
-  private async refreshSessionLock() {
-    this.logger.trace("Acquiring session lock", this.sessionId);
-    try {
-      await this.context.apiClient.api.tasks[":uid"].lock[":lockId"].$post({
-        param: {
-          uid: this.context.uid,
-          lockId: this.sessionId,
-        },
-      });
-    } catch (err) {
-      this.logger.error("Failed to refresh session lock:", err);
+  private async initSessionLock() {
+    this.logger.debug("Init session lock", this.sessionId);
+    if (this.lockingConnection) {
+      throw new Error(
+        "Session lock is already acquired, please release it before acquiring again.",
+      );
     }
+
+    // we don't have access to the full URL, so we need to construct it
+    const url = this.context.apiClient.api.tasks[":uid"].lock[":lockId"].$url({
+      param: { uid: this.context.uid, lockId: this.sessionId },
+    });
+    url.searchParams.set(
+      "accessToken",
+      decodeURIComponent(this.context.accessToken),
+    );
+    url.protocol = url.protocol.replace("http", "ws");
+    const ws = new WebSocket(url);
+
+    await new Promise<void>((resolve, reject) => {
+      ws.addEventListener("error", (error) => {
+        this.logger.warn("Task locking connection error", error);
+        reject(error);
+        // FIXME(zhiming): reconnect when unexpected disconnected
+      });
+
+      ws.addEventListener("close", (event) => {
+        reject(new Error(`Task locking connection closed: ${event.reason}`));
+      });
+
+      ws.addEventListener("open", () => {
+        this.logger.debug("Session lock acquired", this.sessionId);
+        this.lockingConnection = ws;
+        resolve();
+      });
+    });
   }
 
-  private async releaseSessionLock() {
-    this.logger.trace("Releasing session lock", this.sessionId);
-    try {
-      await this.context.apiClient.api.tasks[":uid"].lock[":lockId"].$delete({
-        param: {
-          uid: this.context.uid,
-          lockId: this.sessionId,
-        },
-      });
-    } catch (err) {
-      this.logger.error("Failed to release session lock:", err);
+  private releaseSessionLock() {
+    this.logger.debug("Releasing session lock", this.sessionId);
+    if (this.lockingConnection) {
+      this.lockingConnection.close();
+      this.lockingConnection = undefined;
     }
   }
 

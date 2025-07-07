@@ -81,6 +81,7 @@ program
     // Use existing task ID mode
     const runner = new TaskRunner({
       uid,
+      accessToken: options.token,
       apiClient,
       pochiEvents,
       cwd: options.cwd,
