@@ -14,27 +14,22 @@ export const AskFollowupQuestionTool: React.FC<
       <p className="items-center font-medium italic">{question}</p>
       {followUp &&
         followUp.length > 0 && ( // Check if followUp exists and has items
-          <ol className="flex list-decimal flex-col gap-1 pl-8">
+          <ol className="list-decimal space-y-1 pl-8">
             {followUp.map((followUpText, index) => (
               <li
                 key={index}
-                className="text-muted-foreground hover:text-foreground"
+                className={cn("text-muted-foreground hover:text-foreground", {
+                  "cursor-pointer": !isLoading,
+                  "cursor-wait": isLoading,
+                })}
+                onClick={() =>
+                  !isLoading &&
+                  sendMessage({
+                    prompt: followUpText,
+                  })
+                }
               >
-                <button
-                  type="button"
-                  className={cn("w-full text-left", {
-                    "cursor-pointer": !isLoading,
-                    "cursor-wait": isLoading,
-                  })}
-                  disabled={isLoading}
-                  onClick={() =>
-                    sendMessage({
-                      prompt: followUpText,
-                    })
-                  }
-                >
-                  {followUpText}
-                </button>
+                {followUpText}
               </li>
             ))}
           </ol>
