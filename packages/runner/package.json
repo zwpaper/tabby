@@ -1,7 +1,9 @@
 {
   "name": "@ragdoll/runner",
   "version": "0.2.1",
-  "bin": "src/cli.ts",
+  "bin": {
+    "pochi-runner": "src/cli.ts"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./node": "./src/node.ts"

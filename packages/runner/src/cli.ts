@@ -1,3 +1,5 @@
+#! /usr/bin/env bun
+
 import { type AppType, createPochiEventSource } from "@ragdoll/server";
 import { hc } from "hono/client";
 
