@@ -9,7 +9,7 @@ import {
 import { apiClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { LifeBuoy, Loader2 } from "lucide-react";
+import { Hourglass, LifeBuoy, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/redirect-remote")({
 
 function RouteComponent() {
   const { uid, minionId } = Route.useSearch();
-  const [showManualButton, setShowManualButton] = useState(false);
+  const [isSlowRedirection, setIsSlowRedirection] = useState(false);
 
   const { data: task } = useQuery({
     queryKey: ["task", uid],
@@ -87,7 +87,7 @@ function RouteComponent() {
 
   useEffect(() => {
     const manualButtonTimeout = setTimeout(() => {
-      setShowManualButton(true);
+      setIsSlowRedirection(true);
     }, 8000);
 
     return () => {
@@ -108,6 +108,14 @@ function RouteComponent() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
+          {isSlowRedirection && (
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Hourglass className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
+              <p>
+                Hang tight, we're almost there! Getting things ready for you.
+              </p>
+            </div>
+          )}
           <div className="flex items-start gap-3 rounded-md border p-3">
             <LifeBuoy className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-500" />
             <p>
@@ -116,13 +124,12 @@ function RouteComponent() {
             </p>
           </div>
         </CardContent>
-        {showManualButton && (
+        {redirectUrl && (
           <CardFooter className="flex items-center justify-center">
             <p className="mb-2 text-muted-foreground text-xs">
               If task doesn't open automatically, click{" "}
               <a
-                // Fallback to the redirect endpoint if the url polling fails
-                href={redirectUrl || `/api/minions/${minionId}/redirect`}
+                href={redirectUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="underline"
