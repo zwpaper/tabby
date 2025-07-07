@@ -100,7 +100,10 @@ export class UsageService {
     };
   }
 
-  async readCurrentMonthQuota(user: User) {
+  async readCurrentMonthQuota(user: {
+    id: string;
+    email: string;
+  }) {
     // Calculate the start of the current month (UTC)
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();

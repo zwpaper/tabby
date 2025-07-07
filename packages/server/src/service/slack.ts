@@ -11,6 +11,7 @@ import { githubService } from "./github";
 import { slackTaskService } from "./slack-task";
 import { slackModalViewRenderer } from "./slack-task/slack-modal-view";
 import { slackRichTextRenderer } from "./slack-task/slack-rich-text";
+import { usageService } from "./usage";
 
 class SlackService {
   private app: App;
@@ -530,11 +531,11 @@ class SlackService {
       };
     }
 
-    // Check waitlist approval
-    if (!targetUser.isWaitlistApproved) {
+    const limits = await usageService.readCurrentMonthQuota(targetUser);
+    if (limits.credit.isLimitReached) {
       return {
         success: false,
-        blocks: slackRichTextRenderer.renderWaitlistPendingApproval(userEmail),
+        blocks: slackRichTextRenderer.renderCreditLimitReached(),
       };
     }
 

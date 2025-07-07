@@ -1,8 +1,10 @@
-import type { User } from "../auth";
 import { db } from "../db";
 import { StripePlans } from "./constants";
 
-export async function readActiveSubscriptionLimits(user: User) {
+export async function readActiveSubscriptionLimits(user: {
+  id: string;
+  email: string;
+}) {
   const activeSubscription = await db
     .selectFrom("subscription")
     .select(["id", "plan"])
@@ -19,7 +21,7 @@ export async function readActiveSubscriptionLimits(user: User) {
       basic: 100_000,
       premium: 15_000,
     };
-  } else if (user.isWaitlistApproved) {
+  } else {
     limits =
       StripePlans.find((p) => p.name === "Pro")?.limits ?? // TODO: fix this
       StripePlans[0].limits;

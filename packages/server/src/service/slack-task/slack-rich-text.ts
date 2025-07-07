@@ -292,60 +292,30 @@ class SlackRichTextRenderer {
     return blocks;
   }
 
-  renderWaitlistPendingApproval(userEmail?: string): AnyBlock[] {
+  renderCreditLimitReached(): AnyBlock[] {
     const blocks: AnyBlock[] = [
       {
         type: "header",
         text: {
           type: "plain_text",
-          text: "⏳ Waiting for Approval",
+          text: "💳 Credit Limit Reached",
         },
       },
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "*Thanks for signing up! You're on the waitlist and pending approval.*",
+          text: "*You've reached your credit limit for this billing period.*",
         },
       },
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "I can see you're eager to start coding with AI assistance – that's awesome! 🚀\n\n*What happens next:*\n• Our team will review your application shortly\n• You'll get notified once approved\n• Then you can use all Pochi features including this command!\n• Average approval time: 24-48 hours",
+          text: "Thanks for using Pochi! 🚀 You've been actively coding with AI assistance.\n\n*What you can do:*\n• Add a Credit Card in your account settings for unlimited usage\n• Wait for your credits to reset next billing cycle\n• Check your usage and billing details in your account\n• Contact support if you have questions",
         },
       },
     ];
-
-    // Add email information if provided
-    if (userEmail) {
-      blocks.push({
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `📧 Your account \`${userEmail}\` is in the queue for approval.`,
-        },
-      });
-    }
-
-    blocks.push(
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "*DM us with 'get fast approve' for quick approval!*",
-        },
-      },
-      {
-        type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: "💡 _Tip: Active community members often get approved faster!_",
-          },
-        ],
-      },
-    );
 
     return blocks;
   }
