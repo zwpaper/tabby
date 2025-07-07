@@ -47,9 +47,11 @@ function TaskPage() {
     branch,
   };
 
-  const allTasks = data?.data || [];
+  const allTasks = data?.data;
 
   const processedTasks = useMemo(() => {
+    if (!allTasks?.length) return [];
+
     return allTasks.map((task) => ({
       ...task,
       repoInfo: task.git?.origin ? parseGitOriginUrl(task.git.origin) : null,
@@ -95,7 +97,7 @@ function TaskPage() {
   }, [processedTasks, repository]);
 
   const { tasks: filteredTasks, fuzzyResultMap } = useMemo(() => {
-    let tasks = processedTasks;
+    let tasks = [...processedTasks];
 
     if (repository) {
       tasks = tasks.filter(
@@ -124,6 +126,8 @@ function TaskPage() {
       );
       tasks = tasks.filter((x) => fuzzyResultMap[x.uid]);
     }
+
+    tasks.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
     return { tasks, fuzzyResultMap };
   }, [processedTasks, repository, branch, q]);
@@ -212,7 +216,7 @@ function TaskPage() {
           onFilterChange={onFilterChange}
         />
         <div className="space-y-4">
-          {allTasks.length === 0 ? (
+          {!allTasks?.length ? (
             <EmptyState
               title="No tasks yet"
               description="It looks like you haven't created any tasks. Get started by creating a new task."
