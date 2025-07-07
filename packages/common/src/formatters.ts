@@ -203,7 +203,6 @@ function removeInvalidCharForStorage(messages: UIMessage[]): UIMessage[] {
 
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
 const LLMFormatOps: FormatOp[] = [
-  removeReasoningParts,
   removeEmptyMessages,
   removeMessagesWithoutTextOrFunctionCall,
   resolvePendingToolCalls,
@@ -241,11 +240,16 @@ export const formatters = {
   llm: (
     messages: UIMessage[],
     options?: {
-      tools?: ToolSet;
+      tools: ToolSet;
+      isGemini: boolean;
     },
   ) => {
+    const llmFormatOps = [
+      ...(options?.isGemini ? [removeReasoningParts] : []),
+      ...LLMFormatOps,
+    ];
     const coreMessages = convertToCoreMessages(
-      formatMessages(messages, LLMFormatOps),
+      formatMessages(messages, llmFormatOps),
       options,
     );
     const environmentDetailIndex = coreMessages.findIndex(

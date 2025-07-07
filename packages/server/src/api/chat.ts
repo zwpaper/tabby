@@ -132,7 +132,10 @@ const chat = new Hono()
                     } satisfies CoreMessage,
                   ]
                 : []),
-              ...formatters.llm(preparedMessages, { tools }),
+              ...formatters.llm(preparedMessages, {
+                tools,
+                isGemini: validModelId.includes("google"),
+              }),
             ],
             tools,
             onFinish: async ({
