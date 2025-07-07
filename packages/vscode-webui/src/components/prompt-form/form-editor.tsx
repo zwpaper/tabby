@@ -26,6 +26,11 @@ import {
 } from "./context-mention/mention-list";
 import "./prompt-form.css";
 import { cn } from "@/lib/utils";
+import {
+  type SuggestionMatch,
+  type Trigger,
+  findSuggestionMatch,
+} from "@tiptap/suggestion";
 import type { MentionListActions } from "./shared";
 import { SubmitHistoryExtension } from "./submit-history-extension";
 import {
@@ -97,7 +102,7 @@ export function FormEditor({
   useEffect(() => {
     activeTabsRef.current = activeTabs;
   }, [activeTabs]);
-
+  const isComposingRef = useRef(false);
   const editor = useEditor(
     {
       extensions: [
@@ -181,6 +186,7 @@ export function FormEditor({
                   });
                 },
                 onUpdate: (props) => {
+                  isComposingRef.current = props.editor.view.composing;
                   component.updateProps(props);
                 },
                 onExit: () => {
@@ -196,6 +202,12 @@ export function FormEditor({
                   return component.ref?.onKeyDown(props) ?? false;
                 },
               };
+            },
+            findSuggestionMatch: (config: Trigger): SuggestionMatch => {
+              return findSuggestionMatch({
+                ...config,
+                allowSpaces: isComposingRef.current,
+              });
             },
           },
         }),
@@ -280,6 +292,12 @@ export function FormEditor({
                   return component.ref?.onKeyDown(props) ?? false;
                 },
               };
+            },
+            findSuggestionMatch: (config: Trigger): SuggestionMatch => {
+              return findSuggestionMatch({
+                ...config,
+                allowSpaces: isComposingRef.current,
+              });
             },
           },
         }),
