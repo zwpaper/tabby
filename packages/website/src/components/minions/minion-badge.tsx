@@ -1,3 +1,4 @@
+import { getMinionRedirectUrl } from "@/lib/utils/minions";
 import { HardDrive } from "lucide-react";
 import { Badge } from "../ui/badge";
 
@@ -6,7 +7,7 @@ interface MinionBadgeProps {
 }
 
 export function MinionBadge({ minionId }: MinionBadgeProps) {
-  const minionUrl = `/api/minions/${minionId}/redirect`;
+  const minionUrl = getMinionRedirectUrl(minionId);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();

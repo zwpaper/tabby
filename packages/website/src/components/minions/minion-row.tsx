@@ -1,4 +1,5 @@
 import type { apiClient } from "@/lib/auth-client";
+import { getMinionRedirectUrl } from "@/lib/utils/minions";
 import { formatRelativeTime } from "@/lib/utils/ui";
 
 import type { InferResponseType } from "hono/client";
@@ -11,7 +12,7 @@ type Minion = InferResponseType<
 export function MinionRow({ minion }: { minion: Minion }) {
   return (
     <a
-      href={`/api/minions/${minion.id}/redirect`}
+      href={getMinionRedirectUrl(minion.id)}
       target="_blank"
       rel="noopener noreferrer"
       className="group block cursor-pointer rounded-lg border transition-colors duration-200 hover:bg-muted/50 hover:text-muted-foreground"

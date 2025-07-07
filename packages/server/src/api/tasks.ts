@@ -90,6 +90,7 @@ const tasks = new Hono()
 
     let uid: string;
     let url: string | undefined;
+    let minionId: string | undefined;
     if (remote && event?.type === "website:new-project") {
       const { uid: remoteUid, minion } = await taskService.createWithRunner({
         user,
@@ -98,6 +99,7 @@ const tasks = new Hono()
       });
       uid = remoteUid;
       url = `/api/minions/${minion.id}/redirect`;
+      minionId = minion.id;
     } else {
       uid = await taskService.createWithUserMessage(user.id, prompt, event);
       url = `vscode://TabbyML.pochi/?task=${uid}`;
@@ -106,6 +108,7 @@ const tasks = new Hono()
     return c.json({
       success: true,
       uid,
+      minionId,
       url,
     });
   })

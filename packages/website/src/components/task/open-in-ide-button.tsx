@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { getMinionRedirectUrl } from "@/lib/utils/minions";
 import { AppWindow, Cloud } from "lucide-react";
 
 interface OpenInIdeButtonProps {
@@ -14,8 +15,7 @@ export function OpenInIdeButton({ uid, minionId }: OpenInIdeButtonProps) {
   const handleOpenInRemotePochi = () => {
     if (!minionId) return;
 
-    const minionUrl = `/api/minions/${minionId}/redirect`;
-    window.open(minionUrl, "_blank");
+    window.open(getMinionRedirectUrl(minionId), "_blank");
   };
 
   const callToAction = minionId ? (

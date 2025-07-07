@@ -224,15 +224,25 @@ export function CreateTask({
           throw new Error(errorMessage);
         }
 
-        const { uid, url } = await taskResponse.json();
+        const { uid, url, minionId } = await taskResponse.json();
 
-        await navigate({
-          to: "/redirect-vscode",
-          search: {
-            uid,
-            url,
-          },
-        });
+        if (isRemote) {
+          await navigate({
+            to: "/redirect-remote",
+            search: {
+              uid,
+              minionId: minionId as string,
+            },
+          });
+        } else {
+          await navigate({
+            to: "/redirect-vscode",
+            search: {
+              uid,
+              url,
+            },
+          });
+        }
 
         return;
       } catch (error) {

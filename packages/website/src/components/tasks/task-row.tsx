@@ -1,5 +1,6 @@
 import type { apiClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { getMinionRedirectUrl } from "@/lib/utils/minions";
 import { formatRelativeTime } from "@/lib/utils/ui";
 import {
   IconBrandChrome,
@@ -104,8 +105,11 @@ function EventBadge({
     e.stopPropagation();
     if (!minionId) return;
 
-    const minionUrl = `/api/minions/${minionId}/redirect`;
-    window.open(minionUrl, "_blank", "noopener,noreferrer");
+    window.open(
+      getMinionRedirectUrl(minionId),
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   return (

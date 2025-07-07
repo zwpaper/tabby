@@ -32,6 +32,13 @@ const minions = new Hono()
     const { id } = c.req.param();
     const url = await minionService.redirect(user.id, id);
     return c.redirect(url);
+  })
+  .get("/:id/redirect-url", async (c) => {
+    setIdleTimeout(c.req.raw, 60); // 60 seconds idle timeout
+    const user = c.get("user");
+    const { id } = c.req.param();
+    const url = await minionService.redirect(user.id, id);
+    return c.text(url);
   });
 
 export default minions;

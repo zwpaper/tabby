@@ -20,6 +20,7 @@ import { Route as ShareUidImport } from './routes/share.$uid'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authenticated.stop-impersonating'
 import { Route as AuthenticatedRedirectVscodeImport } from './routes/_authenticated.redirect-vscode'
+import { Route as AuthenticatedRedirectRemoteImport } from './routes/_authenticated.redirect-remote'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
 import { Route as AuthenticatedBaseRouteImport } from './routes/_authenticated._base/route'
 import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authenticated.auth/vscode-link'
@@ -93,6 +94,13 @@ const AuthenticatedRedirectVscodeRoute =
   AuthenticatedRedirectVscodeImport.update({
     id: '/redirect-vscode',
     path: '/redirect-vscode',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
+const AuthenticatedRedirectRemoteRoute =
+  AuthenticatedRedirectRemoteImport.update({
+    id: '/redirect-remote',
+    path: '/redirect-remote',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -264,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/redirect-remote': {
+      id: '/_authenticated/redirect-remote'
+      path: '/redirect-remote'
+      fullPath: '/redirect-remote'
+      preLoaderRoute: typeof AuthenticatedRedirectRemoteImport
       parentRoute: typeof AuthenticatedImport
     }
     '/_authenticated/redirect-vscode': {
@@ -483,6 +498,7 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedBaseRouteRoute: typeof AuthenticatedBaseRouteRouteWithChildren
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedRedirectRemoteRoute: typeof AuthenticatedRedirectRemoteRoute
   AuthenticatedRedirectVscodeRoute: typeof AuthenticatedRedirectVscodeRoute
   AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
   AuthenticatedAuthDeviceLinkRoute: typeof AuthenticatedAuthDeviceLinkRoute
@@ -492,6 +508,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBaseRouteRoute: AuthenticatedBaseRouteRouteWithChildren,
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedRedirectRemoteRoute: AuthenticatedRedirectRemoteRoute,
   AuthenticatedRedirectVscodeRoute: AuthenticatedRedirectVscodeRoute,
   AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
   AuthenticatedAuthDeviceLinkRoute: AuthenticatedAuthDeviceLinkRoute,
@@ -509,6 +526,7 @@ export interface FileRoutesByFullPath {
   '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/redirect-remote': typeof AuthenticatedRedirectRemoteRoute
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
@@ -537,6 +555,7 @@ export interface FileRoutesByTo {
   '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/redirect-remote': typeof AuthenticatedRedirectRemoteRoute
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
@@ -567,6 +586,7 @@ export interface FileRoutesById {
   '/waitlist': typeof WaitlistRoute
   '/_authenticated/_base': typeof AuthenticatedBaseRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/redirect-remote': typeof AuthenticatedRedirectRemoteRoute
   '/_authenticated/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/_authenticated/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
@@ -598,6 +618,7 @@ export interface FileRouteTypes {
     | '/term-of-service'
     | '/waitlist'
     | '/admin'
+    | '/redirect-remote'
     | '/redirect-vscode'
     | '/stop-impersonating'
     | '/auth/$pathname'
@@ -625,6 +646,7 @@ export interface FileRouteTypes {
     | '/term-of-service'
     | '/waitlist'
     | '/admin'
+    | '/redirect-remote'
     | '/redirect-vscode'
     | '/stop-impersonating'
     | '/auth/$pathname'
@@ -653,6 +675,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/_authenticated/_base'
     | '/_authenticated/admin'
+    | '/_authenticated/redirect-remote'
     | '/_authenticated/redirect-vscode'
     | '/_authenticated/stop-impersonating'
     | '/auth/$pathname'
@@ -723,6 +746,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/_base",
         "/_authenticated/admin",
+        "/_authenticated/redirect-remote",
         "/_authenticated/redirect-vscode",
         "/_authenticated/stop-impersonating",
         "/_authenticated/auth/device-link",
@@ -758,6 +782,10 @@ export const routeTree = rootRoute
         "/_authenticated/admin/prompt-evaluation",
         "/_authenticated/admin/users"
       ]
+    },
+    "/_authenticated/redirect-remote": {
+      "filePath": "_authenticated.redirect-remote.tsx",
+      "parent": "/_authenticated"
     },
     "/_authenticated/redirect-vscode": {
       "filePath": "_authenticated.redirect-vscode.tsx",
