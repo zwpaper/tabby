@@ -111,6 +111,15 @@ function removeEmptyMessages(messages: UIMessage[]): UIMessage[] {
   return messages.filter((message) => message.parts.length > 0);
 }
 
+function removeReasoningParts(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => {
+    message.parts = message.parts.filter((part) => {
+      return part.type !== "reasoning";
+    });
+    return message;
+  });
+}
+
 function removeMessagesWithoutTextOrFunctionCall(
   messages: UIMessage[],
 ): UIMessage[] {
@@ -194,6 +203,7 @@ function removeInvalidCharForStorage(messages: UIMessage[]): UIMessage[] {
 
 type FormatOp = (messages: UIMessage[]) => UIMessage[];
 const LLMFormatOps: FormatOp[] = [
+  removeReasoningParts,
   removeEmptyMessages,
   removeMessagesWithoutTextOrFunctionCall,
   resolvePendingToolCalls,
