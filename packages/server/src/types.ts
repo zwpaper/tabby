@@ -22,6 +22,10 @@ export const ZodChatRequestType = z.object({
   environment: ZodEnvironment.optional().describe(
     "Execution environment settings.",
   ),
+  minionId: z
+    .string()
+    .optional()
+    .describe("The ID of the minion (remote Pochi)."),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;

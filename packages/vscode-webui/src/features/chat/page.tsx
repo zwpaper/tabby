@@ -48,6 +48,7 @@ import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { useMcp } from "@/lib/hooks/use-mcp";
+import { useMinionId } from "@/lib/hooks/use-minion-id";
 import { vscodeHost } from "@/lib/vscode";
 import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { ServerErrors } from "@ragdoll/server";
@@ -90,6 +91,7 @@ interface ChatProps {
 
 function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const autoApproveGuard = useAutoApproveGuard();
+  const { data: minionId } = useMinionId();
   const uid = useRef<string | undefined>(task?.uid);
   const [sessionId, updateTaskLock] = useSessionId(uid);
   const [totalTokens, setTotalTokens] = useState<number>(
@@ -193,7 +195,13 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       }
     },
     experimental_prepareRequestBody: (req) =>
-      prepareRequestBody(uid, sessionId.current, req, selectedModel?.id),
+      prepareRequestBody(
+        uid,
+        sessionId.current,
+        req,
+        selectedModel?.id,
+        minionId,
+      ),
     fetch: async (url, options) => {
       // Clear the data when a new request is made
       setData(undefined);

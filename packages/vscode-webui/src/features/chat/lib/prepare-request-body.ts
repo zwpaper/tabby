@@ -10,6 +10,7 @@ export function prepareRequestBody(
     messages: UIMessage[];
   },
   model: string | undefined,
+  minionId?: string,
 ): Omit<RagdollChatRequest, "environment" | "mcpToolSet"> {
   const message = request.messages[request.messages.length - 1];
   const triggerError =
@@ -20,5 +21,6 @@ export function prepareRequestBody(
     model: triggerError ? "fake-model" : model,
     message: fromUIMessage(message),
     sessionId,
+    minionId,
   };
 }

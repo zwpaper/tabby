@@ -33,7 +33,7 @@ import { sql } from "kysely";
 import moment from "moment";
 import type { z } from "zod";
 import { ServerErrors } from "..";
-import { db, uidCoder } from "../db";
+import { db, minionIdCoder, uidCoder } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
 import type { ZodChatRequestType } from "../types";
 import { githubService } from "./github";
@@ -44,8 +44,12 @@ const titleSelect =
     "title",
   );
 
-const minionIdSelect = sql<string | null>`environment->'info'->>'minionId'`.as(
-  "minionId",
+// Select from table (integer, needs encoding)
+const minionIdFromTable = sql<number | null>`"minionId"`.as("minionId");
+
+// Select from environment (string, already encoded)
+const legacyMinionId = sql<string | null>`environment->'info'->>'minionId'`.as(
+  "legacyMinionId",
 );
 
 class StreamingTask {
@@ -95,6 +99,9 @@ class TaskService {
           messages: fromUIMessages(messagesToSave),
         },
         environment: request.environment,
+        minionId: request.minionId
+          ? minionIdCoder.decode(request.minionId)
+          : undefined,
         streamIds: sql<
           string[]
         >`COALESCE("streamIds", '{}') || ARRAY[${streamId}]`,
@@ -105,11 +112,8 @@ class TaskService {
       .executeTakeFirstOrThrow();
 
     // Keep the minion active
-    if (request.environment?.info.minionId) {
-      minionService.signalKeepAliveMinion(
-        userId,
-        request.environment.info.minionId,
-      );
+    if (request.minionId) {
+      minionService.signalKeepAliveMinion(userId, request.minionId);
     }
 
     return {
@@ -191,7 +195,7 @@ class TaskService {
     userId: string,
     request: z.infer<typeof ZodChatRequestType>,
   ) {
-    const { id: chatId, event, environment } = request;
+    const { id: chatId, event, environment, minionId } = request;
     let uid = chatId ?? undefined;
     if (uid === undefined) {
       uid = await this.create(userId, event);
@@ -201,6 +205,8 @@ class TaskService {
       id,
       environment: taskEnvironment,
       status,
+      minionId: taskMinionId,
+      legacyMinionId: taskMinionIdFromEnv,
       ...data
     } = await db
       .selectFrom("task")
@@ -211,12 +217,28 @@ class TaskService {
         "status",
         "id",
         "parentId",
+        minionIdFromTable,
+        legacyMinionId,
       ])
       .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
     this.verifyEnvironment(environment, taskEnvironment);
+
+    const effectiveTaskMinionIdString = taskMinionId
+      ? minionIdCoder.encode(taskMinionId)
+      : taskMinionIdFromEnv;
+
+    if (
+      minionId &&
+      effectiveTaskMinionIdString &&
+      minionId !== effectiveTaskMinionIdString
+    ) {
+      throw new HTTPException(400, {
+        message: "Minion ID mismatch",
+      });
+    }
 
     // Ensure the task is not locked by another session
     await this.checkLock(uid, userId, request.sessionId);
@@ -327,12 +349,6 @@ class TaskService {
         message: "Environment CWD mismatch",
       });
     }
-
-    if (environment.info.minionId !== expectedEnvironment.info.minionId) {
-      throw new HTTPException(400, {
-        message: "Environment Minion ID mismatch",
-      });
-    }
   }
 
   async list(
@@ -360,10 +376,11 @@ class TaskService {
     }
 
     if (minionId) {
-      totalCountQuery = totalCountQuery.where(
-        sql`environment->'info'->>'minionId'`,
-        "=",
-        minionId,
+      totalCountQuery = totalCountQuery.where((eb) =>
+        eb.or([
+          eb("minionId", "=", minionIdCoder.decode(minionId)),
+          eb(sql`environment->'info'->>'minionId'`, "=", minionId),
+        ]),
       );
     }
 
@@ -396,7 +413,8 @@ class TaskService {
         "parentId",
         titleSelect,
         gitSelect,
-        minionIdSelect,
+        minionIdFromTable,
+        legacyMinionId,
       ])
       .orderBy("id", "desc")
       .limit(limit)
@@ -407,7 +425,12 @@ class TaskService {
     }
 
     if (minionId) {
-      query = query.where(sql`environment->'info'->>'minionId'`, "=", minionId);
+      query = query.where((eb) =>
+        eb.or([
+          eb("minionId", "=", minionIdCoder.decode(minionId)),
+          eb(sql`environment->'info'->>'minionId'`, "=", minionId),
+        ]),
+      );
     }
 
     query = applyEventFilter(query, eventFilter);
@@ -419,11 +442,14 @@ class TaskService {
     }
 
     const items = await query.execute();
-    const data = items.map(({ id, ...task }) => ({
+    const data = items.map(({ id, minionId, legacyMinionId, ...task }) => ({
       ...task,
       uid: uidCoder.encode(id), // Map id to uid
       title: parseTitle(task.title),
       totalTokens: task.totalTokens || undefined,
+      minionId: minionId
+        ? minionIdCoder.encode(minionId)
+        : legacyMinionId || undefined,
     }));
 
     return {
@@ -455,7 +481,8 @@ class TaskService {
         "userId",
         titleSelect,
         gitSelect,
-        minionIdSelect,
+        minionIdFromTable,
+        legacyMinionId,
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
       ])
       .where((eb) => {
@@ -487,6 +514,9 @@ class TaskService {
       totalTokens: task.totalTokens || undefined,
       todos: task.todos || undefined,
       title: parseTitle(task.title),
+      minionId: task.minionId
+        ? minionIdCoder.encode(task.minionId)
+        : task.legacyMinionId || undefined,
       subtasks: subtasks.map((subtask) => ({
         uid: uidCoder.encode(subtask.id),
         status: subtask.status,
@@ -767,6 +797,18 @@ class TaskService {
       githubAccessToken,
       githubRepository,
     });
+
+    const minionId = minionIdCoder.decode(minion.id);
+
+    // Update the task with the minion ID
+    await db
+      .updateTable("task")
+      .set({
+        minionId,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("id", "=", uidCoder.decode(uid))
+      .executeTakeFirstOrThrow();
 
     return { uid, minion };
   }

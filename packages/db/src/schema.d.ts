@@ -108,14 +108,6 @@ export interface MonthlyUsage {
   userId: string;
 }
 
-export interface MonthlyUsageLimit {
-  createdAt: Generated<Timestamp>;
-  id: Generated<number>;
-  limit: number;
-  updatedAt: Generated<Timestamp>;
-  userId: string;
-}
-
 export interface Session {
   createdAt: Timestamp;
   expiresAt: Timestamp;
@@ -157,6 +149,7 @@ export interface Task {
   event: Json | null;
   id: Generated<number>;
   isPublicShared: Generated<boolean>;
+  minionId: number | null;
   parentId: number | null;
   status: Generated<string>;
   streamIds: string[] | null;
@@ -188,7 +181,7 @@ export interface User {
   emailVerified: boolean;
   id: string;
   image: string | null;
-  isWaitlistApproved: boolean | null;
+  isWaitlistApproved: Generated<boolean | null>;
   name: string;
   role: string | null;
   stripeCustomerId: string | null;
@@ -212,7 +205,6 @@ export interface DB {
   minion: Minion;
   monthlyCreditLimit: MonthlyCreditLimit;
   monthlyUsage: MonthlyUsage;
-  monthlyUsageLimit: MonthlyUsageLimit;
   session: Session;
   slackConnect: SlackConnect;
   subscription: Subscription;

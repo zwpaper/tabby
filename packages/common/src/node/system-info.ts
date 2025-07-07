@@ -1,28 +1,21 @@
 import os from "node:os";
+import type { Environment } from "@ragdoll/db";
 
 /**
  * Gets system information such as current working directory, shell, OS, and home directory.
  * @param cwd The current working directory to use. If not provided, uses process.cwd()
  * @returns An object containing system information such as cwd, shell, os, and homedir.
  */
-export function getSystemInfo(cwd?: string): {
-  cwd: string;
-  shell: string;
-  os: string;
-  homedir: string;
-  minionId: string;
-} {
+export function getSystemInfo(cwd?: string): Environment["info"] {
   const platform = process.platform;
   const homedir = os.homedir();
   const shell = process.env.SHELL || "";
   const currentWorkingDirectory = cwd || process.cwd();
-  const minionId = process.env.POCHI_MINION_ID || "";
 
   return {
     cwd: currentWorkingDirectory,
     shell,
     os: platform,
     homedir,
-    minionId,
   };
 }
