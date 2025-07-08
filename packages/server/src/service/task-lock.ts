@@ -1,97 +1,123 @@
-import type { ServerWebSocket } from "bun";
+import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import { db, uidCoder } from "../db";
 
 const TaskLockRefreshInterval = 5 * 60 * 1000; // 5 minutes
 
+class TaskLock {
+  private refreshJob: Timer;
+  private refCount = 0;
+
+  constructor(
+    private readonly taskId: number,
+    private readonly userId: string,
+    private readonly lockId: string,
+  ) {
+    this.refreshJob = setInterval(
+      async () => this.lock(),
+      TaskLockRefreshInterval,
+    );
+  }
+
+  async checkLock(userId: string, lockId: string) {
+    if (this.userId !== userId) {
+      throw new Error("User ID does not match");
+    }
+
+    if (this.lockId !== lockId) {
+      throw new Error("Lock ID does not match");
+    }
+
+    await this.lock();
+  }
+
+  async lock() {
+    const lockResult = await db
+      .insertInto("taskLock")
+      .values({
+        id: this.lockId,
+        taskId: this.taskId,
+      })
+      .onConflict((oc) =>
+        oc
+          .column("taskId")
+          .doUpdateSet({
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          })
+          .where("taskLock.id", "=", this.lockId)
+          .where(({ exists, selectFrom }) =>
+            exists(
+              selectFrom("task")
+                .select("id")
+                .where("id", "=", this.taskId)
+                .where("userId", "=", this.userId),
+            ),
+          ),
+      )
+      .executeTakeFirst();
+
+    if (!lockResult.numInsertedOrUpdatedRows) {
+      // Task exists, so it must be a lock conflict.
+      throw new HTTPException(423, {
+        message: "Task is locked by other session",
+      });
+    }
+  }
+
+  async retain() {
+    this.refCount++;
+  }
+
+  async release(force = false): Promise<boolean> {
+    this.refCount--;
+    if (this.refCount === 0 || force) {
+      this.dispose();
+      return true;
+    }
+    return false;
+  }
+
+  private async dispose() {
+    clearInterval(this.refreshJob);
+    await db
+      .deleteFrom("taskLock")
+      .where("id", "=", this.lockId)
+      .where("taskId", "in", (eb) =>
+        eb
+          .selectFrom("task as t")
+          .select("t.id")
+          .where("t.id", "=", this.taskId),
+      )
+      .executeTakeFirst();
+  }
+}
+
 export class TaskLockService {
   private locks = new Map<
     string, // uid
-    {
-      userId: string;
-      lockId: string;
-      ws: ServerWebSocket;
-      release: () => Promise<void>;
-    }
+    TaskLock
   >();
 
-  async lockTask(
-    uid: string,
-    userId: string,
-    lockId: string,
-    ws: ServerWebSocket,
-  ) {
-    const taskId = uidCoder.decode(uid);
+  async lockTask(uid: string, userId: string, lockId: string) {
+    let lock = this.locks.get(uid);
+    if (!lock) {
+      const taskId = uidCoder.decode(uid);
+      lock = new TaskLock(taskId, userId, lockId);
+    }
 
-    const lock = async () => {
-      const lockResult = await db
-        .insertInto("taskLock")
-        .values({
-          id: lockId,
-          taskId,
-        })
-        .onConflict((oc) =>
-          oc
-            .column("taskId")
-            .doUpdateSet({
-              updatedAt: sql`CURRENT_TIMESTAMP`,
-            })
-            .where("taskLock.id", "=", lockId),
-        )
-        .executeTakeFirst();
-
-      if (!lockResult.numInsertedOrUpdatedRows) {
-        throw new Error("Task is locked by another session");
-      }
-    };
-
-    const refreshLockTimer = setInterval(async () => {
-      await lock();
-    }, TaskLockRefreshInterval);
-    await lock();
-
-    const release = async () => {
-      if (refreshLockTimer) {
-        clearInterval(refreshLockTimer);
-      }
-
-      if (
-        ws.readyState === WebSocket.OPEN ||
-        ws.readyState === WebSocket.CONNECTING
-      ) {
-        ws.close();
-      }
-
-      await db
-        .deleteFrom("taskLock")
-        .where("id", "=", lockId)
-        .where("taskId", "in", (eb) =>
-          eb
-            .selectFrom("task as t")
-            .select("t.id")
-            .where("t.id", "=", taskId)
-            .where("t.userId", "=", userId),
-        )
-        .executeTakeFirst();
-    };
-
-    this.locks.set(uid, {
-      userId,
-      lockId,
-      ws,
-      release,
-    });
+    await lock.checkLock(userId, lockId);
+    lock.retain();
+    this.locks.set(uid, lock);
   }
 
   async unlockTask(uid: string, userId: string, lockId: string) {
     const lock = this.locks.get(uid);
-    if (!lock || lock.userId !== userId || lock.lockId !== lockId) {
-      console.error("Lock not found or not matched");
-      return;
+    if (lock) {
+      await lock.checkLock(userId, lockId);
+      if (await lock.release()) {
+        this.locks.delete(uid);
+      }
     }
-
-    this.locks.delete(uid);
-    await lock.release();
   }
 
   async gracefulShutdown() {
@@ -103,7 +129,7 @@ export class TaskLockService {
     );
     const promises = [];
     for (const task of taskLocksToRelease) {
-      promises.push(task.release());
+      promises.push(task.release(true));
     }
     await Promise.all(promises);
   }

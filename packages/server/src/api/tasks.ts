@@ -1,6 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
 import type { TaskCreateEvent, TaskEvent } from "@ragdoll/db";
-import type { ServerWebSocket } from "bun";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
@@ -309,12 +308,10 @@ const tasks = new Hono()
         });
       }
       const user = session.user;
-      await taskService.checkLock(uid, user.id, lockId);
 
       return {
-        onOpen: async (_, ws) => {
-          const raw = ws.raw as ServerWebSocket;
-          await taskLockService.lockTask(uid, user.id, lockId, raw);
+        onOpen: async () => {
+          await taskLockService.lockTask(uid, user.id, lockId);
         },
         onClose: async () => {
           await taskLockService.unlockTask(uid, user.id, lockId);

@@ -30,7 +30,6 @@ import {
 } from "ai";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
-import moment from "moment";
 import type { z } from "zod";
 import { ServerErrors } from "..";
 import { db, minionIdCoder, uidCoder } from "../db";
@@ -38,6 +37,7 @@ import { applyEventFilter } from "../lib/event-filter";
 import type { ZodChatRequestType } from "../types";
 import { githubService } from "./github";
 import { minionService } from "./minion";
+import { taskLockService } from "./task-lock";
 
 const titleSelect =
   sql<string>`(conversation #>> '{messages, 0, parts, 0, text}')::text`.as(
@@ -57,6 +57,7 @@ class StreamingTask {
     readonly streamId: string,
     readonly userId: string,
     readonly uid: string,
+    readonly sessionId: string,
   ) {}
 
   get key() {
@@ -65,6 +66,14 @@ class StreamingTask {
 
   static key(userId: string, uid: string) {
     return `${userId}:${uid}`;
+  }
+
+  async init() {
+    await taskLockService.lockTask(this.uid, this.userId, this.sessionId);
+  }
+
+  async dispose() {
+    await taskLockService.unlockTask(this.uid, this.userId, this.sessionId);
   }
 }
 
@@ -80,7 +89,13 @@ class TaskService {
       userId,
       request,
     );
-    const streamingTask = new StreamingTask(streamId, userId, uid);
+    const streamingTask = new StreamingTask(
+      streamId,
+      userId,
+      uid,
+      request.sessionId,
+    );
+    await streamingTask.init();
     this.streamingTasks.set(streamingTask.key, streamingTask);
 
     const messages = appendClientMessage({
@@ -173,7 +188,7 @@ class TaskService {
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
 
-    this.streamingTasks.delete(StreamingTask.key(userId, uid));
+    await this.finalizeStreaming(uid, userId);
   }
 
   async failStreaming(uid: string, userId: string, error: TaskError) {
@@ -188,7 +203,16 @@ class TaskService {
       .where("userId", "=", userId)
       .execute();
 
-    this.streamingTasks.delete(StreamingTask.key(userId, uid));
+    await this.finalizeStreaming(uid, userId);
+  }
+
+  async finalizeStreaming(uid: string, userId: string) {
+    const key = StreamingTask.key(userId, uid);
+    const streamingTask = this.streamingTasks.get(key);
+    if (streamingTask) {
+      streamingTask.dispose();
+      this.streamingTasks.delete(StreamingTask.key(userId, uid));
+    }
   }
 
   private async prepareTask(
@@ -239,9 +263,6 @@ class TaskService {
         message: "Minion ID mismatch",
       });
     }
-
-    // Ensure the task is not locked by another session
-    await this.checkLock(uid, userId, request.sessionId);
 
     if (status === "streaming") {
       throw new HTTPException(409, {
@@ -875,99 +896,6 @@ class TaskService {
     // if task is slack event we need resume the minion
     if (task.event?.type === "slack:new-task" && task.minionId) {
       minionService.resumeMinion(userId, task.minionId);
-    }
-  }
-
-  private async ensureTask(uid: string, userId: string) {
-    const task = await db
-      .selectFrom("task")
-      .select(["id"])
-      .where("id", "=", uidCoder.decode(uid))
-      .where("userId", "=", userId)
-      .executeTakeFirst();
-
-    if (!task) {
-      throw new HTTPException(404, { message: "Task not found" });
-    }
-
-    return task.id;
-  }
-
-  private async cleanUpOldLocks(taskId: number) {
-    // Clean up old locks older than 30 minutes
-    const thirtyMinutesAgo = moment().subtract(30, "minutes").toDate();
-    await db
-      .deleteFrom("taskLock")
-      .where("taskId", "=", taskId)
-      .where("updatedAt", "<", thirtyMinutesAgo)
-      .execute();
-  }
-
-  async checkLock(uid: string, userId: string, lockId: string) {
-    const taskId = await this.ensureTask(uid, userId);
-    await this.cleanUpOldLocks(taskId);
-
-    const otherLock = await db
-      .selectFrom("taskLock")
-      .where("taskId", "=", taskId)
-      .where("id", "!=", lockId)
-      .select(["id"])
-      .executeTakeFirst();
-
-    if (otherLock) {
-      throw new HTTPException(423, {
-        message: "Task is locked by another session",
-      });
-    }
-  }
-
-  async lock(uid: string, userId: string, lockId: string) {
-    const taskId = await this.ensureTask(uid, userId);
-    await this.cleanUpOldLocks(taskId);
-
-    const lockResult = await db
-      .insertInto("taskLock")
-      .values({
-        id: lockId,
-        taskId,
-      })
-      .onConflict((oc) =>
-        oc
-          .column("taskId")
-          .doUpdateSet({
-            updatedAt: sql`CURRENT_TIMESTAMP`,
-          })
-          .where("taskLock.id", "=", lockId),
-      )
-      .executeTakeFirst();
-
-    if (lockResult.numInsertedOrUpdatedRows) {
-      return;
-    }
-
-    // Task exists, so it must be a lock conflict.
-    throw new HTTPException(423, {
-      message: "Task is locked by other session",
-    });
-  }
-
-  async releaseLock(uid: string, userId: string, lockId: string) {
-    const result = await db
-      .deleteFrom("taskLock")
-      .where("id", "=", lockId)
-      .where("taskId", "in", (eb) =>
-        eb
-          .selectFrom("task as t")
-          .select("t.id")
-          .where("t.id", "=", uidCoder.decode(uid))
-          .where("t.userId", "=", userId),
-      )
-      .executeTakeFirst();
-
-    if (result.numDeletedRows === 0n) {
-      throw new HTTPException(404, {
-        message: "Lock not found or task not found",
-      });
     }
   }
 }
