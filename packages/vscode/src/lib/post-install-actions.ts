@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 import { getLogger } from "./logger";
@@ -15,6 +16,8 @@ export class PostInstallActions {
     this.actions.push(new SetRemoteDefaultExtensionAction(this.context));
 
     false && this.actions.push(new OpenTaskFromEnvAction());
+
+    this.actions.push(new KillRunnerProcessAction());
 
     this.runActions();
   }
@@ -94,3 +97,46 @@ class OpenTaskFromEnvAction implements Action {
     }
   }
 }
+
+class KillRunnerProcessAction implements Action {
+  id = "kill_runner_process";
+
+  async execute(): Promise<void> {
+    await killRunnerProcess();
+  }
+}
+
+/**
+ * kill all pochi-runner processes before extension start on sandbox containers.
+ */
+const killRunnerProcess = async () => {
+  // check if is running in a container
+  if (!process.env.POCHI_SANDBOX_HOST) {
+    logger.info(
+      "This script is intended to be run inside a container. Skipping process kill.",
+    );
+    return;
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const pkill = spawn("pkill", ["-f", "pochi-runner"]);
+
+    pkill.on("close", (code, signal) => {
+      if (code === 0) {
+        logger.info("Successfully killed pochi-runner processes");
+        resolve();
+      } else if (code === 1) {
+        logger.info("No pochi-runner processes found to kill");
+        resolve();
+      } else {
+        logger.error(`pkill failed with code: ${code}, signal: ${signal}`);
+        reject(new Error(`pkill failed: ${code}`));
+      }
+    });
+
+    pkill.on("error", (error) => {
+      logger.error(`Failed to start pkill: ${error.message}`);
+      reject(error);
+    });
+  });
+};
