@@ -397,13 +397,14 @@ function createModel(
   const model = getModelById(modelId);
 
   // Create middlewares
+  // Order matters, execution order is from last to first.
   const middleware: LanguageModelV1Middleware[] = [];
-
-  middleware.push(createBatchCallMiddleware());
 
   if (middlewareContext.newTask) {
     middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
   }
+
+  middleware.push(createBatchCallMiddleware());
 
   middleware.push(createToolMiddleware());
   return wrapLanguageModel({
