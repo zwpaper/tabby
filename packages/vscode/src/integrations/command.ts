@@ -1,6 +1,9 @@
+import { CompletionConfiguration } from "@/completion/configuration";
+import { InlineCompletionProvider } from "@/completion/inline-completion-provider";
+import { CompletionStatusBarManager } from "@/completion/status-bar-manager";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
-import type { AuthClient } from "@/lib/auth-client";
+import type { ApiClient, AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
 import { getWorkspaceRulesFileUri } from "@/lib/env";
@@ -9,8 +12,8 @@ import { getLogger, showOutputPanel } from "@/lib/logger";
 import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
-import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import type { TaskIdParams } from "@ragdoll/vscode-webui-bridge";
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -26,6 +29,8 @@ const logger = getLogger("CommandManager");
 @singleton()
 export class CommandManager implements vscode.Disposable {
   private disposables: vscode.Disposable[] = [];
+  private completionProvider: InlineCompletionProvider | null = null;
+  private providerDisposable: vscode.Disposable | null = null;
 
   constructor(
     private readonly ragdollWebviewProvider: RagdollWebviewProvider,
@@ -35,7 +40,26 @@ export class CommandManager implements vscode.Disposable {
     private readonly authEvents: AuthEvents,
     private readonly commandPalette: CommandPalette,
     private readonly mcpHub: McpHub,
+    @inject("ApiClient") private readonly apiClient: ApiClient,
+    @inject(CompletionConfiguration)
+    private readonly completionConfig: CompletionConfiguration,
+    @inject(CompletionStatusBarManager)
+    private readonly statusBarManager: CompletionStatusBarManager,
+    @inject("vscode.ExtensionContext") context: vscode.ExtensionContext,
   ) {
+    // Add to disposables
+    context.subscriptions.push(this.statusBarManager);
+    context.subscriptions.push(this.completionConfig);
+
+    // Initialize completion provider
+    this.initializeCompletion();
+
+    // Listen for configuration changes
+    this.completionConfig.on("updated", () => {
+      // Reinitialize completion if needed
+      this.reinitializeCompletion();
+    });
+
     this.registerCommands();
   }
 
@@ -318,10 +342,103 @@ export class CommandManager implements vscode.Disposable {
           await vscode.commands.executeCommand("pochiWebui.focus");
         }
       }),
+
+      // Completion commands
+      vscode.commands.registerCommand("pochi.completion.trigger", () => {
+        vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
+      }),
+
+      vscode.commands.registerCommand(
+        "pochi.completion.accept",
+        (callback: () => void) => {
+          if (typeof callback === "function") {
+            callback();
+          }
+        },
+      ),
+
+      vscode.commands.registerCommand("pochi.completion.toggle", async () => {
+        await this.completionConfig.toggleEnabled();
+      }),
+
+      vscode.commands.registerCommand("pochi.completion.openSettings", () => {
+        this.completionConfig.openSettings();
+      }),
     );
   }
 
+  private initializeCompletion(): void {
+    try {
+      logger.info("Initializing Ragdoll completion...");
+
+      // Check if completion is enabled
+      if (!this.completionConfig.enabled) {
+        logger.info("Ragdoll completion is disabled by user");
+        return;
+      }
+
+      // Check if completion is configured
+      if (!this.completionConfig.isConfigured()) {
+        logger.warn(
+          "Ragdoll completion requires authentication - no token available",
+        );
+        return; // Don't show prompt, status bar will indicate auth needed
+      }
+
+      logger.info(
+        "Ragdoll completion configuration is valid, proceeding with initialization",
+      );
+
+      // Create completion provider with dependency injection
+      this.completionProvider = new InlineCompletionProvider(
+        this.apiClient,
+        this.completionConfig,
+        this.statusBarManager,
+      );
+
+      // Register completion provider with VSCode
+      this.providerDisposable =
+        vscode.languages.registerInlineCompletionItemProvider(
+          { pattern: "**" }, // All files
+          this.completionProvider,
+        );
+
+      logger.info("Pochi completion provider registered successfully");
+    } catch (error) {
+      logger.error("Failed to initialize Pochi completion:", error);
+      vscode.window.showErrorMessage(
+        "Failed to initialize Pochi completion. Please check your configuration.",
+      );
+    }
+  }
+
+  private reinitializeCompletion(): void {
+    logger.info("Reinitializing Pochi completion...");
+
+    // Clean up existing provider
+    this.cleanupCompletionProvider();
+
+    // Reinitialize with new configuration
+    this.initializeCompletion();
+  }
+
+  private cleanupCompletionProvider(): void {
+    if (this.providerDisposable) {
+      this.providerDisposable.dispose();
+      this.providerDisposable = null;
+    }
+
+    if (this.completionProvider) {
+      this.completionProvider.dispose();
+      this.completionProvider = null;
+    }
+  }
+
   dispose() {
+    // Clean up completion provider
+    this.cleanupCompletionProvider();
+
+    // Dispose all other commands
     for (const disposable of this.disposables) {
       disposable.dispose();
     }

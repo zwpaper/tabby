@@ -185,6 +185,84 @@
             "default": {},
             "description": "Pochi webview UI settings"
           },
+          "pochi.inlineCompletion": {
+            "type": "object",
+            "description": "Inline code completion settings",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true,
+                "description": "Enable/disable inline code completion",
+                "order": 1
+              },
+              "triggerMode": {
+                "type": "string",
+                "enum": ["automatic", "manual"],
+                "default": "automatic",
+                "enumDescriptions": [
+                  "Automatically trigger completions while typing",
+                  "Only trigger completions manually with Alt+\\"
+                ],
+                "description": "How completions are triggered"
+              },
+              "disabledLanguages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": ["plaintext"],
+                "description": "Programming languages where completion is disabled"
+              },
+              "maxPrefixLines": {
+                "type": "number",
+                "default": 20,
+                "minimum": 1,
+                "description": "Maximum number of lines to include before cursor"
+              },
+              "maxSuffixLines": {
+                "type": "number",
+                "default": 20,
+                "minimum": 0,
+                "description": "Maximum number of lines to include after cursor"
+              },
+              "debounceDelay": {
+                "type": "number",
+                "default": 300,
+                "minimum": 0,
+                "description": "Delay in milliseconds before triggering completion"
+              },
+              "temperature": {
+                "type": "number",
+                "default": 0.1,
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Model temperature for completion generation (0.0-1.0)"
+              },
+              "cacheSize": {
+                "type": "number",
+                "default": 100,
+                "minimum": 10,
+                "description": "Maximum number of completions to cache"
+              },
+              "cacheTTL": {
+                "type": "number",
+                "default": 300000,
+                "minimum": 60000,
+                "description": "Cache time-to-live in milliseconds"
+              }
+            },
+            "default": {
+              "enabled": true,
+              "triggerMode": "automatic",
+              "disabledLanguages": ["plaintext"],
+              "maxPrefixLines": 20,
+              "maxSuffixLines": 20,
+              "debounceDelay": 300,
+              "temperature": 0.1,
+              "cacheSize": 100,
+              "cacheTTL": 300000
+            }
+          },
           "pochi.mcpServers": {
             "default": {},
             "description": "MCP servers configuration"
