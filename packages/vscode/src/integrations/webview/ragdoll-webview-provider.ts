@@ -4,6 +4,7 @@ import { AuthEvents } from "@/lib/auth-events";
 import { getNonce } from "@/lib/get-nonce";
 import { getUri } from "@/lib/get-uri";
 import { Thread } from "@quilted/threads";
+import { getLogger } from "@ragdoll/common";
 import {
   type ResourceURI,
   type VSCodeHostApi,
@@ -16,6 +17,7 @@ import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PochiConfiguration } from "../configuration";
 
+const logger = getLogger("RagdollWebviewProvider");
 @injectable()
 @singleton()
 export class RagdollWebviewProvider
@@ -85,8 +87,10 @@ export class RagdollWebviewProvider
       }),
     );
 
-    this.webviewHost = this.createWebviewThread(webviewView.webview).imports;
-    this.webviewHostReady.fire(this.webviewHost);
+    this.createWebviewThread(webviewView.webview).then((thread) => {
+      this.webviewHost = thread.imports;
+      this.webviewHostReady.fire(this.webviewHost);
+    });
   }
 
   readonly readResourceURI: VSCodeHostApi["readResourceURI"] =
@@ -104,18 +108,43 @@ export class RagdollWebviewProvider
       };
     };
 
-  private createWebviewThread(webview: vscode.Webview) {
+  private async createWebviewThread(webview: vscode.Webview) {
     const vscodeHost = container.resolve(VSCodeHostImpl);
     // Inject the readResourceURI to avoid circular dependency
     vscodeHost.readResourceURI = this.readResourceURI;
 
-    return new Thread<WebviewHostApi, VSCodeHostApi>(
+    // See "tabby-threads/source/targets/iframe/shared.ts"
+    const CHECK_MESSAGE = "quilt.threads.ping";
+    const RESPONSE_MESSAGE = "quilt.threads.pong";
+
+    let connected = false;
+
+    const connectedPromise = new Promise<void>((resolve) => {
+      const { dispose } = webview.onDidReceiveMessage((message) => {
+        if (message === RESPONSE_MESSAGE) {
+          logger.info("Pochi webview ready now");
+          connected = true;
+          dispose();
+          resolve();
+        }
+      });
+
+      // Send ping to check if webview is ready
+      webview.postMessage(CHECK_MESSAGE);
+    });
+
+    const thread = new Thread<WebviewHostApi, VSCodeHostApi>(
       {
-        send(message) {
+        async send(message) {
+          if (!connected) {
+            await connectedPromise;
+          }
           return webview.postMessage(message);
         },
         listen(listen, { signal }) {
           const { dispose } = webview.onDidReceiveMessage((message) => {
+            // Ignore connection check messages
+            if (message === RESPONSE_MESSAGE) return;
             listen(message);
           });
           signal?.addEventListener(
@@ -138,6 +167,11 @@ export class RagdollWebviewProvider
         ],
       },
     );
+
+    // Wait for connection to be established before returning
+    await connectedPromise;
+
+    return thread;
   }
 
   private getHtmlForWebview(webview: vscode.Webview) {

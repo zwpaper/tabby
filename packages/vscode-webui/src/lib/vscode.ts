@@ -1,4 +1,4 @@
-import { Thread } from "@quilted/threads";
+import { ThreadNestedWindow } from "@quilted/threads";
 import type {
   VSCodeHostApi,
   WebviewHostApi,
@@ -36,21 +36,9 @@ export function isVSCodeEnvironment() {
 
 function createVSCodeHost(): VSCodeHostApi {
   const vscode = getVSCodeApi();
-  const thread = new Thread<VSCodeHostApi, WebviewHostApi>(
-    {
-      send(message) {
-        return vscode?.postMessage(message);
-      },
-      listen(listen, { signal }) {
-        self.addEventListener(
-          "message",
-          (event) => {
-            listen(event.data);
-          },
-          { signal },
-        );
-      },
-    },
+
+  const thread = new ThreadNestedWindow<VSCodeHostApi, WebviewHostApi>(
+    vscode as unknown as Window,
     {
       imports: [
         "readToken",
