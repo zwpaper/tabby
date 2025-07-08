@@ -149,5 +149,10 @@ process.on("SIGTERM", async () => {
   process.exit(143);
 });
 
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  console.error("Stack trace:", err.stack);
+});
+
 startWorkers();
 startListenDBEvents();
