@@ -4,12 +4,14 @@ import { TaskHeader } from "@/components/task/header";
 import { OpenInIdeButton } from "@/components/task/open-in-ide-button";
 import { TaskPageSkeleton } from "@/components/task/skeleton";
 import { useTheme } from "@/components/theme-provider";
+import { usePochiEvents } from "@/hooks/use-pochi-events";
 import { apiClient } from "@/lib/auth-client";
 import { normalizeApiError, toHttpError } from "@/lib/error";
 import { inlineSubTasks } from "@/lib/inline-sub-task";
 import { toUIMessages } from "@ragdoll/common";
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import type { TaskEvent } from "@ragdoll/db";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useCallback, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
   component: RouteComponent,
@@ -46,10 +48,33 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
   pendingComponent: TaskPageSkeleton,
 });
 
+const getIsLoading = (status: string) =>
+  status !== "pending-input" && status !== "completed";
+
 function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const { auth } = Route.useRouteContext();
+  const { uid } = Route.useParams();
+  const router = useRouter();
   const { theme } = useTheme();
+
+  const [isLoading, setIsLoading] = useState(() =>
+    getIsLoading(loaderData.status),
+  );
+
+  const pochiEventCallback = useCallback(
+    (event: TaskEvent) => {
+      // The event source is already scoped to the UID on the server,
+      // but we can add a check for robustness.
+      if (event.data.uid === uid) {
+        setIsLoading(getIsLoading(event.data.status));
+        router.invalidate();
+      }
+    },
+    [uid, router],
+  );
+
+  usePochiEvents<TaskEvent>(uid, "task:status-changed", pochiEventCallback);
 
   const renderMessages = useMemo(() => {
     const dbMessages = loaderData.conversation?.messages ?? [];
@@ -85,6 +110,7 @@ function RouteComponent() {
         todos={loaderData.todos}
         user={auth.user}
         theme={theme}
+        isLoading={isLoading}
       />
     </div>
   );

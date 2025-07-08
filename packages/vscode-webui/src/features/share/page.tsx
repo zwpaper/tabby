@@ -19,6 +19,7 @@ export function SharePage() {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [user, setUser] = useState<{ name: string; image?: string | null }>();
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const queryClient = useMemo(() => new QueryClient(), []);
 
@@ -26,9 +27,10 @@ export function SharePage() {
     const handler = (event: MessageEvent) => {
       if (typeof event.data === "object" && event.data?.type === "share") {
         const shareMessage = event.data as ShareMessage;
-        setMessages(shareMessage.messages);
+        setMessages(shareMessage.messages ?? []);
         setUser(shareMessage.user);
-        setTodos(shareMessage.todos);
+        setTodos(shareMessage.todos ?? []);
+        setIsLoading(!!shareMessage.isLoading);
         setIsInitialized(true);
       }
     };
@@ -102,7 +104,7 @@ export function SharePage() {
                     logo={logo}
                     user={user}
                     messages={renderMessages}
-                    isLoading={false}
+                    isLoading={isLoading}
                   />
                 </div>
                 {todos && todos.length > 0 && (
@@ -130,10 +132,13 @@ export function SharePage() {
 
 type ShareMessage = {
   type: "share";
-  messages: UIMessage[]; // Array of messages to be displayed
-  user: {
-    name: string;
-    image?: string | null;
-  };
-  todos: Todo[];
+  messages: UIMessage[] | undefined; // Array of messages to be displayed
+  user:
+    | {
+        name: string;
+        image?: string | null;
+      }
+    | undefined;
+  todos: Todo[] | undefined;
+  isLoading: boolean | undefined;
 };

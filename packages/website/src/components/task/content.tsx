@@ -25,6 +25,7 @@ interface ContentProps extends ComponentProps<"div"> {
   todos?: Todo[] | null;
   user?: User | null;
   theme?: string;
+  isLoading?: boolean;
 }
 
 function TaskContent({
@@ -33,6 +34,7 @@ function TaskContent({
   user,
   theme,
   className,
+  isLoading,
   ...props
 }: ContentProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -109,13 +111,14 @@ function TaskContent({
           messages,
           user,
           todos,
+          isLoading,
         },
         {
           targetOrigin: isDEV ? webviewOrigin : "/",
         },
       );
     }
-  }, [messages, todos, user, loaded]);
+  }, [messages, todos, isLoading, user, loaded]);
 
   return (
     <div className={cn("flex flex-1 flex-col", className)} {...props}>
