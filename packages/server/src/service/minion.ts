@@ -249,6 +249,79 @@ class MinionService {
     return minion.url;
   }
 
+  async redirectByUrl(url: string) {
+    try {
+      const parsedUrl = new URL(url);
+      const host = parsedUrl.host;
+
+      // Check if host starts with "pochi"
+      if (host.startsWith("pochi")) {
+        // Use the URL directly for verification
+        await verifyMinionUrl(url);
+        return url;
+      }
+
+      // Parse subdomain for port forwarding
+      const hostParts = host.split(".");
+      if (hostParts.length < 2) {
+        throw new HTTPException(400, {
+          message: "Invalid URL format",
+        });
+      }
+
+      const subdomain = hostParts[0];
+      const subdomainParts = subdomain.split("-");
+
+      if (subdomainParts.length < 2) {
+        throw new HTTPException(400, {
+          message: "Invalid format",
+        });
+      }
+
+      // Check if the first part can be parsed as a number
+      const firstPart = subdomainParts[0];
+      if (Number.isNaN(Number(firstPart))) {
+        throw new HTTPException(400, {
+          message: "Invalid format",
+        });
+      }
+
+      // Get the part after the first '-'
+      const portForwardId = subdomainParts.slice(1).join("-");
+
+      // Hash port forward ID to sandbox ID
+      const sandboxId = this.hashPortForwardIdToSandboxId(portForwardId);
+      const result = await db
+        .selectFrom("minion")
+        .select(db.fn.countAll().as("count"))
+        .where("sandboxId", "=", sandboxId)
+        .executeTakeFirst();
+      if (!result || result.count === 0 || result.count === "0") {
+        throw new HTTPException(404, {
+          message: "Minion not found or expired",
+        });
+      }
+
+      // Replace subdomain with sandbox ID and verify vscode URL
+      const newHost = `${sandboxId}.${hostParts.slice(1).join(".")}`;
+      const newUrl = new URL(url);
+      newUrl.host = newHost;
+      await verifyMinionUrl(newUrl.toString());
+
+      return url;
+    } catch (error) {
+      if (error instanceof HTTPException) {
+        if (error.status >= 400 && error.status < 500) {
+          return "/tasks";
+        }
+        throw error;
+      }
+      throw new HTTPException(400, {
+        message: "Unknown error occurred while redirecting",
+      });
+    }
+  }
+
   async resumeMinion(userId: string, minionId: string) {
     const { minion, sandbox } = await this.getSandbox(userId, minionId);
 
@@ -286,7 +359,7 @@ async function verifyMinionUrl(url: string) {
             message: "Service Unavailable, please try again later",
           }),
         ),
-      25 * 1000,
+      10 * 1000,
     ),
   );
 

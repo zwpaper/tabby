@@ -41,4 +41,17 @@ const minions = new Hono()
     return c.text(url);
   });
 
+const minionRedirection = new Hono().get(
+  "/",
+  zValidator("query", z.object({ url: z.string().url() })),
+  async (c) => {
+    setIdleTimeout(c.req.raw, 60); // 60 seconds idle timeout
+    const { url } = c.req.valid("query");
+    const target_url = await minionService.redirectByUrl(url);
+    return c.text(target_url);
+  },
+);
+
+export { minionRedirection };
+
 export default minions;

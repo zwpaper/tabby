@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as WaitlistImport } from './routes/waitlist'
 import { Route as TermOfServiceImport } from './routes/term-of-service'
+import { Route as RedirectUrlImport } from './routes/redirect-url'
 import { Route as PrivacyPolicyImport } from './routes/privacy-policy'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
@@ -51,6 +52,12 @@ const WaitlistRoute = WaitlistImport.update({
 const TermOfServiceRoute = TermOfServiceImport.update({
   id: '/term-of-service',
   path: '/term-of-service',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const RedirectUrlRoute = RedirectUrlImport.update({
+  id: '/redirect-url',
+  path: '/redirect-url',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -244,6 +251,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy-policy'
       fullPath: '/privacy-policy'
       preLoaderRoute: typeof PrivacyPolicyImport
+      parentRoute: typeof rootRoute
+    }
+    '/redirect-url': {
+      id: '/redirect-url'
+      path: '/redirect-url'
+      fullPath: '/redirect-url'
+      preLoaderRoute: typeof RedirectUrlImport
       parentRoute: typeof rootRoute
     }
     '/term-of-service': {
@@ -523,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -552,6 +567,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -582,6 +598,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/_authenticated/_base': typeof AuthenticatedBaseRouteRouteWithChildren
@@ -615,6 +632,7 @@ export interface FileRouteTypes {
     | '/'
     | ''
     | '/privacy-policy'
+    | '/redirect-url'
     | '/term-of-service'
     | '/waitlist'
     | '/admin'
@@ -643,6 +661,7 @@ export interface FileRouteTypes {
     | '/'
     | ''
     | '/privacy-policy'
+    | '/redirect-url'
     | '/term-of-service'
     | '/waitlist'
     | '/admin'
@@ -671,6 +690,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/privacy-policy'
+    | '/redirect-url'
     | '/term-of-service'
     | '/waitlist'
     | '/_authenticated/_base'
@@ -703,6 +723,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  RedirectUrlRoute: typeof RedirectUrlRoute
   TermOfServiceRoute: typeof TermOfServiceRoute
   WaitlistRoute: typeof WaitlistRoute
   AuthPathnameRoute: typeof AuthPathnameRoute
@@ -713,6 +734,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
+  RedirectUrlRoute: RedirectUrlRoute,
   TermOfServiceRoute: TermOfServiceRoute,
   WaitlistRoute: WaitlistRoute,
   AuthPathnameRoute: AuthPathnameRoute,
@@ -732,6 +754,7 @@ export const routeTree = rootRoute
         "/",
         "/_authenticated",
         "/privacy-policy",
+        "/redirect-url",
         "/term-of-service",
         "/waitlist",
         "/auth/$pathname",
@@ -755,6 +778,9 @@ export const routeTree = rootRoute
     },
     "/privacy-policy": {
       "filePath": "privacy-policy.tsx"
+    },
+    "/redirect-url": {
+      "filePath": "redirect-url.tsx"
     },
     "/term-of-service": {
       "filePath": "term-of-service.tsx"
