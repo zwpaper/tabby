@@ -23,7 +23,7 @@ class TaskLock {
     await this.lock();
   }
 
-  async lock() {
+  private async lock() {
     const lockResult = await db
       .insertInto("taskLock")
       .values({

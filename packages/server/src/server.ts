@@ -138,8 +138,12 @@ export function setIdleTimeout(request: Request, secs: number) {
 
 process.on("SIGTERM", async () => {
   console.log("SIGTERM received, shutting down...");
-  await taskService.gracefulShutdown();
-  await taskLockService.gracefulShutdown();
+  try {
+    await taskService.gracefulShutdown();
+    await taskLockService.gracefulShutdown();
+  } catch (err) {
+    console.warn("Error during graceful shutdown:", err);
+  }
 
   console.log("Shutdown complete, exiting...");
   process.exit(143);
