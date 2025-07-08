@@ -154,6 +154,7 @@ export interface Task {
   status: Generated<string>;
   streamIds: string[] | null;
   taskId: number;
+  title: string | null;
   totalTokens: number | null;
   updatedAt: Generated<Timestamp>;
   userId: string;

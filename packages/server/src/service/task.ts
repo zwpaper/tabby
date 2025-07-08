@@ -1,3 +1,4 @@
+import { google } from "@ai-sdk/google";
 import { isAbortError } from "@ai-sdk/provider-utils";
 import {
   formatters,
@@ -27,6 +28,7 @@ import {
   type UIMessage,
   appendClientMessage,
   generateId,
+  generateText,
 } from "ai";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
@@ -39,10 +41,12 @@ import { githubService } from "./github";
 import { minionService } from "./minion";
 import { taskLockService } from "./task-lock";
 
-const titleSelect =
-  sql<string>`(conversation #>> '{messages, 0, parts, 0, text}')::text`.as(
-    "title",
-  );
+const titleSelect = sql<string>`
+      COALESCE(
+        title,
+        (conversation #>> '{messages, 0, parts, 0, text}')::text
+      )
+    `.as("title");
 
 // Select from table (integer, needs encoding)
 const minionIdFromTable = sql<number | null>`"minionId"`.as("minionId");
@@ -85,7 +89,7 @@ class TaskService {
     request: z.infer<typeof ZodChatRequestType>,
   ) {
     const streamId = generateId();
-    const { conversation, uid, parentId } = await this.prepareTask(
+    const { conversation, uid, parentId, title } = await this.prepareTask(
       userId,
       request,
     );
@@ -102,6 +106,11 @@ class TaskService {
       messages: toUIMessages(conversation?.messages || []),
       message: toUIMessage(request.message),
     }) as UIMessage[];
+
+    let newTitle = undefined;
+    if (!title && messages.length) {
+      newTitle = await taskService.checkAndGenerateTaskTitle(messages);
+    }
 
     const messagesToSave = formatters.storage(messages);
 
@@ -120,6 +129,7 @@ class TaskService {
         streamIds: sql<
           string[]
         >`COALESCE("streamIds", '{}') || ARRAY[${streamId}]`,
+        title: newTitle,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where("id", "=", uidCoder.decode(uid))
@@ -241,6 +251,7 @@ class TaskService {
         "status",
         "id",
         "parentId",
+        "title",
         minionIdFromTable,
         legacyMinionId,
       ])
@@ -896,6 +907,38 @@ class TaskService {
     // if task is slack event we need resume the minion
     if (task.event?.type === "slack:new-task" && task.minionId) {
       minionService.resumeMinion(userId, task.minionId);
+    }
+  }
+
+  async generateTaskTitle(messages: UIMessage[]) {
+    const result = await generateText({
+      model: google("gemini-2.5-flash"),
+      messages: [
+        ...messages,
+        {
+          role: "user",
+          content:
+            "Based on the conversation above, create a concise and descriptive title for a task. The title should be a short sentence that summarizes the user's request. Do NOT use markdown formatting, bullet points, or numbered lists. Avoid creating complex structured templates. Return only the title without any explanations, comments, headings, or special formatting.",
+        },
+      ],
+    });
+    const generatedTitle = await result.text;
+
+    return generatedTitle;
+  }
+
+  async checkAndGenerateTaskTitle(messages: UIMessage[]) {
+    try {
+      let partCount = 0;
+      for (const message of messages) {
+        partCount += message.parts.length;
+      }
+      if (partCount < 5) return undefined;
+
+      const generatedTitle = await this.generateTaskTitle(messages);
+      return generatedTitle;
+    } catch (error) {
+      console.error("Error generating task title:", error);
     }
   }
 }
