@@ -1,4 +1,5 @@
 import { CodeBlock, MessageMarkdown } from "@/components/message";
+import { filterPlayrightMarkdown } from "./filter-playwright";
 import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";
 import { ExpandableToolContainer } from "./tool-container";
@@ -51,7 +52,7 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
                   Response
                 </span>
               </div>
-              <Result result={result} />
+              <Result result={result} toolName={toolName} />
             </>
           )}
         </div>
@@ -61,9 +62,9 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: unknown output type
-function Result({ result }: { result: any }) {
+function Result({ result, toolName }: { result: any; toolName: string }) {
   if ("content" in result) {
-    return <ContentResult content={result.content} />;
+    return <ContentResult content={result.content} toolName={toolName} />;
   }
   return (
     <div className="p-0">
@@ -78,8 +79,11 @@ function Result({ result }: { result: any }) {
   );
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: external data
-function ContentResult({ content }: { content: any[] }) {
+function ContentResult({
+  content,
+  toolName,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+}: { content: any[]; toolName: string }) {
   return (
     <div className="space-y-0">
       {content.map((item, index) => {
@@ -91,9 +95,14 @@ function ContentResult({ content }: { content: any[] }) {
           );
         }
         if (item.type === "text") {
+          // Check if toolName starts with "browser_" and filter accordingly
+          const textContent = toolName.toLowerCase().startsWith("browser_")
+            ? filterPlayrightMarkdown(item.text)
+            : item.text;
+
           return (
             <div key={index}>
-              <MessageMarkdown isMinimalView>{item.text}</MessageMarkdown>
+              <MessageMarkdown isMinimalView>{textContent}</MessageMarkdown>
             </div>
           );
         }
