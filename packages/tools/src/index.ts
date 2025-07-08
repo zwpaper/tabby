@@ -41,11 +41,11 @@ export const ClientTools = {
   globFiles,
   listFiles,
   multiApplyDiff,
+  newTask,
   readFile,
   searchFiles,
   todoWrite,
   writeToFile,
-  newTask,
 };
 
 export type ClientToolsType = typeof ClientTools;

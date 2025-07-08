@@ -3,13 +3,16 @@ import { z } from "zod";
 import { declareServerTool } from "./types";
 
 export const BatchCallTools = [
+  "applyDiff",
   "executeCommand",
   "globFiles",
   "listFiles",
+  "newTask",
   "readFile",
   "searchFiles",
   "todoWrite",
   "webFetch",
+  "writeToFile",
 ];
 
 export const batchCall = declareServerTool({
