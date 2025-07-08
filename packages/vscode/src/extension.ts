@@ -11,12 +11,8 @@ import { CommandManager } from "./integrations/command";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
 import { McpHub } from "./integrations/mcp/mcp-hub";
 import { TerminalLinkProvider } from "./integrations/terminal-link-provider";
-import {
-  type ApiClient,
-  type AuthClient,
-  createApiClient,
-  createAuthClient,
-} from "./lib/auth-client";
+import { type AuthClient, createAuthClient } from "./lib/auth-client";
+import { type ApiClient, createApiClient } from "./lib/auth-client";
 import { FileLogger } from "./lib/file-logger";
 import { PostInstallActions } from "./lib/post-install-actions";
 

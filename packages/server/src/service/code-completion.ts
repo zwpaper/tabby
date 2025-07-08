@@ -194,7 +194,7 @@ export class CodeCompletionService {
     // Build FIM prompt from segments
     const { prompt, suffix } = this.buildFIMPrompt(req);
 
-    if (prompt.length > 32000) {
+    if (prompt.length > 16000) {
       throw new HTTPException(400, {
         message:
           "Request context is too large. Please reduce the amount of context provided.",
