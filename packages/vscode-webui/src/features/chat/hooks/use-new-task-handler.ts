@@ -1,18 +1,15 @@
 import type { DataPart } from "@ragdoll/common";
 import { useQueryClient } from "@tanstack/react-query";
-import type React from "react";
 import { useEffect } from "react";
 
 import { vscodeHost } from "@/lib/vscode";
 
 export function useNewTaskHandler({
   data,
-  uid,
-  updateTaskLock,
+  setUid,
 }: {
   data: unknown[] | undefined;
-  uid: React.MutableRefObject<string | undefined>;
-  updateTaskLock: () => void;
+  setUid: (uid: string) => void;
 }) {
   const queryClient = useQueryClient();
 
@@ -21,19 +18,18 @@ export function useNewTaskHandler({
 
     const dataParts = data as DataPart[];
     for (const part of dataParts) {
-      if (uid.current === undefined && part.type === "append-id") {
+      if (part.type === "append-id") {
         vscodeHost.capture({
           event: "newTask",
         });
-        uid.current = part.uid;
-        updateTaskLock();
+        setUid(part.uid);
 
         queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
         vscodeHost.setSessionState({
-          lastVisitedRoute: `/?uid=${uid.current}`,
+          lastVisitedRoute: `/?uid=${part.uid}`,
         });
       }
     }
-  }, [data, queryClient, uid, updateTaskLock]);
+  }, [data, queryClient, setUid]);
 }

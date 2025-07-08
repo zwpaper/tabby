@@ -24,7 +24,6 @@ import {
   StopCircleIcon,
 } from "lucide-react";
 import {
-  type MutableRefObject,
   type RefObject,
   useCallback,
   useEffect,
@@ -92,8 +91,8 @@ interface ChatProps {
 function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const autoApproveGuard = useAutoApproveGuard();
   const { data: minionId } = useMinionId();
-  const uid = useRef<string | undefined>(task?.uid);
-  const [sessionId, updateTaskLock] = useSessionId(uid);
+  const { uid, uidRef, setUid } = useUid(task);
+  const { sessionId, locked } = useTaskLock(uid);
   const [totalTokens, setTotalTokens] = useState<number>(
     task?.totalTokens || 0,
   );
@@ -101,12 +100,10 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const isBatchEvaluationTask = task?.event?.type === "batch:evaluation";
 
   useEffect(() => {
-    uid.current = task?.uid;
-    updateTaskLock();
     if (task) {
       setTotalTokens(task.totalTokens || 0);
     }
-  }, [task, updateTaskLock]);
+  }, [task]);
 
   useEffect(() => {
     if (isBatchEvaluationTask) {
@@ -196,7 +193,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     },
     experimental_prepareRequestBody: (req) =>
       prepareRequestBody(
-        uid,
+        uidRef,
         sessionId.current,
         req,
         selectedModel?.id,
@@ -286,7 +283,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     data,
   });
 
-  useNewTaskHandler({ data, uid, updateTaskLock });
+  useNewTaskHandler({ data, setUid });
 
   useTokenUsageUpdater({
     data,
@@ -318,7 +315,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     imageUpload,
     isSubmitDisabled,
     isLoading,
-    uid,
+    uid: uidRef,
     pendingApproval,
   });
 
@@ -355,7 +352,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   });
 
   // FIXME(meng): Re-enable saving messages when checkpoint is stored in messages
-  false && useSaveMessages({ messages, uid });
+  false && useSaveMessages({ messages, uid: uidRef });
 
   useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
 
@@ -398,99 +395,103 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                 showEdit={showEditTodos}
               />
             )}
-            <AutoApproveMenu />
-            {files.length > 0 && (
-              <ImagePreviewList
-                files={files}
-                onRemove={handleRemoveImage}
-                isUploading={isUploadingImages}
-              />
+            {locked && (
+              <>
+                <AutoApproveMenu />
+                {files.length > 0 && (
+                  <ImagePreviewList
+                    files={files}
+                    onRemove={handleRemoveImage}
+                    isUploading={isUploadingImages}
+                  />
+                )}
+                <ChatInputForm
+                  input={input}
+                  setInput={setInput}
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading || isExecuting}
+                  onPaste={handlePasteImage}
+                  pendingApproval={pendingApproval}
+                  status={status}
+                />
+
+                {/* Hidden file input for image uploads */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                />
+
+                <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
+                  <div className="flex items-center gap-2 overflow-x-hidden truncate">
+                    <ModelSelect
+                      value={selectedModel?.id}
+                      models={models}
+                      isLoading={isModelsLoading}
+                      onChange={handleSelectModel}
+                    />
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-1">
+                    {!!selectedModel && (
+                      <TokenUsage
+                        contextWindow={selectedModel.contextWindow}
+                        totalTokens={totalTokens}
+                        className="mr-5"
+                      />
+                    )}
+                    <DevModeButton
+                      messages={messages}
+                      buildEnvironment={buildEnvironment}
+                      todos={todos}
+                      uid={uid}
+                      selectedModel={selectedModel?.id}
+                    />
+                    {uid && (
+                      <PublicShareButton
+                        isPublicShared={task?.isPublicShared === true}
+                        disabled={isTaskLoading || isModelsLoading}
+                        uid={uid}
+                        onError={setAutoDismissError}
+                        modelId={selectedModel?.id}
+                      />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-6 w-6 rounded-md p-0"
+                    >
+                      <ImageIcon className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={isSubmitDisabled}
+                      className="h-6 w-6 rounded-md p-0 transition-opacity"
+                      onClick={() => {
+                        if (showStopButton) {
+                          autoApproveGuard.current = false;
+                          handleStop();
+                        } else {
+                          handleSubmit();
+                        }
+                      }}
+                    >
+                      {showStopButton ? (
+                        <StopCircleIcon className="size-4" />
+                      ) : (
+                        <SendHorizonal className="size-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
-            <ChatInputForm
-              input={input}
-              setInput={setInput}
-              onSubmit={handleSubmit}
-              isLoading={isLoading || isExecuting}
-              onPaste={handlePasteImage}
-              pendingApproval={pendingApproval}
-              status={status}
-            />
-
-            {/* Hidden file input for image uploads */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept="image/*"
-              multiple
-              className="hidden"
-            />
-
-            <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
-              <div className="flex items-center gap-2 overflow-x-hidden truncate">
-                <ModelSelect
-                  value={selectedModel?.id}
-                  models={models}
-                  isLoading={isModelsLoading}
-                  onChange={handleSelectModel}
-                />
-              </div>
-
-              <div className="flex shrink-0 items-center gap-1">
-                {!!selectedModel && (
-                  <TokenUsage
-                    contextWindow={selectedModel.contextWindow}
-                    totalTokens={totalTokens}
-                    className="mr-5"
-                  />
-                )}
-                <DevModeButton
-                  messages={messages}
-                  buildEnvironment={buildEnvironment}
-                  todos={todos}
-                  uid={uid.current}
-                  selectedModel={selectedModel?.id}
-                />
-                {uid.current && (
-                  <PublicShareButton
-                    isPublicShared={task?.isPublicShared === true}
-                    disabled={isTaskLoading || isModelsLoading}
-                    uid={uid.current}
-                    onError={setAutoDismissError}
-                    modelId={selectedModel?.id}
-                  />
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-6 w-6 rounded-md p-0"
-                >
-                  <ImageIcon className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={isSubmitDisabled}
-                  className="h-6 w-6 rounded-md p-0 transition-opacity"
-                  onClick={() => {
-                    if (showStopButton) {
-                      autoApproveGuard.current = false;
-                      handleStop();
-                    } else {
-                      handleSubmit();
-                    }
-                  }}
-                >
-                  {showStopButton ? (
-                    <StopCircleIcon className="size-4" />
-                  ) : (
-                    <SendHorizonal className="size-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
           </>
         )}
       </div>
@@ -552,54 +553,47 @@ function useSaveMessages({
   }, [messages]);
 }
 
-function useSessionId(
-  uid: RefObject<string | undefined>,
-): [MutableRefObject<string>, () => void] {
+function useTaskLock(uid: string | undefined) {
   const sessionId = useRef<string>(generateId());
-  const lockingConnection = useRef<Promise<WebSocket | null> | null>(null);
+  const [locked, setIsLocked] = useState<boolean>(true);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: uid is ref
-  const createLockingConnection = useCallback(() => {
-    if (!uid.current) {
-      lockingConnection.current = null;
-    } else {
-      lockingConnection.current = buildWebSocketUrl(
-        `/api/tasks/${uid.current}/lock/${sessionId.current}`,
-      ).then((url) => {
-        const ws = new WebSocket(url);
-        ws.addEventListener("error", (error) => {
-          console.warn("Task locking connection error", error);
-          // FIXME(zhiming): reconnect when unexpected disconnected
+  const conn = useRef<Promise<WebSocket> | null>(null);
+  useEffect(() => {
+    if (!uid) return;
+    if (conn.current) return;
+
+    conn.current = createLockingConnection(sessionId.current, uid).then(
+      (ws) => {
+        setIsLocked(true);
+
+        ws.addEventListener("close", () => {
+          setIsLocked(false);
         });
+
+        ws.addEventListener("error", () => {
+          setIsLocked(false);
+        });
+
         return ws;
-      });
-    }
-  }, []);
-
-  const disposeLockingConnection = useCallback(() => {
-    if (lockingConnection.current) {
-      lockingConnection.current.then((ws) => {
-        if (ws) {
-          ws.close();
-        }
-      });
-      lockingConnection.current = null;
-    }
-  }, []);
-
-  const updateTaskLock = useCallback(() => {
-    disposeLockingConnection();
-    createLockingConnection();
-  }, [createLockingConnection, disposeLockingConnection]);
+      },
+    );
+  }, [uid]);
 
   useEffect(() => {
-    createLockingConnection();
     return () => {
-      disposeLockingConnection();
+      if (conn.current) {
+        conn.current.then((ws) => {
+          ws.close();
+        });
+        conn.current = null;
+      }
     };
-  }, [createLockingConnection, disposeLockingConnection]);
+  }, []);
 
-  return [sessionId, updateTaskLock];
+  return {
+    locked: uid === undefined ? true : locked,
+    sessionId,
+  };
 }
 
 function ErrorMessageView({ error }: { error: TaskError | undefined }) {
@@ -646,4 +640,41 @@ function ErrorMessageView({ error }: { error: TaskError | undefined }) {
       }}
     />
   );
+}
+
+function useUid(task: Task | null) {
+  const [uid, setUidImpl] = useState<string | undefined>(task?.uid);
+  const uidRef = useRef<string | undefined>(task?.uid);
+
+  const setUid = useCallback((newUid: string | undefined) => {
+    uidRef.current = newUid;
+    setUidImpl(newUid);
+  }, []);
+
+  useEffect(() => {
+    if (task) {
+      setUid(task.uid);
+    }
+  }, [task, setUid]);
+  return {
+    uid,
+    uidRef,
+    setUid,
+  };
+}
+
+async function createLockingConnection(sessionId: string, uid: string) {
+  const url = await buildWebSocketUrl(`/api/tasks/${uid}/lock/${sessionId}`);
+  return new Promise<WebSocket>((resolve, reject) => {
+    const ws = new WebSocket(url);
+    ws.addEventListener("open", () => {
+      resolve(ws);
+    });
+    ws.addEventListener("error", (error) => {
+      reject(error);
+    });
+    ws.addEventListener("close", () => {
+      reject(new Error("WebSocket closed unexpectedly"));
+    });
+  });
 }
