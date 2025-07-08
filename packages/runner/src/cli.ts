@@ -5,6 +5,7 @@ import { hc } from "hono/client";
 
 import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
+import { credentialStorage } from "@ragdoll/common/node";
 import * as commander from "commander";
 import packageJson from "../package.json";
 import { findRipgrep } from "./lib/find-ripgrep";
@@ -33,7 +34,7 @@ program
     "Path to ripgrep binary",
     findRipgrep() || undefined,
   )
-  .requiredOption(
+  .option(
     "--token <token>",
     "Pochi session token",
     process.env.POCHI_SESSION_TOKEN,
@@ -49,9 +50,20 @@ program
       );
     }
 
+    let token: string | undefined = options.token;
+    if (!token) {
+      token = await credentialStorage.read();
+    }
+
+    if (!token) {
+      throw new Error(
+        "Pochi session token is required. Please provide it by using --token or set POCHI_SESSION_TOKEN environment variable or login to Pochi VSCode extension.",
+      );
+    }
+
     const apiClient = hc<AppType>(options.url, {
       headers: {
-        Authorization: `Bearer ${options.token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -76,14 +88,14 @@ program
       `You can visit ${options.url}/tasks/${uid} to see the task progress.`,
     );
 
-    const pochiEvents = createPochiEventSource(uid, options.url, options.token);
+    const pochiEvents = createPochiEventSource(uid, options.url, token);
 
     const maxSteps = parseIntOrUndefined(options.maxSteps);
 
     // Use existing task ID mode
     const runner = new TaskRunner({
       uid,
-      accessToken: options.token,
+      accessToken: token,
       apiClient,
       pochiEvents,
       cwd: options.cwd,

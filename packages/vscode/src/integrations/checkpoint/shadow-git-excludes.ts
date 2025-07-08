@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { join } from "node:path";
-import { isFileExists } from "./util";
+import { isFileExists } from "@ragdoll/common/node";
 
 const getBuildArtifactPatterns = () => [
   ".gradle/",

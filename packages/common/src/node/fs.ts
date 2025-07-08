@@ -1,3 +1,4 @@
+import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileTypeFromBuffer } from "file-type";
 import { MaxReadFileSize } from "./limits";
@@ -76,4 +77,18 @@ export function validateRelativePath(inputPath: string): void {
  */
 export function resolvePath(inputPath: string, cwd: string): string {
   return path.isAbsolute(inputPath) ? inputPath : path.join(cwd, inputPath);
+}
+
+/**
+ * Checks if a file exists.
+ * @param filePath The path to the file to check.
+ * @returns A promise that resolves to true if the file exists, false otherwise.
+ */
+export async function isFileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
