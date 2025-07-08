@@ -918,13 +918,13 @@ class TaskService {
         {
           role: "user",
           content:
-            "Based on the conversation above, create a concise and descriptive title for a task. The title should be a short sentence that summarizes the user's request. Do NOT use markdown formatting, bullet points, or numbered lists. Avoid creating complex structured templates. Return only the title without any explanations, comments, headings, or special formatting.",
+            "Based on the conversation above, create a concise and descriptive title for the task. The title should be a short sentence that summarizes the user's request and should NOT end with any punctuation marks (e.g., periods, question marks). Do NOT use markdown formatting, bullet points, or numbered lists. Avoid creating complex structured templates. Return only the title itself, without any explanations, comments, headings, or special formatting.",
         },
       ],
     });
     const generatedTitle = await result.text;
 
-    return generatedTitle;
+    return trimEndingPunctuation(generatedTitle);
   }
 
   async checkAndGenerateTaskTitle(messages: UIMessage[]) {
@@ -990,3 +990,9 @@ const gitSelect = sql<{ origin: string; branch: string } | null>`
     )
   END
 `.as("git");
+
+const trimEndingPunctuation = (text: string) => {
+  // This regex removes common sentence-ending punctuation and whitespace from the end of a string.
+  // It targets characters like periods, commas, question marks, exclamation marks, and their full-width equivalents.
+  return text.replace(/[.,?_!\s。，？！]+$/gu, "");
+};
