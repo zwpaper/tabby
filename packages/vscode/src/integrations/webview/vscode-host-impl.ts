@@ -71,7 +71,11 @@ import { type FileSelection, TabState } from "../editor/tab-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "../mcp/mcp-hub";
 import { isExecutable } from "../mcp/types";
-import { convertUrl, isLocalUrl } from "../terminal-link-provider/url-utils";
+import {
+  convertUrl,
+  isLocalUrl,
+  promptPublicUrlConversion,
+} from "../terminal-link-provider/url-utils";
 
 const logger = getLogger("VSCodeHostImpl");
 
@@ -392,6 +396,13 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     let parsedUri = vscode.Uri.parse(uri);
     if (sandboxHost && isLocalUrl(parsedUri)) {
       parsedUri = convertUrl(parsedUri, sandboxHost);
+      const result = await promptPublicUrlConversion(
+        parsedUri,
+        this.context.globalState,
+      );
+      if (!result) {
+        return;
+      }
     }
     await vscode.env.openExternal(parsedUri);
   };

@@ -89,4 +89,43 @@ function convertUrl(url: vscode.Uri, hostname: string): vscode.Uri {
   return url.with({ authority: newAuthority });
 }
 
-export { extractHttpUrls, isLocalUrl, convertUrl };
+/**
+ * Prompts the user to confirm opening a converted public URL.
+ * @param publicURI The public URL that has been converted from a local URL.
+ * This is the URL that will be opened in the browser.
+ * @param globalState The global state manager for storing user preferences.
+ * @returns A promise that resolves to a boolean indicating whether the user wants to proceed.
+ */
+async function promptPublicUrlConversion(
+  publicURI: vscode.Uri,
+  globalState: vscode.Memento,
+): Promise<boolean> {
+  const buttonText = {
+    OpenURL: "Open Public URL",
+    NeverShowAgain: "Never Show Again",
+  };
+  const messageKey = "hidePublicUrlWarning";
+  const shouldShowWarning = !globalState.get(messageKey, false);
+  if (shouldShowWarning) {
+    const result = await vscode.window.showInformationMessage(
+      `Open public tunnel URL\n${publicURI.toString()}`,
+      {
+        modal: true,
+        detail:
+          "Your local development server has been made accessible via a public tunnel URL. This allows you to share your work or test from external devices, but be aware that anyone with this URL can access your local server.",
+      },
+      buttonText.OpenURL,
+      buttonText.NeverShowAgain,
+    );
+
+    if (!result) {
+      return false;
+    }
+    if (result === buttonText.NeverShowAgain) {
+      await globalState.update(messageKey, true);
+    }
+  }
+  return true;
+}
+
+export { extractHttpUrls, isLocalUrl, convertUrl, promptPublicUrlConversion };
