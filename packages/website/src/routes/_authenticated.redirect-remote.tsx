@@ -9,13 +9,13 @@ import {
 import { apiClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Hourglass, LifeBuoy, Loader2 } from "lucide-react";
+import { AlertTriangle, Hourglass, LifeBuoy, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
 const searchSchema = z.object({
   uid: z.string().optional(),
-  minionId: z.string(),
+  minionId: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/redirect-remote")({
@@ -42,6 +42,7 @@ function RouteComponent() {
   const { data: redirectUrl } = useQuery({
     queryKey: ["minion-redirect-url", minionId],
     queryFn: async () => {
+      if (!minionId) return null;
       const controller = new AbortController();
       // 10 seconds timeout
       const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -112,16 +113,27 @@ function RouteComponent() {
             <div className="flex items-start gap-3 rounded-md border p-3">
               <Hourglass className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
               <p>
-                Hang tight, we're almost there! Getting things ready for you.
+                Hang tight, we're almost there! Setting up your development
+                environment.
               </p>
             </div>
           )}
           <div className="flex items-start gap-3 rounded-md border p-3">
             <LifeBuoy className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-500" />
             <p>
-              If you encounter issues, refer to the documentation or contact
-              support.
+              Need help? Check our documentation or contact support for
+              assistance.
             </p>
+          </div>
+          <div className="flex items-start gap-3 rounded-md border border-destructive/20 p-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-400" />
+            <div>
+              <p>
+                Do not share the development environment with untrusted parties.
+                This environment contains your login credentials, GitHub access
+                tokens, and other sensitive information.
+              </p>
+            </div>
           </div>
         </CardContent>
         {redirectUrl && (

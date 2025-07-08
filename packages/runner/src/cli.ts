@@ -13,8 +13,8 @@ import { TaskRunnerSupervisor } from "./task-runner-supervisor";
 
 const program = new Command();
 program
-  .name("pochi-runner")
-  .description("Pochi cli runner")
+  .name("pochi")
+  .description("Pochi Code")
   .version(packageJson.version, "-V, --version", "output the current version");
 
 const logger = getLogger("Pochi");
