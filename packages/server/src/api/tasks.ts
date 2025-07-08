@@ -3,6 +3,7 @@ import type { TaskCreateEvent, TaskEvent } from "@ragdoll/db";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
+import type { WSContext } from "hono/ws";
 import { z } from "zod";
 import { optionalAuth, requireAuth } from "../auth";
 import { auth } from "../better-auth";
@@ -309,15 +310,25 @@ const tasks = new Hono()
       }
       const user = session.user;
 
+      const onError = (ws: WSContext) => {
+        ws.close(1000, "Task lock error");
+      };
+
       return {
-        onOpen: async () => {
-          await taskLockService.lockTask(uid, user.id, lockId);
+        onOpen: async (_, ws) => {
+          taskLockService
+            .lockTask(uid, user.id, lockId)
+            .catch(() => onError(ws));
         },
-        onClose: async () => {
-          await taskLockService.unlockTask(uid, user.id, lockId);
+        onClose: async (_, ws) => {
+          taskLockService
+            .unlockTask(uid, user.id, lockId)
+            .catch(() => onError(ws));
         },
-        onError: async () => {
-          await taskLockService.unlockTask(uid, user.id, lockId);
+        onError: async (_, ws) => {
+          taskLockService
+            .unlockTask(uid, user.id, lockId)
+            .catch(() => onError(ws));
         },
       };
     }),
