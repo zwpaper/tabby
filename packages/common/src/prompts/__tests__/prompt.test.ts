@@ -47,6 +47,16 @@ test("environment", () => {
               '962185adb feat(webui): add new task link and pending component',
             ],
           },
+          terminals: [
+            {
+              name: "Terminal 1",
+              isActive: true,
+            },
+            {
+              name: "Terminal 2",
+              isActive: false,
+            }
+          ]
         },
         todos: [
           {

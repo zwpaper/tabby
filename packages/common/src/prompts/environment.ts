@@ -6,6 +6,7 @@ export function getReadEnvironmentResult(environment: Environment) {
     getCurrentTime(environment.currentTime),
     getWorkspaceFiles(environment.workspace, environment.info),
     getCurrentOpenedFiles(environment.workspace),
+    getVisibleTerminals(environment.workspace),
     getCurrentWorkingFile(environment.workspace),
     getGitStatus(environment.workspace.gitStatus),
     getTodos(environment.todos),
@@ -40,6 +41,16 @@ function getCurrentOpenedFiles(workspace: Environment["workspace"]) {
     return "";
   }
   return `# Active File Tabs in Editor\n${openFiles.join("\n")}`;
+}
+
+function getVisibleTerminals(workspace: Environment["workspace"]) {
+  const terminals = workspace.terminals ?? [];
+  if (terminals.length === 0) {
+    return "";
+  }
+  return `# Active Terminals in Editor\n${terminals
+    .map((t) => (t.isActive ? `* ${t.name} (active)` : `  ${t.name}`))
+    .join("\n")}`;
 }
 
 function getCurrentWorkingFile(workspace: Environment["workspace"]) {

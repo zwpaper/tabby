@@ -76,6 +76,8 @@ import {
   isLocalUrl,
   promptPublicUrlConversion,
 } from "../terminal-link-provider/url-utils";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { TerminalState } from "../terminal/terminal-state";
 
 const logger = getLogger("VSCodeHostImpl");
 
@@ -92,6 +94,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly context: vscode.ExtensionContext,
     private readonly tokenStorage: TokenStorage,
     private readonly tabState: TabState,
+    private readonly terminalState: TerminalState,
     private readonly posthog: PostHog,
     private readonly mcpHub: McpHub,
     private readonly taskRunnerManager: TaskRunnerManager,
@@ -182,6 +185,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         gitStatus,
         activeTabs: this.tabState.activeTabs.value.map((tab) => tab.filepath),
         activeSelection: this.tabState.activeSelection.value,
+        terminals: this.terminalState.visibleTerminals.value,
       },
       info: {
         ...systemInfo,

@@ -65,6 +65,10 @@ export const ZodEnvironment = z.object({
         })
         .optional()
         .describe("Git information for the current workspace."),
+      terminals: z
+        .array(z.object({ name: z.string(), isActive: z.boolean() }))
+        .optional()
+        .describe("Visible terminals in the VS Code workspace."),
     })
     .describe("Information about the workspace."),
   info: z

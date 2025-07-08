@@ -107,6 +107,10 @@ README.md
 tsconfig.json
 package.json
 
+# Active Terminals in Editor
+* Terminal 1 (active)
+  Terminal 2
+
 # Active Selection (README.md:3-5)
 
 \`\`\`
