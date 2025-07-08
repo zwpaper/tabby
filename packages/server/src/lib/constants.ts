@@ -183,23 +183,24 @@ export function getModelOptions(
     case "google/gemini-2.5-flash":
     case "google/gemini-2.5-pro":
       return {
-        maxTokens: 1024 * 64, // 64k tokens
+        maxTokens: 1024 * 32, // 32k tokens
         providerOptions: {
           google: {
             thinkingConfig: {
               includeThoughts: true,
+              thinkingBudget: 4096,
             },
           } satisfies GoogleGenerativeAIProviderOptions,
         },
       };
     case "anthropic/claude-4-sonnet":
       return {
-        maxTokens: 1024 * 58, // 55k tokens
+        maxTokens: 1024 * 32, // 32k tokens
         providerOptions: {
           anthropic: {
             thinking: {
               type: "enabled",
-              budgetTokens: 1024,
+              budgetTokens: 4096,
             },
           } satisfies AnthropicProviderOptions,
         },
