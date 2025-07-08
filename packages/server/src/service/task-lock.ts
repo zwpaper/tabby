@@ -2,22 +2,14 @@ import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import { db, uidCoder } from "../db";
 
-const TaskLockRefreshInterval = 5 * 60 * 1000; // 5 minutes
-
 class TaskLock {
-  private refreshJob: Timer;
   private refCount = 0;
 
   constructor(
     private readonly taskId: number,
     private readonly userId: string,
     private readonly lockId: string,
-  ) {
-    this.refreshJob = setInterval(
-      async () => this.lock(),
-      TaskLockRefreshInterval,
-    );
-  }
+  ) {}
 
   async checkLock(userId: string, lockId: string) {
     if (this.userId !== userId) {
@@ -78,7 +70,6 @@ class TaskLock {
   }
 
   private async dispose() {
-    clearInterval(this.refreshJob);
     await db
       .deleteFrom("taskLock")
       .where("id", "=", this.lockId)
