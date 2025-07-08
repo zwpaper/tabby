@@ -115,8 +115,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   readToken = async (): Promise<
     ThreadSignalSerialization<string | undefined>
   > => {
-    const token = await this.tokenStorage.token;
-    return ThreadSignal.serialize(token, {
+    return ThreadSignal.serialize(this.tokenStorage.token, {
       writable: true,
     });
   };
@@ -427,7 +426,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         );
       }
 
-      const runnerState = await this.taskRunnerManager.startTask(uid, options);
+      const runnerState = this.taskRunnerManager.startTask(uid, options);
       const result = ThreadSignal.serialize(runnerState);
       return { result };
     },

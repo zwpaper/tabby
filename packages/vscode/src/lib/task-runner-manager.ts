@@ -34,10 +34,7 @@ export class TaskRunnerManager implements vscode.Disposable {
     this.status = signal(this.buildStatus());
   }
 
-  async startTask(
-    uid: string,
-    option?: TaskRunnerOptions,
-  ): Promise<Signal<TaskRunnerState>> {
+  startTask(uid: string, option?: TaskRunnerOptions): Signal<TaskRunnerState> {
     const entry = this.taskRunnerMap.get(uid);
     const existingRunner = entry?.runner;
     if (existingRunner) {
@@ -50,16 +47,15 @@ export class TaskRunnerManager implements vscode.Disposable {
       return existingRunner.state;
     }
 
-    const token = await this.tokenStorage.token;
     const pochiEvents = createPochiEventSource(
       uid,
       getServerBaseUrl(),
-      token.value,
+      this.tokenStorage.token.value,
     );
 
     logger.debug(`Starting task runner ${uid}`);
     const taskRunner = new TaskRunner({
-      accessToken: token.value || "",
+      accessToken: this.tokenStorage.token.value || "",
       uid,
       apiClient: this.apiClient,
       pochiEvents,

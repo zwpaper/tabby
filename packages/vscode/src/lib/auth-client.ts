@@ -18,14 +18,12 @@ export function createAuthClient(container: DependencyContainer) {
     fetchOptions: {
       auth: {
         type: "Bearer",
-        token: async () => (await tokenStorage.token).value,
+        token: () => tokenStorage.token.value,
       },
       onResponse: (ctx) => {
         const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
         if (authToken) {
-          tokenStorage.token.then((tokenSignal) => {
-            tokenSignal.value = authToken; // update the token in the storage
-          });
+          tokenStorage.token.value = authToken;
         }
       },
     },
@@ -50,10 +48,9 @@ export function createApiClient(container: DependencyContainer) {
   const tokenStorage = container.resolve(TokenStorage);
 
   const app = hc<AppType>(getServerBaseUrl(), {
-    headers: async () => {
-      const token = await tokenStorage.token;
+    headers: () => {
       return {
-        Authorization: `Bearer ${token.value}`,
+        Authorization: `Bearer ${tokenStorage.token.value}`,
       };
     },
   });

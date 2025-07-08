@@ -102,8 +102,7 @@ export class CommandManager implements vscode.Disposable {
         );
         if (selection === "Logout") {
           this.authClient.signOut();
-          const tokenSignal = await this.tokenStorage.token;
-          tokenSignal.value = undefined;
+          this.tokenStorage.token.value = undefined;
           this.authEvents.logoutEvent.fire();
         }
       }),
