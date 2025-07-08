@@ -26,7 +26,7 @@ const defaultTemplate = (tools: string) =>
 API INVOCATIONS
 
 You are provided with api signatures within <api-list></api-list> XML tags in JSON schema format.
-You may call one or more functions to assist with the user query.
+You are only allowed to call a single api at a time, if you need to call multiple apis, you must do it in a single batchCall api.
 Do not make assumptions about what values to plug into functions; you must follow the function signature strictly to call functions.
 Here are the available apis:
 <api-list>
@@ -397,12 +397,16 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
         });
       });
       span.end();
+
+      const stopSequences = params.stopSequences || [];
+      stopSequences.push("</api-request>");
       return {
         ...params,
         mode: {
           // set the mode back to regular and remove the default tools.
           type: "regular",
         },
+        stopSequences,
         prompt: promptWithTools,
       };
     },

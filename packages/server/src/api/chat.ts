@@ -405,9 +405,7 @@ function createModel(
     middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
   }
 
-  if (modelId.includes("google/gemini-2.5")) {
-    middleware.push(createToolMiddleware());
-  }
+  middleware.push(createToolMiddleware());
   return wrapLanguageModel({
     model,
     middleware,
