@@ -220,7 +220,7 @@ class TaskService {
     const key = StreamingTask.key(userId, uid);
     const streamingTask = this.streamingTasks.get(key);
     if (streamingTask) {
-      streamingTask.dispose();
+      await streamingTask.dispose();
       this.streamingTasks.delete(StreamingTask.key(userId, uid));
     }
   }
