@@ -56,14 +56,14 @@ class TaskLock {
     }
   }
 
-  async retain() {
+  retain() {
     this.refCount++;
   }
 
   async release(force = false): Promise<boolean> {
     this.refCount--;
     if (this.refCount === 0 || force) {
-      this.dispose();
+      await this.dispose();
       return true;
     }
     return false;
