@@ -165,6 +165,7 @@ export const StripePlans = [
 ];
 
 const vertex = createVertex({
+  baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/${process.env.GOOGLE_VERTEX_LOCATION}/publishers/google`,
   googleAuthOptions: {
     credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
   },
