@@ -6,7 +6,12 @@ import type { ToolProps } from "../types";
 export const AttemptCompletionTool: React.FC<
   ToolProps<ClientToolsType["attemptCompletion"]>
 > = ({ tool: toolCall }) => {
-  const { result = "" } = toolCall.args || {};
+  const { result = "", command = "" } = toolCall.args || {};
+
+  let markdown = result;
+  if (command) {
+    markdown += `\n\n**${command}**`;
+  }
 
   // Return null if there's nothing to display
   if (!result) {
@@ -19,7 +24,7 @@ export const AttemptCompletionTool: React.FC<
         <Check className="size-4" />
         Task Completed
       </span>
-      <MessageMarkdown>{result}</MessageMarkdown>
+      <MessageMarkdown>{markdown}</MessageMarkdown>
     </div>
   );
 };
