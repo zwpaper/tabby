@@ -101,7 +101,7 @@ export const MessageList: React.FC<{
         </div>
       ))}
       {debouncedIsLoading && (
-        <div className="pb-4">
+        <div className="py-2">
           <Loader2 className="mx-auto size-6 animate-spin" />
         </div>
       )}
