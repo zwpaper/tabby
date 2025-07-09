@@ -6,13 +6,19 @@ import RagdollUriHandler from "@/integrations/uri-handler";
 import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
 import { container, instanceCachingFactory } from "tsyringe";
 import type * as vscode from "vscode";
+import { CompletionConfiguration } from "./completion/configuration";
+import { CompletionStatusBarManager } from "./completion/status-bar-manager";
 import { PochiAuthenticationProvider } from "./integrations/auth-provider";
 import { CommandManager } from "./integrations/command";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
 import { McpHub } from "./integrations/mcp/mcp-hub";
 import { TerminalLinkProvider } from "./integrations/terminal-link-provider";
-import { type AuthClient, createAuthClient } from "./lib/auth-client";
-import { type ApiClient, createApiClient } from "./lib/auth-client";
+import {
+  type ApiClient,
+  type AuthClient,
+  createApiClient,
+  createAuthClient,
+} from "./lib/auth-client";
 import { FileLogger } from "./lib/file-logger";
 import { PostInstallActions } from "./lib/post-install-actions";
 import { TokenStorage } from "./lib/token-storage";
@@ -41,6 +47,8 @@ export async function activate(context: vscode.ExtensionContext) {
   container.resolve(PochiAuthenticationProvider);
   container.resolve(RagdollWebviewProvider);
   container.resolve(RagdollUriHandler);
+  container.resolve(CompletionConfiguration);
+  container.resolve(CompletionStatusBarManager);
   container.resolve(CommandManager);
   container.resolve(DiffOriginContentProvider);
   container.resolve(McpHub);

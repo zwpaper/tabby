@@ -1,4 +1,10 @@
 // biome-ignore lint/style/useImportType: needed for dependency injection
+import { CompletionConfiguration } from "@/completion/configuration";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { InlineCompletionProvider } from "@/completion/inline-completion-provider";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { CompletionStatusBarManager } from "@/completion/status-bar-manager";
+// biome-ignore lint/style/useImportType: needed for dependency injection
 import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
 import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -9,8 +15,8 @@ import { getLogger, showOutputPanel } from "@/lib/logger";
 import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
-import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import type { TaskIdParams } from "@ragdoll/vscode-webui-bridge";
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -35,7 +41,17 @@ export class CommandManager implements vscode.Disposable {
     private readonly authEvents: AuthEvents,
     private readonly commandPalette: CommandPalette,
     private readonly mcpHub: McpHub,
+    @inject(CompletionConfiguration)
+    private readonly completionConfig: CompletionConfiguration,
+    @inject(CompletionStatusBarManager)
+    private readonly statusBarManager: CompletionStatusBarManager,
+    private readonly completionProvider: InlineCompletionProvider,
+    @inject("vscode.ExtensionContext") context: vscode.ExtensionContext,
   ) {
+    context.subscriptions.push(this.completionProvider);
+    context.subscriptions.push(this.completionConfig);
+    context.subscriptions.push(this.statusBarManager);
+
     this.registerCommands();
   }
 
@@ -317,10 +333,24 @@ export class CommandManager implements vscode.Disposable {
           await vscode.commands.executeCommand("pochiWebui.focus");
         }
       }),
+
+      vscode.commands.registerCommand(
+        "pochi.completion.accept",
+        (callback: () => void) => {
+          if (typeof callback === "function") {
+            callback();
+          }
+        },
+      ),
+
+      vscode.commands.registerCommand("pochi.completion.toggle", async () => {
+        await this.completionConfig.toggleEnabled();
+      }),
     );
   }
 
   dispose() {
+    // Dispose all commands
     for (const disposable of this.disposables) {
       disposable.dispose();
     }
