@@ -152,10 +152,13 @@ export function MessageMarkdown({
 
                 // have folder path like `folder/` or `folder/subfolder`
                 const isFolderPath = (text: string): boolean => {
-                  return text.includes("/");
+                  return text.endsWith("/") || text.endsWith("\\");
                 };
 
                 const isSymbol = (text: string): boolean => {
+                  if (SymbolBlacklist.has(text)) {
+                    return false; // Skip blacklisted symbols
+                  }
                   // A symbol is typically a single word or a sequence of characters without spaces
                   return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(text);
                 };
@@ -245,3 +248,62 @@ const SymbolBadge: FC<{ label: string; className?: string }> = ({
     </span>
   );
 };
+
+const SymbolBlacklist = new Set([
+  "Infinity",
+  "NaN",
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "async",
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "do",
+  "else",
+  "export",
+  "false",
+  "for",
+  "function",
+  "if",
+  "implements",
+  "import",
+  "in",
+  "instanceof",
+  "interface",
+  "is",
+  "it",
+  "its",
+  "let",
+  "new",
+  "null",
+  "of",
+  "private",
+  "protected",
+  "public",
+  "return",
+  "static",
+  "super",
+  "switch",
+  "the",
+  "this",
+  "throw",
+  "to",
+  "true",
+  "try",
+  "typeof",
+  "undefined",
+  "var",
+  "void",
+  "while",
+  "with",
+  "yield",
+]);
