@@ -1,13 +1,13 @@
 #!/usr/bin/env bun
 
-import { type AppType, createPochiEventSource } from "@ragdoll/server";
-import { hc } from "hono/client";
-
 import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
 import { credentialStorage } from "@ragdoll/common/node";
+import { type AppType, createPochiEventSource } from "@ragdoll/server";
+import chalk from "chalk";
 import * as commander from "commander";
+import { hc } from "hono/client";
 import packageJson from "../package.json";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { withAttempts } from "./lib/with-attempts";
@@ -22,12 +22,15 @@ global.console = new Console({
 });
 
 const program = new Command();
-program.name("pochi").description("Pochi Code");
+program
+  .name("pochi")
+  .description(`${chalk.bold("Pochi Code")} v${packageJson.version}`);
 
 const logger = getLogger("Pochi");
+logger.debug(`pochi v${packageJson.version}`);
 
 program
-  .optionsGroup("Specify task:")
+  .optionsGroup("Specify Task:")
   .option(
     "--task <uid>",
     "The uid of the task to execute. Can also be provided via the POCHI_TASK_ID environment variable.",
@@ -91,14 +94,14 @@ program
     }
 
     if (uid && prompt) {
-      throw new commander.InvalidArgumentError(
-        "Error: Both task uid and prompt are provided. Please provide only one.",
+      return program.error(
+        "error: Both task uid and prompt are provided. Please provide only one.",
       );
     }
 
     if (!uid && !prompt) {
-      throw new commander.InvalidArgumentError(
-        "Error: Either a task uid or a prompt must be provided",
+      return program.error(
+        "error: Either a task uid or a prompt must be provided",
       );
     }
 
@@ -108,8 +111,8 @@ program
     }
 
     if (!token) {
-      throw new commander.InvalidArgumentError(
-        "Error: No token provided. Please use the --token option, set POCHI_SESSION_TOKEN, or confirm `~/.pochi/credentials.json` exists (login with the Pochi VSCode extension to obtain it).",
+      return program.error(
+        "error: No token provided. Please use the --token option, set POCHI_SESSION_TOKEN, or confirm `~/.pochi/credentials.json` exists (login with the Pochi VSCode extension to obtain it).",
       );
     }
 
@@ -120,7 +123,6 @@ program
     });
 
     const output = new TaskRunnerOutputStream(process.stdout);
-
     let creatingTaskAbortController: AbortController | undefined = undefined;
     let supervisor: TaskRunnerSupervisor | undefined = undefined;
 
@@ -142,8 +144,8 @@ program
       // Create a new task with the provided prompt
       const validPrompt = prompt?.trim();
       if (!validPrompt) {
-        throw new commander.InvalidArgumentError(
-          "Error: Prompt cannot be empty to create a new task",
+        return program.error(
+          "error: Prompt cannot be empty to create a new task",
         );
       }
 
@@ -201,7 +203,7 @@ program
     supervisor.start();
   });
 
-const otherOptionsGroup = "Other options:";
+const otherOptionsGroup = "Others:";
 program
   .optionsGroup(otherOptionsGroup)
   .version(packageJson.version, "-V, --version", "Print the version string.")
@@ -209,7 +211,14 @@ program
     new commander.Option("-h, --help", "Print this help message.").helpGroup(
       otherOptionsGroup,
     ),
-  );
+  )
+  .configureHelp({
+    styleTitle: (title) => chalk.bold(title),
+  })
+  .showHelpAfterError()
+  .showSuggestionAfterError()
+  .configureOutput({
+    outputError: (str, write) => write(chalk.red(str)),
+  });
 
-logger.debug(`${program.name()} v${program.version()}`);
 program.parse();
