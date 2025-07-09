@@ -638,7 +638,7 @@ class SlackTaskService {
       await webClient.chat.postEphemeral({
         channel,
         user: slackUserId,
-        text: `✅ Your answer submitted: "${answer}"`,
+        text: `✅ You replied: "${answer}"`,
         thread_ts: messageTs, // Reply in thread if possible
       });
     } catch (error) {

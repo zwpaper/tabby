@@ -510,7 +510,7 @@ class SlackRichTextRenderer {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `👤 *Your answer:* ${answer}`,
+        text: `👤 *You replied:* ${answer}`,
       },
     };
   }
