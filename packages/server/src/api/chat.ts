@@ -1,4 +1,3 @@
-import { google } from "@ai-sdk/google";
 import { jsonSchema } from "@ai-sdk/ui-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
@@ -37,6 +36,7 @@ import {
 import {
   type AvailableModelId,
   type CreditCostInput,
+  geminiFlash,
   getModelById,
   getModelOptions,
 } from "../lib/constants";
@@ -264,7 +264,7 @@ const chat = new Hono()
               }
 
               const { object: repairedArgs } = await generateObject({
-                model: google("gemini-2.5-flash"),
+                model: geminiFlash,
                 schema: jsonSchema(parameterSchema(toolCall)),
                 prompt: [
                   `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,

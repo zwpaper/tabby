@@ -1,4 +1,3 @@
-import { google } from "@ai-sdk/google";
 import { zValidator } from "@hono/zod-validator";
 import { APICallError, RetryError, generateText } from "ai";
 import { Hono } from "hono";
@@ -6,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 import { checkWaitlist } from "../lib/check-request";
+import { geminiFlash } from "../lib/constants";
 
 const EnhancePromptSchema = z.object({
   prompt: z.string().min(8),
@@ -24,7 +24,7 @@ const enhance = new Hono().post(
 
     try {
       const result = await generateText({
-        model: google("gemini-2.5-flash"),
+        model: geminiFlash,
         system:
           "Enhance the user's prompt to make it clearer and more specific while maintaining its original intent. Make it concise and straightforward. Do NOT use markdown formatting, bullet points, or numbered lists. Avoid creating complex structured templates. Keep the enhancement natural, conversational, and directly usable as text input. Return only the enhanced prompt without any explanations, comments, headings, or special formatting.",
         messages: [

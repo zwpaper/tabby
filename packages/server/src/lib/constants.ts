@@ -177,7 +177,7 @@ export function getModelById(modelId: AvailableModelId): LanguageModelV1 {
     case "google/gemini-2.5-pro":
       return vertex("gemini-2.5-pro");
     case "google/gemini-2.5-flash":
-      return vertex("gemini-2.5-flash");
+      return geminiFlash;
   }
 }
 
@@ -214,3 +214,5 @@ export function getModelOptions(
       return {};
   }
 }
+
+export const geminiFlash = vertex("gemini-2.5-flash");

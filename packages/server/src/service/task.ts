@@ -1,4 +1,3 @@
-import { google } from "@ai-sdk/google";
 import { isAbortError } from "@ai-sdk/provider-utils";
 import {
   formatters,
@@ -35,6 +34,7 @@ import { sql } from "kysely";
 import type { z } from "zod";
 import { ServerErrors } from "..";
 import { db, minionIdCoder, uidCoder } from "../db";
+import { geminiFlash } from "../lib/constants";
 import { applyEventFilter } from "../lib/event-filter";
 import type { ZodChatRequestType } from "../types";
 import { githubService } from "./github";
@@ -108,7 +108,8 @@ class TaskService {
     }) as UIMessage[];
 
     let newTitle = undefined;
-    if (!title && messages.length) {
+    // biome-ignore lint/correctness/noConstantCondition: turn off title generation, pending prompt tuning. FIXME(meng)
+    if (!title && messages.length && false) {
       newTitle = await taskService.checkAndGenerateTaskTitle(messages);
     }
 
@@ -912,15 +913,21 @@ class TaskService {
 
   async generateTaskTitle(messages: UIMessage[]) {
     const result = await generateText({
-      model: google("gemini-2.5-flash"),
-      messages: [
+      model: geminiFlash,
+      messages: formatters.llm([
         ...messages,
         {
           role: "user",
-          content:
-            "Based on the conversation above, create a concise and descriptive title for the task. The title should be a short sentence that summarizes the user's request and should NOT end with any punctuation marks (e.g., periods, question marks). Do NOT use markdown formatting, bullet points, or numbered lists. Avoid creating complex structured templates. Return only the title itself, without any explanations, comments, headings, or special formatting.",
+          parts: [
+            {
+              type: "text",
+              text: "Based on the conversation above, create a concise and descriptive title for the task. The title should be a short sentence that summarizes the user's request and should NOT end with any punctuation marks (e.g., periods, question marks). Do NOT use markdown formatting, bullet points, or numbered lists. Avoid creating complex structured templates. Return only the title itself, without any explanations, comments, headings, or special formatting.",
+            },
+          ],
+          content: "",
+          id: generateId(),
         },
-      ],
+      ]),
     });
     const generatedTitle = await result.text;
 
