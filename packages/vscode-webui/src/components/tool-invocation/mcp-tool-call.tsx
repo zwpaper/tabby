@@ -1,4 +1,5 @@
 import { CodeBlock, MessageMarkdown } from "@/components/message";
+import { vscodeHost } from "@/lib/vscode";
 import { filterPlayrightMarkdown } from "./filter-playwright";
 import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";
@@ -131,8 +132,36 @@ function ImageResult({
   const src = data.startsWith("https://")
     ? data
     : `data:${mimeType};base64,${data}`;
+
+  const handleClick = async () => {
+    if (data.startsWith("https://")) {
+      // External URL - use openExternal instead
+      vscodeHost.openExternal(data);
+    } else {
+      // Base64 data - determine file extension from mimeType
+      const extension = mimeType.split("/")[1] || "png";
+      const encoder = new TextEncoder();
+      const hashArray = await window.crypto.subtle.digest(
+        "SHA-256",
+        encoder.encode(data),
+      );
+      const hashHex = Array.from(new Uint8Array(hashArray))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+        .substring(0, 8); // convert bytes to hex string and take first 8 chars
+      const filename = `mcp-image-preview-${hashHex}.${extension}`;
+      // Open the file in VS Code
+      vscodeHost.openFile(filename, {
+        base64Data: data,
+      });
+    }
+  };
+
   return (
-    <div className="bg-[var(--vscode-editor-background)]">
+    <div
+      className="cursor-pointer bg-[var(--vscode-editor-background)] hover:opacity-80"
+      onClick={handleClick}
+    >
       <img
         src={src}
         alt="MCP tool response snapshot"

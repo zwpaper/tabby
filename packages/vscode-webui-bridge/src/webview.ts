@@ -114,7 +114,12 @@ export interface VSCodeHostApi {
    */
   openFile(
     filePath: string,
-    options?: { start?: number; end?: number; preserveFocus?: boolean },
+    options?: {
+      start?: number;
+      end?: number;
+      preserveFocus?: boolean;
+      base64Data?: string;
+    },
   ): void;
 
   readCurrentWorkspace(): Promise<string | undefined>;

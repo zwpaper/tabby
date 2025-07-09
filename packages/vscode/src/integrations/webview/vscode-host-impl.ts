@@ -1,3 +1,4 @@
+import * as os from "node:os";
 import {
   collectCustomRules,
   collectWorkflows,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/env";
 import { getWorkspaceFolder, isBinaryFile, isFileExists } from "@/lib/fs";
 
+import path from "node:path";
 import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PostHog } from "@/lib/posthog";
@@ -340,35 +342,54 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   openFile = async (
     filePath: string,
-    options?: { start?: number; end?: number; preserveFocus?: boolean },
+    options?: {
+      start?: number;
+      end?: number;
+      preserveFocus?: boolean;
+      base64Data?: string;
+    },
   ) => {
-    const current = vscode.workspace.workspaceFolders?.[0].uri;
-    if (!current) {
-      throw new Error("No workspace folder found.");
-    }
+    const current = getWorkspaceFolder().uri;
+
     const fileUri = vscode.Uri.joinPath(current, filePath);
+
     try {
       const stat = await vscode.workspace.fs.stat(fileUri);
       if (stat.type === vscode.FileType.Directory) {
         // reveal and expand it
         await vscode.commands.executeCommand("revealInExplorer", fileUri);
         await vscode.commands.executeCommand("list.expand");
-        return;
+      } else if (stat.type === vscode.FileType.File) {
+        const isBinary = await isBinaryFile(fileUri);
+        if (isBinary) {
+          await vscode.commands.executeCommand("vscode.open", fileUri);
+        } else {
+          const start = options?.start ?? 1;
+          const end = options?.end ?? start;
+          vscode.window.showTextDocument(fileUri, {
+            selection: new vscode.Range(start - 1, 0, end - 1, 0),
+            preserveFocus: options?.preserveFocus,
+          });
+        }
       }
     } catch (error) {
-      logger.error(`Failed to reveal folder in explorer: ${error}`);
-    }
-
-    const isBinary = await isBinaryFile(fileUri);
-    if (isBinary) {
-      await vscode.commands.executeCommand("vscode.open", fileUri);
-    } else {
-      const start = options?.start ?? 1;
-      const end = options?.end ?? start;
-      vscode.window.showTextDocument(fileUri, {
-        selection: new vscode.Range(start - 1, 0, end - 1, 0),
-        preserveFocus: options?.preserveFocus,
-      });
+      logger.info("File not found, trying to open from base64 data", error);
+      // file may not exist, check if has base64Data
+      if (options?.base64Data) {
+        try {
+          // If base64 data is present, open it as a file
+          const tempFile = vscode.Uri.file(
+            path.join(os.tmpdir(), fileUri.path),
+          );
+          await vscode.workspace.fs.writeFile(
+            tempFile,
+            Buffer.from(options?.base64Data ?? "", "base64"),
+          );
+          await vscode.commands.executeCommand("vscode.open", tempFile);
+        } catch (error) {
+          logger.error(`Failed to open file from base64 data: ${error}`);
+        }
+      }
     }
   };
 
