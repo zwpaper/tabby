@@ -316,17 +316,17 @@ const tasks = new Hono()
 
       return {
         onOpen: async (_, ws) => {
-          taskLockService
+          await taskLockService
             .lockTask(uid, user.id, lockId)
             .catch(() => onError(ws));
         },
         onClose: async (_, ws) => {
-          taskLockService
+          await taskLockService
             .unlockTask(uid, user.id, lockId)
             .catch(() => onError(ws));
         },
         onError: async (_, ws) => {
-          taskLockService
+          await taskLockService
             .unlockTask(uid, user.id, lockId)
             .catch(() => onError(ws));
         },
