@@ -1,3 +1,4 @@
+import { formatters } from "@ragdoll/common";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import type { Tool, ToolCall, ToolResult, UIMessage } from "ai";
 import chalk from "chalk";
@@ -12,7 +13,8 @@ export class TaskRunnerOutputStream {
   constructor(readonly stream: NodeJS.WriteStream) {}
 
   updateMessage(messages: UIMessage[]) {
-    for (const message of messages) {
+    const formattedMessages = formatters.ui(messages);
+    for (const message of formattedMessages) {
       if (message.role !== "user" && message.role !== "assistant") {
         continue; // Only render user and assistant messages
       }
@@ -76,6 +78,13 @@ export class TaskRunnerOutputStream {
     }
   }
 
+  printText(text: string) {
+    this.stream.write(text);
+  }
+
+  println() {
+    this.stream.write("\n");
+  }
   printError(error: Error) {
     this.println();
     const pretty = new PrettyError().render(error);
@@ -158,14 +167,6 @@ export class TaskRunnerOutputStream {
     } else {
       this.loading = rendered.start();
     }
-  }
-
-  private printText(text: string) {
-    this.stream.write(text);
-  }
-
-  private println() {
-    this.stream.write("\n");
   }
 
   private rewind() {

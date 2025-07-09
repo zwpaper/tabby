@@ -10,6 +10,7 @@ import { credentialStorage } from "@ragdoll/common/node";
 import * as commander from "commander";
 import packageJson from "../package.json";
 import { findRipgrep } from "./lib/find-ripgrep";
+import { withAttempts } from "./lib/with-attempts";
 import { TaskRunner } from "./task-runner";
 import { TaskRunnerOutputStream } from "./task-runner-output";
 import { TaskRunnerSupervisor } from "./task-runner-supervisor";
@@ -58,6 +59,10 @@ program
   .option(
     "--token <token>",
     "The Pochi session token. Can also be provided via the POCHI_SESSION_TOKEN environment variable or from the shared credentials file (`~/.pochi/credentials.json`).",
+  )
+  .option(
+    "--model <model>",
+    "The model to use for the task. Options: `google/gemini-2.5-pro`, `google/gemini-2.5-flash`, `anthropic/claude-4-sonnet`",
   )
   .option(
     "--max-steps <number>",
@@ -114,7 +119,27 @@ program
       },
     });
 
+    const output = new TaskRunnerOutputStream(process.stdout);
+
+    let creatingTaskAbortController: AbortController | undefined = undefined;
+    let supervisor: TaskRunnerSupervisor | undefined = undefined;
+
+    process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+    process.on("SIGINT", () => handleShutdown("SIGINT"));
+
+    const handleShutdown = (signal: "SIGTERM" | "SIGINT") => {
+      logger.debug(`Received ${signal}, shutting down gracefully...`);
+      creatingTaskAbortController?.abort();
+      if (supervisor) {
+        supervisor.stop(signal);
+        // process.exit will be handled by the supervisor
+      } else {
+        process.exit(signal === "SIGINT" ? 130 : 143);
+      }
+    };
+
     if (!uid) {
+      // Create a new task with the provided prompt
       const validPrompt = prompt?.trim();
       if (!validPrompt) {
         throw new commander.InvalidArgumentError(
@@ -122,26 +147,42 @@ program
         );
       }
 
-      // Create a new task
-      // FIXME(zhiming): add retry and abort controller to creating task
-      const response = await apiClient.api.tasks.$post({
-        json: {
-          prompt: validPrompt,
+      output.updateIsLoading(true, "Creating task...");
+
+      const abortController = new AbortController();
+      creatingTaskAbortController = abortController;
+
+      uid = await withAttempts(
+        async () => {
+          const response = await apiClient.api.tasks.$post(
+            {
+              json: {
+                prompt: validPrompt,
+              },
+            },
+            {
+              init: {
+                signal: abortController.signal,
+              },
+            },
+          );
+
+          if (!response.ok) {
+            const error = await response.text();
+            throw new Error(
+              `Failed to create task: ${response.status} ${error}`,
+            );
+          }
+
+          const task = await response.json();
+          return task.uid;
         },
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Failed to create task: ${error}`);
-      }
-
-      const task = await response.json();
-      uid = task.uid;
+        { abortSignal: abortController.signal },
+      );
+      output.updateIsLoading(false);
+      output.printText(`Task created: ${options.url}/tasks/${uid}.`);
+      output.println();
     }
-
-    logger.debug(
-      `You can visit ${options.url}/tasks/${uid} to see the task progress.`,
-    );
 
     const pochiEvents = createPochiEventSource(uid, options.url, token);
 
@@ -152,24 +193,11 @@ program
       pochiEvents,
       cwd: options.cwd,
       rg: options.rg,
+      model: options.model,
       maxSteps: options.maxSteps,
     });
 
-    const output = new TaskRunnerOutputStream(process.stdout);
-
-    const supervisor = new TaskRunnerSupervisor(runner, output, options.daemon);
-
-    const handleShutdown = (signal: "SIGTERM" | "SIGINT") => {
-      logger.debug(
-        `Received ${signal}, shutting down supervisor gracefully...`,
-      );
-      supervisor.stop(signal);
-    };
-
-    // FIXME(zhiming): move adding signal handler to before create task
-    process.on("SIGTERM", () => handleShutdown("SIGTERM"));
-    process.on("SIGINT", () => handleShutdown("SIGINT"));
-
+    supervisor = new TaskRunnerSupervisor(runner, output, options.daemon);
     supervisor.start();
   });
 

@@ -29,7 +29,9 @@ import {
 } from "@ragdoll/tools";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
+import { toError, toErrorString } from "./lib/error-utils";
 import { readEnvironment } from "./lib/read-environment";
+import { withAttempts } from "./lib/with-attempts";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
 import { globFiles } from "./tools/glob-files";
@@ -666,54 +668,6 @@ async function loadTaskAndWaitStreaming(
   });
 }
 
-// Max attempts for each http request.
-const MaxRequestAttempts = 3;
-
-async function withAttempts<T>(
-  execute: () => Promise<T>,
-  options?: {
-    maxAttempts?: number;
-    interval?: (attempt: number) => number;
-    abortSignal?: AbortSignal;
-  },
-): Promise<T> {
-  const {
-    maxAttempts = MaxRequestAttempts,
-    interval = (attempt: number) => {
-      if (attempt <= 1) {
-        return 1000; // 1 second for the first attempt
-      }
-      return 10 * 1000; // 10 seconds for subsequent attempts
-    },
-    abortSignal,
-  } = options ?? {};
-
-  let error: Error | undefined;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await execute();
-    } catch (e) {
-      if (
-        e instanceof Error &&
-        e.name === "AbortError" &&
-        abortSignal?.aborted
-      ) {
-        // If the error is an AbortError and the abort signal is triggered, rethrow it.
-        throw e;
-      }
-      error = toError(e);
-    }
-    if (attempt < maxAttempts) {
-      const waitTime = interval(attempt);
-      await sleep(waitTime, abortSignal);
-    }
-  }
-  throw new Error(
-    `Failed after ${maxAttempts} attempts: ${error?.message || "Unknown error"}`,
-    { cause: error },
-  );
-}
-
 async function buildEnvironment(
   context: RunnerOptions,
   todos: Todo[],
@@ -843,40 +797,4 @@ export function extractTaskResult(task: Task): string {
   }
 
   throw new Error("No result found in the last message.");
-}
-
-async function sleep(ms: number, abortSignal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, ms);
-    if (abortSignal) {
-      abortSignal.addEventListener(
-        "abort",
-        () => {
-          clearTimeout(timer);
-          reject(abortSignal.reason);
-        },
-        { once: true },
-      );
-    }
-  });
-}
-
-function toError(e: unknown): Error {
-  if (e instanceof Error) {
-    return e;
-  }
-  if (typeof e === "string") {
-    return new Error(e);
-  }
-  return new Error(JSON.stringify(e));
-}
-
-function toErrorString(e: unknown): string {
-  if (e instanceof Error) {
-    return e.message;
-  }
-  if (typeof e === "string") {
-    return e;
-  }
-  return JSON.stringify(e);
 }

@@ -36,6 +36,7 @@ export class TaskRunnerSupervisor {
   }
 
   stop(signal: "SIGTERM" | "SIGINT" = "SIGTERM"): void {
+    logger.debug(`Stopping TaskRunner supervisor... (${signal})`);
     const error = signal === "SIGINT" ? sigintError : sigtermError;
 
     if (this.abortController) {
