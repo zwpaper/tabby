@@ -92,8 +92,7 @@ class TaskService {
     }) as UIMessage[];
 
     let newTitle = undefined;
-    // biome-ignore lint/correctness/noConstantCondition: turn off title generation, pending prompt tuning. FIXME(meng)
-    if (!title && messages.length && false) {
+    if (!title && messages.length) {
       newTitle = await taskService.checkAndGenerateTaskTitle(messages);
     }
 
@@ -899,7 +898,14 @@ class TaskService {
           parts: [
             {
               type: "text",
-              text: "Based on the conversation above, create a concise and descriptive title for the task. The title should be a short sentence that summarizes the user's request and should NOT end with any punctuation marks (e.g., periods, question marks). Do NOT use markdown formatting, bullet points, or numbered lists. Avoid creating complex structured templates. Return only the title itself, without any explanations, comments, headings, or special formatting.",
+              text: `
+Generate a concise title that captures the essence of the above conversation. Requirements:
+- Create a single descriptive phrase or short sentence
+- Focus on the user's main request or topic
+- Use plain text only (no markdown, formatting, or special characters)
+- Do not include any punctuation at the end
+- Return only the title text, nothing else
+              `,
             },
           ],
           content: "",
