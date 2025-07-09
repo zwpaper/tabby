@@ -1,8 +1,6 @@
-// biome-ignore lint/style/useImportType: needed for dependency injection
 import { CompletionConfiguration } from "@/completion/configuration";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { InlineCompletionProvider } from "@/completion/inline-completion-provider";
-// biome-ignore lint/style/useImportType: needed for dependency injection
 import { CompletionStatusBarManager } from "@/completion/status-bar-manager";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
