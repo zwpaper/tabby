@@ -165,12 +165,20 @@ export class FlyioSandboxProvider implements SandboxProvider {
     const sandboxes: { sandboxId: string }[] = [];
 
     for (const app of appsResponse.apps || []) {
+      // IMPORTANT: Only include apps that start with "pochi-"
+      // This is to filter out only the pochi sandboxes
+      // We have sandboxes for doing replay and other tasks
+      // that do not start with "pochi-"
       if (app.name?.startsWith("pochi-")) {
         sandboxes.push({ sandboxId: app.name || "" });
       }
     }
 
     return sandboxes;
+  }
+
+  async delete(sandboxId: string): Promise<void> {
+    await this.client.deleteApp(sandboxId);
   }
 
   getProviderType(): string {

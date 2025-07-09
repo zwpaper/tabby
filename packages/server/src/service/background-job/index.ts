@@ -1,4 +1,8 @@
 import {
+  queue as cleanupSandboxQueue,
+  createCleanupSandboxWorker,
+} from "./cleanup-expired-sandbox";
+import {
   createDisapproveInactiveUsersWorker,
   queue as disapproveInactiveUsersQueue,
 } from "./disapprove-inactive-users";
@@ -15,12 +19,14 @@ export function startWorkers() {
   createNotifyTaskSlackWorker();
   if (process.env.NODE_ENV === "production") {
     createPauseInactiveSandboxWorker();
+    createCleanupSandboxWorker();
     false && createDisapproveInactiveUsersWorker();
   }
 }
 
 export { enqueueNotifyTaskSlack } from "./notify-task-slack";
 export { signalKeepAliveSandbox } from "./pause-inactive-sandbox";
+export { scheduleCleanupExpiredSandbox } from "./cleanup-expired-sandbox";
 
 export const backgroundJobQueues = [
   {
@@ -36,6 +42,11 @@ export const backgroundJobQueues = [
   {
     queue: pauseInactiveSandboxQueue,
     displayName: "PauseInactiveSandbox",
+    type: "bullmq" as const,
+  },
+  {
+    queue: cleanupSandboxQueue,
+    displayName: "CleanupSandbox",
     type: "bullmq" as const,
   },
 ];

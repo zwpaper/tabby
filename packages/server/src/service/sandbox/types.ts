@@ -51,6 +51,11 @@ export interface SandboxProvider {
   list(): Promise<{ sandboxId: string }[]>;
 
   /**
+   * Delete a sandbox
+   */
+  delete(sandboxId: string): Promise<void>;
+
+  /**
    * Get the provider type identifier
    */
   getProviderType(): string;

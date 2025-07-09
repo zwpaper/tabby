@@ -279,9 +279,17 @@ export class FlyioClient {
   }
 
   async deleteApp(appName: string): Promise<void> {
-    await this.request(`/apps/${appName}`, {
-      method: "DELETE",
-    });
+    try {
+      await this.request(`/apps/${appName}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      // If the app doesn't exist, that's fine - it's already deleted
+      if (error instanceof Error && error.message.includes("not found")) {
+        return;
+      }
+      throw error;
+    }
   }
 
   // Machines endpoints

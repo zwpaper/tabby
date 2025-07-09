@@ -4,7 +4,10 @@ import { HTTPException } from "hono/http-exception";
 import { v5 as uuidv5 } from "uuid";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
-import { signalKeepAliveSandbox } from "./background-job";
+import {
+  scheduleCleanupExpiredSandbox,
+  signalKeepAliveSandbox,
+} from "./background-job";
 import { type CreateSandboxOptions, sandboxService } from "./sandbox";
 
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
@@ -121,6 +124,12 @@ class MinionService {
       .execute();
 
     signalKeepAliveSandbox({ sandboxId: sandbox.id });
+
+    // Schedule cleanup of the sandbox after 7 days
+    await scheduleCleanupExpiredSandbox({
+      sandboxId: sandbox.id,
+    });
+
     return { ...res, id: minionIdCoder.encode(res.id) };
   }
 
