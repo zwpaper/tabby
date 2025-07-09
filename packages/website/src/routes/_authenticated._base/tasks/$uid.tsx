@@ -97,11 +97,7 @@ function RouteComponent() {
           </span>
         }
       >
-        <TaskHeader.Title
-          title={loaderData.title}
-          fallbackUrl="/tasks"
-          showBackButton
-        />
+        <TaskHeader.Title title={loaderData.title} />
         <TaskHeader.Subtitle
           updatedAt={loaderData.updatedAt}
           git={loaderData.git}
