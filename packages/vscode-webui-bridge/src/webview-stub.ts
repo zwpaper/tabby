@@ -66,6 +66,9 @@ const VSCodeHostStub = {
   listFilesInWorkspace: (): Promise<{ filepath: string; isDir: boolean }[]> => {
     return Promise.resolve([{ filepath: "test", isDir: false }]);
   },
+  openSymbol: (_symbol: string): Promise<void> => {
+    return Promise.resolve();
+  },
   listWorkflowsInWorkspace: (): Promise<
     { id: string; path: string; content: string }[]
   > => {

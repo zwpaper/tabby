@@ -10,7 +10,9 @@ import { FileBadge } from "../tool-invocation/file-badge";
 import { CodeBlock } from "./code-block";
 import { customStripTagsPlugin } from "./custom-strip-tags-plugin";
 import "./markdown.css";
+import { addLineBreak } from "@/lib/utils/file";
 import { isVSCodeEnvironment, vscodeHost } from "@/lib/vscode";
+import { CodeXmlIcon } from "lucide-react";
 
 type CustomTag = (typeof CustomHtmlTags)[number];
 
@@ -142,6 +144,34 @@ export function MessageMarkdown({
               props.node.position.start.line === props.node.position.end.line;
 
             if (isInline) {
+              if (typeof children === "string") {
+                // have file extension like `file.txt`
+                const isFilePath = (text: string): boolean => {
+                  return /\.[a-z0-9]+$/i.test(text);
+                };
+
+                // have folder path like `folder/` or `folder/subfolder`
+                const isFolderPath = (text: string): boolean => {
+                  return text.includes("/");
+                };
+
+                const isSymbol = (text: string): boolean => {
+                  // A symbol is typically a single word or a sequence of characters without spaces
+                  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(text);
+                };
+
+                // children may be file path, folder path, symbol or normal text, we need to handle each case
+                if (isFilePath(children)) {
+                  return <FileBadge path={children} />;
+                }
+                if (isFolderPath(children)) {
+                  return <FileBadge path={children} isDirectory={true} />;
+                }
+                if (isSymbol(children)) {
+                  return <SymbolBadge label={children} />;
+                }
+              }
+
               return (
                 <code className={cn("inline-code", className)} {...props}>
                   {children}
@@ -189,3 +219,29 @@ export function MessageMarkdown({
     </div>
   );
 }
+
+const SymbolBadge: FC<{ label: string; className?: string }> = ({
+  label,
+  className,
+}) => {
+  return (
+    <span
+      onClick={(e) => {
+        e.stopPropagation();
+        vscodeHost.openSymbol(label);
+      }}
+      className={cn(
+        "mx-px cursor-pointer rounded-sm border border-border box-decoration-clone p-0.5 text-sm/6 hover:bg-zinc-200 active:bg-zinc-200 dark:active:bg-zinc-700 dark:hover:bg-zinc-700",
+        className,
+      )}
+    >
+      <CodeXmlIcon
+        className={cn(
+          "mx-0.5 inline size-3 w-[15px] text-blue-600 dark:text-blue-400",
+          className,
+        )}
+      />
+      <span className={cn("ml-0.5 break-words")}>{addLineBreak(label)}</span>
+    </span>
+  );
+};

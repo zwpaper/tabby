@@ -76,6 +76,8 @@ export interface VSCodeHostApi {
     }[]
   >;
 
+  openSymbol(symbol: string): Promise<void>;
+
   /**
    * List all workflows from .pochirules/workflows directory
    * Returns an array of objects containing the name and content of each workflow.

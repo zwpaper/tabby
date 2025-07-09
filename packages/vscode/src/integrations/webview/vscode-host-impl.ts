@@ -73,6 +73,7 @@ import { type FileSelection, TabState } from "../editor/tab-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "../mcp/mcp-hub";
 import { isExecutable } from "../mcp/types";
+import { listSymbols } from "../symbol";
 import {
   convertUrl,
   isLocalUrl,
@@ -236,6 +237,25 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       filepath: vscode.workspace.asRelativePath(item.filepath),
       isDir: item.isDir,
     }));
+  };
+
+  openSymbol = async (symbol: string) => {
+    const symbolInfos = await listSymbols({ query: symbol, limit: 1 });
+    if (symbolInfos.length > 0) {
+      const symbolInfo = symbolInfos[0];
+      const fileUri = vscode.Uri.joinPath(
+        getWorkspaceFolder().uri,
+        symbolInfo.filepath,
+      );
+      await vscode.window.showTextDocument(fileUri, {
+        selection: new vscode.Range(
+          symbolInfo?.range?.start?.line ?? 0,
+          symbolInfo?.range?.start?.character ?? 0,
+          symbolInfo?.range?.end?.line ?? 0,
+          symbolInfo?.range?.end?.character ?? 0,
+        ),
+      });
+    }
   };
 
   executeToolCall = runExclusive.build(
