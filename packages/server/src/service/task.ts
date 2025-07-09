@@ -933,7 +933,7 @@ class TaskService {
       for (const message of messages) {
         partCount += message.parts.length;
       }
-      if (partCount < 5) return undefined;
+      if (partCount < 5 || partCount > 10) return undefined;
 
       const generatedTitle = await this.generateTaskTitle(messages);
       return generatedTitle;
