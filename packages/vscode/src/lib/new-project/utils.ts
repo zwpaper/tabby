@@ -183,6 +183,7 @@ async function fetchAndUnzipUsingSystemCommand(
   }
 
   let tempZipFile: vscode.Uri | undefined = undefined;
+  let tempExtractDir: vscode.Uri | undefined = undefined;
 
   try {
     progress.report({ message: "Pochi: Fetching project template..." });
@@ -197,16 +198,33 @@ async function fetchAndUnzipUsingSystemCommand(
       "downloads",
     );
     tempZipFile = vscode.Uri.joinPath(tempZipDir, `${urlBase64}.zip`);
+    tempExtractDir = vscode.Uri.joinPath(tempZipDir, `${urlBase64}-extract`);
 
     await createDirectoryIfNotExists(tempZipDir);
+    await createDirectoryIfNotExists(tempExtractDir);
+
     await execPromise(`curl -L "${url}" -o "${tempZipFile.fsPath}"`);
 
     progress.report({ message: "Pochi: Extracting project template..." });
-    logger.info(`Extracting project template to: ${targetUri}`);
+    logger.info(`Extracting project template to: ${tempExtractDir}`);
 
     await execPromise(
-      `unzip -q "${tempZipFile.fsPath}" -d "${targetUri.fsPath}"`,
+      `unzip -q "${tempZipFile.fsPath}" -d "${tempExtractDir.fsPath}"`,
     );
+    const files = await vscode.workspace.fs.readDirectory(tempExtractDir);
+    if (files.length === 1 && files[0][1] === vscode.FileType.Directory) {
+      const [firstDir] = files[0];
+      const sourceDir = vscode.Uri.joinPath(tempExtractDir, firstDir);
+      logger.info(
+        `Moving contents from ${sourceDir.fsPath} to ${targetUri.fsPath}`,
+      );
+      await moveDirectoryContents(sourceDir, targetUri);
+    } else {
+      logger.info(
+        `Moving contents from ${tempExtractDir.fsPath} to ${targetUri.fsPath}`,
+      );
+      await moveDirectoryContents(tempExtractDir, targetUri);
+    }
   } catch (error) {
     throw new Error(
       "Failed to fetch and unzip project template using system commands.",
@@ -221,6 +239,16 @@ async function fetchAndUnzipUsingSystemCommand(
       } catch (error) {
         logger.debug(
           `Failed to delete temporary zip file: ${tempZipFile}`,
+          error,
+        );
+      }
+    }
+    if (tempExtractDir) {
+      try {
+        await vscode.workspace.fs.delete(tempExtractDir, { recursive: true });
+      } catch (error) {
+        logger.debug(
+          `Failed to delete temporary extract directory: ${tempExtractDir}`,
           error,
         );
       }
@@ -264,5 +292,20 @@ async function fetchAndUnzipUsingJsZip(
       const content = await file.async("uint8array");
       await vscode.workspace.fs.writeFile(destinationPath, content);
     }
+  }
+}
+
+async function moveDirectoryContents(
+  sourceDir: vscode.Uri,
+  destinationDir: vscode.Uri,
+) {
+  const items = await vscode.workspace.fs.readDirectory(sourceDir);
+
+  for (const [item] of items) {
+    const sourcePath = vscode.Uri.joinPath(sourceDir, item);
+    const destinationPath = vscode.Uri.joinPath(destinationDir, item);
+    await vscode.workspace.fs.rename(sourcePath, destinationPath, {
+      overwrite: true,
+    });
   }
 }

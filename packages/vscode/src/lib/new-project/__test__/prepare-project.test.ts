@@ -55,26 +55,51 @@ suite('prepareProject Suite', () => {
     });
 
     test('should use system commands to fetch and extract if available', async () => {
-        execPromiseStub.resolves({ stdout: '', stderr: '' }); // Simulate all commands succeed
+        const expectedZipUrl = 'https://github.com/test-owner/test-repo/archive/refs/heads/main.zip';
+        const urlBase64 = Buffer.from(expectedZipUrl).toString('base64url').replace(/[^a-zA-Z0-9]/g, '');
+        const tempZipDir = vscode.Uri.joinPath(vscode.Uri.file(os.tmpdir()), 'pochi', 'downloads');
+        const tempZipFile = vscode.Uri.joinPath(tempZipDir, `${urlBase64}.zip`);
+        const tempExtractDir = vscode.Uri.joinPath(tempZipDir, `${urlBase64}-extract`);
+        
+        // Configure stubs
+        execPromiseStub.withArgs('curl --version').resolves({ stdout: 'curl 8.0.1', stderr: '' });
+        execPromiseStub.withArgs('unzip -v').resolves({ stdout: 'UnZip 6.00', stderr: '' });
+        execPromiseStub.withArgs(`curl -L "${expectedZipUrl}" -o "${tempZipFile.fsPath}"`).resolves({ stdout: '', stderr: '' });
+        
+        const unzipCommand = `unzip -q "${tempZipFile.fsPath}" -d "${tempExtractDir.fsPath}"`;
+        execPromiseStub.withArgs(unzipCommand).callsFake(async () => {
+            // Simulate the result of unzipping: a directory with files inside the tempExtractDir
+            const extractedRoot = vscode.Uri.joinPath(tempExtractDir, 'test-repo-main');
+            await vscode.workspace.fs.createDirectory(extractedRoot);
+            const file1Uri = vscode.Uri.joinPath(extractedRoot, 'file1.txt');
+            await vscode.workspace.fs.writeFile(file1Uri, Buffer.from('file content'));
+            return { stdout: '', stderr: '' };
+        });
 
         const progress = { report: progressReportStub };
         await prepareProject(projectUri, githubTemplateUrl, progress as any);
 
+        // Assertions
         assert.ok(execPromiseStub.calledWith('curl --version'), 'Should check for curl version');
         assert.ok(execPromiseStub.calledWith('unzip -v'), 'Should check for unzip version');
-        
-        const expectedZipUrl = 'https://github.com/test-owner/test-repo/archive/refs/heads/main.zip';
-        const urlBase64 = Buffer.from(expectedZipUrl).toString('base64url').replace(/[^a-zA-Z0-9]/g, '');
-        const tempZipPath = vscode.Uri.joinPath(vscode.Uri.file(os.tmpdir()), 'pochi', 'downloads', `${urlBase64}.zip`).fsPath;
+        assert.ok(execPromiseStub.calledWith(`curl -L "${expectedZipUrl}" -o "${tempZipFile.fsPath}"`), 'Should call curl to download the zip');
+        assert.ok(execPromiseStub.calledWith(unzipCommand), 'Should call unzip to extract to the temporary directory');
 
-        assert.ok(execPromiseStub.calledWith(`curl -L \"${expectedZipUrl}\" -o \"${tempZipPath}\"`), 'Should call curl to download');
-        assert.ok(execPromiseStub.calledWith(`unzip -q \"${tempZipPath}\" -d \"${projectUri.fsPath}\"`), 'Should call unzip to extract');
-
-        assert.ok(progressReportStub.calledWith({ message: 'Pochi: Fetching project template...' }), 'Progress report for fetching');
-        assert.ok(progressReportStub.calledWith({ message: 'Pochi: Extracting project template...' }), 'Progress report for extracting');
+        assert.ok(progressReportStub.calledWith({ message: 'Pochi: Fetching project template...' }), 'Progress should be reported for fetching');
+        assert.ok(progressReportStub.calledWith({ message: 'Pochi: Extracting project template...' }), 'Progress should be reported for extracting');
         
-        assert.ok(fetchStub.notCalled, 'Fetch should not be called when system commands are used');
-        assert.ok(jszipLoadAsyncStub.notCalled, 'JSZip should not be called when system commands are used');
+        assert.ok(fetchStub.notCalled, 'Fetch should not have been called');
+        assert.ok(jszipLoadAsyncStub.notCalled, 'JSZip should not have been called');
+
+        // Verify that the file was moved to the final project directory
+        const finalFileUri = vscode.Uri.joinPath(projectUri, 'file1.txt');
+        assert.ok(await isFileExists(finalFileUri), 'The extracted file should exist in the final project directory');
+        const fileContent = await vscode.workspace.fs.readFile(finalFileUri);
+        assert.deepStrictEqual(fileContent.toString(), 'file content', 'The file content should be correct');
+
+        // Verify that the temporary extraction directory is gone (or at least the content is moved)
+        const tempExtractedFile = vscode.Uri.joinPath(tempExtractDir, 'test-repo-main', 'file1.txt');
+        assert.strictEqual(await isFileExists(tempExtractedFile), false, 'Temporary extracted file should have been moved, not copied');
     });
 
     test('should fall back to JSZip if system commands are not available', async () => {
