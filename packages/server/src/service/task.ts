@@ -875,11 +875,6 @@ class TaskService {
           eb("status", "=", "completed"),
         ]),
       )
-      .where(
-        "id",
-        "not in",
-        db.selectFrom("taskLock").select("taskId").where("taskId", "=", taskId),
-      )
       .executeTakeFirst();
 
     if (!result || result.numUpdatedRows === 0n) {

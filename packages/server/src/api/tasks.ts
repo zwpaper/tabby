@@ -6,7 +6,6 @@ import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { optionalAuth, requireAuth } from "../auth";
 import { parseEventFilter } from "../lib/event-filter";
-import { upgradeWebSocket } from "../lib/websocket";
 import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task"; // Added import
 import { taskEvents } from "../service/task-events";
@@ -39,11 +38,6 @@ const TaskUidQuerySchema = z
     includeSubTasks: z.coerce.boolean().optional(),
   })
   .optional();
-
-const TaskLockParamsSchema = z.object({
-  uid: z.string(),
-  lockId: z.string(),
-});
 
 const ZodTaskCreateEvent: z.ZodType<TaskCreateEvent> = z.any();
 const TaskCreateSchema = z.object({
@@ -276,14 +270,6 @@ const tasks = new Hono()
       await taskService.appendUserMessage(user.id, uid, prompt);
       return c.json({ success: true });
     },
-  )
-  // FIXME(meng): remove
-  .get(
-    "/:uid/lock/:lockId",
-    zValidator("param", TaskLockParamsSchema),
-    upgradeWebSocket(() => {
-      return {};
-    }),
   );
 
 export default tasks;

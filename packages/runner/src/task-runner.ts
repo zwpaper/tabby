@@ -185,13 +185,11 @@ export class TaskRunner {
   private todos: Todo[] = [];
 
   private readonly logger: ReturnType<typeof getLogger>;
-  private readonly sessionId: string;
   private stepCount = 0;
   private abortController?: AbortController;
   private toolCallOptions: ToolCallOptions;
 
   constructor(readonly options: RunnerOptions) {
-    this.sessionId = generateId();
     this.logger = logger.getSubLogger({
       name: `task-${options.uid}`,
     });
@@ -467,7 +465,6 @@ export class TaskRunner {
           {
             json: {
               id: this.options.uid,
-              sessionId: this.sessionId,
               message: fromUIMessage(lastMessage),
               environment,
               model: this.options.model,
