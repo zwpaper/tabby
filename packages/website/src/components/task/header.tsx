@@ -5,6 +5,7 @@ import { formatRelativeTime } from "@/lib/utils/ui";
 import type { InferResponseType } from "hono/client";
 import { Calendar } from "lucide-react";
 import type { ReactNode } from "react";
+import { BackButton } from "./back-button";
 
 type Task = NonNullable<
   InferResponseType<(typeof apiClient.api.tasks)["$get"]>
@@ -24,7 +25,7 @@ function TaskHeaderRoot({
   return (
     <div className={cn("space-y-4 px-4", className)} {...props}>
       <div className="grid grid-cols-4 gap-3">
-        <div className="col-span-4 flex flex-col space-y-3 overflow-hidden md:col-span-3">
+        <div className="col-span-4 flex flex-col space-y-3 md:col-span-3">
           {children}
         </div>
         {actions && (
@@ -39,17 +40,32 @@ function TaskHeaderRoot({
 
 interface TitleProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
+  fallbackUrl?: string;
+  showBackButton?: boolean;
 }
 
-function Title({ children, className, title, ...props }: TitleProps) {
+function Title({
+  children,
+  className,
+  title,
+  fallbackUrl,
+  showBackButton,
+  ...props
+}: TitleProps) {
   return (
     <div className={cn("flex flex-col", className)} {...props}>
-      <span className="flex items-center gap-1">
+      <div className="relative flex items-center gap-1">
+        {showBackButton && (
+          <BackButton
+            className="-left-7 absolute top-1.5 hidden size-6 items-center justify-center md:flex"
+            fallbackUrl={fallbackUrl}
+          />
+        )}
         <h1 className="truncate whitespace-nowrap font-bold text-2xl">
           {title || "Task"}
         </h1>
         {children}
-      </span>
+      </div>
     </div>
   );
 }
