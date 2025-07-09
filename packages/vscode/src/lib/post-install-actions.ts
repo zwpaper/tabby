@@ -102,7 +102,13 @@ class KillRunnerProcessAction implements Action {
   id = "kill_runner_process";
 
   async execute(): Promise<void> {
-    await killRunnerProcess();
+    try {
+      await killRunnerProcess();
+    } catch (error) {
+      logger.error(
+        `Failed to kill pochi-runner processes: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 }
 
