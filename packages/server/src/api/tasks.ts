@@ -311,7 +311,7 @@ const tasks = new Hono()
       const user = session.user;
 
       const onError = (ws: WSContext) => {
-        ws.close(1000, "Task lock error");
+        ws.close(3000, "Task lock error");
       };
 
       return {

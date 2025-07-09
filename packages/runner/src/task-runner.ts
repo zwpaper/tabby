@@ -29,7 +29,7 @@ import {
 } from "@ragdoll/tools";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
-import WebSocket from "ws";
+import ReconnectingWebSocket from "reconnecting-websocket";
 import { readEnvironment } from "./lib/read-environment";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
@@ -188,7 +188,7 @@ export class TaskRunner {
   private readonly sessionId: string;
   private stepCount = 0;
   private abortController?: AbortController;
-  private lockingConnection?: WebSocket;
+  private lockingConnection?: ReconnectingWebSocket;
   private toolCallOptions: ToolCallOptions;
 
   constructor(readonly options: RunnerOptions) {
@@ -545,7 +545,12 @@ export class TaskRunner {
       decodeURIComponent(this.options.accessToken),
     );
     url.protocol = url.protocol.replace("http", "ws");
-    const ws = new WebSocket(url);
+    const ws = new ReconnectingWebSocket(url.toString(), [], {
+      minReconnectionDelay: 1000,
+      reconnectionDelayGrowFactor: 1.5,
+      maxRetries: Number.POSITIVE_INFINITY,
+    });
+    ws.binaryType = "arraybuffer";
 
     await new Promise<void>((resolve, reject) => {
       ws.addEventListener("error", (error) => {

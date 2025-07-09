@@ -31,6 +31,7 @@ import {
   useRef,
   useState,
 } from "react";
+import ReconnectingWebSocket from "reconnecting-websocket";
 
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { ErrorMessage } from "@/components/error-message";
@@ -556,7 +557,7 @@ function useTaskLock(uid: string | undefined) {
   const [locked, setIsLocked] = useState<boolean>(true);
 
   const inited = useRef(false);
-  const conn = useRef<Promise<WebSocket> | null>(null);
+  const conn = useRef<Promise<ReconnectingWebSocket> | null>(null);
   useEffect(() => {
     if (!uid) return;
     if (conn.current) return;
@@ -666,8 +667,12 @@ function useUid(task: Task | null) {
 
 async function createLockingConnection(sessionId: string, uid: string) {
   const url = await buildWebSocketUrl(`/api/tasks/${uid}/lock/${sessionId}`);
-  return new Promise<WebSocket>((resolve, reject) => {
-    const ws = new WebSocket(url);
+  return new Promise<ReconnectingWebSocket>((resolve, reject) => {
+    const ws = new ReconnectingWebSocket(url, [], {
+      minReconnectionDelay: 1000,
+      reconnectionDelayGrowFactor: 1.5,
+      maxRetries: Number.POSITIVE_INFINITY,
+    });
     ws.addEventListener("open", () => {
       resolve(ws);
     });
