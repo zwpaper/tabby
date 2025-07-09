@@ -1,4 +1,6 @@
+import { exec } from "node:child_process";
 import * as os from "node:os";
+import { promisify } from "node:util";
 import { getLogger } from "@/lib/logger";
 import { SandboxPath } from "@ragdoll/common";
 import * as jszip from "jszip";
@@ -7,6 +9,8 @@ import * as vscode from "vscode";
 import { isFileExists } from "../fs";
 
 const logger = getLogger("newProjectUtils");
+
+const execPromise = promisify(exec);
 
 const homeUri = vscode.Uri.file(os.homedir());
 const baseUri = vscode.Uri.joinPath(homeUri, "PochiProjects");
@@ -147,19 +151,99 @@ export async function prepareProject(
     })
     .toString();
 
-  progress.report({ message: "Pochi: Fetching project template..." });
-  logger.info(`Fetching project template from: ${zipArchiveUrl}`);
+  try {
+    logger.info(`Fetch and unzip: ${zipArchiveUrl}`);
+    await fetchAndUnzipUsingSystemCommand(zipArchiveUrl, projectUri, progress);
+  } catch (error) {
+    logger.info(`Failed to fetch and unzip: ${error}`);
+    logger.info(`Falling back to JSZip to fetch and unzip: ${zipArchiveUrl}`);
+    await fetchAndUnzipUsingJsZip(zipArchiveUrl, projectUri, progress);
+  }
+}
 
-  // Fetch the zip file
+async function fetchAndUnzipUsingSystemCommand(
+  url: string,
+  targetUri: vscode.Uri,
+  progress: vscode.Progress<{ message?: string; increment?: number }>,
+): Promise<void> {
+  // Check if curl and unzip are available using child processes
+  const curlExists = await execPromise("curl --version").then(
+    () => true,
+    () => false,
+  );
+  const unzipExists = await execPromise("unzip -v").then(
+    () => true,
+    () => false,
+  );
+
+  if (!curlExists || !unzipExists) {
+    throw new Error(
+      "Required system commands (curl, unzip) are not available.",
+    );
+  }
+
+  let tempZipFile: vscode.Uri | undefined = undefined;
+
+  try {
+    progress.report({ message: "Pochi: Fetching project template..." });
+    logger.info(`Fetching project template from: ${url}`);
+
+    const urlBase64 = Buffer.from(url)
+      .toString("base64url")
+      .replace(/[^a-zA-Z0-9]/g, "");
+    const tempZipDir = vscode.Uri.joinPath(
+      vscode.Uri.file(os.tmpdir()),
+      "pochi",
+      "downloads",
+    );
+    tempZipFile = vscode.Uri.joinPath(tempZipDir, `${urlBase64}.zip`);
+
+    await createDirectoryIfNotExists(tempZipDir);
+    await execPromise(`curl -L "${url}" -o "${tempZipFile.fsPath}"`);
+
+    progress.report({ message: "Pochi: Extracting project template..." });
+    logger.info(`Extracting project template to: ${targetUri}`);
+
+    await execPromise(
+      `unzip -q "${tempZipFile.fsPath}" -d "${targetUri.fsPath}"`,
+    );
+  } catch (error) {
+    throw new Error(
+      "Failed to fetch and unzip project template using system commands.",
+      {
+        cause: error,
+      },
+    );
+  } finally {
+    if (tempZipFile) {
+      try {
+        await vscode.workspace.fs.delete(tempZipFile);
+      } catch (error) {
+        logger.debug(
+          `Failed to delete temporary zip file: ${tempZipFile}`,
+          error,
+        );
+      }
+    }
+  }
+}
+
+async function fetchAndUnzipUsingJsZip(
+  url: string,
+  targetUri: vscode.Uri,
+  progress: vscode.Progress<{ message?: string; increment?: number }>,
+): Promise<void> {
+  progress.report({ message: "Pochi: Fetching project template..." });
+  logger.info(`Fetching project template from: ${url}`);
+
   let response: Response;
   try {
-    response = await fetch(zipArchiveUrl);
+    response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error ${response.status} ${response.statusText}.`);
     }
   } catch (error) {
-    logger.error(`Failed to fetch project template: ${zipArchiveUrl}`, error);
-
+    logger.error(`Failed to fetch project template: ${url}`, error);
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     throw new Error(`Failed to fetch project template. ${errorMessage}`);
@@ -167,19 +251,18 @@ export async function prepareProject(
   const zipBuffer = await response.arrayBuffer();
 
   progress.report({ message: "Pochi: Extracting project template..." });
-  logger.info(`Extracting project template to: ${projectUri}`);
+  logger.info(`Extracting project template to: ${targetUri}`);
 
-  // Extract the zip
   const zip = await jszip.loadAsync(zipBuffer);
   for (const [filePath, file] of Object.entries(zip.files)) {
     const relativePaths = filePath.split(/[/\\]/).slice(1);
-    const targetPath = vscode.Uri.joinPath(projectUri, ...relativePaths);
+    const destinationPath = vscode.Uri.joinPath(targetUri, ...relativePaths);
 
     if (file.dir) {
-      await vscode.workspace.fs.createDirectory(targetPath);
+      await vscode.workspace.fs.createDirectory(destinationPath);
     } else {
       const content = await file.async("uint8array");
-      await vscode.workspace.fs.writeFile(targetPath, content);
+      await vscode.workspace.fs.writeFile(destinationPath, content);
     }
   }
 }
