@@ -152,7 +152,7 @@ export function MessageMarkdown({
 
                 // have folder path like `folder/` or `folder/subfolder`
                 const isFolderPath = (text: string): boolean => {
-                  return text.endsWith("/") || text.endsWith("\\");
+                  return text.includes("/") || text.includes("\\");
                 };
 
                 const isSymbol = (text: string): boolean => {
