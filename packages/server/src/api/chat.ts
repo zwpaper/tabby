@@ -183,16 +183,25 @@ const chat = new Hono()
               }
 
               if (providerMetadata?.google) {
+                const modelIdFromValidModelId = () => {
+                  switch (validModelId) {
+                    case "google/gemini-2.5-flash":
+                    case "pochi/pro-1":
+                      return "gemini-2.5-flash";
+                    case "google/gemini-2.5-pro":
+                      return "gemini-2.5-pro";
+                    case "anthropic/claude-4-sonnet":
+                      throw new Error("Unsupported model");
+                  }
+                };
+
                 const cacheReadInputTokens =
                   (providerMetadata.google.cachedContentTokenCount as
                     | number
                     | undefined) || 0;
                 creditCostInput = {
                   type: "google",
-                  modelId:
-                    validModelId === "google/gemini-2.5-pro"
-                      ? "gemini-2.5-pro"
-                      : "gemini-2.5-flash",
+                  modelId: modelIdFromValidModelId(),
                   cacheReadInputTokens,
                   inputTokens: usage.promptTokens - cacheReadInputTokens,
                   outputTokens: usage.completionTokens,

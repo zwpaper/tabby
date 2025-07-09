@@ -7,7 +7,8 @@ import type { LanguageModelV1, streamText } from "ai";
 export type AvailableModelId =
   | "google/gemini-2.5-pro"
   | "google/gemini-2.5-flash"
-  | "anthropic/claude-4-sonnet";
+  | "anthropic/claude-4-sonnet"
+  | "pochi/pro-1";
 
 export const AvailableModels: {
   id: AvailableModelId;
@@ -21,6 +22,11 @@ export const AvailableModels: {
   },
   {
     id: "google/gemini-2.5-flash",
+    contextWindow: 1_048_576,
+    costType: "basic",
+  },
+  {
+    id: "pochi/pro-1",
     contextWindow: 1_048_576,
     costType: "basic",
   },
@@ -164,13 +170,6 @@ export const StripePlans = [
   },
 ];
 
-const vertex = createVertex({
-  baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/${process.env.GOOGLE_VERTEX_LOCATION}/publishers/google`,
-  googleAuthOptions: {
-    credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
-  },
-});
-
 export function getModelById(modelId: AvailableModelId): LanguageModelV1 {
   switch (modelId) {
     case "anthropic/claude-4-sonnet":
@@ -179,6 +178,8 @@ export function getModelById(modelId: AvailableModelId): LanguageModelV1 {
       return vertex("gemini-2.5-pro");
     case "google/gemini-2.5-flash":
       return geminiFlash;
+    case "pochi/pro-1":
+      return vertexFineTuning("9156061034513956864");
   }
 }
 
@@ -186,6 +187,7 @@ export function getModelOptions(
   modelId: AvailableModelId,
 ): Partial<Parameters<typeof streamText>["0"]> {
   switch (modelId) {
+    case "pochi/pro-1":
     case "google/gemini-2.5-flash":
     case "google/gemini-2.5-pro":
       return {
@@ -211,9 +213,49 @@ export function getModelOptions(
           } satisfies AnthropicProviderOptions,
         },
       };
-    default:
-      return {};
   }
 }
+
+const vertex = createVertex({
+  baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/${process.env.GOOGLE_VERTEX_LOCATION}/publishers/google`,
+  googleAuthOptions: {
+    credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
+  },
+});
+
+function patchedFetchForFinetune(
+  requestInfo: Request | URL | string,
+  requestInit?: RequestInit,
+): Promise<Response> {
+  function patchString(str: string) {
+    return str.replace("/publishers/google/models", "/endpoints");
+  }
+
+  if (requestInfo instanceof URL) {
+    const patchedUrl = new URL(requestInfo);
+    patchedUrl.pathname = patchString(patchedUrl.pathname);
+    return fetch(patchedUrl, requestInit);
+  }
+  if (requestInfo instanceof Request) {
+    const patchedUrl = patchString(requestInfo.url);
+    const patchedRequest = new Request(patchedUrl, requestInfo);
+    return fetch(patchedRequest, requestInit);
+  }
+  if (typeof requestInfo === "string") {
+    const patchedUrl = patchString(requestInfo);
+    return fetch(patchedUrl, requestInit);
+  }
+  // Should never happen
+  throw new Error(`Unexpected requestInfo type: ${typeof requestInfo}`);
+}
+
+const vertexFineTuning = createVertex({
+  location: "us-central1",
+  baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/us-central1/publishers/google`,
+  googleAuthOptions: {
+    credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
+  },
+  fetch: patchedFetchForFinetune as unknown as typeof globalThis.fetch,
+});
 
 export const geminiFlash = vertex("gemini-2.5-flash");

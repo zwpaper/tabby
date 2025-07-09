@@ -20,12 +20,16 @@ export interface SettingsState {
 
   enableCheckpoint: boolean;
 
+  enablePochiModels: boolean;
+
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
 
   updateEnableCheckpoint: (value: boolean) => void;
+
+  updateEnablePochiModels: (value: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -45,6 +49,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       enableCheckpoint: false,
 
+      enablePochiModels: false,
+
       updateSelectedModelId: (selectedModelId: string | undefined) =>
         set({ selectedModelId }),
 
@@ -60,6 +66,9 @@ export const useSettingsStore = create<SettingsState>()(
 
       updateEnableCheckpoint: (value: boolean) =>
         set(() => ({ enableCheckpoint: value })),
+
+      updateEnablePochiModels: (value: boolean) =>
+        set(() => ({ enablePochiModels: value })),
     }),
     {
       name: "ragdoll-settings-storage",

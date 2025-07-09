@@ -1,40 +1,51 @@
 import { apiClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useSettingsStore } from "../store";
 
 export type Models = ReturnType<typeof useModels>["data"];
 
 export function useModels() {
-  const result = useQuery({
+  const { enablePochiModels } = useSettingsStore();
+  const { data, ...rest } = useQuery({
     queryKey: ["models"],
     queryFn: async () => {
       const res = await apiClient.api.models.$get();
       return await res.json();
     },
   });
-  return result;
+
+  const models = useMemo(() => {
+    if (!data) {
+      return undefined;
+    }
+    if (enablePochiModels) {
+      return data;
+    }
+    return data.filter((model) => !model.id.startsWith("pochi/"));
+  }, [data, enablePochiModels]);
+
+  return { data: models, ...rest };
 }
 
 export function useSelectedModels() {
   const { selectedModelId, updateSelectedModelId } = useSettingsStore();
-  const { data, isLoading, ...rest } = useModels();
+  const { data: models, isLoading, ...rest } = useModels();
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: watching isLoading is sufficient
   useEffect(() => {
     if (!isLoading) {
       // init model
-      const validModelId = getModelIdFromModelInfo(selectedModelId, data);
+      const validModelId = getModelIdFromModelInfo(selectedModelId, models);
       updateSelectedModelId(validModelId);
     }
-  }, [isLoading]);
+  }, [isLoading, models, selectedModelId, updateSelectedModelId]);
 
-  const selectedModel = data?.find((x) => x.id === selectedModelId);
+  const selectedModel = models?.find((x) => x.id === selectedModelId);
 
   return {
     ...rest,
     isLoading,
-    models: data,
+    models,
     selectedModel,
     updateSelectedModelId,
   };
