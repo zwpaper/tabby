@@ -374,125 +374,123 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
             className="mb-12"
           />
         ) : (
-          <>
-            <ApprovalButton
-              pendingApproval={pendingApproval}
-              retry={retry}
-              allowAddToolResult={allowAddToolResult}
-            />
-            {todos && todos.length > 0 && (
-              <LegacyTodoList
-                className="mt-2"
-                todos={todos}
-                status={status}
-                isEditMode={isEditMode}
-                draftTodos={draftTodos}
-                hasDirtyChanges={hasDirtyChanges}
-                enterEditMode={enterEditMode}
-                exitEditMode={exitEditMode}
-                saveTodos={saveTodos}
-                updateTodoStatus={updateTodoStatus}
-                showEdit={showEditTodos}
+          locked && (
+            <>
+              <ApprovalButton
+                pendingApproval={pendingApproval}
+                retry={retry}
+                allowAddToolResult={allowAddToolResult}
               />
-            )}
-            {locked && (
-              <>
-                <AutoApproveMenu />
-                {files.length > 0 && (
-                  <ImagePreviewList
-                    files={files}
-                    onRemove={handleRemoveImage}
-                    isUploading={isUploadingImages}
-                  />
-                )}
-                <ChatInputForm
-                  input={input}
-                  setInput={setInput}
-                  onSubmit={handleSubmit}
-                  isLoading={isLoading || isExecuting}
-                  onPaste={handlePasteImage}
-                  pendingApproval={pendingApproval}
+              {todos && todos.length > 0 && (
+                <LegacyTodoList
+                  className="mt-2"
+                  todos={todos}
                   status={status}
+                  isEditMode={isEditMode}
+                  draftTodos={draftTodos}
+                  hasDirtyChanges={hasDirtyChanges}
+                  enterEditMode={enterEditMode}
+                  exitEditMode={exitEditMode}
+                  saveTodos={saveTodos}
+                  updateTodoStatus={updateTodoStatus}
+                  showEdit={showEditTodos}
                 />
-
-                {/* Hidden file input for image uploads */}
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  accept="image/*"
-                  multiple
-                  className="hidden"
+              )}
+              <AutoApproveMenu />
+              {files.length > 0 && (
+                <ImagePreviewList
+                  files={files}
+                  onRemove={handleRemoveImage}
+                  isUploading={isUploadingImages}
                 />
+              )}
+              <ChatInputForm
+                input={input}
+                setInput={setInput}
+                onSubmit={handleSubmit}
+                isLoading={isLoading || isExecuting}
+                onPaste={handlePasteImage}
+                pendingApproval={pendingApproval}
+                status={status}
+              />
 
-                <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
-                  <div className="flex items-center gap-2 overflow-x-hidden truncate">
-                    <ModelSelect
-                      value={selectedModel?.id}
-                      models={models}
-                      isLoading={isModelsLoading}
-                      onChange={handleSelectModel}
-                    />
-                  </div>
+              {/* Hidden file input for image uploads */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*"
+                multiple
+                className="hidden"
+              />
 
-                  <div className="flex shrink-0 items-center gap-1">
-                    {!!selectedModel && (
-                      <TokenUsage
-                        contextWindow={selectedModel.contextWindow}
-                        totalTokens={totalTokens}
-                        className="mr-5"
-                      />
-                    )}
-                    <DevModeButton
-                      messages={messages}
-                      buildEnvironment={buildEnvironment}
-                      todos={todos}
-                      uid={uid}
-                      selectedModel={selectedModel?.id}
-                    />
-                    {uid && (
-                      <PublicShareButton
-                        isPublicShared={task?.isPublicShared === true}
-                        disabled={isTaskLoading || isModelsLoading}
-                        uid={uid}
-                        onError={setAutoDismissError}
-                        modelId={selectedModel?.id}
-                      />
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-6 w-6 rounded-md p-0"
-                    >
-                      <ImageIcon className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      disabled={isSubmitDisabled}
-                      className="h-6 w-6 rounded-md p-0 transition-opacity"
-                      onClick={() => {
-                        if (showStopButton) {
-                          autoApproveGuard.current = false;
-                          handleStop();
-                        } else {
-                          handleSubmit();
-                        }
-                      }}
-                    >
-                      {showStopButton ? (
-                        <StopCircleIcon className="size-4" />
-                      ) : (
-                        <SendHorizonal className="size-4" />
-                      )}
-                    </Button>
-                  </div>
+              <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
+                <div className="flex items-center gap-2 overflow-x-hidden truncate">
+                  <ModelSelect
+                    value={selectedModel?.id}
+                    models={models}
+                    isLoading={isModelsLoading}
+                    onChange={handleSelectModel}
+                  />
                 </div>
-              </>
-            )}
-          </>
+
+                <div className="flex shrink-0 items-center gap-1">
+                  {!!selectedModel && (
+                    <TokenUsage
+                      contextWindow={selectedModel.contextWindow}
+                      totalTokens={totalTokens}
+                      className="mr-5"
+                    />
+                  )}
+                  <DevModeButton
+                    messages={messages}
+                    buildEnvironment={buildEnvironment}
+                    todos={todos}
+                    uid={uid}
+                    selectedModel={selectedModel?.id}
+                  />
+                  {uid && (
+                    <PublicShareButton
+                      isPublicShared={task?.isPublicShared === true}
+                      disabled={isTaskLoading || isModelsLoading}
+                      uid={uid}
+                      onError={setAutoDismissError}
+                      modelId={selectedModel?.id}
+                    />
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-6 w-6 rounded-md p-0"
+                  >
+                    <ImageIcon className="size-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={isSubmitDisabled}
+                    className="h-6 w-6 rounded-md p-0 transition-opacity"
+                    onClick={() => {
+                      if (showStopButton) {
+                        autoApproveGuard.current = false;
+                        handleStop();
+                      } else {
+                        handleSubmit();
+                      }
+                    }}
+                  >
+                    {showStopButton ? (
+                      <StopCircleIcon className="size-4" />
+                    ) : (
+                      <SendHorizonal className="size-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )
         )}
       </div>
     </div>
@@ -557,10 +555,13 @@ function useTaskLock(uid: string | undefined) {
   const sessionId = useRef<string>(generateId());
   const [locked, setIsLocked] = useState<boolean>(true);
 
+  const inited = useRef(false);
   const conn = useRef<Promise<WebSocket> | null>(null);
   useEffect(() => {
     if (!uid) return;
     if (conn.current) return;
+    if (inited.current) return;
+    inited.current = true;
 
     conn.current = createLockingConnection(sessionId.current, uid).then(
       (ws) => {
