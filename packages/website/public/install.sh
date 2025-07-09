@@ -216,4 +216,8 @@ do
   esac
 done
 
-install_version latest "$install_dir"
+get_latest_version() {
+  curl https://api.github.com/repos/getpochi/code/releases/latest | grep 'tag_name' | cut -d : -f 2,3 | tr -d \",
+}
+
+install_version $(get_latest_version) "$install_dir"
