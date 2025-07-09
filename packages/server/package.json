@@ -6,6 +6,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
     "@ai-sdk/google": "^1.2.18",
+    "@ai-sdk/google-vertex": "^2.2.27",
     "@ai-sdk/provider-utils": "catalog:",
     "@ai-sdk/ui-utils": "catalog:",
     "@better-auth/stripe": "catalog:",

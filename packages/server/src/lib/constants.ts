@@ -1,7 +1,6 @@
-// packages/server/src/lib/constants.ts
-
 import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
-import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
+import { createVertex } from "@ai-sdk/google-vertex";
 import type { LanguageModelV1, streamText } from "ai";
 
 // Define available models
@@ -165,14 +164,20 @@ export const StripePlans = [
   },
 ];
 
+const vertex = createVertex({
+  googleAuthOptions: {
+    credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
+  },
+});
+
 export function getModelById(modelId: AvailableModelId): LanguageModelV1 {
   switch (modelId) {
     case "anthropic/claude-4-sonnet":
       return anthropic("claude-4-sonnet-20250514");
     case "google/gemini-2.5-pro":
-      return google("gemini-2.5-pro");
+      return vertex("gemini-2.5-pro");
     case "google/gemini-2.5-flash":
-      return google("gemini-2.5-flash");
+      return vertex("gemini-2.5-flash");
   }
 }
 
