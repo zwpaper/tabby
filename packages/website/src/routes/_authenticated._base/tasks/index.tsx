@@ -221,18 +221,27 @@ function TaskPage() {
               title="No tasks yet"
               description="It looks like you haven't created any tasks. Get started by creating a new task."
             />
-          ) : tasks.length > 0 ? (
+          ) : (
             <>
-              <div className="space-y-2">
-                {tasks.map((task) => (
-                  <TaskRow
-                    key={task.uid}
-                    task={task}
-                    fuzzyResult={fuzzyResultMap[task.uid]}
-                  />
-                ))}
-              </div>
-              {totalPages > 1 && (
+              {tasks.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    {tasks.map((task) => (
+                      <TaskRow
+                        key={task.uid}
+                        task={task}
+                        fuzzyResult={fuzzyResultMap[task.uid]}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <EmptyState
+                  title="No tasks found"
+                  description="Try adjusting your filters to find what you're looking for."
+                />
+              )}
+              {(totalPages > 1 || page > 1) && (
                 <DataTablePagination
                   page={page}
                   totalPages={totalPages}
@@ -242,11 +251,6 @@ function TaskPage() {
                 />
               )}
             </>
-          ) : (
-            <EmptyState
-              title="No tasks found"
-              description="Try adjusting your filters to find what you're looking for."
-            />
           )}
         </div>
       </div>

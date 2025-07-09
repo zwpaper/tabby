@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useUpdateEffect } from "@/hooks/use-update-effect";
 import { Search, X } from "lucide-react";
-import { useEffect, useReducer } from "react";
+import { useReducer } from "react";
 import { BranchFilter } from "./branch-filter";
 import { RepositoryFilter } from "./repository-filter";
 import type { FilterValues } from "./types";
@@ -58,9 +59,9 @@ export function TaskFilters({
     q: initialValues.q,
   });
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     onFilterChange(filters);
-  }, [filters, onFilterChange]);
+  }, [filters]);
 
   const handleRepositoryChange = (value?: string) => {
     dispatch({ type: "SET_REPOSITORY", payload: value });
