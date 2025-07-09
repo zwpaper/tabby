@@ -1,6 +1,11 @@
-import { injectable, singleton } from "tsyringe";
+import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
-import { convertUrl, extractHttpUrls, isLocalUrl } from "./url-utils";
+import {
+  convertUrl,
+  extractHttpUrls,
+  isLocalUrl,
+  promptPublicUrlConversion,
+} from "./url-utils";
 
 type LinkToHandle = vscode.TerminalLink & {
   url: vscode.Uri;
@@ -11,7 +16,10 @@ type LinkToHandle = vscode.TerminalLink & {
 export class TerminalLinkProvider implements vscode.Disposable {
   private registration: vscode.Disposable | undefined;
 
-  constructor() {
+  constructor(
+    @inject("vscode.ExtensionContext")
+    private readonly context: vscode.ExtensionContext,
+  ) {
     const sandboxHost = process.env.POCHI_SANDBOX_HOST;
 
     if (sandboxHost) {
@@ -33,7 +41,14 @@ export class TerminalLinkProvider implements vscode.Disposable {
             });
         },
 
-        handleTerminalLink: (link: LinkToHandle) => {
+        handleTerminalLink: async (link: LinkToHandle) => {
+          const result = await promptPublicUrlConversion(
+            link.url,
+            this.context.globalState,
+          );
+          if (!result) {
+            return;
+          }
           vscode.env.openExternal(link.url);
         },
       });
