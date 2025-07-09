@@ -2,6 +2,16 @@ import uFuzzy from "@leeoniya/ufuzzy";
 
 const MaxResult = 500;
 
+// Create a single uFuzzy instance to reuse
+const ufInstance = new uFuzzy({
+  // Allow @ symbols and basic path characters
+  intraChars: "[a-z\\d'@\\-_./]",
+  // Don't split on forward slashes - treat them as regular characters
+  interSplit: "[^a-zA-Z\\d'@\\-_./]+",
+  // Allow more insertions for path matching (like amp -> amp-07-08-2025)
+  intraIns: 20,
+});
+
 export interface FuzzySearchOptions {
   maxResults?: number;
 }
@@ -23,8 +33,7 @@ export function fuzzySearchStrings(
     return haystack.slice(0, maxResults);
   }
 
-  const uf = new uFuzzy({});
-  const [_, info, order] = uf.search(haystack, needle);
+  const [_, info, order] = ufInstance.search(haystack, needle);
 
   if (!order) return [];
 
@@ -56,8 +65,7 @@ export function fuzzySearchWorkflows<T extends { id: string }>(
 
   // Create a haystack of workflow names for searching
   const haystack = workflows.map((w) => w.id);
-  const uf = new uFuzzy({});
-  const [_, info, order] = uf.search(haystack, needle);
+  const [_, info, order] = ufInstance.search(haystack, needle);
 
   if (!order) return [];
 
