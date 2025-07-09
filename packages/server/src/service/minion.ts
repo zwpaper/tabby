@@ -254,13 +254,6 @@ class MinionService {
       const parsedUrl = new URL(url);
       const host = parsedUrl.host;
 
-      // Check if host starts with "pochi"
-      if (host.startsWith("pochi")) {
-        // Use the URL directly for verification
-        await verifyMinionUrl(url);
-        return url;
-      }
-
       // Parse subdomain for port forwarding
       const hostParts = host.split(".");
       if (hostParts.length < 2) {
@@ -269,28 +262,29 @@ class MinionService {
         });
       }
 
-      const subdomain = hostParts[0];
-      const subdomainParts = subdomain.split("-");
+      const sandboxId = host.startsWith("pochi-")
+        ? hostParts[0]
+        : (() => {
+            const subdomain = hostParts[0];
+            const subdomainParts = subdomain.split("-");
+            if (subdomainParts.length < 2) {
+              throw new HTTPException(400, {
+                message: "Invalid format",
+              });
+            }
 
-      if (subdomainParts.length < 2) {
-        throw new HTTPException(400, {
-          message: "Invalid format",
-        });
-      }
+            // Check if the first part can be parsed as a number
+            if (Number.isNaN(Number(subdomainParts[0]))) {
+              throw new HTTPException(400, {
+                message: "Invalid format",
+              });
+            }
 
-      // Check if the first part can be parsed as a number
-      const firstPart = subdomainParts[0];
-      if (Number.isNaN(Number(firstPart))) {
-        throw new HTTPException(400, {
-          message: "Invalid format",
-        });
-      }
+            // Get the part after the first '-'
+            const portForwardId = subdomainParts.slice(1).join("-");
+            return this.hashPortForwardIdToSandboxId(portForwardId);
+          })();
 
-      // Get the part after the first '-'
-      const portForwardId = subdomainParts.slice(1).join("-");
-
-      // Hash port forward ID to sandbox ID
-      const sandboxId = this.hashPortForwardIdToSandboxId(portForwardId);
       const result = await db
         .selectFrom("minion")
         .select(db.fn.countAll().as("count"))

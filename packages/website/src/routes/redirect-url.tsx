@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Hourglass,
@@ -27,19 +26,19 @@ export const Route = createFileRoute("/redirect-url")({
 
 function RouteComponent() {
   const { url } = Route.useSearch();
+  const [data, setData] = useState<{ url: string } | null>(null);
+  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [isSlowRedirection, setIsSlowRedirection] = useState(false);
-  const { data, isError, error } = useQuery({
-    queryKey: ["check-url-accessible", url],
-    queryFn: async () => {
-      if (!url) return null;
+  useEffect(() => {
+    if (!url) return;
+
+    const fetchUrl = async () => {
       const controller = new AbortController();
-      // 10 seconds timeout
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
-        const urlToFetch = `/api/redirect-minion?url=${encodeURIComponent(
-          url,
-        )}`;
+        const urlToFetch = `/api/redirect-minion?url=${encodeURIComponent(url)}`;
         const response = await fetch(urlToFetch, {
           signal: controller.signal,
         });
@@ -51,16 +50,17 @@ function RouteComponent() {
         }
 
         const body = await response.text();
-        return {
-          url: body,
-        };
+        setData({ url: body });
+      } catch (err) {
+        setIsError(true);
+        setError(err as Error);
       } finally {
-        // IMPORTANT: Always clear the timeout to prevent it from firing after the promise has settled
         clearTimeout(timeoutId);
       }
-    },
-    enabled: !!url,
-  });
+    };
+
+    fetchUrl();
+  }, [url]);
 
   useEffect(() => {
     const delay = 8000;
