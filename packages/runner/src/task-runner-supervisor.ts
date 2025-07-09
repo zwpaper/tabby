@@ -1,9 +1,17 @@
 import { getLogger } from "@ragdoll/common";
 import type { TaskEvent } from "@ragdoll/db";
 import type { TaskRunner, TaskRunnerState } from "./task-runner";
+import type { TaskRunnerOutputStream } from "./task-runner-output";
 
-const sigtermError = new Error("SIGTERM received.");
-const sigintError = new Error("SIGINT received.");
+class AbortError extends Error {
+  constructor(message?: string) {
+    super(message);
+    this.name = "AbortError";
+  }
+}
+
+const sigtermError = new AbortError("SIGTERM received.");
+const sigintError = new AbortError("SIGINT received.");
 
 const logger = getLogger("TaskRunnerSupervisor");
 
@@ -12,11 +20,12 @@ export class TaskRunnerSupervisor {
 
   constructor(
     private readonly runner: TaskRunner,
+    private readonly output: TaskRunnerOutputStream,
     private readonly isDaemon: boolean = false,
   ) {}
 
   start(): void {
-    logger.info("Starting TaskRunner supervisor...");
+    logger.debug("Starting TaskRunner supervisor...");
     this.abortController = new AbortController();
 
     this.runner.state.subscribe((state) => {
@@ -27,14 +36,12 @@ export class TaskRunnerSupervisor {
   }
 
   stop(signal: "SIGTERM" | "SIGINT" = "SIGTERM"): void {
-    logger.info(`Stopping TaskRunner supervisor due to ${signal}...`);
+    const error = signal === "SIGINT" ? sigintError : sigtermError;
 
     if (this.abortController) {
-      this.abortController.abort();
+      this.abortController.abort(error);
       this.abortController = undefined;
     }
-
-    const error = signal === "SIGINT" ? sigintError : sigtermError;
     this.runner.stop(error);
   }
 
@@ -49,15 +56,24 @@ export class TaskRunnerSupervisor {
         case "loading-task":
           if (progress.phase === "begin") {
             logger.debug(`[Step ${progress.step}] Loading task...`);
+            this.output.updateIsLoading(true, "Loading task...");
           } else if (progress.phase === "end") {
             logger.debug(`[Step ${progress.step}] Task loaded successfully.`);
+            this.output.updateIsLoading(false);
+            this.output.updateMessage(runnerState.messages);
           }
           break;
         case "executing-tool-call":
           if (progress.phase === "begin") {
-            logger.info(
+            logger.debug(
               `[Step ${progress.step}] Executing tool: ${progress.toolName}`,
             );
+            this.output.updateToolCall({
+              state: "call",
+              toolCallId: progress.toolCallId,
+              toolName: progress.toolName,
+              args: progress.toolArgs,
+            });
           } else if (progress.phase === "end") {
             const error =
               typeof progress.toolResult === "object" &&
@@ -71,39 +87,40 @@ export class TaskRunnerSupervisor {
                 `[Step ${progress.step}] Tool ${progress.toolName} ✗ (${error})`,
               );
             } else {
-              logger.info(
+              logger.debug(
                 `[Step ${progress.step}] Tool ${progress.toolName} ✓`,
               );
             }
+            this.output.updateToolCall({
+              state: "result",
+              toolCallId: progress.toolCallId,
+              toolName: progress.toolName,
+              args: progress.toolArgs,
+              result: progress.toolResult,
+            });
           }
           break;
         case "sending-message":
           if (progress.phase === "begin") {
             logger.debug(`[Step ${progress.step}] Sending message...`);
+            this.output.updateMessage(runnerState.messages);
+            this.output.updateIsLoading(true, "Sending message...");
           } else if (progress.phase === "end") {
             logger.debug(`[Step ${progress.step}] Message sent successfully.`);
+            this.output.updateIsLoading(false);
           }
           break;
       }
     } else if (runnerState.state === "stopped") {
-      logger.info("Task runner stopped with result: ", runnerState.result);
+      logger.debug("Task runner stopped with result: ", runnerState.result);
       if (this.isDaemon) {
-        // In daemon mode, always wait for status change when stopped
-        logger.info(
-          "Task stopped in daemon mode, monitoring for pending-model status...",
-        );
-        try {
-          await this.waitForPendingModelStatus();
-          this.startRunner();
-        } catch (_erorr) {
-          // ignore
-        }
+        await this.waitForTaskThenRestart();
       } else {
         // In non-daemon mode, exit with success
+        this.output.finish();
         process.exit(0);
       }
     } else if (runnerState.state === "error") {
-      // except sigterm and sigint error, other error from taskrunner should hang rather then throw
       if (runnerState.error === sigtermError) {
         logger.info(`Task runner exited: ${sigtermError.message}`);
         process.exit(143);
@@ -113,20 +130,35 @@ export class TaskRunnerSupervisor {
       } else {
         logger.error("Task runner failed with error: ", runnerState.error);
         if (this.isDaemon) {
-          // In daemon mode, try to restart the runner and ignore errors
-          try {
-            await this.waitForPendingModelStatus();
-            this.startRunner();
-          } catch (error) {
-            logger.error(
-              "Failed to restart runner after error, continuing to monitor...",
-              error,
-            );
-          }
+          await this.waitForTaskThenRestart();
         } else {
           // In non-daemon mode, rethrow the error to exit the process
+          this.output.printError(runnerState.error);
           throw runnerState.error;
         }
+      }
+    }
+  }
+
+  private async waitForTaskThenRestart() {
+    try {
+      logger.debug(
+        "Task runner stopped in daemon mode, waiting for pending-model status...",
+      );
+      await this.waitForPendingModelStatus();
+
+      logger.debug(
+        "Task status changed to pending-model, restarting runner...",
+      );
+      this.startRunner();
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        logger.debug("Waiting for pending-model was aborted.");
+      } else {
+        logger.error(
+          "Unexpected error while waiting for pending-model and restarting runner: ",
+          error,
+        );
       }
     }
   }
@@ -142,9 +174,6 @@ export class TaskRunnerSupervisor {
           }
 
           if (data.status === "pending-model") {
-            logger.info(
-              "Task status changed to pending-model, restarting runner...",
-            );
             unsubscribe();
             resolve();
           }
@@ -152,18 +181,18 @@ export class TaskRunnerSupervisor {
       );
 
       // Handle abort signal
-      if (this.abortController) {
-        const onAbort = () => {
-          unsubscribe();
-          reject(
-            new Error(
-              "TaskRunnerSupervisor was aborted while waiting for pending-model",
-            ),
-          );
-        };
-        this.abortController.signal.addEventListener("abort", onAbort, {
-          once: true,
-        });
+      const abortSignal = this.abortController?.signal;
+      if (abortSignal) {
+        abortSignal.addEventListener(
+          "abort",
+          () => {
+            unsubscribe();
+            reject(abortSignal.reason);
+          },
+          {
+            once: true,
+          },
+        );
       }
     });
   }

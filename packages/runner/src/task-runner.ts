@@ -120,6 +120,7 @@ type TaskRunnerProgress = { step: number } & (
       phase: "end";
       toolName: string;
       toolCallId: string;
+      toolArgs: unknown;
       toolResult: unknown;
     }
   | {
@@ -416,6 +417,7 @@ export class TaskRunner {
               phase: "end",
               toolName: toolCall.toolName,
               toolCallId: toolCall.toolCallId,
+              toolArgs: toolCall.args,
               toolResult,
             },
           });
