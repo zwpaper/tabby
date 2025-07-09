@@ -11,7 +11,7 @@ import { inlineSubTasks } from "@/lib/inline-sub-task";
 import { toUIMessages } from "@ragdoll/common";
 import type { TaskEvent } from "@ragdoll/db";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
   component: RouteComponent,
@@ -48,9 +48,6 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
   pendingComponent: TaskPageSkeleton,
 });
 
-const getIsLoading = (status: string) =>
-  status !== "pending-input" && status !== "completed";
-
 function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const { auth } = Route.useRouteContext();
@@ -58,16 +55,11 @@ function RouteComponent() {
   const router = useRouter();
   const { theme } = useTheme();
 
-  const [isLoading, setIsLoading] = useState(() =>
-    getIsLoading(loaderData.status),
-  );
-
   const pochiEventCallback = useCallback(
     (event: TaskEvent) => {
       // The event source is already scoped to the UID on the server,
       // but we can add a check for robustness.
       if (event.data.uid === uid) {
-        setIsLoading(getIsLoading(event.data.status));
         router.invalidate();
       }
     },
@@ -75,6 +67,13 @@ function RouteComponent() {
   );
 
   usePochiEvents<TaskEvent>(uid, "task:status-changed", pochiEventCallback);
+
+  const isLoading = useMemo(() => {
+    if (!loaderData) return false;
+    return !["pending-input", "completed", "failed"].includes(
+      loaderData.status,
+    );
+  }, [loaderData]);
 
   const renderMessages = useMemo(() => {
     const dbMessages = loaderData.conversation?.messages ?? [];
