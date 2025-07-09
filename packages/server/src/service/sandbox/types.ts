@@ -1,6 +1,5 @@
 export interface SandboxInfo {
   id: string;
-  projectDir: string;
   isRunning: boolean;
 }
 

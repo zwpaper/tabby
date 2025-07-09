@@ -89,7 +89,6 @@ export class FlyioSandboxProvider implements SandboxProvider {
 
     return {
       id,
-      projectDir: `${SandboxPath.project}`,
       isRunning: machine.state === "started",
     };
   }
@@ -99,7 +98,6 @@ export class FlyioSandboxProvider implements SandboxProvider {
 
     return {
       id: sandboxId,
-      projectDir: `${SandboxPath.project}`,
       isRunning,
     };
   }

@@ -1,3 +1,5 @@
+import path from "node:path";
+import { SandboxPath } from "@ragdoll/common";
 import { HTTPException } from "hono/http-exception";
 import { v5 as uuidv5 } from "uuid";
 import { auth } from "../better-auth";
@@ -98,11 +100,14 @@ class MinionService {
       );
     }
 
+    const projectDir = githubRepository
+      ? path.join(SandboxPath.home, githubRepository.repo)
+      : SandboxPath.project;
     let urlString = url.toString();
     if (url.search) {
-      urlString += `&folder=${sandbox.projectDir}`;
+      urlString += `&folder=${projectDir}`;
     } else {
-      urlString += `?folder=${sandbox.projectDir}`;
+      urlString += `?folder=${projectDir}`;
     }
 
     // Update the minion with the sandbox ID
