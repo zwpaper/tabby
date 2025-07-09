@@ -5,7 +5,6 @@ import type { RefObject } from "react";
 
 export function prepareRequestBody(
   uid: RefObject<string | undefined>,
-  sessionId: string,
   request: {
     messages: UIMessage[];
   },
@@ -20,7 +19,6 @@ export function prepareRequestBody(
     id: uid.current || undefined,
     model: triggerError ? "fake-model" : model,
     message: fromUIMessage(message),
-    sessionId,
     minionId: minionId || undefined,
   };
 }

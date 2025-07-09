@@ -63,7 +63,6 @@
         "ai": "catalog:",
         "commander": "^14.0.0",
         "hono": "catalog:",
-        "reconnecting-websocket": "catalog:",
       },
       "devDependencies": {
         "@ragdoll/db": "workspace:*",
@@ -130,7 +129,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.4.6",
+      "version": "0.4.7",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@preact/signals-core": "catalog:",
@@ -237,7 +236,6 @@
         "react-markdown": "^10.1.0",
         "react-syntax-highlighter": "15.5.0",
         "react-use": "^17.6.0",
-        "reconnecting-websocket": "catalog:",
         "rehype-raw": "^7.0.0",
         "rehype-sanitize": "^6.0.0",
         "remark-gfm": "^4.0.1",
@@ -385,7 +383,6 @@
     "moment": "^2.30.1",
     "react": "^19",
     "react-icons": "^5.5.0",
-    "reconnecting-websocket": "4.4.0",
     "remeda": "^2.21.3",
     "tslog": "^4.9.3",
     "zod": "^3.24.2",
@@ -3174,8 +3171,6 @@
     "recharts-scale": ["recharts-scale@0.4.5", "", { "dependencies": { "decimal.js-light": "^2.4.1" } }, "sha512-kivNFO+0OcUNu7jQquLXAxz1FIwZj8nrj+YkOKc5694NbjCvcT6aSZiIzNzd2Kul4o4rTto8QVR9lMNtxD4G1w=="],
 
     "rechoir": ["rechoir@0.6.2", "", { "dependencies": { "resolve": "^1.1.6" } }, "sha512-HFM8rkZ+i3zrV+4LQjwQ0W+ez98pApMGM3HUrN04j3CqzPOzl9nmP15Y8YXNm8QHGv/eacOVEjqhmWpkRV0NAw=="],
-
-    "reconnecting-websocket": ["reconnecting-websocket@4.4.0", "", {}, "sha512-D2E33ceRPga0NvTDhJmphEgJ7FUYF0v4lr1ki0csq06OdlxKfugGzN0dSkxM/NfqCxYELK4KcaTOUOjTV6Dcng=="],
 
     "redent": ["redent@3.0.0", "", { "dependencies": { "indent-string": "^4.0.0", "strip-indent": "^3.0.0" } }, "sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg=="],
 

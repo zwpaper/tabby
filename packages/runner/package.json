@@ -24,8 +24,7 @@
     "@ragdoll/server": "workspace:*",
     "ai": "catalog:",
     "commander": "^14.0.0",
-    "hono": "catalog:",
-    "reconnecting-websocket": "catalog:"
+    "hono": "catalog:"
   },
   "devDependencies": {
     "@ragdoll/db": "workspace:*",

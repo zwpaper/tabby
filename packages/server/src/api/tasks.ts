@@ -3,16 +3,13 @@ import type { TaskCreateEvent, TaskEvent } from "@ragdoll/db";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
-import type { WSContext } from "hono/ws";
 import { z } from "zod";
 import { optionalAuth, requireAuth } from "../auth";
-import { auth } from "../better-auth";
 import { parseEventFilter } from "../lib/event-filter";
 import { upgradeWebSocket } from "../lib/websocket";
 import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task"; // Added import
 import { taskEvents } from "../service/task-events";
-import { taskLockService } from "../service/task-lock";
 import { ZodMessageType } from "../types";
 
 // Define validation schemas
@@ -70,10 +67,6 @@ const TaskPatchSchema = z.object({
 
 const AppendMessageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
-});
-
-const WebSocketTokenSchema = z.object({
-  accessToken: z.string(),
 });
 
 // Create a tasks router with authentication
@@ -284,53 +277,12 @@ const tasks = new Hono()
       return c.json({ success: true });
     },
   )
-
+  // FIXME(meng): remove
   .get(
     "/:uid/lock/:lockId",
     zValidator("param", TaskLockParamsSchema),
-    upgradeWebSocket(async (c) => {
-      const params = TaskLockParamsSchema.parse(c.req.param());
-      const { uid, lockId } = params;
-
-      const { accessToken } = WebSocketTokenSchema.parse(c.req.query());
-      const headers = new Headers(c.req.raw.headers);
-      headers.delete("authorization");
-      headers.set("Authorization", `Bearer ${encodeURIComponent(accessToken)}`);
-
-      const session = await auth.api.getSession({
-        headers,
-        query: {
-          disableRefresh: true,
-        },
-      });
-      if (!session) {
-        throw new HTTPException(401, {
-          message: "Unauthorized",
-        });
-      }
-      const user = session.user;
-
-      const onError = (ws: WSContext) => {
-        ws.close(3000, "Task lock error");
-      };
-
-      return {
-        onOpen: async (_, ws) => {
-          await taskLockService
-            .lockTask(uid, user.id, lockId)
-            .catch(() => onError(ws));
-        },
-        onClose: async (_, ws) => {
-          await taskLockService
-            .unlockTask(uid, user.id, lockId)
-            .catch(() => onError(ws));
-        },
-        onError: async (_, ws) => {
-          await taskLockService
-            .unlockTask(uid, user.id, lockId)
-            .catch(() => onError(ws));
-        },
-      };
+    upgradeWebSocket(() => {
+      return {};
     }),
   );
 

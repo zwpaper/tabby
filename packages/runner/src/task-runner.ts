@@ -29,7 +29,6 @@ import {
 } from "@ragdoll/tools";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
-import ReconnectingWebSocket from "reconnecting-websocket";
 import { readEnvironment } from "./lib/read-environment";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
@@ -188,7 +187,6 @@ export class TaskRunner {
   private readonly sessionId: string;
   private stepCount = 0;
   private abortController?: AbortController;
-  private lockingConnection?: ReconnectingWebSocket;
   private toolCallOptions: ToolCallOptions;
 
   constructor(readonly options: RunnerOptions) {
@@ -237,8 +235,6 @@ export class TaskRunner {
             error: Error;
           },
     ) => {
-      this.releaseSessionLock();
-
       if (this.abortController === abortController) {
         this.abortController = undefined;
       }
@@ -247,8 +243,6 @@ export class TaskRunner {
     };
 
     try {
-      await this.initSessionLock();
-
       this.logger.trace("Start step loop.");
       this.stepCount = 0;
       while (await this.step()) {
@@ -526,57 +520,6 @@ export class TaskRunner {
       messages: this.messages,
       todos: this.todos,
     };
-  }
-
-  private async initSessionLock() {
-    this.logger.debug("Init session lock", this.sessionId);
-    if (this.lockingConnection) {
-      throw new Error(
-        "Session lock is already acquired, please release it before acquiring again.",
-      );
-    }
-
-    // we don't have access to the full URL, so we need to construct it
-    const url = this.options.apiClient.api.tasks[":uid"].lock[":lockId"].$url({
-      param: { uid: this.options.uid, lockId: this.sessionId },
-    });
-    url.searchParams.set(
-      "accessToken",
-      decodeURIComponent(this.options.accessToken),
-    );
-    url.protocol = url.protocol.replace("http", "ws");
-    const ws = new ReconnectingWebSocket(url.toString(), [], {
-      minReconnectionDelay: 1000,
-      reconnectionDelayGrowFactor: 1.5,
-      maxRetries: Number.POSITIVE_INFINITY,
-    });
-    ws.binaryType = "arraybuffer";
-
-    await new Promise<void>((resolve, reject) => {
-      ws.addEventListener("error", (error) => {
-        this.logger.warn("Task locking connection error", error);
-        reject(error);
-        // FIXME(zhiming): reconnect when unexpected disconnected
-      });
-
-      ws.addEventListener("close", (event) => {
-        reject(new Error(`Task locking connection closed: ${event.reason}`));
-      });
-
-      ws.addEventListener("open", () => {
-        this.logger.debug("Session lock acquired", this.sessionId);
-        this.lockingConnection = ws;
-        resolve();
-      });
-    });
-  }
-
-  private releaseSessionLock() {
-    this.logger.debug("Releasing session lock", this.sessionId);
-    if (this.lockingConnection) {
-      this.lockingConnection.close();
-      this.lockingConnection = undefined;
-    }
   }
 
   private getTaskOrThrow() {

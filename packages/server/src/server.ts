@@ -26,7 +26,6 @@ import { queuedash } from "./queuedash";
 import { startWorkers } from "./service/background-job";
 import { slackService } from "./service/slack";
 import { taskService } from "./service/task";
-import { taskLockService } from "./service/task-lock";
 
 export const app = new Hono().use(authRequest);
 
@@ -143,7 +142,6 @@ process.on("SIGTERM", async () => {
   console.log("SIGTERM received, shutting down...");
   try {
     await taskService.gracefulShutdown();
-    await taskLockService.gracefulShutdown();
   } catch (err) {
     console.warn("Error during graceful shutdown:", err);
   }

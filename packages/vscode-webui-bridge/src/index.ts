@@ -64,9 +64,3 @@ const isDev = process.env.POCHI_LOCAL_SERVER === "true";
 export function getServerBaseUrl() {
   return isDev ? DevBaseUrl : ProdBaseUrl;
 }
-
-export function getServerWebSocketBaseUrl() {
-  return isDev
-    ? DevBaseUrl.replace(/^http/, "ws")
-    : ProdBaseUrl.replace(/^https/, "wss");
-}

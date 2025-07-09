@@ -39,7 +39,6 @@ import { applyEventFilter } from "../lib/event-filter";
 import type { ZodChatRequestType } from "../types";
 import { githubService } from "./github";
 import { minionService } from "./minion";
-import { taskLockService } from "./task-lock";
 
 const titleSelect = sql<string>`
       COALESCE(
@@ -61,7 +60,6 @@ class StreamingTask {
     readonly streamId: string,
     readonly userId: string,
     readonly uid: string,
-    readonly sessionId: string,
   ) {}
 
   get key() {
@@ -70,14 +68,6 @@ class StreamingTask {
 
   static key(userId: string, uid: string) {
     return `${userId}:${uid}`;
-  }
-
-  async init() {
-    await taskLockService.lockTask(this.uid, this.userId, this.sessionId);
-  }
-
-  async dispose() {
-    await taskLockService.unlockTask(this.uid, this.userId, this.sessionId);
   }
 }
 
@@ -93,13 +83,7 @@ class TaskService {
       userId,
       request,
     );
-    const streamingTask = new StreamingTask(
-      streamId,
-      userId,
-      uid,
-      request.sessionId,
-    );
-    await streamingTask.init();
+    const streamingTask = new StreamingTask(streamId, userId, uid);
     this.streamingTasks.set(streamingTask.key, streamingTask);
 
     const messages = appendClientMessage({
@@ -221,7 +205,6 @@ class TaskService {
     const key = StreamingTask.key(userId, uid);
     const streamingTask = this.streamingTasks.get(key);
     if (streamingTask) {
-      await streamingTask.dispose();
       this.streamingTasks.delete(StreamingTask.key(userId, uid));
     }
   }

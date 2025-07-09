@@ -10,7 +10,6 @@ import {
   type VSCodeHostApi,
   type WebviewHostApi,
   getServerBaseUrl,
-  getServerWebSocketBaseUrl,
 } from "@ragdoll/vscode-webui-bridge";
 import { container, inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
@@ -219,7 +218,7 @@ export class RagdollWebviewProvider
         `script-src 'nonce-${nonce}' '${webuiLoggingHash}'`,
         `style-src ${webview.cspSource} 'unsafe-inline'`,
         `font-src ${webview.cspSource}`,
-        `connect-src ${getServerBaseUrl()} ${getServerWebSocketBaseUrl()}`,
+        `connect-src ${getServerBaseUrl()}`,
       ];
       const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
@@ -256,7 +255,7 @@ export class RagdollWebviewProvider
       `script-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} '${reactRefreshHash}' '${webuiLoggingHash}' 'unsafe-eval'`,
       `style-src ${webview.cspSource} 'self' 'unsafe-inline'`,
       `font-src ${webview.cspSource}`,
-      `connect-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} ${devWebUIWsBaseUrl} ${devWebUIWsBaseUrlIp} ${getServerBaseUrl()} ${getServerWebSocketBaseUrl()}`,
+      `connect-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} ${devWebUIWsBaseUrl} ${devWebUIWsBaseUrlIp} ${getServerBaseUrl()}`,
     ];
     const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
