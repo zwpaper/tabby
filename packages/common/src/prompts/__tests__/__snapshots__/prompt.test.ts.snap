@@ -96,6 +96,10 @@ exports[`environment 1`] = `
 "# Current Time
 2021-01-01T00:00:00.000Z
 
+# User Information
+- Name: Pochi
+- Email: noreply@getpochi.com
+
 # Current Working Directory (/home/user/project) Files
 index.ts
 package.json

@@ -1,9 +1,15 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment, GitStatus } from "@ragdoll/db";
 
-export function getReadEnvironmentResult(environment: Environment) {
+type User = { name: string; email: string };
+
+export function getReadEnvironmentResult(
+  environment: Environment,
+  user: User | undefined,
+) {
   const sections = [
     getCurrentTime(environment.currentTime),
+    getUserInfo(user),
     getWorkspaceFiles(environment.workspace, environment.info),
     getCurrentOpenedFiles(environment.workspace),
     getVisibleTerminals(environment.workspace),
@@ -14,6 +20,27 @@ export function getReadEnvironmentResult(environment: Environment) {
     .filter(Boolean)
     .join("\n\n");
   return sections;
+}
+
+function getUserInfo(user: User | undefined) {
+  if (!user) {
+    return "";
+  }
+
+  const userInfo = [];
+  if (user.name) {
+    userInfo.push(`- Name: ${user.name}`);
+  }
+
+  if (user.email) {
+    userInfo.push(`- Email: ${user.email}`);
+  }
+
+  if (userInfo.length > 0) {
+    return `# User Information\n${userInfo.join("\n")}`;
+  }
+
+  return "";
 }
 
 function getCurrentTime(currentTime: string) {
@@ -127,6 +154,7 @@ function getInjectMessage(
 export function injectEnvironmentDetails(
   messages: UIMessage[],
   environment: Environment | undefined,
+  user: User | undefined,
   injectInAssistantMessage: boolean,
 ) {
   if (environment === undefined) return messages;
@@ -135,7 +163,10 @@ export function injectEnvironmentDetails(
 
   const textPart = {
     type: "text",
-    text: `<${EnvironmentDetailsTag}>\n${getReadEnvironmentResult(environment)}\n</${EnvironmentDetailsTag}>`,
+    text: `<${EnvironmentDetailsTag}>\n${getReadEnvironmentResult(
+      environment,
+      user,
+    )}\n</${EnvironmentDetailsTag}>`,
   } satisfies TextUIPart;
 
   const parts = messageToInject.parts || [];

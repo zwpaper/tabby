@@ -388,6 +388,7 @@ async function prepareMessages(
   messages = prompts.injectEnvironmentDetails(
     messages,
     environment,
+    user,
     process.env.POCHI_INJECT_ENVIRONMENT_DETAILS_MODE === "assistant",
   );
   return messages;

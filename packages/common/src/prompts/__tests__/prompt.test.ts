@@ -71,8 +71,6 @@ test("environment", () => {
           os: "linux",
           homedir: "/home/user",
           shell: "bash",
-      }},
-    ),
+      }}, {name: "Pochi", email: "noreply@getpochi.com"}),
   ).toMatchSnapshot();
 });
-
