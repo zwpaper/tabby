@@ -136,6 +136,7 @@ program
         supervisor.stop(signal);
         // process.exit will be handled by the supervisor
       } else {
+        output.finish();
         process.exit(signal === "SIGINT" ? 130 : 143);
       }
     };

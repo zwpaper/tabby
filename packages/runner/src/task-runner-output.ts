@@ -93,6 +93,7 @@ export class TaskRunnerOutputStream {
 
   finish() {
     this.println();
+    this.stream.write("\x1b[?25h"); // ANSI escape sequences to show cursor
   }
 
   private renderRawJson(json: string) {

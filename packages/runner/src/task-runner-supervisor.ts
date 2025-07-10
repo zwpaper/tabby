@@ -124,9 +124,11 @@ export class TaskRunnerSupervisor {
     } else if (runnerState.state === "error") {
       if (runnerState.error === sigtermError) {
         logger.info(`Task runner exited: ${sigtermError.message}`);
+        this.output.finish();
         process.exit(143);
       } else if (runnerState.error === sigintError) {
         logger.info(`Task runner exited: ${sigintError.message}`);
+        this.output.finish();
         process.exit(130);
       } else {
         logger.error("Task runner failed with error: ", runnerState.error);
@@ -135,6 +137,7 @@ export class TaskRunnerSupervisor {
         } else {
           // In non-daemon mode, rethrow the error to exit the process
           this.output.printError(runnerState.error);
+          this.output.finish();
           throw runnerState.error;
         }
       }
