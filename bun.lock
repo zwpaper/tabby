@@ -50,7 +50,7 @@
     },
     "packages/runner": {
       "name": "@ragdoll/runner",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "bin": {
         "pochi": "src/cli.ts",
       },

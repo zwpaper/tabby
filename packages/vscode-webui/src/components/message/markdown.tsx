@@ -158,6 +158,7 @@ export function MessageMarkdown({
                 // have folder path like `folder/` or `folder/subfolder`
                 const isFolderPath = (text: string): boolean => {
                   return (
+                    !text.startsWith("@") &&
                     !text.includes("://") &&
                     (text.includes("/") || text.includes("\\"))
                   );
