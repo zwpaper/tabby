@@ -11,6 +11,7 @@ import { CodeBlock } from "./code-block";
 import { customStripTagsPlugin } from "./custom-strip-tags-plugin";
 import "./markdown.css";
 import { addLineBreak } from "@/lib/utils/file";
+import { isKnownProgrammingLanguage } from "@/lib/utils/languages";
 import { isVSCodeEnvironment, vscodeHost } from "@/lib/vscode";
 import { CodeXmlIcon } from "lucide-react";
 
@@ -147,7 +148,10 @@ export function MessageMarkdown({
               if (typeof children === "string") {
                 // have file extension like `file.txt`
                 const isFilePath = (text: string): boolean => {
-                  return /\.[a-z0-9]+$/i.test(text);
+                  return (
+                    /\.[a-z0-9]+$/i.test(text) &&
+                    isKnownProgrammingLanguage(text)
+                  );
                 };
 
                 // have folder path like `folder/` or `folder/subfolder`
