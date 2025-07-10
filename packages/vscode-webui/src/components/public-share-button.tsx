@@ -9,6 +9,7 @@ import {
 import { apiClient } from "@/lib/auth-client";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useMutation } from "@tanstack/react-query";
 import {
   CheckIcon,
@@ -110,7 +111,8 @@ export function PublicShareButton({
     if (!uid) return;
     menuItemRef.current = "share";
     e.preventDefault();
-    doCopy(`https://app.getpochi.com/share/${uid}`);
+    const shareUrl = `${getServerBaseUrl()}/share/${uid}`;
+    doCopy(shareUrl);
   };
 
   const handleShareSupport: React.MouseEventHandler<HTMLDivElement> = async (
@@ -120,12 +122,13 @@ export function PublicShareButton({
     menuItemRef.current = "support";
     e.preventDefault();
     const version = await vscodeHost.readExtensionVersion();
+    const shareUrl = `${getServerBaseUrl()}/share/${uid}`;
     doCopy(
       JSON.stringify(
         {
           "Extension version": version ?? "",
           Model: modelId ?? "",
-          Link: `https://app.getpochi.com/share/${uid}`,
+          Link: shareUrl,
         },
         null,
         2,
