@@ -221,4 +221,4 @@ program
     outputError: (str, write) => write(chalk.red(str)),
   });
 
-program.parse();
+program.parse(process.argv);
