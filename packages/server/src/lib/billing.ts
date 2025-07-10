@@ -1,9 +1,10 @@
 import { db } from "../db";
 import { StripePlans } from "./constants";
 
-import type { User } from "../auth";
-
-export async function readActiveSubscriptionLimits(user: User) {
+export async function readActiveSubscriptionLimits(user: {
+  id: string;
+  email: string;
+}) {
   const activeSubscription = await db
     .selectFrom("subscription")
     .select(["id", "plan"])

@@ -496,7 +496,12 @@ class SlackService {
     userId: string,
   ): Promise<{
     success: boolean;
-    user?: User;
+    user?: {
+      id: string;
+      email: string;
+      name: string;
+      isWaitlistApproved: boolean | null;
+    };
     userEmail?: string;
     error?: string;
     blocks?: AnyBlock[];
@@ -515,7 +520,7 @@ class SlackService {
     // Check if user exists in database
     const targetUser = await db
       .selectFrom("user")
-      .selectAll()
+      .select(["id", "email", "name", "isWaitlistApproved"])
       .where("email", "=", userEmail)
       .executeTakeFirst();
 
@@ -526,7 +531,7 @@ class SlackService {
       };
     }
 
-    const limits = await usageService.readCurrentMonthQuota(targetUser as User);
+    const limits = await usageService.readCurrentMonthQuota(targetUser);
     if (limits.credit.isLimitReached) {
       return {
         success: false,
@@ -547,7 +552,7 @@ class SlackService {
 
     return {
       success: true,
-      user: targetUser as User,
+      user: targetUser,
       userEmail,
     };
   }

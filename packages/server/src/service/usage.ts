@@ -100,7 +100,10 @@ export class UsageService {
     };
   }
 
-  async readCurrentMonthQuota(user: User) {
+  async readCurrentMonthQuota(user: {
+    id: string;
+    email: string;
+  }) {
     // Calculate the start of the current month (UTC)
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();
@@ -144,14 +147,10 @@ export class UsageService {
       0,
     );
 
-    let isLimitReached =
+    const isLimitReached =
       creditToDollars(spentCredit) - FreeCreditInDollars >
       // default monthly credit limit is $10
       (monthlyCreditLimit ?? 10);
-
-    if (user.email?.endsWith("@tabbyml.com") && user.emailVerified) {
-      isLimitReached = false;
-    }
 
     return {
       plan,
