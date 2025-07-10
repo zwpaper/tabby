@@ -170,7 +170,10 @@ export const StripePlans = [
   },
 ];
 
-export function getModelById(modelId: AvailableModelId): LanguageModelV1 {
+export function getModelById(
+  modelId: AvailableModelId,
+  modelEndpointId?: string,
+): LanguageModelV1 {
   switch (modelId) {
     case "anthropic/claude-4-sonnet":
       return anthropic("claude-4-sonnet-20250514");
@@ -179,7 +182,7 @@ export function getModelById(modelId: AvailableModelId): LanguageModelV1 {
     case "google/gemini-2.5-flash":
       return geminiFlash;
     case "pochi/pro-1":
-      return vertexFineTuning("9156061034513956864");
+      return vertexFineTuning(modelEndpointId || "9156061034513956864");
   }
 }
 

@@ -91,6 +91,11 @@ export interface RunnerOptions {
   model?: string;
 
   /**
+   * The llm model endpoint id to override pochi/pro-1
+   */
+  modelEndpointId?: string;
+
+  /**
    * Force stop the runner after max steps reached.
    * If a task cannot be completed in max steps, it is likely stuck in an infinite loop.
    */
@@ -470,6 +475,7 @@ export class TaskRunner {
               message: fromUIMessage(lastMessage),
               environment,
               model: this.options.model,
+              modelEndpointId: this.options.modelEndpointId,
             },
           },
           {

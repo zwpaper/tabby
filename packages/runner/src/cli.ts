@@ -67,6 +67,7 @@ program
     "--model <model>",
     "The model to use for the task. Options: `google/gemini-2.5-pro`, `google/gemini-2.5-flash`, `anthropic/claude-4-sonnet`",
   )
+  .option("--model-endpoint-id <modelEndpointId>")
   .option(
     "--max-steps <number>",
     "Force the runner to stop after the maximum number of steps is reached.",
@@ -198,6 +199,7 @@ program
       rg: options.rg,
       model: options.model,
       maxSteps: options.maxSteps,
+      modelEndpointId: options.modelEndpointId,
     });
 
     supervisor = new TaskRunnerSupervisor(runner, output, options.daemon);

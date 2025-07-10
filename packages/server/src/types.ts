@@ -25,6 +25,10 @@ export const ZodChatRequestType = z.object({
     .string()
     .optional()
     .describe("The ID of the minion (remote Pochi)."),
+  modelEndpointId: z
+    .string()
+    .optional()
+    .describe("The ID of the model endpoint."),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;

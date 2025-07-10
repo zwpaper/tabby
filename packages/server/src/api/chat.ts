@@ -92,7 +92,11 @@ const chat = new Hono()
       newTask: isSubTask ? undefined : { userId: user.id, parentId: uid },
     };
 
-    const selectedModel = createModel(validModelId, middlewareContext);
+    const selectedModel = createModel(
+      validModelId,
+      middlewareContext,
+      req.modelEndpointId,
+    );
 
     const dataStream = createDataStream({
       execute: async (stream) => {
@@ -397,8 +401,9 @@ interface MiddlewareContext {
 function createModel(
   modelId: AvailableModelId,
   middlewareContext: MiddlewareContext,
+  modelEndpointId?: string,
 ): LanguageModelV1 {
-  const model = getModelById(modelId);
+  const model = getModelById(modelId, modelEndpointId);
 
   // Create middlewares
   // Order matters, execution order is from last to first.
