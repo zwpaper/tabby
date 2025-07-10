@@ -3,7 +3,6 @@ import { type ToolSet, type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
 import { prompts } from "./prompts";
-import { EnvironmentDetailsTag } from "./prompts/environment";
 
 export function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
   return messages.map((message, index) => {
@@ -111,15 +110,6 @@ function removeEmptyMessages(messages: UIMessage[]): UIMessage[] {
   return messages.filter((message) => message.parts.length > 0);
 }
 
-function removeReasoningParts(messages: UIMessage[]): UIMessage[] {
-  return messages.map((message) => {
-    message.parts = message.parts.filter((part) => {
-      return part.type !== "reasoning";
-    });
-    return message;
-  });
-}
-
 function removeMessagesWithoutTextOrFunctionCall(
   messages: UIMessage[],
 ): UIMessage[] {
@@ -219,7 +209,6 @@ const UIFormatOps = [
   removeContentInMessages,
 ];
 const StorageFormatOps = [
-  prompts.stripEnvironmentDetails,
   removeDeprecatedToolInvocations,
   removeContentInMessages,
   removeEmptyMessages,
@@ -241,24 +230,15 @@ export const formatters = {
     messages: UIMessage[],
     options?: {
       tools: ToolSet;
-      isGemini: boolean;
     },
   ) => {
-    const llmFormatOps = [
-      ...(options?.isGemini ? [removeReasoningParts] : []),
-      ...LLMFormatOps,
-    ];
+    const llmFormatOps = [...LLMFormatOps];
     const coreMessages = convertToCoreMessages(
       formatMessages(messages, llmFormatOps),
       options,
     );
-    const environmentDetailIndex = coreMessages.findIndex(
-      (message) =>
-        typeof message.content === "string" &&
-        message.content.startsWith(`<${EnvironmentDetailsTag}>`),
-    );
 
-    const cacheControlMessage = coreMessages.at(environmentDetailIndex - 2);
+    const cacheControlMessage = coreMessages.at(-1);
     if (cacheControlMessage) {
       cacheControlMessage.providerOptions = {
         anthropic: { cacheControl: { type: "ephemeral" } },

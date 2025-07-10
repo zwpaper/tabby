@@ -135,7 +135,6 @@ const chat = new Hono()
                 : []),
               ...formatters.llm(preparedMessages, {
                 tools,
-                isGemini: validModelId.includes("google"),
               }),
             ],
             tools,
@@ -385,12 +384,7 @@ async function prepareMessages(
   stream: DataStreamWriter,
 ): Promise<UIMessage[]> {
   let messages = await resolveServerTools(inputMessages, user, stream);
-  messages = prompts.injectEnvironmentDetails(
-    messages,
-    environment,
-    user,
-    process.env.POCHI_INJECT_ENVIRONMENT_DETAILS_MODE === "assistant",
-  );
+  messages = prompts.injectEnvironmentDetails(messages, environment, user);
   return messages;
 }
 

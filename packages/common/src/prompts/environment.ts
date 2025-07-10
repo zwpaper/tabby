@@ -126,20 +126,10 @@ export function stripEnvironmentDetails(messages: UIMessage[]) {
   return messages;
 }
 
-function getInjectMessage(
-  messages: UIMessage[],
-  injectInAssistantMessage: boolean,
-) {
+function getInjectMessage(messages: UIMessage[]) {
   const lastMessage = messages.at(-1);
   if (!lastMessage) return;
   if (lastMessage.role === "user") return lastMessage;
-  if (lastMessage.role === "assistant") {
-    if (injectInAssistantMessage) {
-      return lastMessage;
-    }
-
-    return getInjectMessage(messages.slice(0, -1), injectInAssistantMessage);
-  }
 }
 
 /**
@@ -148,17 +138,15 @@ function getInjectMessage(
  * @param messages - The array of UI messages.
  * @param environment - The environment object containing workspace and todos.
  * @param event - The user event that triggered this task.
- * @param injectInAssistantMessage - By default, we inject the environment details in the user message. If this is true, we inject it in both the user and the assistant message.
  * @returns The updated array of UI messages with injected environment details.
  */
 export function injectEnvironmentDetails(
   messages: UIMessage[],
   environment: Environment | undefined,
   user: User | undefined,
-  injectInAssistantMessage: boolean,
 ) {
   if (environment === undefined) return messages;
-  const messageToInject = getInjectMessage(messages, injectInAssistantMessage);
+  const messageToInject = getInjectMessage(messages);
   if (!messageToInject) return messages;
 
   const textPart = {
@@ -173,24 +161,6 @@ export function injectEnvironmentDetails(
 
   if (messageToInject.role === "user") {
     messageToInject.parts = [textPart, ...parts];
-  }
-
-  if (messageToInject.role === "assistant") {
-    const lastStepStartIndex = parts.reduce((lastIndex, part, index) => {
-      return part.type === "step-start" ? index : lastIndex;
-    }, -1);
-
-    const insertIndex =
-      parts[lastStepStartIndex + 1].type === "reasoning"
-        ? lastStepStartIndex + 2
-        : lastStepStartIndex + 1;
-
-    // insert textPart after stepStart
-    if (lastStepStartIndex !== -1) {
-      parts.splice(insertIndex, 0, textPart);
-    } else {
-      parts.unshift(textPart);
-    }
   }
 
   return messages;
