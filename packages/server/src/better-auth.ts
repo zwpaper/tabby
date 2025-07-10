@@ -11,6 +11,7 @@ import {
   createAuthMiddleware,
   magicLink,
   oAuthProxy,
+  organization,
 } from "better-auth/plugins";
 
 import moment from "moment";
@@ -81,6 +82,9 @@ export const auth = betterAuth({
   },
   plugins: [
     admin(),
+    organization({
+      organizationLimit: 1,
+    }),
     bearer(),
     oAuthProxy(),
     magicLink({

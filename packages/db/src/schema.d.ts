@@ -81,6 +81,24 @@ export interface ExternalIntegration {
   vendorData: Json;
 }
 
+export interface Invitation {
+  email: string;
+  expiresAt: Timestamp;
+  id: string;
+  inviterId: string;
+  organizationId: string;
+  role: string | null;
+  status: string;
+}
+
+export interface Member {
+  createdAt: Timestamp;
+  id: string;
+  organizationId: string;
+  role: string;
+  userId: string;
+}
+
 export interface Minion {
   createdAt: Generated<Timestamp>;
   e2bSandboxId: string | null;
@@ -108,7 +126,17 @@ export interface MonthlyUsage {
   userId: string;
 }
 
+export interface Organization {
+  createdAt: Timestamp;
+  id: string;
+  logo: string | null;
+  metadata: string | null;
+  name: string;
+  slug: string;
+}
+
 export interface Session {
+  activeOrganizationId: string | null;
   createdAt: Timestamp;
   expiresAt: Timestamp;
   id: string;
@@ -160,13 +188,6 @@ export interface Task {
   userId: string;
 }
 
-export interface TaskLock {
-  createdAt: Generated<Timestamp>;
-  id: string;
-  taskId: number;
-  updatedAt: Generated<Timestamp>;
-}
-
 export interface TaskSequence {
   id: Generated<number>;
   nextTaskId: Generated<number>;
@@ -203,14 +224,16 @@ export interface DB {
   apikey: Apikey;
   chatCompletion: ChatCompletion;
   externalIntegration: ExternalIntegration;
+  invitation: Invitation;
+  member: Member;
   minion: Minion;
   monthlyCreditLimit: MonthlyCreditLimit;
   monthlyUsage: MonthlyUsage;
+  organization: Organization;
   session: Session;
   slackConnect: SlackConnect;
   subscription: Subscription;
   task: Task;
-  taskLock: TaskLock;
   taskSequence: TaskSequence;
   user: User;
   verification: Verification;
