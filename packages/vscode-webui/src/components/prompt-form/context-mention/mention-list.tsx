@@ -29,8 +29,9 @@ export interface MentionListProps {
 export const MentionList = forwardRef<MentionListActions, MentionListProps>(
   ({ items: initialItems, command, query, fetchItems }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
-    const items = useMentionItems(initialItems, query, fetchItems);
+    const [isKeyboardMode, setIsKeyboardMode] = useState(false);
 
+    const items = useMentionItems(initialItems, query, fetchItems);
     // Reset selectedIndex when items change to prevent out-of-bounds access
     useEffect(() => {
       if (selectedIndex >= items.length) {
@@ -42,17 +43,25 @@ export const MentionList = forwardRef<MentionListActions, MentionListProps>(
       command({ id: item.filepath, filepath: item.filepath });
     };
 
+    const handleKeyboardIndexChange = (index: number) => {
+      setIsKeyboardMode(true);
+      setSelectedIndex(index);
+    };
+
     const keyboardNavigation = useMentionKeyboardNavigation(
       items,
       selectedIndex,
-      setSelectedIndex,
+      handleKeyboardIndexChange, // Use the wrapped function
       handleSelect,
     );
 
     useImperativeHandle(ref, () => keyboardNavigation);
 
     return (
-      <div className="relative flex w-[80vw] flex-col overflow-hidden py-1 sm:w-[600px]">
+      <div
+        className="relative flex w-[80vw] flex-col overflow-hidden py-1 sm:w-[600px]"
+        onMouseMove={() => setIsKeyboardMode(false)} // Re-enable mouse mode on move
+      >
         <ScrollArea viewportClassname="max-h-[300px] px-2">
           {items.length === 0 ? (
             <div className="px-2 py-1.5 text-muted-foreground text-xs">
@@ -64,7 +73,11 @@ export const MentionList = forwardRef<MentionListActions, MentionListProps>(
                 <MentionItemView
                   key={item.filepath}
                   onClick={() => handleSelect(item)}
-                  onMouseEnter={() => setSelectedIndex(index)}
+                  onMouseEnter={() => {
+                    if (!isKeyboardMode) {
+                      setSelectedIndex(index);
+                    }
+                  }}
                   isSelected={index === selectedIndex}
                   data={item}
                 />
