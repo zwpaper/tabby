@@ -813,13 +813,11 @@ class TaskService {
       githubRepository,
     });
 
-    const minionId = minionIdCoder.decode(minion.id);
-
     // Update the task with the minion ID
     await db
       .updateTable("task")
       .set({
-        minionId,
+        minionId: minionIdCoder.decode(minion.id),
         updatedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where("id", "=", uidCoder.decode(uid))

@@ -1,14 +1,12 @@
-import path from "node:path";
-import { SandboxPath } from "@ragdoll/common";
 import { HTTPException } from "hono/http-exception";
 import { v5 as uuidv5 } from "uuid";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
 import {
-  scheduleCleanupExpiredSandbox,
+  scheduleCreateSandbox,
   signalKeepAliveSandbox,
 } from "./background-job";
-import { type CreateSandboxOptions, sandboxService } from "./sandbox";
+import { sandboxService } from "./sandbox";
 
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
 const MinionDomain = process.env.POCHI_MINION_DOMAIN || "runpochi.com";
@@ -82,55 +80,16 @@ class MinionService {
         : "",
     };
 
-    const opts: CreateSandboxOptions = {
-      id: sandboxId,
+    // Schedule background job to create the sandbox
+    await scheduleCreateSandbox({
+      minionId,
+      sandboxId,
       uid,
       envs,
-    };
-    const sandbox = await sandboxService.create(opts);
-
-    const url = new URL(`https://${sandboxId}.${MinionDomain}`);
-
-    if (uid) {
-      url.searchParams.append(
-        "callback",
-        encodeURIComponent(
-          JSON.stringify({
-            authority: "tabbyml.pochi",
-            query: `task=${uid}`,
-          }),
-        ),
-      );
-    }
-
-    const projectDir = githubRepository
-      ? path.join(SandboxPath.home, githubRepository.repo)
-      : SandboxPath.project;
-    let urlString = url.toString();
-    if (url.search) {
-      urlString += `&folder=${projectDir}`;
-    } else {
-      urlString += `?folder=${projectDir}`;
-    }
-
-    // Update the minion with the sandbox ID
-    await db
-      .updateTable("minion")
-      .where("id", "=", res.id)
-      .set({
-        sandboxId: sandbox.id,
-        url: urlString,
-      })
-      .execute();
-
-    signalKeepAliveSandbox({ sandboxId: sandbox.id });
-
-    // Schedule cleanup of the sandbox after 7 days
-    await scheduleCleanupExpiredSandbox({
-      sandboxId: sandbox.id,
+      githubRepository,
     });
 
-    return { ...res, id: minionIdCoder.encode(res.id) };
+    return { ...res, id: minionId };
   }
 
   private hashMinionIdToPortForwardId(minionId: string) {
@@ -148,8 +107,8 @@ class MinionService {
   async signalKeepAliveMinion(userId: string, minionId: string) {
     const minion = await this.getMinion(userId, minionId);
     if (!minion.sandboxId) {
-      throw new HTTPException(404, {
-        message: "Minion not found or does not have a sandbox",
+      throw new HTTPException(400, {
+        message: "Sandbox not found, maybe still being created, please wait",
       });
     }
     signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
@@ -201,19 +160,19 @@ class MinionService {
       .executeTakeFirstOrThrow();
   }
 
-  private async getSandbox(userId: string, minionId: string) {
-    const minion = await this.getMinion(userId, minionId);
-    if (!minion.sandboxId) {
-      throw new HTTPException(404, {
-        message: "Minion not found or does not have a sandbox",
-      });
-    }
-    const sandbox = await sandboxService.connect(minion.sandboxId);
-    return { minion, sandbox };
-  }
-
   async get(userId: string, minionId: string) {
-    const { minion, sandbox } = await this.getSandbox(userId, minionId);
+    const minion = await this.getMinion(userId, minionId);
+
+    if (!minion.sandboxId) {
+      return {
+        ...minion,
+        id: minionIdCoder.encode(minion.id),
+        sandbox: null,
+        status: "creating",
+      };
+    }
+
+    const sandbox = await sandboxService.connect(minion.sandboxId);
 
     return {
       ...minion,
@@ -227,16 +186,20 @@ class MinionService {
             };
           })()
         : null,
+      status: "ready",
     };
   }
 
   async redirect(userId: string, minionId: string) {
-    const { minion, sandbox } = await this.getSandbox(userId, minionId);
+    const minion = await this.getMinion(userId, minionId);
+
     if (!minion.sandboxId) {
-      throw new HTTPException(404, {
-        message: "Sandbox has not been created or is not available",
+      throw new HTTPException(400, {
+        message: "Sandbox is still being created, please wait",
       });
     }
+
+    const sandbox = await sandboxService.connect(minion.sandboxId);
 
     if (!sandbox.isRunning) {
       try {
@@ -331,13 +294,15 @@ class MinionService {
   }
 
   async resumeMinion(userId: string, minionId: string) {
-    const { minion, sandbox } = await this.getSandbox(userId, minionId);
+    const minion = await this.getMinion(userId, minionId);
 
     if (!minion.sandboxId) {
-      throw new HTTPException(404, {
-        message: "Sandbox has not been created or is not available",
+      throw new HTTPException(400, {
+        message: "Sandbox is still being created, please wait",
       });
     }
+
+    const sandbox = await sandboxService.connect(minion.sandboxId);
 
     // Resume the sandbox if it's not running
     if (!sandbox.isRunning) {
