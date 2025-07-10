@@ -1,5 +1,4 @@
 import { type ReactNode, useRef } from "react";
-import { useCheckpoints } from "../use-checkpoints";
 import { useToolCallLifeCycles } from "../use-tool-call-life-cycles";
 import { ChatContext, type ChatState } from "./types";
 
@@ -9,8 +8,6 @@ interface ChatContextProviderProps {
 
 export function ChatContextProvider({ children }: ChatContextProviderProps) {
   const autoApproveGuard = useRef(false);
-
-  useCheckpoints();
 
   const { executingToolCalls, getToolCallLifeCycle, completeToolCalls } =
     useToolCallLifeCycles();
