@@ -110,6 +110,15 @@ function removeEmptyMessages(messages: UIMessage[]): UIMessage[] {
   return messages.filter((message) => message.parts.length > 0);
 }
 
+function removeReasoningParts(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => {
+    message.parts = message.parts.filter((part) => {
+      return part.type !== "reasoning";
+    });
+    return message;
+  });
+}
+
 function removeMessagesWithoutTextOrFunctionCall(
   messages: UIMessage[],
 ): UIMessage[] {
@@ -230,9 +239,13 @@ export const formatters = {
     messages: UIMessage[],
     options?: {
       tools: ToolSet;
+      isGemini: boolean;
     },
   ) => {
-    const llmFormatOps = [...LLMFormatOps];
+    const llmFormatOps = [
+      ...(options?.isGemini ? [removeReasoningParts] : []),
+      ...LLMFormatOps,
+    ];
     const coreMessages = convertToCoreMessages(
       formatMessages(messages, llmFormatOps),
       options,
