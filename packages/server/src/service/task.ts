@@ -532,12 +532,14 @@ class TaskService {
       minionId: task.minionId
         ? minionIdCoder.encode(task.minionId)
         : task.legacyMinionId || undefined,
-      subtasks: subtasks.map((subtask) => ({
-        uid: uidCoder.encode(subtask.id),
-        status: subtask.status,
-        conversation: subtask.conversation,
-        todos: subtask.todos || undefined,
-      })),
+      subtasks: includeSubTasks
+        ? subtasks.map((subtask) => ({
+            uid: uidCoder.encode(subtask.id),
+            status: subtask.status,
+            conversation: subtask.conversation,
+            todos: subtask.todos || undefined,
+          }))
+        : undefined,
     };
   }
 
@@ -547,7 +549,7 @@ class TaskService {
     isInternalUser: boolean,
   ) {
     const taskId = uidCoder.decode(uid);
-    let taskQuery = db
+    const taskQuery = db
       .selectFrom("task")
       .innerJoin("user", "task.userId", "user.id")
       .where((eb) => {
@@ -558,6 +560,8 @@ class TaskService {
       })
       .select([
         "task.id",
+        "task.userId",
+        "task.isPublicShared",
         "task.createdAt",
         "task.updatedAt",
         "task.conversation",
@@ -570,18 +574,6 @@ class TaskService {
         sql<Todo[] | null>`task.environment->'todos'`.as("todos"),
       ]);
 
-    if (!isInternalUser) {
-      taskQuery = taskQuery.where((eb) => {
-        if (userId !== undefined) {
-          return eb.or([
-            eb("task.isPublicShared", "=", true),
-            eb("task.userId", "=", userId),
-          ]);
-        }
-        return eb("task.isPublicShared", "=", true);
-      });
-    }
-
     const tasks = await taskQuery.execute();
     if (!tasks || tasks.length === 0) {
       return null;
@@ -591,9 +583,20 @@ class TaskService {
     if (!task) {
       return null;
     }
+
+    if (!isInternalUser && !task.isPublicShared && task.userId !== userId) {
+      return null;
+    }
+
     const subtasks = tasks.filter((t) => t.id !== taskId);
 
-    const { userName, userImage, ...data } = task;
+    const {
+      userName,
+      userImage,
+      userId: taskUserId,
+      isPublicShared,
+      ...data
+    } = task;
 
     return {
       ...data,
