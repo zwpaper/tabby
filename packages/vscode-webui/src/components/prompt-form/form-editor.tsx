@@ -31,6 +31,7 @@ import {
   type Trigger,
   findSuggestionMatch,
 } from "@tiptap/suggestion";
+import { ScrollArea } from "../ui/scroll-area";
 import type { MentionListActions } from "./shared";
 import { SubmitHistoryExtension } from "./submit-history-extension";
 import {
@@ -447,10 +448,12 @@ export function FormEditor({
       }}
     >
       {children}
-      <EditorContent
-        editor={editor}
-        className="prose !border-none max-h-32 min-h-20 w-full max-w-none overflow-hidden overflow-y-auto break-words text-[var(--vscode-input-foreground)] focus:outline-none"
-      />
+      <ScrollArea viewportClassname="max-h-32">
+        <EditorContent
+          editor={editor}
+          className="prose !border-none min-h-20 w-full max-w-none overflow-hidden break-words text-[var(--vscode-input-foreground)] focus:outline-none"
+        />
+      </ScrollArea>
     </form>
   );
 }
