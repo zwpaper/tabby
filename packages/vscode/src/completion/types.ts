@@ -10,16 +10,12 @@ type CompletionApi = ApiClient["api"]["code"]["completion"]["$post"];
 export type CompletionRequest = InferRequestType<CompletionApi>["json"];
 export type CompletionResponse = InferResponseType<CompletionApi>;
 
-export interface DeclarationSnippet {
-  filepath: string;
-  body: string;
-}
-
-export interface CodeSnippet {
-  filepath: string;
-  body: string;
-  score?: number;
-}
+export type DeclarationSnippet = NonNullable<
+  CompletionRequest["segments"]["declarations"]
+>[number];
+export type CodeSnippet = NonNullable<
+  CompletionRequest["segments"]["relevantSnippetsFromChangedFiles"]
+>[number];
 
 // Internal completion context types
 export interface CompletionContext {
