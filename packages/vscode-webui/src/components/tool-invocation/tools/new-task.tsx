@@ -20,10 +20,6 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   const uid = tool.args?._meta?.uid;
   const description = tool.args?.description ?? "";
 
-  if (!uid) {
-    throw new Error("Missing task UID");
-  }
-
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: tool.toolName,
     toolCallId: tool.toolCallId,
@@ -41,10 +37,13 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   const inlinedTask = tool.args?._transient?.task;
 
   const shouldQueryTask =
-    tool.state !== "partial-call" && !inlinedTask && !taskRunnerState;
+    tool.state !== "partial-call" && !inlinedTask && !taskRunnerState && !!uid;
   const { data: loadedTask, isFetching: isTaskLoading } = useQuery({
     queryKey: ["task", uid],
     queryFn: async () => {
+      if (!uid) {
+        throw new Error("UID is required to query task");
+      }
       const resp = await apiClient.api.tasks[":uid"].$get({
         param: {
           uid,

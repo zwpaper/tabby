@@ -8,11 +8,6 @@ export const AttemptCompletionTool: React.FC<
 > = ({ tool: toolCall }) => {
   const { result = "", command = "" } = toolCall.args || {};
 
-  let markdown = result;
-  if (command) {
-    markdown += `\n\n**${command}**`;
-  }
-
   // Return null if there's nothing to display
   if (!result) {
     return null;
@@ -24,7 +19,10 @@ export const AttemptCompletionTool: React.FC<
         <Check className="size-4" />
         Task Completed
       </span>
-      <MessageMarkdown>{markdown}</MessageMarkdown>
+      <MessageMarkdown>{result}</MessageMarkdown>
+      {command && (
+        <span className="mx-auto mt-1 font-mono font-semibold">{command}</span>
+      )}
     </div>
   );
 };
