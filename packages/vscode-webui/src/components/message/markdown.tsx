@@ -171,7 +171,8 @@ export function MessageMarkdown({
                   return <FileBadge path={children} isDirectory={true} />;
                 }
                 if (isSymbol(children)) {
-                  return <SymbolBadge label={children} />;
+                  // FIXME(meng): turn off symbol detection for now.
+                  // return <SymbolBadge label={children} />;
                 }
               }
 
@@ -223,6 +224,7 @@ export function MessageMarkdown({
   );
 }
 
+// @ts-expect-error expect unused.
 const SymbolBadge: FC<{ label: string; className?: string }> = ({
   label,
   className,
