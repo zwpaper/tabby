@@ -1,30 +1,14 @@
 import type { GitPlatform } from "@ragdoll/common/git-utils";
 import type { Position, Range, TextDocument } from "vscode";
 
-// Basic completion types (matching backend API)
-export interface CompletionRequest {
-  language?: string;
-  segments: {
-    prefix: string;
-    suffix?: string;
-    filepath?: string;
-    git_url?: string;
-    declarations?: DeclarationSnippet[];
-    relevant_snippets_from_changed_files?: CodeSnippet[];
-    relevant_snippets_from_recently_opened_files?: CodeSnippet[];
-    clipboard?: string;
-  };
-  temperature?: number;
-  mode?: "standard" | "next_edit_suggestion";
-}
+import type { ApiClient } from "@/lib/auth-client";
+import type { InferRequestType, InferResponseType } from "hono";
 
-export interface CompletionResponse {
-  id: string;
-  choices: Array<{
-    index: number;
-    text: string;
-  }>;
-}
+type CompletionApi = ApiClient["api"]["code"]["completion"]["$post"];
+
+// Basic completion types (matching backend API)
+export type CompletionRequest = InferRequestType<CompletionApi>["json"];
+export type CompletionResponse = InferResponseType<CompletionApi>;
 
 export interface DeclarationSnippet {
   filepath: string;

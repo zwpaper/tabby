@@ -28,15 +28,13 @@ export class CodeCompletionService {
       snippets.push(...segments.declarations.slice(0, 5)); // Top 5 declarations
     }
 
-    if (segments.relevant_snippets_from_changed_files) {
-      snippets.push(
-        ...segments.relevant_snippets_from_changed_files.slice(0, 3),
-      );
+    if (segments.relevantSnippetsFromChangedFiles) {
+      snippets.push(...segments.relevantSnippetsFromChangedFiles.slice(0, 3));
     }
 
-    if (segments.relevant_snippets_from_recently_opened_files) {
+    if (segments.relevantSnippetsFromRecentlyOpenedFiles) {
       snippets.push(
-        ...segments.relevant_snippets_from_recently_opened_files.slice(0, 2),
+        ...segments.relevantSnippetsFromRecentlyOpenedFiles.slice(0, 2),
       ); // Top 2 recent files
     }
 

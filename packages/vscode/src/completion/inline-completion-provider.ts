@@ -212,7 +212,7 @@ export class InlineCompletionProvider
 
     // Pre-process (quick filters)
     const preProcessedChoices = this.postProcessor.process(
-      [{ index: 0, text: request.segments.prefix }],
+      [{ index: 0, text: request.segments.prefix ?? "" }],
       context,
       "pre",
     );
@@ -376,7 +376,7 @@ export class InlineCompletionProvider
         }
       }
 
-      const result = (await response.json()) as CompletionResponse;
+      const result = await response.json();
 
       // Validate response format
       if (!result.id || !Array.isArray(result.choices)) {
@@ -389,8 +389,8 @@ export class InlineCompletionProvider
       logger.debug(`Completion completed in ${duration}ms`, {
         requestId: result.id,
         choicesCount: result.choices.length,
-        prefixLength: request.segments.prefix.length,
-        suffixLength: request.segments.suffix?.length || 0,
+        prefixLength: request.segments.prefix?.length,
+        suffixLength: request.segments.suffix?.length,
       });
 
       return result;
@@ -483,11 +483,10 @@ export class InlineCompletionProvider
         prefix: context.prefix,
         suffix: context.suffix || undefined,
         filepath: relativePath,
-        git_url: extraContexts.git?.url,
+        gitUrl: extraContexts.git?.url,
         declarations: extraContexts.declarations,
-        relevant_snippets_from_changed_files:
-          extraContexts.recentlyChangedFiles,
-        relevant_snippets_from_recently_opened_files:
+        relevantSnippetsFromChangedFiles: extraContexts.recentlyChangedFiles,
+        relevantSnippetsFromRecentlyOpenedFiles:
           extraContexts.recentlyOpenedFiles,
       },
       temperature: this.configManager.getConfig().temperature,

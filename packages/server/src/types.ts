@@ -41,7 +41,7 @@ export const ZodCodeCompletionRequestType = z.object({
       prefix: z.string().describe("Code before cursor"),
       suffix: z.string().optional().describe("Code after cursor"),
       filepath: z.string().optional().describe("Relative file path"),
-      git_url: z.string().optional().describe("Git repository URL"),
+      gitUrl: z.string().optional().describe("Git repository URL"),
       declarations: z
         .array(
           z.object({
@@ -51,7 +51,7 @@ export const ZodCodeCompletionRequestType = z.object({
         )
         .optional()
         .describe("LSP-provided declarations"),
-      relevant_snippets_from_changed_files: z
+      relevantSnippetsFromChangedFiles: z
         .array(
           z.object({
             filepath: z.string().describe("File path"),
@@ -61,7 +61,7 @@ export const ZodCodeCompletionRequestType = z.object({
         )
         .optional()
         .describe("Recent edit context"),
-      relevant_snippets_from_recently_opened_files: z
+      relevantSnippetsFromRecentlyOpenedFiles: z
         .array(
           z.object({
             filepath: z.string().describe("File path"),
