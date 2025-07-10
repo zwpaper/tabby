@@ -18,13 +18,6 @@ class CredentialStorage<T extends PochiCredential> {
   private async readCredentials(): Promise<T | undefined> {
     try {
       if (!(await isFileExists(this.credentialFilePath))) {
-        logger.warn(
-          `Credential storage file does not exist at ${this.credentialFilePath}. Creating a new one.`,
-        );
-        await fs.mkdir(path.dirname(this.credentialFilePath), {
-          recursive: true,
-        });
-        await fs.writeFile(this.credentialFilePath, JSON.stringify({}));
         return undefined;
       }
       const data = await fs.readFile(this.credentialFilePath, "utf-8");
@@ -44,21 +37,21 @@ class CredentialStorage<T extends PochiCredential> {
   }
 
   async write(value: string | undefined): Promise<void> {
-    const credential = await this.readCredentials();
-    if (credential) {
+    try {
+      const credential = (await this.readCredentials()) ?? ({} as T);
       credential.bearer_token = value;
-      try {
-        await fs.writeFile(
-          this.credentialFilePath,
-          JSON.stringify(credential, null),
-        );
-      } catch (error) {
-        logger.error(
-          `Failed to write credential storage file at ${this.credentialFilePath}:`,
-          error,
-        );
-        return;
-      }
+      await fs.mkdir(path.dirname(this.credentialFilePath), {
+        recursive: true,
+      });
+      await fs.writeFile(
+        this.credentialFilePath,
+        JSON.stringify(credential, null),
+      );
+    } catch (error) {
+      logger.error(
+        `Failed to write credential storage file at ${this.credentialFilePath}:`,
+        error,
+      );
     }
   }
 }
