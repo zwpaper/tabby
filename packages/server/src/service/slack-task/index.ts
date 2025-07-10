@@ -92,6 +92,7 @@ class SlackTaskService {
         }
       }
       case "streaming":
+      case "pending-model":
       case "pending-tool": {
         blocks = slackRichTextRenderer.renderTaskRunning(
           headerInfo.prompt,
@@ -104,9 +105,6 @@ class SlackTaskService {
         );
         text = "Task running";
         break;
-      }
-      case "pending-model": {
-        return;
       }
       default: {
         throw task.status satisfies never;
