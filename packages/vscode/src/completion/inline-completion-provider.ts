@@ -394,15 +394,13 @@ export class InlineCompletionProvider
       });
 
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       // Handle abort/cancellation - this is expected behavior, just return null
       if (error instanceof Error && error.name === "AbortError") {
-        // Check if the timeout was the cause of the abort
         if (timeoutController.signal.aborted) {
-          throw new CompletionError(
-            "Request timeout. Please try again.",
-            "TIMEOUT_ERROR",
-          );
+          logger.trace("Request timeout occurred");
+          this.statusBarManager.showError();
+          return null;
         }
         logger.debug("Request was aborted");
         return null;
@@ -572,10 +570,6 @@ export class InlineCompletionProvider
         break;
       case "RATE_LIMIT_ERROR":
         message = "Rate limit exceeded. Please try again in a moment.";
-        break;
-      case "TIMEOUT_ERROR":
-        message = "Request timeout. Please try again.";
-        actions.push("Retry");
         break;
       default:
         // Don't show generic errors to avoid spam
