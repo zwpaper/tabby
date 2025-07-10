@@ -149,6 +149,7 @@ export function MessageMarkdown({
                 // have file extension like `file.txt`
                 const isFilePath = (text: string): boolean => {
                   return (
+                    !text.includes("://") &&
                     /\.[a-z0-9]+$/i.test(text) &&
                     isKnownProgrammingLanguage(text)
                   );
@@ -156,7 +157,10 @@ export function MessageMarkdown({
 
                 // have folder path like `folder/` or `folder/subfolder`
                 const isFolderPath = (text: string): boolean => {
-                  return text.includes("/") || text.includes("\\");
+                  return (
+                    !text.includes("://") &&
+                    (text.includes("/") || text.includes("\\"))
+                  );
                 };
 
                 const isSymbol = (text: string): boolean => {
