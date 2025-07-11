@@ -5,6 +5,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
 import {
   CheckIcon,
@@ -36,7 +37,10 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   isExecuting,
   completed,
 }) => {
-  const [expanded, setExpanded] = useState<boolean>(true);
+  const [expanded, setExpanded] = useDebounceState(false, 500);
+  useEffect(() => {
+    setExpanded(true);
+  }, [setExpanded]);
   const [isStopping, setIsStopping] = useState<boolean>(false);
   const toggleExpanded = () => setExpanded((prev) => !prev);
   const { isCopied, copyToClipboard } = useCopyToClipboard({
@@ -67,7 +71,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     if (!isExecuting && completed) {
       setExpanded(false);
     }
-  }, [isExecuting, completed]);
+  }, [isExecuting, completed, setExpanded]);
 
   // Reset stopping state when execution completes
   useEffect(() => {
