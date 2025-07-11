@@ -1,11 +1,22 @@
 import type { UIMessage } from "ai";
 import type { DB } from ".";
 
+export type CheckpointPart = {
+  type: "checkpoint";
+  checkpoint: {
+    commit: string;
+  };
+};
+
+export type ExtendedUIMessage = Omit<UIMessage, "parts"> & {
+  parts: Array<UIMessage["parts"][number] | CheckpointPart>;
+};
+
 export type DBMessage = {
   id: string;
   createdAt: string;
   role: UIMessage["role"];
-  parts: Array<Exclude<UIMessage["parts"][number], { type: "source" }>>;
+  parts: Array<Exclude<ExtendedUIMessage["parts"][number], { type: "source" }>>;
   experimental_attachments?: UIMessage["experimental_attachments"];
 };
 

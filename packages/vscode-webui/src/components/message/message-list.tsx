@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useEnableCheckpoint } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
-import { hasExtendedPartMixin } from "@ragdoll/common";
+import type { ExtendedUIMessage } from "@ragdoll/db";
 import { useEffect } from "react";
 import { CheckpointUI } from "../checkpoint-ui";
 import { MessageAttachments } from "./attachments";
@@ -78,6 +78,7 @@ export const MessageList: React.FC<{
             <div className={cn("ml-1 flex flex-col", showUserAvatar && "mt-3")}>
               {m.parts.map((part, index) => (
                 <Part
+                  role={m.role}
                   key={index}
                   isLastPartInMessages={
                     index === m.parts.length - 1 &&
@@ -111,13 +112,15 @@ export const MessageList: React.FC<{
 };
 
 function Part({
+  role,
   part,
   partIndex,
   isLastPartInMessages,
   isLoading,
 }: {
+  role: UIMessage["role"];
   partIndex: number;
-  part: NonNullable<UIMessage["parts"]>[number];
+  part: NonNullable<ExtendedUIMessage["parts"]>[number];
   isLastPartInMessages: boolean;
   isLoading: boolean;
 }) {
@@ -137,7 +140,11 @@ function Part({
   }
 
   if (part.type === "step-start") {
-    if (hasExtendedPartMixin(part)) {
+    return;
+  }
+
+  if (part.type === "checkpoint") {
+    if (role === "assistant") {
       return (
         <CheckpointUI checkpoint={part.checkpoint} isLoading={isLoading} />
       );
@@ -169,14 +176,14 @@ function TextPartUI({
 }
 
 const SeparatorWithCheckpoint: React.FC<{
-  message: UIMessage;
+  message: ExtendedUIMessage;
   isLoading: boolean;
 }> = ({ message, isLoading }) => {
   const enableCheckpoint = useEnableCheckpoint();
   const sep = <Separator className="mt-1 mb-2" />;
   if (!enableCheckpoint || message.role === "assistant") return sep;
   const part = message.parts.at(-1);
-  if (part && hasExtendedPartMixin(part)) {
+  if (part && part.type === "checkpoint") {
     return (
       <div className="mt-1 mb-2">
         <CheckpointUI

@@ -39,7 +39,14 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task" | "minion"> & {
   minion: Omit<DbImpl["minion"], "e2bSandboxId">;
 };
 
-export type { DBMessage, TaskError, TaskCreateEvent, TaskEvent } from "./types";
+export type {
+  DBMessage,
+  ExtendedUIMessage,
+  CheckpointPart,
+  TaskError,
+  TaskCreateEvent,
+  TaskEvent,
+} from "./types";
 export {
   ZodEnvironment,
   type Environment,

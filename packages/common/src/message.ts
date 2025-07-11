@@ -1,28 +1,5 @@
+import type { DBMessage } from "@ragdoll/db";
 import type { DataStreamWriter, LanguageModelUsage, UIMessage } from "ai";
-
-export type ExtendedPartMixin = {
-  checkpoint?: {
-    commit: string | null; // The commit hash or identifier for the checkpoint
-  };
-};
-
-export function hasExtendedPartMixin(
-  part: UIMessage["parts"][number],
-): part is UIMessage["parts"][number] & ExtendedPartMixin {
-  return "checkpoint" in part;
-}
-
-export type ExtendedUIMessage = Omit<UIMessage, "parts"> & {
-  parts: Array<UIMessage["parts"][number] & ExtendedPartMixin>;
-};
-
-export type DBMessage = {
-  id: string;
-  createdAt: string;
-  role: UIMessage["role"];
-  parts: Array<Exclude<ExtendedUIMessage["parts"][number], { type: "source" }>>;
-  experimental_attachments?: UIMessage["experimental_attachments"];
-};
 
 export type DataPart =
   | {
@@ -39,7 +16,9 @@ export type DataPart =
 
 export function toUIMessage(message: DBMessage): UIMessage {
   return {
-    ...message,
+    // Force conversion to UIMessage
+    // @ts-expect-error
+    ...(message as UIMessage),
     content: "",
     createdAt: message.createdAt ? new Date(message.createdAt) : undefined,
   };

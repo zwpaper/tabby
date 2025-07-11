@@ -1,15 +1,15 @@
 import { vscodeHost } from "@/lib/vscode";
-import type { ExtendedPartMixin } from "@ragdoll/common";
 import { useMutation } from "@tanstack/react-query";
 import { Check, GitCommitHorizontal, Loader2 } from "lucide-react";
 
 import { useEnableCheckpoint } from "@/features/settings";
 import { cn } from "@/lib/utils";
+import type { CheckpointPart } from "@ragdoll/db";
 import { useState } from "react";
 import { Button } from "./ui/button";
 
 export const CheckpointUI: React.FC<{
-  checkpoint: ExtendedPartMixin["checkpoint"];
+  checkpoint: CheckpointPart["checkpoint"];
   isLoading: boolean;
   className?: string;
   hideBorderOnHover?: boolean;
@@ -32,9 +32,7 @@ export const CheckpointUI: React.FC<{
   });
 
   const handleRestoreCheckpoint = () => {
-    if (checkpoint?.commit) {
-      return restoreCheckpoint(checkpoint.commit);
-    }
+    return restoreCheckpoint(checkpoint.commit);
   };
 
   const showCheckpoint = enableCheckpoint && checkpoint?.commit;
@@ -57,33 +55,31 @@ export const CheckpointUI: React.FC<{
           hide={isPending || showSuccessIcon}
           hideOnHover={hideBorderOnHover}
         />
-        {checkpoint?.commit && (
-          <span
-            className={cn(
-              "flex items-center text-muted-foreground/60 group-hover:px-2.5 group-hover:text-foreground",
-              (isPending || showSuccessIcon) && "px-2.5",
-            )}
-          >
-            {isPending ? (
-              <Loader2 className="size-3 animate-spin " />
-            ) : showSuccessIcon ? (
-              <Check className="size-4 text-emerald-700 dark:text-emerald-300" />
-            ) : (
-              <GitCommitHorizontal className="size-5" />
-            )}
-            {!showSuccessIcon && (
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={isPending}
-                onClick={handleRestoreCheckpoint}
-                className="hidden h-5 items-center gap-1 rounded-md px-1 py-0.5 text-xs hover:bg-transparent group-hover:flex dark:hover:bg-transparent"
-              >
-                {isPending ? "Restoring..." : "Restore"}
-              </Button>
-            )}
-          </span>
-        )}
+        <span
+          className={cn(
+            "flex items-center text-muted-foreground/60 group-hover:px-2.5 group-hover:text-foreground",
+            (isPending || showSuccessIcon) && "px-2.5",
+          )}
+        >
+          {isPending ? (
+            <Loader2 className="size-3 animate-spin " />
+          ) : showSuccessIcon ? (
+            <Check className="size-4 text-emerald-700 dark:text-emerald-300" />
+          ) : (
+            <GitCommitHorizontal className="size-5" />
+          )}
+          {!showSuccessIcon && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={isPending}
+              onClick={handleRestoreCheckpoint}
+              className="hidden h-5 items-center gap-1 rounded-md px-1 py-0.5 text-xs hover:bg-transparent group-hover:flex dark:hover:bg-transparent"
+            >
+              {isPending ? "Restoring..." : "Restore"}
+            </Button>
+          )}
+        </span>
         <Border
           hide={isPending || showSuccessIcon}
           hideOnHover={hideBorderOnHover}

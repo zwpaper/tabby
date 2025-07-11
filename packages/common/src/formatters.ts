@@ -1,3 +1,4 @@
+import type { ExtendedUIMessage } from "@ragdoll/db";
 import { isAutoApproveTool, isUserInputTool } from "@ragdoll/tools";
 import { type ToolSet, type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
@@ -106,6 +107,13 @@ function removeContentInMessages(messages: UIMessage[]): UIMessage[] {
   });
 }
 
+function removeCheckpointPart(messages: ExtendedUIMessage[]): UIMessage[] {
+  return messages.map((x) => {
+    x.parts = x.parts.filter((y) => y.type !== "checkpoint");
+    return x;
+  }) as UIMessage[];
+}
+
 function removeEmptyMessages(messages: UIMessage[]): UIMessage[] {
   return messages.filter((message) => message.parts.length > 0);
 }
@@ -209,6 +217,7 @@ const LLMFormatOps: FormatOp[] = [
   removeToolCallResultMetadata,
   removeToolCallArgumentMetadata,
   removeToolCallArgumentTransientData,
+  removeCheckpointPart,
 ];
 const UIFormatOps = [
   prompts.stripEnvironmentDetails,

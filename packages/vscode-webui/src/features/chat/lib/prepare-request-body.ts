@@ -1,6 +1,6 @@
 import { vscodeHost } from "@/lib/vscode";
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import { type ExtendedPartMixin, fromUIMessage } from "@ragdoll/common";
+import { fromUIMessage } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { McpTool } from "@ragdoll/vscode-webui-bridge";
@@ -46,21 +46,11 @@ async function appendCheckpoint(message: UIMessageWithRevisionId) {
   );
   if (!ckpt) return;
 
-  if (message.role === "user") {
-    const part = message.parts.at(-1);
-    if (!part) {
-      throw new Error("missing parts in messages");
-    }
-
-    const mixin = part as ExtendedPartMixin;
-    mixin.checkpoint = { commit: ckpt };
-  }
-
-  const stepStart = {
-    type: "step-start",
+  const checkpoint = {
+    type: "checkpoint",
     checkpoint: { commit: ckpt },
   } as const;
-  if (message.role === "assistant") {
-    message.parts.push(stepStart);
-  }
+
+  // @ts-expect-error
+  message.parts.push(checkpoint);
 }
