@@ -6,8 +6,8 @@ export const AdvancedSettingsSection: React.FC = () => {
   const {
     isDevMode,
     updateIsDevMode,
-    enableCheckpoint,
-    updateEnableCheckpoint,
+    disableCheckpoint,
+    updateDisableCheckpoint,
     enablePochiModels,
     updateEnablePochiModels,
   } = useSettingsStore();
@@ -30,9 +30,9 @@ export const AdvancedSettingsSection: React.FC = () => {
             <SettingsCheckboxOption
               id="enable-checkpoint"
               label="Enable Checkpoint"
-              checked={enableCheckpoint}
+              checked={!disableCheckpoint}
               onCheckedChange={(checked) => {
-                updateEnableCheckpoint(!!checked);
+                updateDisableCheckpoint(!checked);
               }}
             />
             <SettingsCheckboxOption

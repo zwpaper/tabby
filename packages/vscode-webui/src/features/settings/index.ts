@@ -10,5 +10,5 @@ export { AutoApproveMenu } from "./components/auto-approve-menu";
 export { SettingsPage } from "./components/page";
 
 export function useEnableCheckpoint() {
-  return useSettingsStore((x) => x.enableCheckpoint);
+  return !useSettingsStore((x) => x.disableCheckpoint);
 }
