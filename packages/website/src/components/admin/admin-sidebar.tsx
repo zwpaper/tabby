@@ -1,4 +1,4 @@
-import { IconTestPipe, IconUsers } from "@tabler/icons-react";
+import { IconUsers } from "@tabler/icons-react";
 import type * as React from "react";
 
 import {
@@ -18,11 +18,6 @@ const adminNavItems = [
     title: "Users",
     url: "/admin/users",
     icon: IconUsers,
-  },
-  {
-    title: "Prompt Evaluation",
-    url: "/admin/prompt-evaluation",
-    icon: IconTestPipe,
   },
 ];
 export function AdminSidebar({

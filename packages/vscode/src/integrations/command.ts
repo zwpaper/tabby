@@ -163,51 +163,6 @@ export class CommandManager implements vscode.Disposable {
         },
       ),
 
-      vscode.commands.registerCommand(
-        "pochi.prepareEvaluationProject",
-        async (params: {
-          uid: string;
-          batchId: string;
-          githubTemplateUrl: string;
-        }) => {
-          const currentWorkspace = vscode.workspace.workspaceFolders?.[0].uri;
-          if (!currentWorkspace) {
-            vscode.window.showErrorMessage(
-              "No workspace folder found for evaluation project",
-            );
-            return;
-          }
-
-          return vscode.window.withProgress(
-            {
-              location: vscode.ProgressLocation.Notification,
-              cancellable: false,
-            },
-            async (progress) => {
-              try {
-                progress.report({
-                  message: "Pochi: Preparing evaluation project...",
-                });
-                await this.prepareProjectAndOpenTask(
-                  progress,
-                  currentWorkspace,
-                  params.githubTemplateUrl,
-                  {
-                    uid: params.uid,
-                  },
-                );
-              } catch (error) {
-                const errorMessage =
-                  error instanceof Error ? error.message : "Unknown error";
-                vscode.window.showErrorMessage(
-                  `Pochi: Failed to prepare evaluation project. ${errorMessage}`,
-                );
-              }
-            },
-          );
-        },
-      ),
-
       vscode.commands.registerCommand("pochi.openTask", async (uid: string) => {
         vscode.window.withProgress(
           {

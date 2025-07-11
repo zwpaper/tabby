@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import type { ApiClient, AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
@@ -15,23 +14,7 @@ export interface NewProjectTask {
   uid: string;
   event: Extract<DB["task"]["event"], { type: "website:new-project" }>;
 }
-interface EvaluationTask {
-  uid: string;
-  event: Extract<DB["task"]["event"], { type: "batch:evaluation" }>;
-}
-
 const logger = getLogger("UriHandler");
-
-function getEvaluationProjectUri(batchId: string, uid: string): vscode.Uri {
-  const homeUri = vscode.Uri.file(homedir());
-  const evaluationBaseUri = vscode.Uri.joinPath(
-    homeUri,
-    "PochiProjects",
-    "evaluation-tests",
-    batchId,
-  );
-  return vscode.Uri.joinPath(evaluationBaseUri, `prompt-${uid}`);
-}
 
 @injectable()
 @singleton()
@@ -86,9 +69,6 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       const isNewTask = task?.conversation?.messages.length === 1;
       if (isNewTask) {
         switch (task?.event?.type) {
-          case "batch:evaluation":
-            await this.handleEvaluationTask(task as EvaluationTask);
-            break;
           case "website:new-project":
             await this.handleNewProjectTask(task as NewProjectTask);
             return;
@@ -197,36 +177,6 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
         await vscode.commands.executeCommand("pochi.createProject", task);
       }
     }
-  }
-
-  private async handleEvaluationTask(task: EvaluationTask) {
-    const batchId = task.event.data.batchId;
-
-    const evaluationProjectDir = getEvaluationProjectUri(batchId, task.uid);
-
-    await vscode.workspace.fs.createDirectory(evaluationProjectDir);
-
-    // Push job to prepare the evaluation project and open the existing task
-    await this.workspaceJobQueue.push({
-      workspaceUri: evaluationProjectDir.toString(),
-      command: "pochi.prepareEvaluationProject",
-      args: [
-        {
-          uid: task.uid,
-          batchId,
-          githubTemplateUrl: task.event.data.githubTemplateUrl,
-        },
-      ],
-      expiresAt: Date.now() + 1000 * 60,
-    });
-
-    await vscode.commands.executeCommand(
-      "vscode.openFolder",
-      evaluationProjectDir,
-      {
-        forceNewWindow: true,
-      },
-    );
   }
 
   private async loginWithDeviceLink(token: string) {

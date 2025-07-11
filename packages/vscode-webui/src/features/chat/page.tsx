@@ -45,7 +45,7 @@ import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useMinionId } from "@/lib/hooks/use-minion-id";
 import { vscodeHost } from "@/lib/vscode";
-import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
+
 import { ServerErrors } from "@ragdoll/server";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
@@ -92,19 +92,11 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     task?.totalTokens || 0,
   );
 
-  const isBatchEvaluationTask = task?.event?.type === "batch:evaluation";
-
   useEffect(() => {
     if (task) {
       setTotalTokens(task.totalTokens || 0);
     }
   }, [task]);
-
-  useEffect(() => {
-    if (isBatchEvaluationTask) {
-      autoApproveGuard.current = true;
-    }
-  }, [isBatchEvaluationTask, autoApproveGuard]);
 
   const { data: currentWorkspace, isFetching } = useCurrentWorkspace();
   const isWorkspaceActive = !!currentWorkspace;
@@ -177,15 +169,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
           numToolCalls,
         },
       });
-
-      if (
-        isBatchEvaluationTask &&
-        finishReason === "tool-calls" &&
-        message.parts &&
-        hasAttemptCompletion(message as UIMessage)
-      ) {
-        vscodeHost.closeCurrentWorkspace();
-      }
     },
     experimental_prepareRequestBody: async (req) =>
       prepareRequestBody(

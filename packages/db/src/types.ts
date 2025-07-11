@@ -47,16 +47,6 @@ export type TaskCreateEvent =
         }[];
         githubTemplateUrl?: string;
       };
-    }
-  | {
-      type: "batch:evaluation";
-      data: {
-        batchId: string;
-        githubTemplateUrl: string;
-        prompt: string;
-        promptIndex: number;
-        totalPrompts: number;
-      };
     };
 
 export type TaskError = {
