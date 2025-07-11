@@ -83,7 +83,7 @@ export function SharePage() {
     <VSCodeWebProvider>
       <ChatContextProvider>
         <QueryClientProvider client={queryClient}>
-          <div>
+          <div ref={containerRef}>
             {/* todo skeleton outside? */}
             {messages.length === 0 ? (
               <div className="flex min-h-screen items-center justify-center">
@@ -91,7 +91,6 @@ export function SharePage() {
               </div>
             ) : (
               <div
-                ref={containerRef}
                 className={cn("grid grid-cols-1 gap-3", {
                   "md:grid-cols-4": todos && todos.length > 0,
                 })}
