@@ -67,7 +67,15 @@ function getCurrentOpenedFiles(workspace: Environment["workspace"]) {
   if (openFiles.length === 0) {
     return "";
   }
-  return `# Active File Tabs in Editor\n${openFiles.join("\n")}`;
+  const header = `# Active File Tabs in Editor\nHere are the open file tabs in the editor. If a user mentions "this" or "that" without an active selection, they are likely referring active tab (if exists) below:`;
+  return `${header}\n${openFiles
+    .map((tab) => {
+      if (typeof tab === "string") {
+        return tab;
+      }
+      return tab.isActive ? `${tab.filepath} (active)` : tab.filepath;
+    })
+    .join("\n")}`;
 }
 
 function getVisibleTerminals(workspace: Environment["workspace"]) {

@@ -107,6 +107,7 @@ tsconfig.json
 README.md
 
 # Active File Tabs in Editor
+Here are the open file tabs in the editor. If a user mentions "this" or "that" without an active selection, they are likely referring active tab (if exists) below:
 README.md
 tsconfig.json
 package.json

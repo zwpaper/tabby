@@ -185,7 +185,11 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         files,
         isTruncated,
         gitStatus,
-        activeTabs: this.tabState.activeTabs.value.map((tab) => tab.filepath),
+        activeTabs: this.tabState.activeTabs.value.map((tab) => ({
+          filepath: tab.filepath,
+          isActive:
+            tab.filepath === this.tabState.activeSelection.value?.filepath,
+        })),
         activeSelection: this.tabState.activeSelection.value,
         terminals: this.terminalState.visibleTerminals.value,
       },

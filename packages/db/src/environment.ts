@@ -8,7 +8,17 @@ export const ZodEnvironment = z.object({
       files: z.array(z.string()).describe("List of files in the workspace."),
       isTruncated: z.boolean().describe("Whether the file list is truncated."),
       activeTabs: z
-        .array(z.string())
+        .union([
+          z.array(z.string()),
+          z.array(
+            z.object({
+              filepath: z.string().describe("The file path of the tab."),
+              isActive: z
+                .boolean()
+                .describe("Whether this tab is currently active."),
+            }),
+          ),
+        ])
         .optional()
         .describe("Active editor tabs opened in the current workspace."),
       activeSelection: z
