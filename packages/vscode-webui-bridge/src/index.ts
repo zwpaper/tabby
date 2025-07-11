@@ -59,7 +59,7 @@ export type SaveCheckpointOptions = {
 const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";
 
-const isDev = process.env.POCHI_LOCAL_SERVER === "true";
+export const isDev = process.env.POCHI_LOCAL_SERVER === "true";
 
 export function getServerBaseUrl() {
   return isDev ? DevBaseUrl : ProdBaseUrl;

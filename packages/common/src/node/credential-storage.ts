@@ -11,8 +11,20 @@ export interface PochiCredential {
 const logger = getLogger("PochiCredentialStorage");
 
 class CredentialStorage<T extends PochiCredential> {
+  private isDev: boolean;
+
+  constructor(options?: {
+    isDev?: boolean;
+  }) {
+    this.isDev = options?.isDev ?? false;
+  }
+
   private get credentialFilePath(): string {
-    return path.join(os.homedir(), ".pochi", "credentials.json");
+    return path.join(
+      os.homedir(),
+      ".pochi",
+      this.isDev ? "credentials-dev.json" : "credentials.json",
+    );
   }
 
   private async readCredentials(): Promise<T | undefined> {
@@ -39,14 +51,24 @@ class CredentialStorage<T extends PochiCredential> {
   async write(value: string | undefined): Promise<void> {
     try {
       const credential = (await this.readCredentials()) ?? ({} as T);
-      credential.bearer_token = value;
-      await fs.mkdir(path.dirname(this.credentialFilePath), {
-        recursive: true,
-      });
-      await fs.writeFile(
-        this.credentialFilePath,
-        JSON.stringify(credential, null),
-      );
+      const { bearer_token, ...rest } = credential;
+      const updatedCredential =
+        value !== undefined ? { ...rest, bearer_token: value } : rest;
+
+      if (Object.keys(updatedCredential).length === 0) {
+        // if credential becomes empty, remove the file
+        if (await isFileExists(this.credentialFilePath)) {
+          await fs.unlink(this.credentialFilePath);
+        }
+      } else {
+        await fs.mkdir(path.dirname(this.credentialFilePath), {
+          recursive: true,
+        });
+        await fs.writeFile(
+          this.credentialFilePath,
+          JSON.stringify(updatedCredential),
+        );
+      }
     } catch (error) {
       logger.error(
         `Failed to write credential storage file at ${this.credentialFilePath}:`,
@@ -56,6 +78,4 @@ class CredentialStorage<T extends PochiCredential> {
   }
 }
 
-const credentialStorage = new CredentialStorage();
-
-export { credentialStorage };
+export { CredentialStorage };

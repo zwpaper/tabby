@@ -1,5 +1,6 @@
 import { type Signal, signal } from "@preact/signals-core";
-import { credentialStorage } from "@ragdoll/common/node";
+import { CredentialStorage } from "@ragdoll/common/node";
+import { isDev } from "@ragdoll/vscode-webui-bridge";
 import { injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 
@@ -13,6 +14,9 @@ export class TokenStorage implements vscode.Disposable {
     if (process.env.POCHI_SESSION_TOKEN) {
       return;
     }
+    const credentialStorage = new CredentialStorage({
+      isDev,
+    });
     this.token.value = await credentialStorage.read();
     this.dispose = this.token.subscribe(async (token) => {
       await credentialStorage.write(token);

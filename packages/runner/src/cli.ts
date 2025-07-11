@@ -3,7 +3,7 @@
 import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
-import { credentialStorage } from "@ragdoll/common/node";
+import { CredentialStorage } from "@ragdoll/common/node";
 import { type AppType, createPochiEventSource } from "@ragdoll/server";
 import chalk from "chalk";
 import * as commander from "commander";
@@ -28,6 +28,8 @@ program
 
 const logger = getLogger("Pochi");
 logger.debug(`pochi v${packageJson.version}`);
+
+const prodServerUrl = "https://app.getpochi.com";
 
 program
   .optionsGroup("Specify Task:")
@@ -54,11 +56,7 @@ program
     "The path to the ripgrep binary.",
     findRipgrep() || undefined,
   )
-  .requiredOption(
-    "--url <url>",
-    "The Pochi server URL.",
-    "https://app.getpochi.com",
-  )
+  .requiredOption("--url <url>", "The Pochi server URL.", prodServerUrl)
   .option(
     "--token <token>",
     "The Pochi session token. Can also be provided via the POCHI_SESSION_TOKEN environment variable or from the shared credentials file (`~/.pochi/credentials.json`).",
@@ -108,6 +106,9 @@ program
 
     let token = options.token ?? process.env.POCHI_SESSION_TOKEN;
     if (!token) {
+      const credentialStorage = new CredentialStorage({
+        isDev: options.url !== prodServerUrl,
+      });
       token = await credentialStorage.read();
     }
 

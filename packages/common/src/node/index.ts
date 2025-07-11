@@ -12,4 +12,4 @@ export { getSystemInfo } from "./system-info";
 export { GitStatusReader, type GitStatusReaderOptions } from "./git-status";
 export { collectCustomRules } from "./custom-rules";
 export { MaxTerminalOutputSize } from "./limits";
-export { credentialStorage } from "./credential-storage";
+export { CredentialStorage } from "./credential-storage";
