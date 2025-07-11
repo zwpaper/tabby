@@ -38,7 +38,8 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   isExecuting,
   completed,
 }) => {
-  const [expanded, setExpanded, setExpandedImmediately] = useExpanded();
+  const [expanded, setExpanded, setExpandedImmediately] =
+    useExpanded(completed);
   const [isStopping, setIsStopping] = useState<boolean>(false);
   const toggleExpanded = () => setExpandedImmediately((prev) => !prev);
   const { isCopied, copyToClipboard } = useCopyToClipboard({
@@ -172,9 +173,9 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   );
 };
 
-function useExpanded() {
+function useExpanded(completed: boolean) {
   if (isVSCodeEnvironment()) {
-    return useDebounceState(true, 1_500);
+    return useDebounceState(!completed, 1_500);
   }
   const [value, setValue] = useState(false);
   return [value, setValue, setValue] as const;
