@@ -10,7 +10,13 @@ main() {
     check_git_clean
     bun tsc
     bun install --frozen-lockfile
-    bun run test 
+
+    if [[ -n "$POCHI_REMOTE_ENV" ]]; then
+        echo "Running in pochi remote env, skip vscode tests"
+        bun run turbo test --filter='!pochi'
+    else
+        bun run test
+    fi
 }
 
 main

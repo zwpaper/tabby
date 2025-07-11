@@ -63,6 +63,10 @@ class MinionService {
     const sandboxId = this.hashPortForwardIdToSandboxId(portForwardId);
 
     const envs: Record<string, string> = {
+      // envs available externally
+      POCHI_REMOTE_ENV: "true",
+
+      // envs used internally
       POCHI_SESSION_TOKEN: apiKey.key,
       POCHI_TASK_ID: uid,
       POCHI_MINION_ID: minionId,
