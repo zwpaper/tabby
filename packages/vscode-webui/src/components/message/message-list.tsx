@@ -8,6 +8,7 @@ import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useEnableCheckpoint } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
 import { hasExtendedPartMixin } from "@ragdoll/common";
@@ -96,7 +97,7 @@ export const MessageList: React.FC<{
             )}
           </div>
           {messageIndex < renderMessages.length - 1 && (
-            <Separator className="mt-1 mb-2" />
+            <SeparatorWithCheckpoint message={m} isLoading={isLoading} />
           )}
         </div>
       ))}
@@ -166,3 +167,27 @@ function TextPartUI({
   }
   return <MessageMarkdown className={className}>{part.text}</MessageMarkdown>;
 }
+
+const SeparatorWithCheckpoint: React.FC<{
+  message: UIMessage;
+  isLoading: boolean;
+}> = ({ message, isLoading }) => {
+  const enableCheckpoint = useEnableCheckpoint();
+  const sep = <Separator className="mt-1 mb-2" />;
+  if (!enableCheckpoint || message.role === "assistant") return sep;
+  const part = message.parts.at(-1);
+  if (part && hasExtendedPartMixin(part)) {
+    return (
+      <div className="mt-1 mb-2">
+        <CheckpointUI
+          checkpoint={part.checkpoint}
+          isLoading={isLoading}
+          hideBorderOnHover={false}
+          className="max-w-full"
+        />
+      </div>
+    );
+  }
+
+  return sep;
+};

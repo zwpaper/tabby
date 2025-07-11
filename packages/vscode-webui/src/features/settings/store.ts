@@ -47,7 +47,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
       isDevMode: false,
 
-      enableCheckpoint: false,
+      enableCheckpoint: true,
 
       enablePochiModels: false,
 

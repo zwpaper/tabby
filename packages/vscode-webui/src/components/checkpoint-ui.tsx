@@ -2,8 +2,8 @@ import { vscodeHost } from "@/lib/vscode";
 import type { ExtendedPartMixin } from "@ragdoll/common";
 import { useMutation } from "@tanstack/react-query";
 import { Check, GitCommitHorizontal, Loader2 } from "lucide-react";
-import { useSettingsStore } from "../features/settings/store";
 
+import { useEnableCheckpoint } from "@/features/settings";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -11,8 +11,10 @@ import { Button } from "./ui/button";
 export const CheckpointUI: React.FC<{
   checkpoint: ExtendedPartMixin["checkpoint"];
   isLoading: boolean;
-}> = ({ checkpoint, isLoading }) => {
-  const { enableCheckpoint } = useSettingsStore();
+  className?: string;
+  hideBorderOnHover?: boolean;
+}> = ({ checkpoint, isLoading, className, hideBorderOnHover = true }) => {
+  const enableCheckpoint = useEnableCheckpoint();
 
   const [showSuccessIcon, setShowSuccessIcon] = useState(false);
 
@@ -48,11 +50,20 @@ export const CheckpointUI: React.FC<{
         className={cn(
           "-translate-x-1/2 -top-1 group absolute left-1/2 mx-auto flex min-h-5 w-full max-w-[72px] select-none items-center hover:max-w-full",
           isLoading && "pointer-events-none",
+          className,
         )}
       >
-        <Border hide={isPending || showSuccessIcon} />
+        <Border
+          hide={isPending || showSuccessIcon}
+          hideOnHover={hideBorderOnHover}
+        />
         {checkpoint?.commit && (
-          <span className="flex items-center text-muted-foreground/80 group-hover:text-foreground">
+          <span
+            className={cn(
+              "flex items-center text-muted-foreground/60 group-hover:px-2.5 group-hover:text-foreground",
+              (isPending || showSuccessIcon) && "px-2.5",
+            )}
+          >
             {isPending ? (
               <Loader2 className="size-3 animate-spin " />
             ) : showSuccessIcon ? (
@@ -73,18 +84,25 @@ export const CheckpointUI: React.FC<{
             )}
           </span>
         )}
-        <Border hide={isPending || showSuccessIcon} />
+        <Border
+          hide={isPending || showSuccessIcon}
+          hideOnHover={hideBorderOnHover}
+        />
       </div>
     </div>
   );
 };
 
-function Border({ hide }: { hide: boolean }) {
+function Border({
+  hide,
+  hideOnHover,
+}: { hide: boolean; hideOnHover?: boolean }) {
   return (
     <div
       className={cn(
-        "flex-1 border-foreground/20 border-t group-hover:opacity-0",
-        hide && "opacity-0",
+        "flex-1 border-border border-t",
+        hideOnHover && "group-hover:opacity-0",
+        hideOnHover && hide && "opacity-0",
       )}
     />
   );
