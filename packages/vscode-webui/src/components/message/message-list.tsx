@@ -12,6 +12,7 @@ import { useToolCallLifeCycle } from "@/features/chat";
 import { useEnableCheckpoint } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
+import { isVSCodeEnvironment } from "@/lib/vscode";
 import type { ExtendedUIMessage } from "@ragdoll/db";
 import { useEffect } from "react";
 import { CheckpointUI } from "../checkpoint-ui";
@@ -154,7 +155,7 @@ function Part({
   }
 
   if (part.type === "checkpoint") {
-    if (role === "assistant") {
+    if (role === "assistant" && isVSCodeEnvironment()) {
       return (
         <CheckpointUI
           checkpoint={part.checkpoint}
@@ -196,7 +197,7 @@ const SeparatorWithCheckpoint: React.FC<{
   const sep = <Separator className="mt-1 mb-2" />;
   if (!enableCheckpoint || message.role === "assistant") return sep;
   const part = message.parts.at(-1);
-  if (part && part.type === "checkpoint") {
+  if (part && part.type === "checkpoint" && isVSCodeEnvironment()) {
     return (
       <div className="mt-1 mb-2">
         <CheckpointUI
