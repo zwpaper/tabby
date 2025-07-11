@@ -260,9 +260,6 @@ const chat = new Hono()
                 "task-id": uid,
               },
             },
-            // Disallowing the model to repeat the environment details from our injection.
-            // see injectEnvironmentDetails for more details.
-            stopSequences: [`<${prompts.EnvironmentDetailsTag}>`],
 
             // Disable retries as we handle them ourselves.
             maxRetries: 0,
