@@ -160,6 +160,7 @@ export function MessageMarkdown({
                   return (
                     !text.startsWith("@") &&
                     !text.includes("://") &&
+                    !/\s/.test(text) &&
                     (text.includes("/") || text.includes("\\"))
                   );
                 };
