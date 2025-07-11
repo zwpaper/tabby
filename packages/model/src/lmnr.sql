@@ -32,5 +32,5 @@ SELECT
   (streamText.attributes->>'ai.response.toolCalls')::jsonb as tool_calls,
   transformParams.output->'prompt' AS messages
 FROM streamText JOIN transformParams USING (trace_id)
-WHERE transformParams.is_valid is not false AND transformParams.output->'prompt' is not NULL
+WHERE transformParams.is_valid is not false AND transformParams.output->'prompt' is not NULL AND ((transformParams.output->'prompt')::text NOT LIKE '%<ctrl42>%')
 LIMIT 1000
