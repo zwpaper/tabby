@@ -18,7 +18,7 @@ function RouteComponent() {
 
 function NavHeader() {
   return (
-    <span className="mb-4 flex w-full justify-between px-2 pt-4 md:mb-8 md:px-6">
+    <span className="mb-4 flex w-full justify-between px-4 pt-4 md:mb-8 md:px-6">
       <span className="flex items-center gap-3 md:gap-6">
         <Link to="/home" className="flex items-center gap-1.5">
           <Terminal className="!size-5 animate-[spin_6s_linear_infinite]" />
