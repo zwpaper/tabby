@@ -59,7 +59,7 @@ export class CheckpointService implements vscode.Disposable {
    */
   saveCheckpoint = async (
     message: string,
-    options: SaveCheckpointOptions = { requireChange: true },
+    options: SaveCheckpointOptions = {},
   ): Promise<string | null> => {
     logger.trace(`Saving checkpoint with message: ${message}`);
 
@@ -71,7 +71,7 @@ export class CheckpointService implements vscode.Disposable {
 
     try {
       const status = await this.shadowGit.status();
-      if (status.isClean && options.requireChange) {
+      if (status.isClean && !options.force) {
         return null;
       }
       await this.shadowGit.stageAll();

@@ -51,9 +51,9 @@ export type TaskRunnerOptions = {
 
 export type SaveCheckpointOptions = {
   /**
-   * If true, will only save a checkpoint if there are changes, defaults to true
+   * By default, will only save checkpoint if there are changes, but if you want to force a save, set this to true
    */
-  requireChange?: boolean;
+  force?: boolean;
 };
 
 const DevBaseUrl = "http://localhost:4113";

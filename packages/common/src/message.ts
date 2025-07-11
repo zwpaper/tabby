@@ -6,11 +6,21 @@ export type ExtendedPartMixin = {
   };
 };
 
+export function hasExtendedPartMixin(
+  part: UIMessage["parts"][number],
+): part is UIMessage["parts"][number] & ExtendedPartMixin {
+  return "checkpoint" in part;
+}
+
+export type ExtendedUIMessage = Omit<UIMessage, "parts"> & {
+  parts: Array<UIMessage["parts"][number] & ExtendedPartMixin>;
+};
+
 export type DBMessage = {
   id: string;
   createdAt: string;
   role: UIMessage["role"];
-  parts: Array<Exclude<UIMessage["parts"][number], { type: "source" }>>;
+  parts: Array<Exclude<ExtendedUIMessage["parts"][number], { type: "source" }>>;
   experimental_attachments?: UIMessage["experimental_attachments"];
 };
 

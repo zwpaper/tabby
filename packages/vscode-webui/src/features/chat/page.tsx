@@ -47,6 +47,7 @@ import { useMinionId } from "@/lib/hooks/use-minion-id";
 import { vscodeHost } from "@/lib/vscode";
 import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { ServerErrors } from "@ragdoll/server";
+import { useSettingsStore } from "../settings/store";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
@@ -144,6 +145,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const { toolset: mcpToolSet } = useMcp();
 
   const latestHttpCode = useRef<number | undefined>(undefined);
+  const enableCheckpoint = useSettingsStore((x) => x.enableCheckpoint);
   const chat = useChat({
     /*
      * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
@@ -186,23 +188,20 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         vscodeHost.closeCurrentWorkspace();
       }
     },
-    experimental_prepareRequestBody: (req) =>
-      prepareRequestBody(uidRef, req, selectedModel?.id, minionId),
+    experimental_prepareRequestBody: async (req) =>
+      prepareRequestBody(
+        uidRef,
+        req,
+        await buildEnvironment(),
+        mcpToolSet,
+        selectedModel?.id,
+        enableCheckpoint,
+        minionId,
+      ),
     fetch: async (url, options) => {
       // Clear the data when a new request is made
       setData(undefined);
-      const resp = await fetch(url, {
-        ...options,
-        body:
-          options?.body &&
-          JSON.stringify({
-            ...JSON.parse(options.body as string),
-            // Inject the environment variables into the request body
-            environment: await buildEnvironment(),
-            // Inject the mcp tool set into the request body
-            mcpToolSet,
-          }),
-      });
+      const resp = await fetch(url, options);
       // If the task is already streaming, resume the stream
       latestHttpCode.current = resp.status;
       return resp;
