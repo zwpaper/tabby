@@ -75,12 +75,20 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     }
   }, [isAutoApproved, onAccept]);
 
-  const [showAbort, setShowAbort] = useDebounceState(false, 1_000); // 1 seconds
+  const [showAbort, setShowAbort, setShowAbortImmediate] = useDebounceState(
+    false,
+    1_000,
+  ); // 1 seconds
+
+  useEffect(() => {
+    // Reset the abort button when the tool call changes
+    pendingApproval;
+    setShowAbortImmediate(false);
+  }, [pendingApproval, setShowAbortImmediate]);
+
   useEffect(() => {
     if (lifecycle.status.startsWith("execute")) {
       setShowAbort(true);
-    } else {
-      setShowAbort(false);
     }
   }, [setShowAbort, lifecycle.status]);
 

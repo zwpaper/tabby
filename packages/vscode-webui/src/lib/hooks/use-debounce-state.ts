@@ -14,5 +14,5 @@ export function useDebounceState<T>(initialValue: T, delay: number) {
     };
   }, [value, delay]);
 
-  return [debouncedValue, setValue] as const;
+  return [debouncedValue, setValue, setDebouncedValue] as const;
 }

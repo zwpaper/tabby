@@ -37,10 +37,7 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   isExecuting,
   completed,
 }) => {
-  const [expanded, setExpanded] = useDebounceState(false, 500);
-  useEffect(() => {
-    setExpanded(true);
-  }, [setExpanded]);
+  const [expanded, setExpanded] = useDebounceState(true, 1_500);
   const [isStopping, setIsStopping] = useState<boolean>(false);
   const toggleExpanded = () => setExpanded((prev) => !prev);
   const { isCopied, copyToClipboard } = useCopyToClipboard({
