@@ -7,6 +7,7 @@ import {
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
+import { isVSCodeEnvironment } from "@/lib/vscode";
 import {
   CheckIcon,
   ChevronsDownUpIcon,
@@ -37,9 +38,9 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
   isExecuting,
   completed,
 }) => {
-  const [expanded, setExpanded] = useDebounceState(true, 1_500);
+  const [expanded, setExpanded, setExpandedImmediately] = useExpanded();
   const [isStopping, setIsStopping] = useState<boolean>(false);
-  const toggleExpanded = () => setExpanded((prev) => !prev);
+  const toggleExpanded = () => setExpandedImmediately((prev) => !prev);
   const { isCopied, copyToClipboard } = useCopyToClipboard({
     timeout: 2000,
   });
@@ -170,3 +171,11 @@ export const CommandExecutionPanel: FC<ExecutionPanelProps> = ({
     </div>
   );
 };
+
+function useExpanded() {
+  if (isVSCodeEnvironment()) {
+    return useDebounceState(true, 1_500);
+  }
+  const [value, setValue] = useState(false);
+  return [value, setValue, setValue] as const;
+}

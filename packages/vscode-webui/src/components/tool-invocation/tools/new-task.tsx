@@ -134,11 +134,7 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
       </ToolTitle>
       {taskSource && (
         <ScrollArea viewportClassname="max-h-[300px]" ref={newTaskContainer}>
-          <TaskThread
-            user={{ name: "Runner" }} // FIXME(zhiming): remove the display of user name
-            source={taskSource}
-            showMessageList={showMessageList}
-          />
+          <TaskThread source={taskSource} showMessageList={showMessageList} />
         </ScrollArea>
       )}
     </div>

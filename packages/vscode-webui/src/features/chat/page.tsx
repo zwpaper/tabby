@@ -4,14 +4,8 @@ import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
 import { useEnableCheckpoint, useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
-import {
-  formatters,
-  fromUIMessages,
-  prompts,
-  toUIMessages,
-} from "@ragdoll/common";
+import { formatters, prompts, toUIMessages } from "@ragdoll/common";
 import type { Environment, Todo } from "@ragdoll/db";
-import type { UIMessage } from "ai";
 import type { InferResponseType } from "hono/client";
 import {
   ExternalLinkIcon,
@@ -19,14 +13,7 @@ import {
   SendHorizonal,
   StopCircleIcon,
 } from "lucide-react";
-import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
 import { ErrorMessage } from "@/components/error-message";
@@ -321,9 +308,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     setMessages: setMessages,
   });
 
-  // FIXME(meng): Re-enable saving messages when checkpoint is stored in messages
-  false && useSaveMessages({ messages, uid: uidRef });
-
   useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
 
   return (
@@ -493,30 +477,6 @@ function useTaskError(status: UseChatHelpers["status"], task?: Task | null) {
     }
   }, [status, taskError]);
   return taskError;
-}
-
-function useSaveMessages({
-  messages,
-  uid,
-}: {
-  messages: UIMessage[];
-  uid: RefObject<string | undefined>;
-}) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies(uid.current): uid is ref
-  useEffect(() => {
-    return () => {
-      const lastMessage = messages.at(-1);
-      if (!uid.current || !lastMessage) return;
-      apiClient.api.tasks[":uid"].messages.$patch({
-        param: {
-          uid: uid.current,
-        },
-        json: {
-          messages: fromUIMessages([lastMessage]),
-        },
-      });
-    };
-  }, [messages]);
 }
 
 function ErrorMessageView({ error }: { error: TaskError | undefined }) {

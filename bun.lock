@@ -48,6 +48,9 @@
         "kysely-codegen": "^0.18.3",
       },
     },
+    "packages/model": {
+      "name": "@ragdoll/model",
+    },
     "packages/runner": {
       "name": "@ragdoll/runner",
       "version": "0.2.5",
@@ -133,7 +136,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.4.13",
+      "version": "0.4.16",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@preact/signals-core": "catalog:",
@@ -995,6 +998,8 @@
     "@ragdoll/common": ["@ragdoll/common@workspace:packages/common"],
 
     "@ragdoll/db": ["@ragdoll/db@workspace:packages/db"],
+
+    "@ragdoll/model": ["@ragdoll/model@workspace:packages/model"],
 
     "@ragdoll/runner": ["@ragdoll/runner@workspace:packages/runner"],
 
