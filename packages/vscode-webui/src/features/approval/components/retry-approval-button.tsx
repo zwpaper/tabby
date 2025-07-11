@@ -28,7 +28,7 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
   const autoRetryText = "Continue";
   const retryText = "Continue";
 
-  const [showRetry, setShowRetry] = useDebounceState(false, 500);
+  const [showRetry, setShowRetry] = useDebounceState(false, 1_000);
   useEffect(() => {
     setShowRetry(true);
   }, [setShowRetry]);

@@ -79,7 +79,8 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   useEffect(() => {
     if (lifecycle.status.startsWith("execute")) {
       setShowAbort(true);
-      return;
+    } else {
+      setShowAbort(false);
     }
   }, [setShowAbort, lifecycle.status]);
 
