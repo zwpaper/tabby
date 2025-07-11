@@ -6,7 +6,10 @@ import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { slackService } from "../slack";
 import { taskService } from "../task";
-import { slackRichTextRenderer } from "./slack-rich-text";
+import {
+  type TaskRenderContext,
+  slackRichTextRenderer,
+} from "./slack-rich-text";
 
 type Task = NonNullable<Awaited<ReturnType<(typeof taskService)["get"]>>>;
 
@@ -31,6 +34,24 @@ class SlackTaskService {
     const headerInfo = this.extractHeaderInfoFromTask(task);
     const taskStats = this.extractTaskStatistics(task);
 
+    // Create context object
+    const context: TaskRenderContext = {
+      headerInfo: {
+        prompt: headerInfo.prompt,
+        githubRepository: headerInfo.githubRepository,
+        slackUserId: headerInfo.slackUserId,
+      },
+      task: {
+        uid: task.uid,
+        todos: task.todos,
+        conversation: task.conversation,
+      },
+      stats: {
+        requestsCount: taskStats.requestsCount,
+        totalTokens: taskStats.totalTokens,
+      },
+    };
+
     let blocks: AnyBlock[];
     let text: string;
     let postAction: (() => Promise<void>) | undefined;
@@ -41,14 +62,8 @@ class SlackTaskService {
           task.conversation?.messages,
         );
         blocks = slackRichTextRenderer.renderTaskComplete(
-          headerInfo.prompt,
-          headerInfo.githubRepository,
-          headerInfo.slackUserId,
-          task.uid,
+          context,
           completionResult || "Task completed successfully.",
-          task.todos,
-          taskStats.requestsCount,
-          taskStats.totalTokens,
         );
         text = "Task completed";
         postAction = () => this.addCompletionReaction(userId, task);
@@ -58,14 +73,8 @@ class SlackTaskService {
       case "failed": {
         const errorInfo = this.extractErrorInformation(task);
         blocks = slackRichTextRenderer.renderTaskFailed(
-          headerInfo.prompt,
-          headerInfo.githubRepository,
-          headerInfo.slackUserId,
-          task.uid,
+          context,
           errorInfo.message,
-          task.todos,
-          taskStats.requestsCount,
-          taskStats.totalTokens,
         );
         text = "Task failed";
         break;
@@ -77,15 +86,9 @@ class SlackTaskService {
         const askFollowUpQuestion = this.extractAskFollowUpQuestion(task);
         if (askFollowUpQuestion) {
           blocks = slackRichTextRenderer.renderTaskAskFollowUpQuestion(
-            headerInfo.prompt,
-            headerInfo.githubRepository,
-            headerInfo.slackUserId,
-            task.uid,
+            context,
             askFollowUpQuestion.question,
             askFollowUpQuestion.followUp,
-            task.todos,
-            taskStats.requestsCount,
-            taskStats.totalTokens,
           );
           text = "Need user input";
           break;
@@ -94,15 +97,7 @@ class SlackTaskService {
       case "streaming":
       case "pending-model":
       case "pending-tool": {
-        blocks = slackRichTextRenderer.renderTaskRunning(
-          headerInfo.prompt,
-          headerInfo.githubRepository,
-          headerInfo.slackUserId,
-          task.uid,
-          task.todos,
-          taskStats.requestsCount,
-          taskStats.totalTokens,
-        );
+        blocks = slackRichTextRenderer.renderTaskRunning(context);
         text = "Task running";
         break;
       }
@@ -484,6 +479,7 @@ class SlackTaskService {
       todos,
       0,
       0,
+      null,
     );
 
     await webClient.chat.update({
@@ -591,23 +587,6 @@ class SlackTaskService {
         params.content,
       );
 
-      // Update the original message if we have the info
-      if (params.channel && params.messageTs) {
-        // Get the task to find the Slack user ID
-        const task = await taskService.get(params.taskId, params.userId);
-        const slackEventData = task
-          ? this.extractSlackDataFromTask(task)
-          : null;
-
-        await this.updateMessageWithUserAnswer(
-          params.userId,
-          params.channel,
-          params.messageTs,
-          params.content,
-          slackEventData?.slackUserId,
-        );
-      }
-
       return { success: true };
     } catch (error) {
       console.error("Failed to handle followup action:", error);
@@ -615,32 +594,6 @@ class SlackTaskService {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       };
-    }
-  }
-
-  /**
-   * Show user's answer with a simple ephemeral message
-   */
-  private async updateMessageWithUserAnswer(
-    userId: string,
-    channel: string,
-    messageTs: string,
-    answer: string,
-    slackUserId?: string,
-  ): Promise<void> {
-    const webClient = await slackService.getWebClientByUser(userId);
-    if (!webClient || !slackUserId) return;
-
-    try {
-      // Post a simple ephemeral confirmation message instead of updating the original
-      await webClient.chat.postEphemeral({
-        channel,
-        user: slackUserId,
-        text: `✅ You replied: "${answer}"`,
-        thread_ts: messageTs, // Reply in thread if possible
-      });
-    } catch (error) {
-      console.error("Failed to show user answer confirmation:", error);
     }
   }
 

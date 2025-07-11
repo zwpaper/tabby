@@ -1,6 +1,24 @@
-import type { Todo } from "@ragdoll/db";
+import { prompts } from "@ragdoll/common";
+import type { DBMessage, Todo } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
 import slackifyMarkdown from "slackify-markdown";
+
+export interface TaskRenderContext {
+  headerInfo: {
+    prompt: string;
+    githubRepository: { owner: string; repo: string };
+    slackUserId: string;
+  };
+  task: {
+    uid: string;
+    todos?: Todo[];
+    conversation?: { messages: DBMessage[] } | null | undefined;
+  };
+  stats?: {
+    requestsCount?: number;
+    totalTokens?: number;
+  };
+}
 
 const PreparingTaskBlock = {
   type: "section",
@@ -30,9 +48,11 @@ class SlackRichTextRenderer {
     todos?: Todo[],
     requestsCount?: number,
     totalTokens?: number,
+    conversation?: { messages: DBMessage[] } | null | undefined,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      ...this.renderTaskHistoryBlock(conversation, false, slackUserId),
       PreparingTaskBlock,
     ];
 
@@ -43,17 +63,19 @@ class SlackRichTextRenderer {
     return blocks;
   }
 
-  renderTaskRunning(
-    prompt: string,
-    githubRepository: { owner: string; repo: string },
-    slackUserId: string,
-    taskId: string,
-    todos?: Todo[],
-    requestsCount?: number,
-    totalTokens?: number,
-  ): AnyBlock[] {
+  renderTaskRunning(context: TaskRenderContext): AnyBlock[] {
+    const { headerInfo, task, stats } = context;
     const blocks: AnyBlock[] = [
-      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      this.renderHeaderBlock(
+        headerInfo.prompt,
+        headerInfo.githubRepository,
+        headerInfo.slackUserId,
+      ),
+      ...this.renderTaskHistoryBlock(
+        task.conversation,
+        true,
+        headerInfo.slackUserId,
+      ),
       {
         type: "section",
         text: {
@@ -63,59 +85,74 @@ class SlackRichTextRenderer {
       },
     ];
 
-    this.renderTodoListBlock(blocks, todos);
+    this.renderTodoListBlock(blocks, task.todos);
 
-    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
+    this.renderFooterBlock(
+      blocks,
+      task.uid,
+      stats?.requestsCount,
+      stats?.totalTokens,
+    );
 
     return blocks;
   }
 
   renderTaskAskFollowUpQuestion(
-    prompt: string,
-    githubRepository: { owner: string; repo: string },
-    slackUserId: string,
-    taskId: string,
+    context: TaskRenderContext,
     waitingReason: string,
     followUpSuggestions?: string[],
-    todos?: Todo[],
-    requestsCount?: number,
-    totalTokens?: number,
   ): AnyBlock[] {
+    const { headerInfo, task, stats } = context;
     const blocks: AnyBlock[] = [
-      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      this.renderHeaderBlock(
+        headerInfo.prompt,
+        headerInfo.githubRepository,
+        headerInfo.slackUserId,
+      ),
+      ...this.renderTaskHistoryBlock(
+        task.conversation,
+        false,
+        headerInfo.slackUserId,
+      ),
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*🤔️ I need some help to proceed*\n\n${slackifyMarkdown(waitingReason)}`,
+          text: `*🤔 I need some help to proceed*\n\n${slackifyMarkdown(waitingReason)}`,
         },
       },
     ];
 
-    this.renderFollowUpSuggestionsBlock(blocks, followUpSuggestions, taskId);
+    this.renderFollowUpSuggestionsBlock(blocks, followUpSuggestions, task.uid);
 
-    this.renderTodoListBlock(blocks, todos);
+    this.renderTodoListBlock(blocks, task.todos);
 
-    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
+    this.renderFooterBlock(
+      blocks,
+      task.uid,
+      stats?.requestsCount,
+      stats?.totalTokens,
+    );
 
     return blocks;
   }
 
-  renderTaskComplete(
-    prompt: string,
-    githubRepository: { owner: string; repo: string },
-    slackUserId: string,
-    taskId: string,
-    result: string,
-    todos?: Todo[],
-    requestsCount?: number,
-    totalTokens?: number,
-  ): AnyBlock[] {
+  renderTaskComplete(context: TaskRenderContext, result: string): AnyBlock[] {
+    const { headerInfo, task, stats } = context;
     const blocks: AnyBlock[] = [
-      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      this.renderHeaderBlock(
+        headerInfo.prompt,
+        headerInfo.githubRepository,
+        headerInfo.slackUserId,
+      ),
+      ...this.renderTaskHistoryBlock(
+        task.conversation,
+        false,
+        headerInfo.slackUserId,
+      ),
     ];
 
-    this.renderTodoListBlock(blocks, todos);
+    this.renderTodoListBlock(blocks, task.todos);
 
     // Truncate result if too long to avoid Slack character limit
     const maxLength = 2900;
@@ -133,23 +170,33 @@ class SlackRichTextRenderer {
       },
     });
 
-    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens, true);
+    this.renderFooterBlock(
+      blocks,
+      task.uid,
+      stats?.requestsCount,
+      stats?.totalTokens,
+      true,
+    );
 
     return blocks;
   }
 
   renderTaskFailed(
-    prompt: string,
-    githubRepository: { owner: string; repo: string },
-    slackUserId: string,
-    taskId: string,
+    context: TaskRenderContext,
     errorMessage: string,
-    todos?: Todo[],
-    requestsCount?: number,
-    totalTokens?: number,
   ): AnyBlock[] {
+    const { headerInfo, task, stats } = context;
     const blocks: AnyBlock[] = [
-      this.renderHeaderBlock(prompt, githubRepository, slackUserId),
+      this.renderHeaderBlock(
+        headerInfo.prompt,
+        headerInfo.githubRepository,
+        headerInfo.slackUserId,
+      ),
+      ...this.renderTaskHistoryBlock(
+        task.conversation,
+        false,
+        headerInfo.slackUserId,
+      ),
       {
         type: "section",
         text: {
@@ -159,9 +206,14 @@ class SlackRichTextRenderer {
       },
     ];
 
-    this.renderTodoListBlock(blocks, todos);
+    this.renderTodoListBlock(blocks, task.todos);
 
-    this.renderFooterBlock(blocks, taskId, requestsCount, totalTokens);
+    this.renderFooterBlock(
+      blocks,
+      task.uid,
+      stats?.requestsCount,
+      stats?.totalTokens,
+    );
 
     return blocks;
   }
@@ -577,6 +629,126 @@ class SlackRichTextRenderer {
       slackUserId,
       prompt,
     };
+  }
+
+  /**
+   * Render task history from conversation messages
+   */
+  renderTaskHistoryBlock(
+    conversation: { messages: DBMessage[] } | null | undefined,
+    includeLatestMessage = false,
+    slackUserId?: string,
+  ): AnyBlock[] {
+    if (!conversation?.messages || conversation.messages.length === 0) {
+      return [];
+    }
+
+    const historyItems: string[] = [];
+    const maxChars = 37000; // Reserve 3000 chars for other content in Slack message
+    let currentLength = 0;
+
+    const allMessages = [...conversation.messages].reverse(); // newest first
+    const firstUserMessageIndex = conversation.messages.findIndex(
+      (msg) => msg.role === "user",
+    );
+
+    const messagesToProcess = includeLatestMessage
+      ? allMessages
+      : allMessages.slice(1); // skip latest
+
+    const messages = messagesToProcess.filter((msg, index) => {
+      const originalIndex =
+        conversation.messages.length -
+        1 -
+        (includeLatestMessage ? index : index + 1);
+      return !(msg.role === "user" && originalIndex === firstUserMessageIndex);
+    });
+
+    for (const message of messages) {
+      if (currentLength >= maxChars) break;
+
+      if (message.role === "user") {
+        const textParts =
+          message.parts?.filter((part) => part.type === "text") || [];
+        const validTextParts: string[] = [];
+        for (const part of textParts) {
+          const text = part.text;
+          if (!text) continue;
+          if (text.includes("<environment-details>")) continue;
+          if (prompts.isUserReminder(text)) continue;
+          validTextParts.push(text);
+        }
+        const userText = validTextParts.join(" ").trim();
+        if (userText && userText.length > 0) {
+          const userPrefix = slackUserId ? `<@${slackUserId}>` : "👤 *User:*";
+          const historyItem = `${userPrefix}: ${slackifyMarkdown(userText)}`;
+          if (currentLength + historyItem.length > maxChars) break;
+          historyItems.push(historyItem);
+          currentLength += historyItem.length;
+        }
+      } else if (message.role === "assistant") {
+        // Check for completion attempts first
+        const completionPart = message.parts?.find(
+          (part) =>
+            part.type === "tool-invocation" &&
+            part.toolInvocation?.toolName === "attemptCompletion" &&
+            part.toolInvocation?.args?.result,
+        );
+
+        if (
+          completionPart?.type === "tool-invocation" &&
+          completionPart?.toolInvocation?.args?.result
+        ) {
+          const result = completionPart.toolInvocation.args.result as string;
+          const historyItem = `✅ *Completed:* ${slackifyMarkdown(result)}`;
+
+          // Check if this item would exceed our limit
+          if (currentLength + historyItem.length > maxChars) break;
+
+          historyItems.push(historyItem);
+          currentLength += historyItem.length;
+        }
+
+        // Check for follow-up questions
+        const askFollowUpPart = message.parts?.find(
+          (part) =>
+            part.type === "tool-invocation" &&
+            part.toolInvocation?.toolName === "askFollowupQuestion" &&
+            part.toolInvocation?.args?.question,
+        );
+
+        if (
+          askFollowUpPart?.type === "tool-invocation" &&
+          askFollowUpPart?.toolInvocation?.args?.question
+        ) {
+          const question = askFollowUpPart.toolInvocation.args
+            .question as string;
+          const historyItem = `*🤔 I need some help to proceed*\n${slackifyMarkdown(question)}`;
+
+          // Check if this item would exceed our limit
+          if (currentLength + historyItem.length > maxChars) break;
+
+          historyItems.push(historyItem);
+          currentLength += historyItem.length;
+        }
+      }
+    }
+
+    if (historyItems.length === 0) {
+      return [];
+    }
+
+    const orderedItems = historyItems.reverse();
+
+    return [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: orderedItems.join("\n"),
+        },
+      },
+    ];
   }
 }
 
