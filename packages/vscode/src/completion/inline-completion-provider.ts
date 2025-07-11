@@ -210,16 +210,6 @@ export class InlineCompletionProvider
     // Build completion request
     const request = this.buildCompletionRequest(context, extraContexts);
 
-    // Pre-process (quick filters)
-    const preProcessedChoices = this.postProcessor.process(
-      [{ index: 0, text: request.segments.prefix ?? "" }],
-      context,
-      "pre",
-    );
-    if (preProcessedChoices.length === 0) {
-      return null;
-    }
-
     // Check if request was already cancelled
     if (abortSignal.aborted) {
       logger.debug("Request cancelled before API call");
@@ -239,17 +229,33 @@ export class InlineCompletionProvider
         abortSignal,
       );
 
+      logger.trace("completion response", {
+        response,
+        context,
+        extraContexts,
+      });
+
       // If response is null (due to abort), return null
       if (!response) {
         return null;
       }
 
-      // Post-process completion
-      const processedItems = this.postProcessor.process(
-        response.choices,
-        context,
-        "post",
+      const completionItems = response.choices.map((choice) =>
+        this.postProcessor.toCompletionResultItem(choice, context),
       );
+
+      // Pre-cache process
+      const preCacheProcessedItems = this.postProcessor.process(
+        completionItems,
+        context,
+        "preCache",
+      );
+
+      logger.trace("pre-cache processed", {
+        preCacheProcessedItems,
+        context,
+        extraContexts,
+      });
 
       // Verify this request wasn't cancelled after API call
       if (abortSignal.aborted) {
@@ -257,32 +263,48 @@ export class InlineCompletionProvider
         return null;
       }
 
-      logger.trace("after completion request", {
-        response,
-        processedItems,
+      // Cache result
+      this.cache.set(cacheKey, preCacheProcessedItems);
+
+      logger.trace("Cached completion result", {
+        cacheKey,
+        itemCount: preCacheProcessedItems.length,
+      });
+
+      if (preCacheProcessedItems.length === 0) {
+        return null;
+      }
+
+      // Post-cache process completion
+      const postCacheProcessedItems = this.postProcessor.process(
+        preCacheProcessedItems,
+        context,
+        "postCache",
+      );
+
+      logger.trace("post-cache processed", {
+        postCacheProcessedItems,
         context,
         extraContexts,
       });
 
-      if (processedItems.length === 0) {
-        return null;
-      }
-
-      // Cache result
-      this.cache.set(cacheKey, processedItems);
-      logger.debug("Cached completion result", {
-        cacheKey,
-        itemCount: processedItems.length,
-      });
-
       // Create VSCode completion items
-      const completionItems = this.createInlineCompletionItems(
-        processedItems,
+      const vscodeInlineCompletionItems = this.createInlineCompletionItems(
+        postCacheProcessedItems,
         context,
       );
 
+      logger.trace("vscode inline completion items", {
+        vscodeInlineCompletionItems,
+        context,
+        extraContexts,
+      });
+
       // Track displayed completion
-      if (completionItems && completionItems.length > 0) {
+      if (
+        vscodeInlineCompletionItems &&
+        vscodeInlineCompletionItems.length > 0
+      ) {
         this.displayedCompletion = {
           id: `view-${response.id}-at-${Date.now()}`,
           completions: response,
@@ -293,7 +315,7 @@ export class InlineCompletionProvider
         this.emitEvent({ type: "show", completion: this.displayedCompletion });
       }
 
-      return completionItems;
+      return vscodeInlineCompletionItems;
     } catch (error) {
       // Handle abort/cancellation - this is expected behavior, just return null
       if (error instanceof Error && error.name === "AbortError") {

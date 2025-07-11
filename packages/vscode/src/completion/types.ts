@@ -65,7 +65,7 @@ export interface EditorOptionsContext {
 // Post-processing types
 export interface CompletionResultItem {
   text: string;
-  range?: Range;
+  range: Range;
 }
 
 export interface PostProcessFilter {

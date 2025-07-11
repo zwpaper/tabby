@@ -6,7 +6,7 @@ import type {
 } from "./types";
 
 export class PostProcessor {
-  private preProcessors: PostProcessFilter[] = [
+  private preCacheProcessors: PostProcessFilter[] = [
     new TrimMultiLineInSingleLineMode(),
     new RemoveLineEndsWithRepetition(),
     new DropDuplicated(),
@@ -14,7 +14,7 @@ export class PostProcessor {
     new DropMinimum(),
   ];
 
-  private postProcessors: PostProcessFilter[] = [
+  private postCacheProcessors: PostProcessFilter[] = [
     new RemoveRepetitiveBlocks(),
     new RemoveRepetitiveLines(),
     new LimitScope(),
@@ -28,30 +28,36 @@ export class PostProcessor {
   ];
 
   process(
-    choices: Array<{ index: number; text: string }>,
+    items: CompletionResultItem[],
     context: CompletionContext,
-    phase: "pre" | "post" = "post",
+    phase: "preCache" | "postCache" = "postCache",
   ): CompletionResultItem[] {
     const processors =
-      phase === "pre" ? this.preProcessors : this.postProcessors;
+      phase === "preCache" ? this.preCacheProcessors : this.postCacheProcessors;
 
-    return choices
-      .map((choice) => {
-        let item: CompletionResultItem = {
-          text: choice.text,
-          range: this.calculateRange(context),
-        };
-
+    return items
+      .map((item: CompletionResultItem) => {
+        let processed = item;
         for (const processor of processors) {
-          item = processor.process(item, context);
-          if (item.text === "") {
+          processed = processor.process(item, context);
+          if (processed.text === "") {
             break; // Empty completion, skip further processing
           }
         }
 
-        return item;
+        return processed;
       })
       .filter((item) => item.text !== "");
+  }
+
+  toCompletionResultItem(
+    choice: { index: number; text: string },
+    context: CompletionContext,
+  ): CompletionResultItem {
+    return {
+      text: choice.text,
+      range: this.calculateRange(context),
+    };
   }
 
   private calculateRange(context: CompletionContext): vscode.Range {
