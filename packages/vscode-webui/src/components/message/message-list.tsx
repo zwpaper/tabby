@@ -8,6 +8,7 @@ import { ToolInvocationPart } from "@/components/tool-invocation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useToolCallLifeCycle } from "@/features/chat";
 import { useEnableCheckpoint } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,9 @@ export const MessageList: React.FC<{
   useEffect(() => {
     setDebouncedIsLoading(isLoading);
   }, [isLoading, setDebouncedIsLoading]);
+
+  const { executingToolCalls } = useToolCallLifeCycle();
+  const isExecuting = executingToolCalls.length > 0;
 
   return (
     <ScrollArea
@@ -87,6 +91,7 @@ export const MessageList: React.FC<{
                   partIndex={index}
                   part={part}
                   isLoading={isLoading}
+                  isExecuting={isExecuting}
                 />
               ))}
             </div>
@@ -98,7 +103,10 @@ export const MessageList: React.FC<{
             )}
           </div>
           {messageIndex < renderMessages.length - 1 && (
-            <SeparatorWithCheckpoint message={m} isLoading={isLoading} />
+            <SeparatorWithCheckpoint
+              message={m}
+              isLoading={isLoading || isExecuting}
+            />
           )}
         </div>
       ))}
@@ -117,12 +125,14 @@ function Part({
   partIndex,
   isLastPartInMessages,
   isLoading,
+  isExecuting,
 }: {
   role: UIMessage["role"];
   partIndex: number;
   part: NonNullable<ExtendedUIMessage["parts"]>[number];
   isLastPartInMessages: boolean;
   isLoading: boolean;
+  isExecuting: boolean;
 }) {
   const paddingClass = partIndex === 0 ? "" : "mt-2";
   if (part.type === "text") {
@@ -146,7 +156,10 @@ function Part({
   if (part.type === "checkpoint") {
     if (role === "assistant") {
       return (
-        <CheckpointUI checkpoint={part.checkpoint} isLoading={isLoading} />
+        <CheckpointUI
+          checkpoint={part.checkpoint}
+          isLoading={isLoading || isExecuting}
+        />
       );
     }
     return null;
