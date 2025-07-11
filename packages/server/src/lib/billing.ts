@@ -4,6 +4,8 @@ import { StripePlans } from "./constants";
 export async function readActiveSubscriptionLimits(user: {
   id: string;
   email: string;
+  emailVerified: boolean;
+  name: string;
 }) {
   const activeSubscription = await db
     .selectFrom("subscription")
@@ -16,7 +18,7 @@ export async function readActiveSubscriptionLimits(user: {
   let limits =
     StripePlans.find((p) => p.name.toLowerCase() === planId)?.limits ||
     StripePlans[0].limits;
-  if (user.email.endsWith("@tabbyml.com")) {
+  if (user.email.endsWith("@tabbyml.com") && user.emailVerified) {
     limits = {
       basic: 100_000,
       premium: 15_000,

@@ -500,7 +500,6 @@ class SlackService {
       id: string;
       email: string;
       name: string;
-      isWaitlistApproved: boolean | null;
     };
     userEmail?: string;
     error?: string;
@@ -520,7 +519,7 @@ class SlackService {
     // Check if user exists in database
     const targetUser = await db
       .selectFrom("user")
-      .select(["id", "email", "name", "isWaitlistApproved"])
+      .select(["id", "email", "name", "emailVerified"])
       .where("email", "=", userEmail)
       .executeTakeFirst();
 
@@ -532,7 +531,10 @@ class SlackService {
     }
 
     const limits = await usageService.readCurrentMonthQuota(targetUser);
-    if (limits.credit.isLimitReached) {
+    if (
+      limits.credit.isLimitReached &&
+      !(targetUser.email.endsWith("@tabbyml.com") && targetUser.emailVerified)
+    ) {
       return {
         success: false,
         blocks: slackRichTextRenderer.renderCreditLimitReached(),
