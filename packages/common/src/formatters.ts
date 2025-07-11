@@ -4,6 +4,7 @@ import { type ToolSet, type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
 import { prompts } from "./prompts";
+import { stripEnvironmentDetails } from "./prompts/environment";
 
 export function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
   return messages.map((message, index) => {
@@ -247,17 +248,21 @@ export const formatters = {
   llm: (
     messages: UIMessage[],
     options?: {
-      tools: ToolSet;
+      tools?: ToolSet;
       isGemini: boolean;
+      stripEnvironmentDetails?: boolean;
     },
   ) => {
     const llmFormatOps = [
       ...(options?.isGemini ? [removeReasoningParts] : []),
+      ...(options?.stripEnvironmentDetails ? [stripEnvironmentDetails] : []),
       ...LLMFormatOps,
     ];
     const coreMessages = convertToCoreMessages(
       formatMessages(messages, llmFormatOps),
-      options,
+      {
+        tools: options?.tools,
+      },
     );
 
     const cacheControlMessage = coreMessages.at(-1);

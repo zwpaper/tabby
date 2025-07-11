@@ -892,14 +892,15 @@ class TaskService {
   async generateTaskTitle(messages: UIMessage[]) {
     const result = await generateText({
       model: geminiFlash,
-      messages: formatters.llm([
-        ...messages,
-        {
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: `
+      messages: formatters.llm(
+        [
+          ...messages,
+          {
+            role: "user",
+            parts: [
+              {
+                type: "text",
+                text: `
 Generate a concise title that captures the essence of the above conversation. Requirements:
 - Create a single descriptive phrase or short sentence
 - Focus on the user's main request or topic
@@ -907,12 +908,17 @@ Generate a concise title that captures the essence of the above conversation. Re
 - Do not include any punctuation at the end
 - Return only the title text, nothing else
               `,
-            },
-          ],
-          content: "",
-          id: generateId(),
+              },
+            ],
+            content: "",
+            id: generateId(),
+          },
+        ],
+        {
+          isGemini: true,
+          stripEnvironmentDetails: true,
         },
-      ]),
+      ),
     });
     const generatedTitle = await result.text;
 
