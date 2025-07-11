@@ -27,7 +27,7 @@ API INVOCATIONS
 
 You are provided with api signatures within <api-list></api-list> XML tags in JSON schema format.
 You are only allowed to call a single api at a time, if you need to call multiple apis, you must do it in a single batchCall api.
-Do not make assumptions about what values to plug into functions; you must follow the function signature strictly to call functions.
+Do not make assumptions about what values to plug into apis; you must follow the api signature strictly to call apis.
 Here are the available apis:
 <api-list>
 ${tools}
@@ -40,7 +40,7 @@ For each api invocation return the arguments in JSON text format within api-requ
 </api-request>
 
 ## OUTPUT FORMAT
-Please remember you are not allowed to use any format related to function calling or fc or tool_code.
+Please remember you are not allowed to use any format related to api calling or fc or tool_code.
 For each api request respone, you are only allowed to return the arguments in JSON text format within api-request XML tags as following:
 
 <api-request name="{arg-name}">
