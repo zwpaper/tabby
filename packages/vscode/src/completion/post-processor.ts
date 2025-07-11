@@ -1,3 +1,4 @@
+import * as vscode from "vscode";
 import type {
   CompletionContext,
   CompletionResultItem,
@@ -53,16 +54,14 @@ export class PostProcessor {
       .filter((item) => item.text !== "");
   }
 
-  private calculateRange(
-    context: CompletionContext,
-  ): import("vscode").Range | undefined {
+  private calculateRange(context: CompletionContext): vscode.Range {
+    const start = context.position;
     if (context.isLineEnd && context.lineEndReplaceLength > 0) {
       // Replace whitespace at line end
-      const start = context.position;
       const end = context.position.translate(0, context.lineEndReplaceLength);
-      return new (require("vscode").Range)(start, end);
+      return new vscode.Range(start, end);
     }
-    return undefined;
+    return new vscode.Range(start, start);
   }
 }
 
