@@ -43,7 +43,7 @@ import { minionService } from "./minion";
 const titleSelect = sql<string>`
       COALESCE(
         title,
-        (conversation #>> '{messages, 0, parts, 1, text}')::text
+        (conversation #>> '{messages, 0, parts, 1, text}')::text,
         (conversation #>> '{messages, 0, parts, 0, text}')::text
       )
     `.as("title");
