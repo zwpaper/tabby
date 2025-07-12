@@ -7,13 +7,12 @@ import type { Todo } from "@ragdoll/db";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { UIMessage } from "ai";
 import { Loader2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TodoList } from "../todo";
 
 export function SharePage() {
   const searchParams = new URLSearchParams(location.search);
   const logo = searchParams.get("logo") ?? undefined;
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -52,23 +51,21 @@ export function SharePage() {
   }, [isInitialized]);
 
   // Set up ResizeObserver to monitor content height and send updates to parent
-  useEffect(() => {
-    if (!containerRef.current) return;
+  const monitorHeight = useCallback((element: HTMLElement | null) => {
+    if (!element) return;
 
     const resizeObserver = new ResizeObserver(() => {
-      if (!containerRef.current) return;
-
       // Send height update to parent window
       window.parent.postMessage(
         {
           type: "resize",
-          height: containerRef.current?.clientHeight + 20, // Add some padding
+          height: element.clientHeight + 20, // Add some padding
         },
         "*",
       );
     });
 
-    resizeObserver.observe(containerRef.current);
+    resizeObserver.observe(element);
 
     // Also observe document.body for better coverage
     if (document.body) {
@@ -83,7 +80,7 @@ export function SharePage() {
     <VSCodeWebProvider>
       <ChatContextProvider>
         <QueryClientProvider client={queryClient}>
-          <div ref={containerRef}>
+          <div>
             {/* todo skeleton outside? */}
             {messages.length === 0 ? (
               <div className="flex min-h-screen items-center justify-center">
@@ -91,6 +88,7 @@ export function SharePage() {
               </div>
             ) : (
               <div
+                ref={monitorHeight}
                 className={cn("grid grid-cols-1 gap-3", {
                   "md:grid-cols-4": todos && todos.length > 0,
                 })}
