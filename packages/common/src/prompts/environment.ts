@@ -8,7 +8,7 @@ export function getReadEnvironmentResult(
   user: User | undefined,
 ) {
   const sections = [
-    getCurrentTime(environment.currentTime),
+    getSystemInfo(environment),
     getUserInfo(user),
     getWorkspaceFiles(environment.workspace, environment.info),
     getCurrentOpenedFiles(environment.workspace),
@@ -20,6 +20,21 @@ export function getReadEnvironmentResult(
     .filter(Boolean)
     .join("\n\n");
   return sections;
+}
+
+function getSystemInfo(environment: Environment) {
+  const { info, currentTime } = environment;
+  const prompt = `# System Information
+
+Operating System: ${info.os}
+Default Shell: ${info.shell}
+Home Directory: ${info.homedir}
+Current Working Directory: ${info.cwd}
+Current Time: ${currentTime}
+
+When the user initially gives you a task, a recursive list of all filepaths in the current working directory ('${info.cwd}') will be included in environment-details. This provides an overview of the project's file structure, offering key insights into the project from directory/file names (how developers conceptualize and organize their code) and file extensions (the language used). This can also guide decision-making on which files to explore further. If you need to further explore directories such as outside the current working directory, you can use the listFiles tool. If you pass 'true' for the recursive parameter, it will list files recursively. Otherwise, it will list files at the top level, which is better suited for generic directories where you don't necessarily need the nested structure, like the Desktop.
+`;
+  return prompt;
 }
 
 function getUserInfo(user: User | undefined) {
@@ -40,13 +55,6 @@ function getUserInfo(user: User | undefined) {
     return `# User Information\n${userInfo.join("\n")}`;
   }
 
-  return "";
-}
-
-function getCurrentTime(currentTime: string) {
-  if (currentTime) {
-    return `# Current Time\n${currentTime}`;
-  }
   return "";
 }
 

@@ -4,13 +4,7 @@ import { generateSystemPrompt } from "../system";
 
 test("snapshot", () => {
   expect(
-    generateSystemPrompt({
-      cwd: "/home/user/project",
-      os: "linux",
-      homedir: "/home/user",
-      shell: "bash",
-      customRules: `# Rules from (abc)`,
-    }),
+    generateSystemPrompt(`# Rules from (abc)`),
   ).toMatchSnapshot();
 });
 

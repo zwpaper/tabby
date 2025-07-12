@@ -130,7 +130,7 @@ const chat = new Hono()
                 ? [
                     {
                       role: "system",
-                      content: prompts.system(environment.info),
+                      content: prompts.system(environment.info.customRules),
                       providerOptions: {
                         anthropic: { cacheControl: { type: "ephemeral" } },
                       },
