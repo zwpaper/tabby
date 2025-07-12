@@ -52,13 +52,13 @@ Important notes:
 - In order to ensure good formatting, ALWAYS pass the commit message via a HEREDOC, a la this example:
 <example>
 git commit -m "$(cat <<'EOF'
-   Commit message here.
+Commit message here.
 
-   🤖 Generated with [Pochi](https://getpochi.com)
+🤖 Generated with [Pochi](https://getpochi.com)
 
-   Co-Authored-By: Pochi <noreply@getpochi.com>
-   EOF
-   )"
+Co-Authored-By: Pochi <noreply@getpochi.com>
+EOF
+)"
 </example>
 
 # Creating pull requests
@@ -86,6 +86,7 @@ IMPORTANT: When the user asks you to create a pull request, follow these steps c
 - Ensure the summary accurately reflects the changes and their purpose (ie. "add" means a wholly new feature, "update" means an enhancement to an existing feature, "fix" means a bug fix, etc.)
 - Ensure the summary is not generic (avoid words like "Update" or "Fix" without context)
 - Review the draft summary to ensure it accurately reflects the changes and their purpose
+- Note unlike creating a git message, you don't need to include the Co-Authored-By line in PR body
 
 3. Use batchCall to run the following commands in parallel:
    - Create new branch if needed
