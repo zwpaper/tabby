@@ -2,6 +2,7 @@ import { useToolCallLifeCycle } from "@/features/chat";
 import { useIsDevMode } from "@/features/settings";
 import { cn } from "@/lib/utils";
 import type { ToolInvocation } from "ai";
+import type { ToolCallCheckpoint } from "../message/message-list";
 import { McpToolCall } from "./mcp-tool-call";
 import { applyDiffTool } from "./tools/apply-diff";
 import { AskFollowupQuestionTool } from "./tools/ask-followup-question";
@@ -22,10 +23,12 @@ export function ToolInvocationPart({
   tool,
   isLoading,
   className,
+  changes,
 }: {
   tool: ToolInvocation;
   isLoading: boolean;
   className?: string;
+  changes?: ToolCallCheckpoint;
 }) {
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: tool.toolName,
@@ -41,7 +44,12 @@ export function ToolInvocationPart({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       {C ? (
-        <C tool={tool} isExecuting={isExecuting} isLoading={isLoading} />
+        <C
+          tool={tool}
+          isExecuting={isExecuting}
+          isLoading={isLoading}
+          changes={changes}
+        />
       ) : (
         <McpToolCall tool={tool} isExecuting={isExecuting} />
       )}

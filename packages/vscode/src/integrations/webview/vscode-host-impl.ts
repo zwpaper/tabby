@@ -68,6 +68,7 @@ import * as vscode from "vscode";
 import { CheckpointService } from "../checkpoint/checkpoint-service";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PochiConfiguration } from "../configuration";
+import { DiffChangesContentProvider } from "../editor/diff-changes-content-provider";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { type FileSelection, TabState } from "../editor/tab-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -503,6 +504,68 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   readCheckpointPath = async (): Promise<string | undefined> => {
     return this.checkpointService.getShadowGitPath();
   };
+
+  showCheckpointDiff = runExclusive.build(
+    this.checkpointGroup,
+    async (
+      title: string,
+      checkpoint: { origin: string; modified?: string },
+      displayPath?: string,
+    ) => {
+      const changedFiles = await this.checkpointService.getCheckpointChanges(
+        checkpoint.origin,
+        checkpoint.modified,
+      );
+      if (changedFiles.length === 0) {
+        logger.info(
+          `No changes found in the checkpoint from ${checkpoint.origin} to ${checkpoint.modified}`,
+        );
+        return false;
+      }
+      if (displayPath) {
+        const changedFile = changedFiles.filter(
+          (file) => file.relative === displayPath,
+        )[0];
+        await vscode.commands.executeCommand(
+          "vscode.diff",
+          vscode.Uri.parse(
+            `${DiffChangesContentProvider.scheme}:${changedFile.relative}`,
+          ).with({
+            query: Buffer.from(changedFile.before ?? "").toString("base64"),
+          }),
+          vscode.Uri.parse(
+            `${DiffChangesContentProvider.scheme}:${changedFile.relative}`,
+          ).with({
+            query: Buffer.from(changedFile.after ?? "").toString("base64"),
+          }),
+          title,
+          {
+            preview: true,
+            preserveFocus: true,
+          },
+        );
+        return true;
+      }
+      await vscode.commands.executeCommand(
+        "vscode.changes",
+        title,
+        changedFiles.map((file) => [
+          vscode.Uri.file(file.absolute),
+          vscode.Uri.parse(
+            `${DiffChangesContentProvider.scheme}:${file.relative}`,
+          ).with({
+            query: Buffer.from(file.before ?? "").toString("base64"),
+          }),
+          vscode.Uri.parse(
+            `${DiffChangesContentProvider.scheme}:${file.relative}`,
+          ).with({
+            query: Buffer.from(file.after ?? "").toString("base64"),
+          }),
+        ]),
+      );
+      return true;
+    },
+  );
 
   readExtensionVersion = async () => {
     return this.context.extension.packageJSON.version;

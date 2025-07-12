@@ -1,4 +1,4 @@
-import type { UIMessage } from "@ai-sdk/ui-utils";
+import type { ToolInvocationUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { TextPart } from "ai";
 import { Loader2, UserIcon } from "lucide-react";
 import type React from "react";
@@ -13,7 +13,7 @@ import { useEnableCheckpoint } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
 import { isVSCodeEnvironment } from "@/lib/vscode";
-import type { ExtendedUIMessage } from "@ragdoll/db";
+import type { CheckpointPart, ExtendedUIMessage } from "@ragdoll/db";
 import { useEffect } from "react";
 import { CheckpointUI } from "../checkpoint-ui";
 import { MessageAttachments } from "./attachments";
@@ -93,6 +93,7 @@ export const MessageList: React.FC<{
                   part={part}
                   isLoading={isLoading}
                   isExecuting={isExecuting}
+                  messages={renderMessages}
                 />
               ))}
             </div>
@@ -127,6 +128,7 @@ function Part({
   isLastPartInMessages,
   isLoading,
   isExecuting,
+  messages,
 }: {
   role: UIMessage["role"];
   partIndex: number;
@@ -134,6 +136,7 @@ function Part({
   isLastPartInMessages: boolean;
   isLoading: boolean;
   isExecuting: boolean;
+  messages: UIMessage[];
 }) {
   const paddingClass = partIndex === 0 ? "" : "mt-2";
   if (part.type === "text") {
@@ -172,6 +175,7 @@ function Part({
         className={paddingClass}
         tool={part.toolInvocation}
         isLoading={isLoading}
+        changes={getToolCallCheckpoint(part, messages)}
       />
     );
   }
@@ -211,4 +215,35 @@ const SeparatorWithCheckpoint: React.FC<{
   }
 
   return sep;
+};
+
+export interface ToolCallCheckpoint {
+  origin?: string;
+  modified?: string;
+}
+
+const getToolCallCheckpoint = (
+  part: ToolInvocationUIPart,
+  messages: ExtendedUIMessage[],
+): ToolCallCheckpoint => {
+  const allParts = messages.flatMap((msg) => msg.parts);
+
+  const currentIndex = allParts.findIndex(
+    (p) =>
+      p.type === "tool-invocation" &&
+      p.toolInvocation.toolCallId === part.toolInvocation.toolCallId,
+  );
+
+  const beforeCheckpoint = allParts.findLast(
+    (item, index) => item.type === "checkpoint" && index < currentIndex,
+  ) as CheckpointPart | undefined;
+
+  const afterCheckpoint = allParts.find(
+    (item, index) => item.type === "checkpoint" && index > currentIndex,
+  ) as CheckpointPart | undefined;
+
+  return {
+    origin: beforeCheckpoint?.checkpoint.commit,
+    modified: afterCheckpoint?.checkpoint.commit,
+  };
 };

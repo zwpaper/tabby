@@ -10,6 +10,7 @@ import { CompletionConfiguration } from "./completion/configuration";
 import { CompletionStatusBarManager } from "./completion/status-bar-manager";
 import { PochiAuthenticationProvider } from "./integrations/auth-provider";
 import { CommandManager } from "./integrations/command";
+import { DiffChangesContentProvider } from "./integrations/editor/diff-changes-content-provider";
 import { DiffOriginContentProvider } from "./integrations/editor/diff-origin-content-provider";
 import { McpHub } from "./integrations/mcp/mcp-hub";
 import { TerminalLinkProvider } from "./integrations/terminal-link-provider";
@@ -55,6 +56,7 @@ export async function activate(context: vscode.ExtensionContext) {
   container.resolve(PostInstallActions);
   container.resolve(FileLogger);
   container.resolve(TerminalLinkProvider);
+  container.resolve(DiffChangesContentProvider);
 }
 
 // This method is called when your extension is deactivated

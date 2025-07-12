@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { addLineBreak } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
+import type { ToolCallCheckpoint } from "../message/message-list";
 import { EditSummary } from "./edit-summary";
 import { FileIcon } from "./file-icon/file-icon";
 
@@ -17,6 +18,7 @@ interface FileBadgeProps {
     added: number;
     removed: number;
   };
+  changes?: ToolCallCheckpoint;
 }
 
 export const FileBadge: React.FC<FileBadgeProps> = ({
@@ -29,13 +31,26 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
   labelClassName,
   isDirectory = false,
   editSummary,
+  changes,
 }) => {
   const lineRange = startLine
     ? endLine && startLine !== endLine
       ? `:${startLine}-${endLine}`
       : `:${startLine}`
     : "";
-  const defaultOnClick = () => {
+
+  const defaultOnClick = async () => {
+    if (changes?.origin) {
+      await vscodeHost.showCheckpointDiff(
+        `${path} (Modified by Pochi)`,
+        {
+          origin: changes.origin,
+          modified: changes.modified,
+        },
+        path,
+      );
+      return;
+    }
     vscodeHost.openFile(
       path,
       startLine ? { start: startLine, end: endLine } : undefined,

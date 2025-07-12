@@ -145,6 +145,9 @@ const VSCodeHostStub = {
   readCheckpointPath: async (): Promise<string | undefined> => {
     return Promise.resolve(undefined);
   },
+  showCheckpointDiff: async (): Promise<boolean> => {
+    return Promise.resolve(true);
+  },
   readExtensionVersion: () => {
     return Promise.resolve("");
   },

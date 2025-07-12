@@ -298,7 +298,17 @@ export class ShadowGitRepo implements vscode.Disposable {
 
   async getDiff(from: string, to?: string): Promise<GitDiff[]> {
     const diffRange = to ? `${from}..${to}` : from;
-    const diffSummary = await this.git.diffSummary([diffRange]);
+    // For bare repository with worktree, use --work-tree flag like in reset method
+    const diffSummaryOutput = await this.git.raw([
+      "--work-tree",
+      this.workspaceDir,
+      "diff",
+      "--name-status",
+      diffRange,
+    ]);
+
+    // Parse the diff output manually since we're using raw command
+    const diffSummary = this.parseDiffOutput(diffSummaryOutput);
     const result = [];
     for (const file of diffSummary.files) {
       const filePath = file.file;
@@ -334,6 +344,21 @@ export class ShadowGitRepo implements vscode.Disposable {
       });
     }
     return result;
+  }
+
+  private parseDiffOutput(diffOutput: string): {
+    files: Array<{ file: string }>;
+  } {
+    const lines = diffOutput
+      .trim()
+      .split("\n")
+      .filter((line) => line.trim());
+    const files = lines.map((line) => {
+      // Parse git diff --name-status output format: "STATUS\tfilename"
+      const parts = line.split("\t");
+      return { file: parts[1] || parts[0] }; // fallback to full line if no tab
+    });
+    return { files };
   }
 
   dispose() {

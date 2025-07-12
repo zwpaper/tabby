@@ -5,7 +5,7 @@ import { getLogger } from "@ragdoll/common";
 import type { SaveCheckpointOptions } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
-import { ShadowGitRepo } from "./shadow-git-repo";
+import { type GitDiff, ShadowGitRepo } from "./shadow-git-repo";
 import { Deferred, toErrorMessage } from "./util";
 
 const logger = getLogger("CheckpointService");
@@ -102,7 +102,15 @@ export class CheckpointService implements vscode.Disposable {
       throw new Error("Shadow Git repository not initialized");
     }
 
-    await this.shadowGit.reset(commitHash);
+    try {
+      await this.shadowGit.reset(commitHash);
+    } catch (error) {
+      const errorMessage = toErrorMessage(error);
+      logger.error(
+        `Failed to restore checkpoint for commit hash: ${commitHash}: ${errorMessage}`,
+      );
+      throw new Error(`Failed to restore checkpoint: ${errorMessage}`);
+    }
   };
 
   async getShadowGitPath() {
@@ -114,6 +122,27 @@ export class CheckpointService implements vscode.Disposable {
     await mkdir(checkpointDir, { recursive: true });
     return checkpointDir;
   }
+
+  getCheckpointChanges = async (
+    from: string,
+    to?: string,
+  ): Promise<GitDiff[]> => {
+    await this.ensureInitialized();
+    if (!this.shadowGit) {
+      throw new Error("Shadow Git repository not initialized");
+    }
+    try {
+      const changes = await this.shadowGit.getDiff(from, to);
+      return changes;
+    } catch (error) {
+      const errorMessage = toErrorMessage(error);
+      logger.error(
+        `Failed to get changes for commit hash: ${from} to: ${to}: ${errorMessage}`,
+        { error },
+      );
+      throw new Error(`Failed to get changes: ${errorMessage}`);
+    }
+  };
 
   dispose() {
     this.shadowGit?.dispose();

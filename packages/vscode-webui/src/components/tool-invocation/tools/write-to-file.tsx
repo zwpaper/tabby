@@ -10,7 +10,7 @@ import { UserEdits } from "../user-edits";
 
 export const writeToFileTool: React.FC<
   ToolProps<ClientToolsType["writeToFile"]>
-> = ({ tool, isExecuting }) => {
+> = ({ tool, isExecuting, changes }) => {
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: tool.toolName,
     toolCallId: tool.toolCallId,
@@ -37,6 +37,7 @@ export const writeToFileTool: React.FC<
           path={path}
           onClick={tool.state !== "result" ? handleClick : undefined}
           editSummary={result?._meta?.editSummary}
+          changes={changes}
         />
       )}
     </>

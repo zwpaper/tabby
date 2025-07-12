@@ -68,6 +68,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "saveCheckpoint",
         "restoreCheckpoint",
         "readCheckpointPath",
+        "showCheckpointDiff",
         "readExtensionVersion",
         "readAutoSaveDisabled",
       ],

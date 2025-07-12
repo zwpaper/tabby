@@ -191,6 +191,23 @@ export interface VSCodeHostApi {
 
   readCheckpointPath(): Promise<string | undefined>;
 
+  /**
+   * Shows the code diff between two checkpoints.
+   * @param title - The title of the diff view.
+   * @param checkpoint - An object containing the origin and modified checkpoint commits.
+   * @param displayPath - The file path to display in the diff view. If not provided, the diff will be shown for all files.
+   * @return A promise that resolves to a boolean indicating whether the diff was shown successfully.
+   * If there is no diff, it resolves to false.
+   */
+  showCheckpointDiff(
+    title: string,
+    checkpoint: {
+      origin: string;
+      modified?: string;
+    },
+    displayPath?: string,
+  ): Promise<boolean>;
+
   readExtensionVersion(): Promise<string>;
 
   readAutoSaveDisabled(): Promise<ThreadSignalSerialization<boolean>>;

@@ -1,6 +1,7 @@
 import type { ToolCall, ToolResult } from "@ai-sdk/provider-utils";
 import type { ToolFunctionType } from "@ragdoll/tools";
 import type { Tool } from "ai";
+import type { ToolCallCheckpoint } from "../message/message-list";
 
 export type ToolInvocation<INPUT, OUTPUT> =
   | ({
@@ -24,6 +25,7 @@ export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
   >;
   isExecuting: boolean;
   isLoading: boolean;
+  changes?: ToolCallCheckpoint;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: external function def.

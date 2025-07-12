@@ -10,7 +10,7 @@ import { UserEdits } from "../user-edits";
 
 export const multiApplyDiffTool: React.FC<
   ToolProps<ClientToolsType["multiApplyDiff"]>
-> = ({ tool, isExecuting }) => {
+> = ({ tool, isExecuting, changes }) => {
   const { path } = tool.args || {};
 
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
@@ -37,6 +37,7 @@ export const multiApplyDiffTool: React.FC<
           path={path}
           onClick={tool.state !== "result" ? handleClick : undefined}
           editSummary={result?._meta?.editSummary}
+          changes={changes}
         />
       )}
     </>
