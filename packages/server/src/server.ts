@@ -132,10 +132,11 @@ const server = Bun.serve({
 });
 console.log(`Listening on http://localhost:${server.port} ...`);
 
-const waitUntilPromises: Promise<unknown>[] = [];
+const waitUntilPromises: Set<Promise<unknown>> = new Set();
 
 export function waitUntil(promise: Promise<unknown>): void {
-  waitUntilPromises.push(promise);
+  const job = promise.finally(() => waitUntilPromises.delete(job));
+  waitUntilPromises.add(job);
 }
 
 export function setIdleTimeout(request: Request, secs: number) {
@@ -144,12 +145,14 @@ export function setIdleTimeout(request: Request, secs: number) {
 
 async function gracefulShutdown() {
   console.log("SIGINT / SIGTERM received, shutting down...");
+  const pendingJobs = [...waitUntilPromises];
+  console.log(`Waiting for ${pendingJobs.length} waitUntil promises...`);
   try {
-    await Promise.all(waitUntilPromises);
+    await Promise.all(pendingJobs);
   } catch (err) {
     console.warn("Error during graceful shutdown:", err);
   }
-  console.log("all waitUntil promises done...");
+  console.log("All waitUntil promises resolved.");
 
   // FIXME(meng): since we handle waitUntilPromises, there should no longer a need for gracefulShutdown.
   // Cleanup this part code in future.
