@@ -186,4 +186,4 @@ Otherwise, please follow the todo list to complete the task.
 ${JSON.stringify(todos, null, 2)}`;
 }
 
-export const EnvironmentDetailsTag = "environment-details";
+const EnvironmentDetailsTag = "environment-details";
