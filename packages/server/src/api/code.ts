@@ -32,8 +32,6 @@ const code = new Hono()
         );
         return c.json(response);
       } catch (error) {
-        console.error("Code completion error:", error);
-
         // Handle specific error types
         if (error instanceof HTTPException) {
           throw error;
