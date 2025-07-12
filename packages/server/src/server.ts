@@ -132,14 +132,27 @@ const server = Bun.serve({
 });
 console.log(`Listening on http://localhost:${server.port} ...`);
 
-export function after(_promise: Promise<unknown>): void {}
+const waitUntilPromises: Promise<unknown>[] = [];
+
+export function waitUntil(promise: Promise<unknown>): void {
+  waitUntilPromises.push(promise);
+}
 
 export function setIdleTimeout(request: Request, secs: number) {
   server.timeout(request, secs);
 }
 
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, shutting down...");
+async function gracefulShutdown() {
+  console.log("SIGINT / SIGTERM received, shutting down...");
+  try {
+    await Promise.all(waitUntilPromises);
+  } catch (err) {
+    console.warn("Error during graceful shutdown:", err);
+  }
+  console.log("all waitUntil promises done...");
+
+  // FIXME(meng): since we handle waitUntilPromises, there should no longer a need for gracefulShutdown.
+  // Cleanup this part code in future.
   try {
     await taskService.gracefulShutdown();
   } catch (err) {
@@ -148,7 +161,10 @@ process.on("SIGTERM", async () => {
 
   console.log("Shutdown complete, exiting...");
   process.exit(143);
-});
+}
+
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);

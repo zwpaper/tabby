@@ -46,13 +46,13 @@ import {
 } from "../lib/new-task-middleware";
 import { createToolMiddleware } from "../lib/tool-call-middleware";
 import { resolveServerTools } from "../lib/tools";
-import { after, setIdleTimeout } from "../server";
+import { setIdleTimeout, waitUntil } from "../server";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
 import { ZodChatRequestType } from "../types";
 
 const streamContext = createResumableStreamContext({
-  waitUntil: after,
+  waitUntil,
 });
 
 const EnableInterleavedThinking = true;
