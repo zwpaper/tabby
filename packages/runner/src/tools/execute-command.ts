@@ -42,8 +42,6 @@ export const executeCommand =
         signal: abortSignal,
         env: {
           ...process.env,
-          GIT_COMMITTER_NAME: "Pochi",
-          GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
           GH_PAGER: "",
         },
       });

@@ -6,3 +6,4 @@ startCommand = "cd packages/server && bun start"
 healthcheckPath = "/health"
 healthcheckTimeout = 10
 restartPolicyType = "NEVER"
+drainingSeconds = 60

@@ -74,8 +74,6 @@ class MinionService {
 
       GIT_AUTHOR_NAME: user.name || "Pochi",
       GIT_AUTHOR_EMAIL: user.email || "noreply@getpochi.com",
-      GIT_COMMITTER_NAME: "Pochi",
-      GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
 
       GITHUB_TOKEN: githubAccessToken,
       GH_TOKEN: githubAccessToken,
