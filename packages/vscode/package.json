@@ -182,12 +182,19 @@
               "inlineCompletion": {
                 "type": "boolean",
                 "default": false,
-                "description": "Enable/Disable beta version inline completion module"
+                "description": "Enable inline completion module"
               }
             }
           },
           "pochi.webui": {
             "default": {},
+            "properties": {
+              "POCHI_LOG": {
+                "type": "string",
+                "default": "",
+                "description": "Pochi webview UI log level"
+              }
+            },
             "description": "Pochi webview UI settings"
           },
           "pochi.inlineCompletion": {
