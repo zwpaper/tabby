@@ -26,6 +26,7 @@ interface PublicShareButtonProps {
   uid: string | undefined;
   onError?: (e: Error) => void;
   modelId?: string;
+  displayError?: string;
 }
 
 export function PublicShareButton({
@@ -34,6 +35,7 @@ export function PublicShareButton({
   uid,
   onError,
   modelId,
+  displayError,
 }: PublicShareButtonProps) {
   const menuItemRef = useRef<"share" | "support">();
   const [isPublicShared, setIsPublicShared] = useState(initialIsPublicShared);
@@ -123,19 +125,20 @@ export function PublicShareButton({
     e.preventDefault();
     const version = await vscodeHost.readExtensionVersion();
     const shareUrl = `${getServerBaseUrl()}/share/${uid}`;
-    doCopy(
-      JSON.stringify(
-        {
-          "Extension version": version ?? "",
-          Model: modelId ?? "",
-          Link: shareUrl,
-        },
-        null,
-        2,
-      ),
-    );
-  };
+    const supportInfo = `### Support Information
 
+**Extension version**: ${version ?? "N/A"}
+
+**Model**: ${modelId ?? "N/A"}
+
+**Link**: ${shareUrl}
+
+**Display error**:
+\`\`\`
+${displayError ?? "N/A"}
+\`\`\``;
+    doCopy(supportInfo);
+  };
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
