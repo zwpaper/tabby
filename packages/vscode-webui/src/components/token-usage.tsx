@@ -13,9 +13,6 @@ interface Props {
 
 export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
   const percentage = Math.ceil((totalTokens / contextWindow) * 100);
-  if (percentage < 60) {
-    return null;
-  }
 
   return (
     <Tooltip>
@@ -32,7 +29,8 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        The context window is nearing its limit. Consider starting a new task.
+        This shows your LLM token usage within the context window. The LLM
+        cannot process tokens beyond this limit.
       </TooltipContent>
     </Tooltip>
   );
