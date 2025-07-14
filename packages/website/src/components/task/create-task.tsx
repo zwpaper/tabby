@@ -5,6 +5,7 @@ import { PromptSuggestions } from "@/components/suggestions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useGithubAuth } from "@/hooks/use-github-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apiClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
@@ -18,7 +19,7 @@ import {
 } from "@/lib/utils/image";
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { ServerErrors } from "@ragdoll/server";
-import { Link, useRouter } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import type { Attachment } from "ai";
 import {
   ArrowUpIcon,
@@ -497,15 +498,17 @@ export function CreateTask({
 }
 
 function ErrorMessage({ error }: { error: Error | undefined }) {
+  const { connectGithub } = useGithubAuth();
+
   if (!error) return;
 
   if (error.message === ServerErrors.RequireGithubIntegration) {
     return (
       <span>
-        GitHub integration is required. Please connect your GitHub account on{" "}
-        <Link to="/profile" className="underline">
-          the profile page
-        </Link>
+        GitHub integration is required.{" "}
+        <button type="button" onClick={connectGithub} className="underline">
+          Connect your GitHub account
+        </button>
         .
       </span>
     );

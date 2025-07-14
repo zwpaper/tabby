@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { useGithubAuth } from "@/hooks/use-github-auth";
 import { apiClient, authClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { cn } from "@/lib/utils";
@@ -182,6 +183,7 @@ function GithubConnectCard({
   queryClient,
 }: GithubConnectCardProps) {
   const githubIntegration = integrations?.find((i) => i.provider === "github");
+  const { connectGithub } = useGithubAuth();
 
   const disconnectGithubMutation = useMutation({
     mutationFn: async (integrationId: number) => {
@@ -204,21 +206,6 @@ function GithubConnectCard({
     },
   });
 
-  const handleConnectGithub = () => {
-    authClient.signIn.social({
-      provider: "github",
-      scopes: [
-        "gist",
-        "read:org",
-        "read:user",
-        "repo",
-        "user:email",
-        "workflow",
-      ],
-      callbackURL: "/profile?github_connected=true",
-    });
-  };
-
   const handleDisconnectGithub = (integrationId: number) => {
     disconnectGithubMutation.mutate(integrationId);
   };
@@ -240,7 +227,7 @@ function GithubConnectCard({
                 checked={!!githubIntegration}
                 onCheckedChange={(checked) => {
                   if (checked) {
-                    handleConnectGithub();
+                    connectGithub();
                   } else if (githubIntegration) {
                     handleDisconnectGithub(githubIntegration.id);
                   }
