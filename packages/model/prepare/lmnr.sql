@@ -24,6 +24,7 @@ WITH transformParams AS (
       AND (attributes->>'ai.response.toolCalls')::text LIKE '%attemptCompletion%'
       AND (attributes->>'ai.model.id')::text = 'gemini-2.5-pro'
       AND (attributes->>'ai.usage.promptTokens')::integer > 40000
+      AND (attributes->>'ai.usage.promptTokens')::integer < 110000
 )
 SELECT 
   (streamText.attributes->>'ai.telemetry.metadata.task-id')::text as uid,
