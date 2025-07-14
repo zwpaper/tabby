@@ -70,7 +70,7 @@ function RouteComponent() {
 
   const isLoading = useMemo(() => {
     if (!loaderData) return false;
-    return !["pending-input", "completed", "failed"].includes(
+    return !["pending-input", "completed", "failed", "pending-model"].includes(
       loaderData.status,
     );
   }, [loaderData]);
