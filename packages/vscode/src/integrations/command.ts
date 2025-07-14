@@ -8,6 +8,7 @@ import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
 import { getWorkspaceRulesFileUri } from "@/lib/env";
+import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger, showOutputPanel } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
@@ -19,6 +20,7 @@ import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { CommandPalette } from "./command-palette";
+import { DiffChangesContentProvider } from "./editor/diff-changes-content-provider";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "./mcp/mcp-hub";
 import type { McpServerConfig } from "./mcp/types";
@@ -298,6 +300,23 @@ export class CommandManager implements vscode.Disposable {
 
       vscode.commands.registerCommand("pochi.completion.toggle", async () => {
         await this.completionConfig.toggleEnabled();
+      }),
+
+      vscode.commands.registerCommand("pochi.openFileFromDiff", async () => {
+        const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+        if (
+          activeTab &&
+          activeTab.input instanceof vscode.TabInputTextDiff &&
+          activeTab.input.modified.scheme === DiffChangesContentProvider.scheme
+        ) {
+          const fileUri = vscode.Uri.joinPath(
+            getWorkspaceFolder().uri,
+            activeTab.input.modified.path,
+          );
+          await vscode.window.showTextDocument(fileUri, {
+            preview: false,
+          });
+        }
       }),
     );
   }

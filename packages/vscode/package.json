@@ -109,9 +109,22 @@
         "command": "pochi.mcp.toggleToolEnabled",
         "title": "Toggle MCP Tool Enabled",
         "category": "Pochi"
+      },
+      {
+        "command": "pochi.openFileFromDiff",
+        "title": "Open File",
+        "category": "Pochi",
+        "icon": "$(go-to-file)"
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "pochi.openFileFromDiff",
+          "when": "resourceScheme == 'pochi-diff-changes'",
+          "group": "navigation"
+        }
+      ],
       "commandPalette": [
         {
           "command": "pochi.openLoginPage",
