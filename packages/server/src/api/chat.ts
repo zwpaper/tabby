@@ -139,7 +139,9 @@ const chat = new Hono()
                 : []),
               ...formatters.llm(preparedMessages, {
                 tools,
-                isGemini: validModelId.includes("google"),
+                isGeminiOrPochi:
+                  validModelId.includes("google") ||
+                  validModelId.includes("pochi"),
               }),
             ],
             tools,

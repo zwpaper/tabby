@@ -916,7 +916,7 @@ Generate a concise title that captures the essence of the above conversation. Re
           },
         ],
         {
-          isGemini: true,
+          isGeminiOrPochi: true,
           stripEnvironmentDetails: true,
         },
       ),
