@@ -150,7 +150,8 @@ export function MessageMarkdown({
                 const isFilePath = (text: string): boolean => {
                   return (
                     !text.includes("://") &&
-                    /\.[a-z0-9]+$/i.test(text) &&
+                    // file name should not be empty, e.g. .ts is not a valid file path
+                    /.+\.[a-z0-9]+$/i.test(text) &&
                     isKnownProgrammingLanguage(text)
                   );
                 };
