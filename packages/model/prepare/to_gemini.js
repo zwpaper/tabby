@@ -1,11 +1,48 @@
-import { readFileSync } from "node:fs";
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 
 const data = readFileSync("./data/label.jsonl", "utf-8").split("\n");
 
+const trainFilePath = "./data/train.jsonl";
+const validationFilePath = "./data/validation.jsonl";
+
+if (!existsSync("./data")) {
+  mkdirSync("./data");
+}
+writeFileSync(trainFilePath, ""); // Clear the file if it exists
+writeFileSync(validationFilePath, ""); // Clear the file if it exists
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
+
+let numExcluded = 0;
+let numNotVerified = 0;
+let numTrain = 0;
+let numValidation = 0;
+
 for (const line of data) {
   const json = JSON.parse(line);
-  if (json.excuded) continue;
-  if (!json.verified) continue;
+  if (json.excluded) {
+    numExcluded++;
+  }
+  if (!json.verified) {
+    numNotVerified++;
+  }
+  if (json.excuded || !json.verified) {
+    continue;
+  }
 
   const geminiData = {
     systemInstruction: {
@@ -55,5 +92,19 @@ for (const line of data) {
       });
     }
   }
-  console.log(JSON.stringify(geminiData));
+
+  const isTrain = Math.abs(hashString(json.uid)) % 10 !== 0; // 90% train, 10% validation
+  if (isTrain) {
+    numTrain++;
+  } else {
+    numValidation++;
+  }
+  const outputFilePath = isTrain ? trainFilePath : validationFilePath;
+  appendFileSync(outputFilePath, `${JSON.stringify(geminiData)}\n`);
 }
+
+console.log(
+  `Total: ${data.length} Excluded: ${numExcluded} Not Verified: ${numNotVerified}`,
+);
+
+console.log(`Train: ${numTrain}, Validation: ${numValidation}`);

@@ -29,7 +29,11 @@ function App() {
             }
           })
           .filter(Boolean) as TaskData[];
-        setTasks(parsedTasks);
+        const existingUids = new Set(tasks.map((task) => task.uid));
+        const uniqueTasks = parsedTasks.filter(
+          (task) => !existingUids.has(task.uid),
+        );
+        setTasks((prevTasks) => [...prevTasks, ...uniqueTasks]);
         setSelectedTask(null);
         setEditingPart(null);
       }
