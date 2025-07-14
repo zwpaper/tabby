@@ -7,14 +7,16 @@ import { vscodeHost } from "@/lib/vscode";
 export function useNewTaskHandler({
   data,
   setUid,
+  enabled,
 }: {
   data: unknown[] | undefined;
   setUid: (uid: string) => void;
+  enabled: boolean;
 }) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!data || data.length === 0) return;
+    if (!enabled || !data || data.length === 0) return;
 
     const dataParts = data as DataPart[];
     for (const part of dataParts) {
@@ -31,5 +33,5 @@ export function useNewTaskHandler({
         });
       }
     }
-  }, [data, queryClient, setUid]);
+  }, [enabled, data, queryClient, setUid]);
 }

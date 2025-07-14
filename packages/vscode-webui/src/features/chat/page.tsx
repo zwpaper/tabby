@@ -168,8 +168,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         minionId,
       ),
     fetch: async (url, options) => {
-      // Clear the data when a new request is made
-      setData(undefined);
       const resp = await fetch(url, options);
       // If the task is already streaming, resume the stream
       latestHttpCode.current = resp.status;
@@ -182,7 +180,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   const {
     data,
-    setData,
     error,
     messages,
     setMessages,
@@ -240,7 +237,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     data,
   });
 
-  useNewTaskHandler({ data, setUid });
+  useNewTaskHandler({ data, setUid, enabled: !uidRef.current });
 
   useTokenUsageUpdater({
     data,
