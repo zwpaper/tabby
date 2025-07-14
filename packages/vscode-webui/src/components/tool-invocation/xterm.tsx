@@ -6,6 +6,7 @@ import {
   Terminal,
 } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
+import { debounceWithCachedValue } from "@/lib/debounce";
 import { isVSCodeEnvironment, vscodeHost } from "@/lib/vscode";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
@@ -297,6 +298,33 @@ export function XTerm({
       };
     });
   }, [currentRows, containerRef]);
+
+  useEffect(() => {
+    if (!containerRef.current || !instance) return;
+
+    const container = containerRef.current;
+    const debouncedResize = debounceWithCachedValue(
+      () => {
+        const width = container.clientWidth;
+        const col = Math.floor(width / 8); // Approximate character width
+        if (col < 1) return;
+        instance.resize(col, currentRows);
+      },
+      50,
+      {
+        leading: false,
+        trailing: true,
+      },
+    );
+
+    const resizeObserver = new ResizeObserver(debouncedResize);
+    resizeObserver.observe(container);
+
+    return () => {
+      debouncedResize.cancel();
+      resizeObserver.disconnect();
+    };
+  }, [containerRef, instance, currentRows]);
 
   useEffect(() => {
     setOptions((prev) => ({
