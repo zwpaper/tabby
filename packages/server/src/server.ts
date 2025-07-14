@@ -25,7 +25,6 @@ import { websocket } from "./lib/websocket";
 import { queuedash } from "./queuedash";
 import { startWorkers } from "./service/background-job";
 import { slackService } from "./service/slack";
-import { taskService } from "./service/task";
 
 export const app = new Hono().use(authRequest);
 
@@ -153,14 +152,6 @@ async function gracefulShutdown() {
     console.warn("Error during graceful shutdown:", err);
   }
   console.log("All waitUntil promises resolved.");
-
-  // FIXME(meng): since we handle waitUntilPromises, there should no longer a need for gracefulShutdown.
-  // Cleanup this part code in future.
-  try {
-    await taskService.gracefulShutdown();
-  } catch (err) {
-    console.warn("Error during graceful shutdown:", err);
-  }
 
   console.log("Shutdown complete, exiting...");
   process.exit(143);

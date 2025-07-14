@@ -56,25 +56,7 @@ const legacyMinionId = sql<string | null>`environment->'info'->>'minionId'`.as(
   "legacyMinionId",
 );
 
-class StreamingTask {
-  constructor(
-    readonly streamId: string,
-    readonly userId: string,
-    readonly uid: string,
-  ) {}
-
-  get key() {
-    return StreamingTask.key(this.userId, this.uid);
-  }
-
-  static key(userId: string, uid: string) {
-    return `${userId}:${uid}`;
-  }
-}
-
 class TaskService {
-  private streamingTasks = new Map<string, StreamingTask>();
-
   async startStreaming(
     userId: string,
     request: z.infer<typeof ZodChatRequestType>,
@@ -84,8 +66,6 @@ class TaskService {
       userId,
       request,
     );
-    const streamingTask = new StreamingTask(streamId, userId, uid);
-    this.streamingTasks.set(streamingTask.key, streamingTask);
 
     const messages = appendClientMessage({
       messages: toUIMessages(conversation?.messages || []),
@@ -182,8 +162,6 @@ class TaskService {
       .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .executeTakeFirstOrThrow();
-
-    await this.finalizeStreaming(uid, userId);
   }
 
   async failStreaming(uid: string, userId: string, error: TaskError) {
@@ -197,16 +175,6 @@ class TaskService {
       .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .execute();
-
-    await this.finalizeStreaming(uid, userId);
-  }
-
-  async finalizeStreaming(uid: string, userId: string) {
-    const key = StreamingTask.key(userId, uid);
-    const streamingTask = this.streamingTasks.get(key);
-    if (streamingTask) {
-      this.streamingTasks.delete(StreamingTask.key(userId, uid));
-    }
   }
 
   private async prepareTask(
@@ -721,28 +689,6 @@ class TaskService {
       .executeTakeFirst();
 
     return result?.latestStreamId ?? null;
-  }
-
-  async gracefulShutdown() {
-    const streamingTasksToFail = Array.from(this.streamingTasks.values());
-    const numTasksToFail = streamingTasksToFail.length;
-    console.info(
-      `Process exiting, cleaning up ${numTasksToFail} streaming tasks`,
-    );
-    if (numTasksToFail === 0) return;
-    this.streamingTasks.clear();
-
-    const promises = [];
-    for (const task of streamingTasksToFail) {
-      promises.push(
-        this.failStreaming(task.uid, task.userId, {
-          kind: "AbortError",
-          message: "Server is shutting down, task was aborted",
-        }),
-      );
-    }
-
-    await Promise.all(promises);
   }
 
   toTaskError(error: unknown): TaskError {
