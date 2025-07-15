@@ -33,7 +33,7 @@ function App() {
         const uniqueTasks = parsedTasks.filter(
           (task) => !existingUids.has(task.uid),
         );
-        setTasks((prevTasks) => [...prevTasks, ...uniqueTasks]);
+        setTasks((prevTasks) => [...uniqueTasks, ...prevTasks]);
         setSelectedTask(null);
         setEditingPart(null);
       }
@@ -42,6 +42,43 @@ function App() {
       alert(
         "Failed to read from clipboard. Please make sure you have granted permission and there is text in the clipboard.",
       );
+    }
+  };
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const lines = text.trim().split("\n");
+      const parsedTasks = lines
+        .map((line) => {
+          try {
+            return JSON.parse(line);
+          } catch (error) {
+            console.error("Failed to parse line:", line, error);
+            return null;
+          }
+        })
+        .filter(Boolean) as TaskData[];
+
+      const existingUids = new Set(tasks.map((task) => task.uid));
+      const uniqueTasks = parsedTasks.filter(
+        (task) => !existingUids.has(task.uid),
+      );
+
+      setTasks((prevTasks) => [...uniqueTasks, ...prevTasks]);
+      setSelectedTask(null);
+      setEditingPart(null);
+
+      // Reset the file input
+      event.target.value = "";
+    } catch (error) {
+      console.error("Failed to read file:", error);
+      alert("Failed to read file. Please make sure it's a valid JSONL file.");
     }
   };
 
@@ -173,6 +210,7 @@ function App() {
         <FileControls
           onImport={handleImport}
           onExport={handleExport}
+          onFileUpload={handleFileUpload}
           isExportDisabled={tasks.length === 0}
         />
       </header>

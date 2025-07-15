@@ -7,11 +7,21 @@ interface TaskListProps {
 }
 
 export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
+  // Sort tasks to show PENDING tasks first
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const aIsPending = !a.verified && !a.excluded && a.verified === undefined;
+    const bIsPending = !b.verified && !b.excluded && b.verified === undefined;
+
+    if (aIsPending && !bIsPending) return -1;
+    if (!aIsPending && bIsPending) return 1;
+    return 0; // Keep original order for tasks with same status
+  });
+
   return (
     <div className="w-1/3 overflow-y-auto border-gray-200 border-r bg-gray-50 p-4">
       <h2 className="mb-4 font-semibold text-gray-800 text-lg">Tasks</h2>
       <ul className="space-y-2">
-        {tasks.map((task) => (
+        {sortedTasks.map((task) => (
           <li
             key={task.uid}
             onClick={() => onSelectTask(task)}
@@ -53,6 +63,10 @@ export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
                     clipRule="evenodd"
                   />
                 </svg>
+              ) : !task.excluded && task.verified === undefined ? (
+                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 font-medium text-xs text-yellow-800">
+                  PENDING
+                </span>
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
