@@ -1,5 +1,6 @@
 import { getLogger } from "@ragdoll/common";
 import type { TaskEvent } from "@ragdoll/db";
+import chalk from "chalk";
 import type { TaskRunner, TaskRunnerState } from "./task-runner";
 import type { TaskRunnerOutputStream } from "./task-runner-output";
 
@@ -57,10 +58,10 @@ export class TaskRunnerSupervisor {
         case "loading-task":
           if (progress.phase === "begin") {
             logger.debug(`[Step ${progress.step}] Loading task...`);
-            this.output.updateIsLoading(true, "Loading task...");
+            this.output.startLoading("Loading task...");
           } else if (progress.phase === "end") {
             logger.debug(`[Step ${progress.step}] Task loaded successfully.`);
-            this.output.updateIsLoading(false);
+            this.output.stopLoading();
             this.output.updateMessage(runnerState.messages);
           }
           break;
@@ -105,10 +106,14 @@ export class TaskRunnerSupervisor {
           if (progress.phase === "begin") {
             logger.debug(`[Step ${progress.step}] Sending message...`);
             this.output.updateMessage(runnerState.messages);
-            this.output.updateIsLoading(true, "Sending message...");
+            this.output.startLoading("Sending message...");
           } else if (progress.phase === "end") {
             logger.debug(`[Step ${progress.step}] Message sent successfully.`);
-            this.output.updateIsLoading(false);
+            this.output.stopLoading();
+            this.output.printText(
+              chalk.dim(chalk.italic("--- Round complete ---")),
+            );
+            this.output.println();
           }
           break;
       }
@@ -145,6 +150,9 @@ export class TaskRunnerSupervisor {
   }
 
   private async waitForTaskThenRestart() {
+    this.output.printText(
+      chalk.dim(chalk.italic("Waiting for task to be updated...")),
+    );
     try {
       logger.debug(
         "Task runner stopped in daemon mode, waiting for pending-model status...",

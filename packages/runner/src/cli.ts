@@ -9,6 +9,7 @@ import chalk from "chalk";
 import * as commander from "commander";
 import { hc } from "hono/client";
 import packageJson from "../package.json";
+import { toError } from "./lib/error-utils";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { withAttempts } from "./lib/with-attempts";
 import { TaskRunner } from "./task-runner";
@@ -152,40 +153,52 @@ program
         );
       }
 
-      output.updateIsLoading(true, "Creating task...");
-
+      output.startLoading("Creating task...");
       const abortController = new AbortController();
       creatingTaskAbortController = abortController;
 
-      uid = await withAttempts(
-        async () => {
-          const response = await apiClient.api.tasks.$post(
-            {
-              json: {
-                prompt: validPrompt,
+      try {
+        uid = await withAttempts(
+          async () => {
+            const response = await apiClient.api.tasks.$post(
+              {
+                json: {
+                  prompt: validPrompt,
+                },
               },
-            },
-            {
-              init: {
-                signal: abortController.signal,
+              {
+                init: {
+                  signal: abortController.signal,
+                },
               },
-            },
-          );
-
-          if (!response.ok) {
-            const error = await response.text();
-            throw new Error(
-              `Failed to create task: ${response.status} ${error}`,
             );
-          }
 
-          const task = await response.json();
-          return task.uid;
-        },
-        { abortSignal: abortController.signal },
+            if (!response.ok) {
+              const error = await response.text();
+              throw new Error(
+                `Failed to create task: ${response.status} ${error}`,
+              );
+            }
+
+            const task = await response.json();
+            return task.uid;
+          },
+          { abortSignal: abortController.signal },
+        );
+      } catch (error) {
+        if (abortController.signal.aborted) {
+          return; // just exit if aborted
+        }
+        output.failLoading(chalk.bold(chalk.red("Failed to create task.")));
+        output.printError(toError(error));
+        output.finish();
+        throw error; // rethrow to exit the process
+      }
+
+      const taskUrl = chalk.underline(`${options.url}/tasks/${uid}`);
+      output.succeedLoading(
+        `${chalk.bold(chalk.green("Task created:"))} ${taskUrl}.`,
       );
-      output.updateIsLoading(false);
-      output.printText(`Task created: ${options.url}/tasks/${uid}.`);
       output.println();
     }
 
