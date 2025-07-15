@@ -21,7 +21,7 @@ import {
 } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Environment, TaskEvent, Todo } from "@ragdoll/db";
-import type { AppType, PochiEventSource } from "@ragdoll/server";
+import type { AppType } from "@ragdoll/server";
 import {
   ServerToolApproved,
   ServerTools,
@@ -31,6 +31,7 @@ import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
 import { toError, toErrorString } from "./lib/error-utils";
 import { readEnvironment } from "./lib/read-environment";
+import { createTaskEventSource } from "./lib/task-event-source";
 import { withAttempts } from "./lib/with-attempts";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
@@ -66,11 +67,6 @@ export interface RunnerOptions {
    * This is the API client used to communicate with the server.
    */
   apiClient: ApiClient;
-
-  /**
-   * This is used to subscribe to task events and receive updates.
-   */
-  pochiEvents: PochiEventSource;
 
   /**
    * The current working directory for the task runner.
@@ -312,7 +308,12 @@ export class TaskRunner {
     });
     signal?.throwIfAborted();
 
-    const task = await loadTaskAndWaitStreaming(this.options, signal);
+    const task = await loadTaskAndWaitStreaming({
+      uid: this.options.uid,
+      apiClient: this.options.apiClient,
+      accessToken: this.options.accessToken,
+      abortSignal: signal,
+    });
     this.task = task;
 
     this.messages = toUIMessages(task.conversation?.messages ?? []);
@@ -481,7 +482,7 @@ export class TaskRunner {
     signal?.throwIfAborted();
 
     const environment = await buildEnvironment(
-      this.options,
+      this.options.cwd,
       this.todos,
       signal,
     );
@@ -565,23 +566,29 @@ export class TaskRunner {
   }
 }
 
-const PollTaskStatusInterval = 10_000; // 10 seconds
 const WaitTaskStreamingTimeout = 120_000; // 120 seconds
 
 /**
  * Loads the task and waits for it to be in a non-streaming state.
  */
-async function loadTaskAndWaitStreaming(
-  context: RunnerOptions,
-  abortSignal?: AbortSignal,
-): Promise<Task> {
+async function loadTaskAndWaitStreaming({
+  uid,
+  apiClient,
+  accessToken,
+  abortSignal,
+}: {
+  uid: string;
+  apiClient: ApiClient;
+  accessToken: string;
+  abortSignal?: AbortSignal;
+}): Promise<Task> {
   const loadTask = async () => {
     return await withAttempts(
       async () => {
-        const resp = await context.apiClient.api.tasks[":uid"].$get(
+        const resp = await apiClient.api.tasks[":uid"].$get(
           {
             param: {
-              uid: context.uid,
+              uid,
             },
           },
           {
@@ -602,66 +609,45 @@ async function loadTaskAndWaitStreaming(
 
   return new Promise<Task>((resolve, reject) => {
     const cleanups: (() => void)[] = [];
-    const cleanupAndResolve = (task: Task | Promise<Task>) => {
-      for (const cleanup of cleanups) {
+    const runCleanups = () => {
+      const cleanupFns = cleanups.splice(0, cleanups.length).reverse();
+      for (const cleanup of cleanupFns) {
         cleanup();
       }
+    };
+    const cleanupAndResolve = (task: Task | Promise<Task>) => {
+      runCleanups();
       resolve(task);
     };
     const cleanupAndReject = (error: Error) => {
-      for (const cleanup of cleanups) {
-        cleanup();
-      }
+      runCleanups();
       reject(error);
     };
 
-    // Try load the task directly
-    loadTask()
-      .then((task) => {
-        if (task.status !== "streaming") {
-          cleanupAndResolve(task);
-        } else {
-          // we need to wait for the task to finish streaming
-        }
-      })
-      .catch((error) => {
-        cleanupAndReject(error);
-      });
-
-    // Subscribe to task status changes
-    const unsubscribe = context.pochiEvents.subscribe<TaskEvent>(
+    // Fetch and subscribe to task status events
+    const taskEventSource = createTaskEventSource({
+      uid,
+      apiClient,
+      accessToken,
+    });
+    const unsubscribe = taskEventSource.subscribe<TaskEvent>(
       "task:status-changed",
       ({ data }) => {
-        if (data.uid !== context.uid) {
+        if (data.uid !== uid) {
           return;
         }
-
         if (data.status !== "streaming") {
           cleanupAndResolve(loadTask());
         }
       },
     );
-    cleanups.push(unsubscribe);
-
-    // Set a timer to poll the task status, this is a fallback in case the event subscription does not work
-    const timer = setInterval(() => {
-      loadTask()
-        .then((task) => {
-          if (task.status !== "streaming") {
-            cleanupAndResolve(task);
-          }
-        })
-        .catch((error) => {
-          cleanupAndReject(error);
-        });
-    }, PollTaskStatusInterval);
     cleanups.push(() => {
-      clearInterval(timer);
+      unsubscribe();
+      taskEventSource.dispose();
     });
 
-    // Set a timeout to reject if the task is still streaming after 120 seconds
+    // Set a timeout to check if the task is still streaming after 120 seconds
     const timeout = setTimeout(() => {
-      unsubscribe();
       loadTask()
         .then((task) => {
           if (task.status !== "streaming") {
@@ -669,7 +655,7 @@ async function loadTaskAndWaitStreaming(
           } else {
             cleanupAndReject(
               new Error(
-                `Task ${context.uid} is still streaming after timeout.`,
+                `Task ${uid} is still streaming after ${WaitTaskStreamingTimeout} ms timeout.`,
               ),
             );
           }
@@ -695,12 +681,12 @@ async function loadTaskAndWaitStreaming(
 }
 
 async function buildEnvironment(
-  context: RunnerOptions,
+  cwd: string,
   todos: Todo[],
   signal?: AbortSignal,
 ): Promise<Environment> {
   return new Promise<Environment>((resolve, reject) => {
-    readEnvironment(context).then((environment) => {
+    readEnvironment({ cwd }).then((environment) => {
       resolve({
         ...environment,
         todos,

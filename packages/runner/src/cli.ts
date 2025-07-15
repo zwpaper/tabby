@@ -4,7 +4,7 @@ import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
 import { CredentialStorage } from "@ragdoll/common/node";
-import { type AppType, createPochiEventSource } from "@ragdoll/server";
+import type { AppType } from "@ragdoll/server";
 import chalk from "chalk";
 import * as commander from "commander";
 import { hc } from "hono/client";
@@ -202,13 +202,10 @@ program
       output.println();
     }
 
-    const pochiEvents = createPochiEventSource(uid, options.url, token);
-
     const runner = new TaskRunner({
       uid,
       accessToken: token,
       apiClient,
-      pochiEvents,
       cwd: options.cwd,
       rg: options.rg,
       model: options.model,
