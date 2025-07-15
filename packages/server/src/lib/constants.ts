@@ -168,6 +168,15 @@ export const StripePlans = [
       premium: 500,
     },
   },
+  {
+    name: "Organization",
+    priceId: "price_1RkyHPDZw4FSeDxljz9bLTZz",
+    metered: true,
+    limits: {
+      basic: 5_000,
+      premium: 500,
+    },
+  },
 ];
 
 export function getModelById(
