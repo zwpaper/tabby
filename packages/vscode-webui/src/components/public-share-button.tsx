@@ -9,6 +9,7 @@ import {
 import { apiClient } from "@/lib/auth-client";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
+import { SocialLinks } from "@ragdoll/common";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -140,10 +141,24 @@ ${displayError ?? "N/A"}
     vscodeHost.capture({
       event: "shareSupport",
       properties: {
+        uid,
         text: supportInfo,
       },
     });
     doCopy(supportInfo);
+    const openDiscordButtonText = "Join Discord";
+    const result = await vscodeHost.showInformationMessage(
+      "Task shared with the Pochi team",
+      {
+        modal: true,
+        detail: `This task and relevant debug information have been sent. For support, please join our Discord server and reference this issue with the ID: ${uid}.`,
+      },
+      openDiscordButtonText,
+    );
+
+    if (result === openDiscordButtonText) {
+      await vscodeHost.openExternal(SocialLinks.Discord);
+    }
   };
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>

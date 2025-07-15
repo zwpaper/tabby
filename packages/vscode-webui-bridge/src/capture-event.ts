@@ -39,6 +39,7 @@ export type CaptureEvent =
   | {
       event: "shareSupport";
       properties: {
+        uid: string;
         text: string;
       };
     };

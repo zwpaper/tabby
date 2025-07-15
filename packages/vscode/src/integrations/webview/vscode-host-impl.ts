@@ -577,6 +577,18 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return ThreadSignal.serialize(this.pochiConfiguration.autoSaveDisabled);
   };
 
+  showInformationMessage = async <T extends string>(
+    message: string,
+    options: { modal?: boolean; detail?: string },
+    ...items: T[]
+  ): Promise<T | undefined> => {
+    return await vscode.window.showInformationMessage(
+      message,
+      options,
+      ...items,
+    );
+  };
+
   dispose() {
     for (const disposable of this.disposables) {
       disposable.dispose();

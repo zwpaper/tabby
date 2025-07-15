@@ -154,6 +154,9 @@ const VSCodeHostStub = {
   readAutoSaveDisabled: () => {
     return Promise.resolve({} as ThreadSignalSerialization<boolean>);
   },
+  showInformationMessage: async (): Promise<undefined> => {
+    return Promise.resolve(undefined);
+  },
 } satisfies VSCodeHostApi;
 
 export function createVscodeHostStub(overrides?: Partial<VSCodeHostApi>) {

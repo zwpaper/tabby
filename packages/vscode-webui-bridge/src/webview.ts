@@ -211,6 +211,21 @@ export interface VSCodeHostApi {
   readExtensionVersion(): Promise<string>;
 
   readAutoSaveDisabled(): Promise<ThreadSignalSerialization<boolean>>;
+
+  /**
+   * Show an information message to users. Optionally provide an array of items which will be presented as
+   * clickable buttons.
+   *
+   * @param message The message to show.
+   * @param options Configures the behaviour of the message.
+   * @param items A set of items that will be rendered as actions in the message.
+   * @returns A thenable that resolves to the selected item or `undefined` when being dismissed.
+   */
+  showInformationMessage<T extends string>(
+    message: string,
+    options: { modal?: boolean; detail?: string },
+    ...items: T[]
+  ): Promise<T | undefined>;
 }
 
 export interface WebviewHostApi {
