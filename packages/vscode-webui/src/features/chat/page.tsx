@@ -5,7 +5,7 @@ import { useEnableCheckpoint, useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { formatters, prompts, toUIMessages } from "@ragdoll/common";
-import type { Environment, Todo } from "@ragdoll/db";
+import type { Environment, ExtendedUIMessage, Todo } from "@ragdoll/db";
 import type { InferResponseType } from "hono/client";
 import {
   ExternalLinkIcon,
@@ -34,6 +34,7 @@ import { useMinionId } from "@/lib/hooks/use-minion-id";
 import { vscodeHost } from "@/lib/vscode";
 
 import { ServerErrors } from "@ragdoll/server";
+import type { GitDiff } from "@ragdoll/vscode-webui-bridge";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
@@ -78,7 +79,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const [totalTokens, setTotalTokens] = useState<number>(
     task?.totalTokens || 0,
   );
-
   useEffect(() => {
     if (task) {
       setTotalTokens(task.totalTokens || 0);
@@ -113,12 +113,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   } = imageUpload;
 
   const todosRef = useRef<Todo[] | undefined>(undefined);
-  const buildEnvironment = useCallback(async () => {
-    return {
-      todos: todosRef.current,
-      ...(await vscodeHost.readEnvironment()),
-    } satisfies Environment;
-  }, []);
 
   const { toolset: mcpToolSet } = useMcp();
 
@@ -133,6 +127,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     api: apiClient.api.chat.stream.$url().toString(),
     onFinish: (message, { finishReason }) => {
       autoApproveGuard.current = true;
+
       let numToolCalls: number | undefined;
       if (finishReason === "tool-calls") {
         // Find the last step-start index
@@ -191,6 +186,23 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     addToolResult,
     experimental_resume,
   } = chat;
+
+  const buildEnvironment = useCallback(async () => {
+    const environment = await vscodeHost.readEnvironment();
+
+    let userEdits: GitDiff[] | undefined;
+    const lastCheckpointHash = findLastCheckpointFromMessages(messages);
+    if (lastCheckpointHash && autoApproveGuard.current) {
+      userEdits =
+        (await vscodeHost.diffWithCheckpoint(lastCheckpointHash)) ?? undefined;
+    }
+
+    return {
+      todos: todosRef.current,
+      ...environment,
+      userEdits,
+    } satisfies Environment;
+  }, [messages, autoApproveGuard.current]);
 
   const {
     todos,
@@ -542,4 +554,18 @@ function useUid(task: Task | null) {
     uidRef,
     setUid,
   };
+}
+
+function findLastCheckpointFromMessages(
+  messages: ExtendedUIMessage[],
+): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    for (const part of message.parts) {
+      if (part.type === "checkpoint" && part.checkpoint?.commit) {
+        return part.checkpoint.commit;
+      }
+    }
+  }
+  return undefined;
 }

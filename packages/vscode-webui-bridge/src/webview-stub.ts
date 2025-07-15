@@ -4,6 +4,7 @@ import type { Environment } from "@ragdoll/db";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
+  GitDiff,
   McpStatus,
   ResourceURI,
   SessionState,
@@ -144,6 +145,11 @@ const VSCodeHostStub = {
   },
   readCheckpointPath: async (): Promise<string | undefined> => {
     return Promise.resolve(undefined);
+  },
+  diffWithCheckpoint: async (
+    _fromCheckpoint: string,
+  ): Promise<GitDiff[] | null> => {
+    return Promise.resolve(null);
   },
   showCheckpointDiff: async (): Promise<boolean> => {
     return Promise.resolve(true);

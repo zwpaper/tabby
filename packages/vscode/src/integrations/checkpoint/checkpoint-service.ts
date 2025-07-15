@@ -2,10 +2,13 @@ import { mkdir } from "node:fs/promises";
 import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@ragdoll/common";
-import type { SaveCheckpointOptions } from "@ragdoll/vscode-webui-bridge";
+import type {
+  GitDiff,
+  SaveCheckpointOptions,
+} from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
-import { type GitDiff, ShadowGitRepo } from "./shadow-git-repo";
+import { ShadowGitRepo } from "./shadow-git-repo";
 import { Deferred, toErrorMessage } from "./util";
 
 const logger = getLogger("CheckpointService");
