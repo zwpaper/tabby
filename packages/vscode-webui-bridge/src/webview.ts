@@ -4,7 +4,6 @@ import type { Environment } from "@ragdoll/db";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
-  GitDiff,
   McpStatus,
   NewTaskParams,
   ResourceURI,
@@ -13,7 +12,7 @@ import type {
   TaskIdParams,
   TaskRunnerOptions,
   WorkspaceState,
-} from "./index";
+} from "./index"; // Adjusted to import from index.ts
 
 export interface VSCodeHostApi {
   readResourceURI(): Promise<ResourceURI>;
@@ -191,13 +190,6 @@ export interface VSCodeHostApi {
   restoreCheckpoint(commitHash?: string): Promise<void>;
 
   readCheckpointPath(): Promise<string | undefined>;
-
-  /**
-   * Reads user edits since the last checkpoint as GitDiff array.
-   * @param fromCheckpoint - checkpoint hash to compare from.
-   * @returns A promise that resolves to an array of GitDiff objects representing changes since the last checkpoint, or null if no edits.
-   */
-  diffWithCheckpoint(fromCheckpoint: string): Promise<GitDiff[] | null>;
 
   /**
    * Shows the code diff between two checkpoints.

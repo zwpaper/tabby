@@ -16,12 +16,6 @@ export type {
 
 export type { CaptureEvent } from "./capture-event";
 
-export type GitDiff = {
-  relative: string;
-  absolute: string;
-  before: string;
-  after: string;
-};
 export interface ResourceURI {
   logo128: string;
 }

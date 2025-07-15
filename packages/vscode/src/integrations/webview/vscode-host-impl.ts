@@ -505,29 +505,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return this.checkpointService.getShadowGitPath();
   };
 
-  diffWithCheckpoint = runExclusive.build(
-    this.checkpointGroup,
-    async (fromCheckpoint: string) => {
-      try {
-        // Get changes using existing method
-        const changes =
-          await this.checkpointService.getCheckpointChanges(fromCheckpoint);
-
-        if (changes.length === 0) {
-          return null;
-        }
-
-        // Return the GitDiff array directly
-        return changes;
-      } catch (error) {
-        logger.error(
-          `Failed to get user edits since last checkpoint: ${error}`,
-        );
-        return null;
-      }
-    },
-  );
-
   showCheckpointDiff = runExclusive.build(
     this.checkpointGroup,
     async (

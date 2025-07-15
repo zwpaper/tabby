@@ -71,7 +71,6 @@ function createVSCodeHost(): VSCodeHostApi {
         "showCheckpointDiff",
         "readExtensionVersion",
         "readAutoSaveDisabled",
-        "diffWithCheckpoint",
         "showInformationMessage",
       ],
       exports: {

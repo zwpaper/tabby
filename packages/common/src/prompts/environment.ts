@@ -1,6 +1,5 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment, GitStatus } from "@ragdoll/db";
-import { prompts } from "./index";
 
 type User = { name: string; email: string };
 
@@ -16,7 +15,6 @@ export function getReadEnvironmentResult(
     getVisibleTerminals(environment.workspace),
     getCurrentWorkingFile(environment.workspace),
     getGitStatus(environment.workspace.gitStatus),
-    getUserEdits(environment.userEdits),
     getTodos(environment.todos),
   ]
     .filter(Boolean)
@@ -194,19 +192,6 @@ Here's todo list for current task. If a task is marked as cancelled or completed
 Otherwise, please follow the todo list to complete the task.
 
 ${JSON.stringify(todos, null, 2)}`;
-}
-
-function getUserEdits(userEdits: Environment["userEdits"]) {
-  if (!userEdits || userEdits.length === 0) {
-    return "";
-  }
-
-  const formattedChanges = prompts.formatUserEdits(userEdits);
-
-  return `# Recent Changes Since Last Checkpoint
-The following changes have been made since the last checkpoint:
-
-${formattedChanges}`;
 }
 
 const EnvironmentDetailsTag = "environment-details";
