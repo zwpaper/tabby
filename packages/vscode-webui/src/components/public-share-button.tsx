@@ -137,6 +137,12 @@ export function PublicShareButton({
 \`\`\`
 ${displayError ?? "N/A"}
 \`\`\``;
+    vscodeHost.capture({
+      event: "shareSupport",
+      properties: {
+        text: supportInfo,
+      },
+    });
     doCopy(supportInfo);
   };
   return (

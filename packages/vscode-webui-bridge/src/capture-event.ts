@@ -35,4 +35,10 @@ export type CaptureEvent =
   | {
       event: "sharePublic";
       properties?: undefined;
+    }
+  | {
+      event: "shareSupport";
+      properties: {
+        text: string;
+      };
     };
