@@ -1,7 +1,7 @@
 import { getLogger } from "@ragdoll/common";
 import type { TaskEvent } from "@ragdoll/db";
+import { createPochiEventSourceWithApiClient } from "@ragdoll/server";
 import chalk from "chalk";
-import { createTaskEventSource } from "./lib/task-event-source";
 import type { TaskRunner, TaskRunnerState } from "./task-runner";
 import type { TaskRunnerOutputStream } from "./task-runner-output";
 
@@ -180,11 +180,10 @@ export class TaskRunnerSupervisor {
 
   private async waitForPendingModelStatus(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      const taskEventSource = createTaskEventSource({
-        uid: this.runner.options.uid,
-        apiClient: this.runner.options.apiClient,
-        accessToken: this.runner.options.accessToken,
-      });
+      const taskEventSource = createPochiEventSourceWithApiClient(
+        this.runner.options.uid,
+        this.runner.options.apiClient,
+      );
       const unsubscribe = taskEventSource.subscribe<TaskEvent>(
         "task:status-changed",
         async ({ data }) => {

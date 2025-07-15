@@ -21,7 +21,10 @@ import {
 } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Environment, TaskEvent, Todo } from "@ragdoll/db";
-import type { AppType } from "@ragdoll/server";
+import {
+  type AppType,
+  createPochiEventSourceWithApiClient,
+} from "@ragdoll/server";
 import {
   ServerToolApproved,
   ServerTools,
@@ -31,7 +34,6 @@ import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
 import { toError, toErrorString } from "./lib/error-utils";
 import { readEnvironment } from "./lib/read-environment";
-import { createTaskEventSource } from "./lib/task-event-source";
 import { withAttempts } from "./lib/with-attempts";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
@@ -311,7 +313,6 @@ export class TaskRunner {
     const task = await loadTaskAndWaitStreaming({
       uid: this.options.uid,
       apiClient: this.options.apiClient,
-      accessToken: this.options.accessToken,
       abortSignal: signal,
     });
     this.task = task;
@@ -574,12 +575,10 @@ const WaitTaskStreamingTimeout = 120_000; // 120 seconds
 async function loadTaskAndWaitStreaming({
   uid,
   apiClient,
-  accessToken,
   abortSignal,
 }: {
   uid: string;
   apiClient: ApiClient;
-  accessToken: string;
   abortSignal?: AbortSignal;
 }): Promise<Task> {
   const loadTask = async () => {
@@ -625,11 +624,7 @@ async function loadTaskAndWaitStreaming({
     };
 
     // Fetch and subscribe to task status events
-    const taskEventSource = createTaskEventSource({
-      uid,
-      apiClient,
-      accessToken,
-    });
+    const taskEventSource = createPochiEventSourceWithApiClient(uid, apiClient);
     const unsubscribe = taskEventSource.subscribe<TaskEvent>(
       "task:status-changed",
       ({ data }) => {
