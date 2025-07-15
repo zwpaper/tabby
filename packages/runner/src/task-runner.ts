@@ -181,6 +181,7 @@ const ToolMap: Record<
 };
 
 const DefaultMaxSteps = 24;
+const MaxContinuousTaskFailedSteps = 3;
 
 const logger = getLogger("TaskRunner");
 
@@ -193,6 +194,7 @@ export class TaskRunner {
 
   private readonly logger: ReturnType<typeof getLogger>;
   private stepCount = 0;
+  private continuousTaskFailedSteps = 0;
   private abortController?: AbortController;
   private toolCallOptions: ToolCallOptions;
 
@@ -251,6 +253,7 @@ export class TaskRunner {
     try {
       this.logger.trace("Start step loop.");
       this.stepCount = 0;
+      this.continuousTaskFailedSteps = 0;
       while (await this.step()) {
         this.stepCount++;
       }
@@ -353,90 +356,107 @@ export class TaskRunner {
       return false;
     }
 
-    if (lastMessage.role === "assistant") {
-      if (isAssistantMessageWithNoToolCalls(lastMessage)) {
-        this.logger.trace(
-          "Last message is assistant with no tool calls, sending a new user reminder.",
+    if (task.status === "failed") {
+      this.continuousTaskFailedSteps++;
+      if (this.continuousTaskFailedSteps >= MaxContinuousTaskFailedSteps) {
+        throw new Error(
+          `Task is failed in recent ${MaxContinuousTaskFailedSteps} steps. ${task.error?.message}`,
         );
-        const message = await createUIMessage({
-          role: "user",
-          content: prompts.createUserReminder(
-            "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
-          ),
-        });
-        this.messages.push(message);
-      } else if (
-        isAssistantMessageWithEmptyParts(lastMessage) ||
-        isAssistantMessageWithPartialToolCalls(lastMessage) ||
-        isAssistantMessageWithCompletedToolCalls(lastMessage)
-      ) {
-        this.logger.trace(
-          "Last message is assistant with empty parts or partial/completed tool calls, resending it to trigger generating new messages.",
-        );
-        const processed = prepareLastMessageForRetry(lastMessage);
-        if (processed) {
-          this.messages.splice(-1, 1, processed);
+      }
+      this.logger.trace(
+        "Task is failed, trying to resend last message to resume.",
+        task.error,
+      );
+      // resend the last message, nothing to process here
+    } else {
+      this.continuousTaskFailedSteps = 0;
+      if (lastMessage.role === "assistant") {
+        if (isAssistantMessageWithNoToolCalls(lastMessage)) {
+          this.logger.trace(
+            "Last message is assistant with no tool calls, sending a new user reminder.",
+          );
+          const message = await createUIMessage({
+            role: "user",
+            content: prompts.createUserReminder(
+              "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
+            ),
+          });
+          this.messages.push(message);
+        } else if (
+          isAssistantMessageWithEmptyParts(lastMessage) ||
+          isAssistantMessageWithPartialToolCalls(lastMessage) ||
+          isAssistantMessageWithCompletedToolCalls(lastMessage)
+        ) {
+          this.logger.trace(
+            "Last message is assistant with empty parts or partial/completed tool calls, resending it to trigger generating new messages.",
+          );
+          const processed = prepareLastMessageForRetry(lastMessage);
+          if (processed) {
+            this.messages.splice(-1, 1, processed);
+          } else {
+            // skip, the last message is ready to be resent
+          }
         } else {
-          // skip, the last message is ready to be resent
+          this.logger.trace("Processing tool calls in the last message.");
+          let toolCall = findNextToolCall(lastMessage);
+          while (toolCall) {
+            this.logger.trace(
+              `Found tool call: ${toolCall.toolName} with args: ${JSON.stringify(
+                toolCall.args,
+              )}`,
+            );
+            this.updateState({
+              state: "running",
+              progress: {
+                step: this.stepCount,
+                type: "executing-tool-call",
+                phase: "begin",
+                toolName: toolCall.toolName,
+                toolCallId: toolCall.toolCallId,
+                toolArgs: toolCall.args,
+              },
+            });
+            signal?.throwIfAborted();
+
+            const toolResult = await executeToolCall(
+              toolCall,
+              this.toolCallOptions,
+              signal,
+            );
+
+            updateToolCallResult({
+              messages: this.messages,
+              toolCallId: toolCall.toolCallId,
+              toolResult,
+            });
+
+            this.logger.trace(
+              `Tool call result: ${JSON.stringify(toolResult)}`,
+            );
+            this.updateState({
+              state: "running",
+              progress: {
+                step: this.stepCount,
+                type: "executing-tool-call",
+                phase: "end",
+                toolName: toolCall.toolName,
+                toolCallId: toolCall.toolCallId,
+                toolArgs: toolCall.args,
+                toolResult,
+              },
+            });
+            signal?.throwIfAborted();
+
+            toolCall = findNextToolCall(lastMessage);
+          }
+          this.logger.trace("All tool calls processed in the last message.");
         }
       } else {
-        this.logger.trace("Processing tool calls in the last message.");
-        let toolCall = findNextToolCall(lastMessage);
-        while (toolCall) {
-          this.logger.trace(
-            `Found tool call: ${toolCall.toolName} with args: ${JSON.stringify(
-              toolCall.args,
-            )}`,
-          );
-          this.updateState({
-            state: "running",
-            progress: {
-              step: this.stepCount,
-              type: "executing-tool-call",
-              phase: "begin",
-              toolName: toolCall.toolName,
-              toolCallId: toolCall.toolCallId,
-              toolArgs: toolCall.args,
-            },
-          });
-          signal?.throwIfAborted();
-
-          const toolResult = await executeToolCall(
-            toolCall,
-            this.toolCallOptions,
-            signal,
-          );
-
-          updateToolCallResult({
-            messages: this.messages,
-            toolCallId: toolCall.toolCallId,
-            toolResult,
-          });
-
-          this.logger.trace(`Tool call result: ${JSON.stringify(toolResult)}`);
-          this.updateState({
-            state: "running",
-            progress: {
-              step: this.stepCount,
-              type: "executing-tool-call",
-              phase: "end",
-              toolName: toolCall.toolName,
-              toolCallId: toolCall.toolCallId,
-              toolArgs: toolCall.args,
-              toolResult,
-            },
-          });
-          signal?.throwIfAborted();
-
-          toolCall = findNextToolCall(lastMessage);
-        }
-        this.logger.trace("All tool calls processed in the last message.");
+        this.logger.trace(
+          "Last message is not assistant, continue resending it.",
+        );
+        // nothing to process, just resend the last message
       }
-    } else {
-      this.logger.trace(
-        "Last message is not assistant, continue resending it.",
-      );
-      // nothing to process, just resend the last message
     }
 
     signal?.throwIfAborted();
