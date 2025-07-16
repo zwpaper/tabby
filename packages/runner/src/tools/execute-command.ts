@@ -33,7 +33,9 @@ export const executeCommand =
     }
 
     try {
-      const shell = process.platform === "linux" ? "/bin/bash" : undefined;
+      const shell = ["linux", "darwin"].includes(process.platform)
+        ? "/bin/bash"
+        : undefined;
 
       const { stdout, stderr } = await execCommand(command, {
         shell,

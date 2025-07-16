@@ -62,10 +62,15 @@ export class TerminalJob implements vscode.Disposable {
       this.detached = true;
     }
 
+    const shellPath = ["linux", "darwin"].includes(process.platform)
+      ? "/bin/bash"
+      : undefined;
+
     // Create the terminal with the provided configuration
     this.terminal = vscode.window.createTerminal({
       name: config.name,
       cwd: config.cwd,
+      shellPath,
       env: {
         PAGER: "", // Disable pager for better output handling
         GH_PAGER: "",
