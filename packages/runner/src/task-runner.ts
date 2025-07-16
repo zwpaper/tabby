@@ -379,7 +379,7 @@ export class TaskRunner {
           );
           const message = await createUIMessage({
             role: "user",
-            content: prompts.createUserReminder(
+            content: prompts.createSystemReminder(
               "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
             ),
           });

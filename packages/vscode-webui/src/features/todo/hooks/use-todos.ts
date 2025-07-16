@@ -137,7 +137,7 @@ export function useTodos({
     if (
       lastMessage &&
       lastMessage.role === "user" &&
-      !prompts.isUserReminder(lastMessage.content)
+      !prompts.isSystemReminder(lastMessage.content)
     ) {
       const todos = todosRef.current || [];
       // Check if all todos is canceled or done.

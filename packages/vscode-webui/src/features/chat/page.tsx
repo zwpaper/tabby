@@ -289,7 +289,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     saveTodosImpl();
     handleSubmit(
       undefined,
-      prompts.createUserReminder(
+      prompts.createSystemReminder(
         "I have updated the to-do list and provided it within environment details. Please review them and adjust the plan accordingly. NEVER WORK ON TASKS THAT HAS BEEN MARKED AS COMPLETED OR CANCELLED.",
       ),
     );

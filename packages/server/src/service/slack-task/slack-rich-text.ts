@@ -674,8 +674,7 @@ class SlackRichTextRenderer {
         for (const part of textParts) {
           const text = part.text;
           if (!text) continue;
-          if (text.includes("<environment-details>")) continue;
-          if (prompts.isUserReminder(text)) continue;
+          if (prompts.isSystemReminder(text)) continue;
           validTextParts.push(text);
         }
         const userText = validTextParts.join(" ").trim();

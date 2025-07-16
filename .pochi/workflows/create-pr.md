@@ -8,3 +8,5 @@ Please help create a PR for the current staging changes, following these guideli
 - Always push the branch to the remote repository before creating the PR.
 
 When creating PR with markdown description, pay attention to escape backticks, otherwise it will be executed as command substitution in the shell.
+
+Usually pre-push can take as long as 60 seconds, so please set proper timeout for executeCommand.

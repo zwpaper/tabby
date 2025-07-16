@@ -4,7 +4,6 @@ import { type ToolSet, type UIMessage, convertToCoreMessages } from "ai";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
 import { prompts } from "./prompts";
-import { stripEnvironmentDetails } from "./prompts/environment";
 
 export function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
   return messages.map((message, index) => {
@@ -74,13 +73,18 @@ export function stripKnownXMLTags(messages: UIMessage[]): UIMessage[] {
   });
 }
 
-export function removeUserReminderMessage(messages: UIMessage[]): UIMessage[] {
+export function removeSystemReminder(messages: UIMessage[]): UIMessage[] {
   return messages.filter((message) => {
     if (message.role !== "user") return true;
-    return !message.parts.some((part) => {
-      if (part.type !== "text") return false;
-      return prompts.isUserReminder(part.text);
+    const parts = message.parts.filter((part) => {
+      if (part.type !== "text") return true;
+      return !prompts.isSystemReminder(part.text);
     });
+    if (parts.length === 0) {
+      return false;
+    }
+    message.parts = parts;
+    return true;
   });
 }
 
@@ -221,9 +225,8 @@ const LLMFormatOps: FormatOp[] = [
   removeCheckpointPart,
 ];
 const UIFormatOps = [
-  prompts.stripEnvironmentDetails,
   resolvePendingToolCalls,
-  removeUserReminderMessage,
+  removeSystemReminder,
   combineConsecutiveAssistantMessages,
   removeContentInMessages,
 ];
@@ -250,12 +253,12 @@ export const formatters = {
     options?: {
       tools?: ToolSet;
       isGeminiOrPochi: boolean;
-      stripEnvironmentDetails?: boolean;
+      removeSystemReminder?: boolean;
     },
   ) => {
     const llmFormatOps = [
       ...(options?.isGeminiOrPochi ? [removeReasoningParts] : []),
-      ...(options?.stripEnvironmentDetails ? [stripEnvironmentDetails] : []),
+      ...(options?.removeSystemReminder ? [removeSystemReminder] : []),
       ...LLMFormatOps,
     ];
     const coreMessages = convertToCoreMessages(

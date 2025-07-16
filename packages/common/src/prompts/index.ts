@@ -1,27 +1,23 @@
 import type { Environment } from "@ragdoll/db";
-import {
-  injectEnvironmentDetails,
-  stripEnvironmentDetails,
-} from "./environment";
+import { injectEnvironmentDetails } from "./environment";
 import { generateSystemPrompt } from "./system";
 
 export const prompts = {
   system: generateSystemPrompt,
   injectEnvironmentDetails,
-  stripEnvironmentDetails,
-  createUserReminder,
-  isUserReminder,
+  createSystemReminder,
+  isSystemReminder,
   formatUserEdits,
 };
 
-function createUserReminder(content: string) {
-  return `<user-reminder>${content}</user-reminder>`;
+function createSystemReminder(content: string) {
+  return `<system-reminder>${content}</system-reminder>`;
 }
 
-function isUserReminder(content: string) {
+function isSystemReminder(content: string) {
   return (
-    content.startsWith("<user-reminder>") &&
-    content.endsWith("</user-reminder>")
+    content.startsWith("<system-reminder>") &&
+    content.endsWith("</system-reminder>")
   );
 }
 

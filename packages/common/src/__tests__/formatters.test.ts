@@ -3,8 +3,8 @@ import {
   resolvePendingToolCalls,
   removeDeprecatedToolInvocations,
   stripKnownXMLTags,
-  removeUserReminderMessage,
   combineConsecutiveAssistantMessages,
+  removeSystemReminder,
 } from "../formatters";
 import { type UIMessage } from "ai";
 
@@ -180,7 +180,7 @@ describe("formatters individual ops", () => {
       expect(result).toEqual(expectedMessages);
     });
 
-    it("should not strip unknown <user-reminder> tags", () => {
+    it("should not strip unknown <system-reminder> tags", () => {
       const messages: UIMessage[] = [
         {
           id: "1",
@@ -189,7 +189,7 @@ describe("formatters individual ops", () => {
           parts: [
             {
               type: "text",
-              text: "<user-reminder>this is a reminder</user-reminder>",
+              text: "<system-reminder>this is a reminder</system-reminder>",
             },
           ],
         },
@@ -199,7 +199,7 @@ describe("formatters individual ops", () => {
           id: "1",
           role: "user",
           content: "",
-          parts: [{ type: "text", text: "<user-reminder>this is a reminder</user-reminder>" }],
+          parts: [{ type: "text", text: "<system-reminder>this is a reminder</system-reminder>" }],
         },
       ];
       const result = stripKnownXMLTags(messages);
@@ -207,17 +207,17 @@ describe("formatters individual ops", () => {
     });
   });
 
-  describe("removeUserReminderMessage", () => {
+  describe("removeSystemReminderMessage", () => {
     it("should remove user reminder messages", () => {
       const messages: UIMessage[] = [
         {
           id: "1",
           role: "user",
-          content: "<user-reminder>Remember this</user-reminder>",
+          content: "<system-reminder>Remember this</system-reminder>",
           parts: [
             {
               type: "text",
-              text: "<user-reminder>Remember this</user-reminder>",
+              text: "<system-reminder>Remember this</system-reminder>",
             },
           ],
         },
@@ -227,6 +227,21 @@ describe("formatters individual ops", () => {
           content: "Not a reminder",
           parts: [{ type: "text", text: "Not a reminder" }],
         },
+        {
+          id: "3",
+          role: "user",
+          content: "",
+          parts: [
+            {
+              type: "text",
+              text: "<system-reminder>Remember this</system-reminder>",
+            },
+            {
+              type: "text",
+              text: "nice",
+            },
+          ],
+        },
       ];
       const expectedMessages: UIMessage[] = [
         {
@@ -235,8 +250,14 @@ describe("formatters individual ops", () => {
           content: "Not a reminder",
           parts: [{ type: "text", text: "Not a reminder" }],
         },
+        {
+          id: "3",
+          role: "user",
+          content: "",
+          parts: [{ type: "text", text: "nice" }],
+        },
       ];
-      const result = removeUserReminderMessage(messages);
+      const result = removeSystemReminder(messages);
       expect(result).toEqual(expectedMessages);
     });
   });
