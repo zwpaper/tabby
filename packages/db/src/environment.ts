@@ -94,6 +94,17 @@ export const ZodEnvironment = z.object({
     })
     .describe("General information about the environment."),
   todos: z.array(ZodTodo).optional().describe("Todos in current task"),
+  userEdits: z
+    .array(
+      z.object({
+        relative: z.string(),
+        absolute: z.string(),
+        before: z.string(),
+        after: z.string(),
+      }),
+    )
+    .optional()
+    .describe("User edits since last checkpoint in the current workspace."),
 });
 
 export type Environment = z.infer<typeof ZodEnvironment>;

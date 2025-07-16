@@ -2,17 +2,11 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { getLogger } from "@ragdoll/common";
 import { isFileExists } from "@ragdoll/common/node";
+import type { GitDiff } from "@ragdoll/vscode-webui-bridge";
 import simpleGit, { type SimpleGit } from "simple-git";
 import type * as vscode from "vscode";
 import { writeExcludesFile } from "./shadow-git-excludes";
 import { toErrorMessage } from "./util";
-
-export type GitDiff = {
-  relative: string;
-  absolute: string;
-  before: string;
-  after: string;
-};
 
 const logger = getLogger("ShadowGitRepo");
 
