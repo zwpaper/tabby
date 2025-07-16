@@ -64,7 +64,8 @@ export class UsageService {
               count: eb("monthlyOrganizationUsage.count", "+", 1),
               credit: eb("monthlyOrganizationUsage.credit", "+", credit),
             })),
-        );
+        )
+        .execute();
       return;
     }
 
