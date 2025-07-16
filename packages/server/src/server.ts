@@ -18,7 +18,7 @@ import tasks from "./api/tasks";
 import tools from "./api/tools";
 import upload from "./api/upload";
 import usages from "./api/usages";
-import { authRequest } from "./auth";
+import { authRequest, requireAuth } from "./auth";
 import { auth } from "./better-auth";
 import { startListenDBEvents } from "./db/events";
 import { websocket } from "./lib/websocket";
@@ -40,7 +40,8 @@ if (process.env.NODE_ENV !== "test") {
     const { readFile } = await import("node:fs/promises");
 
     app.use(
-      "/data-labeling-tool/*",
+      "/_internal/data-labeling-tool/*",
+      requireAuth({ internal: true }),
       etag(),
       serveStatic({
         root: "../model/dist",
