@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
-import { optionalAuth, requireAuth } from "../auth";
+import { isInternalUser, optionalAuth, requireAuth } from "../auth";
 import { parseEventFilter } from "../lib/event-filter";
 import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task"; // Added import
@@ -228,8 +228,8 @@ const tasks = new Hono()
       const { uid } = c.req.valid("param");
       const user = c.get("user");
 
-      const isInternalUser = user?.email?.endsWith("@tabbyml.com");
-      const task = await taskService.getPublic(uid, user?.id, !!isInternalUser);
+      const isInternal = user && isInternalUser(user);
+      const task = await taskService.getPublic(uid, user?.id, !!isInternal);
 
       if (!task) {
         throw new HTTPException(404, { message: "Task not found" });

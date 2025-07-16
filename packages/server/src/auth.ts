@@ -7,7 +7,7 @@ export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
     if (process.env.NODE_ENV === "test") {
       return async (c, next) => {
         c.set("user", {
-          email: "test@tabbyml.com",
+          email: "test@foo.com",
         } as User);
         await next();
       };
@@ -52,10 +52,7 @@ export const requireAuth = (
     if (role && user.role !== role) {
       return c.json({ error: "Forbidden" }, 403);
     }
-    if (
-      internal &&
-      (!user.email.endsWith("@tabbyml.com") || !user.emailVerified)
-    ) {
+    if (internal && !isInternalUser(user)) {
       return c.json({ error: "Forbidden" }, 403);
     }
     await next();
@@ -63,3 +60,12 @@ export const requireAuth = (
 
 export type Session = typeof auth.$Infer.Session;
 export type User = Session["user"];
+
+export function isInternalUser(user: User) {
+  return (
+    (user.email.endsWith("@tabbyml.com") ||
+      // Ruofan (intern)
+      user.email === "2953096035@qq.com") &&
+    user.emailVerified
+  );
+}

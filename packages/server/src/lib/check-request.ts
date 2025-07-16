@@ -1,6 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import { ServerErrors } from "..";
-import type { User } from "../auth";
+import { type User, isInternalUser } from "../auth";
 import { organizationService } from "../service/organization";
 import { usageService } from "../service/usage";
 import { type AvailableModelId, AvailableModels } from "./constants";
@@ -19,7 +19,7 @@ export function checkWaitlist(
   user: User,
   errorMessage = "Your waitlist request is still pending. Please wait for approval before using this feature.",
 ) {
-  if (!user.email.endsWith("@tabbyml.com") && !user.isWaitlistApproved) {
+  if (!isInternalUser(user) && !user.isWaitlistApproved) {
     throw new HTTPException(400, { message: errorMessage });
   }
   return true;
@@ -47,10 +47,7 @@ export async function checkUserQuota(user: User, modelId: string) {
     : undefined;
   const userQuota = await usageService.readCurrentMonthQuota(user);
 
-  const isInternalUser =
-    user.email.endsWith("@tabbyml.com") && user.emailVerified;
-
-  if (!isInternalUser) {
+  if (!isInternalUser(user)) {
     // if joined an organization, only check the orgQuota
     if (orgQuota?.credit.isLimitReached) {
       if (!orgQuota?.plan) {
