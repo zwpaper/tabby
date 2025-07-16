@@ -28,8 +28,6 @@ function formatUserEdits(
     return "No changes since last checkpoint.";
   }
 
-  const summary = `Found ${userEdits.length} file(s) modified by user:\n`;
-
   const details = userEdits
     .map((edit) => {
       const { relative, before, after } = edit;
@@ -48,7 +46,7 @@ function formatUserEdits(
     })
     .join("\n\n");
 
-  return summary + details;
+  return details;
 }
 
 function limitContent(content: string, maxLines: number): string {

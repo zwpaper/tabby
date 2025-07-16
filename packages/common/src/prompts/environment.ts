@@ -195,8 +195,8 @@ function getUserEdits(userEdits: Environment["userEdits"]) {
 
   const formattedChanges = prompts.formatUserEdits(userEdits);
 
-  return `# Recent Changes Since Last Checkpoint
-The following changes have been made since the last checkpoint:
+  return `# User Edits
+The user has made the following edits to the workspace. Please take these changes into account when proceeding with the task.
 
 ${formattedChanges}`;
 }
