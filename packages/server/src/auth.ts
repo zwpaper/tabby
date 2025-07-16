@@ -1,3 +1,4 @@
+import type { Organization } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
 import { auth } from "./better-auth";
 
@@ -68,4 +69,8 @@ export function isInternalUser(user: User) {
       user.email === "2953096035@qq.com") &&
     user.emailVerified
   );
+}
+
+export function isInternalOrganization(org: Organization) {
+  return org.slug === "tabbyml";
 }

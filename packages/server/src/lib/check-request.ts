@@ -1,6 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import { ServerErrors } from "..";
-import { type User, isInternalUser } from "../auth";
+import { type User, isInternalOrganization, isInternalUser } from "../auth";
 import { organizationService } from "../service/organization";
 import { usageService } from "../service/usage";
 import { type AvailableModelId, AvailableModels } from "./constants";
@@ -49,15 +49,17 @@ export async function checkUserQuota(user: User, modelId: string) {
 
   // If a user joins an organization, then only check the organization's quota
   if (organization) {
-    if (!orgQuota?.plan) {
-      throw new HTTPException(400, {
-        message: ServerErrors.RequireOrgSubscription,
-      });
-    }
-    if (orgQuota?.credit.isLimitReached) {
-      throw new HTTPException(400, {
-        message: ServerErrors.ReachedOrgCreditLimit,
-      });
+    if (!isInternalOrganization(organization)) {
+      if (!orgQuota?.plan) {
+        throw new HTTPException(400, {
+          message: ServerErrors.RequireOrgSubscription,
+        });
+      }
+      if (orgQuota?.credit.isLimitReached) {
+        throw new HTTPException(400, {
+          message: ServerErrors.ReachedOrgCreditLimit,
+        });
+      }
     }
 
     return;
