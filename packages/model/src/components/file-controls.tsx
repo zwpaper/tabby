@@ -24,14 +24,14 @@ export function FileControls({
       <button
         type="button"
         onClick={onImport}
-        className="rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 text-sm shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 font-medium text-foreground text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
       >
         Import from Clipboard
       </button>
       <button
         type="button"
         onClick={handleUploadClick}
-        className="rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 text-sm shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 font-medium text-foreground text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
       >
         Upload File
       </button>
@@ -46,7 +46,7 @@ export function FileControls({
         type="button"
         onClick={onExport}
         disabled={isExportDisabled}
-        className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 font-medium text-sm text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm shadow-sm transition-colors hover:bg-primary/90 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       >
         Export to Clipboard
       </button>

@@ -28,6 +28,7 @@ import { Route as AuthenticatedBaseRouteImport } from './routes/_authenticated._
 import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authenticated.auth/vscode-link'
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
+import { Route as AuthenticatedAdminModelEvaluationImport } from './routes/_authenticated.admin/model-evaluation'
 import { Route as AuthenticatedBaseTeamImport } from './routes/_authenticated._base/team'
 import { Route as AuthenticatedBaseProfileImport } from './routes/_authenticated._base/profile'
 import { Route as AuthenticatedBaseHomeImport } from './routes/_authenticated._base/home'
@@ -149,6 +150,13 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+
+const AuthenticatedAdminModelEvaluationRoute =
+  AuthenticatedAdminModelEvaluationImport.update({
+    id: '/model-evaluation',
+    path: '/model-evaluation',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 const AuthenticatedBaseTeamRoute = AuthenticatedBaseTeamImport.update({
   id: '/team',
@@ -372,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseTeamImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
+    '/_authenticated/admin/model-evaluation': {
+      id: '/_authenticated/admin/model-evaluation'
+      path: '/model-evaluation'
+      fullPath: '/admin/model-evaluation'
+      preLoaderRoute: typeof AuthenticatedAdminModelEvaluationImport
+      parentRoute: typeof AuthenticatedAdminRouteImport
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/users'
@@ -509,11 +524,14 @@ const AuthenticatedBaseRouteRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminModelEvaluationRoute: typeof AuthenticatedAdminModelEvaluationRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminModelEvaluationRoute:
+      AuthenticatedAdminModelEvaluationRoute,
     AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   }
 
@@ -566,6 +584,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedBaseHomeRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
   '/team': typeof AuthenticatedBaseTeamRoute
+  '/admin/model-evaluation': typeof AuthenticatedAdminModelEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -597,6 +616,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedBaseHomeRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
   '/team': typeof AuthenticatedBaseTeamRoute
+  '/admin/model-evaluation': typeof AuthenticatedAdminModelEvaluationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -631,6 +651,7 @@ export interface FileRoutesById {
   '/_authenticated/_base/home': typeof AuthenticatedBaseHomeRoute
   '/_authenticated/_base/profile': typeof AuthenticatedBaseProfileRoute
   '/_authenticated/_base/team': typeof AuthenticatedBaseTeamRoute
+  '/_authenticated/admin/model-evaluation': typeof AuthenticatedAdminModelEvaluationRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/_authenticated/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -664,6 +685,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/profile'
     | '/team'
+    | '/admin/model-evaluation'
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
@@ -694,6 +716,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/profile'
     | '/team'
+    | '/admin/model-evaluation'
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
@@ -726,6 +749,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_base/home'
     | '/_authenticated/_base/profile'
     | '/_authenticated/_base/team'
+    | '/_authenticated/admin/model-evaluation'
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
     | '/_authenticated/auth/vscode-link'
@@ -828,6 +852,7 @@ export const routeTree = rootRoute
       "filePath": "_authenticated.admin/route.tsx",
       "parent": "/_authenticated",
       "children": [
+        "/_authenticated/admin/model-evaluation",
         "/_authenticated/admin/users"
       ]
     },
@@ -879,6 +904,10 @@ export const routeTree = rootRoute
     "/_authenticated/_base/team": {
       "filePath": "_authenticated._base/team.tsx",
       "parent": "/_authenticated/_base"
+    },
+    "/_authenticated/admin/model-evaluation": {
+      "filePath": "_authenticated.admin/model-evaluation.tsx",
+      "parent": "/_authenticated/admin"
     },
     "/_authenticated/admin/users": {
       "filePath": "_authenticated.admin/users.tsx",

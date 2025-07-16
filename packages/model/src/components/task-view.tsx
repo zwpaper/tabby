@@ -44,11 +44,12 @@ export function TaskView({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <h3 className="font-bold text-gray-900 text-xl">
+        <h3 className="font-bold text-foreground text-xl">
           <a
             href={`https://app.getpochi.com/share/${selectedTask.uid}`}
             target="_blank"
             rel="noreferrer"
+            className="text-primary transition-colors hover:text-primary/80"
           >
             {selectedTask.uid}
           </a>
@@ -61,11 +62,11 @@ export function TaskView({
             onChange={(e) =>
               onVerifiedChange(selectedTask.uid, e.target.checked)
             }
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-input text-primary"
           />
           <label
             htmlFor="verified-checkbox"
-            className="ml-2 block text-gray-900 text-sm"
+            className="ml-2 block text-foreground text-sm"
           >
             Verified
           </label>
@@ -78,11 +79,11 @@ export function TaskView({
             onChange={(e) =>
               onExcludedChange(selectedTask.uid, e.target.checked)
             }
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-input text-primary"
           />
           <label
             htmlFor="excluded-checkbox"
-            className="ml-2 block text-gray-900 text-sm"
+            className="ml-2 block text-foreground text-sm"
           >
             Excluded
           </label>
@@ -90,19 +91,16 @@ export function TaskView({
       </div>
       <div className="space-y-6">
         {selectedTask.messages.map((message: Message, index: number) => (
-          <div
-            key={index}
-            className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
-          >
+          <div key={index} className="rounded-lg border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <strong className="font-semibold text-gray-700 text-md capitalize">
+              <strong className="font-semibold text-foreground text-md capitalize">
                 {message.role}
               </strong>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => onRemoveMessage(selectedTask.uid, index)}
-                  className="rounded-md bg-red-500 px-3 py-1 font-medium text-white text-xs shadow-sm transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="inline-flex items-center justify-center rounded-md border bg-background px-3 py-1.5 font-medium text-foreground text-xs shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
                 >
                   Remove Message
                 </button>

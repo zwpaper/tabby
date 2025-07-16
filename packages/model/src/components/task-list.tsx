@@ -18,14 +18,14 @@ export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
   });
 
   return (
-    <div className="w-1/3 overflow-y-auto border-gray-200 border-r bg-gray-50 p-4">
-      <h2 className="mb-4 font-semibold text-gray-800 text-lg">Tasks</h2>
+    <div className="w-1/3 overflow-y-auto border-r bg-muted/30 p-4">
+      <h2 className="mb-4 font-semibold text-foreground text-lg">Tasks</h2>
       <ul className="space-y-2">
         {sortedTasks.map((task) => (
           <li
             key={task.uid}
             onClick={() => onSelectTask(task)}
-            className={`flex cursor-pointer items-center justify-between rounded-md p-3 transition-colors ${selectedTask?.uid === task.uid ? "bg-blue-100 text-blue-800" : "hover:bg-gray-200"}`}
+            className={`flex cursor-pointer items-center justify-between rounded-md p-3 transition-colors ${selectedTask?.uid === task.uid ? "bg-primary/10 text-primary" : "hover:bg-accent hover:text-accent-foreground"}`}
           >
             <span className="mr-4 flex max-w-120 gap-2 truncate">
               <b>[{task.uid}]</b>
@@ -51,7 +51,7 @@ export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
               {task.verified ? (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-green-500"
+                  className="h-5 w-5 text-green-600"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                   aria-hidden="true"
@@ -64,13 +64,13 @@ export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
                   />
                 </svg>
               ) : !task.excluded && task.verified === undefined ? (
-                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 font-medium text-xs text-yellow-800">
+                <span className="inline-flex items-center rounded-full bg-muted px-2 py-1 font-medium text-muted-foreground text-xs">
                   PENDING
                 </span>
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
+                  className="h-5 w-5 text-muted-foreground"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                   aria-hidden="true"

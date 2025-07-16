@@ -38,8 +38,26 @@ if (process.env.NODE_ENV !== "test") {
   (async () => {
     const { serveStatic } = await import("hono/bun");
     const { readFile } = await import("node:fs/promises");
-    const html = await readFile("../website/dist/index.html", "utf-8");
 
+    app.use(
+      "/data-labeling-tool/*",
+      etag(),
+      serveStatic({
+        root: "../model/dist",
+        rewriteRequestPath: (path) => path.replace(/^\/data-labeling-tool/, ""),
+        precompressed: true,
+        onFound: (path, c) => {
+          if (path.endsWith(".html") || path.endsWith("manifest.json")) {
+            c.header("Cache-Control", "public, max-age=0, must-revalidate");
+          } else {
+            c.header("Cache-Control", "public, immutable, max-age=31536000");
+          }
+        },
+      }),
+    );
+
+    // Serve website static files
+    const html = await readFile("../website/dist/index.html", "utf-8");
     app.use(
       "/*",
       etag(),

@@ -205,8 +205,8 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
-      <header className="flex items-center gap-4 border-gray-200 border-b bg-white p-4 shadow-sm">
+    <div className="flex h-screen flex-col bg-background">
+      <header className="flex items-center gap-4 border-b bg-card p-4 shadow-sm">
         <FileControls
           onImport={handleImport}
           onExport={handleExport}
@@ -220,7 +220,7 @@ function App() {
           selectedTask={selectedTask}
           onSelectTask={setSelectedTask}
         />
-        <div className="w-2/3 overflow-y-auto bg-white px-12 py-4 shadow-inner">
+        <div className="w-2/3 overflow-y-auto bg-background px-12 py-4">
           {selectedTask ? (
             <TaskView
               key={selectedTask.uid}
@@ -237,7 +237,7 @@ function App() {
               onExcludedChange={handleExcludedChange}
             />
           ) : (
-            <p className="text-center text-gray-500">
+            <p className="text-center text-muted-foreground">
               Import from clipboard to get started.
             </p>
           )}
