@@ -47,35 +47,32 @@ export async function checkUserQuota(user: User, modelId: string) {
     : undefined;
   const userQuota = await usageService.readCurrentMonthQuota(user);
 
-  if (!isInternalUser(user)) {
-    // if joined an organization, only check the orgQuota
-    if (orgQuota?.credit.isLimitReached) {
-      if (!orgQuota?.plan) {
-        throw new HTTPException(400, {
-          message: ServerErrors.RequireSubscription,
-        });
-      }
-
-      throw new HTTPException(400, {
-        message: ServerErrors.ReachedCreditLimit,
-      });
-    }
-
-    const userOutOfFreeCredit =
-      userQuota.credit.remainingFreeCredit <= 0 &&
-      userQuota.plan === "Community";
-
-    if (userOutOfFreeCredit) {
+  // if joined an organization, only check the orgQuota
+  if (orgQuota?.credit.isLimitReached) {
+    if (!orgQuota?.plan) {
       throw new HTTPException(400, {
         message: ServerErrors.RequireSubscription,
       });
     }
 
-    const userLimitReached = userQuota.credit.isLimitReached;
-    if (userLimitReached) {
-      throw new HTTPException(400, {
-        message: ServerErrors.ReachedCreditLimit,
-      });
-    }
+    throw new HTTPException(400, {
+      message: ServerErrors.ReachedCreditLimit,
+    });
+  }
+
+  const userOutOfFreeCredit =
+    userQuota.credit.remainingFreeCredit <= 0 && userQuota.plan === "Community";
+
+  if (userOutOfFreeCredit) {
+    throw new HTTPException(400, {
+      message: ServerErrors.RequireSubscription,
+    });
+  }
+
+  const userLimitReached = userQuota.credit.isLimitReached;
+  if (userLimitReached) {
+    throw new HTTPException(400, {
+      message: ServerErrors.ReachedCreditLimit,
+    });
   }
 }
