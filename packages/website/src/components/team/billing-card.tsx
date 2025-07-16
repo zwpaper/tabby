@@ -103,7 +103,9 @@ export function BillingCard({
     mutationFn: async (isSubscribing: boolean) => {
       if (isSubscribing) {
         if (subscription?.cancelAtPeriodEnd) {
-          return authClient.subscription.restore();
+          return authClient.subscription.restore({
+            referenceId: organizationId,
+          });
         }
 
         // subscription limit
@@ -126,6 +128,7 @@ export function BillingCard({
 
       // cancel
       return authClient.subscription.cancel({
+        referenceId: organizationId,
         returnUrl: window.location.href,
       });
     },
