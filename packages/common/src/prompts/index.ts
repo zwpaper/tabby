@@ -16,8 +16,11 @@ function createSystemReminder(content: string) {
 
 function isSystemReminder(content: string) {
   return (
-    content.startsWith("<system-reminder>") &&
-    content.endsWith("</system-reminder>")
+    (content.startsWith("<system-reminder>") &&
+      content.endsWith("</system-reminder>")) ||
+    // Handle legacy data.
+    (content.startsWith("<environment-details>") &&
+      content.endsWith("</environment-details>"))
   );
 }
 
