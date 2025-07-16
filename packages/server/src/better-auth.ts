@@ -136,11 +136,6 @@ export const auth = betterAuth({
       subscription: {
         enabled: true,
         plans: StripePlans,
-        async onSubscriptionUpdate({ subscription }) {
-          if (subscription.cancelAtPeriodEnd) {
-            await stripeClient.subscriptions.cancel(subscription.id);
-          }
-        },
         authorizeReference: async ({ user, referenceId }) => {
           if (user.id === referenceId) return true;
 
