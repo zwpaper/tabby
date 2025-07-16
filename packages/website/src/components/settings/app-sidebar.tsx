@@ -8,15 +8,10 @@ import {
 } from "@tabler/icons-react";
 import type * as React from "react";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent } from "@/components/ui/sidebar";
 import { NavDocuments } from "./nav-documents";
 import { NavMain } from "./nav-main";
 import { NavSecondary } from "./nav-secondary";
-import { QuotaDisplay } from "./quota-display"; // Import the new component
 
 const data = {
   navSecondary: [
@@ -70,9 +65,6 @@ export function AppSidebar({
           <NavSecondary items={data.navSecondary} className="mt-auto" />
         )}
       </SidebarContent>
-      <SidebarFooter>
-        <QuotaDisplay /> {/* Add the QuotaDisplay component here */}
-      </SidebarFooter>
     </Sidebar>
   );
 }

@@ -47,16 +47,6 @@ export async function checkUserQuota(user: User, modelId: string) {
     : undefined;
   const userQuota = await usageService.readCurrentMonthQuota(user);
 
-  const reachQuotaLimit =
-    userQuota.limits[modelCostType] - userQuota.usages[modelCostType] <= 0;
-
-  // biome-ignore lint/correctness/noConstantCondition: disable this check for now
-  if (false && reachQuotaLimit) {
-    throw new HTTPException(400, {
-      message: `You have reached the quota limit for ${modelCostType}. Please upgrade your plan or try again later.`,
-    });
-  }
-
   const isInternalUser =
     user.email.endsWith("@tabbyml.com") && user.emailVerified;
 

@@ -1,7 +1,7 @@
 import { db } from "../db";
 import { StripePlans } from "./constants";
 
-export async function readActiveSubscriptionLimits(user: {
+export async function readActiveSubscription(user: {
   id: string;
   email: string;
   emailVerified: boolean;
@@ -15,22 +15,7 @@ export async function readActiveSubscriptionLimits(user: {
     .executeTakeFirst();
 
   const planId = activeSubscription?.plan ?? StripePlans[0].name.toLowerCase();
-  let limits =
-    StripePlans.find((p) => p.name.toLowerCase() === planId)?.limits ||
-    StripePlans[0].limits;
-  if (user.email.endsWith("@tabbyml.com") && user.emailVerified) {
-    limits = {
-      basic: 100_000,
-      premium: 15_000,
-    };
-  } else {
-    limits =
-      StripePlans.find((p) => p.name === "Pro")?.limits ?? // TODO: fix this
-      StripePlans[0].limits;
-  }
-
   return {
     plan: planId.charAt(0).toUpperCase() + planId.slice(1),
-    limits,
   };
 }

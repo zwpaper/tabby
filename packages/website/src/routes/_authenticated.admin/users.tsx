@@ -16,11 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -48,7 +43,6 @@ import { useMemo, useState } from "react"; // Removed useEffect
 import { toast } from "sonner";
 
 interface UserQuotaData {
-  limit: number;
   premiumUsageDetails: Array<{ modelId: string; count: number }>;
 }
 
@@ -129,56 +123,10 @@ function UserQuotaDisplay({ userId }: { userId: string }) {
     return <span className="text-muted-foreground text-xs">N/A</span>;
   }
 
-  const usagePercent =
-    quotaData.limit > 0
-      ? Math.min((totalUsed / quotaData.limit) * 100, 100)
-      : 0;
-
   return (
-    <HoverCard openDelay={200} closeDelay={200}>
-      <HoverCardTrigger asChild>
-        <Button variant="link" className="h-auto p-0 text-xs">
-          {totalUsed} / {quotaData.limit}
-        </Button>
-      </HoverCardTrigger>
-      <HoverCardContent className="w-80" side="right" align="start">
-        {" "}
-        {/* Added side="right" */}
-        <div className="space-y-2">
-          <h4 className="font-semibold">Monthly Premium Quota</h4>
-          <div className="flex items-center justify-between text-xs">
-            <span>
-              {totalUsed} / {quotaData.limit} requests
-            </span>
-            <span>{usagePercent.toFixed(0)}%</span>
-          </div>
-          <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-            <div
-              className="h-2 rounded-full bg-blue-500"
-              style={{ width: `${usagePercent}%` }}
-            />
-          </div>
-          {quotaData.premiumUsageDetails.length > 0 && (
-            <div className="mt-2 space-y-1 border-t pt-2">
-              <h5 className="font-medium text-muted-foreground text-xs">
-                Usage by Premium Model:
-              </h5>
-              {quotaData.premiumUsageDetails.map((modelUsage) => (
-                <div
-                  key={modelUsage.modelId}
-                  className="flex justify-between text-xs"
-                >
-                  <span className="text-muted-foreground">
-                    {modelUsage.modelId}
-                  </span>
-                  <span>{modelUsage.count} requests</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </HoverCardContent>
-    </HoverCard>
+    <Button variant="link" className="h-auto p-0 text-xs">
+      {totalUsed}
+    </Button>
   );
 }
 

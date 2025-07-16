@@ -4,7 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import Stripe from "stripe";
 import { z } from "zod";
-import { type User, requireAuth } from "../auth";
+import { requireAuth } from "../auth";
 import { db } from "../db";
 import { stripeClient } from "../lib/stripe";
 import { usageService } from "../service/usage";
@@ -109,10 +109,7 @@ const billing = new Hono()
         throw new HTTPException(404, { message: "User not found" });
       }
 
-      const usage = await usageService.readCurrentMonthUsage(
-        userId,
-        targetUser as User,
-      );
+      const usage = await usageService.readCurrentMonthUsage(userId);
       return c.json(usage);
     },
   )

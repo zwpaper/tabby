@@ -3,7 +3,7 @@ import { sql } from "kysely";
 import moment from "moment";
 import type { User } from "../auth";
 import { db } from "../db";
-import { readActiveSubscriptionLimits } from "../lib/billing";
+import { readActiveSubscription } from "../lib/billing";
 import {
   AvailableModels,
   type CreditCostInput,
@@ -131,12 +131,8 @@ export class UsageService {
     };
   }
 
-  async readCurrentMonthUsage(
-    userId: string,
-    targetUser: User,
-  ): Promise<{
+  async readCurrentMonthUsage(userId: string): Promise<{
     userId: string;
-    limit: number;
     premiumUsageDetails: {
       modelId: string;
       count: number;
@@ -160,12 +156,8 @@ export class UsageService {
       .groupBy("modelId")
       .execute();
 
-    const { limits: userLimits } =
-      await readActiveSubscriptionLimits(targetUser);
-
     return {
       userId,
-      limit: userLimits.premium,
       premiumUsageDetails: userMonthlyPremiumUsageDetails.map((usage) => ({
         modelId: usage.modelId,
         count: Number(usage.totalCount),
@@ -183,7 +175,7 @@ export class UsageService {
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();
 
-    const { plan, limits } = await readActiveSubscriptionLimits(user);
+    const { plan } = await readActiveSubscription(user);
 
     // Query the total usage count for the current month.
     // Ensure the timestamp comparison works correctly with the database timezone (assuming UTC)
@@ -224,7 +216,6 @@ export class UsageService {
     return {
       plan,
       usages,
-      limits,
       credit: {
         spent: spentCredit,
         limit: monthlyUserCreditLimit,
