@@ -154,10 +154,7 @@ class SlackService {
       },
     });
 
-    if (
-      process.env.NODE_ENV === "production" ||
-      !!process.env.POCHI_SLACK_DEV
-    ) {
+    if (process.env.SLACK_EVENTS_MODE === "on") {
       // @ts-expect-error
       this.app.receiver.client.start().then(() => this.registerEvents());
     }
