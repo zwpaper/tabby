@@ -48,7 +48,7 @@ export const executeCommand =
         signal: abortSignal,
         env: {
           ...process.env,
-          GH_PAGER: "",
+          PAGER: "cat",
         },
       });
       // need CRLF ('\r\n') as line separator, '\n' only moves the cursor one line down but not to the beginning

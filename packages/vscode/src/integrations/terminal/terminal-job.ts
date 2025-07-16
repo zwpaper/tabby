@@ -76,8 +76,7 @@ export class TerminalJob implements vscode.Disposable {
       cwd: config.cwd,
       shellPath,
       env: {
-        PAGER: "", // Disable pager for better output handling
-        GH_PAGER: "",
+        PAGER: "cat",
       },
       iconPath: new vscode.ThemeIcon("piano"),
       hideFromUser: true,
