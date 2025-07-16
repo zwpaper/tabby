@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -34,10 +35,12 @@ import {
   ChevronRight,
   Loader2,
   MoreHorizontal,
+  Search,
   ShieldCheck,
   ShieldX,
   Undo,
   UserCheck,
+  X,
 } from "lucide-react";
 import { useMemo, useState } from "react"; // Removed useEffect
 import { toast } from "sonner";
@@ -145,8 +148,24 @@ function UsersPage() {
     (typeof userList)[0] | null
   >(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const userList = (userData?.users || []) as User[];
+
+  // Filter users based on email and name search
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return userList;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return userList.filter((user) => {
+      const email = user.email.toLowerCase();
+      const name = (user.name || "").toLowerCase();
+
+      return email.startsWith(query) || name.includes(query);
+    });
+  }, [userList, searchQuery]);
+
   const totalUsers = userData?.total || 0;
   const totalPages = Math.ceil(totalUsers / pageSize);
 
@@ -302,10 +321,12 @@ function UsersPage() {
       );
     }
 
-    if (userList.length === 0) {
+    if (filteredUsers.length === 0) {
       return (
         <div className="rounded-md border border-border bg-muted/40 p-4 text-center text-muted-foreground">
-          No users found.
+          {searchQuery.trim()
+            ? "No users found matching your search."
+            : "No users found."}
         </div>
       );
     }
@@ -326,7 +347,7 @@ function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {userList.map((user) => (
+            {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.name || "—"}</TableCell>
@@ -429,7 +450,7 @@ function UsersPage() {
           </TableBody>
         </Table>
 
-        {totalPages > 1 && (
+        {!searchQuery.trim() && totalPages > 1 && (
           <div className="mt-4 flex items-center justify-between">
             <div className="text-muted-foreground text-sm">
               Showing {(currentPage - 1) * pageSize + 1} to{" "}
@@ -459,6 +480,13 @@ function UsersPage() {
             </div>
           </div>
         )}
+
+        {searchQuery.trim() && (
+          <div className="mt-4 text-muted-foreground text-sm">
+            Showing {filteredUsers.length} user
+            {filteredUsers.length !== 1 ? "s" : ""} matching "{searchQuery}"
+          </div>
+        )}
       </>
     );
   };
@@ -469,7 +497,32 @@ function UsersPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>User Management</CardTitle>
         </CardHeader>
-        <CardContent>{renderUsersTable()}</CardContent>
+        <CardContent>
+          <div className="mb-4 flex items-center gap-2">
+            <div className="relative max-w-sm flex-1">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by email or name..."
+                value={searchQuery}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchQuery(e.target.value)
+                }
+                className="pr-9 pl-9"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="-translate-y-1/2 absolute top-1/2 right-1 h-7 w-7 p-0 hover:bg-muted"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          </div>
+          {renderUsersTable()}
+        </CardContent>
       </Card>
 
       {/* Ban User Confirmation Dialog */}
