@@ -20,7 +20,10 @@ import { db } from "./db";
 import { handleGithubAccountUpdate } from "./github";
 import { StripePlans } from "./lib/constants";
 import { deviceLink } from "./lib/device-link";
-import { getWaitlistSignupEmailHtml } from "./lib/email-templates";
+import {
+  getOrganizationInviteEmailHtml,
+  getWaitlistSignupEmailHtml,
+} from "./lib/email-templates";
 import { resend } from "./lib/resend";
 import { stripeClient } from "./lib/stripe";
 
@@ -85,6 +88,24 @@ export const auth = betterAuth({
     admin(),
     organization({
       organizationLimit: 1,
+      async sendInvitationEmail(data) {
+        const inviteLink = `${process.env.BETTER_AUTH_URL || "https://app.getpochi.com"}/accept-invitation?invitationId=${data.id}`;
+
+        const emailHtml = getOrganizationInviteEmailHtml({
+          organizationName: data.organization.name,
+          inviterName: data.inviter.user.name || "A team member",
+          inviterEmail: data.inviter.user.email,
+          memberRole: data.role,
+          acceptInviteUrl: inviteLink,
+        });
+
+        await resend.emails.send({
+          from: "Pochi <noreply@getpochi.com>",
+          to: data.email,
+          subject: `You're invited to join ${data.organization.name} on Pochi`,
+          html: emailHtml,
+        });
+      },
     }),
     bearer(),
     oAuthProxy(),
