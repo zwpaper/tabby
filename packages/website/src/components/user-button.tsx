@@ -18,12 +18,6 @@ export function UserButton({
   const { data: auth } = useSession();
   const { additionalLinks = [] } = props;
 
-  // additionalLinks.push({
-  //   href: "/team",
-  //   label: "Team",
-  //   icon: <Users />,
-  // });
-
   if (auth?.session.impersonatedBy) {
     additionalLinks.push({
       href: "/stop-impersonating",

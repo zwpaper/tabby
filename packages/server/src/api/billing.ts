@@ -221,17 +221,22 @@ const billing = new Hono()
     async (c) => {
       const user = c.get("user");
       const { subscriptionId } = c.req.valid("query");
-      if (!user.stripeCustomerId) {
-        throw new HTTPException(403, { message: "Forbidden" });
-      }
+
       const subscription = await db
         .selectFrom("subscription")
-        .where("stripeCustomerId", "=", user.stripeCustomerId)
-        .select(["id"])
+        .where("id", "=", subscriptionId)
+        .select(["stripeCustomerId"])
         .executeTakeFirst();
 
       if (!subscription) {
         throw new HTTPException(404, { message: "Subscription not found" });
+      }
+
+      if (
+        !user.stripeCustomerId ||
+        subscription.stripeCustomerId !== user.stripeCustomerId
+      ) {
+        throw new HTTPException(403, { message: "Forbidden" });
       }
 
       try {

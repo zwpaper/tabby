@@ -1,3 +1,4 @@
+import { OrganizationButton } from "@/components/organization-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserButton } from "@/components/user-button";
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
@@ -70,8 +71,9 @@ function NavHeader() {
           )}
         </span>
       </span>
-      <span className="flex gap-2">
+      <span className="flex items-center gap-4">
         <ThemeToggle />
+        <OrganizationButton />
         <UserButton size="icon" />
       </span>
     </span>
