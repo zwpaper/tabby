@@ -135,6 +135,17 @@ export const auth = betterAuth({
         authorizeReference: async ({ user, referenceId }) => {
           if (user.id === referenceId) return true;
 
+          const subscription = await db
+            .selectFrom("subscription")
+            .where("referenceId", "=", referenceId)
+            .where("status", "=", "active")
+            .select(["stripeCustomerId"])
+            .executeTakeFirst();
+
+          if (subscription) {
+            return user.stripeCustomerId === subscription.stripeCustomerId;
+          }
+
           // Check if the user has permission to manage subscriptions for this reference
           const member = await db
             .selectFrom("member")
