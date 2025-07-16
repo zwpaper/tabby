@@ -10,6 +10,7 @@ import {
   computeCreditCost,
 } from "../lib/constants";
 import { stripeClient } from "../lib/stripe";
+import { organizationService } from "./organization";
 
 const FreeCreditInDollars = 20;
 
@@ -20,6 +21,9 @@ export class UsageService {
     usage: LanguageModelUsage,
     creditCostInput: CreditCostInput,
   ): Promise<void> {
+    // Track monthly usage count
+    const now = moment.utc();
+    const startDayOfMonth = now.startOf("month").toDate();
     const credit = await this.meterCreditCost(user, creditCostInput);
 
     // Track individual completion details
@@ -34,10 +38,37 @@ export class UsageService {
       })
       .execute();
 
-    // Track monthly usage count
-    const now = moment.utc();
-    const startDayOfMonth = now.startOf("month").toDate();
+    const organization = await organizationService.readActiveOrganizationByUser(
+      user.id,
+    );
+    const orgQuota = organization
+      ? await usageService.readCurrentMonthOrganizationQuota(organization.id)
+      : undefined;
 
+    // If an org subscription exists, only track the organization's usage.
+    if (organization && orgQuota?.plan) {
+      await db
+        .insertInto("monthlyOrganizationUsage")
+        .values({
+          organizationId: organization.id,
+          userId: user.id,
+          modelId,
+          startDayOfMonth,
+          count: 1,
+          credit,
+        })
+        .onConflict((oc) =>
+          oc
+            .columns(["organizationId", "userId", "startDayOfMonth", "modelId"])
+            .doUpdateSet((eb) => ({
+              count: eb("monthlyOrganizationUsage.count", "+", 1),
+              credit: eb("monthlyOrganizationUsage.credit", "+", credit),
+            })),
+        );
+      return;
+    }
+
+    // Otherwise, track user usage
     await db
       .insertInto("monthlyUsage")
       .values({
@@ -56,6 +87,48 @@ export class UsageService {
           })),
       )
       .execute();
+  }
+
+  async readCurrentMonthOrganizationQuota(organizationId: string) {
+    const now = moment.utc();
+    const startOfMonth = now.startOf("month").toDate();
+
+    const activeSubscription = await db
+      .selectFrom("subscription")
+      .select(["id", "plan"])
+      .where("referenceId", "=", organizationId)
+      .where("status", "=", "active")
+      .executeTakeFirst();
+
+    const usageResults = await db
+      .selectFrom("monthlyOrganizationUsage")
+      .select(["credit"])
+      .where("organizationId", "=", organizationId)
+      .where(sql`"startDayOfMonth"`, "=", startOfMonth)
+      .execute();
+
+    let spentCredit = 0;
+    for (const x of usageResults) {
+      spentCredit += x.credit;
+    }
+
+    const monthlyOrganizationCreditLimit =
+      await this.readMonthlyOrganizationLimit(organizationId);
+
+    const isLimitReached =
+      !activeSubscription ||
+      // default monthly credit limit is $10
+      creditToDollars(spentCredit) > (monthlyOrganizationCreditLimit ?? 10);
+
+    return {
+      // Used to determine if there is a subscription.
+      plan: activeSubscription?.plan,
+      credit: {
+        spent: spentCredit,
+        limit: monthlyOrganizationCreditLimit,
+        isLimitReached,
+      },
+    };
   }
 
   async readCurrentMonthUsage(
@@ -122,13 +195,7 @@ export class UsageService {
       .where(sql`"startDayOfMonth"`, "=", startOfMonth)
       .execute(); // Use executeTakeFirstOrThrow() if you expect a result or want an error
 
-    const monthlyCreditLimitResult = await db
-      .selectFrom("monthlyCreditLimit")
-      .select(["limit"])
-      .where("userId", "=", user.id)
-      .executeTakeFirst();
-
-    const monthlyCreditLimit = monthlyCreditLimitResult?.limit;
+    const monthlyUserCreditLimit = await this.readMonthlyUserLimit(user.id);
 
     let spentCredit = 0;
     const usages = {
@@ -152,7 +219,7 @@ export class UsageService {
     const isLimitReached =
       creditToDollars(spentCredit) - FreeCreditInDollars >
       // default monthly credit limit is $10
-      (monthlyCreditLimit ?? 10);
+      (monthlyUserCreditLimit ?? 10);
 
     return {
       plan,
@@ -160,7 +227,7 @@ export class UsageService {
       limits,
       credit: {
         spent: spentCredit,
-        limit: monthlyCreditLimit,
+        limit: monthlyUserCreditLimit,
         isLimitReached,
         remainingFreeCredit,
       },
@@ -186,6 +253,26 @@ export class UsageService {
     });
 
     return creditCost;
+  }
+
+  async readMonthlyOrganizationLimit(organizationId: string) {
+    const monthlyCreditLimitResult = await db
+      .selectFrom("monthlyOrganizationCreditLimit")
+      .select(["limit"])
+      .where("organizationId", "=", organizationId)
+      .executeTakeFirst();
+
+    return monthlyCreditLimitResult?.limit;
+  }
+
+  async readMonthlyUserLimit(userId: string) {
+    const monthlyCreditLimitResult = await db
+      .selectFrom("monthlyCreditLimit")
+      .select(["limit"])
+      .where("userId", "=", userId)
+      .executeTakeFirst();
+
+    return monthlyCreditLimitResult?.limit;
   }
 }
 

@@ -117,6 +117,24 @@ export interface MonthlyCreditLimit {
   userId: string;
 }
 
+export interface MonthlyOrganizationCreditLimit {
+  createdAt: Generated<Timestamp>;
+  id: Generated<number>;
+  limit: number;
+  organizationId: string;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface MonthlyOrganizationUsage {
+  count: Generated<number>;
+  credit: Generated<number>;
+  id: Generated<number>;
+  modelId: string;
+  organizationId: string;
+  startDayOfMonth: Timestamp;
+  userId: string;
+}
+
 export interface MonthlyUsage {
   count: Generated<number>;
   credit: Generated<number>;
@@ -228,6 +246,8 @@ export interface DB {
   member: Member;
   minion: Minion;
   monthlyCreditLimit: MonthlyCreditLimit;
+  monthlyOrganizationCreditLimit: MonthlyOrganizationCreditLimit;
+  monthlyOrganizationUsage: MonthlyOrganizationUsage;
   monthlyUsage: MonthlyUsage;
   organization: Organization;
   session: Session;

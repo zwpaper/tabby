@@ -19,20 +19,36 @@ const UserIdParamSchema = z.object({
   userId: z.string(),
 });
 
-const billing = new Hono()
-  .get("/portal", requireAuth(), async (c) => {
-    const user = c.get("user");
-    if (!user.stripeCustomerId) {
-      throw new HTTPException(400, { message: "User is not a customer." });
-    }
+const OrgIdParamSchema = z.object({
+  orgId: z.string(),
+});
 
-    const url = new URL(c.req.url);
-    const session = await stripeClient.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
-      return_url: `${url.origin}/profile`,
-    });
-    return c.redirect(session.url, 303);
-  })
+const PortalQuerySchema = z.object({
+  return_pathname: z.string().optional(),
+});
+
+const billing = new Hono()
+  .get(
+    "/portal",
+    requireAuth(),
+    zValidator("query", PortalQuerySchema),
+    async (c) => {
+      const { return_pathname = "profile" } = c.req.valid("query");
+      const user = c.get("user");
+      if (!user.stripeCustomerId) {
+        throw new HTTPException(400, { message: "User is not a customer." });
+      }
+
+      const url = new URL(c.req.url);
+      const return_url = `${url.origin}/${return_pathname}`;
+
+      const session = await stripeClient.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url,
+      });
+      return c.redirect(session.url, 303);
+    },
+  )
   .get(
     "/history",
     requireAuth(),
@@ -126,6 +142,117 @@ const billing = new Hono()
         .execute();
 
       return c.json({ success: true });
+    },
+  )
+  .get(
+    "/quota/organization/:orgId",
+    requireAuth(),
+    zValidator("param", OrgIdParamSchema),
+    async (c) => {
+      const user = c.get("user");
+      const { orgId } = c.req.valid("param");
+      const member = await db
+        .selectFrom("member")
+        .selectAll()
+        .where("userId", "=", user.id)
+        .executeTakeFirst();
+      if (
+        !member ||
+        !member.organizationId ||
+        member.organizationId !== orgId
+      ) {
+        throw new HTTPException(403, { message: "Forbidden" });
+      }
+
+      const quota = await usageService.readCurrentMonthOrganizationQuota(orgId);
+      return c.json(quota);
+    },
+  )
+  .put(
+    "/quota/organization/:orgId/usage",
+    requireAuth(),
+    zValidator("param", OrgIdParamSchema),
+    zValidator(
+      "json",
+      z.object({
+        limit: z.number().int().min(10).max(2000),
+      }),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const { orgId } = c.req.valid("param");
+      const member = await db
+        .selectFrom("member")
+        .selectAll()
+        .where("userId", "=", user.id)
+        .executeTakeFirst();
+      if (
+        !member ||
+        !member.organizationId ||
+        member.organizationId !== orgId ||
+        (member.role !== "owner" && member.role !== "admin")
+      ) {
+        throw new HTTPException(403, { message: "Forbidden" });
+      }
+
+      const { limit } = c.req.valid("json");
+      await db
+        .insertInto("monthlyOrganizationCreditLimit")
+        .values({
+          organizationId: orgId,
+          limit,
+        })
+        .onConflict((oc) =>
+          oc
+            .column("organizationId")
+            .doUpdateSet({ limit, updatedAt: sql`CURRENT_TIMESTAMP` }),
+        )
+        .execute();
+
+      return c.json({ success: true });
+    },
+  )
+  .get(
+    "/invoices",
+    requireAuth(),
+    zValidator(
+      "query",
+      z.object({
+        subscriptionId: z.string(),
+      }),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const { subscriptionId } = c.req.valid("query");
+      if (!user.stripeCustomerId) {
+        throw new HTTPException(403, { message: "Forbidden" });
+      }
+      const subscription = await db
+        .selectFrom("subscription")
+        .where("stripeCustomerId", "=", user.stripeCustomerId)
+        .select(["id"])
+        .executeTakeFirst();
+
+      if (!subscription) {
+        throw new HTTPException(404, { message: "Subscription not found" });
+      }
+
+      try {
+        const upcomingInvoice = await stripeClient.invoices.retrieveUpcoming({
+          subscription: subscriptionId,
+          expand: ["lines.data.price_details.tiers"],
+        });
+
+        return c.json(upcomingInvoice);
+      } catch (error) {
+        console.error("Failed to retrieve upcoming invoice:", error);
+        if (error instanceof Stripe.errors.StripeError) {
+          throw new HTTPException(400, { message: error.message });
+        }
+        throw new HTTPException(500, {
+          message: "Failed to retrieve upcoming invoice.",
+        });
+      }
     },
   );
 

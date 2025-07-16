@@ -1,6 +1,7 @@
 import { HTTPException } from "hono/http-exception";
 import { ServerErrors } from "..";
 import type { User } from "../auth";
+import { organizationService } from "../service/organization";
 import { usageService } from "../service/usage";
 import { type AvailableModelId, AvailableModels } from "./constants";
 
@@ -30,9 +31,6 @@ export async function checkUserQuota(user: User, modelId: string) {
     return;
   }
 
-  // Check quota
-  const quota = await usageService.readCurrentMonthQuota(user);
-
   const modelCostType = AvailableModels.find(
     (model) => model.id === modelId,
   )?.costType;
@@ -41,8 +39,16 @@ export async function checkUserQuota(user: User, modelId: string) {
     throw new HTTPException(400, { message: "Invalid model" });
   }
 
+  const organization = await organizationService.readActiveOrganizationByUser(
+    user.id,
+  );
+  const orgQuota = organization
+    ? await usageService.readCurrentMonthOrganizationQuota(organization.id)
+    : undefined;
+  const userQuota = await usageService.readCurrentMonthQuota(user);
+
   const reachQuotaLimit =
-    quota.limits[modelCostType] - quota.usages[modelCostType] <= 0;
+    userQuota.limits[modelCostType] - userQuota.usages[modelCostType] <= 0;
 
   // biome-ignore lint/correctness/noConstantCondition: disable this check for now
   if (false && reachQuotaLimit) {
@@ -55,13 +61,31 @@ export async function checkUserQuota(user: User, modelId: string) {
     user.email.endsWith("@tabbyml.com") && user.emailVerified;
 
   if (!isInternalUser) {
-    if (quota.credit.remainingFreeCredit <= 0 && quota.plan === "Community") {
+    // if joined an organization, only check the orgQuota
+    if (orgQuota?.credit.isLimitReached) {
+      if (!orgQuota?.plan) {
+        throw new HTTPException(400, {
+          message: ServerErrors.RequireSubscription,
+        });
+      }
+
+      throw new HTTPException(400, {
+        message: ServerErrors.ReachedCreditLimit,
+      });
+    }
+
+    const userOutOfFreeCredit =
+      userQuota.credit.remainingFreeCredit <= 0 &&
+      userQuota.plan === "Community";
+
+    if (userOutOfFreeCredit) {
       throw new HTTPException(400, {
         message: ServerErrors.RequireSubscription,
       });
     }
 
-    if (quota.credit.isLimitReached) {
+    const userLimitReached = userQuota.credit.isLimitReached;
+    if (userLimitReached) {
       throw new HTTPException(400, {
         message: ServerErrors.ReachedCreditLimit,
       });
