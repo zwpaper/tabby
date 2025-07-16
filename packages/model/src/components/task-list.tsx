@@ -99,7 +99,7 @@ function getTaskTitle(task: TaskData) {
   }
 
   if (Array.isArray(userMessage.content) && userMessage.content.length > 0) {
-    return userMessage.content[0].text;
+    return userMessage.content.at(-1)?.text || "No content";
   }
 
   return "Empty message";
