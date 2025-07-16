@@ -29,8 +29,8 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        This shows your LLM token usage within the context window. The LLM
-        cannot process tokens beyond this limit.
+        <p>This shows your token usage within LLM context window.</p>
+        <p>LLM cannot see or use tokens beyond this limit.</p>
       </TooltipContent>
     </Tooltip>
   );
