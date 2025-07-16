@@ -99,6 +99,7 @@ export class UsageService {
       .select(["id", "plan"])
       .where("referenceId", "=", organizationId)
       .where("status", "=", "active")
+      .where("cancelAtPeriodEnd", "=", false)
       .executeTakeFirst();
 
     const usageResults = await db

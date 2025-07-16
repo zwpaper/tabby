@@ -225,10 +225,10 @@ const billing = new Hono()
       const subscription = await db
         .selectFrom("subscription")
         .where("id", "=", subscriptionId)
-        .select(["stripeCustomerId"])
+        .select(["stripeCustomerId", "stripeSubscriptionId"])
         .executeTakeFirst();
 
-      if (!subscription) {
+      if (!subscription?.stripeSubscriptionId) {
         throw new HTTPException(404, { message: "Subscription not found" });
       }
 
@@ -241,7 +241,7 @@ const billing = new Hono()
 
       try {
         const upcomingInvoice = await stripeClient.invoices.retrieveUpcoming({
-          subscription: subscriptionId,
+          subscription: subscription.stripeSubscriptionId,
         });
 
         return c.json(upcomingInvoice);

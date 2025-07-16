@@ -386,9 +386,12 @@ function BillingCard({
   const invoiceQuery = useQuery({
     queryKey: ["invoice", subscription?.stripeSubscriptionId],
     queryFn: async () => {
+      if (!subscription) {
+        throw new Error("Subscription not found");
+      }
       const response = await apiClient.api.billing.invoices.$get({
         query: {
-          subscriptionId: subscription?.stripeSubscriptionId as string,
+          subscriptionId: subscription.id,
         },
       });
       if (!response.ok) {

@@ -12,6 +12,7 @@ export async function readActiveSubscription(user: {
     .select(["id", "plan"])
     .where("referenceId", "=", user.id)
     .where("status", "=", "active")
+    .where("cancelAtPeriodEnd", "=", false)
     .executeTakeFirst();
 
   const planId = activeSubscription?.plan ?? StripePlans[0].name.toLowerCase();
