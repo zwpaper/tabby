@@ -179,6 +179,24 @@ export const auth = betterAuth({
         },
       },
     },
+    session: {
+      create: {
+        before: async (session) => {
+          const membership = await db
+            .selectFrom("member")
+            .where("userId", "=", session.userId)
+            .select("organizationId")
+            .executeTakeFirst();
+
+          return {
+            data: {
+              ...session,
+              activeOrganizationId: membership?.organizationId ?? null,
+            },
+          };
+        },
+      },
+    },
   },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
