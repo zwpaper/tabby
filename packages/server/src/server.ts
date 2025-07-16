@@ -41,11 +41,12 @@ if (process.env.NODE_ENV !== "test") {
 
     app.use(
       "/_internal/data-labeling-tool/*",
-      requireAuth({ internal: true }),
       etag(),
+      requireAuth({ internal: true }),
       serveStatic({
         root: "../model/dist",
-        rewriteRequestPath: (path) => path.replace(/^\/data-labeling-tool/, ""),
+        rewriteRequestPath: (path) =>
+          path.replace(/^\/_internal\/data-labeling-tool/, ""),
         precompressed: true,
         onFound: (path, c) => {
           if (path.endsWith(".html") || path.endsWith("manifest.json")) {

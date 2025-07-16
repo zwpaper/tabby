@@ -26,6 +26,7 @@ export function getReadEnvironmentResult(
 
 export function getLiteReadEnvironmentResult(environment: Environment) {
   const sections = [
+    getGitStatus(environment.workspace.gitStatus),
     getUserEdits(environment.userEdits),
     getTodos(environment.todos),
   ]

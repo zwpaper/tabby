@@ -9,5 +9,5 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
   },
-  base: "/data-labeling-tool/",
+  base: "/_internal/data-labeling-tool/",
 });
