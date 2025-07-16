@@ -1,79 +1,79 @@
-import { createFileRoute } from "@tanstack/react-router";
-
 import { CreateTeamForm } from "@/components/team/create-team-form";
-import { JoinTeamView } from "@/components/team/join-team-view";
-import { TeamView } from "@/components/team/team-view";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { authClient } from "@/lib/auth-client";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_base/team")({
   component: TeamComponent,
+  loader: async ({ context }) => {
+    if (context.auth.session.activeOrganizationId) {
+      const orgs = await authClient.organization.list({
+        query: {
+          orgainzationId: context.auth.session.activeOrganizationId,
+        },
+      });
+      const organizationSlug = orgs.data?.[0]?.slug;
+      if (organizationSlug) {
+        throw redirect({
+          to: "/teams/$slug",
+          params: {
+            slug: organizationSlug,
+          },
+        });
+      }
+    }
+  },
+  pendingComponent: PendingComponent,
 });
 
 function TeamComponent() {
-  const { data, refetch, isLoading } = useQuery({
-    queryKey: ["organization"],
-    queryFn: () => {
-      return authClient.organization.getFullOrganization();
-    },
-  });
-  const organization = data?.data;
+  const router = useRouter();
+  return (
+    <div className="container mx-auto max-w-7xl px-4 py-8 lg:px-8">
+      {/* Main heading */}
+      <h1 className="mb-16 font-bold text-5xl">Team</h1>
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8 lg:px-8">
-        <div className="flex items-center gap-4">
-          <Skeleton className="size-8 rounded-lg" />
-          <Skeleton className="h-8 w-48" />
+      <div className="mb-20 grid grid-cols-1 gap-12 lg:grid-cols-2">
+        {/* Left column - Team features */}
+        <div className="space-y-12">
+          <div>
+            <h2 className="mb-4 font-semibold text-2xl">
+              Shared billing & credits
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              Pooled billing of usage makes it easier to manage costs across
+              your team.
+            </p>
+          </div>
         </div>
-        <div className="my-8 space-y-4">
-          <Skeleton className="h-8 w-28" />
-          <Skeleton className="h-40 w-full" />
-        </div>
-        <div className="my-8 space-y-4">
-          <Skeleton className="h-8 w-28" />
-          <Skeleton className="h-40 w-full" />
+
+        {/* Right column - Join team */}
+        <div>
+          <h2 className="mb-4 font-semibold text-2xl">Join a Team</h2>
+          <p className="mb-6 text-muted-foreground leading-relaxed">
+            Ask a team admin to send you an invitation from their team page.
+            You'll receive an email with a link to join.
+          </p>
+          {/* <p className="text-muted-foreground leading-relaxed">
+            If your team uses SSO, sign in with the correct email (usually your
+            work email).
+          </p> */}
         </div>
       </div>
-    );
-  }
 
-  if (!organization) {
-    return (
-      <div className="container mx-auto max-w-2xl space-y-8 px-4 py-8 lg:px-8">
-        <Tabs defaultValue="create">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="create">Create a Team</TabsTrigger>
-            <TabsTrigger value="join">Join a Team</TabsTrigger>
-          </TabsList>
-          <TabsContent value="create">
-            <Card>
-              <CardHeader>
-                <CardTitle>Create a new Team</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CreateTeamForm onCreated={refetch} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="join">
-            <Card>
-              <CardHeader>
-                <CardTitle>Join an existing Team</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <JoinTeamView />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+      {/* Create team section */}
+      <div className="max-w-xl">
+        <h2 className="mb-6 font-semibold text-2xl">Create a Team</h2>
+        <CreateTeamForm onCreated={() => router.invalidate()} />
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  // @ts-ignore FIXME
-  return <TeamView organization={organization} />;
+function PendingComponent() {
+  return (
+    <div className="flex min-h-screen w-screen items-center justify-center">
+      <Loader2 className="animate-spin" />
+    </div>
+  );
 }

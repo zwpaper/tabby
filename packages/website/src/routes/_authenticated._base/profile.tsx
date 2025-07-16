@@ -454,7 +454,11 @@ function BillingCard({
             cancelUrl: window.location.href,
           });
         }
-        window.location.href = "/api/billing/portal";
+
+        // cancel
+        return authClient.subscription.cancel({
+          returnUrl: window.location.href,
+        });
       } catch {
         toast.error("Failed to fetch");
       }

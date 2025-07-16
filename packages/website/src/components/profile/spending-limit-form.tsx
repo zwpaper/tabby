@@ -33,10 +33,12 @@ export function SpendingLimitForm({
   defaultValues: propsDefaultValues,
   onSubmit,
   isSubmitting,
+  disabled,
 }: {
   defaultValues: Partial<z.input<typeof FormSchema>>;
   onSubmit: (values: z.infer<typeof FormSchema>) => void;
   isSubmitting: boolean;
+  disabled?: boolean;
 }) {
   const form = useForm<z.input<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -88,7 +90,7 @@ export function SpendingLimitForm({
             </FormItem>
           )}
         />
-        <Button type="submit" size="sm" disabled={isSubmitting}>
+        <Button type="submit" size="sm" disabled={disabled || isSubmitting}>
           {isSubmitting && <Loader2 className="size-4 animate-spin" />}
           Save
         </Button>

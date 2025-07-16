@@ -29,9 +29,11 @@ import { SubscriptionLimitDialog } from "./subscription-limit-dialog";
 export function BillingCard({
   queryClient,
   organizationId,
+  isOwner,
 }: {
   queryClient: ReturnType<typeof useQueryClient>;
   organizationId: string;
+  isOwner: boolean;
 }) {
   const [subscriptionLimitDialogOpen, setSubscriptionLimitDialogOpen] =
     useState(false);
@@ -121,7 +123,11 @@ export function BillingCard({
           cancelUrl: window.location.href,
         });
       }
-      window.location.href = "/api/billing/portal?return_pathname=team";
+
+      // cancel
+      return authClient.subscription.cancel({
+        returnUrl: window.location.href,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
@@ -176,6 +182,7 @@ export function BillingCard({
                   checked={isEffectivelyActive}
                   onCheckedChange={subscriptionMutation.mutate}
                   disabled={
+                    !isOwner ||
                     subscriptionMutation.isPending ||
                     subscriptionQuery.isLoading
                   }
@@ -200,7 +207,7 @@ export function BillingCard({
                 )}
               </div>
             )}
-            {!!subscription && (
+            {!!subscription && isOwner && (
               <a href="/api/billing/portal?return_pathname=team">
                 <Button variant="outline" size="sm">
                   Manage
@@ -208,7 +215,7 @@ export function BillingCard({
               </a>
             )}
           </div>
-          {isCreditLimitReached && (
+          {billingQuotaQuery.data?.plan && isCreditLimitReached && (
             <Alert variant="destructive" className="mt-4 border-0">
               <AlertTriangle />
               <AlertTitle>Credit Limit Reached</AlertTitle>
@@ -250,6 +257,7 @@ export function BillingCard({
                     <Skeleton className="h-24 w-full" />
                   ) : (
                     <SpendingLimitForm
+                      disabled={!isOwner}
                       defaultValues={{
                         monthlyCreditLimit:
                           billingQuotaQuery.data?.credit?.limit,

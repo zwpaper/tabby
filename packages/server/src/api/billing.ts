@@ -237,7 +237,6 @@ const billing = new Hono()
       try {
         const upcomingInvoice = await stripeClient.invoices.retrieveUpcoming({
           subscription: subscriptionId,
-          expand: ["lines.data.price_details.tiers"],
         });
 
         return c.json(upcomingInvoice);

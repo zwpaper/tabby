@@ -36,6 +36,7 @@ import { Route as AuthenticatedBaseCreateImport } from './routes/_authenticated.
 import { Route as AuthenticatedBaseSettingsRouteImport } from './routes/_authenticated._base/_settings/route'
 import { Route as AuthenticatedBaseTasksIndexImport } from './routes/_authenticated._base/tasks/index'
 import { Route as AuthenticatedBaseMinionsIndexImport } from './routes/_authenticated._base/minions/index'
+import { Route as AuthenticatedBaseTeamsSlugImport } from './routes/_authenticated._base/teams/$slug'
 import { Route as AuthenticatedBaseTasksUidImport } from './routes/_authenticated._base/tasks/$uid'
 import { Route as AuthenticatedBaseSettingsUsageImport } from './routes/_authenticated._base/_settings/usage'
 import { Route as AuthenticatedBaseSettingsModelImport } from './routes/_authenticated._base/_settings/model'
@@ -201,6 +202,14 @@ const AuthenticatedBaseMinionsIndexRoute =
     path: '/minions/',
     getParentRoute: () => AuthenticatedBaseRouteRoute,
   } as any)
+
+const AuthenticatedBaseTeamsSlugRoute = AuthenticatedBaseTeamsSlugImport.update(
+  {
+    id: '/teams/$slug',
+    path: '/teams/$slug',
+    getParentRoute: () => AuthenticatedBaseRouteRoute,
+  } as any,
+)
 
 const AuthenticatedBaseTasksUidRoute = AuthenticatedBaseTasksUidImport.update({
   id: '/tasks/$uid',
@@ -450,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseTasksUidImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
+    '/_authenticated/_base/teams/$slug': {
+      id: '/_authenticated/_base/teams/$slug'
+      path: '/teams/$slug'
+      fullPath: '/teams/$slug'
+      preLoaderRoute: typeof AuthenticatedBaseTeamsSlugImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
     '/_authenticated/_base/minions/': {
       id: '/_authenticated/_base/minions/'
       path: '/minions'
@@ -501,6 +517,7 @@ interface AuthenticatedBaseRouteRouteChildren {
   AuthenticatedBaseProfileRoute: typeof AuthenticatedBaseProfileRoute
   AuthenticatedBaseTeamRoute: typeof AuthenticatedBaseTeamRoute
   AuthenticatedBaseTasksUidRoute: typeof AuthenticatedBaseTasksUidRoute
+  AuthenticatedBaseTeamsSlugRoute: typeof AuthenticatedBaseTeamsSlugRoute
   AuthenticatedBaseMinionsIndexRoute: typeof AuthenticatedBaseMinionsIndexRoute
   AuthenticatedBaseTasksIndexRoute: typeof AuthenticatedBaseTasksIndexRoute
 }
@@ -514,6 +531,7 @@ const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
     AuthenticatedBaseProfileRoute: AuthenticatedBaseProfileRoute,
     AuthenticatedBaseTeamRoute: AuthenticatedBaseTeamRoute,
     AuthenticatedBaseTasksUidRoute: AuthenticatedBaseTasksUidRoute,
+    AuthenticatedBaseTeamsSlugRoute: AuthenticatedBaseTeamsSlugRoute,
     AuthenticatedBaseMinionsIndexRoute: AuthenticatedBaseMinionsIndexRoute,
     AuthenticatedBaseTasksIndexRoute: AuthenticatedBaseTasksIndexRoute,
   }
@@ -594,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/model': typeof AuthenticatedBaseSettingsModelRoute
   '/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/teams/$slug': typeof AuthenticatedBaseTeamsSlugRoute
   '/minions': typeof AuthenticatedBaseMinionsIndexRoute
   '/tasks': typeof AuthenticatedBaseTasksIndexRoute
 }
@@ -626,6 +645,7 @@ export interface FileRoutesByTo {
   '/model': typeof AuthenticatedBaseSettingsModelRoute
   '/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/teams/$slug': typeof AuthenticatedBaseTeamsSlugRoute
   '/minions': typeof AuthenticatedBaseMinionsIndexRoute
   '/tasks': typeof AuthenticatedBaseTasksIndexRoute
 }
@@ -661,6 +681,7 @@ export interface FileRoutesById {
   '/_authenticated/_base/_settings/model': typeof AuthenticatedBaseSettingsModelRoute
   '/_authenticated/_base/_settings/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/_authenticated/_base/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
+  '/_authenticated/_base/teams/$slug': typeof AuthenticatedBaseTeamsSlugRoute
   '/_authenticated/_base/minions/': typeof AuthenticatedBaseMinionsIndexRoute
   '/_authenticated/_base/tasks/': typeof AuthenticatedBaseTasksIndexRoute
 }
@@ -695,6 +716,7 @@ export interface FileRouteTypes {
     | '/model'
     | '/usage'
     | '/tasks/$uid'
+    | '/teams/$slug'
     | '/minions'
     | '/tasks'
   fileRoutesByTo: FileRoutesByTo
@@ -726,6 +748,7 @@ export interface FileRouteTypes {
     | '/model'
     | '/usage'
     | '/tasks/$uid'
+    | '/teams/$slug'
     | '/minions'
     | '/tasks'
   id:
@@ -759,6 +782,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_base/_settings/model'
     | '/_authenticated/_base/_settings/usage'
     | '/_authenticated/_base/tasks/$uid'
+    | '/_authenticated/_base/teams/$slug'
     | '/_authenticated/_base/minions/'
     | '/_authenticated/_base/tasks/'
   fileRoutesById: FileRoutesById
@@ -844,6 +868,7 @@ export const routeTree = rootRoute
         "/_authenticated/_base/profile",
         "/_authenticated/_base/team",
         "/_authenticated/_base/tasks/$uid",
+        "/_authenticated/_base/teams/$slug",
         "/_authenticated/_base/minions/",
         "/_authenticated/_base/tasks/"
       ]
@@ -943,6 +968,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_base/tasks/$uid": {
       "filePath": "_authenticated._base/tasks/$uid.tsx",
+      "parent": "/_authenticated/_base"
+    },
+    "/_authenticated/_base/teams/$slug": {
+      "filePath": "_authenticated._base/teams/$slug.tsx",
       "parent": "/_authenticated/_base"
     },
     "/_authenticated/_base/minions/": {
