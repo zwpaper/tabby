@@ -8,8 +8,11 @@ WITH transformParams AS (
             -- Either all content parts are API responses
             (SELECT COALESCE(bool_and(part->>'text' LIKE '<api-response%'), true) FROM jsonb_array_elements(message->'content') as part)
             OR
-            -- Or the first content part starts with '<environment-details>'
+            -- Or the first content part starts with '<environment-details>' (Legacy)
             (message->'content'->0->>'text' LIKE '<environment-details>%')
+            OR
+            -- Or the first content part starts with '<system-reminder>'
+            (message->'content'->0->>'text' LIKE '<system-reminder>%')
           )
         )
       FROM
