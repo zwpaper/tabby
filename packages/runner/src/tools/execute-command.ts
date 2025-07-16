@@ -33,9 +33,13 @@ export const executeCommand =
     }
 
     try {
-      const shell = ["linux", "darwin"].includes(process.platform)
-        ? "/bin/bash"
-        : undefined;
+      const defaultShell = process.env.SHELL ?? "";
+
+      const shell = ["zsh", "bash"].includes(defaultShell)
+        ? defaultShell
+        : ["linux", "darwin"].includes(process.platform)
+          ? "/bin/bash"
+          : undefined;
 
       const { stdout, stderr } = await execCommand(command, {
         shell,

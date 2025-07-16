@@ -62,9 +62,13 @@ export class TerminalJob implements vscode.Disposable {
       this.detached = true;
     }
 
-    const shellPath = ["linux", "darwin"].includes(process.platform)
-      ? "/bin/bash"
-      : undefined;
+    const defaultShell = process.env.SHELL ?? "";
+
+    const shellPath = ["zsh", "bash"].includes(defaultShell)
+      ? defaultShell
+      : ["linux", "darwin"].includes(process.platform)
+        ? "/bin/bash"
+        : undefined;
 
     // Create the terminal with the provided configuration
     this.terminal = vscode.window.createTerminal({
