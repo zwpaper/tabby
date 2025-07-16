@@ -101,7 +101,7 @@ export function TeamView({ slug }: TeamViewProps) {
       )}
 
       {/* Billing Section */}
-      {!!organization && (
+      {!!organization && isOwner && (
         <div className="space-y-4">
           <div className="mx-4 space-y-1">
             <h2 className="font-semibold text-base text-foreground">Billing</h2>

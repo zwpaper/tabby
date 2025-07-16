@@ -132,23 +132,16 @@ export const auth = betterAuth({
       subscription: {
         enabled: true,
         plans: StripePlans,
-        authorizeReference: async ({ user, referenceId, action }) => {
+        authorizeReference: async ({ user, referenceId }) => {
           // Check if the user has permission to manage subscriptions for this reference
-          if (
-            action === "upgrade-subscription" ||
-            action === "cancel-subscription" ||
-            action === "restore-subscription"
-          ) {
-            const member = await db
-              .selectFrom("member")
-              .where("userId", "=", user.id)
-              .where("organizationId", "=", referenceId)
-              .select("role")
-              .executeTakeFirst();
+          const member = await db
+            .selectFrom("member")
+            .where("userId", "=", user.id)
+            .where("organizationId", "=", referenceId)
+            .select("role")
+            .executeTakeFirst();
 
-            return member?.role === "owner";
-          }
-          return true;
+          return member?.role === "owner";
         },
       },
       onEvent: async (event) => {
