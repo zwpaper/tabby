@@ -21,7 +21,7 @@ export function InvoiceView({ invoice }: { invoice: Invoice }) {
             {moment.unix(invoice.period_end).format("MMM D, YYYY")}
           </div>
           <div className="flex items-center gap-1 text-sm">
-            <span>Your next estimated payment will be</span>
+            <span>Your estimated next payment will be</span>
             <span className="font-semibold">{dollar}</span>
           </div>
         </div>
