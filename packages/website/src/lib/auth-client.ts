@@ -4,6 +4,7 @@ import {
   adminClient,
   inferAdditionalFields,
   magicLinkClient,
+  organizationClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { hc } from "hono/client";
@@ -14,6 +15,7 @@ export const authClient = createAuthClient({
     adminClient(),
     magicLinkClient(),
     deviceLinkClient(),
+    organizationClient(),
     stripeClient({ subscription: true }),
     inferAdditionalFields<typeof auth>(),
   ],

@@ -1,4 +1,6 @@
 import { SpendingLimitForm } from "@/components/profile/spending-limit-form";
+import { InvoiceView } from "@/components/subscription/invoice-view";
+import { SubscriptionLimitDialog } from "@/components/team/subscription-limit-dialog";
 import {
   Accordion,
   AccordionContent,
@@ -25,7 +27,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { InferResponseType } from "hono/client";
 import { AlertTriangle, CreditCard as IconCreditCard } from "lucide-react";
 import moment from "moment";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_base/profile")({
@@ -358,16 +360,45 @@ function BillingCard({
 }: {
   queryClient: ReturnType<typeof useQueryClient>;
 }) {
+  const { data: session } = useSession();
+  const userId = session?.user.id;
+  const [subscriptionLimitDialogOpen, setSubscriptionLimitDialogOpen] =
+    useState(false);
   const subscriptionQuery = useQuery({
-    queryKey: ["subscription"],
+    queryKey: ["subscription", userId],
     queryFn: async () => {
-      const { data, error } = await authClient.subscription.list();
+      const { data, error } = await authClient.subscription.list({
+        query: {
+          referenceId: userId,
+        },
+      });
       if (error) {
         throw new Error(error.message);
       }
       return data;
     },
+    enabled: !!userId,
   });
+  const subscription = useMemo(() => {
+    return subscriptionQuery.data?.find((x) => x.referenceId === userId);
+  }, [subscriptionQuery.data?.[0], userId]);
+
+  const invoiceQuery = useQuery({
+    queryKey: ["invoice", subscription?.stripeSubscriptionId],
+    queryFn: async () => {
+      const response = await apiClient.api.billing.invoices.$get({
+        query: {
+          subscriptionId: subscription?.stripeSubscriptionId as string,
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Fail to fetch");
+      }
+      return response.json();
+    },
+    enabled: !!subscription?.stripeSubscriptionId,
+  });
+  const invoice = invoiceQuery.data;
 
   const billingQuotaQuery = useQuery({
     queryKey: ["billingQuota"],
@@ -399,24 +430,34 @@ function BillingCard({
     },
   });
 
-  const subscription = subscriptionQuery.data?.[0];
   const subscriptionMutation = useMutation({
     mutationFn: async (isSubscribing: boolean) => {
-      if (isSubscribing) {
-        if (subscription?.cancelAtPeriodEnd) {
-          return authClient.subscription.restore();
+      try {
+        if (isSubscribing) {
+          if (subscription?.cancelAtPeriodEnd) {
+            return authClient.subscription.restore();
+          }
+
+          // const { data: subscriptions } = await authClient.subscription.list();
+          // const existingOtherSubscription = subscriptions?.find(
+          //   (x) => x.plan !== "pro",
+          // );
+          // if (existingOtherSubscription) {
+          //   setSubscriptionLimitDialogOpen(true);
+          //   return;
+          // }
+
+          return authClient.subscription.upgrade({
+            annual: false,
+            plan: "pro",
+            successUrl: window.location.href,
+            cancelUrl: window.location.href,
+          });
         }
-        return authClient.subscription.upgrade({
-          annual: false,
-          plan: "pro",
-          successUrl: window.location.href,
-          cancelUrl: window.location.href,
-        });
+        window.location.href = "/api/billing/portal";
+      } catch {
+        toast.error("Failed to fetch");
       }
-      window.location.href = "/api/billing/portal";
-      // return authClient.subscription.cancel({
-      //   returnUrl: window.location.href,
-      // });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscription"] });
@@ -445,105 +486,125 @@ function BillingCard({
   );
 
   return (
-    <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
-      <CardContent
-        className={cn("p-4", {
-          "pb-0": !!subscription,
-        })}
-      >
-        <div className="flex items-center gap-2 md:ml-2">
-          <div className="flex shrink-0 items-center gap-3">
-            <IconCreditCard size={20} className="text-foreground" />
-            <span className="font-medium text-base">Stripe</span>
-            {subscriptionQuery.isLoading ? (
-              <Skeleton className="h-6 w-12 rounded-lg" />
-            ) : (
-              <Switch
-                checked={isEffectivelyActive}
-                onCheckedChange={subscriptionMutation.mutate}
-                disabled={
-                  subscriptionMutation.isPending || subscriptionQuery.isLoading
-                }
-              />
-            )}
-          </div>
-          {subscription && (
-            <div className="ml-2 flex flex-col justify-center text-muted-foreground text-xs">
-              {subscription.periodEnd && (
-                <span>
-                  {subscription.cancelAtPeriodEnd
-                    ? "Expires on "
-                    : "Renews on "}
-                  {moment(subscription.periodEnd).format("MMMM D, YYYY")}
-                </span>
-              )}
-              {subscription.cancelAtPeriodEnd && (
-                <span>
-                  Your plan will be canceled at the end of the current billing
-                  period.
-                </span>
+    <>
+      <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
+        <CardContent
+          className={cn("p-4", {
+            "pb-0": !!subscription,
+          })}
+        >
+          <div className="flex items-center justify-between gap-2 md:ml-2">
+            <div className="flex shrink-0 items-center gap-3">
+              <IconCreditCard size={20} className="text-foreground" />
+              <span className="font-medium text-base">Stripe</span>
+              {subscriptionQuery.isLoading ? (
+                <Skeleton className="h-6 w-12 rounded-lg" />
+              ) : (
+                <Switch
+                  checked={isEffectivelyActive}
+                  onCheckedChange={subscriptionMutation.mutate}
+                  disabled={
+                    subscriptionMutation.isPending ||
+                    subscriptionQuery.isLoading
+                  }
+                />
               )}
             </div>
-          )}
-        </div>
-        {isCreditLimitReached && (
-          <Alert variant="destructive" className="mt-4 border-0">
-            <AlertTriangle />
-            <AlertTitle>Credit Limit Reached</AlertTitle>
-            <AlertDescription>
-              You have reached your monthly credit limit.
-            </AlertDescription>
-          </Alert>
-        )}
-        <div className="mt-4 mb-8 border-border/50 border-t" />
-        <div className="mb-4 grid grid-cols-2 items-start gap-8">
-          <StatItem
-            label="FREE CREDIT REMAINING"
-            value={freeCreditRemaining.toLocaleString("en-US", {
-              style: "currency",
-              currency: "USD",
-            })}
-            isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
-            isError={billingQuotaQuery.isError}
-          />
-          <StatItem
-            label="CURRENT SPENDING"
-            value={spentInDollars.toLocaleString("en-US", {
-              style: "currency",
-              currency: "USD",
-            })}
-            isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
-            isError={billingQuotaQuery.isError}
-          />
-        </div>
-        {
-          <Accordion type="single" collapsible>
-            <AccordionItem value="spending-limit">
-              <AccordionTrigger className="flex-none px-1 font-medium md:px-2">
-                Spending Settings
-              </AccordionTrigger>
-              <AccordionContent className="px-1 md:px-2">
-                {billingQuotaQuery.isLoading && !billingQuotaQuery.data ? (
-                  <Skeleton className="h-24 w-full" />
-                ) : (
-                  <SpendingLimitForm
-                    defaultValues={{
-                      monthlyCreditLimit: billingQuotaQuery.data?.credit?.limit,
-                    }}
-                    onSubmit={(values) => {
-                      monthlyUsageLimitMutation.mutate(
-                        values.monthlyCreditLimit,
-                      );
-                    }}
-                    isSubmitting={monthlyUsageLimitMutation.isPending}
-                  />
+            {subscription && (
+              <div className="ml-2 flex flex-1 flex-col justify-center text-muted-foreground text-xs">
+                {subscription.periodEnd && (
+                  <span>
+                    {subscription.cancelAtPeriodEnd
+                      ? "Expires on "
+                      : "Renews on "}
+                    {moment(subscription.periodEnd).format("MMMM D, YYYY")}
+                  </span>
                 )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        }
-      </CardContent>
-    </Card>
+                {subscription.cancelAtPeriodEnd && (
+                  <span>
+                    Your plan will be canceled at the end of the current billing
+                    period.
+                  </span>
+                )}
+              </div>
+            )}
+            {!!subscription && (
+              <a href="/api/billing/portal">
+                <Button variant="outline" size="sm">
+                  Manage
+                </Button>
+              </a>
+            )}
+          </div>
+          {isCreditLimitReached && (
+            <Alert variant="destructive" className="mt-4 border-0">
+              <AlertTriangle />
+              <AlertTitle>Credit Limit Reached</AlertTitle>
+              <AlertDescription>
+                You have reached your monthly credit limit.
+              </AlertDescription>
+            </Alert>
+          )}
+          <div className="mt-4 mb-8 border-border/50 border-t" />
+          <div className="mb-4 grid grid-cols-2 items-start gap-8">
+            <StatItem
+              label="FREE CREDIT REMAINING"
+              value={freeCreditRemaining.toLocaleString("en-US", {
+                style: "currency",
+                currency: "USD",
+              })}
+              isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
+              isError={billingQuotaQuery.isError}
+            />
+            <StatItem
+              label="CURRENT SPENDING"
+              value={spentInDollars.toLocaleString("en-US", {
+                style: "currency",
+                currency: "USD",
+              })}
+              isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
+              isError={billingQuotaQuery.isError}
+            />
+          </div>
+          {invoice && <InvoiceView invoice={invoice} />}
+          {
+            <Accordion type="single" collapsible>
+              <AccordionItem value="spending-limit">
+                <AccordionTrigger className="flex-none px-1 font-medium md:px-2">
+                  Spending Settings
+                </AccordionTrigger>
+                <AccordionContent className="px-1 md:px-2">
+                  {billingQuotaQuery.isLoading && !billingQuotaQuery.data ? (
+                    <Skeleton className="h-24 w-full" />
+                  ) : (
+                    <SpendingLimitForm
+                      defaultValues={{
+                        monthlyCreditLimit:
+                          billingQuotaQuery.data?.credit?.limit,
+                      }}
+                      onSubmit={(values) => {
+                        monthlyUsageLimitMutation.mutate(
+                          values.monthlyCreditLimit,
+                        );
+                      }}
+                      isSubmitting={monthlyUsageLimitMutation.isPending}
+                    />
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          }
+        </CardContent>
+      </Card>
+      <SubscriptionLimitDialog
+        open={subscriptionLimitDialogOpen}
+        onOpenChange={setSubscriptionLimitDialogOpen}
+        planName="Pro"
+        // FIXME(jueliang): should be dynamic
+        existingPlanName="Team"
+        url="/api/billing/portal"
+      />
+    </>
   );
 }
 

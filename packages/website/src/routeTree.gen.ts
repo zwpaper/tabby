@@ -22,11 +22,13 @@ import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authenticated.stop-impersonating'
 import { Route as AuthenticatedRedirectVscodeImport } from './routes/_authenticated.redirect-vscode'
 import { Route as AuthenticatedRedirectRemoteImport } from './routes/_authenticated.redirect-remote'
+import { Route as AuthenticatedAcceptInvitationImport } from './routes/_authenticated.accept-invitation'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin/route'
 import { Route as AuthenticatedBaseRouteImport } from './routes/_authenticated._base/route'
 import { Route as AuthenticatedAuthVscodeLinkImport } from './routes/_authenticated.auth/vscode-link'
 import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authenticated.auth/device-link'
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
+import { Route as AuthenticatedBaseTeamImport } from './routes/_authenticated._base/team'
 import { Route as AuthenticatedBaseProfileImport } from './routes/_authenticated._base/profile'
 import { Route as AuthenticatedBaseHomeImport } from './routes/_authenticated._base/home'
 import { Route as AuthenticatedBaseCreateImport } from './routes/_authenticated._base/create'
@@ -110,6 +112,13 @@ const AuthenticatedRedirectRemoteRoute =
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
+const AuthenticatedAcceptInvitationRoute =
+  AuthenticatedAcceptInvitationImport.update({
+    id: '/accept-invitation',
+    path: '/accept-invitation',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -139,6 +148,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+
+const AuthenticatedBaseTeamRoute = AuthenticatedBaseTeamImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedBaseRouteRoute,
 } as any)
 
 const AuthenticatedBaseProfileRoute = AuthenticatedBaseProfileImport.update({
@@ -280,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedImport
     }
+    '/_authenticated/accept-invitation': {
+      id: '/_authenticated/accept-invitation'
+      path: '/accept-invitation'
+      fullPath: '/accept-invitation'
+      preLoaderRoute: typeof AuthenticatedAcceptInvitationImport
+      parentRoute: typeof AuthenticatedImport
+    }
     '/_authenticated/redirect-remote': {
       id: '/_authenticated/redirect-remote'
       path: '/redirect-remote'
@@ -341,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedBaseProfileImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
+    '/_authenticated/_base/team': {
+      id: '/_authenticated/_base/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AuthenticatedBaseTeamImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
     '/_authenticated/admin/users': {
@@ -455,6 +484,7 @@ interface AuthenticatedBaseRouteRouteChildren {
   AuthenticatedBaseCreateRoute: typeof AuthenticatedBaseCreateRoute
   AuthenticatedBaseHomeRoute: typeof AuthenticatedBaseHomeRoute
   AuthenticatedBaseProfileRoute: typeof AuthenticatedBaseProfileRoute
+  AuthenticatedBaseTeamRoute: typeof AuthenticatedBaseTeamRoute
   AuthenticatedBaseTasksUidRoute: typeof AuthenticatedBaseTasksUidRoute
   AuthenticatedBaseMinionsIndexRoute: typeof AuthenticatedBaseMinionsIndexRoute
   AuthenticatedBaseTasksIndexRoute: typeof AuthenticatedBaseTasksIndexRoute
@@ -467,6 +497,7 @@ const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
     AuthenticatedBaseCreateRoute: AuthenticatedBaseCreateRoute,
     AuthenticatedBaseHomeRoute: AuthenticatedBaseHomeRoute,
     AuthenticatedBaseProfileRoute: AuthenticatedBaseProfileRoute,
+    AuthenticatedBaseTeamRoute: AuthenticatedBaseTeamRoute,
     AuthenticatedBaseTasksUidRoute: AuthenticatedBaseTasksUidRoute,
     AuthenticatedBaseMinionsIndexRoute: AuthenticatedBaseMinionsIndexRoute,
     AuthenticatedBaseTasksIndexRoute: AuthenticatedBaseTasksIndexRoute,
@@ -494,6 +525,7 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedBaseRouteRoute: typeof AuthenticatedBaseRouteRouteWithChildren
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedAcceptInvitationRoute: typeof AuthenticatedAcceptInvitationRoute
   AuthenticatedRedirectRemoteRoute: typeof AuthenticatedRedirectRemoteRoute
   AuthenticatedRedirectVscodeRoute: typeof AuthenticatedRedirectVscodeRoute
   AuthenticatedStopImpersonatingRoute: typeof AuthenticatedStopImpersonatingRoute
@@ -504,6 +536,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBaseRouteRoute: AuthenticatedBaseRouteRouteWithChildren,
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedAcceptInvitationRoute: AuthenticatedAcceptInvitationRoute,
   AuthenticatedRedirectRemoteRoute: AuthenticatedRedirectRemoteRoute,
   AuthenticatedRedirectVscodeRoute: AuthenticatedRedirectVscodeRoute,
   AuthenticatedStopImpersonatingRoute: AuthenticatedStopImpersonatingRoute,
@@ -523,6 +556,7 @@ export interface FileRoutesByFullPath {
   '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/accept-invitation': typeof AuthenticatedAcceptInvitationRoute
   '/redirect-remote': typeof AuthenticatedRedirectRemoteRoute
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
@@ -531,6 +565,7 @@ export interface FileRoutesByFullPath {
   '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
+  '/team': typeof AuthenticatedBaseTeamRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -552,6 +587,7 @@ export interface FileRoutesByTo {
   '/term-of-service': typeof TermOfServiceRoute
   '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/accept-invitation': typeof AuthenticatedAcceptInvitationRoute
   '/redirect-remote': typeof AuthenticatedRedirectRemoteRoute
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
@@ -560,6 +596,7 @@ export interface FileRoutesByTo {
   '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
+  '/team': typeof AuthenticatedBaseTeamRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -583,6 +620,7 @@ export interface FileRoutesById {
   '/waitlist': typeof WaitlistRoute
   '/_authenticated/_base': typeof AuthenticatedBaseRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/accept-invitation': typeof AuthenticatedAcceptInvitationRoute
   '/_authenticated/redirect-remote': typeof AuthenticatedRedirectRemoteRoute
   '/_authenticated/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/_authenticated/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
@@ -592,6 +630,7 @@ export interface FileRoutesById {
   '/_authenticated/_base/create': typeof AuthenticatedBaseCreateRoute
   '/_authenticated/_base/home': typeof AuthenticatedBaseHomeRoute
   '/_authenticated/_base/profile': typeof AuthenticatedBaseProfileRoute
+  '/_authenticated/_base/team': typeof AuthenticatedBaseTeamRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/auth/device-link': typeof AuthenticatedAuthDeviceLinkRoute
   '/_authenticated/auth/vscode-link': typeof AuthenticatedAuthVscodeLinkRoute
@@ -615,6 +654,7 @@ export interface FileRouteTypes {
     | '/term-of-service'
     | '/waitlist'
     | '/admin'
+    | '/accept-invitation'
     | '/redirect-remote'
     | '/redirect-vscode'
     | '/stop-impersonating'
@@ -623,6 +663,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/home'
     | '/profile'
+    | '/team'
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
@@ -643,6 +684,7 @@ export interface FileRouteTypes {
     | '/term-of-service'
     | '/waitlist'
     | '/admin'
+    | '/accept-invitation'
     | '/redirect-remote'
     | '/redirect-vscode'
     | '/stop-impersonating'
@@ -651,6 +693,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/home'
     | '/profile'
+    | '/team'
     | '/admin/users'
     | '/auth/device-link'
     | '/auth/vscode-link'
@@ -672,6 +715,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/_authenticated/_base'
     | '/_authenticated/admin'
+    | '/_authenticated/accept-invitation'
     | '/_authenticated/redirect-remote'
     | '/_authenticated/redirect-vscode'
     | '/_authenticated/stop-impersonating'
@@ -681,6 +725,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_base/create'
     | '/_authenticated/_base/home'
     | '/_authenticated/_base/profile'
+    | '/_authenticated/_base/team'
     | '/_authenticated/admin/users'
     | '/_authenticated/auth/device-link'
     | '/_authenticated/auth/vscode-link'
@@ -745,6 +790,7 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/_base",
         "/_authenticated/admin",
+        "/_authenticated/accept-invitation",
         "/_authenticated/redirect-remote",
         "/_authenticated/redirect-vscode",
         "/_authenticated/stop-impersonating",
@@ -772,6 +818,7 @@ export const routeTree = rootRoute
         "/_authenticated/_base/create",
         "/_authenticated/_base/home",
         "/_authenticated/_base/profile",
+        "/_authenticated/_base/team",
         "/_authenticated/_base/tasks/$uid",
         "/_authenticated/_base/minions/",
         "/_authenticated/_base/tasks/"
@@ -783,6 +830,10 @@ export const routeTree = rootRoute
       "children": [
         "/_authenticated/admin/users"
       ]
+    },
+    "/_authenticated/accept-invitation": {
+      "filePath": "_authenticated.accept-invitation.tsx",
+      "parent": "/_authenticated"
     },
     "/_authenticated/redirect-remote": {
       "filePath": "_authenticated.redirect-remote.tsx",
@@ -823,6 +874,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_base/profile": {
       "filePath": "_authenticated._base/profile.tsx",
+      "parent": "/_authenticated/_base"
+    },
+    "/_authenticated/_base/team": {
+      "filePath": "_authenticated._base/team.tsx",
       "parent": "/_authenticated/_base"
     },
     "/_authenticated/admin/users": {

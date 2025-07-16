@@ -17,6 +17,13 @@ export function UserButton({
 }: React.ComponentProps<typeof UserButtonImpl>) {
   const { data: auth } = useSession();
   const { additionalLinks = [] } = props;
+
+  // additionalLinks.push({
+  //   href: "/team",
+  //   label: "Team",
+  //   icon: <Users />,
+  // });
+
   if (auth?.session.impersonatedBy) {
     additionalLinks.push({
       href: "/stop-impersonating",
