@@ -12,7 +12,6 @@ import enhance from "./api/enhance";
 import events from "./api/events";
 import integrations from "./api/integrations";
 import minions from "./api/minions";
-import { minionRedirection } from "./api/minions";
 import models from "./api/models";
 import tasks from "./api/tasks";
 import tools from "./api/tools";
@@ -82,8 +81,6 @@ if (process.env.NODE_ENV !== "test") {
 app.get("/health", (c) => c.text("OK"));
 
 app.on(["GET", "POST"], "/slack/*", (c) => slackService.handler(c.req.raw));
-
-app.route("/api/redirect-minion", minionRedirection);
 
 app.use(
   "/api/*",

@@ -56,6 +56,10 @@ export const auth = betterAuth({
   trustedOrigins: [
     "https://www.getpochi.com",
     "https://app.getpochi.com",
+    // FIXME(wei): wildcard in callbackURL is not yet supported
+    // after wildcard callbackURL supported, we could redirect to runpochi after login
+    // https://github.com/better-auth/better-auth/pull/3105
+    "https://*.runpochi.com",
     "https://ragdoll-production.up.railway.app",
     "http://localhost:4111",
     "http://localhost:4113",

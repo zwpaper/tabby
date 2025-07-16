@@ -17,6 +17,7 @@ import { z } from "zod";
 
 const searchSchema = z.object({
   url: z.string(),
+  token: z.string().optional(),
 });
 
 export const Route = createFileRoute("/redirect-url")({
@@ -30,22 +31,28 @@ function RouteComponent() {
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [isSlowRedirection, setIsSlowRedirection] = useState(false);
+
   useEffect(() => {
     if (!url) return;
 
     const fetchUrl = async () => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
       try {
-        const urlToFetch = `/api/redirect-minion?url=${encodeURIComponent(url)}`;
-        const response = await fetch(urlToFetch, {
+        const decodedUrl = decodeURIComponent(url);
+        const host = new URL(decodedUrl).host;
+        if (!host.startsWith("pochi-") && !/^\d+-/.test(host)) {
+          throw new Error("Bad Request: Invalid URL format");
+        }
+
+        const response = await fetch(`/api/minions/redirect?url=${url}`, {
           signal: controller.signal,
         });
-
         if (!response.ok) {
+          console.log(`check token ${response}`);
           throw new Error(
-            `Failed to fetch redirect URL: ${response.statusText}`,
+            `Failed check remote pochi alive status: ${response.statusText}`,
           );
         }
 

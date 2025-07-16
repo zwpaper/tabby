@@ -1,4 +1,5 @@
 import { HTTPException } from "hono/http-exception";
+import * as jose from "jose";
 import { v5 as uuidv5 } from "uuid";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
@@ -104,6 +105,67 @@ class MinionService {
 
   private uuidv5Id(minionId: string, namespace: string) {
     return uuidv5(minionId, namespace).replace(/-/g, "");
+  }
+
+  async verifySandboxOwnership(userId: string, redirectUrl: string) {
+    const parsedUrl = new URL(redirectUrl);
+    const host = parsedUrl.host;
+    const hostParts = host.split(".");
+    if (hostParts.length < 2) {
+      throw new HTTPException(400, {
+        message: "Invalid redirect_url format",
+      });
+    }
+
+    // only accessing vscode would request jwt token,
+    // so the parts0 is always sandboxId
+    const sandboxId = hostParts[0];
+    const minion = await db
+      .selectFrom("minion")
+      .selectAll()
+      .where("userId", "=", userId)
+      .where("sandboxId", "=", sandboxId)
+      .executeTakeFirst();
+
+    if (!minion) {
+      throw new HTTPException(403, {
+        message: "Forbidden",
+      });
+    }
+  }
+
+  async generateJwt(user: { id: string; name: string }, redirectUrl: string) {
+    const privateKeyJwkString = process.env.MINION_JWT_PRIVATE_KEY;
+    const publicKeyJwkString = process.env.MINION_JWT_PUBLIC_KEY;
+
+    if (!privateKeyJwkString || !publicKeyJwkString) {
+      throw new HTTPException(500, {
+        message: "MINION_JWT_PRIVATE_KEY or MINION_JWT_PUBLIC_KEY is not set",
+      });
+    }
+
+    const privateJwk = {
+      kty: "OKP",
+      crv: "Ed25519",
+      d: privateKeyJwkString,
+      x: publicKeyJwkString,
+    };
+
+    const key = await jose.importJWK(privateJwk, "EdDSA");
+
+    const jwt = await new jose.SignJWT({
+      name: user.name,
+    })
+      .setProtectedHeader({ alg: "EdDSA" })
+      .setIssuedAt()
+      .setIssuer(`${process.env.BETTER_AUTH_URL || "https://app.getpochi.com"}`)
+      .setAudience(new URL(redirectUrl).host)
+      .setExpirationTime("7d")
+      .sign(key);
+
+    return {
+      token: jwt,
+    };
   }
 
   async signalKeepAliveMinion(userId: string, minionId: string) {
@@ -285,6 +347,7 @@ class MinionService {
     } catch (error) {
       if (error instanceof HTTPException) {
         if (error.status >= 400 && error.status < 500) {
+          // if the error is a bad request, redirect to tasks page
           return "/tasks";
         }
         throw error;
@@ -344,8 +407,12 @@ async function verifyMinionUrl(url: string) {
     while (true) {
       try {
         const res = await fetch(url, {
-          method: "GET",
+          method: "OPTIONS",
           redirect: "manual",
+          headers: {
+            // FIXME(wei): for compatibility, will change to pochi-server after replay release
+            "Pochi-Src": "Replay",
+          },
         });
         if (res.status === 200) {
           return;
