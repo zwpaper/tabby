@@ -30,7 +30,7 @@ import {
   generateText,
 } from "ai";
 import { HTTPException } from "hono/http-exception";
-import { sql } from "kysely";
+import { type ExpressionWrapper, type SqlBool, sql } from "kysely";
 import type { z } from "zod";
 import { ServerErrors } from "..";
 import { db, minionIdCoder, uidCoder } from "../db";
@@ -349,6 +349,7 @@ class TaskService {
     let totalCountQuery = db
       .selectFrom("task")
       .where("userId", "=", userId)
+      .where("isDeleted", "=", false)
       .select(db.fn.count("id").as("count"));
 
     if (cwd) {
@@ -387,6 +388,7 @@ class TaskService {
     let query = db
       .selectFrom("task")
       .where("userId", "=", userId)
+      .where("isDeleted", "=", false)
       .select([
         "id",
         "createdAt",
@@ -470,10 +472,16 @@ class TaskService {
         sql<Todo[] | null>`environment->'todos'`.as("todos"),
       ])
       .where((eb) => {
+        let condition: ExpressionWrapper<DB, "task", SqlBool>;
         if (includeSubTasks) {
-          return eb.or([eb("id", "=", taskId), eb("parentId", "=", taskId)]);
+          condition = eb.and([
+            eb("isDeleted", "=", false),
+            eb.or([eb("id", "=", taskId), eb("parentId", "=", taskId)]),
+          ]);
+        } else {
+          condition = eb("id", "=", taskId);
         }
-        return eb("id", "=", taskId);
+        return eb.and([eb("isDeleted", "=", false), condition]);
       });
 
     const tasks = await taskQuery.execute();
@@ -522,9 +530,9 @@ class TaskService {
       .selectFrom("task")
       .innerJoin("user", "task.userId", "user.id")
       .where((eb) => {
-        return eb.or([
-          eb("task.id", "=", taskId),
-          eb("task.parentId", "=", taskId),
+        return eb.and([
+          eb("task.isDeleted", "=", false),
+          eb.or([eb("task.id", "=", taskId), eb("task.parentId", "=", taskId)]),
         ]);
       })
       .select([
@@ -599,6 +607,7 @@ class TaskService {
       })
       .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
+      .where("isDeleted", "=", false)
       .executeTakeFirst();
     return result.numUpdatedRows > 0;
   }
@@ -665,12 +674,15 @@ class TaskService {
 
   async delete(uid: string, userId: string): Promise<boolean> {
     const result = await db
-      .deleteFrom("task")
+      .updateTable("task")
+      .set({
+        isDeleted: true,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
       .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
-      .executeTakeFirst(); // Use executeTakeFirst for delete to get affected rows count
-
-    return result.numDeletedRows > 0; // Return true if deletion was successful
+      .executeTakeFirst();
+    return result.numUpdatedRows > 0;
   }
 
   async fetchLatestStreamId(

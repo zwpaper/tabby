@@ -1,5 +1,6 @@
 import { AccessControlButton } from "@/components/task/access-control-button";
 import { TaskContent } from "@/components/task/content";
+import { DeleteTaskButton } from "@/components/task/delete-task-button";
 import { TaskHeader } from "@/components/task/header";
 import { OpenInIdeButton } from "@/components/task/open-in-ide-button";
 import { TaskPageSkeleton } from "@/components/task/skeleton";
@@ -94,6 +95,7 @@ function RouteComponent() {
               uid={loaderData.uid}
               isPublicShared={loaderData.isPublicShared}
             />
+            <DeleteTaskButton uid={loaderData.uid} />
           </span>
         }
       >

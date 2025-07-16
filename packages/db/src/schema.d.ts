@@ -194,6 +194,7 @@ export interface Task {
   error: Json | null;
   event: Json | null;
   id: Generated<number>;
+  isDeleted: Generated<boolean>;
   isPublicShared: Generated<boolean>;
   minionId: number | null;
   parentId: number | null;
