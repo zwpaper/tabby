@@ -20,6 +20,7 @@ Usage notes:
 - You can specify an optional timeout in seconds (up to 300s / 5 minutes). If not specified, commands will timeout after 60s (1 minute).
 - If the output exceeds 30000 characters, output will be truncated before being returned to you.
 - When issuing multiple commands, use the ';' or '&&' operator to separate them. DO NOT use newlines (newlines are ok in quoted strings).
+- You shall avoid use the markdown code black syntax (backtick, '\`') in your command, as it will be interpreted as a command substitution.
 
 # Committing changes with git
 
