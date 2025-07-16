@@ -275,8 +275,12 @@ export function CreateTask({
     doSubmit(inputValue);
   };
 
-  const submitOnEnter = (e: KeyboardEvent) => {
+  const submitOnEnter = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
+      // Don't submit if user is in IME composition mode (e.g., typing Chinese, Japanese, Korean)
+      if (e.nativeEvent.isComposing) {
+        return; // Let the IME handle the Enter key
+      }
       e.preventDefault();
       handleSubmit();
     }
