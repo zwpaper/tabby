@@ -8,6 +8,7 @@ export type Part = Array<{
 export interface Message {
   role: "system" | "user" | "assistant";
   content: Part;
+  isDeleted?: boolean;
 }
 
 export interface TaskData {

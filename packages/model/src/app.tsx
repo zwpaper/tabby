@@ -142,12 +142,15 @@ function App() {
     setEditedContent("");
   };
 
-  const handleRemoveMessage = (taskUid: string, messageIndex: number) => {
+  const handleToggleRemoveMessage = (taskUid: string, messageIndex: number) => {
     const newTasks = tasks.map((task) => {
       if (task.uid === taskUid) {
-        const newMessages = task.messages.filter(
-          (_, index) => index !== messageIndex,
-        );
+        const newMessages = [...task.messages];
+        const message = newMessages[messageIndex];
+        newMessages[messageIndex] = {
+          ...message,
+          isDeleted: !message.isDeleted,
+        };
         return { ...task, messages: newMessages };
       }
       return task;
@@ -247,7 +250,7 @@ function App() {
               onEdit={handleEdit}
               onSave={handleSave}
               onCancel={handleCancel}
-              onRemoveMessage={handleRemoveMessage}
+              onToggleRemoveMessage={handleToggleRemoveMessage}
               onRemovePart={handleRemovePart}
               onEditedContentChange={setEditedContent}
               onVerifiedChange={handleVerifiedChange}

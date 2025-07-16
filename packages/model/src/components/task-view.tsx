@@ -17,7 +17,7 @@ interface TaskViewProps {
   ) => void;
   onSave: () => void;
   onCancel: () => void;
-  onRemoveMessage: (taskUid: string, messageIndex: number) => void;
+  onToggleRemoveMessage: (taskUid: string, messageIndex: number) => void;
   onRemovePart: (
     taskUid: string,
     messageIndex: number,
@@ -35,7 +35,7 @@ export function TaskView({
   onEdit,
   onSave,
   onCancel,
-  onRemoveMessage,
+  onToggleRemoveMessage,
   onRemovePart,
   onEditedContentChange,
   onVerifiedChange,
@@ -91,7 +91,14 @@ export function TaskView({
       </div>
       <div className="space-y-6">
         {selectedTask.messages.map((message: Message, index: number) => (
-          <div key={index} className="rounded-lg border bg-card p-4 shadow-sm">
+          <div
+            key={index}
+            className={`rounded-lg border p-4 shadow-sm ${
+              message.isDeleted
+                ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
+                : "bg-card"
+            }`}
+          >
             <div className="mb-3 flex items-center justify-between">
               <strong className="font-semibold text-foreground text-md capitalize">
                 {message.role}
@@ -99,10 +106,14 @@ export function TaskView({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => onRemoveMessage(selectedTask.uid, index)}
-                  className="inline-flex items-center justify-center rounded-md border bg-background px-3 py-1.5 font-medium text-foreground text-xs shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
+                  onClick={() => onToggleRemoveMessage(selectedTask.uid, index)}
+                  className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 font-medium text-xs shadow-sm transition-colors focus:outline-none ${
+                    message.isDeleted
+                      ? "bg-green-600 text-white hover:bg-green-700"
+                      : "bg-red-600 text-white hover:bg-red-700"
+                  }`}
                 >
-                  Remove Message
+                  {message.isDeleted ? "Restore Message" : "Delete Message"}
                 </button>
               </div>
             </div>
