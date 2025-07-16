@@ -133,6 +133,8 @@ export const auth = betterAuth({
         enabled: true,
         plans: StripePlans,
         authorizeReference: async ({ user, referenceId }) => {
+          if (user.id === referenceId) return true;
+
           // Check if the user has permission to manage subscriptions for this reference
           const member = await db
             .selectFrom("member")
