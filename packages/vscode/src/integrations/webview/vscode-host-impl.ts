@@ -579,11 +579,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
           ).with({
             query: Buffer.from(file.before ?? "").toString("base64"),
           }),
-          vscode.Uri.parse(
-            `${DiffChangesContentProvider.scheme}:${file.relative}`,
-          ).with({
-            query: Buffer.from(file.after ?? "").toString("base64"),
-          }),
+          vscode.Uri.file(file.absolute),
         ]),
       );
       return true;

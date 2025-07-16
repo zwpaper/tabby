@@ -307,11 +307,11 @@ export class CommandManager implements vscode.Disposable {
         if (
           activeTab &&
           activeTab.input instanceof vscode.TabInputTextDiff &&
-          activeTab.input.modified.scheme === DiffChangesContentProvider.scheme
+          activeTab.input.original.scheme === DiffChangesContentProvider.scheme
         ) {
           const fileUri = vscode.Uri.joinPath(
             getWorkspaceFolder().uri,
-            activeTab.input.modified.path,
+            activeTab.input.original.path,
           );
           await vscode.window.showTextDocument(fileUri, {
             preview: false,
