@@ -64,7 +64,9 @@ export class TerminalJob implements vscode.Disposable {
 
     const defaultShell = process.env.SHELL ?? "";
 
-    const shellPath = ["zsh", "bash"].includes(defaultShell)
+    const shellPath = ["/zsh", "/bash"].some((item) =>
+      defaultShell.endsWith(item),
+    )
       ? defaultShell
       : ["linux", "darwin"].includes(process.platform)
         ? "/bin/bash"

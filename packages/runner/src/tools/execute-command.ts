@@ -35,7 +35,9 @@ export const executeCommand =
     try {
       const defaultShell = process.env.SHELL ?? "";
 
-      const shell = ["zsh", "bash"].includes(defaultShell)
+      const shell = ["/zsh", "/bash"].some((item) =>
+        defaultShell.endsWith(item),
+      )
         ? defaultShell
         : ["linux", "darwin"].includes(process.platform)
           ? "/bin/bash"
