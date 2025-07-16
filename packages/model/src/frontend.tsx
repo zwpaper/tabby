@@ -2,15 +2,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./app.tsx";
+import { ThemeProvider } from "./contexts/theme-context";
 
 // Get theme from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
-const theme = urlParams.get("theme") || "light";
-
-// Apply theme to document root
-const documentRoot = document.documentElement;
-documentRoot.classList.remove("light", "dark");
-documentRoot.classList.add(theme === "dark" ? "dark" : "light");
+const initialTheme = (urlParams.get("theme") as "light" | "dark") || "light";
 
 const root = document.getElementById("root");
 if (!root) {
@@ -19,6 +15,8 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <ThemeProvider initialTheme={initialTheme}>
+      <App />
+    </ThemeProvider>
   </StrictMode>,
 );

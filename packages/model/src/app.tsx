@@ -2,15 +2,18 @@ import { useState } from "react";
 import { FileControls } from "./components/file-controls";
 import { TaskList } from "./components/task-list";
 import { TaskView } from "./components/task-view";
+import { useTheme } from "./contexts/theme-context";
 import type { TaskData } from "./types";
 
 function App() {
+  const { theme } = useTheme();
   const [tasks, setTasks] = useState<TaskData[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskData | null>(null);
   const [editingPart, setEditingPart] = useState<{
     taskUid: string;
     messageIndex: number;
     partIndex: number | null;
+    isEditingNew?: boolean; // New: flag to indicate editing newContent
   } | null>(null);
   const [editedContent, setEditedContent] = useState<string>("");
 
@@ -87,8 +90,9 @@ function App() {
     messageIndex: number,
     partIndex: number | null,
     content: string,
+    isEditingNew = false,
   ) => {
-    setEditingPart({ taskUid, messageIndex, partIndex });
+    setEditingPart({ taskUid, messageIndex, partIndex, isEditingNew });
     setEditedContent(content);
   };
 
@@ -100,16 +104,26 @@ function App() {
       if (task.uid === taskUid) {
         const newMessages = [...task.messages];
         const message = newMessages[messageIndex];
+
         if (partIndex === null) {
-          newMessages[messageIndex] = { ...message, content: editedContent };
+          // Editing string content - convert to structured format
+          const newContent = [
+            {
+              type: "text" as const,
+              text: editedContent,
+            },
+          ];
+          newMessages[messageIndex] = { ...message, content: newContent };
         } else if (Array.isArray(message.content)) {
+          // Editing array content - update specific part
           const newContent = [...message.content];
           newContent[partIndex] = {
             ...newContent[partIndex],
-            text: editedContent,
+            newText: editedContent,
           };
           newMessages[messageIndex] = { ...message, content: newContent };
         }
+
         return { ...task, messages: newMessages };
       }
       return task;
@@ -175,9 +189,12 @@ function App() {
         const newMessages = [...task.messages];
         const message = newMessages[messageIndex];
         if (Array.isArray(message.content)) {
-          const newContent = message.content.filter(
-            (_, index) => index !== partIndex,
-          );
+          const newContent = [...message.content];
+          // Toggle the deleted state for this part
+          newContent[partIndex] = {
+            ...newContent[partIndex],
+            isDeleted: !newContent[partIndex].isDeleted,
+          };
           newMessages[messageIndex] = { ...message, content: newContent };
           return { ...task, messages: newMessages };
         }

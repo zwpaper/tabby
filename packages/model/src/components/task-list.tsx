@@ -9,8 +9,8 @@ interface TaskListProps {
 export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
   // Sort tasks to show PENDING tasks first
   const sortedTasks = [...tasks].sort((a, b) => {
-    const aIsPending = !a.verified && !a.excluded && a.verified === undefined;
-    const bIsPending = !b.verified && !b.excluded && b.verified === undefined;
+    const aIsPending = !a.verified && !a.excluded;
+    const bIsPending = !b.verified && !b.excluded;
 
     if (aIsPending && !bIsPending) return -1;
     if (!aIsPending && bIsPending) return 1;
@@ -63,7 +63,7 @@ export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
                     clipRule="evenodd"
                   />
                 </svg>
-              ) : !task.excluded && task.verified === undefined ? (
+              ) : !task.verified && !task.excluded ? (
                 <span className="inline-flex items-center rounded-full bg-muted px-2 py-1 font-medium text-muted-foreground text-xs">
                   PENDING
                 </span>
@@ -92,9 +92,15 @@ export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
 }
 
 function getTaskTitle(task: TaskData) {
-  const user = task.messages[1];
-  if (typeof user.content === "string") {
-    return user.content;
+  // Find the first user message
+  const userMessage = task.messages.find((msg) => msg.role === "user");
+  if (!userMessage) {
+    return "No user message";
   }
-  return user.content[1].text;
+
+  if (Array.isArray(userMessage.content) && userMessage.content.length > 0) {
+    return userMessage.content[0].text;
+  }
+
+  return "Empty message";
 }

@@ -1,9 +1,9 @@
-export type Part =
-  | string
-  | Array<{
-      type: "text";
-      text: string;
-    }>;
+export type Part = Array<{
+  type: "text";
+  text: string;
+  newText?: string;
+  isDeleted?: boolean;
+}>;
 
 export interface Message {
   role: "system" | "user" | "assistant";
