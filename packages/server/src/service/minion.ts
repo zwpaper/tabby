@@ -410,11 +410,12 @@ async function verifyMinionUrl(url: string) {
           method: "OPTIONS",
           redirect: "manual",
           headers: {
-            // FIXME(wei): for compatibility, will change to pochi-server after replay release
-            "Pochi-Src": "Replay",
+            "Pochi-Src": "pochi-server",
           },
         });
-        if (res.status === 200) {
+        // VSCode did not support OPTIONS, will return 405 in this case
+        // we treat it as connected to VSCode
+        if (res.status === 405) {
           return;
         }
       } catch (err) {
