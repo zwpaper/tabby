@@ -10,6 +10,8 @@ export const prompts = {
   formatUserEdits,
 };
 
+export { getReadEnvironmentResult } from "./environment";
+
 function createSystemReminder(content: string) {
   return `<system-reminder>${content}</system-reminder>`;
 }

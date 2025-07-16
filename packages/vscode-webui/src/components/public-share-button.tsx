@@ -9,7 +9,7 @@ import {
 import { apiClient } from "@/lib/auth-client";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
-import { SocialLinks } from "@ragdoll/common";
+import { SocialLinks, getReadEnvironmentResult } from "@ragdoll/common";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -125,8 +125,12 @@ export function PublicShareButton({
     menuItemRef.current = "support";
     e.preventDefault();
     const version = await vscodeHost.readExtensionVersion();
+    const environment = await vscodeHost.readEnvironment();
     const shareUrl = `${getServerBaseUrl()}/share/${uid}`;
-    const supportInfo = `### Support Information
+
+    const environmentInfo = getReadEnvironmentResult(environment, undefined);
+    const supportInfo = `Support Information
+=================
 
 **Extension version**: ${version ?? "N/A"}
 
@@ -137,7 +141,11 @@ export function PublicShareButton({
 **Display error**:
 \`\`\`
 ${displayError ?? "N/A"}
-\`\`\``;
+\`\`\`
+
+${environmentInfo}
+
+`;
     vscodeHost.capture({
       event: "shareSupport",
       properties: {

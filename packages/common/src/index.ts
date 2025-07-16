@@ -9,7 +9,7 @@ export {
 
 export { formatters } from "./formatters";
 export { attachTransport, getLogger } from "./logger";
-export { prompts } from "./prompts";
+export { prompts, getReadEnvironmentResult } from "./prompts";
 
 export { SocialLinks } from "./social";
 
