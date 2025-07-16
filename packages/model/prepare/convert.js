@@ -32,6 +32,13 @@ for (const x of data) {
   for (const m of x.messages) {
     if (Array.isArray(m.content)) {
       m.content = m.content.filter((x) => x.type === "text");
+    } else {
+      m.content = [
+        {
+          type: "text",
+          text: m.content,
+        },
+      ];
     }
   }
 }
