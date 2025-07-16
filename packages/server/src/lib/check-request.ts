@@ -47,17 +47,20 @@ export async function checkUserQuota(user: User, modelId: string) {
     : undefined;
   const userQuota = await usageService.readCurrentMonthQuota(user);
 
-  // if joined an organization, only check the orgQuota
-  if (orgQuota?.credit.isLimitReached) {
+  // If a user joins an organization, then only check the organization's quota
+  if (organization) {
     if (!orgQuota?.plan) {
       throw new HTTPException(400, {
-        message: ServerErrors.RequireSubscription,
+        message: ServerErrors.RequireOrgSubscription,
+      });
+    }
+    if (orgQuota?.credit.isLimitReached) {
+      throw new HTTPException(400, {
+        message: ServerErrors.ReachedOrgCreditLimit,
       });
     }
 
-    throw new HTTPException(400, {
-      message: ServerErrors.ReachedCreditLimit,
-    });
+    return;
   }
 
   const userOutOfFreeCredit =

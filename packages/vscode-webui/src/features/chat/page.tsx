@@ -511,6 +511,23 @@ function ErrorMessageView({ error }: { error: TaskError | undefined }) {
           );
         }
 
+        if (e.message === ServerErrors.ReachedOrgCreditLimit) {
+          return (
+            <span>
+              Your team has reached the spending limit.{" "}
+              <a
+                href="https://app.getpochi.com/team"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!underline py-1"
+              >
+                <ExternalLinkIcon className="mx-0.5 inline size-4" />
+                See more
+              </a>
+            </span>
+          );
+        }
+
         if (e.message === ServerErrors.RequireSubscription) {
           return (
             <span>
@@ -518,6 +535,24 @@ function ErrorMessageView({ error }: { error: TaskError | undefined }) {
               to Pochi's usage-based plan.{" "}
               <a
                 href="https://app.getpochi.com/profile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!underline py-1"
+              >
+                <ExternalLinkIcon className="mx-0.5 inline size-4" />
+                Subscribe
+              </a>
+            </span>
+          );
+        }
+
+        if (e.message === ServerErrors.RequireOrgSubscription) {
+          return (
+            <span>
+              Your team does not have a subscription yet. To continue, please
+              subscribe to pochi's usage-based plan.{" "}
+              <a
+                href="https://app.getpochi.com/team"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="!underline py-1"
