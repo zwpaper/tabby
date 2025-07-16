@@ -145,6 +145,7 @@ export function BillingCard({
   const totalCredit = billingQuotaQuery.data?.credit?.spent || 0;
   const isCreditLimitReached = billingQuotaQuery.data?.credit?.isLimitReached;
   const totalSpendingInDollars = creditToDollars(totalCredit);
+  const creditLimitInDollars = billingQuotaQuery.data?.credit?.limit || 0;
 
   const invoiceQuery = useQuery({
     queryKey: ["invoice", subscription?.stripeSubscriptionId],
@@ -225,19 +226,19 @@ export function BillingCard({
             </Alert>
           )}
           <div className="mt-4 mb-8 border-border/50 border-t" />
-          <div className="mb-4 grid grid-cols-1 items-start gap-8">
-            {/* <StatItem
-              label="FREE CREDIT REMAINING"
-              value={freeCreditRemaining.toLocaleString("en-US", {
+          <div className="mb-4 grid grid-cols-2 items-start gap-8">
+            <StatItem
+              label="CURRENT SPENDING"
+              value={totalSpendingInDollars.toLocaleString("en-US", {
                 style: "currency",
                 currency: "USD",
               })}
               isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
               isError={billingQuotaQuery.isError}
-            /> */}
+            />
             <StatItem
-              label="CURRENT SPENDING"
-              value={totalSpendingInDollars.toLocaleString("en-US", {
+              label="SPENDING LIMIT"
+              value={creditLimitInDollars.toLocaleString("en-US", {
                 style: "currency",
                 currency: "USD",
               })}
@@ -268,6 +269,7 @@ export function BillingCard({
                         );
                       }}
                       isSubmitting={monthlyUsageLimitMutation.isPending}
+                      maxBudgetUsd={50_000}
                     />
                   )}
                 </AccordionContent>

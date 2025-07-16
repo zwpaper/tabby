@@ -34,11 +34,13 @@ export function SpendingLimitForm({
   onSubmit,
   isSubmitting,
   disabled,
+  maxBudgetUsd = 2000,
 }: {
   defaultValues: Partial<z.input<typeof FormSchema>>;
   onSubmit: (values: z.infer<typeof FormSchema>) => void;
   isSubmitting: boolean;
   disabled?: boolean;
+  maxBudgetUsd?: number;
 }) {
   const form = useForm<z.input<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -84,8 +86,8 @@ export function SpendingLimitForm({
               </FormControl>
               <FormMessage />
               <FormDescription className="text-xs">
-                Set a monthly limit to control your spending (between $10 and
-                $2000).
+                Set a monthly limit to control your spending (between $10 and $
+                {maxBudgetUsd}).
               </FormDescription>
             </FormItem>
           )}

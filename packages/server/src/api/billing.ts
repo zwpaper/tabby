@@ -172,7 +172,7 @@ const billing = new Hono()
     zValidator(
       "json",
       z.object({
-        limit: z.number().int().min(10).max(2000),
+        limit: z.number().int().min(10).max(50_000),
       }),
     ),
     async (c) => {
