@@ -112,10 +112,15 @@ export class TaskRunnerSupervisor {
             logger.debug(`[${stepInfo}] Message sent successfully.`);
             this.output.stopLoading();
             if (progress.messageReason === "next") {
-              this.output.printText(
-                chalk.dim(chalk.italic("--- Round complete ---")),
+              const separator = "─".repeat(
+                Math.min(process.stdout.columns || 80, 50),
               );
-              this.output.println();
+
+              this.output.printText(
+                chalk.dim(`\n${separator}\n`) +
+                  chalk.dim("✨ Round complete\n") +
+                  chalk.dim(`${separator}\n\n`),
+              );
             }
           }
           break;

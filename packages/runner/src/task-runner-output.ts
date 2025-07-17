@@ -163,15 +163,17 @@ export class TaskRunnerOutputStream {
     this.stopLoading();
     const roleName =
       role === "assistant"
-        ? chalk.bold(chalk.blue("Pochi"))
-        : chalk.bold(chalk.green("You"));
-    this.printText(`${roleName}: ${text}`);
+        ? chalk.bold(chalk.blue("🤖 Pochi"))
+        : chalk.bold(chalk.green("👤 You"));
+    this.printText(`\n${roleName}: ${text}`);
     this.println();
   }
 
   private renderReasoningPart(_reasoning: string) {
     this.stopLoading();
-    this.printText(chalk.italic(chalk.gray("Pochi is thinking...")));
+    this.printText(
+      chalk.dim("💭 ") + chalk.italic(chalk.dim("Pochi is thinking...")),
+    );
     this.println();
   }
 
@@ -251,18 +253,35 @@ const StaticToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     toolCall: ToolProps<ClientToolsType["attemptCompletion"]>,
   ) => {
     const { result } = toolCall.args || {};
-    return `${Icon.done} ${chalk.bold(chalk.green("Task Completed:"))} ${result}`;
+    return `\n${chalk.bold(chalk.green("🎉 Task Completed"))}\n${chalk.dim("└─")} ${result}\n`;
   },
   askFollowupQuestion: (
     toolCall: ToolProps<ClientToolsType["askFollowupQuestion"]>,
   ) => {
     const { question, followUp } = toolCall.args || {};
-    return `${chalk.bold(chalk.yellow(question))}\n${followUp.reduce((acc, curr) => `${acc}\n ${chalk.yellow("-")} ${curr}`, "")}`;
+    return `\n${chalk.bold(chalk.yellow(`❓ ${question}`))}\n${followUp.map((option, i) => `${chalk.dim(`   ${i + 1}.`)} ${option}`).join("\n")}\n`;
   },
   // biome-ignore lint/suspicious/noExplicitAny: ToolProps<ServerToolsType["webFetch"]>
   webFetch: (toolCall: any) => {
     const { url } = toolCall.args || {};
-    return `${Icon.done} ${chalk.bold("Read:")} ${chalk.underline(url)}`;
+    if (!url) return `${Icon.done} Web fetch completed`;
+    try {
+      const domain = new URL(url).hostname;
+      // Check if this is an error result
+      if (toolCall.result && "error" in toolCall.result) {
+        return `${Icon.error} Failed to fetch ${chalk.blue(domain)} ${ErrorLabel} ${toolCall.result.error}`;
+      }
+
+      // Check if content was truncated (based on server implementation)
+      const isTruncated = toolCall.result?.isTruncated;
+      const truncatedNote = isTruncated
+        ? chalk.dim(" (content truncated)")
+        : "";
+
+      return `${Icon.done} Fetched content from ${chalk.blue(domain)}${truncatedNote} ${chalk.dim(`(${url})`)}`;
+    } catch (error) {
+      return `${Icon.error} Invalid URL: ${chalk.dim(url)}`;
+    }
   },
   todoWrite: undefined,
   newTask: undefined,
@@ -278,13 +297,13 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
       `${path}${startLine !== undefined && endLine !== undefined ? `:${startLine}-${endLine}` : ""}`,
     );
     if (toolCall.state === "call") {
-      return loading().start(`${chalk.bold("Reading:")} ${pathString}`);
+      return loading().start(`Reading ${pathString}`);
     }
     if (!("error" in toolCall.result)) {
-      loading().succeed(`${chalk.bold("Read:")} ${pathString}`);
+      loading().succeed(`Read ${pathString}`);
     } else {
       loading().fail(
-        `${chalk.bold("Read:")} ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Read ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
       );
     }
     return undefined;
@@ -296,13 +315,13 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     const { path } = toolCall.args || {};
     const pathString = styledPathString(path);
     if (toolCall.state === "call") {
-      return loading().start(`${chalk.bold("Writing:")} ${pathString}`);
+      return loading().start(`Writing ${pathString}`);
     }
     if (!("error" in toolCall.result)) {
-      loading().succeed(`${chalk.bold("Wrote:")} ${pathString}`);
+      loading().succeed(`Wrote ${pathString}`);
     } else {
       loading().fail(
-        `${chalk.bold("Write:")} ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Write ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
       );
     }
     return undefined;
@@ -323,19 +342,22 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     };
     const deletedLines = countLines(searchContent) * expectedReplacements;
     const addedLines = countLines(replaceContent) * expectedReplacements;
-    const diff = `${chalk.green(`+${addedLines}`)}${chalk.red(`-${deletedLines}`)}`;
+    const diff =
+      addedLines > 0 || deletedLines > 0
+        ? `${chalk.dim("(")}${chalk.green(`+${addedLines}`)}${chalk.red(`-${deletedLines}`)}${chalk.dim(")")}`
+        : "";
     if (toolCall.state === "call") {
       return loading().start(
-        `${chalk.bold("Apply diff to:")} ${pathString} ${diff}`,
+        `Applying diff to ${pathString}${diff ? ` ${diff}` : ""}`,
       );
     }
     if (!("error" in toolCall.result)) {
       loading().succeed(
-        `${chalk.bold("Applied diff to:")} ${pathString} ${diff}`,
+        `Applied diff to ${pathString}${diff ? ` ${diff}` : ""}`,
       );
     } else {
       loading().fail(
-        `${chalk.bold("Apply diff to:")} ${pathString} ${diff} ${ErrorLabel} ${toolCall.result.error}`,
+        `Apply diff to ${pathString}${diff ? ` ${diff}` : ""} ${ErrorLabel} ${toolCall.result.error}`,
       );
     }
     return undefined;
@@ -373,19 +395,23 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
       (acc, edit) => acc + countAddedLines(edit),
       0,
     );
-    const diff = `${chalk.green(`+${addedLines}`)}${chalk.red(`-${deletedLines}`)}`;
+    const diff =
+      addedLines > 0 || deletedLines > 0
+        ? `${chalk.dim("(")}${chalk.green(`+${addedLines}`)}${chalk.red(`-${deletedLines}`)}${chalk.dim(")")}`
+        : "";
+    const editCount = `${chalk.dim("(")}${edits.length} edit${edits.length !== 1 ? "s" : ""}${chalk.dim(")")}`;
     if (toolCall.state === "call") {
       return loading().start(
-        `${chalk.bold("Apply diff to:")} ${pathString} ${diff}`,
+        `Applying ${editCount} to ${pathString}${diff ? ` ${diff}` : ""}`,
       );
     }
     if (!("error" in toolCall.result)) {
       loading().succeed(
-        `${chalk.bold("Applied diff to:")} ${pathString} ${diff}`,
+        `Applied ${editCount} to ${pathString}${diff ? ` ${diff}` : ""}`,
       );
     } else {
       loading().fail(
-        `${chalk.bold("Apply diff to:")} ${pathString} ${diff} ${ErrorLabel} ${toolCall.result.error}`,
+        `Apply ${editCount} to ${pathString}${diff ? ` ${diff}` : ""} ${ErrorLabel} ${toolCall.result.error}`,
       );
     }
     return undefined;
@@ -395,25 +421,21 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     loading: () => loading.Loading,
   ) => {
     const { command, cwd } = toolCall.args || {};
-    const cwdString = cwd ? `in ${chalk.italic(cwd)}` : "";
+    const cwdString = cwd ? chalk.dim(` in ${cwd}`) : "";
     let renderedCommand = command.replace(/\r\n|\r|\n/g, " "); // no multiline
-    if (renderedCommand.length > 80) {
-      renderedCommand = `${chalk.whiteBright(renderedCommand.slice(0, 60))}...${chalk.gray(`(${renderedCommand.length - 60} more chars)`)}`;
-    } else {
-      renderedCommand = chalk.whiteBright(renderedCommand);
+    if (renderedCommand.length > 60) {
+      renderedCommand = `${renderedCommand.slice(0, 50)}...${chalk.dim(`(+${renderedCommand.length - 50})`)}`;
     }
     if (toolCall.state === "call") {
       return loading().start(
-        `${chalk.bold("Executing command:")} "${renderedCommand}" ${cwdString}`,
+        `Running ${chalk.cyan(renderedCommand)}${cwdString}`,
       );
     }
     if (!("error" in toolCall.result)) {
-      loading().succeed(
-        `${chalk.bold("Executed command:")} "${renderedCommand}" ${cwdString}`,
-      );
+      loading().succeed(`Ran ${chalk.cyan(renderedCommand)}${cwdString}`);
     } else {
       loading().fail(
-        `${chalk.bold("Executed command:")} "${renderedCommand}" ${cwdString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Run ${chalk.cyan(renderedCommand)}${cwdString} ${ErrorLabel} ${toolCall.result.error}`,
       );
     }
     return undefined;
@@ -424,19 +446,22 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
   ) => {
     const { regex, path } = toolCall.args || {};
     const pathString = styledPathString(path);
-    const regexString = chalk.italic(regex);
+    const regexString = chalk.magenta(regex);
     if (toolCall.state === "call") {
-      return loading().start(
-        `${chalk.bold("Searching:")} ${regexString} ${chalk.bold("in")} ${pathString}`,
-      );
+      return loading().start(`Searching ${regexString} in ${pathString}`);
     }
     if (!("error" in toolCall.result)) {
+      const matchCount = toolCall.result.matches?.length || 0;
+      const matchText = `${matchCount} match${matchCount !== 1 ? "es" : ""}`;
+      const truncated = toolCall.result.isTruncated
+        ? chalk.dim(" (results truncated)")
+        : "";
       loading().succeed(
-        `${chalk.bold("Searched:")} ${regexString} ${chalk.bold("in")} ${pathString}, ${toolCall.result.matches?.length || 0} match${toolCall.result.matches?.length !== 1 ? "es" : ""}${toolCall.result.isTruncated ? ", results truncated" : ""}`,
+        `Found ${chalk.yellow(matchText)} for ${regexString} in ${pathString}${truncated}`,
       );
     } else {
       loading().fail(
-        `${chalk.bold("Searched:")} ${regexString} ${chalk.bold("in")} ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Search ${regexString} in ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
       );
     }
     return undefined;
@@ -448,15 +473,20 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     const { path } = toolCall.args || {};
     const pathString = styledPathString(path);
     if (toolCall.state === "call") {
-      return loading().start(`${chalk.bold("Reading:")} ${pathString}`);
+      return loading().start(`Listing ${pathString}`);
     }
     if (!("error" in toolCall.result)) {
+      const fileCount = toolCall.result.files?.length || 0;
+      const fileText = `${fileCount} file${fileCount !== 1 ? "s" : ""}`;
+      const truncated = toolCall.result.isTruncated
+        ? chalk.dim(" (results truncated)")
+        : "";
       loading().succeed(
-        `${chalk.bold("Read:")} ${pathString}, ${toolCall.result.files?.length || 0} file${toolCall.result.files?.length !== 1 ? "s" : ""}${toolCall.result.isTruncated ? ", results truncated" : ""}`,
+        `Listed ${chalk.yellow(fileText)} in ${pathString}${truncated}`,
       );
     } else {
       loading().fail(
-        `${chalk.bold("Read:")} ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `List ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
       );
     }
     return undefined;
@@ -467,19 +497,22 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
   ) => {
     const { globPattern, path } = toolCall.args || {};
     const pathString = styledPathString(path);
-    const globPatternString = chalk.italic(globPattern);
+    const globPatternString = chalk.magenta(globPattern);
     if (toolCall.state === "call") {
-      return loading().start(
-        `${chalk.bold("Searching:")} ${globPatternString} ${chalk.bold("in")} ${pathString}`,
-      );
+      return loading().start(`Globbing ${globPatternString} in ${pathString}`);
     }
     if (!("error" in toolCall.result)) {
+      const matchCount = toolCall.result.files?.length || 0;
+      const matchText = `${matchCount} match${matchCount !== 1 ? "es" : ""}`;
+      const truncated = toolCall.result.isTruncated
+        ? chalk.dim(" (results truncated)")
+        : "";
       loading().succeed(
-        `${chalk.bold("Searched:")} ${globPatternString} ${chalk.bold("in")} ${pathString}, ${toolCall.result.files?.length || 0} match${toolCall.result.files?.length !== 1 ? "es" : ""}${toolCall.result.isTruncated ? ", results truncated" : ""}`,
+        `Found ${chalk.yellow(matchText)} for ${globPatternString} in ${pathString}${truncated}`,
       );
     } else {
       loading().fail(
-        `${chalk.bold("Searched:")} ${globPatternString} ${chalk.bold("in")} ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Glob ${globPatternString} in ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
       );
     }
     return undefined;
