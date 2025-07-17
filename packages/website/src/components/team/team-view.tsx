@@ -2,13 +2,13 @@ import { authClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import {
   OrganizationInvitationsCard,
-  OrganizationLogo,
   OrganizationMembersCard,
   OrganizationSettingsCards,
 } from "@daveyplate/better-auth-ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { notFound } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
+import { AiOutlineTeam } from "react-icons/ai";
 import {
   Accordion,
   AccordionContent,
@@ -80,7 +80,7 @@ export function TeamView({ slug }: TeamViewProps) {
     <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8 lg:px-8">
       {/* Team Header */}
       <div className="flex items-center gap-4">
-        <OrganizationLogo organization={organization} className="size-12" />
+        <AiOutlineTeam className="size-12" />
         {isPending && !organization?.name ? (
           <Skeleton className="h-6 w-32" />
         ) : (

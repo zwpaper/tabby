@@ -3,7 +3,7 @@ import { useSession } from "@/lib/auth-hooks";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { BuildingIcon } from "lucide-react";
+import { AiOutlineTeam } from "react-icons/ai";
 import { buttonVariants } from "./ui/button";
 
 export function OrganizationButton() {
@@ -49,7 +49,7 @@ export function OrganizationButton() {
         }),
       )}
     >
-      <BuildingIcon className="size-6" />
+      <AiOutlineTeam className="size-4" />
       <span className="truncate">{organization?.name ?? "Create Team"}</span>
     </Link>
   );
