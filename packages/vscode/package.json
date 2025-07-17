@@ -185,6 +185,7 @@
         "title": "Pochi",
         "properties": {
           "pochi.advanced": {
+            "default": {},
             "properties": {
               "inlineCompletion.disabled": {
                 "type": "boolean",
