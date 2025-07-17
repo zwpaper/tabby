@@ -77,14 +77,14 @@ export function TeamView({ slug }: TeamViewProps) {
   }, [slug, organization]);
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8 lg:px-8">
+    <div className="container mx-auto max-w-6xl space-y-4 px-2 pt-6 pb-8 md:space-y-8 md:px-6 md:pt-8 lg:px-8">
       {/* Team Header */}
       <div className="flex items-center gap-4">
-        <AiOutlineTeam className="size-12" />
+        <AiOutlineTeam className="size-8 md:size-12" />
         {isPending && !organization?.name ? (
           <Skeleton className="h-6 w-32" />
         ) : (
-          <h1 className="font-bold text-3xl tracking-tight">
+          <h1 className="font-bold text-2xl tracking-tight md:text-3xl">
             {organization?.name}
           </h1>
         )}
@@ -92,14 +92,14 @@ export function TeamView({ slug }: TeamViewProps) {
 
       {/* Members Section */}
       <div className="space-y-4">
-        <div className="mx-4 space-y-1">
+        <div className="space-y-1">
           <h2 className="font-semibold text-base text-foreground">Members</h2>
           <p className="text-muted-foreground text-xs">
             Manage your team members and their roles.
           </p>
         </div>
         <OrganizationMembersCard
-          className="m-4 w-auto gap-6 rounded-sm border border-border/50 bg-card py-0 text-card-foreground shadow-sm"
+          className="my-4 w-auto gap-6 rounded-sm border border-border/50 bg-card py-0 text-card-foreground shadow-sm"
           classNames={{
             skeleton: "mt-3",
             title: "hidden",
@@ -111,7 +111,7 @@ export function TeamView({ slug }: TeamViewProps) {
       {/* Invitations Section */}
       {isAdmin && !!pendingInvitations?.length && (
         <div className="space-y-4">
-          <div className="mx-4 space-y-1">
+          <div className="space-y-1">
             <h2 className="font-semibold text-base text-foreground">
               Invitations
             </h2>
@@ -120,7 +120,7 @@ export function TeamView({ slug }: TeamViewProps) {
             </p>
           </div>
           <OrganizationInvitationsCard
-            className="m-4 w-auto gap-6 rounded-sm border border-border/50 bg-card py-0 text-card-foreground shadow-sm"
+            className="my-4 w-auto gap-6 rounded-sm border border-border/50 bg-card py-0 text-card-foreground shadow-sm"
             classNames={{
               title: "hidden",
               description: "hidden",
@@ -132,7 +132,7 @@ export function TeamView({ slug }: TeamViewProps) {
       {/* Billing Section */}
       {!!organizationId && hasBillingPermission && (
         <div className="space-y-4">
-          <div className="mx-4 space-y-1">
+          <div className="space-y-1">
             <h2 className="font-semibold text-base text-foreground">Billing</h2>
             <p className="text-muted-foreground text-xs">
               Manage your team's subscription and billing details.
@@ -147,7 +147,7 @@ export function TeamView({ slug }: TeamViewProps) {
       )}
 
       {/* Settings Section */}
-      <div className="space-y-4 px-4">
+      <div className="space-y-4">
         <Accordion type="single" collapsible>
           <AccordionItem value="advanced">
             <AccordionTrigger className="flex-none pt-2 font-semibold">

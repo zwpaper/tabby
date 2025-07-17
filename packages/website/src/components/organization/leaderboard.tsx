@@ -128,7 +128,7 @@ export function UsageLeaderboard() {
   const isLoading = isPending || isUsagePending;
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8 lg:px-8">
+    <div className="container mx-auto max-w-6xl space-y-8 px-2 pt-6 pb-8 md:px-6 md:pt-8 lg:px-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="font-bold text-3xl tracking-tight">Leaderboard</h1>
         <ToggleGroup
