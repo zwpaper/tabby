@@ -874,7 +874,7 @@ Generate a concise title that captures the essence of the above conversation. Re
           },
         ],
         {
-          isGeminiOrPochi: true,
+          isClaude: false,
           removeSystemReminder: true,
         },
       ),

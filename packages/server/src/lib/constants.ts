@@ -2,6 +2,7 @@ import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createVertex } from "@ai-sdk/google-vertex";
 import type { LanguageModelV1, streamText } from "ai";
+import type { ChatRequest } from "../types";
 
 // Define available models
 export type AvailableModelId =
@@ -196,8 +197,14 @@ export function getModelById(
 }
 
 export function getModelOptions(
-  modelId: AvailableModelId,
+  modelId: AvailableModelId | NonNullable<ChatRequest["openAIModelOverride"]>,
 ): Partial<Parameters<typeof streamText>["0"]> {
+  if (typeof modelId !== "string") {
+    return {
+      maxTokens: 1024 * 12, // 12k tokens
+    };
+  }
+
   switch (modelId) {
     case "pochi/pro-1":
     case "google/gemini-2.5-flash":

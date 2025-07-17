@@ -1,3 +1,4 @@
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { jsonSchema } from "@ai-sdk/ui-utils";
 import { zValidator } from "@hono/zod-validator";
 import { Laminar, getTracer } from "@lmnr-ai/lmnr";
@@ -49,7 +50,7 @@ import { resolveServerTools } from "../lib/tools";
 import { setIdleTimeout, waitUntil } from "../server";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
-import { ZodChatRequestType } from "../types";
+import { type ChatRequest, ZodChatRequestType } from "../types";
 
 const streamContext = createResumableStreamContext({
   waitUntil,
@@ -75,8 +76,11 @@ const chat = new Hono()
 
     const user = c.get("user");
 
-    await checkUserQuota(user, requestedModelId);
-    const validModelId = checkModel(requestedModelId);
+    if (!req.openAIModelOverride) {
+      await checkUserQuota(user, requestedModelId);
+    }
+    const validModelId =
+      req.openAIModelOverride || checkModel(requestedModelId);
 
     checkWaitlist(user);
 
@@ -95,6 +99,7 @@ const chat = new Hono()
     const selectedModel = createModel(
       validModelId,
       middlewareContext,
+      requestedModelId,
       req.modelEndpointId,
     );
 
@@ -139,9 +144,7 @@ const chat = new Hono()
                 : []),
               ...formatters.llm(preparedMessages, {
                 tools,
-                isGeminiOrPochi:
-                  validModelId.includes("google") ||
-                  validModelId.includes("pochi"),
+                isClaude: requestedModelId.includes("claude"),
               }),
             ],
             tools,
@@ -160,6 +163,7 @@ const chat = new Hono()
                 responseMessages: response.messages,
               }) as UIMessage[];
               let creditCostInput: CreditCostInput | undefined;
+
               if (providerMetadata?.anthropic) {
                 const cacheCreationInputTokens =
                   (providerMetadata.anthropic.cacheCreationInputTokens as
@@ -190,6 +194,9 @@ const chat = new Hono()
 
               if (providerMetadata?.google) {
                 const modelIdFromValidModelId = () => {
+                  if (typeof validModelId !== "string")
+                    throw new Error("Unsupported model");
+
                   switch (validModelId) {
                     case "google/gemini-2.5-flash":
                     case "pochi/pro-1":
@@ -212,12 +219,6 @@ const chat = new Hono()
                   inputTokens: usage.promptTokens - cacheReadInputTokens,
                   outputTokens: usage.completionTokens,
                 };
-              }
-
-              if (!creditCostInput) {
-                throw new Error(
-                  "Failed to determine credit cost input for usage tracking.",
-                );
               }
 
               const isUsageValid = !Number.isNaN(usage.totalTokens);
@@ -399,11 +400,22 @@ interface MiddlewareContext {
 }
 
 function createModel(
-  modelId: AvailableModelId,
+  modelId: AvailableModelId | NonNullable<ChatRequest["openAIModelOverride"]>,
   middlewareContext: MiddlewareContext,
+  requestedModelId: string,
   modelEndpointId?: string,
 ): LanguageModelV1 {
-  const model = getModelById(modelId, modelEndpointId);
+  let model: LanguageModelV1;
+  if (typeof modelId === "string") {
+    model = getModelById(modelId, modelEndpointId);
+  } else {
+    const provider = createOpenAICompatible({
+      name: "BYOK",
+      baseURL: modelId.baseURL,
+      apiKey: modelId.apiKey,
+    });
+    model = provider(requestedModelId);
+  }
 
   // Create middlewares
   // Order matters, execution order is from last to first.

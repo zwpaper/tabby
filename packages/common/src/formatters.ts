@@ -252,12 +252,12 @@ export const formatters = {
     messages: UIMessage[],
     options?: {
       tools?: ToolSet;
-      isGeminiOrPochi: boolean;
+      isClaude: boolean;
       removeSystemReminder?: boolean;
     },
   ) => {
     const llmFormatOps = [
-      ...(options?.isGeminiOrPochi ? [removeReasoningParts] : []),
+      ...(options?.isClaude ? [] : [removeReasoningParts]),
       ...(options?.removeSystemReminder ? [removeSystemReminder] : []),
       ...LLMFormatOps,
     ];

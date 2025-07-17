@@ -29,6 +29,12 @@ export const ZodChatRequestType = z.object({
     .string()
     .optional()
     .describe("The ID of the model endpoint."),
+  openAIModelOverride: z
+    .object({
+      baseURL: z.string(),
+      apiKey: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;

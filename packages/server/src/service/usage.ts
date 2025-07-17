@@ -19,12 +19,14 @@ export class UsageService {
     user: User,
     modelId: string,
     usage: LanguageModelUsage,
-    creditCostInput: CreditCostInput,
+    creditCostInput: CreditCostInput | undefined,
   ): Promise<void> {
     // Track monthly usage count
     const now = moment.utc();
     const startDayOfMonth = now.startOf("month").toDate();
-    const credit = await this.meterCreditCost(user, creditCostInput);
+    const credit = creditCostInput
+      ? await this.meterCreditCost(user, creditCostInput)
+      : 0;
 
     // Track individual completion details
     await db
