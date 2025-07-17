@@ -51,6 +51,8 @@ export const executeCommand =
         env: {
           ...process.env,
           PAGER: "cat",
+          GIT_COMMITTER_NAME: "Pochi",
+          GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
         },
       });
       // need CRLF ('\r\n') as line separator, '\n' only moves the cursor one line down but not to the beginning
