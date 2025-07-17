@@ -43,12 +43,9 @@ export class UsageService {
     const organization = await organizationService.readActiveOrganizationByUser(
       user.id,
     );
-    const orgQuota = organization
-      ? await usageService.readCurrentMonthOrganizationQuota(organization.id)
-      : undefined;
 
     // If an org subscription exists, only track the organization's usage.
-    if (organization && orgQuota?.plan) {
+    if (organization) {
       await db
         .insertInto("monthlyOrganizationUsage")
         .values({
