@@ -66,11 +66,13 @@ export function SpendingLimitForm({
             <FormItem>
               <FormControl>
                 <span className="flex gap-2">
-                  <FormLabel>Monthly Limit ($)</FormLabel>
+                  <FormLabel className="w-full md:w-auto">
+                    Monthly Limit ($)
+                  </FormLabel>
                   <Input
                     type="number"
                     placeholder="10"
-                    className="h-6 w-full md:w-[120px]"
+                    className="h-6 text-sm md:w-[120px]"
                     step="1"
                     {...field}
                     value={field.value ?? ""}
