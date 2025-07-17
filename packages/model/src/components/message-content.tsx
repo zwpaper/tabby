@@ -35,6 +35,7 @@ interface MessageContentProps {
 }
 
 function MessageContentInternal({
+  role,
   content,
   taskUid,
   messageIndex,
@@ -45,9 +46,11 @@ function MessageContentInternal({
   onCancel,
   onRemovePart,
   onEditedContentChange,
-}: Omit<MessageContentProps, "role">) {
+}: MessageContentProps) {
   const { theme } = useTheme();
-  const [copiedFeedback, setCopiedFeedback] = useState(false);
+  const [copiedFeedback, setCopiedFeedback] = useState<{
+    [key: number]: boolean;
+  }>({});
   const [showDiff, setShowDiff] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(
     typeof window !== "undefined" ? window.innerWidth < 1024 : false,
@@ -65,10 +68,45 @@ function MessageContentInternal({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedFeedback(true);
-    setTimeout(() => setCopiedFeedback(false), 2000);
+  const handleCopyPart = (part: Part[0], partIndex: number) => {
+    // Create a JSON object with the part data
+    const partData = {
+      type: part.type,
+      text: part.newText !== undefined ? part.newText : part.text,
+      ...(part.newText !== undefined && { originalText: part.text }),
+      ...(part.isDeleted && { isDeleted: part.isDeleted }),
+    };
+
+    const jsonString = JSON.stringify(partData, null, 2);
+    navigator.clipboard.writeText(jsonString);
+    setCopiedFeedback((prev) => ({ ...prev, [partIndex]: true }));
+    setTimeout(
+      () => setCopiedFeedback((prev) => ({ ...prev, [partIndex]: false })),
+      2000,
+    );
+  };
+
+  const handleCopyMessage = () => {
+    // Create a JSON object with the entire message data
+    const messageData = {
+      role: role,
+      content: Array.isArray(content)
+        ? content.map((part) => ({
+            type: part.type,
+            text: part.newText !== undefined ? part.newText : part.text,
+            ...(part.newText !== undefined && { originalText: part.text }),
+            ...(part.isDeleted && { isDeleted: part.isDeleted }),
+          }))
+        : content,
+    };
+
+    const jsonString = JSON.stringify(messageData, null, 2);
+    navigator.clipboard.writeText(jsonString);
+    setCopiedFeedback((prev) => ({ ...prev, [-1]: true })); // Use -1 for message-level feedback
+    setTimeout(
+      () => setCopiedFeedback((prev) => ({ ...prev, [-1]: false })),
+      2000,
+    );
   };
 
   // Handle array content with part-level editing and deletion
@@ -170,10 +208,10 @@ function MessageContentInternal({
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleCopy(displayText || "")}
+                        onClick={() => handleCopyPart(part, partIndex)}
                         className="rounded-md bg-gray-500 px-3 py-1 font-medium text-white text-xs shadow-sm transition-colors hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                       >
-                        {copiedFeedback ? "Copied!" : "Copy"}
+                        {copiedFeedback[partIndex] ? "Copied!" : "Copy Part"}
                       </button>
                     </>
                   )}

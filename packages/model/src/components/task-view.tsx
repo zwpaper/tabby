@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Message, TaskData } from "../types";
 import { MessageContent } from "./message-content";
 
@@ -41,6 +42,46 @@ export function TaskView({
   onVerifiedChange,
   onExcludedChange,
 }: TaskViewProps) {
+  const [showSystemMessages, setShowSystemMessages] = useState(false);
+  const [copiedMessageFeedback, setCopiedMessageFeedback] = useState<{
+    [key: number]: boolean;
+  }>({});
+
+  // Filter messages based on showSystemMessages state
+  const filteredMessages = selectedTask.messages.filter((message: Message) => {
+    if (message.role === "system" && !showSystemMessages) {
+      return false;
+    }
+    return true;
+  });
+
+  const handleCopyMessage = (message: Message, messageIndex: number) => {
+    // Create a JSON object with the entire message data
+    const messageData = {
+      role: message.role,
+      content: Array.isArray(message.content)
+        ? message.content.map((part) => ({
+            type: part.type,
+            text: part.newText !== undefined ? part.newText : part.text,
+            ...(part.newText !== undefined && { originalText: part.text }),
+            ...(part.isDeleted && { isDeleted: part.isDeleted }),
+          }))
+        : message.content,
+    };
+
+    const jsonString = JSON.stringify(messageData, null, 2);
+    navigator.clipboard.writeText(jsonString);
+    setCopiedMessageFeedback((prev) => ({ ...prev, [messageIndex]: true }));
+    setTimeout(
+      () =>
+        setCopiedMessageFeedback((prev) => ({
+          ...prev,
+          [messageIndex]: false,
+        })),
+      2000,
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -88,9 +129,26 @@ export function TaskView({
             Excluded
           </label>
         </div>
+        <div className="flex items-center">
+          <input
+            id="show-system-checkbox"
+            type="checkbox"
+            checked={showSystemMessages}
+            onChange={(e) => setShowSystemMessages(e.target.checked)}
+            className="h-4 w-4 rounded border-input text-primary"
+          />
+          <label
+            htmlFor="show-system-checkbox"
+            className="ml-2 block text-foreground text-sm"
+          >
+            Show System Messages
+          </label>
+        </div>
       </div>
       <div className="space-y-6">
-        {selectedTask.messages.map((message: Message, index: number) => {
+        {filteredMessages.map((message: Message) => {
+          // Find the original index in the full messages array
+          const originalIndex = selectedTask.messages.indexOf(message);
           // Check if any parts in this message are deleted
           const hasDeletedParts =
             Array.isArray(message.content) &&
@@ -98,7 +156,7 @@ export function TaskView({
 
           return (
             <div
-              key={index}
+              key={originalIndex}
               className="rounded-lg border bg-card p-4 shadow-sm"
             >
               <div className="mb-3 flex items-center justify-between">
@@ -108,8 +166,17 @@ export function TaskView({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    onClick={() => handleCopyMessage(message, originalIndex)}
+                    className="inline-flex items-center justify-center rounded-md bg-gray-500 px-3 py-1.5 font-medium text-white text-xs shadow-sm transition-colors hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  >
+                    {copiedMessageFeedback[originalIndex]
+                      ? "Copied!"
+                      : "Copy Message"}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() =>
-                      onToggleDeleteMessage(selectedTask.uid, index)
+                      onToggleDeleteMessage(selectedTask.uid, originalIndex)
                     }
                     className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 font-medium text-white text-xs shadow-sm transition-colors focus:outline-none ${
                       hasDeletedParts
@@ -125,7 +192,7 @@ export function TaskView({
                 role={message.role}
                 content={message.content}
                 taskUid={selectedTask.uid}
-                messageIndex={index}
+                messageIndex={originalIndex}
                 editingPart={editingPart}
                 editedContent={editedContent}
                 onEdit={onEdit}
