@@ -69,6 +69,7 @@ export interface ChatCompletion {
   credit: Generated<number>;
   id: Generated<number>;
   modelId: string;
+  organizationId: string | null;
   promptTokens: number;
   userId: string;
 }

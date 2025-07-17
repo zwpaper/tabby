@@ -28,21 +28,22 @@ export class UsageService {
       ? await this.meterCreditCost(user, creditCostInput)
       : 0;
 
+    const organization = await organizationService.readActiveOrganizationByUser(
+      user.id,
+    );
+
     // Track individual completion details
     await db
       .insertInto("chatCompletion")
       .values({
         modelId,
         userId: user.id,
+        organizationId: organization?.id,
         promptTokens: usage.promptTokens,
         completionTokens: usage.completionTokens,
         credit: credit,
       })
       .execute();
-
-    const organization = await organizationService.readActiveOrganizationByUser(
-      user.id,
-    );
 
     // If an org subscription exists, only track the organization's usage.
     if (organization) {
