@@ -180,6 +180,7 @@ const ToolMap: Record<
 
 const DefaultMaxSteps = 24;
 const MaxContinuousTaskFailedSteps = 3;
+const ApiRequestTimeout = 60_000; // 60 seconds
 
 const logger = getLogger("TaskRunner");
 
@@ -490,6 +491,7 @@ export class TaskRunner {
 
     await withAttempts(
       async () => {
+        const timeout = AbortSignal.timeout(ApiRequestTimeout);
         const resp = await this.options.apiClient.api.chat.stream.$post(
           {
             json: {
@@ -502,7 +504,7 @@ export class TaskRunner {
           },
           {
             init: {
-              signal,
+              signal: AbortSignal.any([timeout, ...(signal ? [signal] : [])]),
             },
           },
         );
@@ -584,6 +586,7 @@ async function loadTaskAndWaitStreaming({
   const loadTask = async () => {
     return await withAttempts(
       async () => {
+        const timeout = AbortSignal.timeout(ApiRequestTimeout);
         const resp = await apiClient.api.tasks[":uid"].$get(
           {
             param: {
@@ -592,7 +595,10 @@ async function loadTaskAndWaitStreaming({
           },
           {
             init: {
-              signal: abortSignal,
+              signal: AbortSignal.any([
+                timeout,
+                ...(abortSignal ? [abortSignal] : []),
+              ]),
             },
           },
         );
