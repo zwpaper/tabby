@@ -5,7 +5,6 @@ import {
   betterAuth,
 } from "better-auth";
 import {
-  // type Organization,
   admin,
   apiKey,
   bearer,
