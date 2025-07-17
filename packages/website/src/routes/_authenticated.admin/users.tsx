@@ -39,7 +39,6 @@ import {
   ShieldCheck,
   ShieldX,
   Undo,
-  UserCheck,
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react"; // Removed useEffect
@@ -145,9 +144,7 @@ function UsersPage() {
   const [userToImpersonate, setUserToImpersonate] = useState<
     (typeof userList)[0] | null
   >(null);
-  const [userToApprove, setUserToApprove] = useState<
-    (typeof userList)[0] | null
-  >(null);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -312,33 +309,6 @@ function UsersPage() {
     }
   };
 
-  const handleApproveUser = async () => {
-    if (!userToApprove) return;
-
-    setIsProcessing(true);
-    try {
-      await apiClient.api.admin.approveWaitlist.$post({
-        query: { userId: userToApprove.id },
-      });
-      toast.success("User Approved", {
-        description: `${userToApprove.email} has been approved successfully.`,
-      });
-
-      const refreshedUsers = await fetchUsersPage(
-        pageSize,
-        (currentPage - 1) * pageSize,
-      );
-      setUserData(refreshedUsers);
-    } catch (error) {
-      toast.error("Error Approving User", {
-        description: `Failed to approve ${userToApprove.email}. Please try again.`,
-      });
-    } finally {
-      setIsProcessing(false);
-      setUserToApprove(null);
-    }
-  };
-
   const formatDate = (dateString: string | Date) => {
     const date =
       typeof dateString === "string" ? new Date(dateString) : dateString;
@@ -379,7 +349,7 @@ function UsersPage() {
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Quota</TableHead>
-              <TableHead>Waitlist Approved</TableHead>
+
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -412,13 +382,6 @@ function UsersPage() {
                 <TableCell>
                   <UserQuotaDisplay userId={user.id} />
                 </TableCell>
-                <TableCell>
-                  {user.isWaitlistApproved ? (
-                    <Badge variant="default">Yes</Badge>
-                  ) : (
-                    <Badge variant="secondary">No</Badge>
-                  )}
-                </TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu modal={false}>
@@ -428,18 +391,6 @@ function UsersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {!user.banned && !user.isWaitlistApproved && (
-                        <>
-                          <DropdownMenuItem
-                            onClick={() => setUserToApprove(user)}
-                            disabled={isProcessing}
-                          >
-                            <UserCheck className="mr-2 h-4 w-4" />
-                            Approve User
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
                       <DropdownMenuItem
                         onClick={() => setUserToChangeRole(user)}
                         disabled={isProcessing}
@@ -696,44 +647,6 @@ function UsersPage() {
                 </>
               ) : (
                 "Impersonate User"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Approve User Confirmation Dialog */}
-      <Dialog
-        open={!!userToApprove}
-        onOpenChange={(open) => !open && setUserToApprove(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Approve User Waitlist</DialogTitle>
-            <DialogDescription>
-              {`Are you sure you want to approve waitlist access for ${userToApprove?.email}?`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setUserToApprove(null)}
-              disabled={isProcessing}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleApproveUser}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Approve User"
               )}
             </Button>
           </DialogFooter>

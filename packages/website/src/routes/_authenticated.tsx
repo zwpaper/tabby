@@ -1,4 +1,3 @@
-import { useWaitlistCheck } from "@/hooks/use-waitlist-check";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -17,8 +16,5 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function Auth() {
-  // Use waitlist check hook to get latest waitlist approval status
-  useWaitlistCheck();
-
   return <Outlet />;
 }

@@ -11,7 +11,6 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as WaitlistImport } from './routes/waitlist'
 import { Route as TermOfServiceImport } from './routes/term-of-service'
 import { Route as RedirectUrlImport } from './routes/redirect-url'
 import { Route as PrivacyPolicyImport } from './routes/privacy-policy'
@@ -45,12 +44,6 @@ import { Route as AuthenticatedBaseSettingsBillingImport } from './routes/_authe
 import { Route as AuthenticatedBaseSettingsAccountImport } from './routes/_authenticated._base/_settings/account'
 
 // Create/Update Routes
-
-const WaitlistRoute = WaitlistImport.update({
-  id: '/waitlist',
-  path: '/waitlist',
-  getParentRoute: () => rootRoute,
-} as any)
 
 const TermOfServiceRoute = TermOfServiceImport.update({
   id: '/term-of-service',
@@ -289,13 +282,6 @@ declare module '@tanstack/react-router' {
       path: '/term-of-service'
       fullPath: '/term-of-service'
       preLoaderRoute: typeof TermOfServiceImport
-      parentRoute: typeof rootRoute
-    }
-    '/waitlist': {
-      id: '/waitlist'
-      path: '/waitlist'
-      fullPath: '/waitlist'
-      preLoaderRoute: typeof WaitlistImport
       parentRoute: typeof rootRoute
     }
     '/_authenticated/_base': {
@@ -590,7 +576,6 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
-  '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/accept-invitation': typeof AuthenticatedAcceptInvitationRoute
   '/redirect-remote': typeof AuthenticatedRedirectRemoteRoute
@@ -623,7 +608,6 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
-  '/waitlist': typeof WaitlistRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/accept-invitation': typeof AuthenticatedAcceptInvitationRoute
   '/redirect-remote': typeof AuthenticatedRedirectRemoteRoute
@@ -657,7 +641,6 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
-  '/waitlist': typeof WaitlistRoute
   '/_authenticated/_base': typeof AuthenticatedBaseRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/accept-invitation': typeof AuthenticatedAcceptInvitationRoute
@@ -694,7 +677,6 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/redirect-url'
     | '/term-of-service'
-    | '/waitlist'
     | '/admin'
     | '/accept-invitation'
     | '/redirect-remote'
@@ -726,7 +708,6 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/redirect-url'
     | '/term-of-service'
-    | '/waitlist'
     | '/admin'
     | '/accept-invitation'
     | '/redirect-remote'
@@ -758,7 +739,6 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/redirect-url'
     | '/term-of-service'
-    | '/waitlist'
     | '/_authenticated/_base'
     | '/_authenticated/admin'
     | '/_authenticated/accept-invitation'
@@ -794,7 +774,6 @@ export interface RootRouteChildren {
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   RedirectUrlRoute: typeof RedirectUrlRoute
   TermOfServiceRoute: typeof TermOfServiceRoute
-  WaitlistRoute: typeof WaitlistRoute
   AuthPathnameRoute: typeof AuthPathnameRoute
   ShareUidRoute: typeof ShareUidRoute
 }
@@ -805,7 +784,6 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   RedirectUrlRoute: RedirectUrlRoute,
   TermOfServiceRoute: TermOfServiceRoute,
-  WaitlistRoute: WaitlistRoute,
   AuthPathnameRoute: AuthPathnameRoute,
   ShareUidRoute: ShareUidRoute,
 }
@@ -825,7 +803,6 @@ export const routeTree = rootRoute
         "/privacy-policy",
         "/redirect-url",
         "/term-of-service",
-        "/waitlist",
         "/auth/$pathname",
         "/share/$uid"
       ]
@@ -854,9 +831,6 @@ export const routeTree = rootRoute
     },
     "/term-of-service": {
       "filePath": "term-of-service.tsx"
-    },
-    "/waitlist": {
-      "filePath": "waitlist.tsx"
     },
     "/_authenticated/_base": {
       "filePath": "_authenticated._base/route.tsx",

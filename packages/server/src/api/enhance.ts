@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireAuth } from "../auth";
-import { checkWaitlist } from "../lib/check-request";
+
 import { geminiFlash } from "../lib/constants";
 
 const EnhancePromptSchema = z.object({
@@ -17,10 +17,6 @@ const enhance = new Hono().post(
   requireAuth(),
   async (c) => {
     const { prompt } = await c.req.valid("json");
-    const user = c.get("user");
-
-    // TODO: remove whitelist check
-    checkWaitlist(user);
 
     try {
       const result = await generateText({

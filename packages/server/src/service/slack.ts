@@ -486,7 +486,7 @@ class SlackService {
   }
 
   /**
-   * Validates user existence, waitlist approval, and GitHub connection
+   * Validates user existence, and GitHub connection
    */
   private async validateUser(
     webClient: WebClient,

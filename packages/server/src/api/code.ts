@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requireAuth } from "../auth";
-import { checkWaitlist } from "../lib/check-request";
+
 import { codeCompletionService } from "../service/code-completion";
 import { ZodCodeCompletionRequestType } from "../types";
 
@@ -13,7 +13,6 @@ const code = new Hono()
     zValidator("json", ZodCodeCompletionRequestType),
     async (c) => {
       const req = c.req.valid("json");
-      const user = c.get("user");
 
       // Validate required segments
       if (!req.segments || !req.segments.prefix) {
@@ -23,7 +22,6 @@ const code = new Hono()
       }
 
       // Check user permissions
-      checkWaitlist(user);
 
       try {
         const response = await codeCompletionService.generateCompletion(

@@ -69,12 +69,6 @@ const tasks = new Hono()
     const { prompt, event, remote } = c.req.valid("json");
     const user = c.get("user");
 
-    if (!user.isWaitlistApproved) {
-      throw new HTTPException(403, {
-        message: "You are not approved by waitlist",
-      });
-    }
-
     let uid: string;
     let url: string | undefined;
     let minionId: string | undefined;

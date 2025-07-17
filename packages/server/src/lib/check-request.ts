@@ -1,6 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import { ServerErrors } from "..";
-import { type User, isInternalOrganization, isInternalUser } from "../auth";
+import { type User, isInternalOrganization } from "../auth";
 import { organizationService } from "../service/organization";
 import { usageService } from "../service/usage";
 import { type AvailableModelId, AvailableModels } from "./constants";
@@ -13,16 +13,6 @@ export function checkModel(modelId: string): AvailableModelId {
     });
   }
   return modelId as AvailableModelId;
-}
-
-export function checkWaitlist(
-  user: User,
-  errorMessage = "Your waitlist request is still pending. Please wait for approval before using this feature.",
-) {
-  if (!isInternalUser(user) && !user.isWaitlistApproved) {
-    throw new HTTPException(400, { message: errorMessage });
-  }
-  return true;
 }
 
 export async function checkUserQuota(user: User, modelId: string) {

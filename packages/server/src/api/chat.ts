@@ -29,11 +29,7 @@ import { createResumableStreamContext } from "resumable-stream";
 import { z } from "zod";
 import { type User, requireAuth } from "../auth";
 import { createBatchCallMiddleware } from "../lib/batch-call-middleware";
-import {
-  checkModel,
-  checkUserQuota,
-  checkWaitlist,
-} from "../lib/check-request";
+import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
   type AvailableModelId,
   type CreditCostInput,
@@ -81,8 +77,6 @@ const chat = new Hono()
     }
     const validModelId =
       req.openAIModelOverride || checkModel(requestedModelId);
-
-    checkWaitlist(user);
 
     const { streamId, messages, uid, isSubTask } =
       await taskService.startStreaming(user.id, req);

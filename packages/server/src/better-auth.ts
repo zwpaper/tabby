@@ -20,10 +20,7 @@ import { db } from "./db";
 import { handleGithubAccountUpdate } from "./github";
 import { StripePlans } from "./lib/constants";
 import { deviceLink } from "./lib/device-link";
-import {
-  getOrganizationInviteEmailHtml,
-  getWaitlistSignupEmailHtml,
-} from "./lib/email-templates";
+import { getOrganizationInviteEmailHtml } from "./lib/email-templates";
 import { resend } from "./lib/resend";
 import { stripeClient } from "./lib/stripe";
 
@@ -33,14 +30,6 @@ export const auth = betterAuth({
     useSecureCookies: false,
   },
   user: {
-    additionalFields: {
-      isWaitlistApproved: {
-        type: "boolean",
-        default: true,
-        required: false,
-        input: false,
-      },
-    },
     changeEmail: {
       enabled: true,
       sendChangeEmailVerification: async ({ newEmail, url }) => {
@@ -115,15 +104,11 @@ export const auth = betterAuth({
     oAuthProxy(),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        const emailHtml = getWaitlistSignupEmailHtml({
-          loginUrl: url,
-        });
-
         await resend.emails.send({
           from: "Pochi <noreply@getpochi.com>",
           to: email,
-          subject: "You are on the waitlist - from Pochi!",
-          html: emailHtml,
+          subject: "Sign in to Pochi",
+          html: `<p>Click <a href=\"${url}\">here</a> to sign in.</p>`,
         });
       },
     }),

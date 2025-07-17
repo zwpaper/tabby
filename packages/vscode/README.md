@@ -5,7 +5,7 @@ Pochi is built for code, yet much more than coding. It's the AI agent that think
 
 ## 🚀 Join for Early Access
 
-We are currently inviting developers to experience Pochi firsthand. Join the [Pochi waitlist](https://www.tabbyml.com/agent) to get early access! Join our [community](https://discord.gg/tWF66yr8NQ) to request early access with free model credits!  
+We are currently inviting developers to experience Pochi firsthand. Join our [community](https://discord.gg/tWF66yr8NQ) to request early access with free model credits!  
 💡 Once installed, you may wanna drag the Pochi view into your _secondary sidebar_ - it ensures better visibility and engagement!
 
 ## 📚 Documentation
