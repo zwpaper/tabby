@@ -1,7 +1,3 @@
-import { CompletionConfiguration } from "@/completion/configuration";
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { InlineCompletionProvider } from "@/completion/inline-completion-provider";
-import { CompletionStatusBarManager } from "@/completion/status-bar-manager";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
 import type { AuthClient } from "@/lib/auth-client";
@@ -20,6 +16,8 @@ import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { CommandPalette } from "./command-palette";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { PochiConfiguration } from "./configuration";
 import { DiffChangesContentProvider } from "./editor/diff-changes-content-provider";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "./mcp/mcp-hub";
@@ -41,17 +39,8 @@ export class CommandManager implements vscode.Disposable {
     private readonly authEvents: AuthEvents,
     private readonly commandPalette: CommandPalette,
     private readonly mcpHub: McpHub,
-    @inject(CompletionConfiguration)
-    private readonly completionConfig: CompletionConfiguration,
-    @inject(CompletionStatusBarManager)
-    private readonly statusBarManager: CompletionStatusBarManager,
-    private readonly completionProvider: InlineCompletionProvider,
-    @inject("vscode.ExtensionContext") context: vscode.ExtensionContext,
+    private readonly pochiConfiguration: PochiConfiguration,
   ) {
-    context.subscriptions.push(this.completionProvider);
-    context.subscriptions.push(this.completionConfig);
-    context.subscriptions.push(this.statusBarManager);
-
     this.registerCommands();
   }
 
@@ -298,9 +287,20 @@ export class CommandManager implements vscode.Disposable {
         },
       ),
 
-      vscode.commands.registerCommand("pochi.completion.toggle", async () => {
-        await this.completionConfig.toggleEnabled();
-      }),
+      vscode.commands.registerCommand(
+        "pochi.inlineCompletion.toggleEnabled",
+        async () => {
+          const current = this.pochiConfiguration.advancedSettings.value;
+          const newSettings = {
+            ...current,
+            inlineCompletion: {
+              ...current.inlineCompletion,
+              disabled: !current.inlineCompletion?.disabled,
+            },
+          };
+          this.pochiConfiguration.advancedSettings.value = newSettings;
+        },
+      ),
 
       vscode.commands.registerCommand("pochi.openFileFromDiff", async () => {
         const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;

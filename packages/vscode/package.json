@@ -184,18 +184,24 @@
       {
         "title": "Pochi",
         "properties": {
-          "pochi.settings.advanced": {
-            "default": {},
+          "pochi.advanced": {
             "properties": {
-              "isDevMode": {
+              "enableInlineCompletion": {
                 "type": "boolean",
-                "default": false,
-                "description": "Pochi dev mode"
+                "default": false
               },
-              "inlineCompletion": {
+              "inlineCompletion.disabled": {
                 "type": "boolean",
                 "default": false,
-                "description": "Enable inline completion module"
+                "description": "Enable inline completion feature in Pochi."
+              },
+              "inlineCompletion.disabledLanguages": {
+                "type": "array",
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of languages where inline completion is disabled."
               }
             }
           },
@@ -209,70 +215,6 @@
               }
             },
             "description": "Pochi webview UI settings"
-          },
-          "pochi.inlineCompletion": {
-            "type": "object",
-            "description": "Inline code completion settings",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true,
-                "description": "Enable/disable inline code completion",
-                "order": 1
-              },
-              "triggerMode": {
-                "type": "string",
-                "enum": ["automatic", "manual"],
-                "default": "automatic",
-                "enumDescriptions": [
-                  "Automatically trigger completions while typing",
-                  "Only trigger completions manually with Alt+\\"
-                ],
-                "description": "How completions are triggered"
-              },
-              "disabledLanguages": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "default": ["plaintext"],
-                "description": "Programming languages where completion is disabled"
-              },
-              "maxPrefixLines": {
-                "type": "number",
-                "default": 20,
-                "minimum": 1,
-                "description": "Maximum number of lines to include before cursor"
-              },
-              "maxSuffixLines": {
-                "type": "number",
-                "default": 20,
-                "minimum": 0,
-                "description": "Maximum number of lines to include after cursor"
-              },
-              "debounceDelay": {
-                "type": "number",
-                "default": 300,
-                "minimum": 0,
-                "description": "Delay in milliseconds before triggering completion"
-              },
-              "temperature": {
-                "type": "number",
-                "default": 0.1,
-                "minimum": 0,
-                "maximum": 1,
-                "description": "Model temperature for completion generation (0.0-1.0)"
-              }
-            },
-            "default": {
-              "enabled": true,
-              "triggerMode": "automatic",
-              "disabledLanguages": ["plaintext"],
-              "maxPrefixLines": 20,
-              "maxSuffixLines": 20,
-              "debounceDelay": 300,
-              "temperature": 0.1
-            }
           },
           "pochi.mcpServers": {
             "default": {},
@@ -310,6 +252,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "@orama/orama": "^3.1.11",
     "@preact/signals-core": "catalog:",
     "@quilted/threads": "catalog:",
     "@ragdoll/common": "workspace:*",
@@ -321,6 +264,7 @@
     "better-auth": "catalog:",
     "diff": "^7.0.0",
     "fast-deep-equal": "^3.1.3",
+    "fast-levenshtein": "^3.0.0",
     "file-type": "catalog:",
     "hono": "catalog:",
     "iterator-helpers-polyfill": "^3.0.1",
@@ -333,6 +277,7 @@
     "reflect-metadata": "^0.2.2",
     "run-exclusive": "^2.2.19",
     "simple-git": "^3.28.0",
+    "stats-logscale": "^1.0.9",
     "tsyringe": "^4.10.0"
   },
   "devDependencies": {

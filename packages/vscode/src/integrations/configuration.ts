@@ -8,23 +8,18 @@ import type { McpServerConfig } from "./mcp/types";
 export class PochiConfiguration implements vscode.Disposable {
   private disposables: vscode.Disposable[] = [];
 
-  // isDevMode = signal(getPochiAdvanceSettings().isDevMode ?? false);
+  readonly advancedSettings = signal(getPochiAdvanceSettings());
   readonly mcpServers = signal(getPochiMcpServersSettings());
-
   readonly webui = signal(getPochiWebviewLogSettings());
-
   readonly autoSaveDisabled = signal(getAutoSaveDisabled());
 
   constructor() {
-    // const settings = getPochiAdvanceSettings();
-    // this.isDevMode.value = settings.isDevMode ?? false;
-
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
-        // if (e.affectsConfiguration("pochi.settings.advanced")) {
-        // const settings = getPochiAdvanceSettings();
-        // this.isDevMode.value = settings.isDevMode ?? false;
-        // }
+        if (e.affectsConfiguration("pochi.advanced")) {
+          const settings = getPochiAdvanceSettings();
+          this.advancedSettings.value = settings;
+        }
         if (e.affectsConfiguration("pochi.mcpServers")) {
           const settings = getPochiMcpServersSettings();
           this.mcpServers.value = settings;
@@ -41,18 +36,16 @@ export class PochiConfiguration implements vscode.Disposable {
       }),
     );
 
-    this.disposables.push(
-      // {
-      //   dispose: this.isDevMode.subscribe((value) => {
-      //     updatePochiAdvanceSettings({ isDevMode: value });
-      //   }),
-      // },
-      {
-        dispose: this.mcpServers.subscribe((value) => {
-          updatePochiMcpServersSettings(value);
-        }),
-      },
-    );
+    this.disposables.push({
+      dispose: this.mcpServers.subscribe((value) => {
+        updatePochiMcpServersSettings(value);
+      }),
+    });
+    this.disposables.push({
+      dispose: this.advancedSettings.subscribe((value) => {
+        updatePochiAdvanceSettings(value);
+      }),
+    });
   }
 
   dispose() {
@@ -62,21 +55,25 @@ export class PochiConfiguration implements vscode.Disposable {
   }
 }
 
-// interface PochiAdvanceSettings {
-//   isDevMode?: boolean;
-// }
+type PochiAdvanceSettings = {
+  enableInlineCompletion?: boolean; // FIXME(zhiming): remove this after feature is stable
+  inlineCompletion?: {
+    disabled?: boolean;
+    disabledLanguages?: string[];
+  };
+};
 
-// function getPochiAdvanceSettings() {
-//   return vscode.workspace
-//     .getConfiguration("pochi")
-//     .get("settings.advanced", {}) as PochiAdvanceSettings;
-// }
+function getPochiAdvanceSettings() {
+  return vscode.workspace
+    .getConfiguration("pochi")
+    .get("advanced", {}) as PochiAdvanceSettings;
+}
 
-// async function updatePochiAdvanceSettings(value: PochiAdvanceSettings) {
-//   return vscode.workspace
-//     .getConfiguration("pochi")
-//     .update("settings.advanced", value, true);
-// }
+async function updatePochiAdvanceSettings(value: PochiAdvanceSettings) {
+  return vscode.workspace
+    .getConfiguration("pochi")
+    .update("advanced", value, true);
+}
 
 export type PochiMcpServersSettings = Record<string, McpServerConfig>;
 
