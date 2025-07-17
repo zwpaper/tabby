@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useRef, useState } from "react";
 import type { Message, TaskData } from "../types";
 import { MessageContent } from "./message-content";
 
@@ -47,6 +48,27 @@ export function TaskView({
     [key: number]: boolean;
   }>({});
 
+  const taskViewRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTop = () => {
+    if (taskViewRef.current) {
+      taskViewRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      const lastMessage = messagesContainerRef.current.lastElementChild;
+      if (lastMessage) {
+        lastMessage.scrollIntoView({ behavior: "smooth", block: "end" });
+      }
+    }
+  };
+
   // Filter messages based on showSystemMessages state
   const filteredMessages = selectedTask.messages.filter((message: Message) => {
     if (message.role === "system" && !showSystemMessages) {
@@ -77,69 +99,94 @@ export function TaskView({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <h3 className="font-bold text-foreground text-xl">
-          <a
-            href={`https://app.getpochi.com/share/${selectedTask.uid}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-primary transition-colors hover:text-primary/80"
-          >
-            {selectedTask.uid}
-          </a>
-        </h3>
-        <div className="flex items-center">
-          <input
-            id="verified-checkbox"
-            type="checkbox"
-            checked={selectedTask.verified}
-            onChange={(e) =>
-              onVerifiedChange(selectedTask.uid, e.target.checked)
-            }
-            className="h-4 w-4 rounded border-input text-primary"
-          />
-          <label
-            htmlFor="verified-checkbox"
-            className="ml-2 block text-foreground text-sm"
-          >
-            Verified
-          </label>
-        </div>
-        <div className="flex items-center">
-          <input
-            id="excluded-checkbox"
-            type="checkbox"
-            checked={selectedTask.excluded}
-            onChange={(e) =>
-              onExcludedChange(selectedTask.uid, e.target.checked)
-            }
-            className="h-4 w-4 rounded border-input text-primary"
-          />
-          <label
-            htmlFor="excluded-checkbox"
-            className="ml-2 block text-foreground text-sm"
-          >
-            Excluded
-          </label>
-        </div>
-        <div className="flex items-center">
-          <input
-            id="show-system-checkbox"
-            type="checkbox"
-            checked={showSystemMessages}
-            onChange={(e) => setShowSystemMessages(e.target.checked)}
-            className="h-4 w-4 rounded border-input text-primary"
-          />
-          <label
-            htmlFor="show-system-checkbox"
-            className="ml-2 block text-foreground text-sm"
-          >
-            Show System Messages
-          </label>
+    <div ref={taskViewRef} className="space-y-6">
+      {/* Floating header with task controls - positioned within TaskView */}
+      <div className="sticky top-4 z-10 mb-6 transform rounded-lg border border-gray-200 bg-white/90 p-4 shadow-lg backdrop-blur-md backdrop-saturate-150 transition-all duration-300 hover:shadow-xl hover:backdrop-blur-lg dark:border-gray-700 dark:bg-gray-800/90">
+        <div className="flex flex-wrap items-center gap-4">
+          <h3 className="font-bold text-foreground text-xl">
+            <a
+              href={`https://app.getpochi.com/share/${selectedTask.uid}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary transition-colors hover:text-primary/80"
+            >
+              {selectedTask.uid}
+            </a>
+          </h3>
+          <div className="flex items-center">
+            <input
+              id="verified-checkbox"
+              type="checkbox"
+              checked={selectedTask.verified}
+              onChange={(e) =>
+                onVerifiedChange(selectedTask.uid, e.target.checked)
+              }
+              className="h-4 w-4 rounded border-input text-primary"
+            />
+            <label
+              htmlFor="verified-checkbox"
+              className="ml-2 block text-foreground text-sm"
+            >
+              Verified
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              id="excluded-checkbox"
+              type="checkbox"
+              checked={selectedTask.excluded}
+              onChange={(e) =>
+                onExcludedChange(selectedTask.uid, e.target.checked)
+              }
+              className="h-4 w-4 rounded border-input text-primary"
+            />
+            <label
+              htmlFor="excluded-checkbox"
+              className="ml-2 block text-foreground text-sm"
+            >
+              Excluded
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              id="show-system-checkbox"
+              type="checkbox"
+              checked={showSystemMessages}
+              onChange={(e) => setShowSystemMessages(e.target.checked)}
+              className="h-4 w-4 rounded border-input text-primary"
+            />
+            <label
+              htmlFor="show-system-checkbox"
+              className="ml-2 block text-foreground text-sm"
+            >
+              Show System Messages
+            </label>
+          </div>
+
+          {/* Navigation buttons */}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1.5 text-primary transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              title="Go to top"
+            >
+              <ChevronUp className="h-4 w-4" />
+              <span className="text-sm">Top</span>
+            </button>
+            <button
+              type="button"
+              onClick={scrollToBottom}
+              className="flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1.5 text-primary transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              title="Go to bottom"
+            >
+              <ChevronDown className="h-4 w-4" />
+              <span className="text-sm">Bottom</span>
+            </button>
+          </div>
         </div>
       </div>
-      <div className="space-y-6">
+      <div ref={messagesContainerRef} className="space-y-6">
         {filteredMessages.map((message: Message) => {
           // Find the original index in the full messages array
           const originalIndex = selectedTask.messages.indexOf(message);
