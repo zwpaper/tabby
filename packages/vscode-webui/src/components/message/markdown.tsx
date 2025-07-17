@@ -227,6 +227,9 @@ export function MessageMarkdown({
           hr() {
             return null;
           },
+          p: ({ children }) => (
+            <p className="whitespace-pre-wrap leading-relaxed">{children}</p>
+          ),
         }}
       >
         {processedChildren}
