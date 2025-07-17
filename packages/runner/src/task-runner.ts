@@ -282,7 +282,7 @@ export class TaskRunner {
    */
   private async step(): Promise<boolean> {
     const maxStep = this.options.maxSteps ?? DefaultMaxSteps;
-    if (this.stepCount >= maxStep) {
+    if (this.stepCount > maxStep) {
       throw new Error(`TaskRunner reached maximum steps (${maxStep}).`);
     }
 
@@ -348,6 +348,7 @@ export class TaskRunner {
 
     const task = this.getTaskOrThrow();
     const lastMessage = this.getLastMessageOrThrow();
+    const maxStep = this.options.maxSteps ?? DefaultMaxSteps;
 
     if (
       (task.status === "completed" || task.status === "pending-input") &&
@@ -371,6 +372,17 @@ export class TaskRunner {
         task.error,
       );
       // resend the last message, nothing to process here
+    } else if (this.stepCount === maxStep - 1) {
+      const lastMessage = this.getLastMessageOrThrow();
+      if (lastMessage.role === "assistant") {
+        const message = await createUIMessage({
+          role: "user",
+          content: prompts.createSystemReminder(
+            "You've been working on this task for a while and don't seem to be making progress. Please use askFollowupQuestion to engage with the user and clarify what they need, or use attemptCompletion if you think the task is complete.",
+          ),
+        });
+        this.messages.push(message);
+      }
     } else {
       this.continuousTaskFailedSteps = 0;
       if (lastMessage.role === "assistant") {
