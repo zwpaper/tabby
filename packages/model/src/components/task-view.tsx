@@ -17,7 +17,7 @@ interface TaskViewProps {
   ) => void;
   onSave: () => void;
   onCancel: () => void;
-  onToggleRemoveMessage: (taskUid: string, messageIndex: number) => void;
+  onToggleDeleteMessage: (taskUid: string, messageIndex: number) => void;
   onRemovePart: (
     taskUid: string,
     messageIndex: number,
@@ -35,7 +35,7 @@ export function TaskView({
   onEdit,
   onSave,
   onCancel,
-  onToggleRemoveMessage,
+  onToggleDeleteMessage,
   onRemovePart,
   onEditedContentChange,
   onVerifiedChange,
@@ -90,48 +90,53 @@ export function TaskView({
         </div>
       </div>
       <div className="space-y-6">
-        {selectedTask.messages.map((message: Message, index: number) => (
-          <div
-            key={index}
-            className={`rounded-lg border p-4 shadow-sm ${
-              message.isDeleted
-                ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
-                : "bg-card"
-            }`}
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <strong className="font-semibold text-foreground text-md capitalize">
-                {message.role}
-              </strong>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => onToggleRemoveMessage(selectedTask.uid, index)}
-                  className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 font-medium text-xs shadow-sm transition-colors focus:outline-none ${
-                    message.isDeleted
-                      ? "bg-green-600 text-white hover:bg-green-700"
-                      : "bg-red-600 text-white hover:bg-red-700"
-                  }`}
-                >
-                  {message.isDeleted ? "Restore Message" : "Delete Message"}
-                </button>
+        {selectedTask.messages.map((message: Message, index: number) => {
+          // Check if any parts in this message are deleted
+          const hasDeletedParts =
+            Array.isArray(message.content) &&
+            message.content.some((part) => part.isDeleted);
+
+          return (
+            <div
+              key={index}
+              className="rounded-lg border bg-card p-4 shadow-sm"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <strong className="font-semibold text-foreground text-md capitalize">
+                  {message.role}
+                </strong>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onToggleDeleteMessage(selectedTask.uid, index)
+                    }
+                    className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 font-medium text-white text-xs shadow-sm transition-colors focus:outline-none ${
+                      hasDeletedParts
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-red-600 hover:bg-red-700"
+                    }`}
+                  >
+                    {hasDeletedParts ? "Restore Message" : "Delete Message"}
+                  </button>
+                </div>
               </div>
+              <MessageContent
+                role={message.role}
+                content={message.content}
+                taskUid={selectedTask.uid}
+                messageIndex={index}
+                editingPart={editingPart}
+                editedContent={editedContent}
+                onEdit={onEdit}
+                onSave={onSave}
+                onCancel={onCancel}
+                onRemovePart={onRemovePart}
+                onEditedContentChange={onEditedContentChange}
+              />
             </div>
-            <MessageContent
-              role={message.role}
-              content={message.content}
-              taskUid={selectedTask.uid}
-              messageIndex={index}
-              editingPart={editingPart}
-              editedContent={editedContent}
-              onEdit={onEdit}
-              onSave={onSave}
-              onCancel={onCancel}
-              onRemovePart={onRemovePart}
-              onEditedContentChange={onEditedContentChange}
-            />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

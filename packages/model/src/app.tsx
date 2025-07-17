@@ -2,11 +2,9 @@ import { useState } from "react";
 import { FileControls } from "./components/file-controls";
 import { TaskList } from "./components/task-list";
 import { TaskView } from "./components/task-view";
-import { useTheme } from "./contexts/theme-context";
 import type { TaskData } from "./types";
 
 function App() {
-  const { theme } = useTheme();
   const [tasks, setTasks] = useState<TaskData[]>([]);
   const [selectedTask, setSelectedTask] = useState<TaskData | null>(null);
   const [editingPart, setEditingPart] = useState<{
@@ -142,16 +140,24 @@ function App() {
     setEditedContent("");
   };
 
-  const handleToggleRemoveMessage = (taskUid: string, messageIndex: number) => {
+  const handleToggleDeleteMessage = (taskUid: string, messageIndex: number) => {
     const newTasks = tasks.map((task) => {
       if (task.uid === taskUid) {
         const newMessages = [...task.messages];
         const message = newMessages[messageIndex];
-        newMessages[messageIndex] = {
-          ...message,
-          isDeleted: !message.isDeleted,
-        };
-        return { ...task, messages: newMessages };
+        if (Array.isArray(message.content)) {
+          // Check if any parts are currently deleted
+          const hasDeletedParts = message.content.some(
+            (part) => part.isDeleted,
+          );
+          // Toggle all parts - if any are deleted, restore all; if none are deleted, delete all
+          const newContent = message.content.map((part) => ({
+            ...part,
+            isDeleted: !hasDeletedParts,
+          }));
+          newMessages[messageIndex] = { ...message, content: newContent };
+          return { ...task, messages: newMessages };
+        }
       }
       return task;
     });
@@ -250,7 +256,7 @@ function App() {
               onEdit={handleEdit}
               onSave={handleSave}
               onCancel={handleCancel}
-              onToggleRemoveMessage={handleToggleRemoveMessage}
+              onToggleDeleteMessage={handleToggleDeleteMessage}
               onRemovePart={handleRemovePart}
               onEditedContentChange={setEditedContent}
               onVerifiedChange={handleVerifiedChange}
