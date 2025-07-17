@@ -56,20 +56,14 @@ export function TaskView({
   });
 
   const handleCopyMessage = (message: Message, messageIndex: number) => {
-    // Create a JSON object with the entire message data
-    const messageData = {
-      role: message.role,
-      content: Array.isArray(message.content)
-        ? message.content.map((part) => ({
-            type: part.type,
-            text: part.newText !== undefined ? part.newText : part.text,
-            ...(part.newText !== undefined && { originalText: part.text }),
-            ...(part.isDeleted && { isDeleted: part.isDeleted }),
-          }))
-        : message.content,
-    };
+    // Copy the text content as a JSON string (with quotes and escapes)
+    const textContent = message.content
+      .filter((part) => !part.isDeleted) // Skip deleted parts
+      .map((part) => (part.newText !== undefined ? part.newText : part.text))
+      .filter((text) => text) // Filter out empty strings
+      .join("\n\n"); // Join with double newline for readability
 
-    const jsonString = JSON.stringify(messageData, null, 2);
+    const jsonString = JSON.stringify(textContent);
     navigator.clipboard.writeText(jsonString);
     setCopiedMessageFeedback((prev) => ({ ...prev, [messageIndex]: true }));
     setTimeout(
@@ -189,7 +183,6 @@ export function TaskView({
                 </div>
               </div>
               <MessageContent
-                role={message.role}
                 content={message.content}
                 taskUid={selectedTask.uid}
                 messageIndex={originalIndex}
