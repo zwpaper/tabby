@@ -6,8 +6,7 @@ export const AdvancedSettingsSection: React.FC = () => {
   const {
     isDevMode,
     updateIsDevMode,
-    disableCheckpoint,
-    updateDisableCheckpoint,
+
     enablePochiModels,
     updateEnablePochiModels,
   } = useSettingsStore();
@@ -26,24 +25,14 @@ export const AdvancedSettingsSection: React.FC = () => {
           />
         )}
         {isDevMode && (
-          <>
-            <SettingsCheckboxOption
-              id="enable-checkpoint"
-              label="Enable Checkpoint"
-              checked={!disableCheckpoint}
-              onCheckedChange={(checked) => {
-                updateDisableCheckpoint(!checked);
-              }}
-            />
-            <SettingsCheckboxOption
-              id="enable-pochi-models"
-              label="Enable Pochi Models"
-              checked={enablePochiModels}
-              onCheckedChange={(checked) => {
-                updateEnablePochiModels(!!checked);
-              }}
-            />
-          </>
+          <SettingsCheckboxOption
+            id="enable-pochi-models"
+            label="Enable Pochi Models"
+            checked={enablePochiModels}
+            onCheckedChange={(checked) => {
+              updateEnablePochiModels(!!checked);
+            }}
+          />
         )}
       </div>
     </AccordionSection>

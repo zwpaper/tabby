@@ -18,16 +18,12 @@ export interface SettingsState {
 
   isDevMode: boolean;
 
-  disableCheckpoint: boolean;
-
   enablePochiModels: boolean;
 
   updateAutoApproveSettings: (data: Partial<AutoApprove>) => void;
   updateSelectedModelId: (selectedModelId: string | undefined) => void;
   updateAutoApproveActive: (value: boolean) => void;
   updateIsDevMode: (value: boolean) => void;
-
-  updateDisableCheckpoint: (value: boolean) => void;
 
   updateEnablePochiModels: (value: boolean) => void;
 }
@@ -47,8 +43,6 @@ export const useSettingsStore = create<SettingsState>()(
       },
       isDevMode: false,
 
-      disableCheckpoint: false,
-
       enablePochiModels: false,
 
       updateSelectedModelId: (selectedModelId: string | undefined) =>
@@ -63,9 +57,6 @@ export const useSettingsStore = create<SettingsState>()(
         set(() => ({ autoApproveActive: value })),
 
       updateIsDevMode: (value: boolean) => set(() => ({ isDevMode: value })),
-
-      updateDisableCheckpoint: (value: boolean) =>
-        set(() => ({ disableCheckpoint: value })),
 
       updateEnablePochiModels: (value: boolean) =>
         set(() => ({ enablePochiModels: value })),
