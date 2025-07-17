@@ -1,4 +1,5 @@
 import { signal } from "@preact/signals-core";
+import deepEqual from "fast-deep-equal";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 import type { McpServerConfig } from "./mcp/types";
@@ -38,12 +39,16 @@ export class PochiConfiguration implements vscode.Disposable {
 
     this.disposables.push({
       dispose: this.mcpServers.subscribe((value) => {
-        updatePochiMcpServersSettings(value);
+        if (!deepEqual(value, getPochiMcpServersSettings())) {
+          updatePochiMcpServersSettings(value);
+        }
       }),
     });
     this.disposables.push({
       dispose: this.advancedSettings.subscribe((value) => {
-        updatePochiAdvanceSettings(value);
+        if (!deepEqual(value, getPochiAdvanceSettings())) {
+          updatePochiAdvanceSettings(value);
+        }
       }),
     });
   }
