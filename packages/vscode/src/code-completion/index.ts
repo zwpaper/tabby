@@ -36,7 +36,7 @@ import {
   CompletionStatisticsTracker,
 } from "./statistics";
 import { AbortError, TimeoutError, isCanceledError } from "./utils/errors";
-import { extractNonReservedWordList } from "./utils/strings";
+import { extractNonReservedWordList, isBlank } from "./utils/strings";
 import "./utils/array"; // for mapAsync
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PochiConfiguration } from "@/integrations/configuration";
@@ -263,7 +263,9 @@ export class CompletionProvider
                 token,
               );
             })
-          )?.filter((item) => item !== undefined);
+          )
+            ?.filter((item) => item !== undefined)
+            .filter((item) => !isBlank(item.text));
         } catch (error) {
           if (!isCanceledError) {
             logger.debug("Failed to read last viewed snippets.", error);
