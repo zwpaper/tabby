@@ -312,7 +312,7 @@ export function XTerm({
       },
       50,
       {
-        leading: false,
+        leading: true,
         trailing: true,
       },
     );
