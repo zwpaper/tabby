@@ -11,7 +11,7 @@ function TaskPageSkeleton({ className }: { className?: string }) {
       )}
     >
       {/* Task header Skeleton */}
-      <div className="animate-pulse space-y-4">
+      <div className="animate-pulse space-y-4 px-4">
         <div className="flex items-start gap-3">
           <div className="flex flex-1 flex-col space-y-3 overflow-hidden pr-8">
             <span className="flex items-center gap-2 py-0.5">

@@ -50,9 +50,7 @@ export function OrganizationButton() {
       )}
     >
       <AiOutlineTeam className="size-4" />
-      <span className="hidden truncate md:inline">
-        {organization?.name ?? "Create Team"}
-      </span>
+      <span className="truncate">{organization?.name ?? "Create Team"}</span>
     </Link>
   );
 }

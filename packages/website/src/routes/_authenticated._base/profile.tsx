@@ -68,9 +68,6 @@ interface StatItemProps {
   isError: boolean;
   className?: string;
   description?: string;
-  classNames?: {
-    label?: string;
-  };
 }
 
 function StatItem({
@@ -80,18 +77,12 @@ function StatItem({
   isError,
   className,
   description,
-  classNames,
 }: StatItemProps) {
   const displayValue =
     typeof value === "number" ? value.toLocaleString() : value;
   return (
     <div className={cn("space-y-2 text-center", className)}>
-      <div
-        className={cn(
-          "font-medium text-muted-foreground text-xs uppercase tracking-wider",
-          classNames?.label,
-        )}
-      >
+      <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
         {label}
       </div>
       {isLoading ? (
@@ -132,7 +123,7 @@ function AccountCard({ session }: AccountCardProps) {
 
   const { data: auth } = useSession();
   return (
-    <Card className="my-4 rounded-sm border-border/50 py-0 shadow-sm">
+    <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
       <CardContent className="p-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
           {/* Avatar */}
@@ -221,7 +212,7 @@ function GithubConnectCard({
   };
 
   return (
-    <Card className="my-4 rounded-sm border-border/50 p-2 shadow-sm">
+    <Card className="m-4 rounded-sm border-border/50 p-2 shadow-sm">
       <CardContent className="px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -299,7 +290,7 @@ function SlackWorkspaceCard({
   };
 
   return (
-    <Card className="my-4 rounded-sm border-border/50 py-0 shadow-sm">
+    <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
       <CardContent className="p-4">
         <div className="space-y-4">
           {/* Header */}
@@ -502,7 +493,7 @@ function BillingCard({
 
   return (
     <>
-      <Card className="my-4 rounded-sm border-border/50 py-0 shadow-sm">
+      <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
         <CardContent
           className={cn("p-4", {
             "pb-0": !!subscription,
@@ -570,9 +561,6 @@ function BillingCard({
               })}
               isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
               isError={billingQuotaQuery.isError}
-              classNames={{
-                label: "h-8 md:h-auto",
-              }}
             />
             <StatItem
               label="CURRENT SPENDING"
@@ -582,9 +570,6 @@ function BillingCard({
               })}
               isLoading={billingQuotaQuery.isLoading && !billingQuotaQuery.data}
               isError={billingQuotaQuery.isError}
-              classNames={{
-                label: "h-8 md:h-auto",
-              }}
             />
           </div>
           {invoice && <InvoiceView invoice={invoice} />}
@@ -683,10 +668,10 @@ function RouteComponent() {
   }, [queryClient, userId]);
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-8 px-2 pt-6 pb-8 md:px-6 md:pt-8 lg:px-8">
+    <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8 lg:px-8">
       {/* Account Information Section */}
       <div className="space-y-4">
-        <div className="space-y-1">
+        <div className="mx-4 space-y-1">
           <h2 className="font-semibold text-base text-foreground">Account</h2>
           <p className="text-muted-foreground text-xs">
             Your account information and settings
@@ -697,7 +682,7 @@ function RouteComponent() {
 
       {/* Personal Stats Section */}
       <div className="space-y-4">
-        <div className="space-y-1">
+        <div className="mx-4 space-y-1">
           <h2 className="font-semibold text-base text-foreground">
             Personal Stats
           </h2>
@@ -705,7 +690,7 @@ function RouteComponent() {
             Track your usage patterns and monitor your quota consumption
           </p>
         </div>
-        <Card className="my-4 rounded-sm border-border/50 py-0 shadow-sm">
+        <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
           <CardContent className="p-4">
             <div className="space-y-6">
               <div className="grid grid-cols-2 items-start gap-8">
@@ -730,7 +715,7 @@ function RouteComponent() {
 
       {/* External Integrations Section */}
       <div className="space-y-4">
-        <div className="space-y-1">
+        <div className="mx-4 space-y-1">
           <h2 className="font-semibold text-base text-foreground">
             External Integrations
           </h2>
@@ -749,7 +734,7 @@ function RouteComponent() {
 
       {/* Slack Workspace Installation Section */}
       <div className="space-y-4">
-        <div className="space-y-1">
+        <div className="mx-4 space-y-1">
           <h2 className="font-semibold text-base text-foreground">Slack</h2>
           <p className="text-muted-foreground text-xs">
             Connect Slack workspaces to use Pochi directly in your team channels
@@ -764,7 +749,7 @@ function RouteComponent() {
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-1">
+        <div className="mx-4 space-y-1">
           <h2 className="font-semibold text-base text-foreground">Billing</h2>
           <p className="text-muted-foreground text-xs">
             Manage your billing and subscription details
