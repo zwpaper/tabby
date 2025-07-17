@@ -13,23 +13,36 @@ import {
 
 type Task = NonNullable<Awaited<ReturnType<(typeof taskService)["get"]>>>;
 
+const SLACK_ERROR_REACTED = "already_reacted";
+const SLACK_ERROR_NO_REACTION = "no_reaction";
+
 class SlackTaskService {
-  async notifyTaskStatusUpdate(userId: string, uid: string) {
+  async notifyTaskStatusUpdate(
+    userId: string,
+    uid: string,
+  ): Promise<string | undefined> {
     const task = await taskService.get(uid, userId);
     if (!task || !isNotifyableTask(task)) {
       return;
     }
 
-    await this.sendTaskStatusUpdate(userId, task);
+    return await this.sendTaskStatusUpdate(userId, task);
   }
 
-  private async sendTaskStatusUpdate(userId: string, task: Task) {
+  private async sendTaskStatusUpdate(
+    userId: string,
+    task: Task,
+  ): Promise<string | undefined> {
     const slackEventData = this.extractSlackDataFromTask(task);
     const webClient = await slackService.getWebClientByUser(userId);
 
     if (!webClient || !slackEventData.channel || !slackEventData.ts) {
-      return;
+      return "Task did not contain Slack event data, not updating";
     }
+
+    // Extract values after null check to ensure TypeScript knows they're defined
+    const channel = slackEventData.channel;
+    const ts = slackEventData.ts;
 
     const headerInfo = this.extractHeaderInfoFromTask(task);
     const taskStats = this.extractTaskStatistics(task);
@@ -66,7 +79,7 @@ class SlackTaskService {
           completionResult || "Task completed successfully.",
         );
         text = "Task completed";
-        postAction = () => this.addCompletionReaction(userId, task);
+        postAction = () => this.addCompletionReaction(webClient, channel, ts);
         break;
       }
 
@@ -77,6 +90,8 @@ class SlackTaskService {
           errorInfo.message,
         );
         text = "Task failed";
+        postAction = () =>
+          this.removeCompletionReaction(webClient, channel, ts);
         break;
       }
 
@@ -99,6 +114,8 @@ class SlackTaskService {
       case "pending-tool": {
         blocks = slackRichTextRenderer.renderTaskRunning(context);
         text = "Task running";
+        postAction = () =>
+          this.removeCompletionReaction(webClient, channel, ts);
         break;
       }
       default: {
@@ -107,8 +124,8 @@ class SlackTaskService {
     }
 
     await webClient.chat.update({
-      channel: slackEventData.channel,
-      ts: slackEventData.ts,
+      channel: channel,
+      ts: ts,
       text,
       blocks,
     });
@@ -116,23 +133,59 @@ class SlackTaskService {
     if (postAction) {
       await postAction();
     }
+
+    return;
   }
 
-  private async addCompletionReaction(userId: string, task: Task) {
-    if (!task) return;
-
-    const slackEventData = this.extractSlackDataFromTask(task);
-    const webClient = await slackService.getWebClientByUser(userId);
-
-    if (!webClient || !slackEventData.channel || !slackEventData.ts) {
-      return;
+  private async addCompletionReaction(
+    client: WebClient,
+    channel: string,
+    ts: string,
+  ) {
+    try {
+      await client.reactions.add({
+        channel: channel,
+        timestamp: ts,
+        name: "white_check_mark",
+      });
+    } catch (error) {
+      // Only ignore if reaction already exists
+      if (this.isSlackError(error, SLACK_ERROR_REACTED)) {
+        return;
+      }
+      throw error;
     }
+  }
 
-    await webClient.reactions.add({
-      channel: slackEventData.channel,
-      timestamp: slackEventData.ts,
-      name: "white_check_mark",
-    });
+  private isSlackError(error: unknown, kind: string): boolean {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "data" in error &&
+      typeof error.data === "object" &&
+      error.data !== null &&
+      "error" in error.data &&
+      error.data.error === kind
+    );
+  }
+
+  private async removeCompletionReaction(
+    client: WebClient,
+    channel: string,
+    ts: string,
+  ) {
+    try {
+      await client.reactions.remove({
+        channel: channel,
+        timestamp: ts,
+        name: "white_check_mark",
+      });
+    } catch (error) {
+      if (this.isSlackError(error, SLACK_ERROR_NO_REACTION)) {
+        return;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -368,10 +421,6 @@ class SlackTaskService {
   }
 
   private extractSlackDataFromTask(task: Task) {
-    if (!task || !isNotifyableTask(task)) {
-      throw new Error("Invalid Slack task");
-    }
-
     return task.event?.data as {
       prompt: string;
       channel?: string;

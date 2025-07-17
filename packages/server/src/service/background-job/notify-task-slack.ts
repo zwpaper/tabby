@@ -1,5 +1,6 @@
 import { Queue, Worker } from "bullmq";
 import { slackTaskService } from "../slack-task";
+import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
 const QueueName = "notify-task-slack";
@@ -15,8 +16,8 @@ function dedupeId(job: NotifyTaskSlack) {
 
 export const queue = new Queue<NotifyTaskSlack>(QueueName, queueConfig);
 
-export function enqueueNotifyTaskSlack(data: NotifyTaskSlack) {
-  queue.add(QueueName, data, {
+export async function enqueueNotifyTaskSlack(data: NotifyTaskSlack) {
+  await queue.add(QueueName, data, {
     attempts: 3,
     backoff: {
       type: "exponential",
@@ -24,6 +25,9 @@ export function enqueueNotifyTaskSlack(data: NotifyTaskSlack) {
     },
     deduplication: {
       id: dedupeId(data),
+    },
+    removeOnFail: {
+      age: 60 * 60 * 24 * 10, // 10 days
     },
     removeOnComplete: {
       age: 60 * 60 * 24 * 7, // 7 days
@@ -35,10 +39,21 @@ export function createNotifyTaskSlackWorker() {
   return new Worker<NotifyTaskSlack>(
     QueueName,
     async (job) => {
-      await slackTaskService.notifyTaskStatusUpdate(
-        job.data.userId,
-        job.data.uid,
-      );
+      const logger = getJobLogger(job);
+      try {
+        const result = await slackTaskService.notifyTaskStatusUpdate(
+          job.data.userId,
+          job.data.uid,
+        );
+        if (result) {
+          logger.info(`Successfully notified task status update: ${result}`);
+        }
+      } catch (error) {
+        logger.error(
+          `Failed to notify task status update: ${error instanceof Error ? error.message : error}`,
+        );
+        throw error;
+      }
     },
     {
       ...queueConfig,
