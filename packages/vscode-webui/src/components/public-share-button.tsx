@@ -162,6 +162,7 @@ ${environmentInfo}
         detail: `This task and relevant debug information have been sent. For support, please join our Discord server and reference this issue with the ID: ${uid}.`,
       },
       openDiscordButtonText,
+      "OK",
     );
 
     if (result === openDiscordButtonText) {
@@ -176,7 +177,7 @@ ${environmentInfo}
           variant="ghost"
           size="icon"
           className="h-6 w-6 rounded-md p-0 transition-opacity"
-          disabled={disabled || shareToggleMutation.isPending}
+          disabled={!uid || disabled || shareToggleMutation.isPending}
         >
           <Share2Icon className="size-4" />
         </Button>

@@ -411,16 +411,14 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                   uid={uid}
                   selectedModel={selectedModel?.id}
                 />
-                {uid && (
-                  <PublicShareButton
-                    isPublicShared={task?.isPublicShared === true}
-                    disabled={isTaskLoading || isModelsLoading}
-                    uid={uid}
-                    onError={setAutoDismissError}
-                    modelId={selectedModel?.id}
-                    displayError={displayError?.message}
-                  />
-                )}
+                <PublicShareButton
+                  isPublicShared={task?.isPublicShared === true}
+                  disabled={isTaskLoading || isModelsLoading}
+                  uid={uid}
+                  onError={setAutoDismissError}
+                  modelId={selectedModel?.id}
+                  displayError={displayError?.message}
+                />
                 <Button
                   variant="ghost"
                   size="icon"
