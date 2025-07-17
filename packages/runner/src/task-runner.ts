@@ -599,8 +599,6 @@ export class TaskRunner {
   }
 }
 
-const WaitTaskStreamingTimeout = 120_000; // 120 seconds
-
 /**
  * Loads the task and waits for it to be in a non-streaming state.
  */
@@ -675,28 +673,6 @@ async function loadTaskAndWaitStreaming({
     cleanups.push(() => {
       unsubscribe();
       taskEventSource.dispose();
-    });
-
-    // Set a timeout to check if the task is still streaming after 120 seconds
-    const timeout = setTimeout(() => {
-      loadTask()
-        .then((task) => {
-          if (task.status !== "streaming") {
-            cleanupAndResolve(task);
-          } else {
-            cleanupAndReject(
-              new Error(
-                `Task ${uid} is still streaming after ${WaitTaskStreamingTimeout} ms timeout.`,
-              ),
-            );
-          }
-        })
-        .catch((error) => {
-          cleanupAndReject(error);
-        });
-    }, WaitTaskStreamingTimeout);
-    cleanups.push(() => {
-      clearTimeout(timeout);
     });
 
     if (abortSignal) {
