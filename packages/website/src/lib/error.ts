@@ -82,3 +82,24 @@ export function normalizeApiError(error: unknown): Error {
 
   return error as Error;
 }
+
+export function getBetterAuthErrorMessage(
+  // biome-ignore lint/suspicious/noExplicitAny: Better auth error
+  error: any,
+  defaultErrorMessage?: string,
+) {
+  if (typeof error === "string") {
+    error;
+  }
+
+  if (error?.error) {
+    return (
+      error.error.message ||
+      error.error.code ||
+      error.error.statusText ||
+      defaultErrorMessage
+    );
+  }
+
+  return error?.message || defaultErrorMessage;
+}

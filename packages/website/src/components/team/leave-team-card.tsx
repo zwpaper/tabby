@@ -1,5 +1,6 @@
 import { authClient } from "@/lib/auth-client";
-import { useMutation } from "@tanstack/react-query";
+import { getBetterAuthErrorMessage } from "@/lib/error";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
@@ -32,6 +33,7 @@ export function LeaveTeamCard({
   organizationSlug,
 }: LeaveTeamCardProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: organization, refetch: refetchActiveOrganization } =
     authClient.useActiveOrganization();
 
@@ -44,13 +46,17 @@ export function LeaveTeamCard({
         },
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       refetchActiveOrganization();
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === "activeOrganization",
+      });
       toast.success("Successfully left the team");
       router.navigate({ to: "/profile" });
     },
     onError: (error) => {
-      toast.error(`Failed to leave team: ${error.message}`);
+      const errorReason = getBetterAuthErrorMessage(error);
+      toast.error(`Failed to leave team: ${errorReason}`);
     },
   });
 

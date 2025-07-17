@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Organization } from "better-auth/plugins";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -30,6 +30,7 @@ interface CreateTeamFormProps {
 }
 
 export function CreateTeamForm({ onCreated }: CreateTeamFormProps) {
+  const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -55,7 +56,10 @@ export function CreateTeamForm({ onCreated }: CreateTeamFormProps) {
         organizationId: organization.id,
       });
 
-      await refetchActiveOrganization();
+      refetchActiveOrganization();
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === "activeOrganization",
+      });
       return organization;
     },
     onSuccess: (organization: Organization) => {
