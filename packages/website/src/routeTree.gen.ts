@@ -30,6 +30,7 @@ import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.
 import { Route as AuthenticatedAdminModelEvaluationImport } from './routes/_authenticated.admin/model-evaluation'
 import { Route as AuthenticatedBaseTeamImport } from './routes/_authenticated._base/team'
 import { Route as AuthenticatedBaseProfileImport } from './routes/_authenticated._base/profile'
+import { Route as AuthenticatedBaseLeaderboardImport } from './routes/_authenticated._base/leaderboard'
 import { Route as AuthenticatedBaseHomeImport } from './routes/_authenticated._base/home'
 import { Route as AuthenticatedBaseCreateImport } from './routes/_authenticated._base/create'
 import { Route as AuthenticatedBaseSettingsRouteImport } from './routes/_authenticated._base/_settings/route'
@@ -37,7 +38,6 @@ import { Route as AuthenticatedBaseTasksIndexImport } from './routes/_authentica
 import { Route as AuthenticatedBaseMinionsIndexImport } from './routes/_authenticated._base/minions/index'
 import { Route as AuthenticatedBaseTeamsSlugImport } from './routes/_authenticated._base/teams/$slug'
 import { Route as AuthenticatedBaseTasksUidImport } from './routes/_authenticated._base/tasks/$uid'
-import { Route as AuthenticatedBaseSettingsUsageImport } from './routes/_authenticated._base/_settings/usage'
 import { Route as AuthenticatedBaseSettingsModelImport } from './routes/_authenticated._base/_settings/model'
 import { Route as AuthenticatedBaseSettingsIntegrationsImport } from './routes/_authenticated._base/_settings/integrations'
 import { Route as AuthenticatedBaseSettingsBillingImport } from './routes/_authenticated._base/_settings/billing'
@@ -164,6 +164,13 @@ const AuthenticatedBaseProfileRoute = AuthenticatedBaseProfileImport.update({
   getParentRoute: () => AuthenticatedBaseRouteRoute,
 } as any)
 
+const AuthenticatedBaseLeaderboardRoute =
+  AuthenticatedBaseLeaderboardImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedBaseRouteRoute,
+  } as any)
+
 const AuthenticatedBaseHomeRoute = AuthenticatedBaseHomeImport.update({
   id: '/home',
   path: '/home',
@@ -209,13 +216,6 @@ const AuthenticatedBaseTasksUidRoute = AuthenticatedBaseTasksUidImport.update({
   path: '/tasks/$uid',
   getParentRoute: () => AuthenticatedBaseRouteRoute,
 } as any)
-
-const AuthenticatedBaseSettingsUsageRoute =
-  AuthenticatedBaseSettingsUsageImport.update({
-    id: '/usage',
-    path: '/usage',
-    getParentRoute: () => AuthenticatedBaseSettingsRouteRoute,
-  } as any)
 
 const AuthenticatedBaseSettingsModelRoute =
   AuthenticatedBaseSettingsModelImport.update({
@@ -361,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseHomeImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
+    '/_authenticated/_base/leaderboard': {
+      id: '/_authenticated/_base/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof AuthenticatedBaseLeaderboardImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
     '/_authenticated/_base/profile': {
       id: '/_authenticated/_base/profile'
       path: '/profile'
@@ -431,13 +438,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseSettingsModelImport
       parentRoute: typeof AuthenticatedBaseSettingsRouteImport
     }
-    '/_authenticated/_base/_settings/usage': {
-      id: '/_authenticated/_base/_settings/usage'
-      path: '/usage'
-      fullPath: '/usage'
-      preLoaderRoute: typeof AuthenticatedBaseSettingsUsageImport
-      parentRoute: typeof AuthenticatedBaseSettingsRouteImport
-    }
     '/_authenticated/_base/tasks/$uid': {
       id: '/_authenticated/_base/tasks/$uid'
       path: '/tasks/$uid'
@@ -476,7 +476,6 @@ interface AuthenticatedBaseSettingsRouteRouteChildren {
   AuthenticatedBaseSettingsBillingRoute: typeof AuthenticatedBaseSettingsBillingRoute
   AuthenticatedBaseSettingsIntegrationsRoute: typeof AuthenticatedBaseSettingsIntegrationsRoute
   AuthenticatedBaseSettingsModelRoute: typeof AuthenticatedBaseSettingsModelRoute
-  AuthenticatedBaseSettingsUsageRoute: typeof AuthenticatedBaseSettingsUsageRoute
 }
 
 const AuthenticatedBaseSettingsRouteRouteChildren: AuthenticatedBaseSettingsRouteRouteChildren =
@@ -488,7 +487,6 @@ const AuthenticatedBaseSettingsRouteRouteChildren: AuthenticatedBaseSettingsRout
     AuthenticatedBaseSettingsIntegrationsRoute:
       AuthenticatedBaseSettingsIntegrationsRoute,
     AuthenticatedBaseSettingsModelRoute: AuthenticatedBaseSettingsModelRoute,
-    AuthenticatedBaseSettingsUsageRoute: AuthenticatedBaseSettingsUsageRoute,
   }
 
 const AuthenticatedBaseSettingsRouteRouteWithChildren =
@@ -500,6 +498,7 @@ interface AuthenticatedBaseRouteRouteChildren {
   AuthenticatedBaseSettingsRouteRoute: typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   AuthenticatedBaseCreateRoute: typeof AuthenticatedBaseCreateRoute
   AuthenticatedBaseHomeRoute: typeof AuthenticatedBaseHomeRoute
+  AuthenticatedBaseLeaderboardRoute: typeof AuthenticatedBaseLeaderboardRoute
   AuthenticatedBaseProfileRoute: typeof AuthenticatedBaseProfileRoute
   AuthenticatedBaseTeamRoute: typeof AuthenticatedBaseTeamRoute
   AuthenticatedBaseTasksUidRoute: typeof AuthenticatedBaseTasksUidRoute
@@ -514,6 +513,7 @@ const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
       AuthenticatedBaseSettingsRouteRouteWithChildren,
     AuthenticatedBaseCreateRoute: AuthenticatedBaseCreateRoute,
     AuthenticatedBaseHomeRoute: AuthenticatedBaseHomeRoute,
+    AuthenticatedBaseLeaderboardRoute: AuthenticatedBaseLeaderboardRoute,
     AuthenticatedBaseProfileRoute: AuthenticatedBaseProfileRoute,
     AuthenticatedBaseTeamRoute: AuthenticatedBaseTeamRoute,
     AuthenticatedBaseTasksUidRoute: AuthenticatedBaseTasksUidRoute,
@@ -585,6 +585,7 @@ export interface FileRoutesByFullPath {
   '/share/$uid': typeof ShareUidRoute
   '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
+  '/leaderboard': typeof AuthenticatedBaseLeaderboardRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
   '/team': typeof AuthenticatedBaseTeamRoute
   '/admin/model-evaluation': typeof AuthenticatedAdminModelEvaluationRoute
@@ -595,7 +596,6 @@ export interface FileRoutesByFullPath {
   '/billing': typeof AuthenticatedBaseSettingsBillingRoute
   '/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/model': typeof AuthenticatedBaseSettingsModelRoute
-  '/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
   '/teams/$slug': typeof AuthenticatedBaseTeamsSlugRoute
   '/minions': typeof AuthenticatedBaseMinionsIndexRoute
@@ -617,6 +617,7 @@ export interface FileRoutesByTo {
   '/share/$uid': typeof ShareUidRoute
   '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
+  '/leaderboard': typeof AuthenticatedBaseLeaderboardRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
   '/team': typeof AuthenticatedBaseTeamRoute
   '/admin/model-evaluation': typeof AuthenticatedAdminModelEvaluationRoute
@@ -627,7 +628,6 @@ export interface FileRoutesByTo {
   '/billing': typeof AuthenticatedBaseSettingsBillingRoute
   '/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/model': typeof AuthenticatedBaseSettingsModelRoute
-  '/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
   '/teams/$slug': typeof AuthenticatedBaseTeamsSlugRoute
   '/minions': typeof AuthenticatedBaseMinionsIndexRoute
@@ -652,6 +652,7 @@ export interface FileRoutesById {
   '/_authenticated/_base/_settings': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   '/_authenticated/_base/create': typeof AuthenticatedBaseCreateRoute
   '/_authenticated/_base/home': typeof AuthenticatedBaseHomeRoute
+  '/_authenticated/_base/leaderboard': typeof AuthenticatedBaseLeaderboardRoute
   '/_authenticated/_base/profile': typeof AuthenticatedBaseProfileRoute
   '/_authenticated/_base/team': typeof AuthenticatedBaseTeamRoute
   '/_authenticated/admin/model-evaluation': typeof AuthenticatedAdminModelEvaluationRoute
@@ -662,7 +663,6 @@ export interface FileRoutesById {
   '/_authenticated/_base/_settings/billing': typeof AuthenticatedBaseSettingsBillingRoute
   '/_authenticated/_base/_settings/integrations': typeof AuthenticatedBaseSettingsIntegrationsRoute
   '/_authenticated/_base/_settings/model': typeof AuthenticatedBaseSettingsModelRoute
-  '/_authenticated/_base/_settings/usage': typeof AuthenticatedBaseSettingsUsageRoute
   '/_authenticated/_base/tasks/$uid': typeof AuthenticatedBaseTasksUidRoute
   '/_authenticated/_base/teams/$slug': typeof AuthenticatedBaseTeamsSlugRoute
   '/_authenticated/_base/minions/': typeof AuthenticatedBaseMinionsIndexRoute
@@ -686,6 +686,7 @@ export interface FileRouteTypes {
     | '/share/$uid'
     | '/create'
     | '/home'
+    | '/leaderboard'
     | '/profile'
     | '/team'
     | '/admin/model-evaluation'
@@ -696,7 +697,6 @@ export interface FileRouteTypes {
     | '/billing'
     | '/integrations'
     | '/model'
-    | '/usage'
     | '/tasks/$uid'
     | '/teams/$slug'
     | '/minions'
@@ -717,6 +717,7 @@ export interface FileRouteTypes {
     | '/share/$uid'
     | '/create'
     | '/home'
+    | '/leaderboard'
     | '/profile'
     | '/team'
     | '/admin/model-evaluation'
@@ -727,7 +728,6 @@ export interface FileRouteTypes {
     | '/billing'
     | '/integrations'
     | '/model'
-    | '/usage'
     | '/tasks/$uid'
     | '/teams/$slug'
     | '/minions'
@@ -750,6 +750,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_base/_settings'
     | '/_authenticated/_base/create'
     | '/_authenticated/_base/home'
+    | '/_authenticated/_base/leaderboard'
     | '/_authenticated/_base/profile'
     | '/_authenticated/_base/team'
     | '/_authenticated/admin/model-evaluation'
@@ -760,7 +761,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_base/_settings/billing'
     | '/_authenticated/_base/_settings/integrations'
     | '/_authenticated/_base/_settings/model'
-    | '/_authenticated/_base/_settings/usage'
     | '/_authenticated/_base/tasks/$uid'
     | '/_authenticated/_base/teams/$slug'
     | '/_authenticated/_base/minions/'
@@ -839,6 +839,7 @@ export const routeTree = rootRoute
         "/_authenticated/_base/_settings",
         "/_authenticated/_base/create",
         "/_authenticated/_base/home",
+        "/_authenticated/_base/leaderboard",
         "/_authenticated/_base/profile",
         "/_authenticated/_base/team",
         "/_authenticated/_base/tasks/$uid",
@@ -884,8 +885,7 @@ export const routeTree = rootRoute
         "/_authenticated/_base/_settings/account",
         "/_authenticated/_base/_settings/billing",
         "/_authenticated/_base/_settings/integrations",
-        "/_authenticated/_base/_settings/model",
-        "/_authenticated/_base/_settings/usage"
+        "/_authenticated/_base/_settings/model"
       ]
     },
     "/_authenticated/_base/create": {
@@ -894,6 +894,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_base/home": {
       "filePath": "_authenticated._base/home.tsx",
+      "parent": "/_authenticated/_base"
+    },
+    "/_authenticated/_base/leaderboard": {
+      "filePath": "_authenticated._base/leaderboard.tsx",
       "parent": "/_authenticated/_base"
     },
     "/_authenticated/_base/profile": {
@@ -934,10 +938,6 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_base/_settings/model": {
       "filePath": "_authenticated._base/_settings/model.tsx",
-      "parent": "/_authenticated/_base/_settings"
-    },
-    "/_authenticated/_base/_settings/usage": {
-      "filePath": "_authenticated._base/_settings/usage.tsx",
       "parent": "/_authenticated/_base/_settings"
     },
     "/_authenticated/_base/tasks/$uid": {

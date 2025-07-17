@@ -50,7 +50,6 @@ const fetchTaskCount = async () => {
       start: startDate,
       end: endDate,
       tz: timeZone,
-      includeDailyUsage: "false",
     },
   });
 

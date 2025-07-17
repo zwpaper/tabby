@@ -1,6 +1,7 @@
 import { OrganizationButton } from "@/components/organization-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserButton } from "@/components/user-button";
+import { useSession } from "@/lib/auth-hooks";
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { Terminal } from "lucide-react";
 
@@ -18,6 +19,7 @@ function RouteComponent() {
 }
 
 function NavHeader() {
+  const { session } = useSession();
   return (
     <span className="mb-4 flex w-full items-center justify-between px-4 pt-4 md:mb-8 md:px-6">
       <span className="flex items-center gap-3 md:gap-6">
@@ -28,9 +30,9 @@ function NavHeader() {
         <span className="flex items-center gap-2 font-normal text-muted-foreground text-sm transition-colors duration-150 md:gap-4">
           <Link
             to="/create"
-            className="inline-flex w-14 justify-center py-1.5 hover:text-foreground"
+            className="hidden justify-center py-1.5 hover:text-foreground md:inline-flex"
             activeProps={{
-              className: "text-foreground font-medium",
+              className: "text-foreground",
             }}
           >
             Create
@@ -44,13 +46,24 @@ function NavHeader() {
             activeOptions={{
               includeSearch: false,
             }}
-            className="inline-flex w-14 justify-center py-1.5 hover:text-foreground"
+            className="inline-flex justify-center py-1.5 hover:text-foreground"
             activeProps={{
-              className: "text-foreground font-medium",
+              className: "text-foreground",
             }}
           >
             Tasks
           </Link>
+          {session?.activeOrganizationId && (
+            <Link
+              to="/leaderboard"
+              className="inline-flex justify-center py-1.5 hover:text-foreground"
+              activeProps={{
+                className: "text-foreground ",
+              }}
+            >
+              Leaderboard
+            </Link>
+          )}
           {false && (
             <Link
               to="/minions"
