@@ -186,10 +186,6 @@
         "properties": {
           "pochi.advanced": {
             "properties": {
-              "enableInlineCompletion": {
-                "type": "boolean",
-                "default": false
-              },
               "inlineCompletion.disabled": {
                 "type": "boolean",
                 "default": false,

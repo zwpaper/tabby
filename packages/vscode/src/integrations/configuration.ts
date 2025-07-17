@@ -61,7 +61,6 @@ export class PochiConfiguration implements vscode.Disposable {
 }
 
 type PochiAdvanceSettings = {
-  enableInlineCompletion?: boolean; // FIXME(zhiming): remove this after feature is stable
   inlineCompletion?: {
     disabled?: boolean;
     disabledLanguages?: string[];

@@ -77,11 +77,7 @@ export class CompletionProvider
     private readonly editorOptionsProvider: EditorOptionsProvider,
     private readonly fetcher: CompletionFetcher,
   ) {
-    // FIXME(zhiming): remove this check after feature is stable
-    if (pochiConfiguration.advancedSettings.value?.enableInlineCompletion) {
-      logger.warn("The experimental inline completion feature is enabled.");
-      this.initialize();
-    }
+    this.initialize();
   }
 
   private initialize() {

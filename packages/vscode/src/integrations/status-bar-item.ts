@@ -22,10 +22,7 @@ export class StatusBarItem implements vscode.Disposable {
     private readonly authEvents: AuthEvents,
     private readonly inlineCompletionProvider: CompletionProvider,
   ) {
-    // FIXME(zhiming): remove this check after feature is stable
-    if (pochiConfiguration.advancedSettings.value?.enableInlineCompletion) {
-      this.initialize();
-    }
+    this.initialize();
   }
 
   private initialize() {
