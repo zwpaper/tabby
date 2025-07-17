@@ -1,4 +1,7 @@
 import { SocialLinks } from "@ragdoll/common";
+import magicLinkEmail from "../templates/magic-link-email.html" with {
+  type: "text",
+};
 import organizationInviteEmail from "../templates/organization-invite-email.html" with {
   type: "text",
 };
@@ -11,6 +14,13 @@ import waitlistConfirmationPage from "../templates/waitlist-confirmation-page.ht
 import waitlistSignupEmail from "../templates/waitlist-signup-email.html" with {
   type: "text",
 };
+import welcomeEmail from "../templates/welcome-email.html" with {
+  type: "text",
+};
+
+export interface MagicLinkEmailData {
+  magicLinkUrl: string;
+}
 
 export interface OrganizationInviteEmailData {
   organizationName: string;
@@ -31,6 +41,17 @@ export interface WaitlistSignupEmailData {
 
 export interface WaitlistConfirmationPageData {
   userInitial: string;
+}
+
+export interface WelcomeEmailData {
+  userName?: string;
+}
+
+export function getMagicLinkEmailHtml(data: MagicLinkEmailData): string {
+  return magicLinkEmail
+    .replace("{{MAGIC_LINK_URL}}", data.magicLinkUrl)
+    .replace(/{{DISCORD_URL}}/g, SocialLinks.Discord)
+    .replace("{{X_URL}}", SocialLinks.X);
 }
 
 export function getOrganizationInviteEmailHtml(
@@ -71,4 +92,11 @@ export function getWaitlistConfirmationPageHtml(
   return waitlistConfirmationPage
     .replace("{{USER_INITIAL}}", data.userInitial)
     .replace("{{DISCORD_URL}}", SocialLinks.Discord);
+}
+
+export function getWelcomeEmailHtml(data: WelcomeEmailData): string {
+  return welcomeEmail
+    .replace("{{USER_NAME}}", data.userName ? `, ${data.userName}` : "")
+    .replace(/{{DISCORD_URL}}/g, SocialLinks.Discord)
+    .replace("{{X_URL}}", SocialLinks.X);
 }
