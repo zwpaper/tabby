@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiClient, authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { creditToDollars } from "@/lib/utils/credit";
+import type { Subscription } from "@better-auth/stripe";
 import { IconCreditCard } from "@tabler/icons-react";
 import {
   useMutation,
@@ -12,7 +13,7 @@ import {
 } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import moment from "moment";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { SpendingLimitForm } from "../profile/spending-limit-form";
 import { InvoiceView } from "../subscription/invoice-view";
@@ -29,28 +30,14 @@ import { SubscriptionLimitDialog } from "./subscription-limit-dialog";
 export function BillingCard({
   queryClient,
   organizationId,
-  isOwner,
+  subscription,
 }: {
   queryClient: ReturnType<typeof useQueryClient>;
   organizationId: string;
-  isOwner: boolean;
+  subscription: Subscription | undefined;
 }) {
   const [subscriptionLimitDialogOpen, setSubscriptionLimitDialogOpen] =
     useState(false);
-  const subscriptionQuery = useQuery({
-    queryKey: ["subscription", organizationId],
-    queryFn: async () => {
-      const { data, error } = await authClient.subscription.list({
-        query: {
-          referenceId: organizationId,
-        },
-      });
-      if (error) {
-        throw new Error(error.message);
-      }
-      return data;
-    },
-  });
 
   const billingQuotaQuery = useQuery({
     queryKey: ["billingQuota", organizationId],
@@ -58,7 +45,7 @@ export function BillingCard({
       const res = await apiClient.api.billing.quota.organization[":orgId"].$get(
         {
           param: {
-            orgId: organizationId,
+            orgId: organizationId as string,
           },
         },
       );
@@ -92,12 +79,6 @@ export function BillingCard({
       toast.error("Failed to update monthly limit");
     },
   });
-
-  const subscription = useMemo(() => {
-    return subscriptionQuery.data?.find(
-      (x) => x.referenceId === organizationId,
-    );
-  }, [subscriptionQuery.data, organizationId]);
 
   const subscriptionMutation = useMutation({
     mutationFn: async (isSubscribing: boolean) => {
@@ -182,19 +163,11 @@ export function BillingCard({
             <div className="flex shrink-0 items-center gap-3">
               <IconCreditCard size={20} className="text-foreground" />
               <span className="font-medium text-base">Stripe</span>
-              {subscriptionQuery.isLoading ? (
-                <Skeleton className="h-6 w-12 rounded-lg" />
-              ) : (
-                <Switch
-                  checked={isEffectivelyActive}
-                  onCheckedChange={subscriptionMutation.mutate}
-                  disabled={
-                    !isOwner ||
-                    subscriptionMutation.isPending ||
-                    subscriptionQuery.isLoading
-                  }
-                />
-              )}
+              <Switch
+                checked={isEffectivelyActive}
+                onCheckedChange={subscriptionMutation.mutate}
+                disabled={subscriptionMutation.isPending}
+              />
             </div>
             {subscription && (
               <div className="ml-2 flex flex-1 flex-col justify-center text-muted-foreground text-xs">
@@ -214,7 +187,7 @@ export function BillingCard({
                 )}
               </div>
             )}
-            {!!subscription && isOwner && (
+            {!!subscription && (
               <a href="/api/billing/portal?return_pathname=team">
                 <Button variant="outline" size="sm">
                   Manage
@@ -264,7 +237,6 @@ export function BillingCard({
                     <Skeleton className="h-24 w-full" />
                   ) : (
                     <SpendingLimitForm
-                      disabled={!isOwner}
                       defaultValues={{
                         monthlyCreditLimit:
                           billingQuotaQuery.data?.credit?.limit,

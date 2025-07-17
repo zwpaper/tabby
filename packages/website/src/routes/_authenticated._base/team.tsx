@@ -64,7 +64,14 @@ function TeamComponent() {
       {/* Create team section */}
       <div className="max-w-xl">
         <h2 className="mb-6 font-semibold text-2xl">Create a Team</h2>
-        <CreateTeamForm onCreated={() => router.invalidate()} />
+        <CreateTeamForm
+          onCreated={({ slug }) =>
+            router.navigate({
+              to: "/teams/$slug",
+              params: { slug },
+            })
+          }
+        />
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import type { Organization } from "better-auth/plugins";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -25,7 +26,7 @@ const FormSchema = z.object({
 });
 
 interface CreateTeamFormProps {
-  onCreated?: () => void;
+  onCreated?: (organization: Organization) => void;
 }
 
 export function CreateTeamForm({ onCreated }: CreateTeamFormProps) {
@@ -35,6 +36,8 @@ export function CreateTeamForm({ onCreated }: CreateTeamFormProps) {
       name: "",
     },
   });
+  const { refetch: refetchActiveOrganization } =
+    authClient.useActiveOrganization();
 
   const createOrganizationMutation = useMutation({
     mutationFn: async (data: { name: string }) => {
@@ -52,11 +55,12 @@ export function CreateTeamForm({ onCreated }: CreateTeamFormProps) {
         organizationId: organization.id,
       });
 
-      await authClient.organization.getFullOrganization();
+      await refetchActiveOrganization();
+      return organization;
     },
-    onSuccess: () => {
+    onSuccess: (organization: Organization) => {
       toast.success("Team created successfully");
-      onCreated?.();
+      onCreated?.(organization);
     },
     onError: (error) => {
       toast.error("Failed to create team", {

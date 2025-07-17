@@ -6,7 +6,7 @@ import {
   OrganizationMembersCard,
   OrganizationSettingsCards,
 } from "@daveyplate/better-auth-ui";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { notFound } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -20,14 +20,34 @@ export function TeamView({ slug }: TeamViewProps) {
   const queryClient = useQueryClient();
   const { data: auth } = useSession();
   const { data: organization, isPending } = authClient.useActiveOrganization();
+  const organizationId = organization?.id;
 
-  const isOwner = useMemo(() => {
-    if (!organization || !auth) return false;
-    const currentMember = organization.members.find(
-      (x) => x.userId === auth.user.id,
+  const subscriptionQuery = useQuery({
+    queryKey: ["subscription", organizationId],
+    queryFn: async () => {
+      const subscription = await authClient.subscription.list({
+        query: {
+          referenceId: organizationId,
+        },
+        fetchOptions: {
+          throw: true,
+        },
+      });
+
+      return subscription;
+    },
+    enabled: !!organizationId,
+    retry(failureCount, error) {
+      if (error.message === "Unauthorized") return false;
+      return failureCount < 2;
+    },
+  });
+
+  const subscription = useMemo(() => {
+    return subscriptionQuery.data?.find(
+      (x) => x.referenceId === organizationId,
     );
-    return currentMember?.role === "owner";
-  }, [organization, auth]);
+  }, [subscriptionQuery.data, organizationId]);
 
   const isAdmin = useMemo(() => {
     if (!organization || !auth) return false;
@@ -40,6 +60,9 @@ export function TeamView({ slug }: TeamViewProps) {
   const pendingInvitations = organization?.invitations?.filter(
     (invitation) => invitation.status === "pending",
   );
+
+  const hasBillingPermission =
+    !subscriptionQuery.isPending && !subscriptionQuery.error;
 
   useEffect(() => {
     if (!!organization && organization.slug !== slug) {
@@ -101,7 +124,7 @@ export function TeamView({ slug }: TeamViewProps) {
       )}
 
       {/* Billing Section */}
-      {!!organization && isOwner && (
+      {!!organizationId && hasBillingPermission && (
         <div className="space-y-4">
           <div className="mx-4 space-y-1">
             <h2 className="font-semibold text-base text-foreground">Billing</h2>
@@ -110,9 +133,9 @@ export function TeamView({ slug }: TeamViewProps) {
             </p>
           </div>
           <BillingCard
-            isOwner={isOwner}
             queryClient={queryClient}
-            organizationId={organization.id}
+            organizationId={organizationId}
+            subscription={subscription}
           />
         </div>
       )}

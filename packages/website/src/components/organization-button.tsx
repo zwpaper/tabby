@@ -15,10 +15,13 @@ export function OrganizationButton() {
         isPending={isPending}
         organization={organization}
         localization={{
-          ORGANIZATION: "Team",
+          ORGANIZATION: "Create Team",
         }}
         className="max-w-[200px] overflow-hidden"
         classNames={{
+          avatar: {
+            base: "hidden",
+          },
           title: "font-medium truncate",
           subtitle: "hidden",
         }}

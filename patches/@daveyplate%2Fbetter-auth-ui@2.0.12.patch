@@ -1,0 +1,13 @@
+diff --git a/dist/index.js b/dist/index.js
+index afce3f9f02bfe69d01de62bbd95ea8307294c8db..55afa57e2f649714b0ce28eb645429f4b53d059c 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1511,7 +1511,7 @@ import { jsx as jsx14, jsxs as jsxs9 } from "react/jsx-runtime";
+ function DropdownMenu({
+   ...props
+ }) {
+-  return /* @__PURE__ */ jsx14(DropdownMenuPrimitive.Root, { "data-slot": "dropdown-menu", ...props });
++  return /* @__PURE__ */ jsx14(DropdownMenuPrimitive.Root, { "data-slot": "dropdown-menu", "modal": false, ...props });
+ }
+ function DropdownMenuTrigger({
+   ...props
