@@ -137,6 +137,7 @@ function UsersPage() {
   const { users, pageSize, error: loaderError } = Route.useLoaderData(); // Renamed error to loaderError
   const [currentPage, setCurrentPage] = useState(1);
   const [userData, setUserData] = useState(users);
+  const [searchResults, setSearchResults] = useState<User[] | null>(null);
   const [userToBan, setUserToBan] = useState<(typeof userList)[0] | null>(null);
   const [userToChangeRole, setUserToChangeRole] = useState<
     (typeof userList)[0] | null
@@ -149,22 +150,59 @@ function UsersPage() {
   >(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   const userList = (userData?.users || []) as User[];
 
-  // Filter users based on email and name search
-  const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return userList;
+  // Search users using API
+  const searchUsers = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults(null);
+      return;
     }
-    const query = searchQuery.toLowerCase().trim();
-    return userList.filter((user) => {
-      const email = user.email.toLowerCase();
-      const name = (user.name || "").toLowerCase();
 
-      return email.startsWith(query) || name.includes(query);
-    });
-  }, [userList, searchQuery]);
+    setIsSearching(true);
+    try {
+      const res = await apiClient.api.admin.searchUsers.$get({
+        query: { query: query.trim(), limit: "100" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Convert date strings to Date objects to match User type
+        const usersWithDates = data.users.map((user) => ({
+          ...user,
+          createdAt: new Date(user.createdAt),
+          updatedAt: new Date(user.updatedAt),
+          banExpires: user.banExpires ? new Date(user.banExpires) : null,
+        })) as User[];
+        setSearchResults(usersWithDates);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      toast.error("Search failed", {
+        description: "Failed to search users. Please try again.",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounce search to avoid too many API calls
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+
+  const debouncedSearch = (query: string) => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    const timeout = setTimeout(() => {
+      searchUsers(query);
+    }, 300); // 300ms debounce
+    setSearchTimeout(timeout);
+  };
+
+  const displayUsers = searchQuery.trim() ? searchResults || [] : userList;
 
   const totalUsers = userData?.total || 0;
   const totalPages = Math.ceil(totalUsers / pageSize);
@@ -321,7 +359,7 @@ function UsersPage() {
       );
     }
 
-    if (filteredUsers.length === 0) {
+    if (displayUsers.length === 0) {
       return (
         <div className="rounded-md border border-border bg-muted/40 p-4 text-center text-muted-foreground">
           {searchQuery.trim()
@@ -347,7 +385,7 @@ function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.map((user) => (
+            {displayUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.name || "—"}</TableCell>
@@ -483,8 +521,8 @@ function UsersPage() {
 
         {searchQuery.trim() && (
           <div className="mt-4 text-muted-foreground text-sm">
-            Showing {filteredUsers.length} user
-            {filteredUsers.length !== 1 ? "s" : ""} matching "{searchQuery}"
+            Showing {displayUsers.length} user
+            {displayUsers.length !== 1 ? "s" : ""} matching "{searchQuery}"
           </div>
         )}
       </>
@@ -500,13 +538,22 @@ function UsersPage() {
         <CardContent>
           <div className="mb-4 flex items-center gap-2">
             <div className="relative max-w-sm flex-1">
-              <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+              {isSearching ? (
+                <Loader2 className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 animate-spin text-muted-foreground" />
+              ) : (
+                <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+              )}
               <Input
                 placeholder="Search by email or name..."
                 value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSearchQuery(e.target.value)
-                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const value = e.target.value;
+                  setSearchQuery(value);
+                  // Fetch all users when user starts searching
+                  if (value.trim()) {
+                    debouncedSearch(value);
+                  }
+                }}
                 className="pr-9 pl-9"
               />
               {searchQuery && (
