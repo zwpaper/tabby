@@ -1,7 +1,10 @@
 import { type ExecException, exec } from "node:child_process";
 import * as path from "node:path";
 import { promisify } from "node:util";
-import { MaxTerminalOutputSize } from "@ragdoll/common/node";
+import {
+  MaxTerminalOutputSize,
+  fixExecuteCommandOutput,
+} from "@ragdoll/common/node";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import type { ToolCallOptions } from "../types";
 
@@ -55,8 +58,7 @@ export const executeCommand =
           GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
         },
       });
-      // need CRLF ('\r\n') as line separator, '\n' only moves the cursor one line down but not to the beginning
-      const fullOutput = (stdout + stderr).replace(/(?<!\r)\n/g, "\r\n");
+      const fullOutput = fixExecuteCommandOutput(stdout + stderr);
       const isTruncated = fullOutput.length > MaxTerminalOutputSize;
       const output = isTruncated
         ? fullOutput.slice(-MaxTerminalOutputSize)

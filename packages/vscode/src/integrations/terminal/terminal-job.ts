@@ -1,7 +1,9 @@
 import { getLogger } from "@/lib/logger";
+import { getShellPath } from "@ragdoll/common/node";
 import * as vscode from "vscode";
-import { createBackgroundOutputStream } from "./background-stream-utils";
 import { OutputManager } from "./output";
+import { createBackgroundOutputStream } from "./utils";
+import { waitForWebviewSubscription } from "./utils";
 
 const logger = getLogger("TerminalJob");
 
@@ -62,21 +64,11 @@ export class TerminalJob implements vscode.Disposable {
       this.detached = true;
     }
 
-    const defaultShell = process.env.SHELL ?? "";
-
-    const shellPath = ["/zsh", "/bash"].some((item) =>
-      defaultShell.endsWith(item),
-    )
-      ? defaultShell
-      : ["linux", "darwin"].includes(process.platform)
-        ? "/bin/bash"
-        : undefined;
-
     // Create the terminal with the provided configuration
     this.terminal = vscode.window.createTerminal({
       name: config.name,
       cwd: config.cwd,
-      shellPath,
+      shellPath: getShellPath(),
       env: {
         PAGER: "cat",
         GIT_COMMITTER_NAME: "Pochi",
@@ -101,7 +93,7 @@ export class TerminalJob implements vscode.Disposable {
    * Execute the configured command in the terminal
    */
   async execute(): Promise<void> {
-    await this.waitForWebviewSubscription();
+    await waitForWebviewSubscription();
 
     let executeError: ExecutionError | undefined = undefined;
 
@@ -300,18 +292,4 @@ export class TerminalJob implements vscode.Disposable {
   static create(config: TerminalJobConfig): TerminalJob {
     return new TerminalJob(config);
   }
-
-  /**
-   * Waits for webview subscription to prevent early garbage collection
-   */
-  private async waitForWebviewSubscription(): Promise<void> {
-    await new Promise((resolve) =>
-      setTimeout(resolve, WebviewSubscriptionDelayMs),
-    );
-  }
 }
-
-/**
- * Initial delay before starting command execution to ensure webview subscription
- */
-const WebviewSubscriptionDelayMs = 250;

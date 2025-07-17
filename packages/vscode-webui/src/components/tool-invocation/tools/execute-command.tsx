@@ -73,6 +73,7 @@ export const executeCommandTool: React.FC<
           onDetach={onDetach}
           completed={completed}
           isExecuting={isExecuting}
+          isDevServer={isDevServer}
         />
       }
     />

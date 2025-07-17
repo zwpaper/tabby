@@ -13,3 +13,4 @@ export { GitStatusReader, type GitStatusReaderOptions } from "./git-status";
 export { collectCustomRules } from "./custom-rules";
 export { MaxTerminalOutputSize } from "./limits";
 export { CredentialStorage } from "./credential-storage";
+export { getShellPath, fixExecuteCommandOutput } from "./shell";
