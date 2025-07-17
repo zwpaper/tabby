@@ -34,6 +34,7 @@ import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
 import { toError, toErrorString } from "./lib/error-utils";
 import { readEnvironment } from "./lib/read-environment";
+import { StepCount, type StepInfo } from "./lib/step-count";
 import { withAttempts } from "./lib/with-attempts";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
@@ -94,16 +95,21 @@ export interface RunnerOptions {
   modelEndpointId?: string;
 
   /**
-   * Force stop the runner after max steps reached.
-   * If a task cannot be completed in max steps, it is likely stuck in an infinite loop.
+   * Force stop the runner after max rounds reached.
+   * If a task cannot be completed in max rounds, it is likely stuck in an infinite loop.
    */
-  maxSteps?: number;
+  maxRounds?: number;
+
+  /**
+   * Force stop the runner after max retries reached in a single round.
+   */
+  maxRetries?: number;
 
   // Add more context properties here as needed in the future
   // e.g., environment variables, workspace settings, etc.
 }
 
-type TaskRunnerProgress = { step: number } & (
+type TaskRunnerProgress = { step: StepInfo } & (
   | {
       type: "loading-task";
       phase: "begin";
@@ -132,10 +138,13 @@ type TaskRunnerProgress = { step: number } & (
       type: "sending-message";
       phase: "begin";
       message: UIMessage;
+      messageReason: "next" | "retry";
     }
   | {
       type: "sending-message";
       phase: "end";
+      message: UIMessage;
+      messageReason: "next" | "retry";
     }
 );
 
@@ -178,24 +187,23 @@ const ToolMap: Record<
   executeCommand,
 };
 
-const DefaultMaxSteps = 24;
-const MaxContinuousTaskFailedSteps = 3;
+const DefaultMaxRounds = 24;
+const DefaultMaxRetries = 3;
 const ApiRequestTimeout = 60_000; // 60 seconds
 
 const logger = getLogger("TaskRunner");
 
 export class TaskRunner {
-  readonly state: Signal<TaskRunnerState>;
+  private readonly logger: ReturnType<typeof getLogger>;
+  private toolCallOptions: ToolCallOptions;
+  private stepCount: StepCount;
+  private abortController?: AbortController;
 
   private task?: Task;
   private messages: UIMessage[] = [];
   private todos: Todo[] = [];
 
-  private readonly logger: ReturnType<typeof getLogger>;
-  private stepCount = 0;
-  private continuousTaskFailedSteps = 0;
-  private abortController?: AbortController;
-  private toolCallOptions: ToolCallOptions;
+  readonly state: Signal<TaskRunnerState>;
 
   constructor(readonly options: RunnerOptions) {
     this.logger = logger.getSubLogger({
@@ -208,6 +216,10 @@ export class TaskRunner {
       cwd: options.cwd,
       rg: options.rg,
     };
+    this.stepCount = new StepCount(
+      options.maxRounds ?? DefaultMaxRounds,
+      options.maxRetries ?? DefaultMaxRetries,
+    );
   }
 
   start() {
@@ -231,7 +243,7 @@ export class TaskRunner {
     const abortController = new AbortController();
     this.abortController = abortController;
 
-    const finishWithState = async (
+    const finishWithState = (
       state:
         | {
             state: "stopped";
@@ -251,17 +263,24 @@ export class TaskRunner {
 
     try {
       this.logger.trace("Start step loop.");
-      this.stepCount = 0;
-      this.continuousTaskFailedSteps = 0;
-      while (await this.step()) {
-        this.stepCount++;
+      this.stepCount.reset();
+      while (true) {
+        const stepResult = await this.step();
+        if (stepResult === "finished") {
+          break;
+        }
+        if (stepResult === "retry") {
+          this.stepCount.nextRetry();
+        } else {
+          this.stepCount.nextRound();
+        }
       }
 
       const task = this.getTaskOrThrow();
       const result = extractTaskResult(task);
       this.logger.trace("Completed with result:", result);
 
-      await finishWithState({
+      finishWithState({
         state: "stopped",
         result,
       });
@@ -269,7 +288,7 @@ export class TaskRunner {
       const error = toError(e);
       this.logger.trace("Failed:", error);
 
-      await finishWithState({
+      finishWithState({
         state: "error",
         error,
       });
@@ -277,24 +296,28 @@ export class TaskRunner {
   }
 
   /**
-   * @returns {boolean} - Returns true if next step is ready to be executed, false if the task is completed.
+   * @returns
+   *  - "finished" if the task is finished and no more steps are needed.
+   *  - "next" if the task is not finished and needs next round.
+   *  - "retry" if the task is not finished and needs to retry the current round.
    * @throws {Error} - Throws an error if this step is failed.
    */
-  private async step(): Promise<boolean> {
-    const maxStep = this.options.maxSteps ?? DefaultMaxSteps;
-    if (this.stepCount > maxStep) {
-      throw new Error(`TaskRunner reached maximum steps (${maxStep}).`);
-    }
-
+  private async step(): Promise<"finished" | "next" | "retry"> {
     await this.loadTask();
 
-    const shouldSendMessage = await this.processMessage();
-    if (!shouldSendMessage) {
-      return false;
+    const result = await this.processMessage();
+    if (result === "finished") {
+      return "finished";
+    }
+    if (result === "next") {
+      this.stepCount.throwIfReachedMaxRounds();
+    }
+    if (result === "retry") {
+      this.stepCount.throwIfReachedMaxRetries();
     }
 
-    await this.sendMessage();
-    return true;
+    await this.sendMessage(result);
+    return result;
   }
 
   private async loadTask() {
@@ -339,16 +362,12 @@ export class TaskRunner {
     signal?.throwIfAborted();
   }
 
-  /**
-   * @returns {boolean} - Returns true if the last message was processed and ready to be sent, false if no more steps to process.
-   */
-  private async processMessage(): Promise<boolean> {
+  private async processMessage(): Promise<"finished" | "next" | "retry"> {
     const signal = this.abortController?.signal;
     signal?.throwIfAborted();
 
     const task = this.getTaskOrThrow();
     const lastMessage = this.getLastMessageOrThrow();
-    const maxStep = this.options.maxSteps ?? DefaultMaxSteps;
 
     if (
       (task.status === "completed" || task.status === "pending-input") &&
@@ -357,128 +376,124 @@ export class TaskRunner {
       this.logger.trace(
         "Task is completed or pending input, no more steps to process.",
       );
-      return false;
+      return "finished";
     }
 
     if (task.status === "failed") {
-      this.continuousTaskFailedSteps++;
-      if (this.continuousTaskFailedSteps >= MaxContinuousTaskFailedSteps) {
-        throw new Error(
-          `Task is failed in recent ${MaxContinuousTaskFailedSteps} steps. ${task.error?.message}`,
-        );
-      }
       this.logger.trace(
-        "Task is failed, trying to resend last message to resume.",
+        "Task is failed, trying to resend last message to resume it.",
         task.error,
       );
-      // resend the last message, nothing to process here
-    } else if (this.stepCount === maxStep - 1) {
-      const lastMessage = this.getLastMessageOrThrow();
-      if (lastMessage.role === "assistant") {
-        const message = await createUIMessage({
-          role: "user",
-          content: prompts.createSystemReminder(
-            "You've been working on this task for a while and don't seem to be making progress. Please use askFollowupQuestion to engage with the user and clarify what they need, or use attemptCompletion if you think the task is complete.",
-          ),
-        });
-        this.messages.push(message);
-      }
-    } else {
-      this.continuousTaskFailedSteps = 0;
-      if (lastMessage.role === "assistant") {
-        if (isAssistantMessageWithNoToolCalls(lastMessage)) {
-          this.logger.trace(
-            "Last message is assistant with no tool calls, sending a new user reminder.",
-          );
-          const message = await createUIMessage({
-            role: "user",
-            content: prompts.createSystemReminder(
-              "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
-            ),
-          });
-          this.messages.push(message);
-        } else if (
-          isAssistantMessageWithEmptyParts(lastMessage) ||
-          isAssistantMessageWithPartialToolCalls(lastMessage) ||
-          isAssistantMessageWithCompletedToolCalls(lastMessage)
-        ) {
-          this.logger.trace(
-            "Last message is assistant with empty parts or partial/completed tool calls, resending it to trigger generating new messages.",
-          );
-          const processed = prepareLastMessageForRetry(lastMessage);
-          if (processed) {
-            this.messages.splice(-1, 1, processed);
-          } else {
-            // skip, the last message is ready to be resent
-          }
-        } else {
-          this.logger.trace("Processing tool calls in the last message.");
-          let toolCall = findNextToolCall(lastMessage);
-          while (toolCall) {
-            this.logger.trace(
-              `Found tool call: ${toolCall.toolName} with args: ${JSON.stringify(
-                toolCall.args,
-              )}`,
-            );
-            this.updateState({
-              state: "running",
-              progress: {
-                step: this.stepCount,
-                type: "executing-tool-call",
-                phase: "begin",
-                toolName: toolCall.toolName,
-                toolCallId: toolCall.toolCallId,
-                toolArgs: toolCall.args,
-              },
-            });
-            signal?.throwIfAborted();
-
-            const toolResult = await executeToolCall(
-              toolCall,
-              this.toolCallOptions,
-              signal,
-            );
-
-            updateToolCallResult({
-              messages: this.messages,
-              toolCallId: toolCall.toolCallId,
-              toolResult,
-            });
-
-            this.logger.trace(
-              `Tool call result: ${JSON.stringify(toolResult)}`,
-            );
-            this.updateState({
-              state: "running",
-              progress: {
-                step: this.stepCount,
-                type: "executing-tool-call",
-                phase: "end",
-                toolName: toolCall.toolName,
-                toolCallId: toolCall.toolCallId,
-                toolArgs: toolCall.args,
-                toolResult,
-              },
-            });
-            signal?.throwIfAborted();
-
-            toolCall = findNextToolCall(lastMessage);
-          }
-          this.logger.trace("All tool calls processed in the last message.");
-        }
-      } else {
-        this.logger.trace(
-          "Last message is not assistant, continue resending it.",
-        );
-        // nothing to process, just resend the last message
-      }
+      return "retry";
     }
 
-    signal?.throwIfAborted();
-    return true;
+    if (lastMessage.role !== "assistant") {
+      this.logger.trace(
+        "Last message is not a assistant message, resending it to resume the task.",
+      );
+      return "retry";
+    }
+
+    if (
+      isAssistantMessageWithEmptyParts(lastMessage) ||
+      isAssistantMessageWithPartialToolCalls(lastMessage) ||
+      isAssistantMessageWithCompletedToolCalls(lastMessage)
+    ) {
+      this.logger.trace(
+        "Last message is assistant with empty parts or partial/completed tool calls, resending it to resume the task.",
+      );
+      const processed = prepareLastMessageForRetry(lastMessage);
+      if (processed) {
+        this.messages.splice(-1, 1, processed);
+      } else {
+        // skip, the last message is ready to be resent
+      }
+      return "retry";
+    }
+
+    if (this.stepCount.willReachMaxRounds()) {
+      this.logger.trace("Will reach max rounds, sending a new user reminder.");
+      const message = await createUIMessage({
+        role: "user",
+        content: prompts.createSystemReminder(
+          "You've been working on this task for a while and don't seem to be making progress. Please use askFollowupQuestion to engage with the user and clarify what they need, or use attemptCompletion if you think the task is complete.",
+        ),
+      });
+      this.messages.push(message);
+      return "next";
+    }
+
+    if (isAssistantMessageWithNoToolCalls(lastMessage)) {
+      this.logger.trace(
+        "Last message is assistant with no tool calls, sending a new user reminder.",
+      );
+      const message = await createUIMessage({
+        role: "user",
+        content: prompts.createSystemReminder(
+          "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
+        ),
+      });
+      this.messages.push(message);
+      return "next";
+    }
+
+    /* otherwise, processing tool calls */ {
+      this.logger.trace("Processing tool calls in the last message.");
+      let toolCall = findNextToolCall(lastMessage);
+      while (toolCall) {
+        this.logger.trace(
+          `Found tool call: ${toolCall.toolName} with args: ${JSON.stringify(
+            toolCall.args,
+          )}`,
+        );
+        this.updateState({
+          state: "running",
+          progress: {
+            step: this.stepCount,
+            type: "executing-tool-call",
+            phase: "begin",
+            toolName: toolCall.toolName,
+            toolCallId: toolCall.toolCallId,
+            toolArgs: toolCall.args,
+          },
+        });
+        signal?.throwIfAborted();
+
+        const toolResult = await executeToolCall(
+          toolCall,
+          this.toolCallOptions,
+          signal,
+        );
+
+        updateToolCallResult({
+          messages: this.messages,
+          toolCallId: toolCall.toolCallId,
+          toolResult,
+        });
+
+        this.logger.trace(`Tool call result: ${JSON.stringify(toolResult)}`);
+        this.updateState({
+          state: "running",
+          progress: {
+            step: this.stepCount,
+            type: "executing-tool-call",
+            phase: "end",
+            toolName: toolCall.toolName,
+            toolCallId: toolCall.toolCallId,
+            toolArgs: toolCall.args,
+            toolResult,
+          },
+        });
+        signal?.throwIfAborted();
+
+        toolCall = findNextToolCall(lastMessage);
+      }
+      this.logger.trace("All tool calls processed in the last message.");
+      return "next";
+    }
   }
 
-  private async sendMessage() {
+  private async sendMessage(messageReason: "next" | "retry") {
     const signal = this.abortController?.signal;
 
     const lastMessage = this.getLastMessageOrThrow();
@@ -491,6 +506,7 @@ export class TaskRunner {
         type: "sending-message",
         phase: "begin",
         message: lastMessage,
+        messageReason,
       },
     });
     signal?.throwIfAborted();
@@ -537,6 +553,8 @@ export class TaskRunner {
         step: this.stepCount,
         type: "sending-message",
         phase: "end",
+        message: lastMessage,
+        messageReason,
       },
     });
     signal?.throwIfAborted();

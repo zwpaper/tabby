@@ -32,6 +32,17 @@ logger.debug(`pochi v${packageJson.version}`);
 
 const prodServerUrl = "https://app.getpochi.com";
 
+const parsePositiveInt = (input: string) => {
+  if (!input) {
+    return undefined;
+  }
+  const result = Number.parseInt(input);
+  if (Number.isNaN(result) || result <= 0) {
+    program.error("error: Option must be a positive integer");
+  }
+  return result;
+};
+
 program
   .optionsGroup("Specify Task:")
   .option(
@@ -68,15 +79,14 @@ program
   )
   .option("--model-endpoint-id <modelEndpointId>")
   .option(
-    "--max-steps <number>",
-    "Force the runner to stop after the maximum number of steps is reached.",
-    (input: string) => {
-      if (!input) {
-        return undefined;
-      }
-      const result = Number.parseInt(input);
-      return Number.isNaN(result) ? undefined : result;
-    },
+    "--max-rounds <number>",
+    "Force the runner to stop if the number of rounds exceeds this value.",
+    parsePositiveInt,
+  )
+  .option(
+    "--max-retries <number>",
+    "Force the runner to stop if the number of retries in a single round exceeds this value.",
+    parsePositiveInt,
   )
   .action(async (options) => {
     let uid = options.task ?? process.env.POCHI_TASK_ID;
@@ -209,7 +219,8 @@ program
       cwd: options.cwd,
       rg: options.rg,
       model: options.model,
-      maxSteps: options.maxSteps,
+      maxRounds: options.maxRounds,
+      maxRetries: options.maxRetries,
       modelEndpointId: options.modelEndpointId,
     });
 

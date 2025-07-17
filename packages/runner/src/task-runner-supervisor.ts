@@ -2,6 +2,7 @@ import { getLogger } from "@ragdoll/common";
 import type { TaskEvent } from "@ragdoll/db";
 import { createPochiEventSourceWithApiClient } from "@ragdoll/server";
 import chalk from "chalk";
+import { stepToString } from "./lib/step-count";
 import type { TaskRunner, TaskRunnerState } from "./task-runner";
 import type { TaskRunnerOutputStream } from "./task-runner-output";
 
@@ -57,22 +58,21 @@ export class TaskRunnerSupervisor {
   private async trackRunnerState(runnerState: TaskRunnerState): Promise<void> {
     if (runnerState.state === "running") {
       const progress = runnerState.progress;
+      const stepInfo = stepToString(progress.step);
       switch (progress.type) {
         case "loading-task":
           if (progress.phase === "begin") {
-            logger.debug(`[Step ${progress.step}] Loading task...`);
+            logger.debug(`[${stepInfo}] Loading task...`);
             this.output.startLoading("Loading task...");
           } else if (progress.phase === "end") {
-            logger.debug(`[Step ${progress.step}] Task loaded successfully.`);
+            logger.debug(`[${stepInfo}] Task loaded successfully.`);
             this.output.stopLoading();
             this.output.updateMessage(runnerState.messages);
           }
           break;
         case "executing-tool-call":
           if (progress.phase === "begin") {
-            logger.debug(
-              `[Step ${progress.step}] Executing tool: ${progress.toolName}`,
-            );
+            logger.debug(`[${stepInfo}] Executing tool: ${progress.toolName}`);
             this.output.updateToolCall({
               state: "call",
               toolCallId: progress.toolCallId,
@@ -89,12 +89,10 @@ export class TaskRunnerSupervisor {
                 : undefined;
             if (error) {
               logger.error(
-                `[Step ${progress.step}] Tool ${progress.toolName} ✗ (${error})`,
+                `[${stepInfo}] Tool ${progress.toolName} ✗ (${error})`,
               );
             } else {
-              logger.debug(
-                `[Step ${progress.step}] Tool ${progress.toolName} ✓`,
-              );
+              logger.debug(`[${stepInfo}] Tool ${progress.toolName} ✓`);
             }
             this.output.updateToolCall({
               state: "result",
@@ -107,16 +105,18 @@ export class TaskRunnerSupervisor {
           break;
         case "sending-message":
           if (progress.phase === "begin") {
-            logger.debug(`[Step ${progress.step}] Sending message...`);
+            logger.debug(`[${stepInfo}] Sending message...`);
             this.output.updateMessage(runnerState.messages);
             this.output.startLoading("Sending message...");
           } else if (progress.phase === "end") {
-            logger.debug(`[Step ${progress.step}] Message sent successfully.`);
+            logger.debug(`[${stepInfo}] Message sent successfully.`);
             this.output.stopLoading();
-            this.output.printText(
-              chalk.dim(chalk.italic("--- Round complete ---")),
-            );
-            this.output.println();
+            if (progress.messageReason === "next") {
+              this.output.printText(
+                chalk.dim(chalk.italic("--- Round complete ---")),
+              );
+              this.output.println();
+            }
           }
           break;
       }
