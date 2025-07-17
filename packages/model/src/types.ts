@@ -17,3 +17,18 @@ export interface TaskData {
   verified?: boolean;
   excluded?: boolean;
 }
+
+export type GeminiData = {
+  systemInstruction: {
+    role: "system";
+    parts: Array<{
+      text: string;
+    }>;
+  };
+  contents: Array<{
+    role: "user" | "model";
+    parts: Array<{
+      text: string;
+    }>;
+  }>;
+};
