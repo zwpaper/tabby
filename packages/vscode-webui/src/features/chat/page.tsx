@@ -1,7 +1,7 @@
 import { ModelSelect } from "@/components/model-select";
 import { Button } from "@/components/ui/button";
 import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
-import { useEnableCheckpoint, useSelectedModels } from "@/features/settings";
+import { useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { formatters, prompts, toUIMessages } from "@ragdoll/common";
@@ -117,7 +117,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const { toolset: mcpToolSet } = useMcp();
 
   const latestHttpCode = useRef<number | undefined>(undefined);
-  const enableCheckpoint = useEnableCheckpoint();
   const chat = useChat({
     /*
      * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
@@ -159,7 +158,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         await buildEnvironment(),
         mcpToolSet,
         selectedModel?.id,
-        enableCheckpoint,
         minionId,
       ),
     fetch: async (url, options) => {

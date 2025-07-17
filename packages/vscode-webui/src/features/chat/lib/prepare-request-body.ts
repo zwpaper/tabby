@@ -14,12 +14,10 @@ export async function prepareRequestBody(
   environment: Environment,
   mcpToolSet: Record<string, McpTool>,
   model: string | undefined,
-  enableCheckpoint: boolean,
   minionId?: string | null,
 ): Promise<RagdollChatRequest> {
   const message = request.messages[request.messages.length - 1];
-  enableCheckpoint &&
-    (await appendCheckpoint(message as UIMessageWithRevisionId));
+  await appendCheckpoint(message as UIMessageWithRevisionId);
   const triggerError =
     message.parts[0].type === "text" &&
     message.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");

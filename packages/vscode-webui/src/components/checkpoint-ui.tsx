@@ -8,7 +8,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { useEnableCheckpoint } from "@/features/settings";
 import { cn } from "@/lib/utils";
 import type { CheckpointPart } from "@ragdoll/db";
 import { useState } from "react";
@@ -22,8 +21,6 @@ export const CheckpointUI: React.FC<{
   className?: string;
   hideBorderOnHover?: boolean;
 }> = ({ checkpoint, isLoading, className, hideBorderOnHover = true }) => {
-  const enableCheckpoint = useEnableCheckpoint();
-
   const [currentAction, setCurrentAction] = useState<ActionType>();
   const [showActionSuccessIcon, setShowActionSuccessIcon] = useState(false);
 
@@ -69,7 +66,7 @@ export const CheckpointUI: React.FC<{
     });
   };
 
-  const showCheckpoint = enableCheckpoint && checkpoint?.commit;
+  const showCheckpoint = checkpoint?.commit;
 
   const getRestoreIcon = () => {
     if (isPending && currentAction === "restore") {

@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToolCallLifeCycle } from "@/features/chat";
-import { useEnableCheckpoint } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
 import { isVSCodeEnvironment } from "@/lib/vscode";
@@ -197,9 +196,8 @@ const SeparatorWithCheckpoint: React.FC<{
   message: ExtendedUIMessage;
   isLoading: boolean;
 }> = ({ message, isLoading }) => {
-  const enableCheckpoint = useEnableCheckpoint();
   const sep = <Separator className="mt-1 mb-2" />;
-  if (!enableCheckpoint || message.role === "assistant") return sep;
+  if (message.role === "assistant") return sep;
   const part = message.parts.at(-1);
   if (part && part.type === "checkpoint" && isVSCodeEnvironment()) {
     return (
