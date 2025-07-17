@@ -101,7 +101,6 @@ export interface Member {
 
 export interface Minion {
   createdAt: Generated<Timestamp>;
-  e2bSandboxId: string | null;
   id: Generated<number>;
   sandboxId: string | null;
   updatedAt: Generated<Timestamp>;

@@ -25,3 +25,4 @@ When encountering issues like `TypeError: Descriptor for property readFile is no
 4. Prefer `@/lib` over `../lib` for imports.
 5. For global variable in typescript, prefer using PascalCase, e.g `GlobalVariableName`, instead of `GLOBAL_VARIABLE_NAME`.
 6. For biome related warning / errors, prefer using `bun fix` in the root directory to fix the issues.
+7. `packages/db/src/schema.d.ts` is auto generated with script 'db:genschema'. Do not modify it directly.
