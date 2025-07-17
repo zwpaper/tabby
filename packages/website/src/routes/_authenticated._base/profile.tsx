@@ -580,7 +580,7 @@ function BillingCard({
                 <AccordionTrigger className="flex-none px-1 font-medium md:px-2">
                   Spending Settings
                 </AccordionTrigger>
-                <AccordionContent className="px-1 md:px-2">
+                <AccordionContent className="p-1 md:px-2">
                   {billingQuotaQuery.isLoading && !billingQuotaQuery.data ? (
                     <Skeleton className="h-24 w-full" />
                   ) : (

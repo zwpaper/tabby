@@ -9,9 +9,15 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { notFound } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../ui/accordion";
 import { Skeleton } from "../ui/skeleton";
 import { BillingCard } from "./billing-card";
-
+import { LeaveTeamCard } from "./leave-team-card";
 interface TeamViewProps {
   slug: string;
 }
@@ -141,14 +147,38 @@ export function TeamView({ slug }: TeamViewProps) {
       )}
 
       {/* Settings Section */}
-      <div className="space-y-4">
-        <div className="mx-4 space-y-1">
-          <h2 className="font-semibold text-base text-foreground">Settings</h2>
-          <p className="text-muted-foreground text-xs">
-            Manage your team's settings and details.
-          </p>
-        </div>
-        <OrganizationSettingsCards className="m-4 w-auto gap-6 py-0" />
+      <div className="space-y-4 px-4">
+        <Accordion type="single" collapsible>
+          <AccordionItem value="advanced">
+            <AccordionTrigger className="flex-none pt-2 font-semibold">
+              Advanced Settings
+            </AccordionTrigger>
+            <AccordionContent className="px-0">
+              <div className="space-y-6">
+                <OrganizationSettingsCards
+                  className="w-auto gap-6 py-0"
+                  classNames={{
+                    card: {
+                      base: "pt-4 rounded-sm",
+                      header: "px-4",
+                      title: "font-semibold !text-base text-foreground",
+                      description: "text-muted-foreground !text-xs",
+                      footer: "rounded-b-sm px-4 !py-3",
+                      content: "px-4",
+                    },
+                  }}
+                />
+                {/* Leave Team Card */}
+                {!!organizationId && (
+                  <LeaveTeamCard
+                    organizationId={organizationId}
+                    organizationSlug={slug}
+                  />
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </div>
   );

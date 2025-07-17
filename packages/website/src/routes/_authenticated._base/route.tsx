@@ -1,6 +1,8 @@
-// import { OrganizationButton } from "@/components/organization-button";
+import { OrganizationButton } from "@/components/organization-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserButton } from "@/components/user-button";
+import { useSession } from "@/lib/auth-hooks";
+import { isInternalUser } from "@/lib/utils/auth";
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { Terminal } from "lucide-react";
 
@@ -18,6 +20,8 @@ function RouteComponent() {
 }
 
 function NavHeader() {
+  const { data } = useSession();
+  const user = data?.user;
   return (
     <span className="mb-4 flex w-full justify-between px-4 pt-4 md:mb-8 md:px-6">
       <span className="flex items-center gap-3 md:gap-6">
@@ -69,11 +73,11 @@ function NavHeader() {
               Minions
             </Link>
           )}
+          <ThemeToggle />
         </span>
       </span>
       <span className="flex items-center gap-4">
-        <ThemeToggle />
-        {/* <OrganizationButton /> */}
+        {isInternalUser(user) && <OrganizationButton />}
         <UserButton size="icon" />
       </span>
     </span>
