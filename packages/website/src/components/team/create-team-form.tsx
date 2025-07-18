@@ -19,9 +19,10 @@ import { z } from "zod";
 const FormSchema = z.object({
   name: z
     .string()
-    .min(1, "Team name is required")
-    .regex(/[A-Za-z-]+/, {
-      message: "Only alphabetic characters and hyphens are allowed",
+    .trim()
+    .min(5, "Team name must be at least 5 characters.")
+    .regex(/^[a-zA-Z0-9-]+$/, {
+      message: "Only letters, numbers, and hyphens are allowed.",
     }),
 });
 
@@ -63,7 +64,7 @@ export function CreateTeamForm({ onCreated }: CreateTeamFormProps) {
       return organization;
     },
     onSuccess: (organization: Organization) => {
-      toast.success("Team created successfully");
+      toast.success("Team created successfully. Redirecting...");
       onCreated?.(organization);
     },
     onError: (error) => {

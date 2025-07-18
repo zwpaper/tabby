@@ -1,4 +1,4 @@
-import { AcceptInvitationCard } from "@/components/organization/accept-invitation-card";
+import { AcceptInvitationCard } from "@/components/team/accept-invitation-card";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 

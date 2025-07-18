@@ -3,11 +3,9 @@ import { useSession } from "@/lib/auth-hooks";
 import {
   OrganizationInvitationsCard,
   OrganizationMembersCard,
-  OrganizationSettingsCards,
 } from "@daveyplate/better-auth-ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { notFound } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { AiOutlineTeam } from "react-icons/ai";
 import {
   Accordion,
@@ -17,6 +15,8 @@ import {
 } from "../ui/accordion";
 import { Skeleton } from "../ui/skeleton";
 import { BillingCard } from "./billing-card";
+import { DeleteTeamCard } from "./delete-team-card";
+import { InfoSettingsCard } from "./info-settings-card";
 import { LeaveTeamCard } from "./leave-team-card";
 interface TeamViewProps {
   slug: string;
@@ -63,6 +63,14 @@ export function TeamView({ slug }: TeamViewProps) {
     return currentMember?.role === "owner" || currentMember?.role === "admin";
   }, [organization, auth]);
 
+  const isOwner = useMemo(() => {
+    if (!organization || !auth) return false;
+    const currentMember = organization.members.find(
+      (x) => x.userId === auth.user.id,
+    );
+    return currentMember?.role === "owner";
+  }, [organization, auth]);
+
   const pendingInvitations = organization?.invitations?.filter(
     (invitation) => invitation.status === "pending",
   );
@@ -70,11 +78,17 @@ export function TeamView({ slug }: TeamViewProps) {
   const hasBillingPermission =
     !subscriptionQuery.isPending && !subscriptionQuery.error;
 
-  useEffect(() => {
-    if (!!organization && organization.slug !== slug) {
-      throw notFound();
-    }
-  }, [slug, organization]);
+  if (!isPending && (!organization || organization.slug !== slug)) {
+    return (
+      <div className="container mx-auto flex max-w-6xl flex-col items-center justify-center space-y-4 px-4 py-16 lg:px-8">
+        <h1 className="font-bold text-3xl tracking-tight">Team Not Found</h1>
+        <p className="text-muted-foreground">
+          The team you are looking for does not exist or you do not have
+          permission to view it.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8 lg:px-8">
@@ -155,25 +169,22 @@ export function TeamView({ slug }: TeamViewProps) {
             </AccordionTrigger>
             <AccordionContent className="px-0">
               <div className="space-y-6">
-                <OrganizationSettingsCards
-                  className="w-auto gap-6 py-0"
-                  classNames={{
-                    card: {
-                      base: "pt-4 rounded-sm",
-                      header: "px-4",
-                      title: "font-semibold !text-base text-foreground",
-                      description: "text-muted-foreground !text-xs",
-                      footer: "rounded-b-sm px-4 !py-3",
-                      content: "px-4",
-                    },
-                  }}
-                />
+                {organization && (
+                  <InfoSettingsCard
+                    organization={organization}
+                    disabled={!isAdmin}
+                  />
+                )}
                 {/* Leave Team Card */}
                 {!!organizationId && (
                   <LeaveTeamCard
                     organizationId={organizationId}
                     organizationSlug={slug}
                   />
+                )}
+
+                {organization && isOwner && (
+                  <DeleteTeamCard organization={organization} />
                 )}
               </div>
             </AccordionContent>

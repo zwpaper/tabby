@@ -136,7 +136,7 @@ function AcceptInvitationContent({
         fetchOptions: { throw: true },
       });
 
-      toast.success("You have been invited to join an organization.");
+      toast.success("Invitation rejected successfully");
     } catch (error) {
       toast.error(getBetterAuthErrorMessage(error));
 
