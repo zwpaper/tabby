@@ -214,8 +214,11 @@ export function UsageLeaderboard() {
                       <Skeleton className="h-4 w-32" />
                       <Skeleton className="h-3 w-24" />
                     </div>
-                    <Skeleton className="h-6 w-12" />
-                    <Skeleton className="h-6 w-12" />
+                    <div className="flex w-full justify-between">
+                      <div className="w-0" />
+                      <Skeleton className="h-6 w-12" />
+                      <Skeleton className="h-6 w-12" />
+                    </div>
                   </div>
                 ))}
               </div>
