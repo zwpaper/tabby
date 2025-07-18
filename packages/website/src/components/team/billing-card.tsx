@@ -153,7 +153,7 @@ export function BillingCard({
 
   return (
     <>
-      <Card className="m-4 rounded-sm border-border/50 py-0 shadow-sm">
+      <Card className="my-4 rounded-sm border-border/50 py-0 shadow-sm">
         <CardContent
           className={cn("p-4", {
             "pb-0": !!subscription,

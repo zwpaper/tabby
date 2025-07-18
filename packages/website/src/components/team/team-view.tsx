@@ -118,6 +118,8 @@ export function TeamView({ slug }: TeamViewProps) {
             skeleton: "mt-3",
             title: "hidden",
             description: "hidden",
+            base: "gap-1",
+            content: "px-2 gap-2.5",
           }}
         />
       </div>
