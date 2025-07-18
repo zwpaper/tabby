@@ -86,7 +86,7 @@ function ContentResult({
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 }: { content: any[]; toolName: string }) {
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 px-4 py-2">
       {content.map((item, index) => {
         if (item.type === "image") {
           return (
