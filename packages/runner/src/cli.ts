@@ -163,6 +163,7 @@ program
         );
       }
 
+      output.println(1);
       output.startLoading("Creating task...");
       const abortController = new AbortController();
       creatingTaskAbortController = abortController;
@@ -207,9 +208,8 @@ program
 
       const taskUrl = chalk.underline(`${options.url}/tasks/${uid}`);
       output.succeedLoading(
-        `${chalk.bold(chalk.green("Task created:"))} ${taskUrl}.`,
+        `${chalk.bold(chalk.green("✨ Your task is ready! View it here:"))} ${taskUrl}`,
       );
-      output.println();
     }
 
     const runner = new TaskRunner({

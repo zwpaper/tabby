@@ -295,6 +295,7 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     const { path, startLine, endLine } = toolCall.args || {};
     const pathString = styledPathString(
       `${path}${startLine !== undefined && endLine !== undefined ? `:${startLine}-${endLine}` : ""}`,
+      "read",
     );
     if (toolCall.state === "call") {
       return loading().start(`Reading ${pathString}`);
@@ -313,7 +314,7 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     loading: () => loading.Loading,
   ) => {
     const { path } = toolCall.args || {};
-    const pathString = styledPathString(path);
+    const pathString = styledPathString(path, "write");
     if (toolCall.state === "call") {
       return loading().start(`Writing ${pathString}`);
     }
@@ -344,7 +345,7 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     const addedLines = countLines(replaceContent) * expectedReplacements;
     const diff =
       addedLines > 0 || deletedLines > 0
-        ? `${chalk.dim("(")}${chalk.green(`+${addedLines}`)}${chalk.red(`-${deletedLines}`)}${chalk.dim(")")}`
+        ? `${chalk.dim("(")}${chalk.green(`+${addedLines}`)}${chalk.dim("/")}${chalk.red(`-${deletedLines}`)}${chalk.dim(")")}`
         : "";
     if (toolCall.state === "call") {
       return loading().start(
@@ -397,7 +398,7 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
     );
     const diff =
       addedLines > 0 || deletedLines > 0
-        ? `${chalk.dim("(")}${chalk.green(`+${addedLines}`)}${chalk.red(`-${deletedLines}`)}${chalk.dim(")")}`
+        ? `${chalk.dim("(")}${chalk.green(`+${addedLines}`)}${chalk.dim("/")}${chalk.red(`-${deletedLines}`)}${chalk.dim(")")}`
         : "";
     const editCount = `${chalk.dim("(")}${edits.length} edit${edits.length !== 1 ? "s" : ""}${chalk.dim(")")}`;
     if (toolCall.state === "call") {
@@ -519,8 +520,15 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
   },
 };
 
-const styledPathString = (path: string) => {
-  return chalk.italic(path);
+const styledPathString = (path: string, operation?: "read" | "write") => {
+  const baseStyle = chalk.italic(path);
+  if (operation === "read") {
+    return chalk.blue(baseStyle);
+  }
+  if (operation === "write") {
+    return chalk.green(baseStyle);
+  }
+  return baseStyle;
 };
 const ErrorLabel = chalk.bold(chalk.red("ERROR:"));
 const Icon = {
