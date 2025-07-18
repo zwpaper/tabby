@@ -609,6 +609,7 @@ function BillingCard({
                         );
                       }}
                       isSubmitting={monthlyUsageLimitMutation.isPending}
+                      maxBudgetUsd={2000}
                     />
                   )}
                 </AccordionContent>
