@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { apiClient, authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import { useState } from "react";
@@ -37,7 +36,6 @@ interface StatItemProps {
   value: number | string;
   isLoading: boolean;
   isError: boolean;
-  className?: string;
   description?: string;
 }
 
@@ -46,13 +44,12 @@ function StatItem({
   value,
   isLoading,
   isError,
-  className,
   description,
 }: StatItemProps) {
   const displayValue =
     typeof value === "number" ? value.toLocaleString() : value;
   return (
-    <div className={cn("space-y-2 text-center", className)}>
+    <div className="space-y-2">
       <div className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
         {label}
       </div>
@@ -130,91 +127,152 @@ export function UsageLeaderboard() {
   return (
     <div className="container mx-auto max-w-6xl space-y-8 px-4 py-8 lg:px-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <h1 className="font-bold text-3xl tracking-tight">Leaderboard</h1>
+        <div>
+          <h1 className="font-bold text-4xl text-foreground tracking-tight">
+            Leaderboard
+          </h1>
+          <p className="mt-2 text-muted-foreground text-sm">
+            Track your team's AI usage and productivity
+          </p>
+        </div>
         <ToggleGroup
-          className="mt-4 md:mt-0 [&>button]:px-2"
+          className="mt-4 rounded-lg border border-border p-1 md:mt-0 [&>button]:px-3 [&>button]:py-1.5"
           type="single"
           defaultValue="7d"
           onValueChange={(value: string) => {
             if (value) setTimeRange(value);
           }}
         >
-          <ToggleGroupItem value="1h">1h</ToggleGroupItem>
-          <ToggleGroupItem value="12h">12h</ToggleGroupItem>
-          <ToggleGroupItem value="24h">24h</ToggleGroupItem>
-          <ToggleGroupItem value="7d">1w</ToggleGroupItem>
-          <ToggleGroupItem value="1m">1m</ToggleGroupItem>
+          <ToggleGroupItem value="1h" className="font-medium text-xs">
+            1h
+          </ToggleGroupItem>
+          <ToggleGroupItem value="12h" className="font-medium text-xs">
+            12h
+          </ToggleGroupItem>
+          <ToggleGroupItem value="24h" className="font-medium text-xs">
+            24h
+          </ToggleGroupItem>
+          <ToggleGroupItem value="7d" className="font-medium text-xs">
+            7d
+          </ToggleGroupItem>
+          <ToggleGroupItem value="1m" className="font-medium text-xs">
+            30d
+          </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
       <div className="space-y-12">
         <div>
-          <h2 className="font-semibold text-base text-foreground">Team</h2>
-          <div className="grid grid-cols-3 gap-8 pt-4">
-            <StatItem
-              label="Active Users"
-              value={usageData?.summary.activeUsers ?? 0}
-              isLoading={isLoading}
-              isError={isError}
-            />
-            <StatItem
-              label="Tasks"
-              value={usageData?.summary.taskCount ?? 0}
-              isLoading={isLoading}
-              isError={isError}
-            />
-            <StatItem
-              label="Messages"
-              value={usageData?.summary.completionCount ?? 0}
-              isLoading={isLoading}
-              isError={isError}
-            />
+          <h2 className="font-semibold text-foreground text-lg">
+            Team Overview
+          </h2>
+          <div className="mt-4 grid grid-cols-1 gap-8 sm:grid-cols-3">
+            <div className="text-center">
+              <StatItem
+                label="Active Users"
+                value={usageData?.summary.activeUsers ?? 0}
+                isLoading={isLoading}
+                isError={isError}
+              />
+            </div>
+            <div className="text-center">
+              <StatItem
+                label="Tasks"
+                value={usageData?.summary.taskCount ?? 0}
+                isLoading={isLoading}
+                isError={isError}
+              />
+            </div>
+            <div className="text-center">
+              <StatItem
+                label="Messages"
+                value={usageData?.summary.completionCount ?? 0}
+                isLoading={isLoading}
+                isError={isError}
+              />
+            </div>
           </div>
         </div>
 
         <div>
           <div className="space-y-1">
-            <h2 className="font-semibold text-base text-foreground">Members</h2>
-            <p className="text-muted-foreground text-xs">
-              An overview of usage stats for each member.
+            <h2 className="font-semibold text-foreground text-lg">
+              Member Performance
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              See how each team member is contributing to AI usage and
+              productivity.
             </p>
           </div>
-          <div className="mt-4">
+          <div className="mt-6">
             {isLoading ? (
-              <Skeleton className="h-48 w-full" />
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-3 py-3">
+                    <Skeleton className="h-9 w-9 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <Skeleton className="h-6 w-12" />
+                    <Skeleton className="h-6 w-12" />
+                  </div>
+                ))}
+              </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">Name</TableHead>
-                    <TableHead className="text-right">Tasks</TableHead>
-                    <TableHead className="text-right">Messages</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {usageData?.users.map((user) => (
-                    <TableRow key={user.userId}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.image ?? undefined} />
-                            <AvatarFallback>
-                              {user.name?.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{user.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {user.taskCount}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {user.completionCount}
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border border-b">
+                      <TableHead className="w-[280px] font-semibold text-foreground">
+                        Member
+                      </TableHead>
+                      <TableHead className="text-right font-semibold text-foreground">
+                        Tasks
+                      </TableHead>
+                      <TableHead className="text-right font-semibold text-foreground">
+                        Messages
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {usageData?.users.map((user) => (
+                      <TableRow
+                        key={user.userId}
+                        className="border-border/50 border-b transition-colors last:border-b-0 hover:bg-muted/20"
+                      >
+                        <TableCell className="py-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
+                              <AvatarImage
+                                src={user.image ?? undefined}
+                                className="object-cover"
+                              />
+                              <AvatarFallback className="bg-muted text-muted-foreground">
+                                {user.name?.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-foreground">
+                                {user.name}
+                              </div>
+                              <div className="text-muted-foreground text-xs">
+                                {user.email}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 text-right font-mono text-sm">
+                          {user.taskCount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="py-3 text-right font-mono text-sm">
+                          {user.completionCount.toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
         </div>
