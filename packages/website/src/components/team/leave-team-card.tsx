@@ -47,12 +47,15 @@ export function LeaveTeamCard({
       });
     },
     onSuccess: async () => {
+      await authClient.organization.setActive({
+        organizationId: null,
+      });
       refetchActiveOrganization();
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === "activeOrganization",
       });
       toast.success("Successfully left the team");
-      router.navigate({ to: "/profile" });
+      router.navigate({ to: "/team" });
     },
     onError: (error) => {
       const errorReason = getBetterAuthErrorMessage(error);
