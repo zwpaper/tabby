@@ -31,7 +31,12 @@ function TeamComponent() {
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8 lg:px-8">
       {/* Main heading */}
-      <h1 className="mb-16 font-bold text-5xl">Team</h1>
+      <div className="mb-16 flex items-center gap-4">
+        <h1 className="font-bold text-5xl">Team</h1>
+        <span className="rounded-full bg-stone-200 px-2.5 py-0.5 font-semibold text-sm text-stone-700 dark:bg-stone-700 dark:text-stone-200">
+          Beta
+        </span>
+      </div>
 
       <div className="mb-20 grid grid-cols-1 gap-12 lg:grid-cols-2">
         {/* Left column - Team features */}

@@ -117,7 +117,7 @@ export function InfoSettingsCard({
     <Card className="rounded-sm pt-4 pb-0">
       <CardHeader className="px-4">
         <CardTitle className="text-base">Team Information</CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs">
           Update your team's visible name and URL namespace.
         </CardDescription>
       </CardHeader>
@@ -133,7 +133,7 @@ export function InfoSettingsCard({
                   <FormControl>
                     <Input {...field} disabled={disabled} />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs">
                     This is your team's visible name.
                   </FormDescription>
                   <FormMessage />
@@ -149,7 +149,7 @@ export function InfoSettingsCard({
                   <FormControl>
                     <Input {...field} disabled={disabled} />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs">
                     This is your team's URL namespace.
                   </FormDescription>
                   <FormMessage />

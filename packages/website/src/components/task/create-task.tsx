@@ -360,12 +360,15 @@ export function CreateTask({
         What can I help you ship?
       </h2>
       <form
-        className="w-full max-w-3xl rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80 dark:bg-input/30"
+        className="relative w-full max-w-3xl overflow-hidden rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80 dark:bg-input/30"
         onSubmit={handleSubmit}
         onClick={() => {
           textareaRef.current?.focus();
         }}
       >
+        <div className="absolute top-2.5 right-[-30px] w-24 rotate-45 bg-stone-200/80 py-1 text-center font-semibold text-stone-700/90 text-xs dark:bg-stone-800/80 dark:text-stone-300/90">
+          Beta
+        </div>
         {files.length > 0 && (
           <ImagePreviewList
             files={files}

@@ -102,6 +102,9 @@ export function TeamView({ slug }: TeamViewProps) {
             {organization?.name}
           </h1>
         )}
+        <span className="rounded-full bg-stone-200 px-2.5 py-0.5 font-semibold text-sm text-stone-700 dark:bg-stone-700 dark:text-stone-200">
+          Beta
+        </span>
       </div>
 
       {/* Members Section */}
@@ -121,6 +124,7 @@ export function TeamView({ slug }: TeamViewProps) {
             base: "gap-1",
             content: "px-2 gap-2.5",
             footer: "mt-1.5",
+            cell: "px-4 py-3 rounded-md",
           }}
         />
       </div>
@@ -143,6 +147,7 @@ export function TeamView({ slug }: TeamViewProps) {
               description: "hidden",
               base: "gap-1",
               content: "px-2 gap-2.5 pb-1.5",
+              cell: "px-4 py-3 rounded-md",
             }}
           />
         </div>
