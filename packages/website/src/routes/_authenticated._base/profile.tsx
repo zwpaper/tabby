@@ -441,6 +441,19 @@ function BillingCard({
     },
   });
 
+  const handleToggleSubscription = (isSubscribing: boolean) => {
+    if (session?.session.activeOrganizationId) {
+      toast.info(
+        "You are currently in a team. Please leave the team before subscribing to the personal plan.",
+        {
+          duration: 10_000,
+        },
+      );
+      return;
+    }
+    subscriptionMutation.mutate(isSubscribing);
+  };
+
   const subscriptionMutation = useMutation({
     mutationFn: async (isSubscribing: boolean) => {
       try {
@@ -517,7 +530,7 @@ function BillingCard({
               ) : (
                 <Switch
                   checked={isEffectivelyActive}
-                  onCheckedChange={subscriptionMutation.mutate}
+                  onCheckedChange={handleToggleSubscription}
                   disabled={
                     subscriptionMutation.isPending ||
                     subscriptionQuery.isLoading
