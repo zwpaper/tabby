@@ -85,7 +85,7 @@ function NavHeader() {
           <ThemeToggle />
         </span>
       </span>
-      <span className="flex items-center gap-4">
+      <span className="flex items-center gap-2 md:gap-4">
         <OrganizationButton />
         <UserButton size="icon" />
       </span>

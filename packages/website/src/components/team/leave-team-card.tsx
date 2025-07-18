@@ -54,8 +54,11 @@ export function LeaveTeamCard({
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === "activeOrganization",
       });
+      queryClient.invalidateQueries({
+        queryKey: ["session"],
+      });
       toast.success("Successfully left the team");
-      router.navigate({ to: "/team" });
+      router.navigate({ to: "/" });
     },
     onError: (error) => {
       const errorReason = getBetterAuthErrorMessage(error);
