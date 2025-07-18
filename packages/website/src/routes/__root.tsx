@@ -7,7 +7,6 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { useEffect, useState } from "react";
 
 interface RouterContext {
   auth: typeof authClient.$Infer.Session;
@@ -30,25 +29,13 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     const location = useLocation();
     const isAuthPage = location.pathname.startsWith("/auth");
 
-    const [scrolled, setScrolled] = useState(false);
-    useEffect(() => {
-      const handleScroll = () => {
-        setScrolled(true);
-      };
-
-      window.addEventListener("wheel", handleScroll);
-      return () => {
-        window.removeEventListener("wheel", handleScroll);
-      };
-    }, []);
-
     return (
       <>
         <HeadContent />
-        <div className="min-h-screen">
+        <div className={`min-h-screen ${!isAuthPage ? "pb-16" : ""}`}>
           <Outlet />
         </div>
-        {!isAuthPage && scrolled && <Footer />}
+        {!isAuthPage && <Footer />}
         <TanStackRouterDevtools position="bottom-right" />
       </>
     );
