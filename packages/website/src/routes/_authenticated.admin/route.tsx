@@ -1,5 +1,9 @@
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -21,8 +25,15 @@ export const Route = createFileRoute("/_authenticated/admin")({
 function AdminLayout() {
   return (
     <SidebarProvider>
-      <AdminSidebar className="hidden h-screen md:flex" />
+      <AdminSidebar />
       <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-px bg-border" />
+            <h1 className="font-semibold">Admin Panel</h1>
+          </div>
+        </header>
         <div className="flex-1 p-6">
           <Outlet />
         </div>
