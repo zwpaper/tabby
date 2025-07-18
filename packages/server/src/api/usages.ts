@@ -94,11 +94,21 @@ const usages = new Hono()
         ? moment.tz(start, tz).toDate()
         : moment.tz(endDate, tz).subtract(30, "days").toDate();
 
-      // Organization-level summary
+      // Get all members for organization
+      const members = await db
+        .selectFrom("member")
+        .innerJoin("user", "user.id", "member.userId")
+        .select(["user.id", "user.name", "user.email", "user.image"])
+        .where("organizationId", "=", orgId)
+        .execute();
+
+      const memberIds = members.map((m) => m.id);
+
+      // Organization-level summary - count completions for all member users
       const orgAggregateResult = await db
         .selectFrom("chatCompletion")
         .select([db.fn.count("id").as("completionCount")])
-        .where("organizationId", "=", orgId)
+        .where("userId", "in", memberIds)
         .where("createdAt", ">=", startDate)
         .where("createdAt", "<=", endDate)
         .executeTakeFirst();
@@ -111,14 +121,6 @@ const usages = new Hono()
         .where("task.createdAt", ">=", startDate)
         .where("task.createdAt", "<=", endDate)
         .executeTakeFirst();
-
-      // Get all members for user breakdown
-      const members = await db
-        .selectFrom("member")
-        .innerJoin("user", "user.id", "member.userId")
-        .select(["user.id", "user.name", "user.email", "user.image"])
-        .where("organizationId", "=", orgId)
-        .execute();
 
       const combinedUserData = new Map<
         string,
@@ -142,11 +144,11 @@ const usages = new Hono()
         });
       }
 
-      // User-level completion breakdown
+      // User-level completion breakdown for organization members
       const userCompletionBreakdown = await db
         .selectFrom("chatCompletion")
         .select(["userId", db.fn.count("id").as("completionCount")])
-        .where("organizationId", "=", orgId)
+        .where("userId", "in", memberIds)
         .where("createdAt", ">=", startDate)
         .where("createdAt", "<=", endDate)
         .groupBy("userId")

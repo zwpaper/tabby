@@ -38,7 +38,6 @@ export class UsageService {
       .values({
         modelId,
         userId: user.id,
-        organizationId: organization?.id,
         promptTokens: usage.promptTokens,
         completionTokens: usage.completionTokens,
         credit: credit,
