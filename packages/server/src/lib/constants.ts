@@ -192,7 +192,7 @@ export function getModelById(
     case "google/gemini-2.5-flash":
       return geminiFlash;
     case "pochi/pro-1":
-      return vertexFineTuning(modelEndpointId || "3127711458301837312");
+      return vertexFineTuning(modelEndpointId || "2224986023618674688");
   }
 }
 
