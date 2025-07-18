@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { getBetterAuthErrorMessage } from "@/lib/error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Organization } from "better-auth/plugins";
@@ -43,10 +44,24 @@ export function CreateTeamForm({ onCreated }: CreateTeamFormProps) {
 
   const createOrganizationMutation = useMutation({
     mutationFn: async (data: { name: string }) => {
-      const slug = data.name
+      let slug = data.name
         .toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "");
+
+      try {
+        await authClient.organization.checkSlug({
+          slug,
+          fetchOptions: {
+            throw: true,
+          },
+        });
+      } catch (error) {
+        // If slug exists, append a random 4-digit number
+        const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
+        slug = `${slug}-${randomSuffix}`;
+      }
+
       const organization = await authClient.organization.create({
         ...data,
         slug,
@@ -69,7 +84,7 @@ export function CreateTeamForm({ onCreated }: CreateTeamFormProps) {
     },
     onError: (error) => {
       toast.error("Failed to create team", {
-        description: error.message,
+        description: getBetterAuthErrorMessage(error),
       });
     },
   });
