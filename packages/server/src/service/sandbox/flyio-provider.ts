@@ -85,8 +85,6 @@ export class FlyioSandboxProvider implements SandboxProvider {
       },
     });
 
-    await this.client.allocateIp({ appId: id });
-
     return {
       id,
       isRunning: machine.state === "started",
