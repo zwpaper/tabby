@@ -166,7 +166,7 @@ export function UsageLeaderboard() {
           <h2 className="font-semibold text-foreground text-lg">
             Team Overview
           </h2>
-          <div className="mt-4 grid grid-cols-1 gap-8 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-3 gap-8">
             <div className="text-center">
               <StatItem
                 label="Active Users"
