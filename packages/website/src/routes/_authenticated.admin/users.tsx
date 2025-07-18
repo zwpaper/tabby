@@ -17,6 +17,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -31,8 +40,6 @@ import { useQuery } from "@tanstack/react-query"; // Added useQuery import
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Ban,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   MoreHorizontal,
   Search,
@@ -208,6 +215,39 @@ function UsersPage() {
     setCurrentPage(newPage);
     const newUsers = await fetchUsersPage(pageSize, (newPage - 1) * pageSize);
     setUserData(newUsers);
+  };
+
+  const generatePageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, "ellipsis-start");
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push("ellipsis-end", totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots.filter(
+      (item, index, array) =>
+        (item !== array[index - 1] && item !== 1) || index === 0,
+    );
   };
 
   const handleBanUser = async () => {
@@ -440,32 +480,67 @@ function UsersPage() {
         </Table>
 
         {!searchQuery.trim() && totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 space-y-2">
+            <div className="flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage > 1) handlePageChange(currentPage - 1);
+                      }}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+
+                  {generatePageNumbers().map((pageNum, index) => (
+                    <PaginationItem key={`${pageNum}-${index}`}>
+                      {pageNum === "ellipsis-start" ||
+                      pageNum === "ellipsis-end" ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(pageNum as number);
+                          }}
+                          isActive={currentPage === pageNum}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (currentPage < totalPages)
+                          handlePageChange(currentPage + 1);
+                      }}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
             <div className="text-muted-foreground text-sm">
               Showing {(currentPage - 1) * pageSize + 1} to{" "}
               {Math.min(currentPage * pageSize, totalUsers)} of {totalUsers}{" "}
               users
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         )}
