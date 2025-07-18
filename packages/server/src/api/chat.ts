@@ -197,8 +197,8 @@ const chat = new Hono()
                       return "gemini-2.5-flash";
                     case "google/gemini-2.5-pro":
                       return "gemini-2.5-pro";
-                    case "anthropic/claude-4-sonnet":
-                      throw new Error("Unsupported model");
+                    default:
+                      throw new Error(`Non google model: ${validModelId}`);
                   }
                 };
 

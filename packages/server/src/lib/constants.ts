@@ -1,6 +1,7 @@
 import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createVertex } from "@ai-sdk/google-vertex";
+import { groq } from "@ai-sdk/groq";
 import type { LanguageModelV1, streamText } from "ai";
 import type { ChatRequest } from "../types";
 
@@ -9,6 +10,7 @@ export type AvailableModelId =
   | "google/gemini-2.5-pro"
   | "google/gemini-2.5-flash"
   | "anthropic/claude-4-sonnet"
+  | "moonshotai/kimi-k2"
   | "pochi/pro-1";
 
 export const AvailableModels: {
@@ -36,6 +38,11 @@ export const AvailableModels: {
     contextWindow: 200_000,
     costType: "premium",
   },
+  {
+    id: "moonshotai/kimi-k2",
+    contextWindow: 131_072,
+    costType: "basic",
+  },
 ];
 
 export type CreditCostInput =
@@ -51,6 +58,12 @@ export type CreditCostInput =
       type: "google";
       modelId: "gemini-2.5-pro" | "gemini-2.5-flash";
       cacheReadInputTokens: number;
+      inputTokens: number;
+      outputTokens: number;
+    }
+  | {
+      type: "moonshotai";
+      modelId: "kimi-k2";
       inputTokens: number;
       outputTokens: number;
     };
@@ -81,6 +94,12 @@ const PriceByModel = {
         input: 25,
         output: 150,
       },
+    },
+  },
+  moonshotai: {
+    "kimi-k2": {
+      input: 10,
+      output: 30,
     },
   },
 } as const;
@@ -141,6 +160,15 @@ function computeCreditCostForAnthropic(
   );
 }
 
+// https://console.groq.com/docs/model/moonshotai/kimi-k2-instruct
+function computeCreditCostForMoonshotai(
+  input: Extract<CreditCostInput, { type: "moonshotai" }>,
+): number {
+  const { modelId, inputTokens, outputTokens } = input;
+  const price = PriceByModel.moonshotai[modelId];
+  return inputTokens * price.input + outputTokens * price.output;
+}
+
 // Returns the cost credit for a usage.
 // 1 USD = 10M credits.
 export function computeCreditCost(input: CreditCostInput): number {
@@ -149,6 +177,8 @@ export function computeCreditCost(input: CreditCostInput): number {
       return computeCreditCostForGoogle(input);
     case "anthropic":
       return computeCreditCostForAnthropic(input);
+    case "moonshotai":
+      return computeCreditCostForMoonshotai(input);
   }
 }
 
@@ -191,6 +221,8 @@ export function getModelById(
       return vertex("gemini-2.5-pro");
     case "google/gemini-2.5-flash":
       return geminiFlash;
+    case "moonshotai/kimi-k2":
+      return groq("moonshotai/kimi-k2-instruct");
     case "pochi/pro-1":
       return vertexFineTuning(modelEndpointId || "2224986023618674688");
   }
@@ -231,6 +263,10 @@ export function getModelOptions(
             },
           } satisfies AnthropicProviderOptions,
         },
+      };
+    case "moonshotai/kimi-k2":
+      return {
+        maxTokens: 1024 * 14, // 14k tokens
       };
   }
 }
