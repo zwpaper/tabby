@@ -114,16 +114,16 @@ export function InfoSettingsCard({
   });
 
   return (
-    <Card className="pb-0">
-      <CardHeader>
-        <CardTitle>Team Information</CardTitle>
+    <Card className="rounded-sm pt-4 pb-0">
+      <CardHeader className="px-4">
+        <CardTitle className="text-base">Team Information</CardTitle>
         <CardDescription>
           Update your team's visible name and URL namespace.
         </CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={onSubmit}>
-          <CardContent className="space-y-4 px-6 pb-6">
+          <CardContent className="space-y-4 px-4 pb-6">
             <FormField
               control={form.control}
               name="name"
@@ -157,7 +157,7 @@ export function InfoSettingsCard({
               )}
             />
           </CardContent>
-          <CardFooter className="!py-3 flex justify-center border-t bg-muted/30 px-6 md:justify-end">
+          <CardFooter className="!py-3 flex justify-center border-t bg-muted/30 px-4 md:justify-end">
             <Button
               type="submit"
               disabled={

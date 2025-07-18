@@ -120,6 +120,7 @@ export function TeamView({ slug }: TeamViewProps) {
             description: "hidden",
             base: "gap-1",
             content: "px-2 gap-2.5",
+            footer: "mt-1.5",
           }}
         />
       </div>
@@ -140,6 +141,8 @@ export function TeamView({ slug }: TeamViewProps) {
             classNames={{
               title: "hidden",
               description: "hidden",
+              base: "gap-1",
+              content: "px-2 gap-2.5 pb-1.5",
             }}
           />
         </div>
@@ -169,7 +172,7 @@ export function TeamView({ slug }: TeamViewProps) {
             <AccordionTrigger className="flex-none pt-2 font-semibold">
               Advanced Settings
             </AccordionTrigger>
-            <AccordionContent className="px-0">
+            <AccordionContent>
               <div className="space-y-6">
                 {organization && (
                   <InfoSettingsCard
