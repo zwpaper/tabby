@@ -1,3 +1,4 @@
+import { trace } from "@opentelemetry/api";
 import type { Organization } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
 import { auth } from "./better-auth";
@@ -23,6 +24,10 @@ export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
       });
       if (session) {
         c.set("user", session.user);
+
+        trace.getActiveSpan()?.setAttributes({
+          "ragdoll.user.email": session.user.email,
+        });
       }
       await next();
     };
