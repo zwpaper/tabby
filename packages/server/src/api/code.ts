@@ -58,10 +58,7 @@ const code = new Hono()
         }
 
         // Generic error
-        throw new HTTPException(500, {
-          message: "Failed to generate code completion",
-          cause: error,
-        });
+        throw error;
       }
     },
   );

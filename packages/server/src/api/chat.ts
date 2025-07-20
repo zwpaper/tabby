@@ -1,6 +1,7 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { jsonSchema } from "@ai-sdk/ui-utils";
 import { zValidator } from "@hono/zod-validator";
+import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import {
@@ -291,17 +292,17 @@ const chat = new Hono()
         });
       },
       onError(error) {
+        const span = trace.getActiveSpan();
+        if (span) {
+          if (error instanceof Error) {
+            span.recordException(error);
+          }
+          span.setStatus({ code: SpanStatusCode.ERROR });
+        }
+
         // Failed to stream the response.
         const taskError = taskService.toTaskError(error);
         taskService.failStreaming(uid, user.id, taskError);
-
-        if (taskError.kind === "APICallError") {
-          console.log(
-            "API call error",
-            taskError.message,
-            taskError.requestBodyValues,
-          );
-        }
 
         return taskError.message;
       },
