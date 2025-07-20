@@ -16,9 +16,9 @@ import tasks from "./api/tasks";
 import tools from "./api/tools";
 import upload from "./api/upload";
 import usages from "./api/usages";
-import { authRequest } from "./auth";
+import { authRequest, requireAuth } from "./auth";
 import { auth } from "./better-auth";
-import { internal } from "./internal";
+import { queuedash } from "./queuedash";
 import { slackService } from "./service/slack";
 
 export const app = new Hono().use(authRequest);
@@ -35,6 +35,25 @@ if (process.env.NODE_ENV !== "test") {
   (async () => {
     const { serveStatic } = await import("hono/bun");
     const { readFile } = await import("node:fs/promises");
+
+    app.use(
+      "/_internal/data-labeling-tool/*",
+      etag(),
+      requireAuth({ internal: true }),
+      serveStatic({
+        root: "../model/dist",
+        rewriteRequestPath: (path) =>
+          path.replace(/^\/_internal\/data-labeling-tool/, ""),
+        precompressed: true,
+        onFound: (path, c) => {
+          if (path.endsWith(".html") || path.endsWith("manifest.json")) {
+            c.header("Cache-Control", "public, max-age=0, must-revalidate");
+          } else {
+            c.header("Cache-Control", "public, immutable, max-age=31536000");
+          }
+        },
+      }),
+    );
 
     // Serve website static files
     const html = await readFile("../website/dist/index.html", "utf-8");
@@ -97,8 +116,8 @@ app.use(
 // Auth routes
 app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
-// internal
-app.route("/_internal", internal);
+// queue dash.
+app.route("/queuedash", queuedash);
 
 const api = app.basePath("/api");
 
