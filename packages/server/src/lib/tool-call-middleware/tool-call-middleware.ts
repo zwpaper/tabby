@@ -1,10 +1,10 @@
-import { trace } from "@opentelemetry/api";
 import {
   type LanguageModelV1Middleware,
   type LanguageModelV1Prompt,
   type LanguageModelV1StreamPart,
   generateId,
 } from "ai";
+import { tracer } from "../../trace";
 import { getPotentialStartIndex } from "./utils";
 
 interface ParsedToolCall {
@@ -393,12 +393,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
       const stopSequences = params.stopSequences || [];
       stopSequences.push("</api-request>");
 
-      trace
-        .getActiveSpan()
-        ?.setAttribute(
-          "ai.prompt.rawMessages",
-          JSON.stringify(promptWithTools),
-        );
+      tracer.setAttribute("ai.prompt.rawMessages", promptWithTools);
 
       return {
         ...params,

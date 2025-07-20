@@ -10,6 +10,7 @@ import {
   computeCreditCost,
 } from "../lib/constants";
 import { stripeClient } from "../lib/stripe";
+import { tracer } from "../trace";
 import { organizationService } from "./organization";
 
 const FreeCreditInDollars = 20;
@@ -24,9 +25,12 @@ export class UsageService {
     // Track monthly usage count
     const now = moment.utc();
     const startDayOfMonth = now.startOf("month").toDate();
-    const credit = creditCostInput
-      ? await this.meterCreditCost(user, creditCostInput)
-      : 0;
+    const credit =
+      creditCostInput && (await this.meterCreditCost(user, creditCostInput));
+
+    if (credit) {
+      tracer.setAttribute("ragdoll.metering.credit", credit);
+    }
 
     const organization = await organizationService.readActiveOrganizationByUser(
       user.id,
