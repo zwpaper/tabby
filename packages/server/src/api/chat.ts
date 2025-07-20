@@ -1,7 +1,6 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { jsonSchema } from "@ai-sdk/ui-utils";
 import { zValidator } from "@hono/zod-validator";
-import { Laminar, getTracer } from "@lmnr-ai/lmnr";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import {
@@ -117,179 +116,175 @@ const chat = new Hono()
         };
 
         const modelOptions = getModelOptions(validModelId);
-        const result = Laminar.withSession(`${user.id}-${uid}`, () =>
-          streamText({
-            ...modelOptions,
-            abortSignal: c.req.raw.signal,
-            temperature: 0.8,
-            toolCallStreaming: true,
-            model: selectedModel,
-            messages: [
-              ...(environment?.info
-                ? [
-                    {
-                      role: "system",
-                      content: prompts.system(environment.info.customRules),
-                      providerOptions: {
-                        anthropic: { cacheControl: { type: "ephemeral" } },
-                      },
-                    } satisfies CoreMessage,
-                  ]
-                : []),
-              ...formatters.llm(preparedMessages, {
-                tools,
-                isClaude: requestedModelId.includes("claude"),
-              }),
-            ],
-            tools,
-            onFinish: async ({
-              usage,
+        const result = streamText({
+          ...modelOptions,
+          abortSignal: c.req.raw.signal,
+          temperature: 0.8,
+          toolCallStreaming: true,
+          model: selectedModel,
+          messages: [
+            ...(environment?.info
+              ? [
+                  {
+                    role: "system",
+                    content: prompts.system(environment.info.customRules),
+                    providerOptions: {
+                      anthropic: { cacheControl: { type: "ephemeral" } },
+                    },
+                  } satisfies CoreMessage,
+                ]
+              : []),
+            ...formatters.llm(preparedMessages, {
+              tools,
+              isClaude: requestedModelId.includes("claude"),
+            }),
+          ],
+          tools,
+          onFinish: async ({
+            usage,
+            finishReason,
+            response,
+            providerMetadata,
+          }) => {
+            if (finishReason === "length") {
+              throw new Error("The response was too long.");
+            }
+
+            const finalMessages = appendResponseMessages({
+              messages: preparedMessages,
+              responseMessages: response.messages,
+            }) as UIMessage[];
+            let creditCostInput: CreditCostInput | undefined;
+
+            if (providerMetadata?.anthropic) {
+              const cacheCreationInputTokens =
+                (providerMetadata.anthropic.cacheCreationInputTokens as
+                  | number
+                  | undefined) || 0;
+              const cacheReadInputTokens =
+                (providerMetadata.anthropic.cacheReadInputTokens as
+                  | number
+                  | undefined) || 0;
+              creditCostInput = {
+                type: "anthropic",
+                modelId: "claude-4-sonnet",
+                cacheWriteInputTokens: cacheCreationInputTokens,
+                cacheReadInputTokens,
+                inputTokens: usage.promptTokens,
+                outputTokens: usage.completionTokens,
+              };
+
+              const promptTokens =
+                (cacheReadInputTokens || cacheCreationInputTokens) +
+                usage.promptTokens;
+              usage = {
+                promptTokens,
+                completionTokens: usage.completionTokens,
+                totalTokens: promptTokens + usage.completionTokens,
+              };
+            }
+
+            if (providerMetadata?.google) {
+              const modelIdFromValidModelId = () => {
+                if (typeof validModelId !== "string")
+                  throw new Error("Unsupported model");
+
+                switch (validModelId) {
+                  case "google/gemini-2.5-flash":
+                  case "pochi/pro-1":
+                    return "gemini-2.5-flash";
+                  case "google/gemini-2.5-pro":
+                    return "gemini-2.5-pro";
+                  default:
+                    throw new Error(`Non google model: ${validModelId}`);
+                }
+              };
+
+              const cacheReadInputTokens =
+                (providerMetadata.google.cachedContentTokenCount as
+                  | number
+                  | undefined) || 0;
+              creditCostInput = {
+                type: "google",
+                modelId: modelIdFromValidModelId(),
+                cacheReadInputTokens,
+                inputTokens: usage.promptTokens - cacheReadInputTokens,
+                outputTokens: usage.completionTokens,
+              };
+            }
+
+            const isUsageValid = !Number.isNaN(usage.totalTokens);
+
+            await taskService.finishStreaming(
+              uid,
+              user.id,
+              finalMessages,
               finishReason,
-              response,
-              providerMetadata,
-            }) => {
-              if (finishReason === "length") {
-                throw new Error("The response was too long.");
-              }
+              isUsageValid ? usage.totalTokens : undefined,
+            );
 
-              const finalMessages = appendResponseMessages({
-                messages: preparedMessages,
-                responseMessages: response.messages,
-              }) as UIMessage[];
-              let creditCostInput: CreditCostInput | undefined;
-
-              if (providerMetadata?.anthropic) {
-                const cacheCreationInputTokens =
-                  (providerMetadata.anthropic.cacheCreationInputTokens as
-                    | number
-                    | undefined) || 0;
-                const cacheReadInputTokens =
-                  (providerMetadata.anthropic.cacheReadInputTokens as
-                    | number
-                    | undefined) || 0;
-                creditCostInput = {
-                  type: "anthropic",
-                  modelId: "claude-4-sonnet",
-                  cacheWriteInputTokens: cacheCreationInputTokens,
-                  cacheReadInputTokens,
-                  inputTokens: usage.promptTokens,
-                  outputTokens: usage.completionTokens,
-                };
-
-                const promptTokens =
-                  (cacheReadInputTokens || cacheCreationInputTokens) +
-                  usage.promptTokens;
-                usage = {
-                  promptTokens,
-                  completionTokens: usage.completionTokens,
-                  totalTokens: promptTokens + usage.completionTokens,
-                };
-              }
-
-              if (providerMetadata?.google) {
-                const modelIdFromValidModelId = () => {
-                  if (typeof validModelId !== "string")
-                    throw new Error("Unsupported model");
-
-                  switch (validModelId) {
-                    case "google/gemini-2.5-flash":
-                    case "pochi/pro-1":
-                      return "gemini-2.5-flash";
-                    case "google/gemini-2.5-pro":
-                      return "gemini-2.5-pro";
-                    default:
-                      throw new Error(`Non google model: ${validModelId}`);
-                  }
-                };
-
-                const cacheReadInputTokens =
-                  (providerMetadata.google.cachedContentTokenCount as
-                    | number
-                    | undefined) || 0;
-                creditCostInput = {
-                  type: "google",
-                  modelId: modelIdFromValidModelId(),
-                  cacheReadInputTokens,
-                  inputTokens: usage.promptTokens - cacheReadInputTokens,
-                  outputTokens: usage.completionTokens,
-                };
-              }
-
-              const isUsageValid = !Number.isNaN(usage.totalTokens);
-
-              await taskService.finishStreaming(
-                uid,
-                user.id,
-                finalMessages,
-                finishReason,
-                isUsageValid ? usage.totalTokens : undefined,
+            if (isUsageValid) {
+              await usageService.trackUsage(
+                user,
+                requestedModelId,
+                usage,
+                creditCostInput,
               );
 
-              if (isUsageValid) {
-                await usageService.trackUsage(
-                  user,
-                  requestedModelId,
-                  usage,
-                  creditCostInput,
-                );
-
-                appendDataPart(
-                  {
-                    type: "update-usage",
-                    ...usage,
-                  },
-                  stream,
-                );
-              }
-            },
-            headers:
-              requestedModelId.includes("claude-4") && EnableInterleavedThinking
-                ? {
-                    "anthropic-beta": "interleaved-thinking-2025-05-14",
-                  }
-                : undefined,
-            experimental_telemetry: {
-              isEnabled: true,
-              tracer: getTracer(),
-              metadata: {
-                "user-id": user.id,
-                "user-email": user.email,
-                "task-id": uid,
-              },
-            },
-
-            // Disable retries as we handle them ourselves.
-            maxRetries: 0,
-
-            experimental_repairToolCall: async ({
-              toolCall,
-              parameterSchema,
-              error,
-            }) => {
-              if (NoSuchToolError.isInstance(error)) {
-                return null; // do not attempt to fix invalid tool names
-              }
-
-              const { object: repairedArgs } = await generateObject({
-                model: geminiFlash,
-                schema: jsonSchema(parameterSchema(toolCall)),
-                prompt: [
-                  `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
-                  JSON.stringify(toolCall.args),
-                  "The tool accepts the following schema:",
-                  JSON.stringify(parameterSchema(toolCall)),
-                  "Please fix the arguments.",
-                ].join("\n"),
-                experimental_telemetry: {
-                  isEnabled: true,
-                  tracer: getTracer(),
+              appendDataPart(
+                {
+                  type: "update-usage",
+                  ...usage,
                 },
-              });
-
-              return { ...toolCall, args: JSON.stringify(repairedArgs) };
+                stream,
+              );
+            }
+          },
+          headers:
+            requestedModelId.includes("claude-4") && EnableInterleavedThinking
+              ? {
+                  "anthropic-beta": "interleaved-thinking-2025-05-14",
+                }
+              : undefined,
+          experimental_telemetry: {
+            isEnabled: true,
+            metadata: {
+              "user-id": user.id,
+              "user-email": user.email,
+              "task-id": uid,
             },
-          }),
-        );
+          },
+
+          // Disable retries as we handle them ourselves.
+          maxRetries: 0,
+
+          experimental_repairToolCall: async ({
+            toolCall,
+            parameterSchema,
+            error,
+          }) => {
+            if (NoSuchToolError.isInstance(error)) {
+              return null; // do not attempt to fix invalid tool names
+            }
+
+            const { object: repairedArgs } = await generateObject({
+              model: geminiFlash,
+              schema: jsonSchema(parameterSchema(toolCall)),
+              prompt: [
+                `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
+                JSON.stringify(toolCall.args),
+                "The tool accepts the following schema:",
+                JSON.stringify(parameterSchema(toolCall)),
+                "Please fix the arguments.",
+              ].join("\n"),
+              experimental_telemetry: {
+                isEnabled: true,
+              },
+            });
+
+            return { ...toolCall, args: JSON.stringify(repairedArgs) };
+          },
+        });
 
         result.mergeIntoDataStream(stream, {
           sendReasoning: true,

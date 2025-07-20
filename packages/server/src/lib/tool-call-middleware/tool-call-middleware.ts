@@ -1,4 +1,4 @@
-import { Laminar } from "@lmnr-ai/lmnr";
+import { trace } from "@opentelemetry/api";
 import {
   type LanguageModelV1Middleware,
   type LanguageModelV1Prompt,
@@ -390,16 +390,16 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
               ...processedPrompt,
             ];
 
-      const span = Laminar.startSpan({ name: "transformParams" });
-      await Laminar.withSpan(span, async () => {
-        Laminar.setSpanOutput({
-          prompt: promptWithTools,
-        });
-      });
-      span.end();
-
       const stopSequences = params.stopSequences || [];
       stopSequences.push("</api-request>");
+
+      trace
+        .getActiveSpan()
+        ?.setAttribute(
+          "ai.prompt.rawMessages",
+          JSON.stringify(promptWithTools),
+        );
+
       return {
         ...params,
         mode: {

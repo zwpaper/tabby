@@ -26,7 +26,7 @@ async function dbMaintainance() {
   // Delete expired sessions.
   const result = await db
     .deleteFrom("session")
-    .where("expiresAt", "<", moment().subtract("1", "hour").toDate())
+    .where("expiresAt", "<", moment().subtract("7", "day").toDate())
     .executeTakeFirst();
   if (result.numDeletedRows > 0) {
     console.info(`Deleted ${result.numDeletedRows} expired sessions.`);
