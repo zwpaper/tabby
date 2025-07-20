@@ -36,7 +36,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/queuedash": {
+      "/_internal": {
         target: "http://localhost:4113",
       },
       "/slack": {
