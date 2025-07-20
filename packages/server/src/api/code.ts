@@ -55,6 +55,14 @@ const code = new Hono()
               message: "Network error accessing completion service.",
             });
           }
+
+          if (error.message === "The connection was closed") {
+            // @ts-expect-error 499 is a non-standard status code for client closed request
+            // https://http.dev/499
+            throw new HTTPException(499, {
+              message: "Client closed the connection.",
+            });
+          }
         }
 
         // Generic error
