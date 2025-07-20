@@ -21,7 +21,7 @@ import { auth } from "./better-auth";
 import { queuedash } from "./queuedash";
 import { slackService } from "./service/slack";
 
-export const app = new Hono().use(authRequest);
+export const app = new Hono();
 
 if (process.env.NODE_ENV === "production") {
   app.use(otel());
@@ -29,6 +29,9 @@ if (process.env.NODE_ENV === "production") {
   // Only use logger in development / testing.
   app.use(logger());
 }
+
+// after otel so user info is traced.
+app.use(authRequest);
 
 // Static file serving with dynamic import
 if (process.env.NODE_ENV !== "test") {
