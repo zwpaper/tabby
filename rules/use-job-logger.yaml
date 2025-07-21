@@ -1,8 +1,0 @@
-id: use-job-logger
-language: TypeScript
-rule:
-  pattern: getLogger($$$)
-message: Don't use getLogger, use getJobLogger instead.
-severity: error
-files:
-  - "packages/server/src/service/background-job/**/*.ts"
