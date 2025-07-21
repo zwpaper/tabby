@@ -1,10 +1,59 @@
+import { SeverityNumber } from "@opentelemetry/api-logs";
+import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
+import {
+  BatchLogRecordProcessor,
+  LoggerProvider,
+} from "@opentelemetry/sdk-logs";
 import { NodeSDK } from "@opentelemetry/sdk-node";
+import { attachTransport } from "@ragdoll/common";
 import { app } from "./app";
 import { startListenDBEvents } from "./db/events";
 import { websocket } from "./lib/websocket";
 import { startWorkers } from "./service/background-job";
 export type { AppType } from "./app";
+
+const loggerProvider = new LoggerProvider({
+  processors: [new BatchLogRecordProcessor(new OTLPLogExporter())],
+});
+
+attachTransport((args, meta) => {
+  let severityNumber: SeverityNumber = 0;
+  switch (meta.logLevelName) {
+    case "SILLY":
+      severityNumber = SeverityNumber.TRACE;
+      break;
+    case "TRACE":
+      severityNumber = SeverityNumber.TRACE2;
+      break;
+    case "DEBUG":
+      severityNumber = SeverityNumber.DEBUG;
+      break;
+    case "INFO":
+      severityNumber = SeverityNumber.INFO;
+      break;
+    case "WARN":
+      severityNumber = SeverityNumber.WARN;
+      break;
+    case "ERROR":
+      severityNumber = SeverityNumber.ERROR;
+      break;
+    case "FATAL":
+      severityNumber = SeverityNumber.FATAL;
+      break;
+    default:
+      throw new Error(`Unknown log level: ${meta.logLevelName}`);
+  }
+  const body = typeof args[0] === "string" ? args[0] : JSON.stringify(args[0]);
+  loggerProvider.getLogger(meta.name || "default").emit({
+    body,
+    severityNumber,
+    attributes: {
+      "log.file.name": meta.path?.fileName,
+      "log.file.path": meta.path?.filePath,
+    },
+  });
+});
 
 const sdk = new NodeSDK({
   traceExporter: new OTLPTraceExporter(),
@@ -32,7 +81,7 @@ export function setIdleTimeout(request: Request, secs: number) {
 
 async function gracefulShutdown() {
   // Stop accepting new connections
-  await server.stop();
+  await server.stop().catch(console.error);
 
   console.log("SIGINT / SIGTERM received, shutting down...");
   const pendingJobs = [...waitUntilPromises];
@@ -44,7 +93,8 @@ async function gracefulShutdown() {
   }
   console.log("All waitUntil promises resolved.");
 
-  await sdk.shutdown();
+  await sdk.shutdown().catch(console.error);
+  await loggerProvider.shutdown().catch(console.error);
   console.log("Shutdown complete, exiting...");
   process.exit(143);
 }

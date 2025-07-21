@@ -1,6 +1,6 @@
+import { getLogger } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
 import { slackTaskService } from "../slack-task";
-import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
 const QueueName = "notify-task-slack";
@@ -35,11 +35,11 @@ export async function enqueueNotifyTaskSlack(data: NotifyTaskSlack) {
   });
 }
 
+const logger = getLogger("notify-task-slack");
 export function createNotifyTaskSlackWorker() {
   return new Worker<NotifyTaskSlack>(
     QueueName,
     async (job) => {
-      const logger = getJobLogger(job);
       try {
         const result = await slackTaskService.notifyTaskStatusUpdate(
           job.data.userId,
