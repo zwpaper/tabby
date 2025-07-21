@@ -103,7 +103,9 @@ export function FormEditor({
   useEffect(() => {
     activeTabsRef.current = activeTabs;
   }, [activeTabs]);
-  const isComposingRef = useRef(false);
+  const isFileMentionComposingRef = useRef(false);
+  const isCommandMentionComposingRef = useRef(false);
+
   const editor = useEditor(
     {
       extensions: [
@@ -147,8 +149,19 @@ export function FormEditor({
                 });
               };
 
+              const updateIsComposingRef = (v: boolean) => {
+                isFileMentionComposingRef.current = v;
+              };
+
+              const destroyMention = () => {
+                popup[0].destroy();
+                component.destroy();
+                updateIsComposingRef(false);
+              };
+
               return {
                 onStart: (props) => {
+                  updateIsComposingRef(props.editor.view.composing);
                   const tiptapProps = props as {
                     editor: unknown;
                     clientRect?: () => DOMRect;
@@ -187,16 +200,15 @@ export function FormEditor({
                   });
                 },
                 onUpdate: (props) => {
-                  isComposingRef.current = props.editor.view.composing;
+                  updateIsComposingRef(props.editor.view.composing);
                   component.updateProps(props);
                 },
                 onExit: () => {
-                  popup[0].destroy();
-                  component.destroy();
+                  destroyMention();
                 },
                 onKeyDown: (props) => {
                   if (props.event.key === "Escape") {
-                    popup[0].hide();
+                    destroyMention();
                     return true;
                   }
 
@@ -207,7 +219,7 @@ export function FormEditor({
             findSuggestionMatch: (config: Trigger): SuggestionMatch => {
               return findSuggestionMatch({
                 ...config,
-                allowSpaces: isComposingRef.current,
+                allowSpaces: isFileMentionComposingRef.current,
               });
             },
           },
@@ -246,8 +258,20 @@ export function FormEditor({
                 return workflowResults;
               };
 
+              const updateIsComposingRef = (v: boolean) => {
+                isCommandMentionComposingRef.current = v;
+              };
+
+              const destroyMention = () => {
+                popup[0].destroy();
+                component.destroy();
+                updateIsComposingRef(false);
+              };
+
               return {
                 onStart: (props) => {
+                  updateIsComposingRef(props.editor.view.composing);
+
                   const tiptapProps = props as {
                     editor: unknown;
                     clientRect?: () => DOMRect;
@@ -278,15 +302,15 @@ export function FormEditor({
                   });
                 },
                 onUpdate: (props) => {
+                  updateIsComposingRef(props.editor.view.composing);
                   component.updateProps(props);
                 },
                 onExit: () => {
-                  popup[0].destroy();
-                  component.destroy();
+                  destroyMention();
                 },
                 onKeyDown: (props) => {
                   if (props.event.key === "Escape") {
-                    popup[0].hide();
+                    destroyMention();
                     return true;
                   }
 
@@ -297,7 +321,7 @@ export function FormEditor({
             findSuggestionMatch: (config: Trigger): SuggestionMatch => {
               return findSuggestionMatch({
                 ...config,
-                allowSpaces: isComposingRef.current,
+                allowSpaces: isCommandMentionComposingRef.current,
               });
             },
           },

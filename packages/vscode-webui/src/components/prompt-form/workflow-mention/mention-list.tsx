@@ -65,7 +65,7 @@ export const WorkflowMentionList = forwardRef<
     <div className="relative flex w-[80vw] flex-col overflow-hidden py-1 sm:w-[600px]">
       <ScrollArea viewportClassname="max-h-[300px] px-2">
         {items.length === 0 ? (
-          <div className="px-2 py-1.5 text-muted-foreground text-xs">
+          <div className="px-2 py-3 text-muted-foreground text-xs">
             {query ? "No workflows found" : "Type to search workflows..."}
           </div>
         ) : (
