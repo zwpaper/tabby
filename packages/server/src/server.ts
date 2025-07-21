@@ -32,7 +32,7 @@ export function setIdleTimeout(request: Request, secs: number) {
 
 async function gracefulShutdown() {
   // Stop accepting new connections
-  server.stop();
+  await server.stop();
 
   console.log("SIGINT / SIGTERM received, shutting down...");
   const pendingJobs = [...waitUntilPromises];
