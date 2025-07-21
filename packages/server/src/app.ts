@@ -10,6 +10,7 @@ import code from "./api/code";
 import enhance from "./api/enhance";
 import events from "./api/events";
 import integrations from "./api/integrations";
+import invitation from "./api/invitation";
 import minions from "./api/minions";
 import models from "./api/models";
 import tasks from "./api/tasks";
@@ -135,6 +136,7 @@ export const route = api
   .route("/tasks", tasks)
   .route("/minions", minions)
   .route("/integrations", integrations)
+  .route("/invitation", invitation)
   .route("/upload", upload)
   .route("/enhancePrompt", enhance)
   .route("/tools", tools)

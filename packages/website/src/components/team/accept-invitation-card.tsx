@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { getBetterAuthErrorMessage } from "@/lib/error";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
@@ -43,6 +43,7 @@ function AcceptInvitationContent({
   invitationId,
 }: AcceptInvitationCardProps & { invitationId: string }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const invitationQuery = useQuery({
     queryKey: ["invitation", invitationId],
     queryFn: async () => {
@@ -105,6 +106,9 @@ function AcceptInvitationContent({
         fetchOptions: { throw: true },
       });
 
+      await queryClient.invalidateQueries({
+        queryKey: ["pendingInvitations"],
+      });
       toast.success("Invitation accepted successfully");
 
       if (organizationResponse.slug) {
