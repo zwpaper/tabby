@@ -1,4 +1,5 @@
 import type { QueueBaseOptions } from "bullmq";
+import { BullMQOtel } from "bullmq-otel";
 import IORedis from "ioredis";
 import { parseRedisUrl } from "parse-redis-url-simple";
 
@@ -16,8 +17,10 @@ function createRedisConnection() {
 
 // Export the Redis client instance
 const connection = createRedisConnection();
+const otel = new BullMQOtel("background-jobs");
 
 export const queueConfig: QueueBaseOptions = {
   connection,
+  telemetry: otel,
   prefix: process.env.NODE_ENV === "production" ? "pochi" : "dev-pochi",
 };

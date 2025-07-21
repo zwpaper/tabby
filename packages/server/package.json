@@ -30,6 +30,7 @@
     "ai": "catalog:",
     "better-auth": "catalog:",
     "bullmq": "^5.53.2",
+    "bullmq-otel": "^1.0.1",
     "emittery": "catalog:",
     "eventsource": "^4.0.0",
     "hono": "catalog:",
