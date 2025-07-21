@@ -62,6 +62,34 @@ export type SaveCheckpointOptions = {
   force?: boolean;
 };
 
+/**
+ * Custom model setting
+ */
+export type CustomModelSetting = {
+  models: {
+    /**
+     * Display name of the model, e.g., "GPT-4o".
+     * This is used for display purposes in the UI. If not provided, the `id` will be used.
+     */
+    name?: string;
+    /**
+     * Identifier for the model, e.g., "gpt-4o".
+     * This is used to identify the model in API requests.
+     */
+    id: string;
+    /**
+     * Maximum number of generated tokens for the model
+     */
+    maxTokens: number;
+    /**
+     * Context window size for the model
+     */
+    contextWindow: number;
+  }[];
+  baseURL: string;
+  apiKey?: string;
+};
+
 const DevBaseUrl = "http://localhost:4113";
 const ProdBaseUrl = "https://app.getpochi.com";
 

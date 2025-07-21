@@ -116,6 +116,15 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   const { toolset: mcpToolSet } = useMcp();
 
+  const openAIModelOverride =
+    selectedModel?.type === "byok"
+      ? {
+          baseURL: selectedModel.provider.baseURL,
+          apiKey: selectedModel.provider.apiKey,
+          maxOutputTokens: selectedModel.maxTokens,
+        }
+      : undefined;
+
   const latestHttpCode = useRef<number | undefined>(undefined);
   const chat = useChat({
     /*
@@ -159,6 +168,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         mcpToolSet,
         selectedModel?.id,
         minionId,
+        openAIModelOverride,
       ),
     fetch: async (url, options) => {
       const resp = await fetch(url, options);
@@ -387,7 +397,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
             <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
               <div className="flex items-center gap-2 overflow-x-hidden truncate">
                 <ModelSelect
-                  value={selectedModel?.id}
+                  value={selectedModel}
                   models={models}
                   isLoading={isModelsLoading}
                   onChange={handleSelectModel}

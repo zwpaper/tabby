@@ -13,12 +13,12 @@ import { cn } from "@/lib/utils";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import LoadingWrapper from "@/components/loading-wrapper";
-import type { Models } from "@/features/settings";
+import type { DisplayModel } from "@/features/settings";
 import { DropdownMenuPortal } from "@radix-ui/react-dropdown-menu";
 
 interface ModelSelectProps {
-  models: Models;
-  value: string | undefined;
+  models: DisplayModel[] | undefined;
+  value: DisplayModel | undefined;
   onChange: (v: string) => void;
   isLoading?: boolean;
   triggerClassName?: string;
@@ -55,7 +55,9 @@ export function ModelSelect({
                   triggerClassName,
                 )}
               >
-                <span className="truncate whitespace-nowrap">{value}</span>
+                <span className="truncate whitespace-nowrap">
+                  {value?.name ?? "No Model Selected"}
+                </span>
                 <ChevronDownIcon className="size-4 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
@@ -66,9 +68,12 @@ export function ModelSelect({
                 align="end"
                 className="dropdown-menu max-h-[30vh] min-w-[18rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-2 text-popover-foreground shadow"
               >
-                <DropdownMenuRadioGroup value={value} onValueChange={onChange}>
+                <DropdownMenuRadioGroup
+                  value={value?.id}
+                  onValueChange={onChange}
+                >
                   {models.map((model) => {
-                    const isSelected = model.id === value;
+                    const isSelected = model.id === value?.id;
                     return (
                       <DropdownMenuRadioItem
                         onClick={(e) => {
@@ -82,7 +87,7 @@ export function ModelSelect({
                         <CheckIcon
                           className={cn(
                             "mr-1 shrink-0",
-                            model.id === value ? "opacity-100" : "opacity-0",
+                            isSelected ? "opacity-100" : "opacity-0",
                           )}
                         />
                         <span
@@ -90,7 +95,7 @@ export function ModelSelect({
                             "font-semibold": isSelected,
                           })}
                         >
-                          {model.id}
+                          {model.type === "hosted" ? model.id : model.name}
                         </span>
                       </DropdownMenuRadioItem>
                     );

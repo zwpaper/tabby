@@ -233,7 +233,7 @@ export function getModelOptions(
 ): Partial<Parameters<typeof streamText>["0"]> {
   if (typeof modelId !== "string") {
     return {
-      maxTokens: 1024 * 12, // 12k tokens
+      maxTokens: modelId.maxOutputTokens,
     };
   }
 

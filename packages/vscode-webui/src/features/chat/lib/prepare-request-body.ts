@@ -15,6 +15,7 @@ export async function prepareRequestBody(
   mcpToolSet: Record<string, McpTool>,
   model: string | undefined,
   minionId?: string | null,
+  openAIModelOverride?: RagdollChatRequest["openAIModelOverride"],
 ): Promise<RagdollChatRequest> {
   const message = request.messages[request.messages.length - 1];
   await appendCheckpoint(message as UIMessageWithRevisionId);
@@ -29,6 +30,7 @@ export async function prepareRequestBody(
     environment,
     // @ts-expect-error
     mcpToolSet,
+    openAIModelOverride,
   };
 }
 

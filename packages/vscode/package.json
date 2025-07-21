@@ -216,6 +216,51 @@
           "pochi.mcpServers": {
             "default": {},
             "description": "MCP servers configuration"
+          },
+          "pochi.customModelSettings": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "object",
+              "default": {},
+              "properties": {
+                "baseURL": {
+                  "type": "string",
+                  "description": "Base URL of the custom model setting API (e.g., https://api.openai.com/v1)"
+                },
+                "apiKey": {
+                  "type": "string",
+                  "description": "API key for the custom model setting (optional)"
+                },
+                "models": {
+                  "type": "array",
+                  "default": [],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique identifier for the model"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Display name for the model"
+                      },
+                      "maxTokens": {
+                        "type": "number",
+                        "description": "Maximum number of tokens for the model"
+                      },
+                      "contextWindow": {
+                        "type": "number",
+                        "description": "Context window size for the model"
+                      }
+                    }
+                  },
+                  "description": "List of available models from the custom model setting API"
+                }
+              },
+              "description": "List of custom model settings for OpenAI API override"
+            }
           }
         }
       }

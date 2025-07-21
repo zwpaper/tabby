@@ -33,6 +33,7 @@ export const ZodChatRequestType = z.object({
     .object({
       baseURL: z.string(),
       apiKey: z.string().optional(),
+      maxOutputTokens: z.number().describe("Max output tokens of the model."),
     })
     .optional(),
 });

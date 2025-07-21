@@ -4,6 +4,7 @@ import type { Environment } from "@ragdoll/db";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
+  CustomModelSetting,
   GitDiff,
   McpStatus,
   NewTaskParams,
@@ -234,6 +235,14 @@ export interface VSCodeHostApi {
     options: { modal?: boolean; detail?: string },
     ...items: T[]
   ): Promise<T | undefined>;
+
+  /**
+   * Read the OpenAI model override configuration.
+   * @returns The OpenAI model override configuration or undefined if not set.
+   */
+  readCustomModelSetting(): Promise<
+    ThreadSignalSerialization<CustomModelSetting[] | undefined>
+  >;
 }
 
 export interface WebviewHostApi {

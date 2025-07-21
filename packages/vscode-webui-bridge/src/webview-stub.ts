@@ -4,6 +4,7 @@ import type { Environment } from "@ragdoll/db";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
+  CustomModelSetting,
   GitDiff,
   McpStatus,
   ResourceURI,
@@ -162,6 +163,13 @@ const VSCodeHostStub = {
   },
   showInformationMessage: async (): Promise<undefined> => {
     return Promise.resolve(undefined);
+  },
+  readCustomModelSetting: async (): Promise<
+    ThreadSignalSerialization<CustomModelSetting[] | undefined>
+  > => {
+    return Promise.resolve(
+      {} as ThreadSignalSerialization<CustomModelSetting[] | undefined>,
+    );
   },
 } satisfies VSCodeHostApi;
 

@@ -73,6 +73,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "readAutoSaveDisabled",
         "diffWithCheckpoint",
         "showInformationMessage",
+        "readCustomModelSetting",
       ],
       exports: {
         openTask(params) {

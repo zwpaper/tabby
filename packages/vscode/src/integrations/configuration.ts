@@ -1,4 +1,5 @@
 import { signal } from "@preact/signals-core";
+import type { CustomModelSetting } from "@ragdoll/vscode-webui-bridge";
 import deepEqual from "fast-deep-equal";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
@@ -13,6 +14,7 @@ export class PochiConfiguration implements vscode.Disposable {
   readonly mcpServers = signal(getPochiMcpServersSettings());
   readonly webui = signal(getPochiWebviewLogSettings());
   readonly autoSaveDisabled = signal(getAutoSaveDisabled());
+  readonly customModelSettings = signal(getCustomModelSetting());
 
   constructor() {
     this.disposables.push(
@@ -33,6 +35,11 @@ export class PochiConfiguration implements vscode.Disposable {
 
         if (e.affectsConfiguration("files.autoSave")) {
           this.autoSaveDisabled.value = getAutoSaveDisabled();
+        }
+
+        if (e.affectsConfiguration("pochi.customModelSettings")) {
+          const settings = getCustomModelSetting();
+          this.customModelSettings.value = settings;
         }
       }),
     );
@@ -109,4 +116,10 @@ function getAutoSaveDisabled() {
     .get<string>("autoSave", "off");
 
   return autoSave === "off";
+}
+
+function getCustomModelSetting() {
+  return vscode.workspace
+    .getConfiguration("pochi")
+    .get("customModelSettings") as CustomModelSetting[] | undefined;
 }

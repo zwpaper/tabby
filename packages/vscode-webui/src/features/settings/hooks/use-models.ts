@@ -2,8 +2,28 @@ import { apiClient } from "@/lib/auth-client";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useSettingsStore } from "../store";
+import { useCustomModelSetting } from "./use-custom-model-setting";
 
-export type Models = ReturnType<typeof useModels>["data"];
+export type DisplayModel =
+  | {
+      type: "hosted";
+      id: string;
+      name: string;
+      contextWindow: number;
+      costType: "basic" | "premium";
+    }
+  | {
+      type: "byok";
+      id: string;
+      name: string;
+      contextWindow: number;
+      maxTokens: number;
+      costType: "basic";
+      provider: {
+        baseURL: string;
+        apiKey?: string;
+      };
+    };
 
 export function useModels() {
   const { enablePochiModels } = useSettingsStore();
@@ -15,15 +35,49 @@ export function useModels() {
     },
   });
 
+  const customModelSettings = useCustomModelSetting();
+
+  const customModels = useMemo(() => {
+    return customModelSettings?.flatMap((modelSetting) => {
+      const { models, ...provider } = modelSetting;
+      return models.map<DisplayModel>((model) => {
+        return {
+          ...model,
+          type: "byok" as const,
+          name: model.name ?? model.id,
+          id: model.id,
+          contextWindow: model.contextWindow,
+          maxTokens: model.maxTokens,
+          costType: "basic",
+          provider,
+        };
+      });
+    });
+  }, [customModelSettings]);
+
   const models = useMemo(() => {
     if (!data) {
       return undefined;
     }
-    if (enablePochiModels) {
-      return data;
+
+    let defaultModels = data.map<DisplayModel>((model) => ({
+      type: "hosted" as const,
+      name: model.id,
+      ...model,
+    }));
+    if (!enablePochiModels) {
+      defaultModels = defaultModels.filter(
+        (model) => !model.id.startsWith("pochi/"),
+      );
     }
-    return data.filter((model) => !model.id.startsWith("pochi/"));
-  }, [data, enablePochiModels]);
+
+    // Add custom models from OpenAI compatible models if available
+    if (customModels && customModels.length > 0) {
+      return [...defaultModels, ...customModels];
+    }
+
+    return defaultModels;
+  }, [data, enablePochiModels, customModels]);
 
   return { data: models, ...rest };
 }
@@ -36,7 +90,9 @@ export function useSelectedModels() {
     if (!isLoading) {
       // init model
       const validModelId = getModelIdFromModelInfo(selectedModelId, models);
-      updateSelectedModelId(validModelId);
+      if (validModelId !== selectedModelId) {
+        updateSelectedModelId(validModelId);
+      }
     }
   }, [isLoading, models, selectedModelId, updateSelectedModelId]);
 
@@ -51,7 +107,10 @@ export function useSelectedModels() {
   };
 }
 
-function getModelIdFromModelInfo(modelId: string | undefined, models: Models) {
+function getModelIdFromModelInfo(
+  modelId: string | undefined,
+  models: DisplayModel[] | undefined,
+): string | undefined {
   if (!models?.length) return undefined;
 
   const targetModel = modelId

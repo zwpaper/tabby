@@ -52,6 +52,7 @@ import {
 } from "@ragdoll/tools";
 import type {
   CaptureEvent,
+  CustomModelSetting,
   McpStatus,
   ResourceURI,
   SaveCheckpointOptions,
@@ -606,6 +607,12 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       options,
       ...items,
     );
+  };
+
+  readCustomModelSetting = async (): Promise<
+    ThreadSignalSerialization<CustomModelSetting[] | undefined>
+  > => {
+    return ThreadSignal.serialize(this.pochiConfiguration.customModelSettings);
   };
 
   dispose() {
