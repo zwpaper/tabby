@@ -26,11 +26,11 @@ export class UsageService {
     const now = moment.utc();
     const startDayOfMonth = now.startOf("month").toDate();
     const credit =
-      creditCostInput && (await this.meterCreditCost(user, creditCostInput));
+      (creditCostInput &&
+        (await this.meterCreditCost(user, creditCostInput))) ||
+      0;
 
-    if (credit) {
-      tracer.setAttribute("ragdoll.metering.credit", credit);
-    }
+    tracer.setAttribute("ragdoll.metering.credit", credit);
 
     const organization = await organizationService.readActiveOrganizationByUser(
       user.id,
