@@ -216,8 +216,8 @@ const chat = new Hono()
 
             if (validModelId === "moonshotai/kimi-k2") {
               creditCostInput = {
-                type: "moonshotai",
-                modelId: "kimi-k2",
+                type: "groq",
+                modelId: "moonshotai/kimi-k2-instruct",
                 inputTokens: usage.promptTokens,
                 outputTokens: usage.completionTokens,
               };

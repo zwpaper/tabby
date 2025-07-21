@@ -62,8 +62,8 @@ export type CreditCostInput =
       outputTokens: number;
     }
   | {
-      type: "moonshotai";
-      modelId: "kimi-k2";
+      type: "groq";
+      modelId: "moonshotai/kimi-k2-instruct";
       inputTokens: number;
       outputTokens: number;
     };
@@ -96,8 +96,8 @@ const PriceByModel = {
       },
     },
   },
-  moonshotai: {
-    "kimi-k2": {
+  groq: {
+    "moonshotai/kimi-k2-instruct": {
       input: 10,
       output: 30,
     },
@@ -161,11 +161,11 @@ function computeCreditCostForAnthropic(
 }
 
 // https://console.groq.com/docs/model/moonshotai/kimi-k2-instruct
-function computeCreditCostForMoonshotai(
-  input: Extract<CreditCostInput, { type: "moonshotai" }>,
+function computeCreditCostForGroq(
+  input: Extract<CreditCostInput, { type: "groq" }>,
 ): number {
   const { modelId, inputTokens, outputTokens } = input;
-  const price = PriceByModel.moonshotai[modelId];
+  const price = PriceByModel.groq[modelId];
   return inputTokens * price.input + outputTokens * price.output;
 }
 
@@ -177,8 +177,8 @@ export function computeCreditCost(input: CreditCostInput): number {
       return computeCreditCostForGoogle(input);
     case "anthropic":
       return computeCreditCostForAnthropic(input);
-    case "moonshotai":
-      return computeCreditCostForMoonshotai(input);
+    case "groq":
+      return computeCreditCostForGroq(input);
   }
 }
 
