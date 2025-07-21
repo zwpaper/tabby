@@ -36,10 +36,6 @@ attachTransport((args, meta) => {
   logs.getLogger(meta.name || "default").emit({
     body,
     severityNumber,
-    attributes: {
-      "log.file.name": meta.path?.fileName,
-      "log.file.path": meta.path?.filePath,
-    },
   });
 });
 
@@ -50,4 +46,6 @@ const sdk = new NodeSDK({
 
 sdk.start();
 
-process.on("SIGTERM SIGINT", () => sdk.shutdown().catch(console.error));
+for (const signal of ["SIGTERM", "SIGINT"]) {
+  process.on(signal, () => sdk.shutdown().catch(console.error));
+}
