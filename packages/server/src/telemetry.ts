@@ -37,7 +37,6 @@ attachTransport((args, meta) => {
     body,
     severityNumber,
     timestamp: meta.date,
-    eventName: "log",
   });
 });
 
