@@ -1,5 +1,5 @@
 import type React from "react";
-import { useCallback, useEffect } from "react"; // useMemo is now in the hook
+import { useCallback, useEffect, useMemo } from "react"; // useMemo is now in the hook
 
 import { Button } from "@/components/ui/button";
 import { useAutoApproveGuard, useToolCallLifeCycle } from "@/features/chat";
@@ -16,11 +16,30 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   pendingApproval,
 }) => {
   const autoApproveGuard = useAutoApproveGuard();
-
-  const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
-    toolName: pendingApproval.tool.toolName,
-    toolCallId: pendingApproval.tool.toolCallId,
-  });
+  const { getToolCallLifeCycle } = useToolCallLifeCycle();
+  const [lifecycles, tools] = useMemo(
+    () =>
+      "tools" in pendingApproval
+        ? [
+            pendingApproval.tools.map((tool) =>
+              getToolCallLifeCycle({
+                toolName: tool.toolName,
+                toolCallId: tool.toolCallId,
+              }),
+            ),
+            pendingApproval.tools,
+          ]
+        : [
+            [
+              getToolCallLifeCycle({
+                toolName: pendingApproval.tool.toolName,
+                toolCallId: pendingApproval.tool.toolCallId,
+              }),
+            ],
+            [pendingApproval.tool],
+          ],
+    [getToolCallLifeCycle, pendingApproval],
+  );
 
   const { selectedModel } = useSelectedModels();
 
@@ -42,38 +61,36 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const abortText = ToolAbortText[pendingApproval.name] || "Stop";
 
   const onAccept = useCallback(() => {
-    if (lifecycle.status !== "ready") {
-      return;
-    }
+    for (const [i, lifecycle] of lifecycles.entries()) {
+      if (lifecycle.status !== "ready") {
+        continue;
+      }
 
-    lifecycle.execute(pendingApproval.tool.args, {
-      model: selectedModel?.id,
-    });
-  }, [
-    pendingApproval.tool,
-    lifecycle.status,
-    lifecycle.execute,
-    selectedModel?.id,
-  ]);
+      lifecycle.execute(tools[i].args, {
+        model: selectedModel?.id,
+      });
+    }
+  }, [tools, lifecycles, selectedModel?.id]);
 
   const onReject = useCallback(() => {
-    if (lifecycle.status !== "ready") {
-      return;
+    for (const lifecycle of lifecycles) {
+      if (lifecycle.status !== "ready") {
+        continue;
+      }
+      lifecycle.reject();
     }
+  }, [lifecycles]);
 
-    lifecycle.reject();
-  }, [lifecycle.status, lifecycle.reject]);
-
+  const isReady = lifecycles.every((x) => x.status === "ready");
   const isAutoApproved = useToolAutoApproval(
     pendingApproval,
     autoApproveGuard.current,
   );
-
   useEffect(() => {
-    if (isAutoApproved) {
+    if (isReady && isAutoApproved) {
       onAccept();
     }
-  }, [isAutoApproved, onAccept]);
+  }, [isReady, isAutoApproved, onAccept]);
 
   const [showAbort, setShowAbort, setShowAbortImmediate] = useDebounceState(
     false,
@@ -86,19 +103,24 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     setShowAbortImmediate(false);
   }, [pendingApproval, setShowAbortImmediate]);
 
+  const isExecuting = lifecycles.some((lifecycle) =>
+    lifecycle.status.startsWith("execute"),
+  );
   useEffect(() => {
-    if (lifecycle.status.startsWith("execute")) {
+    if (isExecuting) {
       setShowAbort(true);
     }
-  }, [setShowAbort, lifecycle.status]);
+  }, [setShowAbort, isExecuting]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies(autoApproveGuard): autoApproveGuard is a ref, so it won't change
   const abort = useCallback(() => {
     autoApproveGuard.current = false;
-    lifecycle.abort();
-  }, [lifecycle]);
+    for (const lifecycle of lifecycles) {
+      lifecycle.abort();
+    }
+  }, [lifecycles]);
 
-  const showAccept = !isAutoApproved && lifecycle.status === "ready";
+  const showAccept = !isAutoApproved && isReady;
   if (showAccept) {
     return (
       <>
@@ -112,7 +134,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
     );
   }
 
-  if (showAbort && abortText && lifecycle.status.startsWith("execute")) {
+  if (showAbort && abortText && isExecuting) {
     /*
     Only display the abort button if:
     1. There's executing tool call

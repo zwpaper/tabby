@@ -6,5 +6,6 @@ coverage/
 !.env.example
 *.sqlite*
 .turbo
+.DS_store
 
 *storybook.log
