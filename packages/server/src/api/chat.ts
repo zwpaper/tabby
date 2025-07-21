@@ -214,6 +214,15 @@ const chat = new Hono()
               };
             }
 
+            if (validModelId === "moonshotai/kimi-k2") {
+              creditCostInput = {
+                type: "moonshotai",
+                modelId: "kimi-k2",
+                inputTokens: usage.promptTokens,
+                outputTokens: usage.completionTokens,
+              };
+            }
+
             const isUsageValid = !Number.isNaN(usage.totalTokens);
 
             await taskService.finishStreaming(
