@@ -14,6 +14,7 @@ import { tracer } from "../trace";
 import { organizationService } from "./organization";
 
 const FreeCreditInDollars = 20;
+const CodeCompletionSubscriptionCountThreshold = 100;
 
 export class UsageService {
   async trackUsage(
@@ -268,6 +269,44 @@ export class UsageService {
       .executeTakeFirst();
 
     return monthlyCreditLimitResult?.limit;
+  }
+
+  async trackCodeCompletionUsage(user: User, count = 1) {
+    const now = moment.utc();
+    const startDayOfMonth = now.startOf("month").toDate();
+
+    await db
+      .insertInto("monthlyCodeCompletionUsage")
+      .values({
+        userId: user.id,
+        startDayOfMonth,
+        count,
+      })
+      .onConflict((oc) =>
+        oc.columns(["userId", "startDayOfMonth"]).doUpdateSet((eb) => ({
+          count: eb("monthlyCodeCompletionUsage.count", "+", count),
+        })),
+      )
+      .execute();
+  }
+
+  async readCodeCompletionUsage(user: User) {
+    const now = moment.utc();
+    const startDayOfMonth = now.startOf("month").toDate();
+
+    const results = await db
+      .selectFrom("monthlyCodeCompletionUsage")
+      .select(["count"])
+      .where("userId", "=", user.id)
+      .where(sql`"startDayOfMonth"`, "=", startDayOfMonth)
+      .executeTakeFirst();
+
+    const count = results?.count ?? 0;
+
+    return {
+      count,
+      isSubscriptionRequired: count >= CodeCompletionSubscriptionCountThreshold,
+    };
   }
 }
 

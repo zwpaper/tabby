@@ -108,6 +108,13 @@ export interface Minion {
   userId: string;
 }
 
+export interface MonthlyCodeCompletionUsage {
+  count: Generated<number>;
+  id: Generated<number>;
+  startDayOfMonth: Timestamp;
+  userId: string;
+}
+
 export interface MonthlyCreditLimit {
   createdAt: Generated<Timestamp>;
   id: Generated<number>;
@@ -245,6 +252,7 @@ export interface DB {
   invitation: Invitation;
   member: Member;
   minion: Minion;
+  monthlyCodeCompletionUsage: MonthlyCodeCompletionUsage;
   monthlyCreditLimit: MonthlyCreditLimit;
   monthlyOrganizationCreditLimit: MonthlyOrganizationCreditLimit;
   monthlyOrganizationUsage: MonthlyOrganizationUsage;

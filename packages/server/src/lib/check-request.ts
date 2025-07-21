@@ -3,6 +3,7 @@ import { ServerErrors } from "..";
 import { type User, isInternalOrganization } from "../auth";
 import { organizationService } from "../service/organization";
 import { usageService } from "../service/usage";
+import { readActiveSubscription } from "./billing";
 import { type AvailableModelId, AvailableModels } from "./constants";
 
 export function checkModel(modelId: string): AvailableModelId {
@@ -70,4 +71,52 @@ export async function checkUserQuota(user: User, modelId: string) {
       message: ServerErrors.ReachedCreditLimit,
     });
   }
+}
+
+export async function checkUserCodeCompletionQuota(user: User) {
+  if (process.env.NODE_ENV === "test") {
+    // Skip quota check for test environment
+    return;
+  }
+
+  const usage = await usageService.readCodeCompletionUsage(user);
+  if (!usage.isSubscriptionRequired) {
+    // covered by free tier
+    return;
+  }
+
+  const organization = await organizationService.readActiveOrganizationByUser(
+    user.id,
+  );
+  if (organization && isInternalOrganization(organization)) {
+    // internal organization
+    return;
+  }
+
+  const orgQuota = organization
+    ? await usageService.readCurrentMonthOrganizationQuota(organization.id)
+    : undefined;
+
+  if (organization) {
+    if (!orgQuota?.plan) {
+      // has a org but no org plan
+      throw new HTTPException(400, {
+        message: ServerErrors.RequireOrgSubscription,
+      });
+    }
+
+    // covered by org plan
+    return;
+  }
+
+  const { plan } = await readActiveSubscription(user);
+  if (plan === "Community") {
+    // free plan
+    throw new HTTPException(400, {
+      message: ServerErrors.RequireSubscription,
+    });
+  }
+
+  // covered by Pro plan
+  return;
 }

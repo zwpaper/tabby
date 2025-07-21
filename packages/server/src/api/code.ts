@@ -3,7 +3,9 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requireAuth } from "../auth";
 
+import { checkUserCodeCompletionQuota } from "../lib/check-request";
 import { codeCompletionService } from "../service/code-completion";
+import { usageService } from "../service/usage";
 import { ZodCodeCompletionRequestType } from "../types";
 
 const code = new Hono()
@@ -21,13 +23,19 @@ const code = new Hono()
         });
       }
 
-      // Check user permissions
+      // Check user subscription
+      const user = c.get("user");
+      await checkUserCodeCompletionQuota(user);
 
       try {
         const response = await codeCompletionService.generateCompletion(
           req,
           c.req.raw.signal,
         );
+
+        // Track usage
+        await usageService.trackCodeCompletionUsage(user);
+
         return c.json(response);
       } catch (error) {
         // Handle specific error types
