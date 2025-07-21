@@ -9,9 +9,8 @@ import { buttonVariants } from "./ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
 // Infer type from API response
-const pendingInvitationsQuery = apiClient.api.invitation.me.$get;
 type PendingInvitationsResponse = InferResponseType<
-  typeof pendingInvitationsQuery
+  typeof apiClient.api.invitation.me.$get
 >;
 type Invitation = PendingInvitationsResponse["invitations"];
 
@@ -114,11 +113,11 @@ export function OrganizationButton() {
       )}
     >
       <AiOutlineTeam className="size-4 shrink-0" />
-      <span className="truncate md:inline">
+      <span className="hidden truncate md:inline">
         {organization?.name ?? "Create Team"}
       </span>
       {hasPendingInvitations && (
-        <span className="-translate-y-1/2 absolute top-1 right-1 z-10 flex size-3.5 translate-x-1/2 transform items-center justify-center rounded-full bg-primary font-bold text-primary-foreground text-xs text-xs">
+        <span className="-translate-y-1/2 absolute top-1.5 right-1.5 z-10 flex size-3.5 translate-x-1/2 transform items-center justify-center rounded-full bg-primary font-bold text-[10px] text-primary-foreground">
           {invitations.length}
         </span>
       )}
