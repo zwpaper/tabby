@@ -36,6 +36,8 @@ attachTransport((args, meta) => {
   logs.getLogger(meta.name || "default").emit({
     body,
     severityNumber,
+    timestamp: meta.date,
+    eventName: "log",
   });
 });
 
