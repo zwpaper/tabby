@@ -6,7 +6,7 @@ import {
   LoggerProvider,
 } from "@opentelemetry/sdk-logs";
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import { attachTransport } from "@ragdoll/common";
+import { attachTransport, getLogger } from "@ragdoll/common";
 import { app } from "./app";
 import { startListenDBEvents } from "./db/events";
 import { websocket } from "./lib/websocket";
@@ -59,6 +59,8 @@ const sdk = new NodeSDK({
   traceExporter: new OTLPTraceExporter(),
 });
 
+const logger = getLogger("server");
+
 sdk.start();
 
 const server = Bun.serve({
@@ -66,7 +68,7 @@ const server = Bun.serve({
   fetch: app.fetch,
   websocket,
 });
-console.log(`Listening on http://localhost:${server.port} ...`);
+logger.info(`Listening on http://localhost:${server.port} ...`);
 
 const waitUntilPromises: Set<Promise<unknown>> = new Set();
 
@@ -83,19 +85,19 @@ async function gracefulShutdown() {
   // Stop accepting new connections
   await server.stop().catch(console.error);
 
-  console.log("SIGINT / SIGTERM received, shutting down...");
+  logger.info("SIGINT / SIGTERM received, shutting down...");
   const pendingJobs = [...waitUntilPromises];
-  console.log(`Waiting for ${pendingJobs.length} waitUntil promises...`);
+  logger.info(`Waiting for ${pendingJobs.length} waitUntil promises...`);
   try {
     await Promise.all(pendingJobs);
   } catch (err) {
-    console.warn("Error during graceful shutdown:", err);
+    logger.warn("Error during graceful shutdown:", err);
   }
-  console.log("All waitUntil promises resolved.");
+  logger.info("All waitUntil promises resolved.");
 
   await sdk.shutdown().catch(console.error);
   await loggerProvider.shutdown().catch(console.error);
-  console.log("Shutdown complete, exiting...");
+  logger.info("Shutdown complete, exiting...");
   process.exit(143);
 }
 
