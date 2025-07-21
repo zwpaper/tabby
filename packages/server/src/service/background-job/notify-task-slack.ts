@@ -41,13 +41,11 @@ export function createNotifyTaskSlackWorker() {
     QueueName,
     async (job) => {
       try {
-        const result = await slackTaskService.notifyTaskStatusUpdate(
+        await slackTaskService.notifyTaskStatusUpdate(
           job.data.userId,
           job.data.uid,
         );
-        if (result) {
-          logger.info(`Successfully notified task status update: ${result}`);
-        }
+        logger.info("Successfully notified task status update");
       } catch (error) {
         logger.error(
           `Failed to notify task status update: ${error instanceof Error ? error.message : error}`,

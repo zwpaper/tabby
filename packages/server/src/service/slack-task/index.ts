@@ -17,10 +17,7 @@ const SLACK_ERROR_REACTED = "already_reacted";
 const SLACK_ERROR_NO_REACTION = "no_reaction";
 
 class SlackTaskService {
-  async notifyTaskStatusUpdate(
-    userId: string,
-    uid: string,
-  ): Promise<string | undefined> {
+  async notifyTaskStatusUpdate(userId: string, uid: string): Promise<void> {
     const task = await taskService.get(uid, userId);
     if (!task || !isNotifyableTask(task)) {
       return;
@@ -32,12 +29,12 @@ class SlackTaskService {
   private async sendTaskStatusUpdate(
     userId: string,
     task: Task,
-  ): Promise<string | undefined> {
+  ): Promise<void> {
     const slackEventData = this.extractSlackDataFromTask(task);
     const webClient = await slackService.getWebClientByUser(userId);
 
     if (!webClient || !slackEventData.channel || !slackEventData.ts) {
-      return "Task did not contain Slack event data, not updating";
+      throw new Error("Slack web client or event data is missing");
     }
 
     // Extract values after null check to ensure TypeScript knows they're defined
