@@ -1,9 +1,6 @@
 import { spawn } from "node:child_process";
-import {
-  MaxTerminalOutputSize,
-  fixExecuteCommandOutput,
-  getShellPath,
-} from "@ragdoll/common/node";
+import { fixExecuteCommandOutput, getShellPath } from "@ragdoll/common/node";
+import { ExecutionError, truncateOutput } from "./utils";
 
 interface ExecuteCommandOptions {
   command: string;
@@ -11,15 +8,6 @@ interface ExecuteCommandOptions {
   timeout: number;
   abortSignal?: AbortSignal;
 }
-
-const truncateOutput = (output: string) => {
-  const isTruncated = output.length > MaxTerminalOutputSize;
-  const finalOutput = isTruncated
-    ? output.slice(-MaxTerminalOutputSize)
-    : output;
-
-  return { output: finalOutput, isTruncated };
-};
 
 /**
  * Executes a command in a shell
@@ -31,7 +19,7 @@ const truncateOutput = (output: string) => {
  * @param param0.onData - Optional callback to receive output data as it is produced
  * @returns A promise that resolves with the final output or rejects on error
  */
-export const executeCommandByNode = async ({
+export const executeCommandWithNode = async ({
   command,
   cwd,
   timeout,
@@ -63,22 +51,14 @@ export const executeCommandByNode = async ({
       if (timeout > 0) {
         timeoutId = setTimeout(() => {
           child.kill("SIGTERM");
-          reject(
-            new Error(
-              `Command execution timed out after ${timeout} seconds, if it's used as background task, please consider use isDevServer=true to run it as a dev server.`,
-            ),
-          );
+          reject(ExecutionError.createTimeoutError(timeout));
         }, timeout * 1000);
       }
 
       // Handle abort signal
       const onAbort = () => {
         child.kill("SIGTERM");
-        reject(
-          new Error(
-            "Tool execution was aborted by user, please follow the user's guidance for next steps",
-          ),
-        );
+        reject(ExecutionError.createAbortError());
       };
       abortSignal?.addEventListener("abort", onAbort);
 
@@ -103,14 +83,14 @@ export const executeCommandByNode = async ({
         if (code === 0) {
           resolve(truncateOutput(output));
         } else {
-          reject(new Error(`Command exited with code ${code}`));
+          reject(ExecutionError.create(`Command exited with code ${code}`));
         }
       });
 
       child.on("error", (error) => {
         if (timeoutId) clearTimeout(timeoutId);
         abortSignal?.removeEventListener("abort", onAbort);
-        reject(new Error(`Command execution failed: ${error.message}`));
+        reject(ExecutionError.create(`Command execution failed: ${error}`));
       });
     },
   );

@@ -2,23 +2,10 @@ import { getLogger } from "@/lib/logger";
 import { getShellPath } from "@ragdoll/common/node";
 import * as vscode from "vscode";
 import { OutputManager } from "./output";
-import { createBackgroundOutputStream } from "./utils";
+import { ExecutionError, createBackgroundOutputStream } from "./utils";
 import { waitForWebviewSubscription } from "./utils";
 
 const logger = getLogger("TerminalJob");
-
-/**
- * Error class for terminal execution failures
- */
-export class ExecutionError extends Error {
-  constructor(
-    public readonly aborted: boolean,
-    message: string,
-  ) {
-    super(message);
-    this.name = "ExecutionError";
-  }
-}
 
 /**
  * Configuration options for creating a TerminalJob
@@ -103,8 +90,7 @@ export class TerminalJob implements vscode.Disposable {
       if (err instanceof ExecutionError) {
         executeError = err;
       } else {
-        executeError = new ExecutionError(
-          false,
+        executeError = ExecutionError.create(
           `Command execution failed: ${err}`,
         );
       }
@@ -144,7 +130,7 @@ export class TerminalJob implements vscode.Disposable {
       if (error instanceof ExecutionError) {
         throw error;
       }
-      throw new ExecutionError(false, `Command execution failed: ${error}`);
+      throw ExecutionError.create(`Command execution failed: ${error}`);
     }
   }
 
@@ -153,14 +139,10 @@ export class TerminalJob implements vscode.Disposable {
    */
   private createAbortAndTimeoutPromise(): Promise<never> {
     return new Promise<never>((_, reject) => {
-      const abortError = new ExecutionError(
-        true,
-        "Tool execution was aborted by user, please follow the user's guidance for next steps",
-      );
+      const abortError = ExecutionError.createAbortError();
 
-      const timeoutError = new ExecutionError(
-        false,
-        `Command execution timed out after ${this.config.timeout} seconds, if it's used as background task, please consider use isDevServer=true to run it as a dev server.`,
+      const timeoutError = ExecutionError.createTimeoutError(
+        this.config.timeout,
       );
 
       // Check if already aborted

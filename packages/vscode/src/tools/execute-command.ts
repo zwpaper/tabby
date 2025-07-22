@@ -1,5 +1,4 @@
 import * as path from "node:path";
-import { executeCommandByNode } from "@/integrations/terminal/execute-command";
 import { TerminalJob } from "@/integrations/terminal/terminal-job";
 import { waitForWebviewSubscription } from "@/integrations/terminal/utils";
 import { getWorkspaceFolder } from "@/lib/fs";
@@ -7,6 +6,7 @@ import { type Signal, signal } from "@preact/signals-core";
 import { ThreadSignal } from "@quilted/threads/signals";
 import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
+import { executeCommandWithPty } from "../integrations/terminal/execute-command-with-pty";
 
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
@@ -46,7 +46,7 @@ export const executeCommand: ToolFunctionType<
     });
 
     waitForWebviewSubscription().then(() => {
-      executeCommandByNode({
+      executeCommandWithPty({
         command,
         cwd,
         timeout: timeout ?? defaultTimeout,

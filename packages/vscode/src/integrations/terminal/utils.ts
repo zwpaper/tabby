@@ -1,4 +1,5 @@
 import { getLogger } from "@/lib/logger";
+import { MaxTerminalOutputSize } from "@ragdoll/common/node";
 
 const logger = getLogger("BackgroundStreamUtils");
 
@@ -71,4 +72,44 @@ export const waitForWebviewSubscription = async (): Promise<void> => {
   await new Promise((resolve) =>
     setTimeout(resolve, WebviewSubscriptionDelayMs),
   );
+};
+
+/**
+ * Error class for command execution failures
+ */
+export class ExecutionError extends Error {
+  constructor(
+    public readonly aborted: boolean,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ExecutionError";
+  }
+
+  static create(message: string, aborted = false) {
+    return new ExecutionError(aborted, message);
+  }
+
+  static createAbortError() {
+    return new ExecutionError(
+      true,
+      "Tool execution was aborted by user, please follow the user's guidance for next steps",
+    );
+  }
+
+  static createTimeoutError(timeout: number) {
+    return new ExecutionError(
+      false,
+      `Command execution timed out after ${timeout} seconds, if it's used as background task, please consider use isDevServer=true to run it as a dev server.`,
+    );
+  }
+}
+
+export const truncateOutput = (output: string) => {
+  const isTruncated = output.length > MaxTerminalOutputSize;
+  const finalOutput = isTruncated
+    ? output.slice(-MaxTerminalOutputSize)
+    : output;
+
+  return { output: finalOutput, isTruncated };
 };
