@@ -1,11 +1,12 @@
-import type { DBMessage, Todo } from "@ragdoll/db";
+import type { UIMessage } from "ai";
 import { z } from "zod";
+import type { Todo } from "./todo-write";
 import { defineClientTool } from "./types";
 
 export type SubTask = {
   uid: string;
-  conversation?: { messages?: DBMessage[] } | null;
-  todos?: Todo[];
+  messages: UIMessage[];
+  todos: Todo[];
 };
 
 export const newTask = defineClientTool({

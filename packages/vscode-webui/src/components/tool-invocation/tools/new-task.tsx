@@ -101,7 +101,7 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
       ? {
           // inlined subtask, no need to query
           type: "task",
-          messages: toUIMessages(inlinedTask.conversation?.messages ?? []),
+          messages: inlinedTask.messages ?? [],
           todos: inlinedTask.todos ?? [],
         }
       : shouldQueryTask

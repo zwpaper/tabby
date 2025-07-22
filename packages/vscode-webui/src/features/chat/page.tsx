@@ -5,7 +5,8 @@ import { useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import { formatters, prompts, toUIMessages } from "@ragdoll/common";
-import type { Environment, ExtendedUIMessage, Todo } from "@ragdoll/db";
+import type { Environment, ExtendedUIMessage } from "@ragdoll/db";
+import type { Todo } from "@ragdoll/tools";
 import type { InferResponseType } from "hono/client";
 import {
   ExternalLinkIcon,

@@ -1,8 +1,8 @@
 import { MessageList } from "@/components/message/message-list";
 import { cn } from "@/lib/utils";
 import { formatters } from "@ragdoll/common";
-import type { Todo } from "@ragdoll/db";
 import type { TaskRunnerState } from "@ragdoll/runner";
+import type { Todo } from "@ragdoll/tools";
 import type { UIMessage } from "ai";
 import { useEffect, useMemo, useState } from "react";
 import { FixedStateChatContextProvider } from "../features/chat/lib/chat-state";

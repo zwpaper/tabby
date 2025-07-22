@@ -1,5 +1,5 @@
 import { LegacyTodoList } from "@/features/todo";
-import type { Todo } from "@ragdoll/db";
+import type { Todo } from "@ragdoll/tools";
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 

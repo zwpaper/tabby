@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import type { Todo } from "@ragdoll/db";
+import type { Todo } from "@ragdoll/tools";
 import {
   Circle,
   CircleCheckBig,

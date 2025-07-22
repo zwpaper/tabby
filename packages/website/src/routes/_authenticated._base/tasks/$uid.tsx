@@ -11,6 +11,7 @@ import { normalizeApiError, toHttpError } from "@/lib/error";
 import { inlineSubTasks } from "@/lib/inline-sub-task";
 import { toUIMessages } from "@ragdoll/common";
 import type { TaskEvent } from "@ragdoll/db";
+import type { SubTask } from "@ragdoll/tools";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
@@ -33,8 +34,18 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
         throw toHttpError(resp);
       }
 
-      const json = await resp.json();
-      return json;
+      const { subtasks, ...rest } = await resp.json();
+      return {
+        ...rest,
+        subtasks: subtasks?.map(
+          (x) =>
+            ({
+              uid: x.uid,
+              messages: toUIMessages(x.conversation?.messages || []),
+              todos: x.todos || [],
+            }) satisfies SubTask,
+        ),
+      };
     } catch (error) {
       throw normalizeApiError(error);
     }

@@ -6,7 +6,8 @@
   "dependencies": {
     "kysely": "catalog:",
     "zod": "catalog:",
-    "ai": "catalog:"
+    "ai": "catalog:",
+    "@ragdoll/tools": "workspace:*"
   },
   "scripts": {
     "tsc": "tsc",

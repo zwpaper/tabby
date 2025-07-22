@@ -20,7 +20,7 @@ import {
   prepareLastMessageForRetry,
 } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
-import type { Environment, TaskEvent, Todo } from "@ragdoll/db";
+import type { Environment, TaskEvent } from "@ragdoll/db";
 import {
   type AppType,
   createPochiEventSourceWithApiClient,
@@ -28,6 +28,7 @@ import {
 import {
   ServerToolApproved,
   ServerTools,
+  type Todo,
   type ToolFunctionType,
 } from "@ragdoll/tools";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";

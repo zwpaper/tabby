@@ -15,6 +15,10 @@ import { newTask } from "./new-task";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
+export {
+  ZodTodo,
+  type Todo,
+} from "./todo-write";
 export type {
   PreviewToolFunctionType,
   ToolFunctionType,

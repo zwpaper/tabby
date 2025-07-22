@@ -10,6 +10,7 @@ import { normalizeApiError, toHttpError } from "@/lib/error";
 import { inlineSubTasks } from "@/lib/inline-sub-task";
 import { cn } from "@/lib/utils";
 import { toUIMessages } from "@ragdoll/common";
+import type { SubTask } from "@ragdoll/tools";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
@@ -31,8 +32,18 @@ export const Route = createFileRoute("/share/$uid")({
         throw toHttpError(resp);
       }
 
-      const json = await resp.json();
-      return json;
+      const { subtasks, ...rest } = await resp.json();
+      return {
+        ...rest,
+        subtasks: subtasks?.map(
+          (x) =>
+            ({
+              uid: x.uid,
+              messages: toUIMessages(x.conversation?.messages || []),
+              todos: x.todos || [],
+            }) satisfies SubTask,
+        ),
+      };
     } catch (error) {
       throw normalizeApiError(error);
     }

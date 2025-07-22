@@ -50,7 +50,6 @@ export {
   type Environment,
   type GitStatus,
 } from "./environment";
-export { type Todo, ZodTodo } from "./todo";
 
 export type TaskCreateEventDataHelper<T extends TaskCreateEvent["type"]> =
   Extract<TaskCreateEvent, { type: T }>["data"];

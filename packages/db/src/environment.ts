@@ -1,5 +1,5 @@
+import { ZodTodo } from "@ragdoll/tools";
 import { z } from "zod";
-import { ZodTodo } from "./todo";
 
 export const ZodEnvironment = z.object({
   currentTime: z.string().describe("The current time."),

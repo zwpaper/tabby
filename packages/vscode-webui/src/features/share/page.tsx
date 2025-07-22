@@ -3,7 +3,7 @@ import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import { formatters } from "@ragdoll/common";
-import type { Todo } from "@ragdoll/db";
+import type { Todo } from "@ragdoll/tools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { UIMessage } from "ai";
 import { Loader2 } from "lucide-react";

@@ -1,5 +1,6 @@
 import { prompts } from "@ragdoll/common";
-import type { DBMessage, Todo } from "@ragdoll/db";
+import type { DBMessage } from "@ragdoll/db";
+import type { Todo } from "@ragdoll/tools";
 import type { AnyBlock } from "@slack/web-api";
 import slackifyMarkdown from "slackify-markdown";
 

@@ -15,9 +15,8 @@ import type {
   Environment,
   TaskCreateEvent,
   TaskError,
-  Todo,
 } from "@ragdoll/db";
-import { isUserInputTool } from "@ragdoll/tools";
+import { type Todo, isUserInputTool } from "@ragdoll/tools";
 import {
   APICallError,
   type FinishReason,
