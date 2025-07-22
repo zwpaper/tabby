@@ -18,3 +18,13 @@ export const minionIdCoder = (() => {
     decode: (id: string) => coder.decode(id)[0],
   };
 })();
+
+export const clipIdCoder = (() => {
+  const alphabet =
+    "N4lLmyE6hO93pqHve2PMGQkfRdcot5UJw8snirbZAFTjgaz01VDYW7xKuXISCB";
+  const coder = new Sqids({ minLength: 8, alphabet });
+  return {
+    encode: (id: number) => coder.encode([id]),
+    decode: (id: string) => coder.decode(id)[0],
+  };
+})();

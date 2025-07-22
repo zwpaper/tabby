@@ -35,4 +35,4 @@ async function dbMaintainance() {
 
 dbMaintainance();
 
-export { minionIdCoder, uidCoder } from "./id-coders";
+export { clipIdCoder, minionIdCoder, uidCoder } from "./id-coders";

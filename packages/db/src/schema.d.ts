@@ -73,6 +73,13 @@ export interface ChatCompletion {
   userId: string;
 }
 
+export interface Clip {
+  createdAt: Generated<Timestamp>;
+  data: Json;
+  id: Generated<number>;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface ExternalIntegration {
   createdAt: Generated<Timestamp>;
   id: Generated<number>;
@@ -248,6 +255,7 @@ export interface DB {
   account: Account;
   apikey: Apikey;
   chatCompletion: ChatCompletion;
+  clip: Clip;
   externalIntegration: ExternalIntegration;
   invitation: Invitation;
   member: Member;

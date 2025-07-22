@@ -29,7 +29,7 @@ export const MessageList: React.FC<{
 }> = ({
   messages: renderMessages,
   isLoading,
-  user = { name: "You" },
+  user = { name: "User" },
   logo,
   containerRef,
   showUserAvatar = true,

@@ -6,6 +6,7 @@ import { logger } from "hono/logger";
 import admin from "./api/admin";
 import billing from "./api/billing";
 import chat from "./api/chat";
+import clips from "./api/clips";
 import code from "./api/code";
 import enhance from "./api/enhance";
 import events from "./api/events";
@@ -140,6 +141,7 @@ export const route = api
   .route("/upload", upload)
   .route("/enhancePrompt", enhance)
   .route("/tools", tools)
+  .route("/clips", clips)
   .route("/admin", admin);
 
 export type AppType = typeof route;
