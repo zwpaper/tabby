@@ -12,7 +12,6 @@ import {
   queue as slackQueue,
 } from "./notify-task-slack";
 
-
 export function startWorkers() {
   createNotifyTaskSlackWorker();
   createSandboxWorker();

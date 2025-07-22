@@ -31,6 +31,7 @@ import {
   type AppType,
   createPochiEventSourceWithApiClient,
 } from "@ragdoll/server";
+import type { ChatRequest } from "@ragdoll/server";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
 import { toError, toErrorString } from "./lib/error-utils";
@@ -105,6 +106,8 @@ export interface RunnerOptions {
    * Force stop the runner after max retries reached in a single round.
    */
   maxRetries?: number;
+
+  openAIModelOverride?: ChatRequest["openAIModelOverride"];
 
   // Add more context properties here as needed in the future
   // e.g., environment variables, workspace settings, etc.
@@ -529,6 +532,7 @@ export class TaskRunner {
               environment,
               model: this.options.model,
               modelEndpointId: this.options.modelEndpointId,
+              openAIModelOverride: this.options.openAIModelOverride,
             },
           },
           {

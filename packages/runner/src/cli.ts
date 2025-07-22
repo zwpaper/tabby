@@ -4,7 +4,7 @@ import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
 import { CredentialStorage } from "@ragdoll/common/node";
-import type { AppType } from "@ragdoll/server";
+import type { AppType, ChatRequest } from "@ragdoll/server";
 import chalk from "chalk";
 import * as commander from "commander";
 import { hc } from "hono/client";
@@ -88,6 +88,14 @@ program
     "Force the runner to stop if the number of retries in a single round exceeds this value.",
     parsePositiveInt,
   )
+  .optionsGroup("BYOK:")
+  .option("--base-url <baseURL>", "The base URL to use for BYOK requests.")
+  .option("--api-key <apikey>", "The API key to use for BYOK requests.")
+  .option(
+    "--max-output-tokens <number>",
+    "The max output tokens to use for BYOK model.",
+    parsePositiveInt,
+  )
   .action(async (options) => {
     let uid = options.task ?? process.env.POCHI_TASK_ID;
 
@@ -127,6 +135,21 @@ program
       return program.error(
         "error: No token provided. Please use the --token option, set POCHI_SESSION_TOKEN, or confirm `~/.pochi/credentials.json` exists (login with the Pochi VSCode extension to obtain it).",
       );
+    }
+
+    let openAIModelOverride: ChatRequest["openAIModelOverride"] | undefined;
+    if (options.baseUrl) {
+      if (options.maxOutputTokens && options.model) {
+        openAIModelOverride = {
+          apiKey: options.apiKey,
+          baseURL: options.baseUrl,
+          maxOutputTokens: options.maxOutputTokens,
+        };
+      } else {
+        return program.error(
+          "error: --base-url requires --max-output-tokens and --model to be set.",
+        );
+      }
     }
 
     const apiClient = hc<AppType>(options.url, {
@@ -222,6 +245,7 @@ program
       maxRounds: options.maxRounds,
       maxRetries: options.maxRetries,
       modelEndpointId: options.modelEndpointId,
+      openAIModelOverride,
     });
 
     supervisor = new TaskRunnerSupervisor(runner, output, options.daemon);
