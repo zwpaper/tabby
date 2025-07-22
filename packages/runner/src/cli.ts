@@ -237,7 +237,6 @@ program
 
     const runner = new TaskRunner({
       uid,
-      accessToken: token,
       apiClient,
       cwd: options.cwd,
       rg: options.rg,

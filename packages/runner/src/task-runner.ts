@@ -64,11 +64,6 @@ export interface RunnerOptions {
   uid: string;
 
   /**
-   * Access token to authenticate the task runner with the server.
-   */
-  accessToken: string;
-
-  /**
    * This is the API client used to communicate with the server.
    */
   apiClient: ApiClient;

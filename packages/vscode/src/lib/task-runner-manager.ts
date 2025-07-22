@@ -6,8 +6,6 @@ import type * as vscode from "vscode";
 import type { ApiClient } from "./auth-client";
 import { getWorkspaceFolder, vscodeRipgrepPath } from "./fs";
 import { getLogger } from "./logger";
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { TokenStorage } from "./token-storage";
 
 const logger = getLogger("TaskRunnerManager");
 
@@ -23,7 +21,6 @@ export class TaskRunnerManager implements vscode.Disposable {
   constructor(
     @inject("ApiClient")
     private readonly apiClient: ApiClient,
-    private readonly tokenStorage: TokenStorage,
   ) {
     logger.debug("TaskRunnerManager created.");
     this.status = signal(this.buildStatus());
@@ -49,7 +46,6 @@ export class TaskRunnerManager implements vscode.Disposable {
     const taskRunner = new TaskRunner({
       uid,
       apiClient: this.apiClient,
-      accessToken: this.tokenStorage.token.value || "",
       cwd: getWorkspaceFolder().uri.fsPath,
       rg: vscodeRipgrepPath,
       ...option,
