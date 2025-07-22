@@ -55,9 +55,9 @@ import type {
   CustomModelSetting,
   McpStatus,
   ResourceURI,
+  RunTaskOptions,
   SaveCheckpointOptions,
   SessionState,
-  TaskRunnerOptions,
   VSCodeHostApi,
   WorkspaceState,
 } from "@ragdoll/vscode-webui-bridge";
@@ -460,7 +460,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   runTask = runExclusive.build(
     this.toolCallGroup,
-    async (uid: string, options?: TaskRunnerOptions) => {
+    async (uid: string, options?: RunTaskOptions) => {
       if (options?.abortSignal) {
         const abortSignal = new ThreadAbortSignal(options.abortSignal);
         abortSignal.throwIfAborted();
@@ -473,7 +473,9 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         );
       }
 
-      const runnerState = this.taskRunnerManager.startTask(uid, options);
+      const runnerState = this.taskRunnerManager.startTask(uid, {
+        model: options?.model,
+      });
       const result = ThreadSignal.serialize(runnerState);
       return { result };
     },

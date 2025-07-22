@@ -9,10 +9,10 @@ import type {
   McpStatus,
   NewTaskParams,
   ResourceURI,
+  RunTaskOptions,
   SaveCheckpointOptions,
   SessionState,
   TaskIdParams,
-  TaskRunnerOptions,
   WorkspaceState,
 } from "./index";
 
@@ -165,7 +165,7 @@ export interface VSCodeHostApi {
    */
   runTask(
     uid: string,
-    options?: TaskRunnerOptions,
+    options?: RunTaskOptions,
   ): Promise<{ result: ThreadSignalSerialization<TaskRunnerState> }>;
 
   /**

@@ -1,7 +1,6 @@
 import { type Signal, signal } from "@preact/signals-core";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import { TaskRunner } from "@ragdoll/runner/node";
-import type { TaskRunnerOptions } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import type { ApiClient } from "./auth-client";
@@ -30,7 +29,10 @@ export class TaskRunnerManager implements vscode.Disposable {
     this.status = signal(this.buildStatus());
   }
 
-  startTask(uid: string, option?: TaskRunnerOptions): Signal<TaskRunnerState> {
+  startTask(
+    uid: string,
+    option?: { model?: string | undefined },
+  ): Signal<TaskRunnerState> {
     const entry = this.taskRunnerMap.get(uid);
     const existingRunner = entry?.runner;
     if (existingRunner) {

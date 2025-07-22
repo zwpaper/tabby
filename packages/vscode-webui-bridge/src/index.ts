@@ -50,7 +50,7 @@ export interface ExecuteCommandResult {
   error?: string; // Optional error message if the execution aborted / failed
 }
 
-export type TaskRunnerOptions = {
+export type RunTaskOptions = {
   model?: string;
   abortSignal?: ThreadAbortSignalSerialization;
 };
