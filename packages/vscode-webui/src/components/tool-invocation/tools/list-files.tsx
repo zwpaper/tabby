@@ -1,5 +1,5 @@
 import { isFolder } from "@/lib/utils/file";
-import type { ClientToolsType } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import { useMemo } from "react";
 import { FileBadge } from "../file-badge";
 import { FileList } from "../file-list";

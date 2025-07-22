@@ -1,5 +1,6 @@
 {
-  "name": "@ragdoll/tools",
+  "name": "@getpochi/tools",
+  "version": "0.0.2",
   "exports": {
     ".": "./src/index.ts"
   },

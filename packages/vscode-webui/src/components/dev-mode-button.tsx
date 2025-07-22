@@ -11,8 +11,8 @@ import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { createCoreMessagesForCopy } from "@/lib/utils/message";
 import { vscodeHost } from "@/lib/vscode";
 import type { UIMessage } from "@ai-sdk/ui-utils";
+import type { Todo } from "@getpochi/tools";
 import type { Environment } from "@ragdoll/db";
-import type { Todo } from "@ragdoll/tools";
 import { useRouter } from "@tanstack/react-router";
 import { Bot, CheckIcon, CopyIcon, SettingsIcon } from "lucide-react"; // Removed FilesIcon
 import type React from "react";

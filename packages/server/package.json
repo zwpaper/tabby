@@ -26,7 +26,7 @@
     "@queuedash/api": "^3.6.0",
     "@ragdoll/common": "workspace:*",
     "@ragdoll/db": "workspace:*",
-    "@ragdoll/tools": "workspace:*",
+    "@getpochi/tools": "workspace:*",
     "@slack/bolt": "catalog:",
     "@slack/web-api": "^7.9.2",
     "@types/uuid": "^10.0.0",

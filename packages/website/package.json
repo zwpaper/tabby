@@ -37,7 +37,7 @@
     "@ragdoll/common": "workspace:*",
     "@ragdoll/db": "workspace:*",
     "@ragdoll/server": "workspace:*",
-    "@ragdoll/tools": "workspace:*",
+    "@getpochi/tools": "workspace:*",
     "@tabler/icons-react": "^3.31.0",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/react-query": "^5.71.5",

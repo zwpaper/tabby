@@ -7,7 +7,7 @@
     "kysely": "catalog:",
     "zod": "catalog:",
     "ai": "catalog:",
-    "@ragdoll/tools": "workspace:*"
+    "@getpochi/tools": "workspace:*"
   },
   "scripts": {
     "tsc": "tsc",

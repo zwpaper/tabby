@@ -1,7 +1,7 @@
 import type { PendingToolCallApproval } from "@/features/approval";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
-import { ToolsByPermission } from "@ragdoll/tools";
+import { ToolsByPermission } from "@getpochi/tools";
 import type { ToolInvocation } from "ai";
 import { useAutoApprove } from "./use-auto-approve";
 

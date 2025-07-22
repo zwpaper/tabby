@@ -32,6 +32,6 @@
   },
   "devDependencies": {
     "@ragdoll/db": "workspace:*",
-    "@ragdoll/tools": "workspace:*"
+    "@getpochi/tools": "workspace:*"
   }
 }

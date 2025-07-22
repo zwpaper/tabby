@@ -1,4 +1,4 @@
-import type { SubTask } from "@ragdoll/tools";
+import type { SubTask } from "@getpochi/tools";
 import type { UIMessage } from "ai";
 
 export function inlineSubTasks(

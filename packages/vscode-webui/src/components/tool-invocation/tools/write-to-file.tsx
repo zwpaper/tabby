@@ -1,5 +1,5 @@
 import { useToolCallLifeCycle } from "@/features/chat";
-import type { ClientToolsType } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
 import { NewProblems, NewProblemsIcon } from "../new-problems";

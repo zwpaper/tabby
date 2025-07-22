@@ -1,5 +1,5 @@
 import { MessageMarkdown } from "@/components/message";
-import type { ClientToolsType } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import { Check } from "lucide-react";
 import type { ToolProps } from "../types";
 

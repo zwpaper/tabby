@@ -1,4 +1,4 @@
-import type { ClientToolsType } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import { FileList } from "../file-list";
 import { HighlightedText } from "../highlight-text";
 import { StatusIcon } from "../status-icon";

@@ -1,5 +1,5 @@
-import type { ClientToolsType } from "@ragdoll/tools";
-import { isUserInputTool } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
+import { isUserInputTool } from "@getpochi/tools";
 import type { ToolInvocation, UIMessage } from "ai";
 import { useMemo } from "react";
 

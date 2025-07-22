@@ -1,4 +1,4 @@
-import type { ToolsByPermission } from "@ragdoll/tools";
+import type { ToolsByPermission } from "@getpochi/tools";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 

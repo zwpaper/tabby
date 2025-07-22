@@ -1,4 +1,4 @@
-import type { Todo } from "@ragdoll/tools";
+import type { Todo } from "@getpochi/tools";
 import type { UIMessage } from "ai";
 
 export function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {

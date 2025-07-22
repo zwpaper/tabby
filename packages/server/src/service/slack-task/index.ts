@@ -1,8 +1,8 @@
 import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
 import type { AnyBlock, WebClient } from "@slack/web-api";
 
+import type { Todo } from "@getpochi/tools";
 import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
-import type { Todo } from "@ragdoll/tools";
 import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { slackService } from "../slack";

@@ -1,4 +1,4 @@
-import { ServerToolApproved, ServerTools } from "@ragdoll/tools";
+import { ServerToolApproved, ServerTools } from "@getpochi/tools";
 import {
   type DataStreamWriter,
   type Tool,

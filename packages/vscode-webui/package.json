@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@ai-sdk/react": "1.2.12",
-    "@ai-sdk/ui-utils": "catalog:",
     "@daveyplate/better-auth-tanstack": "catalog:",
     "@leeoniya/ufuzzy": "^1.0.18",
     "@preact/signals-core": "catalog:",
@@ -86,7 +85,8 @@
   "devDependencies": {
     "@preact/signals-react-transform": "^0.5.1",
     "@ragdoll/db": "workspace:*",
-    "@ragdoll/tools": "workspace:*",
+    "@ai-sdk/ui-utils": "catalog:",
+    "@getpochi/tools": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/addon-interactions": "^8.6.12",

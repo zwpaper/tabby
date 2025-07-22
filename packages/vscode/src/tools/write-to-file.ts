@@ -1,7 +1,10 @@
 import { DiffView } from "@/integrations/editor/diff-view";
+import type { ClientToolsType } from "@getpochi/tools";
+import type {
+  PreviewToolFunctionType,
+  ToolFunctionType,
+} from "@getpochi/tools";
 import { fixCodeGenerationOutput } from "@ragdoll/common/output-utils";
-import type { ClientToolsType } from "@ragdoll/tools";
-import type { PreviewToolFunctionType, ToolFunctionType } from "@ragdoll/tools";
 
 export const previewWriteToFile: PreviewToolFunctionType<
   ClientToolsType["writeToFile"]

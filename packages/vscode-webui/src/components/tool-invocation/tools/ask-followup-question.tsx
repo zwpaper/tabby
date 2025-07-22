@@ -1,6 +1,6 @@
 import { useSendMessage } from "@/features/chat";
 import { cn } from "@/lib/utils";
-import type { ClientToolsType } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import type { ToolProps } from "../types";
 
 export const AskFollowupQuestionTool: React.FC<

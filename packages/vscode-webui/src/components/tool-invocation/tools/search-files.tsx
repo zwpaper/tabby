@@ -1,4 +1,4 @@
-import type { ClientToolsType } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import type React from "react";
 import { FileList } from "../file-list";
 import { HighlightedText } from "../highlight-text";

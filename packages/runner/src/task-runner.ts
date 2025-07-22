@@ -6,6 +6,12 @@ import {
   prepareAttachmentsForRequest,
   updateToolCallResult,
 } from "@ai-sdk/ui-utils";
+import {
+  ServerToolApproved,
+  ServerTools,
+  type Todo,
+  type ToolFunctionType,
+} from "@getpochi/tools";
 import { type Signal, signal } from "@preact/signals-core";
 import {
   fromUIMessage,
@@ -25,12 +31,6 @@ import {
   type AppType,
   createPochiEventSourceWithApiClient,
 } from "@ragdoll/server";
-import {
-  ServerToolApproved,
-  ServerTools,
-  type Todo,
-  type ToolFunctionType,
-} from "@ragdoll/tools";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
 import type { hc } from "hono/client";
 import { toError, toErrorString } from "./lib/error-utils";

@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import type { Todo } from "@ragdoll/tools";
+import type { Todo } from "@getpochi/tools";
 import type { UIMessage } from "ai";
 import {
   type ComponentProps,

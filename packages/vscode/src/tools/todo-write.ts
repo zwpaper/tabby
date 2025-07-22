@@ -1,4 +1,4 @@
-import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
+import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 
 /**
  * Implements the writeToFile tool for VSCode extension.

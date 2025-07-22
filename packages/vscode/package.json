@@ -329,7 +329,7 @@
   },
   "devDependencies": {
     "@ragdoll/db": "workspace:*",
-    "@ragdoll/tools": "workspace:*",
+    "@getpochi/tools": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
     "@types/diff": "^7.0.2",
     "@types/object-hash": "^3.0.6",

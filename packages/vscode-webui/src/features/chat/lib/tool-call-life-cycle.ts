@@ -1,4 +1,5 @@
 import { vscodeHost } from "@/lib/vscode";
+import type { ClientToolsType } from "@getpochi/tools";
 import {
   ThreadAbortSignal,
   type ThreadAbortSignalSerialization,
@@ -9,7 +10,6 @@ import {
 } from "@quilted/threads/signals";
 import { getLogger } from "@ragdoll/common";
 import type { TaskRunnerState } from "@ragdoll/runner";
-import type { ClientToolsType } from "@ragdoll/tools";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import type { ToolInvocation } from "ai";
 import Emittery from "emittery";

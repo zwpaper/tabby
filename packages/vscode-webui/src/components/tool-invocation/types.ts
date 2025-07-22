@@ -1,4 +1,4 @@
-import type { ToolInvocationUIPart } from "@ragdoll/tools";
+import type { ToolInvocationUIPart } from "@getpochi/tools";
 import type { Tool } from "ai";
 import type { ToolCallCheckpoint } from "../message/message-list";
 

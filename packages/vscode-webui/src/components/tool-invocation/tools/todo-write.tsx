@@ -1,4 +1,4 @@
-import type { ClientToolsType } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import { Bug } from "lucide-react";
 import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";

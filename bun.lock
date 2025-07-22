@@ -18,8 +18,8 @@
       "name": "@ragdoll/common",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
+        "@getpochi/tools": "workspace:*",
         "@ragdoll/db": "workspace:*",
-        "@ragdoll/tools": "workspace:*",
         "ai": "catalog:",
         "fast-levenshtein": "^3.0.0",
         "file-type": "catalog:",
@@ -39,6 +39,7 @@
     "packages/db": {
       "name": "@ragdoll/db",
       "dependencies": {
+        "@getpochi/tools": "workspace:*",
         "ai": "catalog:",
         "kysely": "catalog:",
         "zod": "catalog:",
@@ -86,8 +87,8 @@
         "pretty-error": "^4.0.0",
       },
       "devDependencies": {
+        "@getpochi/tools": "workspace:*",
         "@ragdoll/db": "workspace:*",
-        "@ragdoll/tools": "workspace:*",
       },
     },
     "packages/server": {
@@ -102,6 +103,7 @@
         "@ai-sdk/ui-utils": "catalog:",
         "@better-auth/stripe": "catalog:",
         "@e2b/code-interpreter": "catalog:",
+        "@getpochi/tools": "workspace:*",
         "@hono-storage/s3": "^0.0.13",
         "@hono/otel": "^0.2.2",
         "@hono/zod-validator": "^0.4.3",
@@ -115,7 +117,6 @@
         "@queuedash/api": "^3.6.0",
         "@ragdoll/common": "workspace:*",
         "@ragdoll/db": "workspace:*",
-        "@ragdoll/tools": "workspace:*",
         "@slack/bolt": "catalog:",
         "@slack/web-api": "^7.9.2",
         "@types/uuid": "^10.0.0",
@@ -149,10 +150,10 @@
       },
     },
     "packages/tools": {
-      "name": "@ragdoll/tools",
+      "name": "@getpochi/tools",
+      "version": "0.0.2",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
-        "@ragdoll/db": "workspace:*",
         "ai": "catalog:",
         "json-schema": "^0.4.0",
         "zod": "catalog:",
@@ -192,8 +193,8 @@
         "tsyringe": "^4.10.0",
       },
       "devDependencies": {
+        "@getpochi/tools": "workspace:*",
         "@ragdoll/db": "workspace:*",
-        "@ragdoll/tools": "workspace:*",
         "@ragdoll/vscode-webui-bridge": "workspace:*",
         "@types/diff": "^7.0.2",
         "@types/object-hash": "^3.0.6",
@@ -217,9 +218,7 @@
     "packages/vscode-webui": {
       "name": "@ragdoll/vscode-webui",
       "dependencies": {
-        "@ai-sdk/provider-utils": "catalog:",
         "@ai-sdk/react": "1.2.12",
-        "@ai-sdk/ui-utils": "catalog:",
         "@daveyplate/better-auth-tanstack": "catalog:",
         "@leeoniya/ufuzzy": "^1.0.18",
         "@preact/signals-core": "catalog:",
@@ -288,9 +287,10 @@
         "zustand": "^5.0.3",
       },
       "devDependencies": {
+        "@ai-sdk/ui-utils": "catalog:",
+        "@getpochi/tools": "workspace:*",
         "@preact/signals-react-transform": "^0.5.1",
         "@ragdoll/db": "workspace:*",
-        "@ragdoll/tools": "workspace:*",
         "@ragdoll/vscode-webui-bridge": "workspace:*",
         "@storybook/addon-essentials": "^8.6.12",
         "@storybook/addon-interactions": "^8.6.12",
@@ -330,6 +330,7 @@
         "@better-auth/stripe": "catalog:",
         "@daveyplate/better-auth-tanstack": "catalog:",
         "@daveyplate/better-auth-ui": "^2.0.12",
+        "@getpochi/tools": "workspace:*",
         "@hookform/resolvers": "^5.1.1",
         "@radix-ui/react-accordion": "^1.2.11",
         "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -352,7 +353,6 @@
         "@ragdoll/common": "workspace:*",
         "@ragdoll/db": "workspace:*",
         "@ragdoll/server": "workspace:*",
-        "@ragdoll/tools": "workspace:*",
         "@tabler/icons-react": "^3.31.0",
         "@tailwindcss/vite": "^4.0.6",
         "@tanstack/react-query": "^5.71.5",
@@ -745,6 +745,8 @@
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.9", "", {}, "sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg=="],
 
+    "@getpochi/tools": ["@getpochi/tools@workspace:packages/tools"],
+
     "@grpc/grpc-js": ["@grpc/grpc-js@1.13.4", "", { "dependencies": { "@grpc/proto-loader": "^0.7.13", "@js-sdsl/ordered-map": "^4.4.2" } }, "sha512-GsFaMXCkMqkKIvwCQjCrwH+GHbPKBjhwo/8ZuUkWHqbI73Kky9I+pQltrlT0+MWpedCoosda53lgjYfyEPgxBg=="],
 
     "@grpc/proto-loader": ["@grpc/proto-loader@0.7.15", "", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.2.5", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-tMXdRCfYVixjuFK+Hk0Q1s38gV9zDiDJfWL3h1rv4Qc39oILCu1TRTDt7+fGUI8K4G1Fj125Hx/ru3azECWTyQ=="],
@@ -1060,8 +1062,6 @@
     "@ragdoll/runner": ["@ragdoll/runner@workspace:packages/runner"],
 
     "@ragdoll/server": ["@ragdoll/server@workspace:packages/server"],
-
-    "@ragdoll/tools": ["@ragdoll/tools@workspace:packages/tools"],
 
     "@ragdoll/vscode-webui": ["@ragdoll/vscode-webui@workspace:packages/vscode-webui"],
 

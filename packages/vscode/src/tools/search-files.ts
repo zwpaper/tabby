@@ -1,7 +1,7 @@
 import { getWorkspaceFolder, vscodeRipgrepPath } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import { searchFilesWithRipgrep } from "@ragdoll/common/node";
-import type { ClientToolsType, ToolFunctionType } from "@ragdoll/tools";
 
 const logger = getLogger("searchFiles");
 

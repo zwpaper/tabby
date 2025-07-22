@@ -1,4 +1,4 @@
-import type { ClientToolsType } from "@ragdoll/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import { FileBadge } from "../file-badge";
 import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";

@@ -1,9 +1,9 @@
 import type { Message } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
+import type { Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
 import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
-import type { Todo } from "@ragdoll/tools";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function useTodos({
