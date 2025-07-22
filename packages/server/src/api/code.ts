@@ -16,13 +16,6 @@ const code = new Hono()
     async (c) => {
       const req = c.req.valid("json");
 
-      // Validate required segments
-      if (!req.segments || !req.segments.prefix) {
-        throw new HTTPException(400, {
-          message: "Request must include segments with at least a prefix",
-        });
-      }
-
       // Check user subscription
       const user = c.get("user");
       await checkUserCodeCompletionQuota(user);

@@ -182,13 +182,6 @@ export class CodeCompletionService {
     req: CodeCompletionRequest,
     signal?: AbortSignal,
   ): Promise<CodeCompletionResponse> {
-    // Validate required segments
-    if (!req.segments || !req.segments.prefix) {
-      throw new HTTPException(400, {
-        message: "Request must include segments with at least a prefix",
-      });
-    }
-
     // Build FIM prompt from segments
     const { prompt, suffix } = this.buildFIMPrompt(req);
 
