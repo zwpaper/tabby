@@ -18,7 +18,8 @@ export const BatchCallTools = [
 export const batchCall = declareServerTool({
   description: `
 - batchCall execution tool that runs multiple tool invocations in a single request
-- Tools are executed in parallel when possible, and otherwise serially
+- Tools are executed in parallel, if you need to run them sequentially, you should call them one by one.
+  * When you run multiple git command that's modifying the repo, you should run them one by one to avoid git locking.
 - Takes a list of tool invocations (toolName and input pairs)
 - Returns the collected results from all invocations
 - Use this tool when you need to run multiple independent tool operations at once -- it is awesome for speeding up your workflow, reducing both context usage and latency
