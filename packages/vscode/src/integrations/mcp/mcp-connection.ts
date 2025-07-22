@@ -206,7 +206,10 @@ export class McpConnection implements vscode.Disposable {
       return;
     }
 
-    if (shouldRestartDueToConfigChanged(oldConfig, config)) {
+    if (
+      shouldRestartDueToConfigChanged(oldConfig, config) &&
+      !config.disabled
+    ) {
       this.logger.debug("Configuration changed, restarting...");
       this.fsm.send({ type: "restart" });
       return;
