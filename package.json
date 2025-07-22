@@ -49,7 +49,7 @@
     "turbo": "^2.5.5",
     "typescript": "^5.7.2"
   },
-  "packageManager": "bun@1.2.19",
+  "packageManager": "bun@1.2.18",
   "trustedDependencies": ["@ast-grep/cli"],
   "patchedDependencies": {
     "better-auth@1.2.9": "patches/better-auth@1.2.9.patch",
