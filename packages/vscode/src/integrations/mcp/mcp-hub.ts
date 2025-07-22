@@ -19,7 +19,7 @@ type McpConnectionMap = Map<
   string,
   {
     instance: McpConnection;
-    listener: vscode.Disposable;
+    listeners: vscode.Disposable[];
   }
 >;
 
@@ -233,15 +233,16 @@ export class McpHub implements vscode.Disposable {
 
   private createConnection(name: string, config: McpServerConfig) {
     const connection = new McpConnection(name, this.context, config);
-    const listener = {
+    const connectionObject = {
+      instance: connection,
+      listeners: [] as vscode.Disposable[],
+    };
+    this.connections.set(name, connectionObject);
+    connectionObject.listeners.push({
       dispose: connection.status.subscribe(() => {
         logger.debug(`Connection status updated for ${name}`);
         this.updateStatus();
       }),
-    };
-    this.connections.set(name, {
-      instance: connection,
-      listener,
     });
     logger.debug(`Connection ${name} created.`);
   }
@@ -257,7 +258,9 @@ export class McpHub implements vscode.Disposable {
   private removeConnection(name: string) {
     const connection = this.connections.get(name);
     if (connection) {
-      connection.listener.dispose();
+      for (const listener of connection.listeners) {
+        listener.dispose();
+      }
       connection.instance.dispose();
       this.connections.delete(name);
       logger.debug(`Connection ${name} removed.`);
@@ -271,7 +274,9 @@ export class McpHub implements vscode.Disposable {
     this.listeners = [];
 
     for (const connection of this.connections.values()) {
-      connection.listener.dispose();
+      for (const listener of connection.listeners) {
+        listener.dispose();
+      }
       connection.instance.dispose();
     }
     this.connections.clear();

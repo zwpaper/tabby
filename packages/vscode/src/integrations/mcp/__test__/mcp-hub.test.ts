@@ -194,7 +194,7 @@ describe("McpHub", () => {
       const disposeStub = sandbox.stub();
       (mcpHub as any).connections.set("test-server", {
         instance: { restart: restartStub, dispose: disposeStub },
-        listener: { dispose: sandbox.stub() },
+        listeners: [{ dispose: sandbox.stub() }],
       });
 
       mcpHub.restart("test-server");
@@ -293,7 +293,7 @@ describe("McpHub", () => {
       const listenerDisposeStub = sandbox.stub();
       (hubWithConnection as any).connections.set("test-server", {
         instance: { dispose: disposeStub },
-        listener: { dispose: listenerDisposeStub },
+        listeners: [{ dispose: listenerDisposeStub }],
       });
 
       // Remove server from config
@@ -328,7 +328,7 @@ describe("McpHub", () => {
           dispose: disposeStub,
           status: { value: { status: "ready", tools: {} } }
         },
-        listener: { dispose: sandbox.stub() },
+        listeners: [{ dispose: sandbox.stub() }],
       });
 
       // Update server config
@@ -378,7 +378,7 @@ describe("McpHub", () => {
       (mcpHub as any).config = { "test-server": { command: "node", args: [] } };
       (mcpHub as any).connections.set("test-server", {
         instance: mockConnection,
-        listener: { dispose: sandbox.stub() },
+        listeners: [{ dispose: sandbox.stub() }],
       });
 
       // Trigger status update
@@ -416,7 +416,7 @@ describe("McpHub", () => {
       (mcpHub as any).config = { "test-server": { command: "node", args: [] } };
       (mcpHub as any).connections.set("test-server", {
         instance: mockConnection,
-        listener: { dispose: sandbox.stub() },
+        listeners: [{ dispose: sandbox.stub() }],
       });
 
       // Trigger status update
@@ -439,7 +439,7 @@ describe("McpHub", () => {
 
       (mcpHub as any).connections.set("test-server", {
         instance: { dispose: connectionDisposeStub },
-        listener: { dispose: listenerDisposeStub },
+        listeners: [{ dispose: listenerDisposeStub }],
       });
 
       (mcpHub as any).listeners.push({ dispose: mainListenerDisposeStub });
@@ -456,10 +456,3 @@ describe("McpHub", () => {
     });
   });
 });
-
-
-
-
-
-
-
