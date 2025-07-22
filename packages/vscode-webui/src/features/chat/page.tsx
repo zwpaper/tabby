@@ -201,8 +201,13 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     let userEdits: GitDiff[] | undefined;
     const lastCheckpointHash = findLastCheckpointFromMessages(messages);
     if (lastCheckpointHash && autoApproveGuard.current) {
-      userEdits =
+      const gitDiff =
         (await vscodeHost.diffWithCheckpoint(lastCheckpointHash)) ?? undefined;
+      // Filter out binary files (by check if there's null byte in the diff)
+      const nullbyte = "\u0000";
+      userEdits = gitDiff?.filter(
+        (x) => !x.before.includes(nullbyte) && !x.after.includes(nullbyte),
+      );
     }
 
     return {
