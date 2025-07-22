@@ -3,7 +3,7 @@ import { SandboxPath } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
 import { db, minionIdCoder } from "../../db";
 import { type CreateSandboxOptions, sandboxService } from "../sandbox";
-import { scheduleCleanupExpiredSandbox, signalKeepAliveSandbox } from "./index";
+import { scheduleCleanupExpiredSandbox } from "./index";
 import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
@@ -114,9 +114,6 @@ export function createSandboxWorker() {
           .execute();
 
         logger.debug(`Minion ${minionId} updated with sandbox details`);
-
-        // Signal keep alive for the sandbox
-        signalKeepAliveSandbox({ sandboxId: sandbox.id });
 
         // Schedule cleanup of the sandbox after 7 days
         await scheduleCleanupExpiredSandbox({

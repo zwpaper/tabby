@@ -3,10 +3,7 @@ import * as jose from "jose";
 import { v5 as uuidv5 } from "uuid";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
-import {
-  scheduleCreateSandbox,
-  signalKeepAliveSandbox,
-} from "./background-job";
+import { scheduleCreateSandbox } from "./background-job";
 import { sandboxService } from "./sandbox";
 
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
@@ -177,7 +174,6 @@ class MinionService {
         message: "Sandbox not found, maybe still being created, please wait",
       });
     }
-    signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
   }
 
   async list(userId: string, page: number, limit: number) {
@@ -278,8 +274,6 @@ class MinionService {
         }
       }
     }
-
-    signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
 
     if (!minion.url) {
       throw new HTTPException(404, {
@@ -383,7 +377,7 @@ class MinionService {
         }
       }
     }
-    signalKeepAliveSandbox({ sandboxId: minion.sandboxId });
+
     return {
       success: true,
     };
