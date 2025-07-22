@@ -15,7 +15,6 @@ describe("McpConnection", () => {
   let mockStdioTransport: sinon.SinonStub;
   let mockStreamableTransport: sinon.SinonStub;
   let mockCheckUrlIsSseServer: sinon.SinonStub;
-  let mockGetCwd: sinon.SinonStub;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -43,7 +42,6 @@ describe("McpConnection", () => {
     mockStdioTransport = sandbox.stub();
     mockStreamableTransport = sandbox.stub();
     mockCheckUrlIsSseServer = sandbox.stub().resolves(false);
-    mockGetCwd = sandbox.stub().returns("/test/cwd");
 
     // Use proxyquire to mock dependencies
     McpConnection = proxyquire("../mcp-connection", {
@@ -61,9 +59,6 @@ describe("McpConnection", () => {
         readableError: (error: any) => error?.message || String(error),
         shouldRestartDueToConfigChanged: sandbox.stub().returns(false),
         isToolEnabledChanged: sandbox.stub().returns(false),
-      },
-      "@/lib/env": {
-        getCwd: mockGetCwd,
       },
       "@/lib/logger": {
         getLogger: () => ({
@@ -183,7 +178,6 @@ describe("McpConnection", () => {
           shouldRestartDueToConfigChanged: shouldRestartStub,
           isToolEnabledChanged: sandbox.stub().returns(false),
         },
-        "@/lib/env": { getCwd: mockGetCwd },
         "@/lib/logger": {
           getLogger: () => ({
             debug: sandbox.stub(),
@@ -242,6 +236,7 @@ describe("McpConnection", () => {
       const config: McpServerConfig = {
         command: "node",
         args: ["server.js"],
+        cwd: "/test/cwd",
         disabled: false,
       };
 

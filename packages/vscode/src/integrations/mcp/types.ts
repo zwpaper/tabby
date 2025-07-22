@@ -4,6 +4,7 @@ import type { ToolExecutionOptions } from "ai";
 interface McpServerTransportStdio {
   command: string;
   args: string[];
+  cwd?: string;
   env?: Record<string, string>;
 }
 

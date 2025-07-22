@@ -1,4 +1,3 @@
-import { getCwd } from "@/lib/env";
 import { getLogger } from "@/lib/logger";
 import {
   StdioClientTransport,
@@ -281,11 +280,11 @@ export class McpConnection implements vscode.Disposable {
           transport: new StdioClientTransport({
             command: this.config.command,
             args: this.config.args,
+            cwd: this.config.cwd,
             env: {
               ...getDefaultEnvironment(),
               ...this.config.env,
             },
-            cwd: getCwd(),
           }),
           name: this.extensionContext.extension.id,
           onUncaughtError,
