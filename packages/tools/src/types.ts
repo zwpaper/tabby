@@ -1,4 +1,10 @@
-import { type Tool, type ToolExecutionOptions, tool } from "ai";
+import {
+  type Tool,
+  type ToolCall,
+  type ToolExecutionOptions,
+  type ToolResult,
+  tool,
+} from "ai";
 
 import type { z } from "zod";
 
@@ -75,3 +81,33 @@ export function declareServerTool<
     parameters: inputSchema,
   });
 }
+
+type ToolInvocation<INPUT, OUTPUT> =
+  | ({
+      state: "partial-call";
+      step?: number;
+    } & ToolCall<string, Optional<INPUT> | undefined>)
+  | ({
+      state: "call";
+      step?: number;
+    } & ToolCall<string, INPUT>)
+  | ({
+      state: "result";
+      step?: number;
+    } & ToolResult<string, INPUT, OUTPUT>);
+
+export interface ToolInvocationUIPart<
+  // biome-ignore lint/suspicious/noExplicitAny: external function def.
+  T extends Tool<any, any> = Tool<any, any>,
+> {
+  type: "tool-invocation";
+  toolInvocation: ToolInvocation<
+    InputType<ToolFunctionType<T>>,
+    Awaited<ReturnType<ToolFunctionType<T>>> | { error: string }
+  >;
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: external function def.
+type InputType<T extends (...args: any[]) => any> = Parameters<T>[0];
+
+type Optional<T> = { [K in keyof T]: T[K] | undefined };

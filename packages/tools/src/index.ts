@@ -15,7 +15,11 @@ import { newTask } from "./new-task";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
-export type { PreviewToolFunctionType, ToolFunctionType } from "./types";
+export type {
+  PreviewToolFunctionType,
+  ToolFunctionType,
+  ToolInvocationUIPart,
+} from "./types";
 import type { Tool } from "ai";
 import { webFetch } from "./web-fetch";
 import { writeToFile } from "./write-to-file";

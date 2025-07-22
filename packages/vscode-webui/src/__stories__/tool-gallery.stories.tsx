@@ -1,14 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { ToolInvocationPart } from "@/components/tool-invocation";
-import type {
-  ToolInvocation,
-  ToolProps,
-} from "@/components/tool-invocation/types";
+import type { ToolProps } from "@/components/tool-invocation/types";
 import type { ClientToolsType } from "@ragdoll/tools";
+import type { ToolInvocation } from "ai";
 
 const ToolsGallery: React.FC<{
-  tools: ToolInvocation<unknown, unknown>[];
+  tools: ToolInvocation[];
 }> = ({ tools = [] }) => {
   return (
     <div className="mt-3 ml-1 flex flex-col gap-2">
