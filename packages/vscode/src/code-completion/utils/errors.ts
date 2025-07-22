@@ -1,14 +1,26 @@
+import { ServerErrors } from "@ragdoll/server";
+
 export class HttpError extends Error {
   public readonly status: number;
   public readonly statusText: string;
-  public readonly response: Response;
+  public readonly text;
 
-  constructor(response: Response) {
-    super(`${response.status} ${response.statusText}`);
+  constructor({
+    status,
+    statusText,
+    text,
+  }: {
+    status: number;
+    statusText: string;
+    text?: string | undefined;
+  }) {
+    super(
+      `${status} ${statusText}: ${text?.trim() || "No additional details."}`,
+    );
     this.name = "HttpError";
-    this.status = response.status;
-    this.statusText = response.statusText;
-    this.response = response;
+    this.status = status;
+    this.statusText = statusText;
+    this.text = text;
   }
 }
 
@@ -29,12 +41,15 @@ export class TimeoutError extends Error {
 export function isTimeoutError(error: unknown) {
   return (
     (error instanceof Error && error.name === "TimeoutError") ||
-    (error instanceof HttpError && [408, 499].includes(error.status))
+    (error instanceof HttpError && error.status === 408)
   );
 }
 
 export function isCanceledError(error: unknown) {
-  return error instanceof Error && error.name === "AbortError";
+  return (
+    (error instanceof Error && error.name === "AbortError") ||
+    (error instanceof HttpError && error.status === 499)
+  );
 }
 
 export function isUnauthorizedError(error: unknown) {
@@ -43,4 +58,18 @@ export function isUnauthorizedError(error: unknown) {
 
 export function isRateLimitExceededError(error: unknown) {
   return error instanceof HttpError && error.status === 429;
+}
+
+export function checkSubscriptionRequiredError(
+  error: unknown,
+): undefined | "user" | "team" {
+  if (error instanceof HttpError && error.status === 400) {
+    if (error.text === ServerErrors.RequireSubscription) {
+      return "user";
+    }
+    if (error.text === ServerErrors.RequireOrgSubscription) {
+      return "team";
+    }
+  }
+  return undefined;
 }

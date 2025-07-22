@@ -11,6 +11,7 @@ import type * as vscode from "vscode";
 import { CodeCompletionConfig } from "./configuration";
 import {
   HttpError,
+  checkSubscriptionRequiredError,
   isCanceledError,
   isRateLimitExceededError,
   isTimeoutError,
@@ -74,7 +75,11 @@ export class CompletionFetcher {
         `[${requestId}] Completion response status: ${response.status}.`,
       );
       if (!response.ok) {
-        throw new HttpError(response);
+        throw new HttpError({
+          status: response.status,
+          statusText: response.statusText,
+          text: await response.text(),
+        });
       }
       const data = await response.json();
       logger.trace(`[${requestId}] Completion response data:`, data);
@@ -101,6 +106,10 @@ export class CompletionFetcher {
       } else if (isRateLimitExceededError(error)) {
         logger.debug(
           `[${requestId}] Completion request failed due to rate limit exceeded.`,
+        );
+      } else if (checkSubscriptionRequiredError(error)) {
+        logger.debug(
+          `[${requestId}] Completion request failed due to subscription required.`,
         );
       } else {
         logger.debug(`[${requestId}] Completion request failed.`, error);

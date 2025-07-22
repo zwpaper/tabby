@@ -67,7 +67,7 @@ export class PochiConfiguration implements vscode.Disposable {
   }
 }
 
-type PochiAdvanceSettings = {
+export type PochiAdvanceSettings = {
   inlineCompletion?: {
     disabled?: boolean;
     disabledLanguages?: string[];

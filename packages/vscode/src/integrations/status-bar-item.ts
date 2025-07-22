@@ -2,6 +2,7 @@
 import { CompletionProvider } from "@/code-completion";
 // biome-ignore lint/style/useImportType: needed for initialization
 import { AuthEvents } from "@/lib/auth-events";
+import { signal } from "@preact/signals-core";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for initialization
@@ -16,6 +17,16 @@ export class StatusBarItem implements vscode.Disposable {
   );
 
   private disposables: vscode.Disposable[] = [];
+  readonly status = signal<
+    | "initializing"
+    | "logged-out"
+    | "subscription-required"
+    | "subscription-required-team"
+    | "disabled"
+    | "disabled-language"
+    | "ready"
+    | "loading"
+  >("initializing");
 
   constructor(
     private readonly pochiConfiguration: PochiConfiguration,
@@ -51,24 +62,30 @@ export class StatusBarItem implements vscode.Disposable {
         this.update();
       }),
     );
+    this.disposables.push({
+      dispose: this.status.subscribe((status) => {
+        this.renderStatus(status);
+      }),
+    });
   }
 
-  private update(): void {
+  private update() {
+    this.status.value = this.calcStatus();
+  }
+
+  private calcStatus() {
     if (this.authEvents.isLoggedIn.value === undefined) {
-      this.renderStatus("loading");
-      return;
+      return "initializing";
     }
     if (this.authEvents.isLoggedIn.value === false) {
-      this.renderStatus("logged-out");
-      return;
+      return "logged-out";
     }
     // User logged-in
 
     if (
       this.pochiConfiguration.advancedSettings.value.inlineCompletion?.disabled
     ) {
-      this.renderStatus("disabled");
-      return;
+      return "disabled";
     }
     if (
       vscode.window.activeTextEditor &&
@@ -76,47 +93,85 @@ export class StatusBarItem implements vscode.Disposable {
         vscode.window.activeTextEditor.document.languageId,
       )
     ) {
-      this.renderStatus("disabled");
-      return;
+      return "disabled-language";
     }
     // Inline completion is enabled
 
+    if (this.inlineCompletionProvider.requireSubscription.value === "user") {
+      return "subscription-required";
+    }
+    if (this.inlineCompletionProvider.requireSubscription.value === "team") {
+      return "subscription-required-team";
+    }
+    // Subscription is valid
+
     if (this.inlineCompletionProvider.isFetching.value) {
-      this.renderStatus("loading");
-      return;
+      return "loading";
     }
     // Normal case
 
-    this.renderStatus("ready");
+    return "ready";
   }
 
-  private renderStatus(
-    status: "logged-out" | "disabled" | "ready" | "loading",
-  ) {
+  private renderStatus(status: StatusBarItem["status"]["value"]) {
     switch (status) {
+      case "initializing":
+        this.statusBarItem.text = "$(loading~spin) Pochi";
+        this.statusBarItem.tooltip = "Initializing...";
+        this.statusBarItem.backgroundColor = undefined;
+        this.statusBarItem.command = undefined;
+        break;
+
       case "logged-out":
         this.statusBarItem.text = "$(warning) Pochi";
-        this.statusBarItem.tooltip = "Click to login.";
+        this.statusBarItem.tooltip = "Please sign in to use code completion.";
         this.statusBarItem.backgroundColor = new vscode.ThemeColor(
           "statusBarItem.warningBackground",
         );
         this.statusBarItem.command = "pochi.openLoginPage";
         break;
 
+      case "subscription-required":
+        this.statusBarItem.text = "$(warning) Pochi";
+        this.statusBarItem.tooltip =
+          "To continue using code completion, please subscribe to Pochi.";
+        this.statusBarItem.backgroundColor = new vscode.ThemeColor(
+          "statusBarItem.warningBackground",
+        );
+        this.statusBarItem.command = {
+          title: "Open Profile",
+          command: "pochi.openWebsite",
+          arguments: ["/profile"],
+        };
+        break;
+
+      case "subscription-required-team":
+        this.statusBarItem.text = "$(warning) Pochi";
+        this.statusBarItem.tooltip =
+          "To continue using code completion, please subscribe to Pochi.";
+        this.statusBarItem.backgroundColor = new vscode.ThemeColor(
+          "statusBarItem.warningBackground",
+        );
+        this.statusBarItem.command = this.statusBarItem.command = {
+          title: "Open Team Settings",
+          command: "pochi.openWebsite",
+          arguments: ["/team"],
+        };
+        break;
+
       case "disabled":
         this.statusBarItem.text = "$(dash) Pochi";
-        this.statusBarItem.tooltip =
-          "Code completion is disabled. Click to enable.";
+        this.statusBarItem.tooltip = "Code completion is disabled.";
         this.statusBarItem.backgroundColor = undefined;
         this.statusBarItem.command = "pochi.inlineCompletion.toggleEnabled";
         break;
 
-      case "ready":
-        this.statusBarItem.text = "$(check) Pochi";
-        this.statusBarItem.tooltip =
-          "Code completion is enabled. Click to disable.";
+      case "disabled-language":
+        this.statusBarItem.text = "$(dash) Pochi";
+        this.statusBarItem.tooltip = `Code completion is disabled for ${vscode.window.activeTextEditor?.document.languageId ?? "current language"}.`;
         this.statusBarItem.backgroundColor = undefined;
-        this.statusBarItem.command = "pochi.inlineCompletion.toggleEnabled";
+        this.statusBarItem.command =
+          "pochi.inlineCompletion.toggleLanguageEnabled";
         break;
 
       case "loading":
@@ -124,6 +179,13 @@ export class StatusBarItem implements vscode.Disposable {
         this.statusBarItem.tooltip = "Generating a completion...";
         this.statusBarItem.backgroundColor = undefined;
         this.statusBarItem.command = undefined;
+        break;
+
+      case "ready":
+        this.statusBarItem.text = "$(check) Pochi";
+        this.statusBarItem.tooltip = "Code completion is enabled.";
+        this.statusBarItem.backgroundColor = undefined;
+        this.statusBarItem.command = "pochi.inlineCompletion.toggleEnabled";
         break;
     }
   }

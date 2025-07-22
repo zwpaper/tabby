@@ -1,132 +1,193 @@
-import type { AuthClient } from "@/lib/auth-client";
-import { getLogger } from "@/lib/logger";
-import { inject, injectable, singleton } from "tsyringe";
+import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { PochiConfiguration } from "./configuration";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { StatusBarItem } from "./status-bar-item";
 
-interface PochiQuickPickItem extends vscode.QuickPickItem {
-  command?: string;
-  args?: unknown[];
+interface QuickPickItem extends vscode.QuickPickItem {
+  onDidAccept?: () => void;
 }
 
-interface PochiQuickPickButton extends vscode.QuickInputButton {
-  command?: string;
-  args?: unknown[];
-}
-
-const logger = getLogger("CommandPalette");
-
+// FIXME(zhiming): CommandPalette is not used for now, consider removing it.
 @injectable()
 @singleton()
 export class CommandPalette {
-  private accountQuickPickItem: PochiQuickPickItem = {
-    label: "Account",
-    description: "Fetching user information...",
-    iconPath: new vscode.ThemeIcon("account"),
-  };
-  private quickPick: vscode.QuickPick<PochiQuickPickItem> | undefined;
-
-  constructor(@inject("AuthClient") private readonly authClient: AuthClient) {}
+  constructor(
+    private readonly statusBarItem: StatusBarItem,
+    private readonly pochiConfiguration: PochiConfiguration,
+  ) {}
 
   async show() {
-    const items: PochiQuickPickItem[] = [
-      this.accountQuickPickItem,
-      {
-        label: "Config",
-        kind: vscode.QuickPickItemKind.Separator,
-      },
-      {
-        label: "Settings",
-        command: "pochi.openSettings",
-        iconPath: new vscode.ThemeIcon("settings"),
-      },
-      {
-        label: "Show Logs",
-        command: "pochi.outputPanel.focus",
-        iconPath: new vscode.ThemeIcon("output"),
-      },
-    ];
+    return new Promise<QuickPickItem | undefined>((resolve) => {
+      const quickPick = vscode.window.createQuickPick<QuickPickItem>();
+      quickPick.title = "Pochi Command Palette";
+      quickPick.placeholder = "Select an action";
+      const status = this.statusBarItem.status.value;
 
-    await this.showQuickPick(items, "Pochi Command Palette");
-  }
+      const items = [
+        this.buildStatusItem(status),
+        {
+          label: "",
+          kind: vscode.QuickPickItemKind.Separator,
+        },
+        {
+          label: "Chat",
+          iconPath: new vscode.ThemeIcon("comment"),
+          onDidAccept: () => {
+            vscode.commands.executeCommand("pochiWebui.focus");
+          },
+        },
+        {
+          label: "",
+          kind: vscode.QuickPickItemKind.Separator,
+        },
+        {
+          label: this.pochiConfiguration.advancedSettings.value.inlineCompletion
+            ?.disabled
+            ? "Enable Code Completion"
+            : "Disable Code Completion",
+          onDidAccept: () => {
+            vscode.commands.executeCommand(
+              "pochi.inlineCompletion.toggleEnabled",
+            );
+          },
+        },
+      ];
 
-  private async showQuickPick(items: PochiQuickPickItem[], title: string) {
-    return new Promise<PochiQuickPickItem | undefined>((resolve) => {
-      this.quickPick = vscode.window.createQuickPick<PochiQuickPickItem>();
-      this.quickPick.items = items;
-      this.quickPick.title = title;
-      this.quickPick.canSelectMany = false;
-      this.quickPick.show();
-      this.quickPick.onDidAccept(() => {
-        const selectedItem = this.quickPick?.selectedItems[0];
-        if (selectedItem?.command) {
-          vscode.commands.executeCommand(
-            selectedItem.command,
-            ...(selectedItem?.args || []),
-          );
-        }
-        resolve(selectedItem);
+      const language = vscode.window.activeTextEditor?.document.languageId;
+      if (language) {
+        items.push({
+          label:
+            this.pochiConfiguration.advancedSettings.value.inlineCompletion?.disabledLanguages?.includes(
+              language,
+            )
+              ? `Enable Code Completion for "${language}"`
+              : `Disable Code Completion for "${language}"`,
+          onDidAccept: () => {
+            vscode.commands.executeCommand(
+              "pochi.inlineCompletion.toggleLanguageEnabled",
+              language,
+            );
+          },
+        });
+      }
+
+      items.push(
+        {
+          label: "",
+          kind: vscode.QuickPickItemKind.Separator,
+        },
+        {
+          label: "Settings",
+          iconPath: new vscode.ThemeIcon("settings"),
+          onDidAccept: () => {
+            vscode.commands.executeCommand("pochi.openSettings");
+          },
+        },
+        {
+          label: "Show Logs",
+          iconPath: new vscode.ThemeIcon("output"),
+          onDidAccept: () => {
+            vscode.commands.executeCommand("pochi.outputPanel.focus");
+          },
+        },
+      );
+
+      quickPick.items = items;
+      const unsubscribe = this.statusBarItem.status.subscribe((status) => {
+        quickPick.items = [this.buildStatusItem(status), ...items.slice(1)];
       });
-      this.quickPick.onDidHide(() => {
+
+      quickPick.onDidAccept(() => {
+        const selected = quickPick.selectedItems[0];
+        selected?.onDidAccept?.();
+        resolve(selected);
+        quickPick.hide();
+      });
+
+      quickPick.onDidHide(() => {
+        unsubscribe();
+        quickPick.dispose();
         resolve(undefined);
       });
-      this.quickPick.onDidTriggerItemButton(({ button, item }) => {
-        const pochiButton = button as PochiQuickPickButton;
-        if (item && pochiButton?.command) {
-          vscode.commands.executeCommand(
-            pochiButton.command,
-            ...(pochiButton.args || []),
-          );
-        }
-        resolve(item);
-      });
-      this.updateAuthInfo();
+
+      quickPick.show();
     });
   }
 
-  private async updateAuthInfo() {
-    if (!this.quickPick) {
-      return;
-    }
-    this.quickPick.busy = true;
-    const authinfo = await this.fetchAuthInfo();
-    let accountItem: PochiQuickPickItem;
-    if (authinfo.loggedIn) {
-      const logoutButton: PochiQuickPickButton = {
-        tooltip: "Logout",
-        iconPath: new vscode.ThemeIcon("sign-out"),
-        command: "pochi.logout",
-      };
-      accountItem = {
-        ...this.accountQuickPickItem,
-        description: `Logged in as ${authinfo.username}`,
-        buttons: [logoutButton],
-      };
-    } else {
-      accountItem = {
-        ...this.accountQuickPickItem,
-        description: "You're not logged-in, click to login",
-        command: "pochi.openLoginPage",
-      };
-    }
-    this.quickPick.busy = false;
+  private buildStatusItem(
+    status: StatusBarItem["status"]["value"],
+  ): QuickPickItem {
+    switch (status) {
+      case "initializing":
+        return {
+          label: "$(loading~spin) Initializing...",
+        };
 
-    this.quickPick.items = this.quickPick.items.map((item) => {
-      if (item.label === this.accountQuickPickItem.label) {
-        return accountItem;
+      case "logged-out":
+        return {
+          label: "Sign In",
+          onDidAccept: () => {
+            vscode.commands.executeCommand("pochi.openLoginPage");
+          },
+        };
+
+      case "subscription-required":
+        return {
+          label: "Subscribe",
+          iconPath: new vscode.ThemeIcon("account"),
+          detail:
+            "To continue using code completion, please subscribe to Pochi.",
+          onDidAccept: () => {
+            vscode.commands.executeCommand("pochi.openWebsite", "/profile");
+          },
+        };
+
+      case "subscription-required-team":
+        return {
+          label: "Subscribe",
+          iconPath: new vscode.ThemeIcon("account"),
+          detail:
+            "Your team does not have a subscription yet, please subscribe to Pochi.",
+          onDidAccept: () => {
+            vscode.commands.executeCommand("pochi.openWebsite", "/team");
+          },
+        };
+
+      case "disabled":
+        return {
+          label: "Code Completion Disabled",
+          iconPath: new vscode.ThemeIcon("dash"),
+          description: "Click to enable",
+          onDidAccept: () => {
+            vscode.commands.executeCommand(
+              "pochi.inlineCompletion.toggleEnabled",
+            );
+          },
+        };
+
+      case "disabled-language": {
+        const language = vscode.window.activeTextEditor?.document.languageId;
+        return {
+          label: `Code Completion Disabled${language ? ` for "${language}"` : ""}`,
+          iconPath: new vscode.ThemeIcon("dash"),
+          description: "Click to enable",
+          onDidAccept: () => {
+            vscode.commands.executeCommand(
+              "pochi.inlineCompletion.toggleLanguageEnabled",
+              language,
+            );
+          },
+        };
       }
-      return item;
-    });
-  }
 
-  private async fetchAuthInfo(): Promise<{
-    loggedIn: boolean;
-    username?: string;
-  }> {
-    const { data: session, error } = await this.authClient.getSession();
-    logger.debug("User session data:", session, error);
-    if (!session || error) {
-      return { loggedIn: false };
+      case "loading":
+      case "ready":
+        return {
+          label: "Ready",
+          iconPath: new vscode.ThemeIcon("check"),
+        };
     }
-    return { loggedIn: true, username: session.user.email };
   }
 }

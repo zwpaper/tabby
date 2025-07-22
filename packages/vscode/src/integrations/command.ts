@@ -15,9 +15,7 @@ import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { CommandPalette } from "./command-palette";
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { PochiConfiguration } from "./configuration";
+import { type PochiAdvanceSettings, PochiConfiguration } from "./configuration";
 import { DiffChangesContentProvider } from "./editor/diff-changes-content-provider";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "./mcp/mcp-hub";
@@ -37,7 +35,6 @@ export class CommandManager implements vscode.Disposable {
     private readonly newProjectRegistry: NewProjectRegistry,
     @inject("AuthClient") private readonly authClient: AuthClient,
     private readonly authEvents: AuthEvents,
-    private readonly commandPalette: CommandPalette,
     private readonly mcpHub: McpHub,
     private readonly pochiConfiguration: PochiConfiguration,
   ) {
@@ -74,6 +71,13 @@ export class CommandManager implements vscode.Disposable {
           ),
         );
       }),
+
+      vscode.commands.registerCommand(
+        "pochi.openWebsite",
+        async (path: string) => {
+          vscode.env.openExternal(vscode.Uri.parse(getServerBaseUrl() + path));
+        },
+      ),
 
       vscode.commands.registerCommand("pochi.logout", async () => {
         const selection = await vscode.window.showInformationMessage(
@@ -208,11 +212,6 @@ export class CommandManager implements vscode.Disposable {
       }),
 
       vscode.commands.registerCommand(
-        "pochi.showCommandPalette",
-        this.commandPalette.show.bind(this.commandPalette),
-      ),
-
-      vscode.commands.registerCommand(
         "pochi.outputPanel.focus",
         showOutputPanel,
       ),
@@ -298,6 +297,47 @@ export class CommandManager implements vscode.Disposable {
               disabled: !current.inlineCompletion?.disabled,
             },
           };
+          this.pochiConfiguration.advancedSettings.value = newSettings;
+        },
+      ),
+
+      vscode.commands.registerCommand(
+        "pochi.inlineCompletion.toggleLanguageEnabled",
+        async (language?: string | undefined) => {
+          const languageId =
+            language ?? vscode.window.activeTextEditor?.document.languageId;
+
+          if (!languageId) {
+            return;
+          }
+
+          const current = this.pochiConfiguration.advancedSettings.value;
+          let newSettings: PochiAdvanceSettings;
+          if (
+            current.inlineCompletion?.disabledLanguages?.includes(languageId)
+          ) {
+            newSettings = {
+              ...current,
+              inlineCompletion: {
+                ...current.inlineCompletion,
+                disabledLanguages:
+                  current.inlineCompletion.disabledLanguages.filter(
+                    (lang) => lang !== languageId,
+                  ),
+              },
+            };
+          } else {
+            newSettings = {
+              ...current,
+              inlineCompletion: {
+                ...current.inlineCompletion,
+                disabledLanguages: [
+                  ...(current.inlineCompletion?.disabledLanguages ?? []),
+                  languageId,
+                ],
+              },
+            };
+          }
           this.pochiConfiguration.advancedSettings.value = newSettings;
         },
       ),
