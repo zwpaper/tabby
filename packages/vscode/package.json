@@ -187,18 +187,23 @@
           "pochi.advanced": {
             "default": {},
             "properties": {
-              "inlineCompletion.disabled": {
-                "type": "boolean",
-                "default": false,
-                "description": "Enable inline completion feature in Pochi."
-              },
-              "inlineCompletion.disabledLanguages": {
-                "type": "array",
-                "default": [],
-                "items": {
-                  "type": "string"
-                },
-                "description": "List of languages where inline completion is disabled."
+              "inlineCompletion": {
+                "default": {},
+                "properties": {
+                  "disabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable inline completion feature in Pochi."
+                  },
+                  "disabledLanguages": {
+                    "type": "array",
+                    "default": [],
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of languages where inline completion is disabled."
+                  }
+                }
               }
             }
           },
