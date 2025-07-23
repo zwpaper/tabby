@@ -45,15 +45,7 @@ export function useMixinReadyForRetryError(
     }
   }, [messages]);
 
-  if (
-    error &&
-    ![
-      ServerErrors.ReachedCreditLimit,
-      ServerErrors.RequireSubscription,
-      ServerErrors.ReachedOrgCreditLimit,
-      ServerErrors.RequireOrgSubscription,
-    ].includes(error.message)
-  ) {
+  if (error && !Object.values(ServerErrors).includes(error.message)) {
     return error;
   }
 
