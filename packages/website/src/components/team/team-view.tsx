@@ -29,15 +29,20 @@ export function TeamView({ slug }: TeamViewProps) {
   const organizationId = organization?.id;
 
   const subscriptionsQuery = useQuery({
-    queryKey: ["subscriptions"],
+    queryKey: ["subscriptions", organizationId],
     queryFn: async () => {
-      const resp = await apiClient.api.billing.subscriptions.$get();
+      const resp = await apiClient.api.billing.subscriptions.$get({
+        query: {
+          organizationId,
+        },
+      });
       if (!resp.ok) {
         return null;
       }
       const result = await resp.json();
       return result;
     },
+    enabled: !!organizationId,
   });
   const subscriptions = subscriptionsQuery.data;
 
