@@ -327,7 +327,6 @@ const chat = new Hono()
       });
     }
 
-    c.header("Pochi-Task-Id", uid);
     return stream(c, (stream) => stream.pipe(resumableStream));
   })
   .get(
