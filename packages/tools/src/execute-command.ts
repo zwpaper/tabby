@@ -134,7 +134,9 @@ Important:
       .min(1)
       .max(60 * 5)
       .optional()
-      .describe("Optional timeout in seconds, max 300 seconds."),
+      .describe(
+        "Optional timeout in seconds, max 300 seconds. By default the timeout is 120 seconds.",
+      ),
   }),
   outputSchema: z.object({
     output: z

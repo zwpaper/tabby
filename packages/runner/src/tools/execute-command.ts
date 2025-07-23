@@ -15,7 +15,7 @@ export const executeCommand =
     context: ToolCallOptions,
   ): ToolFunctionType<ClientToolsType["executeCommand"]> =>
   async (
-    { command, cwd = ".", isDevServer, timeout = 15 },
+    { command, cwd = ".", isDevServer, timeout = 120 },
     { abortSignal },
   ) => {
     if (!command) {

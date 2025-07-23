@@ -1,4 +1,5 @@
-import { IconBrain, IconUsers } from "@tabler/icons-react";
+import { IconUsers } from "@tabler/icons-react";
+
 import type * as React from "react";
 
 import {
@@ -20,11 +21,6 @@ const adminNavItems = [
     title: "Users",
     url: "/admin/users",
     icon: IconUsers,
-  },
-  {
-    title: "Data Labeling Tool",
-    url: "/admin/model-evaluation",
-    icon: IconBrain,
   },
 ];
 export function AdminSidebar({

@@ -11,7 +11,7 @@ import { executeCommandWithPty } from "../integrations/terminal/execute-command-
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
 > = async ({ command, cwd = ".", isDevServer, timeout }, { abortSignal }) => {
-  const defaultTimeout = isDevServer ? 60 : 30; // 60 seconds for dev server, 30 seconds otherwise
+  const defaultTimeout = 120;
   if (!command) {
     throw new Error("Command is required to execute.");
   }
