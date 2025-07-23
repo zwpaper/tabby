@@ -58,7 +58,7 @@ export const MessageList: React.FC<{
             {showUserAvatar && (
               <div className="flex items-center gap-2">
                 {m.role === "user" ? (
-                  <Avatar className="size-7">
+                  <Avatar className="size-7 select-none">
                     <AvatarImage src={user?.image ?? undefined} />
                     <AvatarFallback
                       className={cn(
@@ -71,7 +71,7 @@ export const MessageList: React.FC<{
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <Avatar className="size-7">
+                  <Avatar className="size-7 select-none">
                     <AvatarImage src={logo} className="scale-110" />
                     <AvatarFallback className="bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)]" />
                   </Avatar>
