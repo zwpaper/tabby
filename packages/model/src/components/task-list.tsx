@@ -18,7 +18,7 @@ export function TaskList({ tasks, selectedTask, onSelectTask }: TaskListProps) {
   });
 
   return (
-    <div className="w-1/3 overflow-y-auto border-r bg-muted/30 p-4">
+    <div className="w-1/5 overflow-y-auto border-r bg-muted/30 p-4">
       <h2 className="mb-4 font-semibold text-foreground text-lg">Tasks</h2>
       <ul className="space-y-2">
         {sortedTasks.map((task) => (

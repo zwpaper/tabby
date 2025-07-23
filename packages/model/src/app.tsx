@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FileControls } from "./components/file-controls";
+import { ResponseToc } from "./components/response-toc";
+import { TaskBar } from "./components/task-bar";
 import { TaskList } from "./components/task-list";
-import { TaskView } from "./components/task-view";
+import { TaskView, type TaskViewHandle } from "./components/task-view";
+import { TaskViewProvider } from "./contexts/task-view-context";
 import type { TaskData } from "./types";
 
 function App() {
@@ -14,6 +17,9 @@ function App() {
     isEditingNew?: boolean; // New: flag to indicate editing newContent
   } | null>(null);
   const [editedContent, setEditedContent] = useState<string>("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isTocOpen, setIsTocOpen] = useState(true);
+  const taskViewRef = useRef<TaskViewHandle>(null);
 
   const handleImport = async () => {
     try {
@@ -230,46 +236,77 @@ function App() {
     );
   };
 
+  const scrollToTop = () => {
+    taskViewRef.current?.scrollToTop();
+  };
+
+  const scrollToBottom = () => {
+    taskViewRef.current?.scrollToBottom();
+  };
+
   return (
-    <div className="flex h-screen flex-col bg-background">
-      <header className="flex items-center gap-4 border-b bg-card p-4 shadow-sm">
-        <FileControls
-          onImport={handleImport}
-          onExport={handleExport}
-          onFileUpload={handleFileUpload}
-          isExportDisabled={tasks.length === 0}
-        />
-      </header>
-      <div className="flex flex-grow overflow-hidden">
-        <TaskList
-          tasks={tasks}
-          selectedTask={selectedTask}
-          onSelectTask={setSelectedTask}
-        />
-        <div className="w-2/3 overflow-y-auto bg-background px-12 py-4">
-          {selectedTask ? (
-            <TaskView
-              key={selectedTask.uid}
+    <TaskViewProvider>
+      <div className="flex h-screen flex-col bg-background">
+        <header className="flex items-center justify-between gap-4 border-b bg-card p-4 shadow-sm">
+          <FileControls
+            onImport={handleImport}
+            onExport={handleExport}
+            onFileUpload={handleFileUpload}
+            isExportDisabled={tasks.length === 0}
+          />
+          {selectedTask && (
+            <TaskBar
               selectedTask={selectedTask}
-              editingPart={editingPart}
-              editedContent={editedContent}
-              onEdit={handleEdit}
-              onSave={handleSave}
-              onCancel={handleCancel}
-              onToggleDeleteMessage={handleToggleDeleteMessage}
-              onRemovePart={handleRemovePart}
-              onEditedContentChange={setEditedContent}
               onVerifiedChange={handleVerifiedChange}
               onExcludedChange={handleExcludedChange}
+              scrollToTop={scrollToTop}
+              scrollToBottom={scrollToBottom}
+              isSidebarOpen={isSidebarOpen}
+              toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+              isTocOpen={isTocOpen}
+              toggleToc={() => setIsTocOpen(!isTocOpen)}
             />
-          ) : (
-            <p className="text-center text-muted-foreground">
-              Import from clipboard to get started.
-            </p>
+          )}
+        </header>
+        <div className="flex flex-grow overflow-hidden">
+          {isSidebarOpen && (
+            <TaskList
+              tasks={tasks}
+              selectedTask={selectedTask}
+              onSelectTask={setSelectedTask}
+            />
+          )}
+          <div
+            className={`${isSidebarOpen ? "w-3/5" : "w-full"} overflow-y-auto bg-background px-4 py-4`}
+          >
+            {selectedTask ? (
+              <TaskView
+                ref={taskViewRef}
+                key={selectedTask.uid}
+                selectedTask={selectedTask}
+                editingPart={editingPart}
+                editedContent={editedContent}
+                onEdit={handleEdit}
+                onSave={handleSave}
+                onCancel={handleCancel}
+                onToggleDeleteMessage={handleToggleDeleteMessage}
+                onRemovePart={handleRemovePart}
+                onEditedContentChange={setEditedContent}
+              />
+            ) : (
+              <p className="text-center text-muted-foreground">
+                Import from clipboard to get started.
+              </p>
+            )}
+          </div>
+          {isTocOpen && selectedTask && (
+            <div className="w-1/5 overflow-y-auto border-l bg-muted/30 p-4">
+              <ResponseToc messages={selectedTask.messages} />
+            </div>
           )}
         </div>
       </div>
-    </div>
+    </TaskViewProvider>
   );
 }
 
