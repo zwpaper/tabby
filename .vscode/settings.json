@@ -19,5 +19,6 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "tailwindCSS.classFunctions": ["tw"],
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "rust-analyzer.linkedProjects": ["prod/analysis/Cargo.toml"]
 }
