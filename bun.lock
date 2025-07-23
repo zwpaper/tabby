@@ -162,7 +162,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.4.36",
+      "version": "0.4.37",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@orama/orama": "^3.1.11",
