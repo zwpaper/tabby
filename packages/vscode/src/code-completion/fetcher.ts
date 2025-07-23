@@ -11,6 +11,7 @@ import type * as vscode from "vscode";
 import { CodeCompletionConfig } from "./configuration";
 import {
   HttpError,
+  checkPaymentRequiredError,
   checkSubscriptionRequiredError,
   isCanceledError,
   isRateLimitExceededError,
@@ -106,6 +107,10 @@ export class CompletionFetcher {
       } else if (isRateLimitExceededError(error)) {
         logger.debug(
           `[${requestId}] Completion request failed due to rate limit exceeded.`,
+        );
+      } else if (checkPaymentRequiredError(error)) {
+        logger.debug(
+          `[${requestId}] Completion request failed due to payment required.`,
         );
       } else if (checkSubscriptionRequiredError(error)) {
         logger.debug(

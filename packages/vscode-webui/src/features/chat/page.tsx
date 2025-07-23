@@ -576,6 +576,40 @@ function ErrorMessageView({ error }: { error: TaskError | undefined }) {
           );
         }
 
+        if (e.message === ServerErrors.RequirePayment) {
+          return (
+            <span>
+              You have unpaid invoices. Please{" "}
+              <a
+                href="https://app.getpochi.com/profile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!underline py-1"
+              >
+                make a payment
+              </a>{" "}
+              to continue using Pochi
+            </span>
+          );
+        }
+
+        if (e.message === ServerErrors.RequireOrgPayment) {
+          return (
+            <span>
+              Your team have unpaid invoices. Please{" "}
+              <a
+                href="https://app.getpochi.com/team"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!underline py-1"
+              >
+                make a payment
+              </a>{" "}
+              to continue using Pochi
+            </span>
+          );
+        }
+
         return e.message;
       }}
     />

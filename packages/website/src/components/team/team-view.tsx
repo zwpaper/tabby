@@ -1,4 +1,4 @@
-import { authClient } from "@/lib/auth-client";
+import { apiClient, authClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import {
   OrganizationInvitationsCard,
@@ -28,32 +28,18 @@ export function TeamView({ slug }: TeamViewProps) {
   const { data: organization, isPending } = authClient.useActiveOrganization();
   const organizationId = organization?.id;
 
-  const subscriptionQuery = useQuery({
-    queryKey: ["subscription", organizationId],
+  const subscriptionsQuery = useQuery({
+    queryKey: ["subscriptions"],
     queryFn: async () => {
-      const subscription = await authClient.subscription.list({
-        query: {
-          referenceId: organizationId,
-        },
-        fetchOptions: {
-          throw: true,
-        },
-      });
-
-      return subscription;
-    },
-    enabled: !!organizationId,
-    retry(failureCount, error) {
-      if (error.message === "Unauthorized") return false;
-      return failureCount < 2;
+      const resp = await apiClient.api.billing.subscriptions.$get();
+      if (!resp.ok) {
+        return null;
+      }
+      const result = await resp.json();
+      return result;
     },
   });
-
-  const subscription = useMemo(() => {
-    return subscriptionQuery.data?.find(
-      (x) => x.referenceId === organizationId,
-    );
-  }, [subscriptionQuery.data, organizationId]);
+  const subscriptions = subscriptionsQuery.data;
 
   const isAdmin = useMemo(() => {
     if (!organization || !auth) return false;
@@ -76,7 +62,9 @@ export function TeamView({ slug }: TeamViewProps) {
   );
 
   const hasBillingPermission =
-    !subscriptionQuery.isPending && !subscriptionQuery.error;
+    !subscriptionsQuery.isLoading &&
+    !subscriptionsQuery.error &&
+    (!!subscriptions?.length || isOwner);
 
   if (!isPending && (!organization || organization.slug !== slug)) {
     return (
@@ -165,7 +153,8 @@ export function TeamView({ slug }: TeamViewProps) {
           <BillingCard
             queryClient={queryClient}
             organizationId={organizationId}
-            subscription={subscription}
+            subscriptions={subscriptions}
+            isLoading={subscriptionsQuery.isLoading}
           />
         </div>
       )}

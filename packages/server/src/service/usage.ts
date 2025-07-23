@@ -3,10 +3,10 @@ import { sql } from "kysely";
 import moment from "moment";
 import type { User } from "../auth";
 import { db } from "../db";
-import { readActiveSubscription } from "../lib/billing";
 import {
   AvailableModels,
   type CreditCostInput,
+  StripePlans,
   computeCreditCost,
 } from "../lib/constants";
 import { stripeClient } from "../lib/stripe";
@@ -98,12 +98,17 @@ export class UsageService {
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();
 
-    const activeSubscription = await db
+    const subscriptions = await db
       .selectFrom("subscription")
-      .select(["id", "plan"])
+      .select(["id", "plan", "status"])
       .where("referenceId", "=", organizationId)
-      .where("status", "=", "active")
-      .executeTakeFirst();
+      .where("status", "in", ["active", "past_due", "unpaid"])
+      .execute();
+
+    const activeSubscription = subscriptions.find((x) => x.status === "active");
+    const unpaidSubscription = subscriptions.find(
+      (x) => x.status === "past_due" || x.status === "unpaid",
+    );
 
     const usageResults = await db
       .selectFrom("monthlyOrganizationUsage")
@@ -126,12 +131,13 @@ export class UsageService {
       creditToDollars(spentCredit) > (monthlyOrganizationCreditLimit ?? 10);
 
     return {
-      // Used to determine if there is a subscription.
+      // Used to determine if there is a active subscription.
       plan: activeSubscription?.plan,
       credit: {
         spent: spentCredit,
         limit: monthlyOrganizationCreditLimit,
         isLimitReached,
+        isUnpaid: !!unpaidSubscription,
       },
     };
   }
@@ -180,7 +186,22 @@ export class UsageService {
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();
 
-    const { plan } = await readActiveSubscription(user);
+    // todo
+    const subscriptions = await db
+      .selectFrom("subscription")
+      .select(["id", "plan", "status"])
+      .where("referenceId", "=", user.id)
+      .where("status", "in", ["active", "past_due", "unpaid"])
+      .execute();
+
+    const activeSubscription = subscriptions.find((x) => x.status === "active");
+    const unpaidSubscription = subscriptions.find(
+      (x) => x.status === "past_due" || x.status === "unpaid",
+    );
+
+    const planId =
+      activeSubscription?.plan ?? StripePlans[0].name.toLowerCase();
+    const plan = planId.charAt(0).toUpperCase() + planId.slice(1);
 
     // Query the total usage count for the current month.
     // Ensure the timestamp comparison works correctly with the database timezone (assuming UTC)
@@ -219,6 +240,7 @@ export class UsageService {
       (monthlyUserCreditLimit ?? 10);
 
     return {
+      // Used to determine if there is a active subscription.
       plan,
       usages,
       credit: {
@@ -226,6 +248,7 @@ export class UsageService {
         limit: monthlyUserCreditLimit,
         isLimitReached,
         remainingFreeCredit,
+        isUnpaid: !!unpaidSubscription,
       },
     };
   }

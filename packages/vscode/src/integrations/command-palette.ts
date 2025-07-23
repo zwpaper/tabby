@@ -155,6 +155,28 @@ export class CommandPalette {
           },
         };
 
+      case "payment-required":
+        return {
+          label: "Payment",
+          iconPath: new vscode.ThemeIcon("account"),
+          detail:
+            "You have unpaid invoices, please make a payment to continue using code completion.",
+          onDidAccept: () => {
+            vscode.commands.executeCommand("pochi.openWebsite", "/profile");
+          },
+        };
+
+      case "payment-required-team":
+        return {
+          label: "Payment",
+          iconPath: new vscode.ThemeIcon("account"),
+          detail:
+            "Your team have unpaid invoices, please make a payment to continue using code completion.",
+          onDidAccept: () => {
+            vscode.commands.executeCommand("pochi.openWebsite", "/team");
+          },
+        };
+
       case "disabled":
         return {
           label: "Code Completion Disabled",

@@ -22,6 +22,8 @@ export class StatusBarItem implements vscode.Disposable {
     | "logged-out"
     | "subscription-required"
     | "subscription-required-team"
+    | "payment-required"
+    | "payment-required-team"
     | "disabled"
     | "disabled-language"
     | "ready"
@@ -97,6 +99,14 @@ export class StatusBarItem implements vscode.Disposable {
     }
     // Inline completion is enabled
 
+    if (this.inlineCompletionProvider.requirePayment.value === "user") {
+      return "payment-required";
+    }
+
+    if (this.inlineCompletionProvider.requirePayment.value === "team") {
+      return "payment-required-team";
+    }
+
     if (this.inlineCompletionProvider.requireSubscription.value === "user") {
       return "subscription-required";
     }
@@ -149,6 +159,34 @@ export class StatusBarItem implements vscode.Disposable {
         this.statusBarItem.text = "$(warning) Pochi";
         this.statusBarItem.tooltip =
           "To continue using code completion, please subscribe to Pochi.";
+        this.statusBarItem.backgroundColor = new vscode.ThemeColor(
+          "statusBarItem.warningBackground",
+        );
+        this.statusBarItem.command = this.statusBarItem.command = {
+          title: "Open Team Settings",
+          command: "pochi.openWebsite",
+          arguments: ["/team"],
+        };
+        break;
+
+      case "payment-required":
+        this.statusBarItem.text = "$(warning) Pochi";
+        this.statusBarItem.tooltip =
+          "You have unpaid invoices, please make a payment to continue using code completion.";
+        this.statusBarItem.backgroundColor = new vscode.ThemeColor(
+          "statusBarItem.warningBackground",
+        );
+        this.statusBarItem.command = {
+          title: "Open Profile",
+          command: "pochi.openWebsite",
+          arguments: ["/profile"],
+        };
+        break;
+
+      case "payment-required-team":
+        this.statusBarItem.text = "$(warning) Pochi";
+        this.statusBarItem.tooltip =
+          "Your team have unpaid invoices, please make a payment to continue using code completion.";
         this.statusBarItem.backgroundColor = new vscode.ThemeColor(
           "statusBarItem.warningBackground",
         );

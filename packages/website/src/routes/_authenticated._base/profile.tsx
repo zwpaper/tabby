@@ -369,37 +369,40 @@ function BillingCard({
   queryClient: ReturnType<typeof useQueryClient>;
 }) {
   const { data: session } = useSession();
-  const userId = session?.user.id;
   const [subscriptionLimitDialogOpen, setSubscriptionLimitDialogOpen] =
     useState(false);
-  const subscriptionQuery = useQuery({
-    queryKey: ["subscription", userId],
+
+  const { data: subscriptions, isLoading: isSubscriptionsLoading } = useQuery({
+    queryKey: ["subscriptions"],
     queryFn: async () => {
-      const { data, error } = await authClient.subscription.list({
-        query: {
-          referenceId: userId,
-        },
-      });
-      if (error) {
-        throw new Error(error.message);
+      const resp = await apiClient.api.billing.subscriptions.$get();
+      if (!resp.ok) {
+        return null;
       }
-      return data;
+      const result = await resp.json();
+      return result;
     },
-    enabled: !!userId,
   });
-  const subscription = useMemo(() => {
-    return subscriptionQuery.data?.find((x) => x.referenceId === userId);
-  }, [subscriptionQuery.data?.[0], userId]);
+
+  const activeSubscription = useMemo(() => {
+    return subscriptions?.find((x) => x.status === "active");
+  }, [subscriptions]);
+
+  const hasUnpaidSubscription = useMemo(() => {
+    return !!subscriptions?.find(
+      (x) => x.status === "past_due" || x.status === "unpaid",
+    );
+  }, [subscriptions]);
 
   const invoiceQuery = useQuery({
-    queryKey: ["invoice", subscription?.stripeSubscriptionId],
+    queryKey: ["invoice", activeSubscription?.stripeSubscriptionId],
     queryFn: async () => {
-      if (!subscription) {
+      if (!activeSubscription) {
         throw new Error("Subscription not found");
       }
       const response = await apiClient.api.billing.invoices.$get({
         query: {
-          subscriptionId: subscription.id,
+          subscriptionId: activeSubscription.id,
         },
       });
       if (!response.ok) {
@@ -407,9 +410,9 @@ function BillingCard({
       }
       return response.json();
     },
-    enabled: !!subscription?.stripeSubscriptionId,
+    enabled: !!activeSubscription?.stripeSubscriptionId,
   });
-  const invoice = invoiceQuery.data;
+  const upcomingInvoice = invoiceQuery.data;
 
   const billingQuotaQuery = useQuery({
     queryKey: ["billingQuota"],
@@ -457,8 +460,9 @@ function BillingCard({
   const subscriptionMutation = useMutation({
     mutationFn: async (isSubscribing: boolean) => {
       try {
+        // upgrade
         if (isSubscribing) {
-          if (subscription?.cancelAtPeriodEnd) {
+          if (activeSubscription?.cancelAtPeriodEnd) {
             return authClient.subscription.restore();
           }
 
@@ -479,7 +483,6 @@ function BillingCard({
           });
         }
 
-        // cancel
         return authClient.subscription.cancel({
           returnUrl: window.location.href,
         });
@@ -497,9 +500,6 @@ function BillingCard({
     },
   });
 
-  const isPro = (subscription?.plan || "free") === "pro";
-  const isEffectivelyActive = isPro && !subscription?.cancelAtPeriodEnd;
-
   const totalCredit = billingQuotaQuery.data?.credit?.spent || 0;
   const isCreditLimitReached = billingQuotaQuery.data?.credit?.isLimitReached;
   const totalSpendingInDollars = creditToDollars(totalCredit);
@@ -516,47 +516,58 @@ function BillingCard({
   return (
     <>
       <Card className="my-4 rounded-sm border-border/50 py-0 shadow-sm">
-        <CardContent
-          className={cn("p-4", {
-            "pb-0": !!subscription,
-          })}
-        >
-          <div className="flex items-center justify-between gap-2 md:ml-2">
+        <CardContent className={cn("p-4 pb-2")}>
+          <div className="flex flex-col justify-between gap-2 md:ml-2 md:flex-row md:items-center">
             <div className="flex shrink-0 items-center gap-3">
               <IconCreditCard size={20} className="text-foreground" />
               <span className="font-medium text-base">Stripe</span>
-              {subscriptionQuery.isLoading ? (
+              {isSubscriptionsLoading ? (
                 <Skeleton className="h-6 w-12 rounded-lg" />
               ) : (
                 <Switch
-                  checked={isEffectivelyActive}
+                  checked={!!subscriptions?.length}
                   onCheckedChange={handleToggleSubscription}
                   disabled={
-                    subscriptionMutation.isPending ||
-                    subscriptionQuery.isLoading
+                    subscriptionMutation.isPending || isSubscriptionsLoading
                   }
                 />
               )}
             </div>
-            {subscription && (
+            {hasUnpaidSubscription ? (
+              <div className="ml-2 inline-flex flex-1 items-center gap-1 text-sm">
+                <AlertTriangle className="size-4" />
+                <span>
+                  You have unpaid invoices. Please{" "}
+                  <a
+                    href="/api/billing/portal"
+                    className="text-primary underline hover:opacity-70"
+                  >
+                    make a payment
+                  </a>{" "}
+                  to continue using Pochi.
+                </span>
+              </div>
+            ) : activeSubscription ? (
               <div className="ml-2 flex flex-1 flex-col justify-center text-muted-foreground text-xs">
-                {subscription.periodEnd && (
+                {activeSubscription.periodEnd && (
                   <span>
-                    {subscription.cancelAtPeriodEnd
+                    {activeSubscription.cancelAtPeriodEnd
                       ? "Expires on "
                       : "Renews on "}
-                    {moment(subscription.periodEnd).format("MMMM D, YYYY")}
+                    {moment(activeSubscription.periodEnd).format(
+                      "MMMM D, YYYY",
+                    )}
                   </span>
                 )}
-                {subscription.cancelAtPeriodEnd && (
+                {activeSubscription.cancelAtPeriodEnd && (
                   <span>
                     Your plan will be canceled at the end of the current billing
                     period.
                   </span>
                 )}
               </div>
-            )}
-            {!!subscription && (
+            ) : null}
+            {!!subscriptions?.length && (
               <a href="/api/billing/portal">
                 <Button variant="outline" size="sm">
                   Manage
@@ -600,7 +611,7 @@ function BillingCard({
               }}
             />
           </div>
-          {invoice && <InvoiceView invoice={invoice} />}
+          {upcomingInvoice && <InvoiceView invoice={upcomingInvoice} />}
           {
             <Accordion type="single" collapsible>
               <AccordionItem value="spending-limit">

@@ -38,6 +38,7 @@ import {
 import {
   AbortError,
   TimeoutError,
+  checkPaymentRequiredError,
   checkSubscriptionRequiredError,
   isCanceledError,
 } from "./utils/errors";
@@ -71,6 +72,7 @@ export class CompletionProvider
   readonly latencyIssue = signal<LatencyIssue | undefined>(undefined);
   readonly isFetching = signal<boolean>(false);
   readonly requireSubscription = signal<"user" | "team" | undefined>(undefined);
+  readonly requirePayment = signal<"user" | "team" | undefined>(undefined);
 
   constructor(
     private readonly pochiConfiguration: PochiConfiguration,
@@ -157,6 +159,10 @@ export class CompletionProvider
 
   private updateRequireSubscription(value: "user" | "team" | undefined) {
     this.requireSubscription.value = value;
+  }
+
+  private updateRequirePayment(value: "user" | "team" | undefined) {
+    this.requirePayment.value = value;
   }
 
   private submitCompletionStatistics() {
@@ -496,9 +502,14 @@ export class CompletionProvider
             solution = undefined;
           }
 
-          const requiredSubscription = checkSubscriptionRequiredError(error);
-          if (requiredSubscription) {
-            this.updateRequireSubscription(requiredSubscription);
+          const requiredPayment = checkPaymentRequiredError(error);
+          if (requiredPayment) {
+            this.updateRequirePayment(requiredPayment);
+          } else {
+            const requiredSubscription = checkSubscriptionRequiredError(error);
+            if (requiredSubscription) {
+              this.updateRequireSubscription(requiredSubscription);
+            }
           }
         }
       } else {

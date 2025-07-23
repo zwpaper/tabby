@@ -73,3 +73,17 @@ export function checkSubscriptionRequiredError(
   }
   return undefined;
 }
+
+export function checkPaymentRequiredError(
+  error: unknown,
+): undefined | "user" | "team" {
+  if (error instanceof HttpError && error.status === 400) {
+    if (error.text === ServerErrors.RequirePayment) {
+      return "user";
+    }
+    if (error.text === ServerErrors.RequireOrgPayment) {
+      return "team";
+    }
+  }
+  return undefined;
+}

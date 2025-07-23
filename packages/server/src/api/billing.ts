@@ -255,6 +255,56 @@ const billing = new Hono()
         });
       }
     },
+  )
+  .get(
+    "/subscriptions",
+    requireAuth(),
+    zValidator(
+      "query",
+      z
+        .object({
+          organizationId: z.string().optional(),
+        })
+        .optional(),
+    ),
+    async (c) => {
+      const user = c.get("user");
+      const query = c.req.valid("query");
+      const organizationId = query?.organizationId;
+
+      let member: { role: string } | undefined;
+
+      if (organizationId) {
+        member = await db
+          .selectFrom("member")
+          .where("userId", "=", user.id)
+          .where("organizationId", "=", organizationId)
+          .select("role")
+          .executeTakeFirst();
+
+        // If not a member of the organization, return a 401 error.
+        if (!member) {
+          throw new HTTPException(401, { message: "Unauthorized" });
+        }
+      }
+
+      const referenceId = organizationId || user.id;
+      const subscriptions = await db
+        .selectFrom("subscription")
+        .where("referenceId", "=", referenceId)
+        .where("status", "in", ["active", "past_due", "unpaid"])
+        .selectAll()
+        .execute();
+
+      // If not the creator of the subscription and not the organization owner, return a 401 error.
+      const filteredSubscriptions = subscriptions.filter((x) => {
+        return (
+          x.stripeCustomerId === user.stripeCustomerId ||
+          (!!member && member.role === "owner")
+        );
+      });
+      return c.json(filteredSubscriptions);
+    },
   );
 
 export default billing;

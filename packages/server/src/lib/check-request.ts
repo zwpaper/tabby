@@ -3,7 +3,6 @@ import { ServerErrors } from "..";
 import { type User, isInternalOrganization } from "../auth";
 import { organizationService } from "../service/organization";
 import { usageService } from "../service/usage";
-import { readActiveSubscription } from "./billing";
 import { type AvailableModelId, AvailableModels } from "./constants";
 
 export function checkModel(modelId: string): AvailableModelId {
@@ -41,11 +40,18 @@ export async function checkUserQuota(user: User, modelId: string) {
   // If a user joins an organization, then only check the organization's quota
   if (organization) {
     if (!isInternalOrganization(organization)) {
+      if (orgQuota?.credit?.isUnpaid) {
+        throw new HTTPException(400, {
+          message: ServerErrors.RequireOrgPayment,
+        });
+      }
+
       if (!orgQuota?.plan) {
         throw new HTTPException(400, {
           message: ServerErrors.RequireOrgSubscription,
         });
       }
+
       if (orgQuota?.credit.isLimitReached) {
         throw new HTTPException(400, {
           message: ServerErrors.ReachedOrgCreditLimit,
@@ -58,6 +64,12 @@ export async function checkUserQuota(user: User, modelId: string) {
 
   const userOutOfFreeCredit =
     userQuota.credit.remainingFreeCredit <= 0 && userQuota.plan === "Community";
+
+  if (userQuota.credit.isUnpaid) {
+    throw new HTTPException(400, {
+      message: ServerErrors.RequirePayment,
+    });
+  }
 
   if (userOutOfFreeCredit) {
     throw new HTTPException(400, {
@@ -98,8 +110,13 @@ export async function checkUserCodeCompletionQuota(user: User) {
     : undefined;
 
   if (organization) {
+    if (orgQuota?.credit?.isUnpaid) {
+      throw new HTTPException(400, {
+        message: ServerErrors.RequireOrgPayment,
+      });
+    }
+
     if (!orgQuota?.plan) {
-      // has a org but no org plan
       throw new HTTPException(400, {
         message: ServerErrors.RequireOrgSubscription,
       });
@@ -109,8 +126,13 @@ export async function checkUserCodeCompletionQuota(user: User) {
     return;
   }
 
-  const { plan } = await readActiveSubscription(user);
-  if (plan === "Community") {
+  const userQuota = await usageService.readCurrentMonthQuota(user);
+  if (userQuota.credit.isUnpaid) {
+    throw new HTTPException(400, {
+      message: ServerErrors.RequirePayment,
+    });
+  }
+  if (userQuota.plan === "Community") {
     // free plan
     throw new HTTPException(400, {
       message: ServerErrors.RequireSubscription,
