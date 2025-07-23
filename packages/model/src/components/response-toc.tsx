@@ -7,6 +7,7 @@ interface ApiRequestEntry {
   messageIndex: number;
   partIndex: number;
   requestIndexInPart: number;
+  globalIndex: number;
 }
 
 interface ResponseTocProps {
@@ -15,23 +16,58 @@ interface ResponseTocProps {
 
 const extractApiRequests = (messages: Message[]): ApiRequestEntry[] => {
   const requests: ApiRequestEntry[] = [];
+  let globalIndex = 1;
   messages.forEach((message, messageIndex) => {
-    if (message.role === "assistant" && Array.isArray(message.content)) {
+    if (
+      (message.role === "assistant" || message.role === "user") &&
+      Array.isArray(message.content)
+    ) {
       message.content.forEach((part, partIndex) => {
         const text = part.newText ?? part.text;
         if (typeof text === "string") {
-          const apiRequestRegex = /<api-request name="([^"]+)">/g;
-          let match: RegExpExecArray | null;
-          let requestIndexInPart = 0;
-          // biome-ignore lint/suspicious/noAssignInExpressions: This is a standard and safe way to iterate through regex matches
-          while ((match = apiRequestRegex.exec(text)) !== null) {
-            requests.push({
-              name: match[1],
-              messageIndex,
-              partIndex,
-              requestIndexInPart: requestIndexInPart++,
-            });
-          }
+          // Use the same regex pattern as message-content.tsx
+          const parts = text.split(
+            /(<api-request .*?<\/api-request>|<(?:system-reminder|user-reminder)>[\s\S]*?<\/(?:system-reminder|user-reminder)>|<environment-details>[\s\S]*?<\/environment-details>)/gs,
+          );
+          let requestCounter = 0;
+          // biome-ignore lint/complexity/noForEach: <explanation>
+          parts.forEach((splitPart) => {
+            const isApiRequest = /(<api-request .*?<\/api-request>)/gs.test(
+              splitPart,
+            );
+            const isSystemReminder =
+              /(<(?:system-reminder|user-reminder)>[\s\S]*?<\/(?:system-reminder|user-reminder)>)/gs.test(
+                splitPart,
+              );
+            const isEnvironmentDetails =
+              /(<environment-details>[\s\S]*?<\/environment-details>)/gs.test(
+                splitPart,
+              );
+
+            if (isApiRequest || isSystemReminder || isEnvironmentDetails) {
+              let name: string;
+              if (isApiRequest) {
+                // Extract the name from api-request
+                const nameMatch = splitPart.match(
+                  /<api-request name="([^"]+)">/,
+                );
+                name = nameMatch ? nameMatch[1] : "api-request";
+              } else if (isSystemReminder) {
+                // Both system-reminder and user-reminder are treated as "system-reminder"
+                name = "system-reminder";
+              } else {
+                name = "environment-details";
+              }
+
+              requests.push({
+                name: name,
+                messageIndex,
+                partIndex,
+                requestIndexInPart: requestCounter++,
+                globalIndex: globalIndex++,
+              });
+            }
+          });
         }
       });
     }
@@ -64,7 +100,14 @@ export const ResponseToc: React.FC<ResponseTocProps> = ({ messages }) => {
   }
 
   const handleLinkClick = (request: ApiRequestEntry) => {
-    const elementId = `api-request-${request.messageIndex}-${request.partIndex}-${request.requestIndexInPart}`;
+    let elementId: string;
+    if (request.name === "system-reminder") {
+      elementId = `system-reminder-${request.messageIndex}-${request.partIndex}-${request.requestIndexInPart}`;
+    } else if (request.name === "environment-details") {
+      elementId = `environment-details-${request.messageIndex}-${request.partIndex}-${request.requestIndexInPart}`;
+    } else {
+      elementId = `api-request-${request.messageIndex}-${request.partIndex}-${request.requestIndexInPart}`;
+    }
     const element = document.getElementById(elementId);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -74,7 +117,7 @@ export const ResponseToc: React.FC<ResponseTocProps> = ({ messages }) => {
   return (
     <div className="response-toc flex h-full flex-col">
       <div className="sticky top-0 z-10 bg-muted/30 p-4">
-        <h4 className="mb-2 font-semibold">API Requests</h4>
+        <h4 className="mb-2 font-semibold">API Requests & System Elements</h4>
         <div className="mb-2 flex flex-wrap gap-2">
           {uniqueToolNames.map((name) => (
             <div key={name} className="flex items-center">
@@ -109,6 +152,9 @@ export const ResponseToc: React.FC<ResponseTocProps> = ({ messages }) => {
               onClick={() => handleLinkClick(request)}
               className="w-full rounded bg-transparent p-1 text-left text-gray-600 text-sm hover:bg-gray-100 hover:text-gray-900"
             >
+              <span className="mr-2 font-mono text-gray-400 text-xs">
+                #{request.globalIndex}
+              </span>
               {request.name}
             </button>
           </li>

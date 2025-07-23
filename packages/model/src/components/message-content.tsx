@@ -265,18 +265,37 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
                 </div>
               ) : (
                 <pre className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-background p-3 text-foreground text-sm">
-                  {role === "assistant" && !isEditingThis
+                  {(role === "assistant" || role === "user") && !isEditingThis
                     ? (() => {
                         if (!displayText) return null;
                         const parts = displayText.split(
-                          /(<api-request .*?<\/api-request>)/gs,
+                          /(<api-request .*?<\/api-request>|<(?:system-reminder|user-reminder)>[\s\S]*?<\/(?:system-reminder|user-reminder)>|<environment-details>[\s\S]*?<\/environment-details>)/gs,
                         );
                         let requestCounter = 0;
                         return parts.map((part, i) => {
+                          const isApiRequest =
+                            /(<api-request .*?<\/api-request>)/gs.test(part);
+                          const isSystemReminder =
+                            /(<(?:system-reminder|user-reminder)>[\s\S]*?<\/(?:system-reminder|user-reminder)>)/gs.test(
+                              part,
+                            );
+                          const isEnvironmentDetails =
+                            /(<environment-details>[\s\S]*?<\/environment-details>)/gs.test(
+                              part,
+                            );
                           if (
-                            /(<api-request .*?<\/api-request>)/gs.test(part)
+                            isApiRequest ||
+                            isSystemReminder ||
+                            isEnvironmentDetails
                           ) {
-                            const id = `api-request-${messageIndex}-${partIndex}-${requestCounter++}`;
+                            let id: string;
+                            if (isApiRequest) {
+                              id = `api-request-${messageIndex}-${partIndex}-${requestCounter++}`;
+                            } else if (isSystemReminder) {
+                              id = `system-reminder-${messageIndex}-${partIndex}-${requestCounter++}`;
+                            } else {
+                              id = `environment-details-${messageIndex}-${partIndex}-${requestCounter++}`;
+                            }
                             return (
                               <span key={i} id={id}>
                                 {part}
