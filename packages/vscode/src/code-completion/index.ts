@@ -138,6 +138,17 @@ export class CompletionProvider
       }
       const list = result.solution.toInlineCompletionList(result.context);
       logger.debug("Provided inline completion items", list.items);
+
+      list.items = list.items.map((item) => {
+        return {
+          ...item,
+          command: {
+            title: "Code Completion Accepted",
+            command: "pochi.inlineCompletion.onDidAccept",
+            arguments: [item],
+          },
+        };
+      });
       return list;
     } catch (error) {
       return null;

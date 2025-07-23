@@ -9,6 +9,8 @@ import { getLogger, showOutputPanel } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
+import { PostHog } from "@/lib/posthog";
+// biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
 import type { TaskIdParams } from "@ragdoll/vscode-webui-bridge";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
@@ -37,6 +39,7 @@ export class CommandManager implements vscode.Disposable {
     private readonly authEvents: AuthEvents,
     private readonly mcpHub: McpHub,
     private readonly pochiConfiguration: PochiConfiguration,
+    private readonly posthog: PostHog,
   ) {
     this.registerCommands();
   }
@@ -278,11 +281,9 @@ export class CommandManager implements vscode.Disposable {
       }),
 
       vscode.commands.registerCommand(
-        "pochi.completion.accept",
-        (callback: () => void) => {
-          if (typeof callback === "function") {
-            callback();
-          }
+        "pochi.inlineCompletion.onDidAccept",
+        (_item: vscode.InlineCompletionItem) => {
+          this.posthog.capture("acceptCodeCompletion");
         },
       ),
 
