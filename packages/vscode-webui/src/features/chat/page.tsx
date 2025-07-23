@@ -295,7 +295,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     imageUpload,
     isSubmitDisabled,
     isLoading,
-    uid: uidRef,
     pendingApproval,
   });
 

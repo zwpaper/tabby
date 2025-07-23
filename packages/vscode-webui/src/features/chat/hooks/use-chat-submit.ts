@@ -1,8 +1,6 @@
 import type { PendingApproval } from "@/features/approval";
-import { apiClient } from "@/lib/auth-client";
 import type { useImageUpload } from "@/lib/hooks/use-image-upload";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { fromUIMessages } from "@ragdoll/common";
 import type React from "react";
 import { useCallback } from "react";
 import { useAutoApproveGuard, useToolCallLifeCycle } from "../lib/chat-state";
@@ -19,7 +17,6 @@ interface UseChatSubmitProps {
   imageUpload: UseImageUploadReturn;
   isSubmitDisabled: boolean;
   isLoading: boolean;
-  uid: React.MutableRefObject<string | undefined>;
   pendingApproval: PendingApproval | undefined;
 }
 
@@ -28,7 +25,6 @@ export function useChatSubmit({
   imageUpload,
   isSubmitDisabled,
   isLoading,
-  uid,
   pendingApproval,
 }: UseChatSubmitProps) {
   const autoApproveGuard = useAutoApproveGuard();
@@ -40,7 +36,7 @@ export function useChatSubmit({
     }
   }, [executingToolCalls]);
 
-  const { append, setInput, input, messages, stop: stopChat } = chat;
+  const { append, setInput, input, stop: stopChat } = chat;
   const {
     files,
     isUploading,
@@ -49,26 +45,13 @@ export function useChatSubmit({
     clearError: clearUploadImageError,
   } = imageUpload;
 
-  const handleStop = useCallback(async () => {
+  const handleStop = useCallback(() => {
     if (isExecuting) {
       abortToolCalls();
     } else if (isUploading) {
       cancelUpload();
     } else if (isLoading) {
       stopChat();
-      if (uid.current) {
-        const lastMessage = messages.at(-1);
-        if (lastMessage) {
-          await apiClient.api.tasks[":uid"].messages.$patch({
-            param: {
-              uid: uid.current,
-            },
-            json: {
-              messages: fromUIMessages([lastMessage]),
-            },
-          });
-        }
-      }
     } else if (pendingApproval?.name === "retry") {
       pendingApproval.stopCountdown();
     }
@@ -76,8 +59,6 @@ export function useChatSubmit({
     isExecuting,
     isUploading,
     isLoading,
-    uid,
-    messages,
     pendingApproval,
     abortToolCalls,
     cancelUpload,
@@ -93,7 +74,7 @@ export function useChatSubmit({
         return;
       }
 
-      await handleStop();
+      handleStop();
 
       const content = prompt || input.trim();
       if (files.length > 0) {

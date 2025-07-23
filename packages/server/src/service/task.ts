@@ -1,6 +1,7 @@
 import { isAbortError } from "@ai-sdk/provider-utils";
 import { type Todo, isUserInputTool } from "@getpochi/tools";
 import {
+  appendMessages,
   formatters,
   fromUIMessages,
   toUIMessage,
@@ -24,7 +25,6 @@ import {
   type Message,
   NoSuchToolError,
   type UIMessage,
-  appendClientMessage,
   generateId,
   generateText,
 } from "ai";
@@ -66,10 +66,17 @@ class TaskService {
       request,
     );
 
-    const messages = appendClientMessage({
-      messages: toUIMessages(conversation?.messages || []),
-      message: toUIMessage(request.message),
-    }) as UIMessage[];
+    const messagesToAppend =
+      request.messages ?? (request.message ? [request.message] : []);
+
+    if (messagesToAppend.length === 0) {
+      throw new Error("No messages to append");
+    }
+
+    const messages = appendMessages(
+      toUIMessages(conversation?.messages ?? []),
+      toUIMessages(messagesToAppend),
+    );
 
     let newTitle = undefined;
     if (!title && messages.length) {

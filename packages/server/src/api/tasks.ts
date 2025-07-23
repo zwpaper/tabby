@@ -253,6 +253,7 @@ const tasks = new Hono()
       return c.json(task);
     },
   )
+  // FIXME(quanzhu): delete this endpoint after release
   .patch(
     "/:uid/messages",
     zValidator("param", TaskUidParamsSchema),

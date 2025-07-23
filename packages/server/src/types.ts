@@ -10,7 +10,13 @@ export const ZodChatRequestType = z.object({
   id: z.string().optional().describe("Task uid."),
   model: z.string().optional().describe("Model to use for this request."),
   event: ZodEventType.optional().describe("Associated event for the task."),
-  message: ZodMessageType.describe("Message payload for the chat request."),
+  message: ZodMessageType.optional().describe(
+    "Message payload for the chat request.",
+  ),
+  messages: z
+    .array(ZodMessageType)
+    .optional()
+    .describe("Messages to append for the chat request."),
   mcpToolSet: z
     .record(
       z.string().describe("Name of the MCP tool."),

@@ -4,6 +4,7 @@ export {
   fromUIMessages,
   toUIMessage,
   toUIMessages,
+  appendMessages,
   type DataPart,
 } from "./message";
 

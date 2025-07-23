@@ -1,6 +1,6 @@
 import { vscodeHost } from "@/lib/vscode";
 import type { UIMessage } from "@ai-sdk/ui-utils";
-import { fromUIMessage } from "@ragdoll/common";
+import { fromUIMessages } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import type { ChatRequest as RagdollChatRequest } from "@ragdoll/server";
 import type { McpTool } from "@ragdoll/vscode-webui-bridge";
@@ -17,15 +17,16 @@ export async function prepareRequestBody(
   minionId?: string | null,
   openAIModelOverride?: RagdollChatRequest["openAIModelOverride"],
 ): Promise<RagdollChatRequest> {
-  const message = request.messages[request.messages.length - 1];
-  await appendCheckpoint(message as UIMessageWithRevisionId);
+  const last2Messages = request.messages.slice(-2);
+  const lastMessage = last2Messages.at(-1);
+  await appendCheckpoint(lastMessage as UIMessageWithRevisionId);
   const triggerError =
-    message.parts[0].type === "text" &&
-    message.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
+    lastMessage?.parts[0].type === "text" &&
+    lastMessage?.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
   return {
     id: uid.current || undefined,
     model: triggerError ? "fake-model" : model,
-    message: fromUIMessage(message),
+    messages: fromUIMessages(last2Messages),
     minionId: minionId || undefined,
     environment,
     // @ts-expect-error
