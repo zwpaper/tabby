@@ -1,7 +1,14 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { vscodeHost } from "@/lib/vscode";
 import { FileIcon } from "lucide-react";
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 import type { MentionListActions } from "../shared";
 import {
   useMentionItems,
@@ -35,22 +42,25 @@ export const WorkflowMentionList = forwardRef<
   const [selectedIndex, setSelectedIndex] = useState(0);
   const items = useMentionItems(initialItems, query, fetchItems);
 
-  // Reset selectedIndex when items change to prevent out-of-bounds access
+  // Reset selected index when items change to prevent out-of-bounds access
   useEffect(() => {
     if (selectedIndex >= items.length) {
       setSelectedIndex(Math.max(0, items.length - 1));
     }
   }, [items.length, selectedIndex]);
 
-  const handleSelect = async (item: WorkflowItem) => {
-    vscodeHost.capture({
-      event: "selectWorkflow",
-      properties: {
-        workflowId: item.id,
-      },
-    });
-    command(item);
-  };
+  const handleSelect = useCallback(
+    async (item: WorkflowItem) => {
+      vscodeHost.capture({
+        event: "selectWorkflow",
+        properties: {
+          workflowId: item.id,
+        },
+      });
+      command(item);
+    },
+    [command],
+  );
 
   const keyboardNavigation = useMentionKeyboardNavigation(
     items,
@@ -74,7 +84,6 @@ export const WorkflowMentionList = forwardRef<
               <WorkflowItemView
                 key={item.id}
                 onClick={() => handleSelect(item)}
-                onMouseEnter={() => setSelectedIndex(index)}
                 isSelected={index === selectedIndex}
                 data={item}
               />
@@ -92,13 +101,12 @@ interface WorkflowItemViewProps {
   isSelected: boolean;
   data: WorkflowItem;
   onClick: () => void;
-  onMouseEnter: () => void;
 }
 
 /**
  * Workflow item view for displaying workflow files
  */
-function WorkflowItemView({
+const WorkflowItemView = memo(function WorkflowItemView({
   isSelected,
   data,
   ...rest
@@ -108,7 +116,7 @@ function WorkflowItemView({
   return (
     <div
       className={`flex cursor-pointer flex-nowrap items-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-sm ${
-        isSelected ? "bg-accent text-accent-foreground" : ""
+        isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
       }`}
       {...rest}
       ref={ref}
@@ -119,4 +127,4 @@ function WorkflowItemView({
       </span>
     </div>
   );
-}
+});

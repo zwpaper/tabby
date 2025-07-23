@@ -78,9 +78,12 @@ export function useScrollIntoView(isSelected: boolean) {
 
   useLayoutEffect(() => {
     if (isSelected && ref.current) {
-      ref.current?.scrollIntoView({
-        block: "nearest",
-        inline: "nearest",
+      requestAnimationFrame(() => {
+        ref.current?.scrollIntoView({
+          block: "nearest",
+          inline: "nearest",
+          behavior: "auto",
+        });
       });
     }
   }, [isSelected]);
