@@ -276,9 +276,7 @@ function App() {
               onSelectTask={setSelectedTask}
             />
           )}
-          <div
-            className={`${isSidebarOpen ? "w-3/5" : "w-full"} overflow-y-auto bg-background px-4 py-4`}
-          >
+          <div className="flex-1 overflow-y-auto bg-background px-4 py-4">
             {selectedTask ? (
               <TaskView
                 ref={taskViewRef}
