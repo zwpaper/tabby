@@ -40,6 +40,7 @@ export function createPochiEventSource(
 export function createPochiEventSourceWithApiClient(
   uid: string,
   apiClient: ReturnType<typeof hc<AppType>>,
+  options?: { heartbeat?: boolean },
 ) {
   const url = apiClient.api.tasks[":uid"].events
     .$url({ param: { uid } })
@@ -58,6 +59,7 @@ export function createPochiEventSourceWithApiClient(
       return apiClient.api.tasks[":uid"].events.$get(
         {
           param: { uid },
+          query: options?.heartbeat ? { heartbeat: "true" } : undefined,
         },
         {
           headers,

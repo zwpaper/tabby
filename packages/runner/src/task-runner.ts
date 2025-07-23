@@ -658,7 +658,11 @@ async function loadTaskAndWaitStreaming({
     };
 
     // Fetch and subscribe to task status events
-    const taskEventSource = createPochiEventSourceWithApiClient(uid, apiClient);
+    const taskEventSource = createPochiEventSourceWithApiClient(
+      uid,
+      apiClient,
+      { heartbeat: true },
+    );
     const unsubscribe = taskEventSource.subscribe<TaskEvent>(
       "task:status-changed",
       ({ data }) => {

@@ -39,6 +39,12 @@ const TaskUidQuerySchema = z
   })
   .optional();
 
+const TaskEventsQuerySchema = z
+  .object({
+    heartbeat: z.coerce.boolean().optional(),
+  })
+  .optional();
+
 const ZodTaskCreateEvent: z.ZodType<TaskCreateEvent> = z.any();
 const TaskCreateSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
@@ -133,9 +139,11 @@ const tasks = new Hono()
   .get(
     "/:uid/events",
     zValidator("param", TaskUidParamsSchema),
+    zValidator("query", TaskEventsQuerySchema),
     requireAuth(),
     async (c) => {
       const { uid } = c.req.valid("param");
+      const { heartbeat } = c.req.valid("query") || {};
       const user = c.get("user");
 
       const task = await taskService.get(uid, user.id);
@@ -164,7 +172,17 @@ const tasks = new Hono()
 
         while (true) {
           setIdleTimeout(c.req.raw, 120);
-          await new Promise((resolve) => setTimeout(resolve, 60 * 1000));
+          await new Promise((resolve) => setTimeout(resolve, 15 * 1000));
+          if (heartbeat) {
+            await stream.writeSSE({
+              data: JSON.stringify({
+                type: "heartbeat",
+                data: {
+                  timestamp: Date.now(),
+                },
+              }),
+            });
+          }
         }
       });
     },
