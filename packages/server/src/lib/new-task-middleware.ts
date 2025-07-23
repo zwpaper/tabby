@@ -83,6 +83,8 @@ export function createNewTaskMiddleware(
           if (x.parameters?.properties) {
             // biome-ignore lint/performance/noDelete: type safe
             delete x.parameters.properties._meta;
+            // biome-ignore lint/performance/noDelete: type safe
+            delete x.parameters.properties._transient;
           }
         }
       }
