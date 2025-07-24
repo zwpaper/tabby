@@ -5,7 +5,6 @@ import {
   isAssistantMessageWithNoToolCalls,
   isAssistantMessageWithPartialToolCalls,
 } from "@ragdoll/common/message-utils";
-import { ServerErrors } from "@ragdoll/server";
 import { useMemo } from "react";
 
 type RetryKind = "ready" | "tool-calls" | "no-tool-calls";
@@ -45,9 +44,5 @@ export function useMixinReadyForRetryError(
     }
   }, [messages]);
 
-  if (error && !Object.values(ServerErrors).includes(error.message)) {
-    return error;
-  }
-
-  return readyForRetryError;
+  return error || readyForRetryError;
 }

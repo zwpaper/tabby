@@ -1,5 +1,6 @@
 import { useAutoApproveGuard } from "@/features/chat";
 import { useAutoApprove } from "@/features/settings";
+import { ServerErrors } from "@ragdoll/server";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // fibonacci sequence starting from 1, 2, 3, 5, 8...
@@ -51,6 +52,11 @@ export function usePendingRetryApproval({
   status: "submitted" | "streaming" | "ready" | "error";
 }) {
   const autoApproveGuard = useAutoApproveGuard();
+
+  if (error && Object.values(ServerErrors).includes(error.message)) {
+    autoApproveGuard.current = false;
+  }
+
   const { autoApproveActive, autoApproveSettings } = useAutoApprove(
     autoApproveGuard.current,
   );
