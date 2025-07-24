@@ -14,6 +14,15 @@ function assistantToolCallToText({
   )}</api-request>`;
 }
 
+function safeJsonParse(json: string) {
+  try {
+    return JSON.parse(json);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
 export async function fetchTask(uid: string, auth: string): Promise<TaskData> {
   const urlBuilder = new URL(QuickWitBaseUrl);
   urlBuilder.pathname = "/api/v1/otel-traces-v0_7/search";
@@ -42,11 +51,10 @@ export async function fetchTask(uid: string, auth: string): Promise<TaskData> {
   }
   const hit = data.hits[0];
   const prompt = hit.span_attributes["ai.prompt.rawMessages"];
-  console.log(prompt);
 
   const taskData: TaskData = {
     uid,
-    messages: JSON.parse(prompt),
+    messages: safeJsonParse(prompt) ?? [],
   };
 
   const responseMessage: TaskData["messages"][number] = {
@@ -62,7 +70,7 @@ export async function fetchTask(uid: string, auth: string): Promise<TaskData> {
   }
 
   const responseToolCalls = hit.span_attributes["ai.response.toolCalls"];
-  const toolCalls = JSON.parse(responseToolCalls);
+  const toolCalls = safeJsonParse(responseToolCalls);
   if (toolCalls && Array.isArray(toolCalls)) {
     for (const toolCall of toolCalls) {
       responseMessage.content.push({

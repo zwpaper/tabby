@@ -1,5 +1,8 @@
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const UsernameStorageKey = "storage-key-import-tasks-username";
+const PasswordStorageKey = "storage-key-import-tasks-password";
 
 interface ImportTasksModalProps {
   isOpen: boolean;
@@ -13,8 +16,20 @@ export function ImportTasksModal({
   onImport,
 }: ImportTasksModalProps) {
   const [content, setContent] = useState("");
-  const [username, setUsername] = useState("ragdoll");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState(
+    () => localStorage.getItem(UsernameStorageKey) || "",
+  );
+  const [password, setPassword] = useState(
+    () => localStorage.getItem(PasswordStorageKey) || "",
+  );
+
+  useEffect(() => {
+    localStorage.setItem(UsernameStorageKey, username);
+  }, [username]);
+
+  useEffect(() => {
+    localStorage.setItem(PasswordStorageKey, password);
+  }, [password]);
 
   if (!isOpen) return null;
 
@@ -23,16 +38,12 @@ export function ImportTasksModal({
     if (content.trim()) {
       onImport({ content, auth: `Basic ${btoa(`${username}:${password}`)}` });
       setContent("");
-      setUsername("");
-      setPassword("");
       onClose();
     }
   };
 
   const handleClose = () => {
     setContent("");
-    setUsername("");
-    setPassword("");
     onClose();
   };
 
