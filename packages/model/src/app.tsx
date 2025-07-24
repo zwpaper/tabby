@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
 import { FileControls } from "./components/file-controls";
+import { ImportTasksModal } from "./components/import-tasks-modal";
 import { ResponseToc } from "./components/response-toc";
 import { TaskBar } from "./components/task-bar";
 import { TaskList } from "./components/task-list";
 import { TaskView, type TaskViewHandle } from "./components/task-view";
 import { TaskViewProvider } from "./contexts/task-view-context";
+import { fetchTask } from "./lib/task-fetcher";
 import type { TaskData } from "./types";
 
 function App() {
@@ -19,6 +21,7 @@ function App() {
   const [editedContent, setEditedContent] = useState<string>("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isTocOpen, setIsTocOpen] = useState(true);
+  const [isImportTasksModalOpen, setIsImportTasksModalOpen] = useState(false);
   const taskViewRef = useRef<TaskViewHandle>(null);
 
   const handleImport = async () => {
@@ -86,6 +89,60 @@ function App() {
     } catch (error) {
       console.error("Failed to read file:", error);
       alert("Failed to read file. Please make sure it's a valid JSONL file.");
+    }
+  };
+
+  const openImportTasksModal = () => {
+    setIsImportTasksModalOpen(true);
+  };
+
+  const handleImportTasks = async ({
+    content,
+    auth,
+  }: { content: string; auth: string }) => {
+    try {
+      const inputTaskUids = content
+        .trim()
+        .split(/[\n\s,;]+/)
+        .filter(Boolean)
+        .map((item) => {
+          if (item.includes("/")) {
+            const url = new URL(item);
+            return url.pathname.split("/").pop() ?? "";
+          }
+          return item;
+        })
+        .filter(Boolean)
+        .filter((uid, idx, arr) => arr.indexOf(uid) === idx); // dedup
+
+      const existingTaskUids = new Set(tasks.map((task) => task.uid));
+      const skippedTasks = inputTaskUids.filter((uid) =>
+        existingTaskUids.has(uid),
+      );
+      if (skippedTasks.length > 0) {
+        alert(
+          `Skipped ${skippedTasks.length} duplicate tasks: ${skippedTasks.join(", ")}`,
+        );
+      }
+
+      const newTaskUids = inputTaskUids.filter(
+        (uid) => !existingTaskUids.has(uid),
+      );
+      const newTasks: TaskData[] = [];
+
+      for (const uid of newTaskUids) {
+        const task = await fetchTask(uid, auth);
+        newTasks.push(task);
+      }
+
+      setTasks((prevTasks) => [...newTasks, ...prevTasks]);
+      setSelectedTask(null);
+      setEditingPart(null);
+
+      alert(`Successfully imported ${newTasks.length} tasks!`);
+    } catch (error) {
+      console.error("Failed to import tasks:", error);
+      alert("Failed to import tasks. Please the console for more details.");
     }
   };
 
@@ -252,6 +309,7 @@ function App() {
             onImport={handleImport}
             onExport={handleExport}
             onFileUpload={handleFileUpload}
+            onImportTasks={openImportTasksModal}
             isExportDisabled={tasks.length === 0}
           />
           {selectedTask && (
@@ -303,6 +361,12 @@ function App() {
             </div>
           )}
         </div>
+
+        <ImportTasksModal
+          isOpen={isImportTasksModalOpen}
+          onClose={() => setIsImportTasksModalOpen(false)}
+          onImport={handleImportTasks}
+        />
       </div>
     </TaskViewProvider>
   );
