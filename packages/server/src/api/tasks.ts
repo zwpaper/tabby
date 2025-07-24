@@ -243,10 +243,6 @@ const tasks = new Hono()
       const isInternal = user && isInternalUser(user);
       const task = await taskService.getPublic(uid, user?.id, !!isInternal);
 
-      if (!task) {
-        throw new HTTPException(404, { message: "Task not found" });
-      }
-
       // Add 5-minute cache headers
       c.header("Cache-Control", "public, max-age=300, s-maxage=300");
 

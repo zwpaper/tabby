@@ -559,16 +559,16 @@ class TaskService {
 
     const tasks = await taskQuery.execute();
     if (!tasks || tasks.length === 0) {
-      return null;
+      throw new HTTPException(404, { message: "Task not found" });
     }
 
     const task = tasks.find((t) => t.id === taskId);
     if (!task) {
-      return null;
+      throw new HTTPException(404, { message: "Task not found" });
     }
 
     if (!isInternalUser && !task.isPublicShared && task.userId !== userId) {
-      return null;
+      throw new HTTPException(403, { message: "Forbidden" });
     }
 
     const subtasks = tasks.filter((t) => t.id !== taskId);
