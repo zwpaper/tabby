@@ -32,6 +32,10 @@ logger.debug(`pochi v${packageJson.version}`);
 
 const prodServerUrl = "https://app.getpochi.com";
 
+const userAgent = `PochiRunner/${packageJson.version} ${
+  process.isBun ? `Bun/${Bun.version}` : `Node/${process.version}`
+} (${process.platform}; ${process.arch})`;
+
 const parsePositiveInt = (input: string) => {
   if (!input) {
     return undefined;
@@ -155,6 +159,7 @@ program
     const apiClient = hc<AppType>(options.url, {
       headers: {
         Authorization: `Bearer ${token}`,
+        "User-Agent": userAgent,
       },
     });
 

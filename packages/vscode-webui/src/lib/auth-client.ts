@@ -10,23 +10,36 @@ import { hc } from "hono/client";
 import { vscodeHost } from "./vscode";
 
 const tokenPromise = vscodeHost.readToken().then(threadSignal);
+const extensionVersionPromise = vscodeHost.readExtensionVersion();
+
+const customFetchImpl = async (
+  input: RequestInfo | URL,
+  requestInit?: RequestInit,
+) => {
+  const token = await tokenPromise;
+  const extensionVersion = await extensionVersionPromise;
+  const headers = new Headers(requestInit?.headers);
+  headers.append("Authorization", `Bearer ${token.value}`);
+  headers.set("X-Pochi-Extension-Version", extensionVersion);
+  return fetch(input, {
+    ...requestInit,
+    headers,
+  });
+};
 
 function createAuthClient() {
   const authClient = createAuthClientImpl({
     baseURL: getServerBaseUrl(),
     fetchOptions: {
-      auth: {
-        type: "Bearer",
-        token: async () => tokenPromise.then((signal) => signal.value),
+      customFetchImpl,
+      onResponse: (ctx: ResponseContext) => {
+        const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
+        if (authToken) {
+          tokenPromise.then((signal) => {
+            signal.value = authToken;
+          });
+        }
       },
-    },
-    onResponse: (ctx: ResponseContext) => {
-      const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
-      if (authToken) {
-        tokenPromise.then((signal) => {
-          signal.value = authToken;
-        });
-      }
     },
   });
 
@@ -40,15 +53,7 @@ export const authHooks = createAuthHooks(authClient);
 
 function createApiClient() {
   const app = hc<AppType>(getServerBaseUrl(), {
-    fetch: async (input: RequestInfo | URL, requestInit?: RequestInit) => {
-      const token = await tokenPromise;
-      const headers = new Headers(requestInit?.headers);
-      headers.append("Authorization", `Bearer ${token.value}`);
-      return fetch(input, {
-        ...requestInit,
-        headers,
-      });
-    },
+    fetch: customFetchImpl,
   });
   return app;
 }

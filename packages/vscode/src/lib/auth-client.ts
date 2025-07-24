@@ -4,8 +4,28 @@ import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 import { hc } from "hono/client";
 import type { DependencyContainer } from "tsyringe";
+import * as vscode from "vscode";
+import packageJson from "../../package.json";
 import { PostHog } from "./posthog";
 import { TokenStorage } from "./token-storage";
+
+const UserAgent = `Pochi/${packageJson.version} ${vscode.env.appName.replace(/\s+/g, "")}/${vscode.version} (${process.platform}; ${process.arch})`;
+
+const buildCustomFetchImpl = (tokenStorage: TokenStorage) => {
+  return async (input: string | URL | Request, requestInit?: RequestInit) => {
+    // FIXME(zhiming): HeadersInit is not compatible with Bun's type HeadersInit. (@types/bun 1.2.6)
+    // Update @types/bun to fix this problem.
+    // biome-ignore lint/suspicious/noExplicitAny: skip type check
+    const headers = new Headers(requestInit?.headers as any);
+    headers.append("Authorization", `Bearer ${tokenStorage.token.value}`);
+    headers.set("User-Agent", UserAgent);
+    headers.set("X-Pochi-Extension-Version", packageJson.version);
+    return fetch(input, {
+      ...requestInit,
+      headers,
+    });
+  };
+};
 
 export function createAuthClient(container: DependencyContainer) {
   const tokenStorage = container.resolve(TokenStorage);
@@ -16,10 +36,7 @@ export function createAuthClient(container: DependencyContainer) {
     plugins: [deviceLinkClient()],
 
     fetchOptions: {
-      auth: {
-        type: "Bearer",
-        token: () => tokenStorage.token.value,
-      },
+      customFetchImpl: buildCustomFetchImpl(tokenStorage),
       onResponse: (ctx) => {
         const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
         if (authToken) {
@@ -48,17 +65,7 @@ export function createApiClient(container: DependencyContainer) {
   const tokenStorage = container.resolve(TokenStorage);
 
   const app = hc<AppType>(getServerBaseUrl(), {
-    fetch: async (input: string | URL | Request, requestInit?: RequestInit) => {
-      // FIXME(zhiming): HeadersInit is not compatible with Bun's type HeadersInit. (@types/bun 1.2.6)
-      // Update @types/bun to fix this problem.
-      // biome-ignore lint/suspicious/noExplicitAny: skip type check
-      const headers = new Headers(requestInit?.headers as any);
-      headers.append("Authorization", `Bearer ${tokenStorage.token.value}`);
-      return fetch(input, {
-        ...requestInit,
-        headers,
-      });
-    },
+    fetch: buildCustomFetchImpl(tokenStorage),
   });
 
   return app;

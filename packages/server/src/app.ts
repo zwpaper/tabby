@@ -93,7 +93,11 @@ app.use(
 
       return undefined;
     },
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Pochi-Extension-Version",
+    ],
     allowMethods: ["POST", "GET", "PATCH", "OPTIONS", "DELETE"],
     credentials: true,
   }),
