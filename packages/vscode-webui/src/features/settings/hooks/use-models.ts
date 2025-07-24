@@ -27,7 +27,7 @@ export type DisplayModel =
 
 export function useModels() {
   const { enablePochiModels } = useSettingsStore();
-  const { data, ...rest } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["models"],
     queryFn: async () => {
       const res = await apiClient.api.models.$get();
@@ -35,7 +35,8 @@ export function useModels() {
     },
   });
 
-  const customModelSettings = useCustomModelSetting();
+  const { customModelSettings, isLoading: isLoadingCustomModelSettings } =
+    useCustomModelSetting();
 
   const customModels = useMemo(() => {
     return customModelSettings?.flatMap((modelSetting) => {
@@ -79,12 +80,15 @@ export function useModels() {
     return defaultModels;
   }, [data, enablePochiModels, customModels]);
 
-  return { data: models, ...rest };
+  return {
+    models,
+    isLoading: !(!isLoading && !isLoadingCustomModelSettings), // make sure hosted model and custom model are all loaded
+  };
 }
 
 export function useSelectedModels() {
   const { selectedModelId, updateSelectedModelId } = useSettingsStore();
-  const { data: models, isLoading, ...rest } = useModels();
+  const { models, isLoading } = useModels();
 
   useEffect(() => {
     if (!isLoading) {
@@ -99,7 +103,6 @@ export function useSelectedModels() {
   const selectedModel = models?.find((x) => x.id === selectedModelId);
 
   return {
-    ...rest,
     isLoading,
     models,
     selectedModel,

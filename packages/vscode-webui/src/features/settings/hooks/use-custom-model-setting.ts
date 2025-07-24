@@ -29,6 +29,8 @@ export const useCustomModelSetting = () => {
     CustomModelSetting[] | undefined
   >(undefined);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const updateCustomModelSetting = (
       settings: CustomModelSetting[] | undefined,
@@ -40,14 +42,16 @@ export const useCustomModelSetting = () => {
       }
     };
     const fetchCustomModelSetting = async () => {
+      setIsLoading(true);
       const signal = threadSignal(await vscodeHost.readCustomModelSetting());
       signal.subscribe((value) => {
         updateCustomModelSetting(value);
       });
       updateCustomModelSetting(signal.value);
+      setIsLoading(false);
     };
     fetchCustomModelSetting();
   }, []);
 
-  return customModelSettings;
+  return { customModelSettings, isLoading };
 };
