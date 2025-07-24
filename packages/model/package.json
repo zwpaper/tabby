@@ -15,7 +15,8 @@
     "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "^19.0.0",
     "react-textarea-autosize": "^8.5.9",
-    "tailwindcss": "^4.0.6"
+    "tailwindcss": "^4.0.6",
+    "tailwindcss-animate": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.6",

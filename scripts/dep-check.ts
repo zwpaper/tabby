@@ -172,6 +172,7 @@ const PackageIgnoreList: Record<string, string[]> = {
   model: [
     // tailwind
     "tailwindcss",
+    "tailwindcss-animate",
   ],
   "vscode-webui": [
     // tailwind

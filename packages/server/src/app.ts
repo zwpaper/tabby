@@ -18,7 +18,7 @@ import tasks from "./api/tasks";
 import tools from "./api/tools";
 import upload from "./api/upload";
 import usages from "./api/usages";
-import { authRequest, requireAuth } from "./auth";
+import { authRequest } from "./auth";
 import { auth } from "./better-auth";
 import { queuedash } from "./queuedash";
 import { slackService } from "./service/slack";
@@ -40,25 +40,6 @@ if (process.env.NODE_ENV !== "test") {
   (async () => {
     const { serveStatic } = await import("hono/bun");
     const { readFile } = await import("node:fs/promises");
-
-    app.use(
-      "/_internal/data-labeling-tool/*",
-      etag(),
-      requireAuth({ internal: true }),
-      serveStatic({
-        root: "../model/dist",
-        rewriteRequestPath: (path) =>
-          path.replace(/^\/_internal\/data-labeling-tool/, ""),
-        precompressed: true,
-        onFound: (path, c) => {
-          if (path.endsWith(".html") || path.endsWith("manifest.json")) {
-            c.header("Cache-Control", "public, max-age=0, must-revalidate");
-          } else {
-            c.header("Cache-Control", "public, immutable, max-age=31536000");
-          }
-        },
-      }),
-    );
 
     // Serve website static files
     const html = await readFile("../website/dist/index.html", "utf-8");
