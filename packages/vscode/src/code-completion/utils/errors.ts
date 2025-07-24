@@ -63,7 +63,7 @@ export function isRateLimitExceededError(error: unknown) {
 export function checkSubscriptionRequiredError(
   error: unknown,
 ): undefined | "user" | "team" {
-  if (error instanceof HttpError && error.status === 400) {
+  if (error instanceof HttpError && error.status === 422) {
     if (error.text === ServerErrors.RequireSubscription) {
       return "user";
     }
@@ -77,7 +77,7 @@ export function checkSubscriptionRequiredError(
 export function checkPaymentRequiredError(
   error: unknown,
 ): undefined | "user" | "team" {
-  if (error instanceof HttpError && error.status === 400) {
+  if (error instanceof HttpError && error.status === 422) {
     if (error.text === ServerErrors.RequirePayment) {
       return "user";
     }
