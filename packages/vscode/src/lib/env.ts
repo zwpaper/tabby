@@ -1,15 +1,23 @@
+import { homedir } from "node:os";
 import path from "node:path";
 import {
   collectCustomRules as collectCustomRulesImpl,
   getSystemInfo as getSystemInfoImpl,
 } from "@ragdoll/common/node";
+import type { RuleFile } from "@ragdoll/vscode-webui-bridge";
 import * as vscode from "vscode";
-import { getWorkspaceFolder, readDirectoryFiles, readFileContent } from "./fs";
+import {
+  getWorkspaceFolder,
+  isFileExists,
+  readDirectoryFiles,
+  readFileContent,
+} from "./fs";
 
 // Path constants - using arrays for consistency
 const DefaultWorkspaceRulesFilePath = "README.pochi.md";
 const WorkspaceRulesFilePath = [DefaultWorkspaceRulesFilePath];
 const WorkflowsDirPath = [".pochi", "workflows"];
+const SystemRuleFilepath = path.join(homedir(), ".pochi", "README.pochi.md");
 
 export function getCwd() {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
@@ -51,6 +59,26 @@ export function getWorkspaceRulesFileUri() {
 
 function getWorkflowsDirectoryUri() {
   return getWorkspaceUri(...WorkflowsDirPath);
+}
+
+export async function collectRuleFiles(): Promise<RuleFile[]> {
+  const ruleFiles: RuleFile[] = [];
+  const workspaceRuleFile = getWorkspaceRulesFileUri();
+  if (await isFileExists(workspaceRuleFile)) {
+    ruleFiles.push({
+      filepath: workspaceRuleFile.fsPath,
+      relativeFilepath: vscode.workspace.asRelativePath(workspaceRuleFile),
+    });
+  }
+
+  if (await isFileExists(vscode.Uri.file(SystemRuleFilepath))) {
+    ruleFiles.push({
+      filepath: SystemRuleFilepath,
+      label: SystemRuleFilepath.replace(homedir(), "~"),
+    });
+  }
+
+  return ruleFiles;
 }
 
 /**

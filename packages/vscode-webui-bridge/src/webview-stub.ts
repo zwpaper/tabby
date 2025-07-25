@@ -8,6 +8,7 @@ import type {
   GitDiff,
   McpStatus,
   ResourceURI,
+  RuleFile,
   SessionState,
   VSCodeHostApi,
   WorkspaceState,
@@ -70,6 +71,9 @@ const VSCodeHostStub = {
   },
   openSymbol: (_symbol: string): Promise<void> => {
     return Promise.resolve();
+  },
+  listRuleFiles: (): Promise<RuleFile[]> => {
+    return Promise.resolve([]);
   },
   listWorkflowsInWorkspace: (): Promise<
     { id: string; path: string; content: string }[]

@@ -120,7 +120,7 @@ export function DevModeButton({
         <DropdownMenuContent
           onCloseAutoFocus={(e) => e.preventDefault()}
           side="bottom"
-          className="dropdown-menu max-h-[30vh] min-w-[12rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-2 text-popover-foreground shadow"
+          className="dropdown-menu max-h-[30vh] min-w-[12rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-background p-2 text-popover-foreground shadow"
         >
           <CopyMenuItem
             fetchContent={getMessagesContent}

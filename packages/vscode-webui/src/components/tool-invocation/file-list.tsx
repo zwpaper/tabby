@@ -1,12 +1,14 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { getFileName, isFolder } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
 import { useState } from "react";
 import { FileIcon } from "./file-icon/file-icon";
 
 export const FileList: React.FC<{
-  matches: { file: string; line?: number; context?: string }[];
-}> = ({ matches }) => {
+  matches: { file: string; line?: number; context?: string; label?: string }[];
+  showBaseName?: boolean;
+}> = ({ matches, showBaseName = true }) => {
   const [activeIndex, setActiveIndex] = useState(-1);
   if (matches.length === 0) {
     return null;
@@ -47,20 +49,32 @@ export const FileList: React.FC<{
               defaultIconClassName="ml-0 mr-0.5" // Default icon is larger than others
               isDirectory={isFolder(match.file)}
             />
-            {getFileName(match.file)}
-            {match.line && (
-              <span
-                className={`truncate ${activeIndex === index ? "text-secondary-foreground/70" : "text-foreground/70"}`}
-              >
-                :{match.line}
-              </span>
+            {showBaseName && (
+              <>
+                {getFileName(match.file)}
+                {match.line && (
+                  <span
+                    className={`truncate ${activeIndex === index ? "text-secondary-foreground/70" : "text-foreground/70"}`}
+                  >
+                    :{match.line}
+                  </span>
+                )}
+              </>
             )}
           </span>
           <span
             title={match.file}
-            className={`${activeIndex === index ? "text-secondary-foreground/70" : "text-foreground/70"}`}
+            className={cn(
+              activeIndex === index
+                ? showBaseName
+                  ? "text-secondary-foreground/70"
+                  : "text-secondary-foreground"
+                : showBaseName
+                  ? "text-foreground/70"
+                  : "text-foreground",
+            )}
           >
-            {match.file}
+            {match.label ?? match.file}
           </span>
         </div>
       ))}

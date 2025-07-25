@@ -66,7 +66,7 @@ export function ModelSelect({
                 onCloseAutoFocus={(e) => e.preventDefault()}
                 side="bottom"
                 align="end"
-                className="dropdown-menu max-h-[30vh] min-w-[18rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-2 text-popover-foreground shadow"
+                className="dropdown-menu max-h-[30vh] min-w-[18rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-background p-2 text-popover-foreground shadow"
               >
                 <DropdownMenuRadioGroup
                   value={value?.id}

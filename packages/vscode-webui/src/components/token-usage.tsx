@@ -1,9 +1,14 @@
+import { FileList } from "@/components/tool-invocation/file-list";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { vscodeHost } from "@/lib/vscode";
+import type { RuleFile } from "@ragdoll/vscode-webui-bridge";
+import { useEffect, useState } from "react";
+import { Progress } from "./ui/progress";
 
 interface Props {
   contextWindow: number;
@@ -13,10 +18,15 @@ interface Props {
 
 export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
   const percentage = Math.ceil((totalTokens / contextWindow) * 100);
+  const [ruleFiles, setRuleFiles] = useState<RuleFile[]>([]);
+
+  useEffect(() => {
+    vscodeHost.listRuleFiles().then(setRuleFiles);
+  }, []);
 
   return (
-    <Tooltip>
-      <TooltipTrigger>
+    <Popover>
+      <PopoverTrigger>
         <div
           className={cn(
             "overflow-x-hidden text-muted-foreground text-xs",
@@ -27,12 +37,41 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
             {percentage}% of {formatTokens(contextWindow)} tokens
           </span>
         </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>This shows your token usage within LLM context window.</p>
-        <p>LLM cannot see or use tokens beyond this limit.</p>
-      </TooltipContent>
-    </Tooltip>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 border">
+        <div className="flex flex-col gap-y-4 text-xs">
+          {ruleFiles.length > 0 && (
+            <div className="flex flex-col gap-y-1">
+              <div className="mb-1 text-muted-foreground">Agent Files</div>
+              <div>
+                <FileList
+                  matches={ruleFiles.map((item) => ({
+                    file: item.relativeFilepath ?? item.filepath,
+                    label: item.label,
+                  }))}
+                  showBaseName={false}
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex flex-col gap-y-1">
+            <div className="mb-1 text-muted-foreground">Context Window</div>
+            <div>
+              <Progress value={percentage} className="mb-1" />
+              {formatTokens(totalTokens)} of {formatTokens(contextWindow)} used
+            </div>
+          </div>
+          {/* <div className="mt-2 flex items-center gap-x-2">
+            <Button variant="outline" size="sm" className="text-xs">
+              New Task with Summary
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs">
+              Compact Task
+            </Button>
+          </div> */}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

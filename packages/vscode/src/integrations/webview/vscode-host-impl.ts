@@ -1,6 +1,7 @@
 import * as os from "node:os";
 import {
   collectCustomRules,
+  collectRuleFiles,
   collectWorkflows,
   copyThirdPartyRules,
   detectThirdPartyRules,
@@ -55,6 +56,7 @@ import type {
   CustomModelSetting,
   McpStatus,
   ResourceURI,
+  RuleFile,
   RunTaskOptions,
   SaveCheckpointOptions,
   SessionState,
@@ -106,6 +108,10 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly checkpointService: CheckpointService,
     private readonly pochiConfiguration: PochiConfiguration,
   ) {}
+
+  listRuleFiles = async (): Promise<RuleFile[]> => {
+    return await collectRuleFiles();
+  };
 
   listWorkflowsInWorkspace = (): Promise<
     { id: string; path: string; content: string }[]
@@ -377,7 +383,9 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   ) => {
     const current = getWorkspaceFolder().uri;
 
-    const fileUri = vscode.Uri.joinPath(current, filePath);
+    const fileUri = path.isAbsolute(filePath)
+      ? vscode.Uri.file(filePath)
+      : vscode.Uri.joinPath(current, filePath);
 
     try {
       const stat = await vscode.workspace.fs.stat(fileUri);

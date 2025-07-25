@@ -9,6 +9,7 @@ import type {
   McpStatus,
   NewTaskParams,
   ResourceURI,
+  RuleFile,
   RunTaskOptions,
   SaveCheckpointOptions,
   SessionState,
@@ -79,6 +80,11 @@ export interface VSCodeHostApi {
   >;
 
   openSymbol(symbol: string): Promise<void>;
+
+  /**
+   * List all rule files in the workspace and home directory.
+   */
+  listRuleFiles(): Promise<RuleFile[]>;
 
   /**
    * List all workflows from .pochirules/workflows directory

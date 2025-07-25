@@ -56,6 +56,7 @@ function createVSCodeHost(): VSCodeHostApi {
         "previewToolCall",
         "openFile",
         "readResourceURI",
+        "listRuleFiles",
         "listWorkflowsInWorkspace",
         "capture",
         "closeCurrentWorkspace",
