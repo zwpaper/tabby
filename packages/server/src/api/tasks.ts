@@ -9,7 +9,6 @@ import { parseEventFilter } from "../lib/event-filter";
 import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task"; // Added import
 import { taskEvents } from "../service/task-events";
-import { ZodMessageType } from "../types";
 
 // Define validation schemas
 const PaginationSchema = z.object({
@@ -59,10 +58,6 @@ const TaskCreateSchema = z.object({
 
 const TaskShareSchema = z.object({
   isPublicShared: z.boolean(),
-});
-
-const TaskPatchSchema = z.object({
-  messages: z.array(ZodMessageType),
 });
 
 const AppendMessageSchema = z.object({
@@ -247,23 +242,6 @@ const tasks = new Hono()
       c.header("Cache-Control", "public, max-age=300, s-maxage=300");
 
       return c.json(task);
-    },
-  )
-  // FIXME(quanzhu): delete this endpoint after release
-  .patch(
-    "/:uid/messages",
-    zValidator("param", TaskUidParamsSchema),
-    zValidator("json", TaskPatchSchema),
-    requireAuth(),
-    async (c) => {
-      const { uid } = c.req.valid("param");
-      const { messages } = c.req.valid("json");
-      const user = c.get("user");
-      const updated = await taskService.patchMessages(uid, user.id, messages);
-      if (!updated) {
-        throw new HTTPException(404, { message: "Task not found" });
-      }
-      return c.json({ success: true });
     },
   )
   .post(

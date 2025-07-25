@@ -4,7 +4,6 @@ import {
   appendMessages,
   formatters,
   fromUIMessages,
-  toUIMessage,
   toUIMessages,
 } from "@ragdoll/common";
 import {
@@ -614,66 +613,6 @@ class TaskService {
       .where("id", "=", uidCoder.decode(uid))
       .where("userId", "=", userId)
       .where("isDeleted", "=", false)
-      .executeTakeFirst();
-    return result.numUpdatedRows > 0;
-  }
-
-  async patchMessages(
-    uid: string,
-    userId: string,
-    messages: DBMessage[],
-  ): Promise<boolean> {
-    const id = uidCoder.decode(uid);
-    const task = await db
-      .selectFrom("task")
-      .where("id", "=", id)
-      .where("userId", "=", userId)
-      .select(["conversation"])
-      .executeTakeFirst();
-
-    if (!task) {
-      return false;
-    }
-
-    const existingMessages = task.conversation?.messages ?? [];
-    const messageIds = [
-      ...existingMessages.map((m) => m.id),
-      ...messages.map((m) => m.id),
-    ];
-
-    const processedMessageIds = new Set<string>();
-    const allMessages: UIMessage[] = [];
-    for (const id of messageIds) {
-      if (processedMessageIds.has(id)) {
-        continue; // Skip if already processed to dedupe.
-      }
-
-      processedMessageIds.add(id);
-
-      // Prefer new messages over existing ones
-      const newMessage = messages.find((m) => m.id === id);
-      if (newMessage) {
-        allMessages.push(toUIMessage(newMessage));
-      } else {
-        // If the new message is not found, use the existing one
-        const existingMessage = existingMessages.find((m) => m.id === id);
-        if (existingMessage) {
-          allMessages.push(toUIMessage(existingMessage));
-        }
-      }
-    }
-
-    const messagesToSave = formatters.storage(allMessages);
-    const result = await db
-      .updateTable("task")
-      .set({
-        conversation: {
-          messages: fromUIMessages(messagesToSave),
-        },
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("id", "=", id)
-      .where("userId", "=", userId)
       .executeTakeFirst();
     return result.numUpdatedRows > 0;
   }
