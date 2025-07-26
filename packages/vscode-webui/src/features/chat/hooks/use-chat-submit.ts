@@ -2,7 +2,7 @@ import type { PendingApproval } from "@/features/approval";
 import type { useImageUpload } from "@/lib/hooks/use-image-upload";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type React from "react";
-import { type MutableRefObject, useCallback } from "react";
+import { useCallback } from "react";
 import { useAutoApproveGuard, useToolCallLifeCycle } from "../lib/chat-state";
 
 type UseChatReturn = Pick<
@@ -18,7 +18,6 @@ interface UseChatSubmitProps {
   isSubmitDisabled: boolean;
   isLoading: boolean;
   pendingApproval: PendingApproval | undefined;
-  recentAborted: MutableRefObject<boolean>;
 }
 
 export function useChatSubmit({
@@ -27,7 +26,6 @@ export function useChatSubmit({
   isSubmitDisabled,
   isLoading,
   pendingApproval,
-  recentAborted,
 }: UseChatSubmitProps) {
   const autoApproveGuard = useAutoApproveGuard();
   const { executingToolCalls } = useToolCallLifeCycle();
@@ -69,17 +67,14 @@ export function useChatSubmit({
 
   const handleSubmit = useCallback(
     async (e?: React.FormEvent<HTMLFormElement>, prompt?: string) => {
+      autoApproveGuard.current = true;
       e?.preventDefault();
-      if (recentAborted.current) {
-        return;
-      }
+
       if (isSubmitDisabled && !prompt) {
         return;
       }
-      autoApproveGuard.current = true;
 
       handleStop();
-      recentAborted.current = true;
 
       const content = prompt || input.trim();
       if (files.length > 0) {
@@ -116,7 +111,6 @@ export function useChatSubmit({
       append,
       setInput,
       clearUploadImageError,
-      recentAborted,
     ],
   );
 
