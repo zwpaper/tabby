@@ -42,7 +42,7 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
         <div className="flex flex-col gap-y-4 text-xs">
           {ruleFiles.length > 0 && (
             <div className="flex flex-col gap-y-1">
-              <div className="mb-1 text-muted-foreground">Agent Files</div>
+              <div className="mb-1 text-muted-foreground">Rules</div>
               <div>
                 <FileList
                   matches={ruleFiles.map((item) => ({
