@@ -127,6 +127,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       : undefined;
 
   const latestHttpCode = useRef<number | undefined>(undefined);
+  const recentAborted = useRef<boolean>(false);
   const chat = useChat({
     /*
      * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
@@ -172,9 +173,23 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         openAIModelOverride,
       ),
     fetch: async (url, options) => {
-      const resp = await fetch(url, options);
-      // If the task is already streaming, resume the stream
+      let resp: Response | null = null;
+      let numAttempts = 0;
+      do {
+        if (numAttempts > 0) {
+          await new Promise((res) =>
+            setTimeout(res, 1000 * 2 ** numAttempts++),
+          );
+        }
+        resp = await fetch(url, options);
+
+        // A 409 conflict can occur if the user aborts a streaming request and immediately retries,
+        // as the task status in the database might still be 'streaming'.
+        // We use exponential backoff to handle this race condition.
+      } while (resp.status === 409 && recentAborted.current && numAttempts < 5);
+
       latestHttpCode.current = resp.status;
+      recentAborted.current = false;
       return resp;
     },
     headers: {
@@ -296,6 +311,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     isSubmitDisabled,
     isLoading,
     pendingApproval,
+    recentAborted,
   });
 
   const saveTodos = useCallback(() => {

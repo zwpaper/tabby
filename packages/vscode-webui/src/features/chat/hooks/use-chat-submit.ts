@@ -2,7 +2,7 @@ import type { PendingApproval } from "@/features/approval";
 import type { useImageUpload } from "@/lib/hooks/use-image-upload";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type React from "react";
-import { useCallback } from "react";
+import { type MutableRefObject, useCallback } from "react";
 import { useAutoApproveGuard, useToolCallLifeCycle } from "../lib/chat-state";
 
 type UseChatReturn = Pick<
@@ -18,6 +18,7 @@ interface UseChatSubmitProps {
   isSubmitDisabled: boolean;
   isLoading: boolean;
   pendingApproval: PendingApproval | undefined;
+  recentAborted: MutableRefObject<boolean>;
 }
 
 export function useChatSubmit({
@@ -26,6 +27,7 @@ export function useChatSubmit({
   isSubmitDisabled,
   isLoading,
   pendingApproval,
+  recentAborted,
 }: UseChatSubmitProps) {
   const autoApproveGuard = useAutoApproveGuard();
   const { executingToolCalls } = useToolCallLifeCycle();
@@ -52,6 +54,7 @@ export function useChatSubmit({
       cancelUpload();
     } else if (isLoading) {
       stopChat();
+      recentAborted.current = true;
     } else if (pendingApproval?.name === "retry") {
       pendingApproval.stopCountdown();
     }
@@ -63,10 +66,14 @@ export function useChatSubmit({
     abortToolCalls,
     cancelUpload,
     stopChat,
+    recentAborted,
   ]);
 
   const handleSubmit = useCallback(
     async (e?: React.FormEvent<HTMLFormElement>, prompt?: string) => {
+      if (recentAborted.current) {
+        return;
+      }
       autoApproveGuard.current = true;
       e?.preventDefault();
 
@@ -75,6 +82,10 @@ export function useChatSubmit({
       }
 
       handleStop();
+      if (recentAborted.current) {
+        // break isLoading, we need to wait for some time to avoid racing between stop and submit.
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
 
       const content = prompt || input.trim();
       if (files.length > 0) {
@@ -111,6 +122,7 @@ export function useChatSubmit({
       append,
       setInput,
       clearUploadImageError,
+      recentAborted,
     ],
   );
 
