@@ -168,7 +168,7 @@ async function main(): Promise<void> {
 }
 
 const PackageIgnoreList: Record<string, string[]> = {
-  model: [
+  "label-studio": [
     // tailwind
     "tailwindcss",
     "tailwindcss-animate",

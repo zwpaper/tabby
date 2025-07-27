@@ -49,8 +49,8 @@
         "kysely-codegen": "^0.18.3",
       },
     },
-    "packages/model": {
-      "name": "@ragdoll/model",
+    "packages/label-studio": {
+      "name": "@ragdoll/label-studio",
       "version": "0.1.0",
       "dependencies": {
         "lucide-react": "^0.487.0",
@@ -1059,7 +1059,7 @@
 
     "@ragdoll/db": ["@ragdoll/db@workspace:packages/db"],
 
-    "@ragdoll/model": ["@ragdoll/model@workspace:packages/model"],
+    "@ragdoll/label-studio": ["@ragdoll/label-studio@workspace:packages/label-studio"],
 
     "@ragdoll/runner": ["@ragdoll/runner@workspace:packages/runner"],
 

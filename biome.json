@@ -9,7 +9,7 @@
     "ignoreUnknown": false,
     "ignore": [
       "**/*/routeTree.gen.ts",
-      "packages/model/data",
+      "packages/label-studio/data",
       "packages/ink-storybook",
       "*.test.ts",
       "*.story.tsx",

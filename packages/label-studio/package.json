@@ -1,5 +1,5 @@
 {
-  "name": "@ragdoll/model",
+  "name": "@ragdoll/label-studio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
