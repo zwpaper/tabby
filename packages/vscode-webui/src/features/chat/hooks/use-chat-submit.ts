@@ -71,11 +71,11 @@ export function useChatSubmit({
 
   const handleSubmit = useCallback(
     async (e?: React.FormEvent<HTMLFormElement>, prompt?: string) => {
+      e?.preventDefault();
       if (recentAborted.current) {
         return;
       }
       autoApproveGuard.current = true;
-      e?.preventDefault();
 
       if (isSubmitDisabled && !prompt) {
         return;
