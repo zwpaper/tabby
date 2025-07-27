@@ -4,6 +4,7 @@ import {
   appendMessages,
   formatters,
   fromUIMessages,
+  getLogger,
   toUIMessages,
 } from "@ragdoll/common";
 import {
@@ -53,6 +54,8 @@ const minionIdFromTable = sql<number | null>`"minionId"`.as("minionId");
 const legacyMinionId = sql<string | null>`environment->'info'->>'minionId'`.as(
   "legacyMinionId",
 );
+
+const logger = getLogger("TaskService");
 
 class TaskService {
   async startStreaming(
@@ -682,7 +685,7 @@ class TaskService {
     }
 
     if (!(error instanceof Error)) {
-      console.error("Unknown error", error);
+      logger.error("Unknown error", error);
       return internalError("Something went wrong. Please try again.");
     }
 

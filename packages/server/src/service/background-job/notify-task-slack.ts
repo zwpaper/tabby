@@ -45,7 +45,7 @@ export function createNotifyTaskSlackWorker() {
           job.data.userId,
           job.data.uid,
         );
-        logger.info("Successfully notified task status update");
+        logger.debug("Successfully notified task status update");
       } catch (error) {
         logger.error(
           `Failed to notify task status update: ${error instanceof Error ? error.message : error}`,
