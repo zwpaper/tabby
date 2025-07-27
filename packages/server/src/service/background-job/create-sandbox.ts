@@ -1,14 +1,14 @@
 import path from "node:path";
-import { SandboxPath } from "@ragdoll/common";
+import { SandboxPath, getLogger } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
 import { db, minionIdCoder } from "../../db";
 import { type CreateSandboxOptions, sandboxService } from "../sandbox";
 import { scheduleCleanupExpiredSandbox } from "./index";
-import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
 const QueueName = "create-sandbox";
 
+const logger = getLogger("CreateSandbox");
 const MinionDomain = process.env.POCHI_MINION_DOMAIN || "runpochi.com";
 
 interface CreateSandboxJobData {
@@ -43,7 +43,6 @@ export function createSandboxWorker() {
   return new Worker<CreateSandboxJobData>(
     QueueName,
     async (job) => {
-      const logger = getJobLogger(job);
       const { minionId, sandboxId, uid, envs, githubRepository } = job.data;
 
       logger.debug(`Creating sandbox for minion ${minionId}`);

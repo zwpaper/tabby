@@ -1,4 +1,4 @@
-import { SandboxPath } from "@ragdoll/common";
+import { SandboxPath, getLogger } from "@ragdoll/common";
 import { HTTPException } from "hono/http-exception";
 import {
   type FlyioClient,
@@ -17,6 +17,8 @@ const FlyImage =
   process.env.FLY_SANDBOX_IMAGE || "ghcr.io/tabbyml/pochi-minion:latest";
 const FlyRegion = process.env.FLY_REGION || "lax";
 const SandboxTimeoutMs = 60 * 1000 * 60 * 12; // 12 hours
+
+const logger = getLogger("FlyioSandboxProvider");
 
 export class FlyioSandboxProvider implements SandboxProvider {
   private client: FlyioClient;
@@ -131,7 +133,7 @@ export class FlyioSandboxProvider implements SandboxProvider {
       const machineId = await this.getMachineForApp(sandboxId);
       await this.client.suspendMachine(sandboxId, machineId);
     } catch (error) {
-      console.error(`Failed to pause sandbox ${sandboxId}:`, error);
+      logger.error(`Failed to pause sandbox ${sandboxId}`, error);
     }
   }
 
@@ -196,7 +198,7 @@ export class FlyioSandboxProvider implements SandboxProvider {
       }
       return machineId;
     } catch (error) {
-      console.log(`Error getting machine for app ${appName}:`, error);
+      logger.error(`Error getting machine for app ${appName}`, error);
       throw new Error(`Failed to get machine for app ${appName}: ${error}`);
     }
   }
@@ -212,8 +214,8 @@ export class FlyioSandboxProvider implements SandboxProvider {
       });
       return output.stdout || "";
     } catch (error) {
-      console.log(
-        `Error reading file from machine ${appName}:${filePath}:`,
+      logger.error(
+        `Error reading file from machine ${appName}:${filePath}`,
         error,
       );
       return "";

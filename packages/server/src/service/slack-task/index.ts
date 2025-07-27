@@ -2,6 +2,7 @@ import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
 import type { AnyBlock, WebClient } from "@slack/web-api";
 
 import type { Todo } from "@getpochi/tools";
+import { getLogger } from "@ragdoll/common";
 import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
 import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
@@ -16,6 +17,8 @@ type Task = NonNullable<Awaited<ReturnType<(typeof taskService)["get"]>>>;
 
 const SLACK_ERROR_REACTED = "already_reacted";
 const SLACK_ERROR_NO_REACTION = "no_reaction";
+
+const logger = getLogger("SlackTaskService");
 
 class SlackTaskService {
   async notifyTaskStatusUpdate(userId: string, uid: string): Promise<void> {
@@ -212,7 +215,7 @@ class SlackTaskService {
     });
 
     if (!messageResult.ok || !messageResult.ts) {
-      console.error("Failed to post GitHub task message:", messageResult.error);
+      logger.error("Failed to post GitHub task message", messageResult.error);
       return null;
     }
 
@@ -261,7 +264,7 @@ class SlackTaskService {
     );
 
     if (!slackInfo?.ts) {
-      console.error("Failed to send slack message");
+      logger.error("Failed to send slack message");
       return;
     }
 
@@ -333,7 +336,7 @@ class SlackTaskService {
 
       return ownerAndRepo;
     } catch (error) {
-      console.error("Error extracting repo from channel topic:", error);
+      logger.error("Error extracting repo from channel topic", error);
       return null;
     }
   }
@@ -636,7 +639,7 @@ class SlackTaskService {
 
       return { success: true };
     } catch (error) {
-      console.error("Failed to handle followup action:", error);
+      logger.error("Failed to handle followup action", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -669,7 +672,7 @@ class SlackTaskService {
     try {
       return Buffer.from(encodedContent, "base64").toString("utf-8");
     } catch (error) {
-      console.error("Failed to decode content:", error);
+      logger.error("Failed to decode content", error);
       return null;
     }
   }

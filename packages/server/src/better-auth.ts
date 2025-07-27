@@ -1,4 +1,5 @@
 import { stripe } from "@better-auth/stripe";
+import { getLogger } from "@ragdoll/common";
 import {
   type GenericEndpointContext,
   type Session,
@@ -26,6 +27,8 @@ import {
 } from "./lib/email-templates";
 import { resend } from "./lib/resend";
 import { stripeClient } from "./lib/stripe";
+
+const logger = getLogger("BetterAuth");
 
 export const auth = betterAuth({
   advanced: {
@@ -192,7 +195,7 @@ export const auth = betterAuth({
               html: emailHtml,
             });
           } catch (error) {
-            console.error("Failed to send welcome email:", error);
+            logger.error("Failed to send welcome email", error);
           }
         },
       },

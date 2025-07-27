@@ -843,7 +843,7 @@ Generate a concise title that captures the essence of the above conversation. Re
       const generatedTitle = await this.generateTaskTitle(messages);
       return generatedTitle;
     } catch (error) {
-      console.error("Error generating task title:", error);
+      logger.error("Error generating task title", error);
     }
   }
 }

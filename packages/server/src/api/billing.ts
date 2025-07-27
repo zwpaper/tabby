@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import { getLogger } from "@ragdoll/common";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
@@ -8,6 +9,8 @@ import { requireAuth } from "../auth";
 import { db } from "../db";
 import { stripeClient } from "../lib/stripe";
 import { usageService } from "../service/usage";
+
+const logger = getLogger("BillingApi");
 
 // Define the schema for query parameters for history endpoint
 const BillingHistoryQuerySchema = z.object({
@@ -246,7 +249,7 @@ const billing = new Hono()
 
         return c.json(upcomingInvoice);
       } catch (error) {
-        console.error("Failed to retrieve upcoming invoice:", error);
+        logger.error("Failed to retrieve upcoming invoice", error);
         if (error instanceof Stripe.errors.StripeError) {
           throw new HTTPException(400, { message: error.message });
         }

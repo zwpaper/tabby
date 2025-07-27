@@ -1,9 +1,12 @@
 import { zValidator } from "@hono/zod-validator";
+import { getLogger } from "@ragdoll/common";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 import { db } from "../db";
+
+const logger = getLogger("AdminApi");
 
 const admin = new Hono().get(
   "/searchUsers",
@@ -42,7 +45,7 @@ const admin = new Hono().get(
         total: users.length,
       });
     } catch (error) {
-      console.error("Search users error:", error);
+      logger.error("Search users error", error);
       throw new HTTPException(500, {
         message: "Failed to search users",
       });

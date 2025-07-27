@@ -6,3 +6,4 @@ message: Don't use console for logging, use getLogger instead.
 severity: error
 files:
   - "packages/runner/src/**/*.ts"
+  - "packages/server/src/**/*.ts"

@@ -1,3 +1,4 @@
+import { getLogger } from "@ragdoll/common";
 import {
   type LanguageModelV1Middleware,
   type LanguageModelV1Prompt,
@@ -6,6 +7,8 @@ import {
 } from "ai";
 import { tracer } from "../../trace";
 import { getPotentialStartIndex } from "./utils";
+
+const logger = getLogger("ToolCallMiddleware");
 
 interface ParsedToolCall {
   name: string;
@@ -329,7 +332,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
           })),
         };
       } catch (e) {
-        console.error("Failed to process tool calls in wrapGenerate", e);
+        logger.error("Failed to process tool calls in wrapGenerate", e);
         // Return original result if tool call processing fails
         return result;
       }

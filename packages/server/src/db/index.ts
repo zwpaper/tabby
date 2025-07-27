@@ -1,8 +1,11 @@
+import { getLogger } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import { Kysely, PostgresDialect } from "kysely";
 import moment from "moment";
 import { Pool } from "pg";
 import { parse } from "pg-connection-string";
+
+const logger = getLogger("DB");
 
 const pool = (() => {
   const conn = parse(process.env.DATABASE_URL || "");
@@ -29,7 +32,7 @@ async function dbMaintainance() {
     .where("expiresAt", "<", moment().subtract("7", "day").toDate())
     .executeTakeFirst();
   if (result.numDeletedRows > 0) {
-    console.info(`Deleted ${result.numDeletedRows} expired sessions.`);
+    logger.info(`Deleted ${result.numDeletedRows} expired sessions.`);
   }
 }
 

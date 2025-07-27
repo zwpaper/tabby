@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import { getLogger } from "@ragdoll/common";
 import { APICallError, RetryError, generateText } from "ai";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -6,6 +7,8 @@ import { z } from "zod";
 import { requireAuth } from "../auth";
 
 import { geminiFlash } from "../lib/constants";
+
+const logger = getLogger("EnhanceApi");
 
 const EnhancePromptSchema = z.object({
   prompt: z.string().min(8),
@@ -38,7 +41,7 @@ const enhance = new Hono().post(
         enhanced: enhancedPrompt.trim(),
       });
     } catch (error) {
-      console.error("Error enhancing prompt:", error);
+      logger.error("Error enhancing prompt", error);
 
       if (RetryError.isInstance(error)) {
         if (APICallError.isInstance(error.lastError)) {

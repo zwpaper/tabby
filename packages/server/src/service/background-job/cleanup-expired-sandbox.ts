@@ -1,13 +1,15 @@
+import { getLogger } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
 import { db } from "../../db";
 import { sandboxService } from "../sandbox";
-import { getJobLogger } from "./logger";
 import { queueConfig } from "./redis";
 
 const QueueName = "cleanup-expired-sandbox";
 
 // 7 days in milliseconds
 const SANDBOX_EXPIRY_TIME = 7 * 24 * 60 * 60 * 1000;
+
+const logger = getLogger("CleanupExpiredSandbox");
 
 interface CleanupExpiredSandboxData {
   sandboxId: string;
@@ -58,8 +60,6 @@ export function createCleanupSandboxWorker() {
   return new Worker<CleanupExpiredSandboxData>(
     QueueName,
     async (job) => {
-      const logger = getJobLogger(job);
-
       const { sandboxId } = job.data;
       logger.debug(`Cleaning up sandbox ${sandboxId}`);
 
@@ -146,6 +146,6 @@ async function checkSandboxes() {
       }
     }
   } catch (error) {
-    console.error("Failed to cleanup orphaned sandboxes:", error);
+    logger.error("Failed to cleanup orphaned sandboxes", error);
   }
 }

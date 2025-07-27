@@ -1,6 +1,9 @@
 import { Octokit } from "@octokit/rest";
+import { getLogger } from "@ragdoll/common";
 import { sql } from "kysely";
 import { db } from "../db";
+
+const logger = getLogger("GithubService");
 
 class GithubService {
   /**
@@ -57,7 +60,7 @@ class GithubService {
       });
       return true;
     } catch (error) {
-      console.error("GitHub repo access validation failed:", error);
+      logger.error("GitHub repo access validation failed", error);
       return false;
     }
   }

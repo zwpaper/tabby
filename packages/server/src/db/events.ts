@@ -1,8 +1,11 @@
+import { getLogger } from "@ragdoll/common";
 import type { DB, TaskCreateEvent } from "@ragdoll/db";
 import { slackTaskService } from "../service/slack-task";
 import { taskEvents } from "../service/task-events";
 import { uidCoder } from "./id-coders";
 import { pool } from "./pool";
+
+const logger = getLogger("DBEvents");
 
 type TaskStatusChanged = {
   id: number;
@@ -18,7 +21,7 @@ export async function startListenDBEvents() {
   client.on("notification", (msg) => {
     if (msg.channel === "task_status_channel") {
       if (!msg.payload) {
-        console.warn("No payload in task_status_channel");
+        logger.warn("No payload in task_status_channel");
         return;
       }
       const { userId, id, status, eventType } = JSON.parse(
@@ -42,5 +45,5 @@ export async function startListenDBEvents() {
     }
   });
 
-  console.log("Listening for DB notifications...");
+  logger.info("Listening for DB notifications...");
 }

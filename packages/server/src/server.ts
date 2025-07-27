@@ -7,14 +7,14 @@ import { startWorkers } from "./service/background-job";
 export type { AppType } from "./app";
 import { serve } from "@hono/node-server";
 
-const logger = getLogger("server");
+const logger = getLogger("Server");
 const port = process.env.PORT ? Number.parseInt(process.env.PORT) : 4113;
 
 const server = serve({
   port,
   fetch: app.fetch,
 });
-console.log(`Listening on http://localhost:${port} ...`);
+console.log(`Listening on http://localhost:${port} ...`); // ast-grep-ignore: no-console
 
 const waitUntilPromises: Set<Promise<unknown>> = new Set();
 
@@ -30,7 +30,7 @@ export function setIdleTimeout(_request: Request, _secs: number) {
 async function gracefulShutdown() {
   await new Promise((resolve, reject) =>
     server.close((err) => (err ? reject(err) : resolve(null))),
-  ).catch(console.error);
+  ).catch((err) => logger.error("Error closing server", err));
 
   logger.info("SIGINT / SIGTERM received, shutting down...");
   const pendingJobs = [...waitUntilPromises];
@@ -50,8 +50,7 @@ process.on("SIGTERM", gracefulShutdown);
 process.on("SIGINT", gracefulShutdown);
 
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
-  console.error("Stack trace:", err.stack);
+  logger.error("Uncaught Exception", err);
 });
 
 startWorkers();

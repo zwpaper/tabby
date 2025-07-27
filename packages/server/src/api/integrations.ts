@@ -1,8 +1,11 @@
+import { getLogger } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requireAuth } from "../auth";
 import { db } from "../db";
+
+const logger = getLogger("IntegrationsApi");
 
 const integrations = new Hono()
   .use(requireAuth())
@@ -25,7 +28,7 @@ const integrations = new Hono()
       });
       return c.json(userIntegrations);
     } catch (error) {
-      console.error("Failed to fetch integrations:", error);
+      logger.error("Failed to fetch integrations", error);
       throw new HTTPException(500, { message: "Failed to fetch integrations" });
     }
   })
@@ -63,7 +66,7 @@ const integrations = new Hono()
       return c.json({ success: true });
     } catch (error) {
       if (error instanceof HTTPException) throw error;
-      console.error("Failed to delete integration:", error);
+      logger.error("Failed to delete integration", error);
       throw new HTTPException(500, { message: "Failed to delete integration" });
     }
   });

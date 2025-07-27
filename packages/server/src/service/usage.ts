@@ -1,3 +1,4 @@
+import { getLogger } from "@ragdoll/common";
 import type { LanguageModelUsage } from "ai";
 import { sql } from "kysely";
 import moment from "moment";
@@ -12,6 +13,8 @@ import {
 import { stripeClient } from "../lib/stripe";
 import { tracer } from "../trace";
 import { organizationService } from "./organization";
+
+const logger = getLogger("UsageService");
 
 const FreeCreditInDollars = 20;
 const CodeCompletionSubscriptionCountThreshold = 100;
@@ -257,7 +260,7 @@ export class UsageService {
     const creditCost = computeCreditCost(creditCostInput);
 
     if (!user.stripeCustomerId) {
-      console.warn(
+      logger.warn(
         "User does not have a Stripe customer ID, skipping billing event.",
       );
       return;

@@ -1,4 +1,5 @@
 export type { TaskEvent, TaskCreateEvent } from "@ragdoll/db";
+import { getLogger } from "@ragdoll/common";
 import { EventSource, type EventSourceInit } from "eventsource";
 import type { hc } from "hono/client";
 import type { AppType } from "./server";
@@ -7,6 +8,8 @@ export type { AppType } from "./server";
 export { deviceLinkClient } from "./lib/device-link/client";
 
 export type { auth } from "./better-auth";
+
+const logger = getLogger("PochiEventSource");
 
 export interface PochiEventSource {
   /* Subscribe to events, returns a function to unsubscribe */
@@ -94,7 +97,7 @@ class PochiEventSourceImpl implements PochiEventSource {
           listener(data);
         }
       } catch (error) {
-        console.error(`Error processing ${type} event:`, error);
+        logger.error(`Error processing ${type} event`, error);
       }
     };
 

@@ -39,7 +39,7 @@ attachTransport((args, meta) => {
     .map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
     .join(" ");
   const span = trace.getActiveSpan();
-  const eventName = `log.${meta.name || "default"}`;
+  const eventName = "ragdoll.log";
   const location = meta.path?.filePathWithLine;
   const { logLevelName: logLevel } = meta;
   if (logAsEvent) {
@@ -73,5 +73,5 @@ const sdk = new NodeSDK({
 sdk.start();
 
 for (const signal of ["SIGTERM", "SIGINT"]) {
-  process.on(signal, () => sdk.shutdown().catch(console.error));
+  process.on(signal, () => sdk.shutdown().catch(console.error)); // ast-grep-ignore: no-console
 }
