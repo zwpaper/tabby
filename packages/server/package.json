@@ -61,8 +61,8 @@
   "scripts": {
     "tsc": "tsc --noEmit",
     "dev:server": "vite-node -w src/server.ts",
-    "build": "bun build src/server.ts --outdir dist --target node --sourcemap=external",
-    "start": "dotenv node dist/server.js"
+    "build": "bun build src/server.ts --outdir dist --target node --sourcemap=linked",
+    "start": "dotenv node -- --enable-source-maps dist/server.js"
   },
   "devDependencies": {
     "@types/pg": "^8.11.11",
