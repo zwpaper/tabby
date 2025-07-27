@@ -48,6 +48,7 @@ export function useChatSubmit({
   } = imageUpload;
 
   const handleStop = useCallback(() => {
+    recentAborted.current = false;
     if (isExecuting) {
       abortToolCalls();
     } else if (isUploading) {
@@ -72,21 +73,17 @@ export function useChatSubmit({
   const handleSubmit = useCallback(
     async (e?: React.FormEvent<HTMLFormElement>, prompt?: string) => {
       e?.preventDefault();
-      if (recentAborted.current) {
-        return;
-      }
-      autoApproveGuard.current = true;
 
       if (isSubmitDisabled && !prompt) {
         return;
       }
-
       handleStop();
       if (recentAborted.current) {
         // break isLoading, we need to wait for some time to avoid racing between stop and submit.
         await new Promise((resolve) => setTimeout(resolve, 25));
       }
 
+      autoApproveGuard.current = false;
       const content = prompt || input.trim();
       if (files.length > 0) {
         try {
@@ -104,6 +101,7 @@ export function useChatSubmit({
           return;
         }
       } else if (content.length > 0) {
+        autoApproveGuard.current = true;
         clearUploadImageError();
         append({
           role: "user",
