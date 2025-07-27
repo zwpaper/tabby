@@ -6,7 +6,7 @@ import { SimpleLogRecordProcessor } from "@opentelemetry/sdk-logs";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { attachTransport } from "@ragdoll/common";
 
-const logAsEvent = true;
+const logAsEvent = false;
 
 attachTransport((args, meta) => {
   let severityNumber: SeverityNumber = 0;
@@ -39,12 +39,12 @@ attachTransport((args, meta) => {
     .map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
     .join(" ");
   const span = trace.getActiveSpan();
-  const eventName = "ragdoll.log";
+  const eventName = meta.name || "default";
   const location = meta.path?.filePathWithLine;
   const { logLevelName: logLevel } = meta;
   if (logAsEvent) {
     span?.addEvent(
-      eventName,
+      "ragdoll.log",
       {
         message: body,
         logLevel,
