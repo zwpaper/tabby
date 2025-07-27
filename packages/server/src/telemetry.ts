@@ -1,9 +1,12 @@
+import { trace } from "@opentelemetry/api";
 import { SeverityNumber, logs } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { SimpleLogRecordProcessor } from "@opentelemetry/sdk-logs";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { attachTransport } from "@ragdoll/common";
+
+const logAsEvent = true;
 
 attachTransport((args, meta) => {
   let severityNumber: SeverityNumber = 0;
@@ -32,12 +35,34 @@ attachTransport((args, meta) => {
     default:
       throw new Error(`Unknown log level: ${meta.logLevelName}`);
   }
-  const body = typeof args[0] === "string" ? args[0] : JSON.stringify(args[0]);
-  logs.getLogger(meta.name || "default").emit({
-    body,
-    severityNumber,
-    timestamp: meta.date,
-  });
+  const body = args
+    .map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+    .join(" ");
+  const span = trace.getActiveSpan();
+  const eventName = `log.${meta.name || "default"}`;
+  const location = meta.path?.filePathWithLine;
+  const { logLevelName: logLevel } = meta;
+  if (logAsEvent) {
+    span?.addEvent(
+      eventName,
+      {
+        message: body,
+        logLevel,
+        location,
+      },
+      meta.date,
+    );
+  } else {
+    logs.getLogger(eventName).emit({
+      body,
+      severityNumber,
+      timestamp: meta.date,
+      attributes: {
+        location,
+        logLevel,
+      },
+    });
+  }
 });
 
 const sdk = new NodeSDK({
