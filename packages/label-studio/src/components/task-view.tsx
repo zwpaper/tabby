@@ -26,6 +26,12 @@ interface TaskViewProps {
     partIndex: number,
   ) => void;
   onEditedContentChange: (content: string) => void;
+  onPreview: (
+    taskUid: string,
+    messageIndex: number,
+    partIndex: number,
+    content: string,
+  ) => void;
 }
 
 export interface TaskViewHandle {
@@ -45,6 +51,7 @@ export const TaskView = forwardRef<TaskViewHandle, TaskViewProps>(
       onToggleDeleteMessage,
       onRemovePart,
       onEditedContentChange,
+      onPreview,
     },
     ref,
   ) => {
@@ -167,6 +174,7 @@ export const TaskView = forwardRef<TaskViewHandle, TaskViewProps>(
                     onSave={onSave}
                     onCancel={onCancel}
                     onRemovePart={onRemovePart}
+                    onPreview={onPreview}
                     onEditedContentChange={onEditedContentChange}
                   />
                 </div>

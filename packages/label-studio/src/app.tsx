@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { FileControls } from "./components/file-controls";
 import { ImportTasksModal } from "./components/import-tasks-modal";
+import { PreviewModal } from "./components/preview-modal";
 import { ResponseToc } from "./components/response-toc";
 import { TaskBar } from "./components/task-bar";
 import { TaskList } from "./components/task-list";
@@ -19,6 +20,22 @@ function App() {
     isEditingNew?: boolean; // New: flag to indicate editing newContent
   } | null>(null);
   const [editedContent, setEditedContent] = useState<string>("");
+  const [previewModalState, setPreviewModalState] = useState<{
+    isOpen: boolean;
+    content: string;
+    language: "text" | "custom";
+    taskUid: string | null;
+    messageIndex: number | null;
+    partIndex: number | null;
+  }>({
+    isOpen: false,
+    content: "",
+    language: "text",
+    taskUid: null,
+    messageIndex: null,
+    partIndex: null,
+  });
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isTocOpen, setIsTocOpen] = useState(true);
   const [isImportTasksModalOpen, setIsImportTasksModalOpen] = useState(false);
@@ -203,6 +220,115 @@ function App() {
     setEditedContent("");
   };
 
+  const handlePreview = (
+    taskUid: string,
+    messageIndex: number,
+    partIndex: number,
+    content: string,
+  ) => {
+    let language: "text" | "custom" = content.startsWith("<")
+      ? "custom"
+      : "text";
+    let displayContent = content;
+
+    if (language === "custom") {
+      try {
+        const firstAngleBracket = content.indexOf(">");
+        const lastClosingTag = content.lastIndexOf("</");
+
+        if (firstAngleBracket !== -1 && lastClosingTag !== -1) {
+          const jsonString = content.substring(
+            firstAngleBracket + 1,
+            lastClosingTag,
+          );
+          const jsonContent = JSON.parse(jsonString);
+          displayContent = JSON.stringify(jsonContent, null, 2);
+        } else {
+          language = "text";
+        }
+      } catch (error) {
+        language = "text";
+        console.log("Setting language to text due to error:", error);
+      }
+    }
+
+    setPreviewModalState({
+      isOpen: true,
+      content: displayContent,
+      language,
+      taskUid,
+      messageIndex,
+      partIndex,
+    });
+  };
+
+  const handleClosePreview = () => {
+    setPreviewModalState({
+      isOpen: false,
+      content: "",
+      language: "text",
+      taskUid: null,
+      messageIndex: null,
+      partIndex: null,
+    });
+  };
+
+  const handleSavePreview = (newContent: string) => {
+    const { taskUid, messageIndex, partIndex, language } = previewModalState;
+    if (partIndex === null || messageIndex === null || taskUid === null) return;
+
+    const newTasks = tasks.map((task) => {
+      if (task.uid === taskUid) {
+        const newMessages = [...task.messages];
+        const message = newMessages[messageIndex];
+        if (Array.isArray(message.content)) {
+          const newContentArray = [...message.content];
+          const part = newContentArray[partIndex];
+
+          let finalContent = newContent;
+          if (language === "custom") {
+            try {
+              const jsonContent = JSON.parse(newContent);
+              const originalContent =
+                task.messages[messageIndex]?.content[partIndex]?.text ?? "";
+
+              const firstAngleBracket = originalContent.indexOf(">");
+              const lastClosingTag = originalContent.lastIndexOf("</");
+
+              if (firstAngleBracket !== -1 && lastClosingTag !== -1) {
+                const openingTag = originalContent.substring(
+                  0,
+                  firstAngleBracket + 1,
+                );
+                const closingTag = originalContent.substring(lastClosingTag);
+                finalContent = `${openingTag}${JSON.stringify(jsonContent)}${closingTag}`;
+              } else {
+                // Fallback for safety
+                finalContent = newContent;
+              }
+            } catch (error) {
+              // If parsing fails, save the raw content
+              finalContent = newContent;
+            }
+          }
+          newContentArray[partIndex] = {
+            ...part,
+            newText: finalContent,
+          };
+          newMessages[messageIndex] = { ...message, content: newContentArray };
+        }
+        return { ...task, messages: newMessages };
+      }
+      return task;
+    });
+
+    setTasks(newTasks);
+    const updatedSelectedTask =
+      newTasks.find((task) => task.uid === selectedTask?.uid) || null;
+    setSelectedTask(updatedSelectedTask);
+    handleClosePreview();
+  };
+
   const handleToggleDeleteMessage = (taskUid: string, messageIndex: number) => {
     const newTasks = tasks.map((task) => {
       if (task.uid === taskUid) {
@@ -348,6 +474,7 @@ function App() {
                 onToggleDeleteMessage={handleToggleDeleteMessage}
                 onRemovePart={handleRemovePart}
                 onEditedContentChange={setEditedContent}
+                onPreview={handlePreview}
               />
             ) : (
               <p className="text-center text-muted-foreground">
@@ -366,6 +493,14 @@ function App() {
           isOpen={isImportTasksModalOpen}
           onClose={() => setIsImportTasksModalOpen(false)}
           onImport={handleImportTasks}
+        />
+
+        <PreviewModal
+          isOpen={previewModalState.isOpen}
+          onClose={handleClosePreview}
+          content={previewModalState.content}
+          onSave={handleSavePreview}
+          language={previewModalState.language}
         />
       </div>
     </TaskViewProvider>

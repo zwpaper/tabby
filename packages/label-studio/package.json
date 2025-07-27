@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/view": "^6.38.1",
+    "@uiw/react-codemirror": "^4.24.1",
     "lucide-react": "^0.487.0",
     "react": "catalog:",
     "react-diff-viewer-continued": "^3.4.0",

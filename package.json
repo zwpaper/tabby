@@ -58,5 +58,12 @@
     "@ai-sdk/google@1.2.18": "patches/@ai-sdk%2Fgoogle@1.2.18.patch",
     "@ai-sdk/react@1.2.12": "patches/@ai-sdk%2Freact@1.2.12.patch",
     "@daveyplate/better-auth-ui@2.0.12": "patches/@daveyplate%2Fbetter-auth-ui@2.0.12.patch"
+  },
+  "dependencies": {
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/language": "^6.11.2",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.1",
+    "@uiw/react-codemirror": "^4.24.1"
   }
 }

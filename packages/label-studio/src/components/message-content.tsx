@@ -32,6 +32,12 @@ interface MessageContentProps {
     partIndex: number,
   ) => void;
   onEditedContentChange: (content: string) => void;
+  onPreview: (
+    taskUid: string,
+    messageIndex: number,
+    partIndex: number,
+    content: string,
+  ) => void;
 }
 
 export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
@@ -48,6 +54,7 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
       onCancel,
       onRemovePart,
       onEditedContentChange,
+      onPreview,
     },
     ref,
   ) {
@@ -164,6 +171,20 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
                         className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground text-xs shadow-sm transition-colors hover:bg-primary/90 focus:outline-none"
                       >
                         Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onPreview(
+                            taskUid,
+                            messageIndex,
+                            partIndex,
+                            displayText || "",
+                          )
+                        }
+                        className="inline-flex items-center justify-center rounded-md bg-blue-600 px-3 py-1.5 font-medium text-white text-xs shadow-sm transition-colors hover:bg-blue-700 focus:outline-none"
+                      >
+                        Formatted Edit
                       </button>
                       <button
                         type="button"
