@@ -183,9 +183,7 @@ const chat = new Hono()
                 completionTokens: usage.completionTokens,
                 totalTokens: promptTokens + usage.completionTokens,
               };
-            }
-
-            if (providerMetadata?.google) {
+            } else if (providerMetadata?.google) {
               const modelIdFromValidModelId = () => {
                 if (typeof validModelId !== "string")
                   throw new Error("Unsupported model");
@@ -212,15 +210,26 @@ const chat = new Hono()
                 inputTokens: usage.promptTokens - cacheReadInputTokens,
                 outputTokens: usage.completionTokens,
               };
-            }
-
-            if (validModelId === "moonshotai/kimi-k2") {
+            } else if (validModelId === "moonshotai/kimi-k2") {
               creditCostInput = {
                 type: "groq",
                 modelId: "moonshotai/kimi-k2-instruct",
                 inputTokens: usage.promptTokens,
                 outputTokens: usage.completionTokens,
               };
+            } else if (validModelId === "qwen/qwen3-coder") {
+              creditCostInput = {
+                type: "deepinfra",
+                modelId: "qwen/qwen3-coder",
+                inputTokens: usage.promptTokens,
+                outputTokens: usage.completionTokens,
+              };
+            } else if (typeof validModelId !== "string") {
+              // Custom model, do nothing.
+            } else {
+              throw new HTTPException(500, {
+                message: `Model: ${validModelId} is not properly supported.`,
+              });
             }
 
             const isUsageValid = !Number.isNaN(usage.totalTokens);

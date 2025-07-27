@@ -14,7 +14,6 @@
     "@ai-sdk/provider-utils": "catalog:",
     "@ai-sdk/ui-utils": "catalog:",
     "@better-auth/stripe": "catalog:",
-    "@e2b/code-interpreter": "catalog:",
     "@getpochi/tools": "workspace:*",
     "@hono-storage/s3": "^0.0.13",
     "@hono/node-server": "^1.17.1",
