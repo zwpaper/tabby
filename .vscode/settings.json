@@ -20,5 +20,5 @@
   },
   "tailwindCSS.classFunctions": ["tw"],
   "editor.formatOnSave": true,
-  "rust-analyzer.linkedProjects": ["prod/analysis/Cargo.toml"]
+  "rust-analyzer.linkedProjects": []
 }

@@ -7,6 +7,5 @@ coverage/
 *.sqlite*
 .turbo
 .DS_store
-target/
 
 *storybook.log
