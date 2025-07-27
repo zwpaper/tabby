@@ -9,6 +9,7 @@ function createRedisConnection() {
   // Create IORedis client with the URL
   const connection = new IORedis({
     ...config,
+    family: 0,
     maxRetriesPerRequest: null,
   });
 
