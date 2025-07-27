@@ -2,7 +2,7 @@
 buildCommand = "bun run build:server"
 
 [deploy]
-startCommand = "sleep 3 && cd packages/server && bun start"
+startCommand = "cd packages/server && bun start"
 healthcheckPath = "/health"
 healthcheckTimeout = 10
 restartPolicyType = "NEVER"
