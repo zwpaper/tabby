@@ -1,4 +1,5 @@
 import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
+import { deepinfra } from "@ai-sdk/deepinfra";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createVertex } from "@ai-sdk/google-vertex";
 import { groq } from "@ai-sdk/groq";
@@ -11,7 +12,8 @@ export type AvailableModelId =
   | "google/gemini-2.5-flash"
   | "anthropic/claude-4-sonnet"
   | "moonshotai/kimi-k2"
-  | "pochi/pro-1";
+  | "pochi/pro-1"
+  | "qwen/qwen3-coder";
 
 export const AvailableModels: {
   id: AvailableModelId;
@@ -43,6 +45,11 @@ export const AvailableModels: {
     contextWindow: 131_072,
     costType: "basic",
   },
+  {
+    id: "qwen/qwen3-coder",
+    contextWindow: 262_144,
+    costType: "basic",
+  },
 ];
 
 export type CreditCostInput =
@@ -64,6 +71,12 @@ export type CreditCostInput =
   | {
       type: "groq";
       modelId: "moonshotai/kimi-k2-instruct";
+      inputTokens: number;
+      outputTokens: number;
+    }
+  | {
+      type: "deepinfra";
+      modelId: "qwen/qwen3-coder";
       inputTokens: number;
       outputTokens: number;
     };
@@ -100,6 +113,12 @@ const PriceByModel = {
     "moonshotai/kimi-k2-instruct": {
       input: 10,
       output: 30,
+    },
+  },
+  deepinfra: {
+    "qwen/qwen3-coder": {
+      input: 4,
+      output: 16,
     },
   },
 } as const;
@@ -160,6 +179,15 @@ function computeCreditCostForAnthropic(
   );
 }
 
+// https://deepinfra.com/Qwen/Qwen3-Coder-480B-A35B-Instruct
+function computeCreditCostForDeepInfra(
+  input: Extract<CreditCostInput, { type: "deepinfra" }>,
+): number {
+  const { modelId, inputTokens, outputTokens } = input;
+  const price = PriceByModel.deepinfra[modelId];
+  return inputTokens * price.input + outputTokens * price.output;
+}
+
 // https://console.groq.com/docs/model/moonshotai/kimi-k2-instruct
 function computeCreditCostForGroq(
   input: Extract<CreditCostInput, { type: "groq" }>,
@@ -179,6 +207,10 @@ export function computeCreditCost(input: CreditCostInput): number {
       return computeCreditCostForAnthropic(input);
     case "groq":
       return computeCreditCostForGroq(input);
+    case "deepinfra":
+      return computeCreditCostForDeepInfra(input);
+    default:
+      throw new Error("Unknown model type");
   }
 }
 
@@ -225,6 +257,10 @@ export function getModelById(
       return groq("moonshotai/kimi-k2-instruct");
     case "pochi/pro-1":
       return vertexFineTuning(modelEndpointId || "2224986023618674688");
+    case "qwen/qwen3-coder":
+      return deepinfra("Qwen/Qwen3-Coder-480B-A35B-Instruct");
+    default:
+      throw new Error("Unknown model id");
   }
 }
 
@@ -267,6 +303,10 @@ export function getModelOptions(
     case "moonshotai/kimi-k2":
       return {
         maxTokens: 1024 * 14, // 14k tokens
+      };
+    case "qwen/qwen3-coder":
+      return {
+        maxTokens: 1024 * 32,
       };
   }
 }
