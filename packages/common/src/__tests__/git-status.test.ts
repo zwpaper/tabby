@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { GitStatusReader } from "../node/git-status";
 import type { GitStatusReaderOptions } from "../node/git-status";
 

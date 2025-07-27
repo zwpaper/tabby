@@ -13,10 +13,7 @@ const UserAgent = `Pochi/${packageJson.version} ${vscode.env.appName.replace(/\s
 
 const buildCustomFetchImpl = (tokenStorage: TokenStorage) => {
   return async (input: string | URL | Request, requestInit?: RequestInit) => {
-    // FIXME(zhiming): HeadersInit is not compatible with Bun's type HeadersInit. (@types/bun 1.2.6)
-    // Update @types/bun to fix this problem.
-    // biome-ignore lint/suspicious/noExplicitAny: skip type check
-    const headers = new Headers(requestInit?.headers as any);
+    const headers = new Headers(requestInit?.headers);
     headers.append("Authorization", `Bearer ${tokenStorage.token.value}`);
     headers.set("User-Agent", UserAgent);
     headers.set("X-Pochi-Extension-Version", packageJson.version);

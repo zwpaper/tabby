@@ -1,4 +1,82 @@
-// Bun Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`environment 1`] = `
+"# System Information
+
+Operating System: linux
+Default Shell: bash
+Home Directory: /home/user
+Current Working Directory: /home/user/project
+Current Time: 2021-01-01T00:00:00.000Z
+
+# User Information
+- Name: Pochi
+- Email: noreply@getpochi.com
+
+# Current Working Directory (/home/user/project) Files
+index.ts
+package.json
+tsconfig.json
+README.md
+
+# Active File Tabs in Editor
+Here are the open file tabs in the editor. If a user mentions "this" or "that" without an active selection, they are likely referring active tab (if exists) below:
+README.md
+tsconfig.json
+package.json
+
+# Active Terminals in Editor
+* Terminal 1 (active)
+  Terminal 2
+
+# Active Selection (README.md:3-5)
+
+\`\`\`
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+\`\`\`
+
+
+# GIT STATUS
+Origin: https://github.com/username/repo.git
+Current branch: add-environment-to-chat-request-body
+Main branch (you will usually use this for PRs): main
+
+Status:
+M packages/vscode-webui-bridge/src/index.ts
+A packages/vscode-webui/src/lib/use-environment.ts
+M packages/vscode-webui/src/lib/vscode.ts
+M packages/vscode-webui/src/routes/chat.tsx
+?? src/fib.test.ts
+?? vitest.config.ts
+
+Recent commits:
+02b50f727 feat(chat): add environment property to prepareRequestBody
+962185adb feat(webui): add new task link and pending component
+
+# User Edits
+The user has made the following edits to the workspace. Please take these changes into account when proceeding with the task.
+
+**path/to/file** (modified)
+\`\`\`diff
+-hello
++world
+\`\`\`
+
+# TODOs
+Here's todo list for current task. If a task is marked as cancelled or completed, it no longer needs your attention, NEVER ATTEMPT TO COMPLETE IT AGAIN, this is SUPER IMPORTANT!!!.
+Otherwise, please follow the todo list to complete the task.
+
+[
+  {
+    "content": "fix this",
+    "id": "1",
+    "status": "pending",
+    "priority": "high"
+  }
+]"
+`;
 
 exports[`snapshot 1`] = `
 "You are Pochi, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
@@ -78,82 +156,4 @@ You should always speak and think in the "en" language unless the user gives you
 
 Rules:
 # Rules from (abc)"
-`;
-
-exports[`environment 1`] = `
-"# System Information
-
-Operating System: linux
-Default Shell: bash
-Home Directory: /home/user
-Current Working Directory: /home/user/project
-Current Time: 2021-01-01T00:00:00.000Z
-
-# User Information
-- Name: Pochi
-- Email: noreply@getpochi.com
-
-# Current Working Directory (/home/user/project) Files
-index.ts
-package.json
-tsconfig.json
-README.md
-
-# Active File Tabs in Editor
-Here are the open file tabs in the editor. If a user mentions "this" or "that" without an active selection, they are likely referring active tab (if exists) below:
-README.md
-tsconfig.json
-package.json
-
-# Active Terminals in Editor
-* Terminal 1 (active)
-  Terminal 2
-
-# Active Selection (README.md:3-5)
-
-\`\`\`
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-\`\`\`
-
-
-# GIT STATUS
-Origin: https://github.com/username/repo.git
-Current branch: add-environment-to-chat-request-body
-Main branch (you will usually use this for PRs): main
-
-Status:
-M packages/vscode-webui-bridge/src/index.ts
-A packages/vscode-webui/src/lib/use-environment.ts
-M packages/vscode-webui/src/lib/vscode.ts
-M packages/vscode-webui/src/routes/chat.tsx
-?? src/fib.test.ts
-?? vitest.config.ts
-
-Recent commits:
-02b50f727 feat(chat): add environment property to prepareRequestBody
-962185adb feat(webui): add new task link and pending component
-
-# User Edits
-The user has made the following edits to the workspace. Please take these changes into account when proceeding with the task.
-
-**path/to/file** (modified)
-\`\`\`diff
--hello
-+world
-\`\`\`
-
-# TODOs
-Here's todo list for current task. If a task is marked as cancelled or completed, it no longer needs your attention, NEVER ATTEMPT TO COMPLETE IT AGAIN, this is SUPER IMPORTANT!!!.
-Otherwise, please follow the todo list to complete the task.
-
-[
-  {
-    "content": "fix this",
-    "id": "1",
-    "status": "pending",
-    "priority": "high"
-  }
-]"
 `;

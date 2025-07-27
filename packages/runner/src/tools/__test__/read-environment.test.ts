@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { readEnvironment } from "../../lib/read-environment";
 import type { RunnerOptions } from "../../task-runner";
 

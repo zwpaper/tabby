@@ -99,8 +99,7 @@ async function runDepcheck(
       ...(PackageIgnoreList[packageName] || []),
 
       // Workspace dependencies
-      "bun:test",
-      "bun",
+      "vitest",
     ],
   };
   return new Promise((resolve) => {
@@ -214,6 +213,7 @@ const PackageIgnoreList: Record<string, string[]> = {
     // Releasing
     "ovsx",
   ],
+  runner: ["@types/bun"],
 };
 
 // Run the script

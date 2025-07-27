@@ -9,7 +9,6 @@ import chat from "./api/chat";
 import clips from "./api/clips";
 import code from "./api/code";
 import enhance from "./api/enhance";
-import events from "./api/events";
 import integrations from "./api/integrations";
 import invitation from "./api/invitation";
 import minions from "./api/minions";
@@ -38,7 +37,7 @@ app.use(authRequest);
 // Static file serving with dynamic import
 if (process.env.NODE_ENV !== "test") {
   (async () => {
-    const { serveStatic } = await import("hono/bun");
+    const { serveStatic } = await import("@hono/node-server/serve-static");
     const { readFile } = await import("node:fs/promises");
 
     // Serve website static files
@@ -113,7 +112,6 @@ const api = app.basePath("/api");
 
 // Endpoint to list available models
 export const route = api
-  .route("/events", events)
   .route("/models", models)
   .route("/chat", chat)
   .route("/code", code)

@@ -87,7 +87,7 @@ export const auth = betterAuth({
       async sendInvitationEmail(data) {
         const inviteLink = `${process.env.BETTER_AUTH_URL || "https://app.getpochi.com"}/accept-invitation?invitationId=${data.id}`;
 
-        const emailHtml = getOrganizationInviteEmailHtml({
+        const emailHtml = await getOrganizationInviteEmailHtml({
           organizationName: data.organization.name,
           inviterName: data.inviter.user.name || "A team member",
           inviterEmail: data.inviter.user.email,
@@ -107,7 +107,7 @@ export const auth = betterAuth({
     oAuthProxy(),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
-        const emailHtml = getMagicLinkEmailHtml({
+        const emailHtml = await getMagicLinkEmailHtml({
           magicLinkUrl: url,
         });
 
@@ -181,7 +181,7 @@ export const auth = betterAuth({
         after: async (user) => {
           // Send welcome email to new users
           try {
-            const emailHtml = getWelcomeEmailHtml({
+            const emailHtml = await getWelcomeEmailHtml({
               userName: user.name,
             });
 

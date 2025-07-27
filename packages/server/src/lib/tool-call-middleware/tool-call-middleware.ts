@@ -425,7 +425,7 @@ function processToolResult(
           content.push({
             type: "image",
             mimeType: part.mimeType,
-            image: Uint8Array.fromBase64(part.data),
+            image: base64ToUint8Array(part.data),
           });
         } else {
           content.push(part as (typeof content)[number]);
@@ -443,4 +443,14 @@ function processToolResult(
     role: "user",
     content,
   };
+}
+
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
 }

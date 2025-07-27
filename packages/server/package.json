@@ -1,5 +1,6 @@
 {
   "name": "@ragdoll/server",
+  "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -15,6 +16,7 @@
     "@e2b/code-interpreter": "catalog:",
     "@getpochi/tools": "workspace:*",
     "@hono-storage/s3": "^0.0.13",
+    "@hono/node-server": "^1.17.1",
     "@hono/otel": "^0.2.2",
     "@hono/zod-validator": "^0.4.3",
     "@octokit/rest": "^22.0.0",
@@ -58,12 +60,13 @@
   },
   "scripts": {
     "tsc": "tsc --noEmit",
-    "dev:server": "bun --hot src/server.ts",
-    "build": "bun build src/server.ts --outdir dist --target bun --sourcemap=external",
-    "start": "bun run dist/server.js"
+    "dev:server": "vite-node -w src/server.ts",
+    "build": "bun build src/server.ts --outdir dist --target node --sourcemap=external",
+    "start": "dotenv node dist/server.js"
   },
   "devDependencies": {
     "@types/pg": "^8.11.11",
-    "@types/bun": "^1.2.6"
+    "dotenv-cli": "^9.0.0",
+    "vite-node": "^3.2.4"
   }
 }

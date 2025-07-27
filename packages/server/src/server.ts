@@ -3,18 +3,18 @@ import "./telemetry";
 import { getLogger } from "@ragdoll/common";
 import { app } from "./app";
 import { startListenDBEvents } from "./db/events";
-import { websocket } from "./lib/websocket";
 import { startWorkers } from "./service/background-job";
 export type { AppType } from "./app";
+import { serve } from "@hono/node-server";
 
 const logger = getLogger("server");
+const port = process.env.PORT ? Number.parseInt(process.env.PORT) : 4113;
 
-const server = Bun.serve({
-  port: process.env.PORT || 4113,
+const server = serve({
+  port,
   fetch: app.fetch,
-  websocket,
 });
-logger.info(`Listening on http://localhost:${server.port} ...`);
+console.log(`Listening on http://localhost:${port} ...`);
 
 const waitUntilPromises: Set<Promise<unknown>> = new Set();
 
@@ -23,13 +23,14 @@ export function waitUntil(promise: Promise<unknown>): void {
   waitUntilPromises.add(job);
 }
 
-export function setIdleTimeout(request: Request, secs: number) {
-  server.timeout(request, secs);
+export function setIdleTimeout(_request: Request, _secs: number) {
+  // server.timeout(request, secs);
 }
 
 async function gracefulShutdown() {
-  // Stop accepting new connections
-  await server.stop().catch(console.error);
+  await new Promise((resolve, reject) =>
+    server.close((err) => (err ? reject(err) : resolve(null))),
+  ).catch(console.error);
 
   logger.info("SIGINT / SIGTERM received, shutting down...");
   const pendingJobs = [...waitUntilPromises];
