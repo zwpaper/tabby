@@ -27,15 +27,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
   component: () => {
     const location = useLocation();
-    const isAuthPage = location.pathname.startsWith("/auth");
+    const showFooter =
+      !location.pathname.startsWith("/auth") &&
+      !location.pathname.startsWith("/clips");
 
     return (
       <>
         <HeadContent />
-        <div className={`min-h-screen ${!isAuthPage ? "pb-16" : ""}`}>
+        <div className={`min-h-screen ${showFooter ? "pb-16" : ""}`}>
           <Outlet />
         </div>
-        {!isAuthPage && <Footer />}
+        {showFooter && <Footer />}
         <TanStackRouterDevtools position="bottom-right" />
       </>
     );
