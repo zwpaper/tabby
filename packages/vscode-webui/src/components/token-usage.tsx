@@ -19,17 +19,56 @@ interface Props {
 export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
   const percentage = Math.ceil((totalTokens / contextWindow) * 100);
   const [ruleFiles, setRuleFiles] = useState<RuleFile[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
 
   useEffect(() => {
     vscodeHost.listRuleFiles().then(setRuleFiles);
   }, []);
 
+  const handleMouseEnter = () => {
+    if (!isPinned) {
+      setIsOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isPinned) {
+      setIsOpen(false);
+    }
+  };
+
+  const handleClick = () => {
+    if (isPinned) {
+      setIsPinned(false);
+      setIsOpen(false);
+    } else {
+      setTimeout(() => {
+        setIsPinned(true);
+        setIsOpen(true);
+      }, 0);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      // If popover is closing for any reason, it should be unpinned
+      setIsPinned(false);
+    }
+  };
+
   return (
-    <Popover>
-      <PopoverTrigger>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+      <PopoverTrigger
+        asChild
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+      >
         <div
           className={cn(
-            "overflow-x-hidden text-muted-foreground text-xs",
+            "cursor-pointer overflow-x-hidden rounded-md px-2 py-1 text-muted-foreground text-xs hover:bg-muted hover:text-foreground",
             className,
           )}
         >
@@ -38,7 +77,13 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
           </span>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-80 border">
+      <PopoverContent
+        className="w-80 border"
+        sideOffset={0}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <div className="flex flex-col gap-y-4 text-xs">
           {ruleFiles.length > 0 && (
             <div className="flex flex-col gap-y-1">
