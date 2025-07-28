@@ -15,7 +15,7 @@ class ClipService {
     const decodedId = clipIdCoder.decode(id);
     const clip = await db
       .selectFrom("clip")
-      .select(["data"])
+      .select(["data", "updatedAt"])
       .where("id", "=", decodedId)
       .executeTakeFirst();
 
