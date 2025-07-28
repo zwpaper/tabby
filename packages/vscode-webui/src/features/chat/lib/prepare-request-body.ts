@@ -17,16 +17,26 @@ export async function prepareRequestBody(
   minionId?: string | null,
   openAIModelOverride?: RagdollChatRequest["openAIModelOverride"],
 ): Promise<RagdollChatRequest> {
-  const last2Messages = request.messages.slice(-2);
-  const lastMessage = last2Messages.at(-1);
-  await appendCheckpoint(lastMessage as UIMessageWithRevisionId);
+  const lastMessage = request.messages.at(-1);
+  if (!lastMessage) {
+    throw new Error("Cannot prepare request body with no messages.");
+  }
+
+  const messagesToSend =
+    lastMessage.role === "user"
+      ? request.messages.slice(-2)
+      : request.messages.slice(-1);
+
+  const lastMessageToSend = messagesToSend.at(-1);
+
+  await appendCheckpoint(lastMessageToSend as UIMessageWithRevisionId);
   const triggerError =
-    lastMessage?.parts[0].type === "text" &&
-    lastMessage?.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
+    lastMessageToSend?.parts[0].type === "text" &&
+    lastMessageToSend?.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
   return {
     id: uid.current || undefined,
     model: triggerError ? "fake-model" : model,
-    messages: fromUIMessages(last2Messages),
+    messages: fromUIMessages(messagesToSend),
     minionId: minionId || undefined,
     environment,
     // @ts-expect-error
