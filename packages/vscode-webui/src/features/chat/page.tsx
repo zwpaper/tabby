@@ -123,6 +123,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
           baseURL: selectedModel.provider.baseURL,
           apiKey: selectedModel.provider.apiKey,
           maxOutputTokens: selectedModel.maxTokens,
+          contextWindow: selectedModel.contextWindow,
         }
       : undefined;
 

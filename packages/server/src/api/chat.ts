@@ -32,6 +32,7 @@ import { createBatchCallMiddleware } from "../lib/batch-call-middleware";
 import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
   type AvailableModelId,
+  AvailableModels,
   type CreditCostInput,
   geminiFlash,
   getModelById,
@@ -44,6 +45,7 @@ import {
 import { createToolMiddleware } from "../lib/tool-call-middleware";
 import { resolveServerTools } from "../lib/tools";
 import { setIdleTimeout, waitUntil } from "../server";
+import { compactService } from "../service/compact";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
 import { type ChatRequest, ZodChatRequestType } from "../types";
@@ -79,7 +81,11 @@ const chat = new Hono()
       req.openAIModelOverride || checkModel(requestedModelId);
 
     const { streamId, messages, uid, isSubTask } =
-      await taskService.startStreaming(user.id, req);
+      await taskService.startStreaming(
+        user.id,
+        req,
+        getContextWindow(validModelId),
+      );
 
     const enabledClientTools = selectClientTools(!isSubTask);
 
@@ -397,7 +403,7 @@ async function prepareMessages(
 ): Promise<UIMessage[]> {
   let messages = await resolveServerTools(inputMessages, user, stream);
   messages = prompts.injectEnvironmentDetails(messages, environment, user);
-  return messages;
+  return compactService.extractCompactMessages(messages);
 }
 
 export default chat;
@@ -439,4 +445,18 @@ function createModel(
     model,
     middleware,
   });
+}
+
+function getContextWindow(
+  modelId: AvailableModelId | NonNullable<ChatRequest["openAIModelOverride"]>,
+) {
+  if (typeof modelId === "string") {
+    const model = AvailableModels.find((m) => m.id === modelId);
+    if (!model) {
+      throw new Error(`Model ${modelId} is not valid`);
+    }
+    return model.contextWindow;
+  }
+
+  return modelId.contextWindow;
 }

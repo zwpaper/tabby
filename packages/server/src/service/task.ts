@@ -36,6 +36,7 @@ import { db, minionIdCoder, uidCoder } from "../db";
 import { geminiFlash } from "../lib/constants";
 import { applyEventFilter } from "../lib/event-filter";
 import type { ZodChatRequestType } from "../types";
+import { compactService } from "./compact";
 import { githubService } from "./github";
 import { minionService } from "./minion";
 
@@ -61,12 +62,11 @@ class TaskService {
   async startStreaming(
     userId: string,
     request: z.infer<typeof ZodChatRequestType>,
+    contextWindow: number,
   ) {
     const streamId = generateId();
-    const { conversation, uid, parentId, title } = await this.prepareTask(
-      userId,
-      request,
-    );
+    const { conversation, totalTokens, uid, parentId, title } =
+      await this.prepareTask(userId, request);
 
     const messagesToAppend =
       request.messages ?? (request.message ? [request.message] : []);
@@ -75,7 +75,7 @@ class TaskService {
       throw new Error("No messages to append");
     }
 
-    const messages = appendMessages(
+    let messages = appendMessages(
       toUIMessages(conversation?.messages ?? []),
       toUIMessages(messagesToAppend),
     );
@@ -83,6 +83,15 @@ class TaskService {
     let newTitle = undefined;
     if (!title && messages.length) {
       newTitle = await taskService.checkAndGenerateTaskTitle(messages);
+    }
+
+    if (
+      request.enableAutoCompact &&
+      shouldAutoCompact(contextWindow, totalTokens, messages)
+    ) {
+      const summary = await compactService.compact(messages);
+      messages = summary.messages;
+      await this.resetTokens(uid, summary.totalTokens);
     }
 
     const messagesToSave = formatters.storage(messages);
@@ -212,6 +221,7 @@ class TaskService {
         "id",
         "parentId",
         "title",
+        "totalTokens",
         minionIdFromTable,
         legacyMinionId,
       ])
@@ -633,6 +643,17 @@ class TaskService {
     return result.numUpdatedRows > 0;
   }
 
+  private async resetTokens(uid: string, newTokenCount: number) {
+    await db
+      .updateTable("task")
+      .set({
+        totalTokens: newTokenCount,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("id", "=", uidCoder.decode(uid))
+      .executeTakeFirstOrThrow();
+  }
+
   async fetchLatestStreamId(
     uid: string,
     userId: string,
@@ -901,3 +922,19 @@ const trimEndingPunctuation = (text: string) => {
   // It targets characters like periods, commas, question marks, exclamation marks, and their full-width equivalents.
   return text.replace(/[.,?_!\s。，？！]+$/gu, "");
 };
+
+function shouldAutoCompact(
+  contextWindow: number,
+  totalTokens: number | null,
+  messages: UIMessage[],
+) {
+  if (!totalTokens) return false;
+  if (totalTokens < contextWindow * 0.9) {
+    return false;
+  }
+  if (messages.at(-1)?.role !== "user") {
+    return false;
+  }
+
+  return true;
+}

@@ -1,4 +1,6 @@
 import type { Environment } from "@ragdoll/db";
+import type { UIMessage } from "ai";
+import { createCompactSummaryPrompt } from "./compact";
 import { injectEnvironmentDetails } from "./environment";
 import { generateSystemPrompt } from "./system";
 
@@ -8,6 +10,9 @@ export const prompts = {
   createSystemReminder,
   isSystemReminder,
   formatUserEdits,
+  isCompactPart,
+  compact: createCompactSummaryPrompt,
+  createCompactPart,
 };
 
 export { getReadEnvironmentResult } from "./environment";
@@ -26,6 +31,26 @@ function isSystemReminder(content: string) {
     (content.startsWith("<environment-details>") &&
       content.endsWith("</environment-details>"))
   );
+}
+
+function isCompactPart(part: UIMessage["parts"][number]) {
+  return (
+    part.type === "text" &&
+    part.text.startsWith("<compact>") &&
+    part.text.endsWith("</compact>")
+  );
+}
+
+function createCompactPart(
+  summary: string,
+  messageCount: number,
+): UIMessage["parts"][number] {
+  const text = `<compact>
+Previous conversation summary (${messageCount} messages):
+${summary}
+This section contains a summary of the conversation up to this point to save context. The full conversation history has been preserved but condensed for efficiency.
+</compact>`;
+  return { type: "text", text };
 }
 
 function formatUserEdits(

@@ -39,9 +39,14 @@ export const ZodChatRequestType = z.object({
     .object({
       baseURL: z.string(),
       apiKey: z.string().optional(),
+      contextWindow: z.number().describe("Context window of the model."),
       maxOutputTokens: z.number().describe("Max output tokens of the model."),
     })
     .optional(),
+  enableAutoCompact: z
+    .boolean()
+    .optional()
+    .describe("Enable auto-compact for the task."),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;

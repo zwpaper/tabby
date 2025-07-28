@@ -100,6 +100,11 @@ program
     "The max output tokens to use for BYOK model.",
     parsePositiveInt,
   )
+  .option(
+    "--context-window <number>",
+    "The context window limit for BYOK model.",
+    parsePositiveInt,
+  )
   .action(async (options) => {
     let uid = options.task ?? process.env.POCHI_TASK_ID;
 
@@ -143,15 +148,16 @@ program
 
     let openAIModelOverride: ChatRequest["openAIModelOverride"] | undefined;
     if (options.baseUrl) {
-      if (options.maxOutputTokens && options.model) {
+      if (options.maxOutputTokens && options.model && options.contextWindow) {
         openAIModelOverride = {
           apiKey: options.apiKey,
           baseURL: options.baseUrl,
           maxOutputTokens: options.maxOutputTokens,
+          contextWindow: options.contextWindow,
         };
       } else {
         return program.error(
-          "error: --base-url requires --max-output-tokens and --model to be set.",
+          "error: --base-url requires --max-output-tokens, --model and --context-window to be set.",
         );
       }
     }
