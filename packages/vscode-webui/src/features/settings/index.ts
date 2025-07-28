@@ -4,6 +4,7 @@ export {
   useModels,
   useSelectedModels,
   type DisplayModel,
+  type ModelGroups,
 } from "./hooks/use-models";
 export { useAutoApprove } from "./hooks/use-auto-approve";
 export { useToolAutoApproval } from "./hooks/use-tool-auto-approval";

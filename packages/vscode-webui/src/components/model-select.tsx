@@ -6,6 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,11 +14,11 @@ import { cn } from "@/lib/utils";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import LoadingWrapper from "@/components/loading-wrapper";
-import type { DisplayModel } from "@/features/settings";
+import type { DisplayModel, ModelGroups } from "@/features/settings";
 import { DropdownMenuPortal } from "@radix-ui/react-dropdown-menu";
 
 interface ModelSelectProps {
-  models: DisplayModel[] | undefined;
+  models: ModelGroups | undefined;
   value: DisplayModel | undefined;
   onChange: (v: string) => void;
   isLoading?: boolean;
@@ -44,7 +45,7 @@ export function ModelSelect({
         </div>
       }
     >
-      {!!models?.length && (
+      {!!models && models.length > 0 && (
         <div className="h-6 select-none overflow-hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -72,35 +73,43 @@ export function ModelSelect({
                   value={value?.id}
                   onValueChange={onChange}
                 >
-                  {models.map((model) => {
-                    const isSelected = model.id === value?.id;
-                    return (
-                      <DropdownMenuRadioItem
-                        onClick={(e) => {
-                          onSelectModel(model.id);
-                          e.stopPropagation();
-                        }}
-                        value={model.id}
-                        key={model.id}
-                        className="cursor-pointer py-2 pl-2"
-                      >
-                        <CheckIcon
-                          className={cn(
-                            "mr-1 shrink-0",
-                            isSelected ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        <span
-                          className={cn({
-                            "font-semibold": isSelected,
-                          })}
-                        >
-                          {model.type === "hosted" ? model.id : model.name}
-                        </span>
-                      </DropdownMenuRadioItem>
-                    );
-                  })}
-                </DropdownMenuRadioGroup>
+                  {models.map((group, index) => (
+                    <div key={group.title}>
+                      {group.isCustom && index > 0 && <DropdownMenuSeparator />}
+                      <div className="px-2 py-1.5 font-semibold text-muted-foreground text-sm">
+                        {group.title}
+                      </div>
+                      {group.models.map((model: DisplayModel) => {
+                        const isSelected = model.id === value?.id;
+                        return (
+                          <DropdownMenuRadioItem
+                            onClick={(e) => {
+                              onSelectModel(model.id);
+                              e.stopPropagation();
+                            }}
+                            value={model.id}
+                            key={model.id}
+                            className="cursor-pointer py-2 pl-2"
+                          >
+                            <CheckIcon
+                              className={cn(
+                                "mr-1 shrink-0",
+                                isSelected ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            <span
+                              className={cn({
+                                "font-semibold": isSelected,
+                              })}
+                            >
+                              {model.type === "hosted" ? model.id : model.name}
+                            </span>
+                          </DropdownMenuRadioItem>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </DropdownMenuRadioGroup>{" "}
               </DropdownMenuContent>
             </DropdownMenuPortal>
           </DropdownMenu>

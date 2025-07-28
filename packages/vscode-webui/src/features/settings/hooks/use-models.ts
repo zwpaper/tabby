@@ -25,6 +25,13 @@ export type DisplayModel =
       };
     };
 
+export type ModelGroup = {
+  title: string;
+  models: DisplayModel[];
+  isCustom?: boolean;
+};
+export type ModelGroups = ModelGroup[];
+
 export function useModels() {
   const { enablePochiModels } = useSettingsStore();
   const { data, isLoading } = useQuery({
@@ -90,6 +97,32 @@ export function useSelectedModels() {
   const { selectedModelId, updateSelectedModelId } = useSettingsStore();
   const { models, isLoading } = useModels();
 
+  const groupedModels = useMemo<ModelGroups | undefined>(() => {
+    if (!models) return undefined;
+    const groups: ModelGroups = [];
+    const premiumModels = models.filter(
+      (m) => m.type === "hosted" && m.costType === "premium",
+    );
+    if (premiumModels.length > 0) {
+      groups.push({ title: "Super", models: premiumModels });
+    }
+    const basicModels = models.filter(
+      (m) => m.type === "hosted" && m.costType === "basic",
+    );
+    if (basicModels.length > 0) {
+      groups.push({ title: "Swift", models: basicModels });
+    }
+    const customModels = models.filter((m) => m.type === "byok");
+    if (customModels.length > 0) {
+      groups.push({
+        title: "Custom",
+        models: customModels,
+        isCustom: true,
+      });
+    }
+    return groups;
+  }, [models]);
+
   useEffect(() => {
     if (!isLoading) {
       // init model
@@ -105,6 +138,7 @@ export function useSelectedModels() {
   return {
     isLoading,
     models,
+    groupedModels,
     selectedModel,
     updateSelectedModelId,
   };

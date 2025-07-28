@@ -90,7 +90,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const isWorkspaceActive = !!currentWorkspace;
 
   const {
-    models,
+    groupedModels,
     selectedModel,
     isLoading: isModelsLoading,
     updateSelectedModelId: handleSelectModel,
@@ -419,7 +419,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
               <div className="flex items-center gap-2 overflow-x-hidden truncate">
                 <ModelSelect
                   value={selectedModel}
-                  models={models}
+                  models={groupedModels}
                   isLoading={isModelsLoading}
                   onChange={handleSelectModel}
                 />
