@@ -3,7 +3,7 @@ import { normalizeApiError, toHttpError } from "@/lib/error";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-export const Route = createFileRoute("/clip/new")({
+export const Route = createFileRoute("/clips/new")({
   component: ClipNew,
 });
 

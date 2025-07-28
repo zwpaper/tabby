@@ -50,7 +50,7 @@ function getPochiLogLevel() {
     return (globalThis as any).POCHI_LOG as string;
   }
 
-  return process.env.POCHI_LOG || "";
+  return (typeof process !== "undefined" && process.env.POCHI_LOG) || "";
 }
 
 function parseLogMinLevelAndType(name: string) {

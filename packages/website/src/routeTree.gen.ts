@@ -17,8 +17,8 @@ import { Route as PrivacyPolicyImport } from './routes/privacy-policy'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
 import { Route as ShareUidImport } from './routes/share.$uid'
-import { Route as ClipNewImport } from './routes/clip/new'
-import { Route as ClipIdImport } from './routes/clip/$id'
+import { Route as ClipsNewImport } from './routes/clips/new'
+import { Route as ClipsIdImport } from './routes/clips/$id'
 import { Route as AuthPathnameImport } from './routes/auth/$pathname'
 import { Route as AuthenticatedStopImpersonatingImport } from './routes/_authenticated.stop-impersonating'
 import { Route as AuthenticatedRedirectVscodeImport } from './routes/_authenticated.redirect-vscode'
@@ -81,15 +81,15 @@ const ShareUidRoute = ShareUidImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const ClipNewRoute = ClipNewImport.update({
-  id: '/clip/new',
-  path: '/clip/new',
+const ClipsNewRoute = ClipsNewImport.update({
+  id: '/clips/new',
+  path: '/clips/new',
   getParentRoute: () => rootRoute,
 } as any)
 
-const ClipIdRoute = ClipIdImport.update({
-  id: '/clip/$id',
-  path: '/clip/$id',
+const ClipsIdRoute = ClipsIdImport.update({
+  id: '/clips/$id',
+  path: '/clips/$id',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -339,18 +339,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathnameImport
       parentRoute: typeof rootRoute
     }
-    '/clip/$id': {
-      id: '/clip/$id'
-      path: '/clip/$id'
-      fullPath: '/clip/$id'
-      preLoaderRoute: typeof ClipIdImport
+    '/clips/$id': {
+      id: '/clips/$id'
+      path: '/clips/$id'
+      fullPath: '/clips/$id'
+      preLoaderRoute: typeof ClipsIdImport
       parentRoute: typeof rootRoute
     }
-    '/clip/new': {
-      id: '/clip/new'
-      path: '/clip/new'
-      fullPath: '/clip/new'
-      preLoaderRoute: typeof ClipNewImport
+    '/clips/new': {
+      id: '/clips/new'
+      path: '/clips/new'
+      fullPath: '/clips/new'
+      preLoaderRoute: typeof ClipsNewImport
       parentRoute: typeof rootRoute
     }
     '/share/$uid': {
@@ -592,8 +592,8 @@ export interface FileRoutesByFullPath {
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
-  '/clip/$id': typeof ClipIdRoute
-  '/clip/new': typeof ClipNewRoute
+  '/clips/$id': typeof ClipsIdRoute
+  '/clips/new': typeof ClipsNewRoute
   '/share/$uid': typeof ShareUidRoute
   '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
@@ -625,8 +625,8 @@ export interface FileRoutesByTo {
   '/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
-  '/clip/$id': typeof ClipIdRoute
-  '/clip/new': typeof ClipNewRoute
+  '/clips/$id': typeof ClipsIdRoute
+  '/clips/new': typeof ClipsNewRoute
   '/share/$uid': typeof ShareUidRoute
   '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
@@ -660,8 +660,8 @@ export interface FileRoutesById {
   '/_authenticated/redirect-vscode': typeof AuthenticatedRedirectVscodeRoute
   '/_authenticated/stop-impersonating': typeof AuthenticatedStopImpersonatingRoute
   '/auth/$pathname': typeof AuthPathnameRoute
-  '/clip/$id': typeof ClipIdRoute
-  '/clip/new': typeof ClipNewRoute
+  '/clips/$id': typeof ClipsIdRoute
+  '/clips/new': typeof ClipsNewRoute
   '/share/$uid': typeof ShareUidRoute
   '/_authenticated/_base/_settings': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
   '/_authenticated/_base/create': typeof AuthenticatedBaseCreateRoute
@@ -696,8 +696,8 @@ export interface FileRouteTypes {
     | '/redirect-vscode'
     | '/stop-impersonating'
     | '/auth/$pathname'
-    | '/clip/$id'
-    | '/clip/new'
+    | '/clips/$id'
+    | '/clips/new'
     | '/share/$uid'
     | '/create'
     | '/home'
@@ -728,8 +728,8 @@ export interface FileRouteTypes {
     | '/redirect-vscode'
     | '/stop-impersonating'
     | '/auth/$pathname'
-    | '/clip/$id'
-    | '/clip/new'
+    | '/clips/$id'
+    | '/clips/new'
     | '/share/$uid'
     | '/create'
     | '/home'
@@ -761,8 +761,8 @@ export interface FileRouteTypes {
     | '/_authenticated/redirect-vscode'
     | '/_authenticated/stop-impersonating'
     | '/auth/$pathname'
-    | '/clip/$id'
-    | '/clip/new'
+    | '/clips/$id'
+    | '/clips/new'
     | '/share/$uid'
     | '/_authenticated/_base/_settings'
     | '/_authenticated/_base/create'
@@ -791,8 +791,8 @@ export interface RootRouteChildren {
   RedirectUrlRoute: typeof RedirectUrlRoute
   TermOfServiceRoute: typeof TermOfServiceRoute
   AuthPathnameRoute: typeof AuthPathnameRoute
-  ClipIdRoute: typeof ClipIdRoute
-  ClipNewRoute: typeof ClipNewRoute
+  ClipsIdRoute: typeof ClipsIdRoute
+  ClipsNewRoute: typeof ClipsNewRoute
   ShareUidRoute: typeof ShareUidRoute
 }
 
@@ -803,8 +803,8 @@ const rootRouteChildren: RootRouteChildren = {
   RedirectUrlRoute: RedirectUrlRoute,
   TermOfServiceRoute: TermOfServiceRoute,
   AuthPathnameRoute: AuthPathnameRoute,
-  ClipIdRoute: ClipIdRoute,
-  ClipNewRoute: ClipNewRoute,
+  ClipsIdRoute: ClipsIdRoute,
+  ClipsNewRoute: ClipsNewRoute,
   ShareUidRoute: ShareUidRoute,
 }
 
@@ -824,8 +824,8 @@ export const routeTree = rootRoute
         "/redirect-url",
         "/term-of-service",
         "/auth/$pathname",
-        "/clip/$id",
-        "/clip/new",
+        "/clips/$id",
+        "/clips/new",
         "/share/$uid"
       ]
     },
@@ -896,11 +896,11 @@ export const routeTree = rootRoute
     "/auth/$pathname": {
       "filePath": "auth/$pathname.tsx"
     },
-    "/clip/$id": {
-      "filePath": "clip/$id.tsx"
+    "/clips/$id": {
+      "filePath": "clips/$id.tsx"
     },
-    "/clip/new": {
-      "filePath": "clip/new.tsx"
+    "/clips/new": {
+      "filePath": "clips/new.tsx"
     },
     "/share/$uid": {
       "filePath": "share.$uid.tsx"
