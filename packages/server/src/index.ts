@@ -43,41 +43,56 @@ export function createPochiEventSource(
 export function createPochiEventSourceWithApiClient(
   uid: string,
   apiClient: ReturnType<typeof hc<AppType>>,
-  options?: { heartbeat?: boolean },
+  options?: { heartbeat?: boolean; logFn?: (message: string) => void },
 ) {
   const url = apiClient.api.tasks[":uid"].events
     .$url({ param: { uid } })
     .toString();
-  return new PochiEventSourceImpl(url, {
-    fetch: (input, init) => {
-      if (
-        (typeof input === "string" && input !== url) ||
-        (input instanceof URL && input.toString() !== url)
-      ) {
-        throw new Error(
-          `Expected input to be ${url}, but got ${input}. This is likely a bug in PochiEventSourceImpl.`,
+  return new PochiEventSourceImpl(
+    url,
+    {
+      fetch: async (input, init) => {
+        if (
+          (typeof input === "string" && input !== url) ||
+          (input instanceof URL && input.toString() !== url)
+        ) {
+          throw new Error(
+            `Expected input to be ${url}, but got ${input}. This is likely a bug in PochiEventSourceImpl.`,
+          );
+        }
+        options?.logFn?.(`Request: GET ${url}`);
+        const { headers, ...restInit } = init;
+        const resp = await apiClient.api.tasks[":uid"].events.$get(
+          {
+            param: { uid },
+            query: options?.heartbeat ? { heartbeat: "true" } : undefined,
+          },
+          {
+            headers,
+            init: restInit,
+          },
         );
-      }
-      const { headers, ...restInit } = init;
-      return apiClient.api.tasks[":uid"].events.$get(
-        {
-          param: { uid },
-          query: options?.heartbeat ? { heartbeat: "true" } : undefined,
-        },
-        {
-          headers,
-          init: restInit,
-        },
-      );
+        options?.logFn?.(
+          `Response: GET ${url}: ${resp.status} ${resp.statusText}`,
+        );
+        return resp;
+      },
     },
-  });
+    { logFn: options?.logFn },
+  );
 }
 
 class PochiEventSourceImpl implements PochiEventSource {
   private es: EventSource;
+  private logFn?: (message: string) => void;
 
-  constructor(url: string, eventSourceInitDict: EventSourceInit) {
+  constructor(
+    url: string,
+    eventSourceInitDict: EventSourceInit,
+    options?: { logFn?: (message: string) => void },
+  ) {
     this.es = new EventSource(url, eventSourceInitDict);
+    this.logFn = options?.logFn;
   }
 
   subscribe<T extends { type: string }>(
@@ -86,6 +101,8 @@ class PochiEventSourceImpl implements PochiEventSource {
   ) {
     const callback = (message: MessageEvent) => {
       try {
+        this.logFn?.(`Received event: ${message.data}`);
+
         if (typeof message.data !== "string") return;
         const data = JSON.parse(message.data) as T;
 

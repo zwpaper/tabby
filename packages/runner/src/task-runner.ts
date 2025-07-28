@@ -190,7 +190,7 @@ const DefaultMaxRounds = 24;
 const DefaultMaxRetries = 3;
 const ApiRequestTimeout = 60_000; // 60 seconds
 
-const logger = getLogger("TaskRunner");
+const baseLogger = getLogger("TaskRunner");
 
 export class TaskRunner {
   private readonly logger: ReturnType<typeof getLogger>;
@@ -205,7 +205,7 @@ export class TaskRunner {
   readonly state: Signal<TaskRunnerState>;
 
   constructor(readonly options: RunnerOptions) {
-    this.logger = logger.getSubLogger({
+    this.logger = baseLogger.getSubLogger({
       name: `task-${options.uid}`,
     });
     this.state = signal({
@@ -336,6 +336,7 @@ export class TaskRunner {
     const task = await loadTaskAndWaitStreaming({
       uid: this.options.uid,
       apiClient: this.options.apiClient,
+      logger: this.logger,
       abortSignal: signal,
     });
     this.task = task;
@@ -518,7 +519,9 @@ export class TaskRunner {
 
     await withAttempts(
       async () => {
+        const url = this.options.apiClient.api.chat.stream.$url();
         const timeout = AbortSignal.timeout(ApiRequestTimeout);
+        this.logger.debug(`Request: POST ${url}`);
         const resp = await this.options.apiClient.api.chat.stream.$post(
           {
             json: {
@@ -535,6 +538,9 @@ export class TaskRunner {
               signal: AbortSignal.any([timeout, ...(signal ? [signal] : [])]),
             },
           },
+        );
+        this.logger.debug(
+          `Response: POST ${url}: ${resp.status} ${resp.statusText}`,
         );
         if (!resp.ok) {
           const error = await resp.text();
@@ -605,16 +611,20 @@ export class TaskRunner {
 async function loadTaskAndWaitStreaming({
   uid,
   apiClient,
+  logger,
   abortSignal,
 }: {
   uid: string;
   apiClient: ApiClient;
+  logger: ReturnType<typeof getLogger>;
   abortSignal?: AbortSignal;
 }): Promise<Task> {
   const loadTask = async () => {
     return await withAttempts(
       async () => {
+        const url = apiClient.api.tasks[":uid"].$url({ param: { uid } });
         const timeout = AbortSignal.timeout(ApiRequestTimeout);
+        logger.debug(`Request: GET ${url}`);
         const resp = await apiClient.api.tasks[":uid"].$get(
           {
             param: {
@@ -630,6 +640,7 @@ async function loadTaskAndWaitStreaming({
             },
           },
         );
+        logger.debug(`Response: GET ${url}: ${resp.status} ${resp.statusText}`);
         if (!resp.ok) {
           const error = await resp.text();
           throw new Error(`Failed to fetch task: ${resp.statusText}: ${error}`);
@@ -661,7 +672,12 @@ async function loadTaskAndWaitStreaming({
     const taskEventSource = createPochiEventSourceWithApiClient(
       uid,
       apiClient,
-      { heartbeat: true },
+      {
+        heartbeat: true,
+        logFn: (message: string) => {
+          logger.debug(message);
+        },
+      },
     );
     const unsubscribe = taskEventSource.subscribe<TaskEvent>(
       "task:status-changed",

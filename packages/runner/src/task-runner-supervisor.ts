@@ -188,7 +188,12 @@ export class TaskRunnerSupervisor {
       const taskEventSource = createPochiEventSourceWithApiClient(
         this.runner.options.uid,
         this.runner.options.apiClient,
-        { heartbeat: true },
+        {
+          heartbeat: true,
+          logFn: (message: string) => {
+            logger.debug(message);
+          },
+        },
       );
       const unsubscribe = taskEventSource.subscribe<TaskEvent>(
         "task:status-changed",
