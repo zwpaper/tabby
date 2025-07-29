@@ -45,7 +45,6 @@ import {
 import { createToolMiddleware } from "../lib/tool-call-middleware";
 import { resolveServerTools } from "../lib/tools";
 import { setIdleTimeout, waitUntil } from "../server";
-import { compactService } from "../service/compact";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
 import { type ChatRequest, ZodChatRequestType } from "../types";
@@ -403,7 +402,7 @@ async function prepareMessages(
 ): Promise<UIMessage[]> {
   let messages = await resolveServerTools(inputMessages, user, stream);
   messages = prompts.injectEnvironmentDetails(messages, environment, user);
-  return compactService.extractCompactMessages(messages);
+  return messages;
 }
 
 export default chat;

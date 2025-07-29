@@ -27,8 +27,7 @@ export class CompactService {
     };
   }
 
-  /* Extract messages since the last compact section (including the compact message) */
-  extractCompactMessages(messages: UIMessage[]) {
+  private extractCompactMessages(messages: UIMessage[]) {
     for (let i = messages.length - 1; i >= 0; i--) {
       const message = messages[i];
       if (message.parts.some(prompts.isCompactPart)) {
