@@ -59,13 +59,12 @@
   },
   "scripts": {
     "tsc": "tsc --noEmit",
-    "dev:server": "vite-node -w src/server.ts",
+    "dev:server": "bun --watch src/server.ts",
     "build": "bun build src/server.ts --outdir dist --target node --sourcemap=linked",
     "start": "dotenv node -- --enable-source-maps dist/server.js"
   },
   "devDependencies": {
     "@types/pg": "^8.11.11",
-    "dotenv-cli": "^9.0.0",
-    "vite-node": "^3.2.4"
+    "dotenv-cli": "^9.0.0"
   }
 }

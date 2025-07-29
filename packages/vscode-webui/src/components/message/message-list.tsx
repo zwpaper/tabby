@@ -1,4 +1,6 @@
 import type { ToolInvocationUIPart, UIMessage } from "@ai-sdk/ui-utils";
+import { IconLineSpacingCompact } from "obra-icons-react";
+
 import type { TextPart } from "ai";
 import { Loader2, UserIcon } from "lucide-react";
 import type React from "react";
@@ -12,9 +14,11 @@ import { useToolCallLifeCycle } from "@/features/chat";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
 import { isVSCodeEnvironment } from "@/lib/vscode";
+import { prompts } from "@ragdoll/common";
 import type { CheckpointPart, ExtendedUIMessage } from "@ragdoll/db";
 import { useEffect } from "react";
 import { CheckpointUI } from "../checkpoint-ui";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
 
@@ -54,7 +58,7 @@ export const MessageList: React.FC<{
     >
       {renderMessages.map((m, messageIndex) => (
         <div key={m.id} className="flex flex-col">
-          <div className={cn(showUserAvatar && "py-2")}>
+          <div className={cn(showUserAvatar && "pt-4 pb-2")}>
             {showUserAvatar && (
               <div className="flex items-center gap-2">
                 {m.role === "user" ? (
@@ -77,6 +81,9 @@ export const MessageList: React.FC<{
                   </Avatar>
                 )}
                 <strong>{m.role === "user" ? user?.name : "Pochi"}</strong>
+                {containsCompactPart(m) && (
+                  <CompactPartToolTip className="ml-1" />
+                )}
               </div>
             )}
             <div className={cn("ml-1 flex flex-col", showUserAvatar && "mt-3")}>
@@ -189,6 +196,11 @@ function TextPartUI({
   if (part.text.trim().length === 0) {
     return null; // Skip empty text parts
   }
+
+  if (prompts.isCompactPart(part)) {
+    return null; // Skip compact parts
+  }
+
   return <MessageMarkdown className={className}>{part.text}</MessageMarkdown>;
 }
 
@@ -245,3 +257,23 @@ const getToolCallCheckpoint = (
     modified: afterCheckpoint?.checkpoint.commit,
   };
 };
+
+function containsCompactPart(message: UIMessage) {
+  return message.parts.some(prompts.isCompactPart);
+}
+
+function CompactPartToolTip({ className }: { className?: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild className={className}>
+        <IconLineSpacingCompact className="size-5 cursor-pointer" />
+      </TooltipTrigger>
+      <TooltipContent sideOffset={2} side="right">
+        <p className="m-0">
+          Conversation has been compacted from this point onward to reduce
+          context usage
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}

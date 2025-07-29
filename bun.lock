@@ -161,7 +161,6 @@
       "devDependencies": {
         "@types/pg": "^8.11.11",
         "dotenv-cli": "^9.0.0",
-        "vite-node": "^3.2.4",
       },
     },
     "packages/tools": {
@@ -176,7 +175,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.4.48",
+      "version": "0.4.49",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@orama/orama": "^3.1.11",
@@ -282,6 +281,7 @@
         "hono": "catalog:",
         "lucide-react": "^0.487.0",
         "motion": "^12.12.1",
+        "obra-icons-react": "^1.23.1",
         "react": "catalog:",
         "react-dom": "^19.0.0",
         "react-icons": "catalog:",
@@ -2967,6 +2967,8 @@
     "object-keys": ["object-keys@1.1.1", "", {}, "sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA=="],
 
     "object.assign": ["object.assign@4.1.7", "", { "dependencies": { "call-bind": "^1.0.8", "call-bound": "^1.0.3", "define-properties": "^1.2.1", "es-object-atoms": "^1.0.0", "has-symbols": "^1.1.0", "object-keys": "^1.1.1" } }, "sha512-nK28WOo+QIjBkDduTINE4JkF/UJJKyf2EJxvJKfblDpyg0Q+pkOHNTL0Qwy6NP6FhE/EnzV73BxxqcJaXY9anw=="],
+
+    "obra-icons-react": ["obra-icons-react@1.23.1", "", {}, "sha512-jbn/1zqBipS3aOd5tTb3JLjWz49pwA0NCEmc/GMvHJG75Tn+jp4KBI4BG032BfYEGl3sYld7RCcRByPle3uymg=="],
 
     "on-finished": ["on-finished@2.4.1", "", { "dependencies": { "ee-first": "1.1.1" } }, "sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg=="],
 

@@ -63,6 +63,7 @@
     "hono": "catalog:",
     "lucide-react": "^0.487.0",
     "motion": "^12.12.1",
+    "obra-icons-react": "^1.23.1",
     "react": "catalog:",
     "react-dom": "^19.0.0",
     "react-icons": "catalog:",

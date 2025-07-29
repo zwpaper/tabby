@@ -16,6 +16,7 @@ export async function prepareRequestBody(
   model: string | undefined,
   minionId?: string | null,
   openAIModelOverride?: RagdollChatRequest["openAIModelOverride"],
+  enableAutoCompact?: boolean,
 ): Promise<RagdollChatRequest> {
   const lastMessage = request.messages.at(-1);
   if (!lastMessage) {
@@ -42,6 +43,7 @@ export async function prepareRequestBody(
     // @ts-expect-error
     mcpToolSet,
     openAIModelOverride,
+    enableAutoCompact,
   };
 }
 

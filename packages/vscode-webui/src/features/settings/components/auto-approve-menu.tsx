@@ -30,6 +30,7 @@ export function AutoApproveMenu() {
     updateAutoApproveActive,
     autoApproveSettings,
     updateAutoApproveSettings,
+    enableAutoCompact,
   } = useSettingsStore();
 
   const [currentMaxRetry, setCurrentMaxRetry] = useState(
@@ -92,6 +93,7 @@ export function AutoApproveMenu() {
       .filter((setting) => getCoreActionCheckedState(setting.id))
       .map((setting) => setting.summary),
     ...(autoApproveSettings.retry ? ["Retry"] : []),
+    ...(enableAutoCompact ? ["Auto-compact"] : []),
   ];
 
   return (

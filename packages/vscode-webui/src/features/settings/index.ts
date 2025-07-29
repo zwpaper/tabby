@@ -8,6 +8,7 @@ export {
 } from "./hooks/use-models";
 export { useAutoApprove } from "./hooks/use-auto-approve";
 export { useToolAutoApproval } from "./hooks/use-tool-auto-approval";
+export { useEnableAutoCompact } from "./hooks/use-enable-auto-compact";
 
 export { AutoApproveMenu } from "./components/auto-approve-menu";
 export { SettingsPage } from "./components/page";

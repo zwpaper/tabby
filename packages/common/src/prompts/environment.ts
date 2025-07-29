@@ -165,14 +165,19 @@ export function injectEnvironmentDetails(
       ? getReadEnvironmentResult(environment, user)
       : getLiteReadEnvironmentResult(environment);
 
-  const textPart = {
+  const reminderPart = {
     type: "text",
     text: prompts.createSystemReminder(environmentDetails),
   } satisfies TextUIPart;
 
   const parts = messageToInject.parts || [];
-
-  messageToInject.parts = [textPart, ...parts];
+  const lastPart = parts.at(-1);
+  const remainParts = parts.slice(0, -1) || [];
+  messageToInject.parts = [
+    ...remainParts,
+    reminderPart,
+    ...(lastPart ? [lastPart] : []),
+  ];
 
   return messages;
 }
