@@ -70,8 +70,8 @@ export function useModels() {
 
     let defaultModels = data.map<DisplayModel>((model) => ({
       type: "hosted" as const,
-      name: model.id,
       ...model,
+      name: model.id,
     }));
     if (!enablePochiModels) {
       defaultModels = defaultModels.filter(

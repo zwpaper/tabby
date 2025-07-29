@@ -14,6 +14,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as TermOfServiceImport } from './routes/term-of-service'
 import { Route as RedirectUrlImport } from './routes/redirect-url'
 import { Route as PrivacyPolicyImport } from './routes/privacy-policy'
+import { Route as PricingImport } from './routes/pricing'
 import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
 import { Route as ShareUidImport } from './routes/share.$uid'
@@ -61,6 +62,12 @@ const RedirectUrlRoute = RedirectUrlImport.update({
 const PrivacyPolicyRoute = PrivacyPolicyImport.update({
   id: '/privacy-policy',
   path: '/privacy-policy',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const PricingRoute = PricingImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -267,6 +274,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof AuthenticatedImport
+      parentRoute: typeof rootRoute
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingImport
       parentRoute: typeof rootRoute
     }
     '/privacy-policy': {
@@ -583,6 +597,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
@@ -616,6 +631,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '': typeof AuthenticatedBaseSettingsRouteRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
@@ -650,6 +666,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/pricing': typeof PricingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/redirect-url': typeof RedirectUrlRoute
   '/term-of-service': typeof TermOfServiceRoute
@@ -687,6 +704,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | ''
+    | '/pricing'
     | '/privacy-policy'
     | '/redirect-url'
     | '/term-of-service'
@@ -719,6 +737,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | ''
+    | '/pricing'
     | '/privacy-policy'
     | '/redirect-url'
     | '/term-of-service'
@@ -751,6 +770,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/pricing'
     | '/privacy-policy'
     | '/redirect-url'
     | '/term-of-service'
@@ -787,6 +807,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  PricingRoute: typeof PricingRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   RedirectUrlRoute: typeof RedirectUrlRoute
   TermOfServiceRoute: typeof TermOfServiceRoute
@@ -799,6 +820,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  PricingRoute: PricingRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   RedirectUrlRoute: RedirectUrlRoute,
   TermOfServiceRoute: TermOfServiceRoute,
@@ -820,6 +842,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/_authenticated",
+        "/pricing",
         "/privacy-policy",
         "/redirect-url",
         "/term-of-service",
@@ -844,6 +867,9 @@ export const routeTree = rootRoute
         "/_authenticated/auth/device-link",
         "/_authenticated/auth/vscode-link"
       ]
+    },
+    "/pricing": {
+      "filePath": "pricing.tsx"
     },
     "/privacy-policy": {
       "filePath": "privacy-policy.tsx"
