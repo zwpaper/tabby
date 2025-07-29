@@ -14,9 +14,12 @@ type TaskStatusChanged = {
   eventType: TaskCreateEvent["type"] | null;
 };
 
+import { userIntegrationsEvents } from "../service/user-integrations-events";
+
 export async function startListenDBEvents() {
   const client = await pool.connect();
   await client.query("LISTEN task_status_channel");
+  await client.query("LISTEN integrations_changed");
 
   client.on("notification", (msg) => {
     if (msg.channel === "task_status_channel") {
@@ -42,6 +45,18 @@ export async function startListenDBEvents() {
           status,
         },
       });
+    } else if (msg.channel === "integrations_changed") {
+      if (!msg.payload) {
+        console.warn("No payload in integrations_changed");
+        return;
+      }
+      const payload = JSON.parse(msg.payload) as { userId: string };
+      if (payload?.userId) {
+        userIntegrationsEvents.publish({
+          type: "integrations:changed",
+          data: { userId: payload.userId },
+        });
+      }
     }
   });
 

@@ -18,6 +18,10 @@ import { useSession } from "@/lib/auth-hooks";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@daveyplate/better-auth-ui";
 import {
+  type ExternalIntegrationsEvent,
+  createExternalIntegrationsEventSource,
+} from "@ragdoll/server";
+import {
   IconBrandGithub,
   IconBrandSlack,
   IconLogout,
@@ -706,6 +710,23 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
     }
   }, [queryClient, userId]);
+
+  useEffect(() => {
+    const es = createExternalIntegrationsEventSource();
+    const unsubscribe = es.subscribe(
+      "integrations:changed",
+      (event: ExternalIntegrationsEvent) => {
+        if (event.data.userId === userId) {
+          queryClient.invalidateQueries({ queryKey: ["integrations", userId] });
+        }
+      },
+    );
+
+    return () => {
+      unsubscribe();
+      es.dispose();
+    };
+  }, [userId, queryClient]);
 
   return (
     <div className="container mx-auto max-w-6xl space-y-8 px-2 pt-6 pb-8 md:px-6 md:pt-8 lg:px-8">

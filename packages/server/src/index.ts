@@ -1,4 +1,8 @@
-export type { TaskEvent, TaskCreateEvent } from "@ragdoll/db";
+export type {
+  TaskEvent,
+  TaskCreateEvent,
+  ExternalIntegrationsEvent,
+} from "@ragdoll/db";
 import { getLogger } from "@ragdoll/common";
 import { EventSource, type EventSourceInit } from "eventsource";
 import type { hc } from "hono/client";
@@ -26,6 +30,25 @@ export function createPochiEventSource(
   token?: string,
 ) {
   const url = `${baseUrl || ""}/api/tasks/${uid}/events`;
+  return new PochiEventSourceImpl(url, {
+    fetch: token
+      ? (input, init) =>
+          fetch(input, {
+            ...init,
+            headers: {
+              ...init.headers,
+              Authorization: `Bearer ${token}`,
+            },
+          })
+      : undefined,
+  });
+}
+
+export function createExternalIntegrationsEventSource(
+  baseUrl?: string,
+  token?: string,
+) {
+  const url = `${baseUrl || ""}/api/integrations/events`;
   return new PochiEventSourceImpl(url, {
     fetch: token
       ? (input, init) =>
@@ -80,6 +103,29 @@ export function createPochiEventSourceWithApiClient(
     },
     { logFn: options?.logFn },
   );
+}
+
+export function createExternalIntegrationsEventSourceWithApiClient(
+  apiClient: ReturnType<typeof hc<AppType>>,
+) {
+  const url = apiClient.api.integrations.$url().toString();
+  return new PochiEventSourceImpl(url, {
+    fetch: (input, init) => {
+      if (
+        (typeof input === "string" && input !== url) ||
+        (input instanceof URL && input.toString() !== url)
+      ) {
+        throw new Error(
+          `Expected input to be ${url}, but got ${input}. This is likely a bug in PochiEventSourceImpl.`,
+        );
+      }
+      const { headers, ...restInit } = init;
+      return apiClient.api.integrations.events.$get(undefined, {
+        headers,
+        init: restInit,
+      });
+    },
+  });
 }
 
 class PochiEventSourceImpl implements PochiEventSource {

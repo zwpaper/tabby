@@ -71,3 +71,10 @@ export type TaskEvent = {
     status: DB["task"]["status"]["__select__"];
   };
 };
+
+export type ExternalIntegrationsEvent = {
+  type: "integrations:changed";
+  data: {
+    userId: string;
+  };
+};

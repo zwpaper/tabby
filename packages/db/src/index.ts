@@ -50,6 +50,7 @@ export type {
   TaskError,
   TaskCreateEvent,
   TaskEvent,
+  ExternalIntegrationsEvent,
 } from "./types";
 export {
   ZodEnvironment,

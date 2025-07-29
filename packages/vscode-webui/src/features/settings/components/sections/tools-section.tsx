@@ -1,11 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiClient } from "@/lib/auth-client";
+import { apiClient, authHooks } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import {
+  type ExternalIntegrationsEvent,
+  createExternalIntegrationsEventSourceWithApiClient,
+} from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { Dot } from "lucide-react";
+import { useEffect } from "react";
 import { Section, SubSection } from "../ui/section";
 import { ToolBadgeList } from "../ui/tool-badge";
 import { McpSection } from "./mcp-section";
@@ -16,6 +21,10 @@ interface Tool {
 }
 
 export const ToolsSection: React.FC = () => {
+  const queryClient = useQueryClient();
+  const { session } = authHooks.useSession();
+  const userId = session?.userId;
+
   const { data: toolsData, isLoading } = useQuery({
     queryKey: ["tools"],
     queryFn: async () => {
@@ -26,6 +35,34 @@ export const ToolsSection: React.FC = () => {
       return res.json() as Promise<Tool[]>;
     },
   });
+
+  const { data: connectedIntegrationsData } = useQuery({
+    queryKey: ["integrations"],
+    queryFn: async () => {
+      const res = await apiClient.api.integrations.$get();
+      if (!res.ok) {
+        throw new Error("Failed to fetch integration status");
+      }
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (!userId) return;
+    const es = createExternalIntegrationsEventSourceWithApiClient(apiClient);
+    const unsubscribe = es.subscribe(
+      "integrations:changed",
+      (event: ExternalIntegrationsEvent) => {
+        if (event?.data?.userId === userId)
+          queryClient.invalidateQueries({ queryKey: ["integrations"] });
+      },
+    );
+
+    return () => {
+      unsubscribe();
+      es.dispose();
+    };
+  }, [queryClient, userId]);
 
   const renderToolsContent = () => {
     if (!toolsData || isLoading) {
@@ -49,18 +86,6 @@ export const ToolsSection: React.FC = () => {
 
     return <ToolBadgeList tools={toolsData} />;
   };
-
-  const { data: connectedIntegrationsData } = useQuery({
-    queryKey: ["integrations"],
-    queryFn: async () => {
-      const res = await apiClient.api.integrations.$get();
-      if (!res.ok) {
-        throw new Error("Failed to fetch integration status");
-      }
-      return res.json();
-    },
-    refetchInterval: 5000,
-  });
 
   const titleElement = (
     <a href={`${getServerBaseUrl()}/profile`}>Integrations</a>
