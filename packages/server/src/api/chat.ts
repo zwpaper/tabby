@@ -198,6 +198,7 @@ const chat = new Hono()
                   case "pochi/pro-1":
                     return "gemini-2.5-flash";
                   case "google/gemini-2.5-pro":
+                  case "pochi/max-1":
                     return "gemini-2.5-pro";
                   default:
                     throw new Error(`Non google model: ${validModelId}`);
@@ -276,6 +277,10 @@ const chat = new Hono()
               "user-id": user.id,
               "user-email": user.email,
               "task-id": uid,
+              "model-id":
+                typeof validModelId === "string"
+                  ? validModelId
+                  : requestedModelId,
             },
           },
 

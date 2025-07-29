@@ -13,6 +13,7 @@ export type AvailableModelId =
   | "anthropic/claude-4-sonnet"
   | "moonshotai/kimi-k2"
   | "pochi/pro-1"
+  | "pochi/max-1"
   | "qwen/qwen3-coder";
 
 export const AvailableModels: {
@@ -34,6 +35,11 @@ export const AvailableModels: {
     id: "pochi/pro-1",
     contextWindow: 1_048_576,
     costType: "basic",
+  },
+  {
+    id: "pochi/max-1",
+    contextWindow: 1_048_576,
+    costType: "premium",
   },
   {
     id: "anthropic/claude-4-sonnet",
@@ -257,6 +263,8 @@ export function getModelById(
       return groq("moonshotai/kimi-k2-instruct");
     case "pochi/pro-1":
       return vertexFineTuning(modelEndpointId || "2224986023618674688");
+    case "pochi/max-1":
+      return vertexFineTuning(modelEndpointId || "664840596455686144");
     case "qwen/qwen3-coder":
       return deepinfra("Qwen/Qwen3-Coder-480B-A35B-Instruct");
     default:
@@ -275,6 +283,7 @@ export function getModelOptions(
 
   switch (modelId) {
     case "pochi/pro-1":
+    case "pochi/max-1":
     case "google/gemini-2.5-flash":
     case "google/gemini-2.5-pro":
       return {
