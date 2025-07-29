@@ -1,0 +1,13 @@
+import time
+
+import vertexai
+from vertexai.tuning import sft
+
+PROJECT_ID = "gen-lang-client-0005535210"
+vertexai.init(project=PROJECT_ID, location="us-central1")
+
+sft_tuning_job = sft.train(
+    source_model="gemini-2.5-pro",
+    train_dataset="gs://pochi-fine-tuning/train.jsonl",
+    tuned_model_display_name="max-20250729-01",
+)
