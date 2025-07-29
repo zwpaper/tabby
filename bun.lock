@@ -79,7 +79,7 @@
     },
     "packages/runner": {
       "name": "@ragdoll/runner",
-      "version": "0.2.11",
+      "version": "0.2.12",
       "bin": {
         "pochi": "src/cli.ts",
       },
@@ -155,7 +155,6 @@
         "slackify-markdown": "^4.4.0",
         "sqids": "^0.3.0",
         "stripe": "17",
-        "tslog": "catalog:",
         "uuid": "^11.1.0",
         "zod": "catalog:",
       },
@@ -177,7 +176,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.4.46",
+      "version": "0.4.48",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@orama/orama": "^3.1.11",

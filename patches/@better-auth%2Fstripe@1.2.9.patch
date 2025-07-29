@@ -1,11 +1,40 @@
+diff --git a/node_modules/@better-auth/stripe/.bun-tag-4c8bae837e995e1d b/.bun-tag-4c8bae837e995e1d
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/@better-auth/stripe/.bun-tag-4f5fc5fc78456cb2 b/.bun-tag-4f5fc5fc78456cb2
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/node_modules/@better-auth/stripe/.bun-tag-d4d082c3fefdd19b b/.bun-tag-d4d082c3fefdd19b
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/index.mjs b/dist/index.mjs
-index 02e094e0acc61a3cb8bf090d285f9b7e78cb13fb..a4561454069c75a6f1ce7a09041ff73673f257ee 100644
+index 02e094e0acc61a3cb8bf090d285f9b7e78cb13fb..b35233750ee6d198bfcf3943865fc6432ccbe8fa 100644
 --- a/dist/index.mjs
 +++ b/dist/index.mjs
-@@ -329,7 +329,7 @@ const stripe = (options) => {
+@@ -5,6 +5,22 @@ import { originCheck, getSessionFromCtx, sessionMiddleware, APIError } from 'bet
+ import { generateRandomString } from 'better-auth/crypto';
+ import { mergeSchema } from 'better-auth/db';
+ 
++function getEndOfMonthTimestampSec() {
++	// Get the current date
++	const now = new Date();
++
++	// Create a date for the first day of the next month
++	const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
++
++	// Subtract 1 millisecond to get the end of the current month
++	const endOfMonthTimestampMs = startOfNextMonth.getTime() - 1;
++
++	// To get the standard Unix timestamp in seconds, divide by 1000
++	const endOfMonthTimestampSec = Math.floor(endOfMonthTimestampMs / 1000);
++
++	return endOfMonthTimestampSec
++}
++
+ async function getPlans(options) {
+   return typeof options?.subscription?.plans === "function" ? await options.subscription?.plans() : options.subscription?.plans;
+ }
+@@ -329,7 +345,7 @@ const stripe = (options) => {
          message: "Reference id is not allowed. Read server logs for more details."
        });
      }
@@ -14,7 +43,7 @@ index 02e094e0acc61a3cb8bf090d285f9b7e78cb13fb..a4561454069c75a6f1ce7a09041ff736
        user: session.user,
        session: session.session,
        referenceId,
-@@ -521,7 +521,10 @@ const stripe = (options) => {
+@@ -521,7 +537,10 @@ const stripe = (options) => {
                  items: [
                    {
                      id: activeSubscription.items.data[0]?.id,
@@ -26,7 +55,7 @@ index 02e094e0acc61a3cb8bf090d285f9b7e78cb13fb..a4561454069c75a6f1ce7a09041ff736
                      price: ctx.body.annual ? plan.annualDiscountPriceId : plan.priceId
                    }
                  ]
-@@ -607,7 +610,8 @@ const stripe = (options) => {
+@@ -607,11 +626,13 @@ const stripe = (options) => {
              line_items: [
                {
                  price: priceIdToUse,
@@ -36,3 +65,9 @@ index 02e094e0acc61a3cb8bf090d285f9b7e78cb13fb..a4561454069c75a6f1ce7a09041ff736
                }
              ],
              subscription_data: {
+-              ...freeTrail
++              ...freeTrail,
++              billing_cycle_anchor: getEndOfMonthTimestampSec()
+             },
+             mode: "subscription",
+             client_reference_id: referenceId,
