@@ -9,6 +9,7 @@ import { parseEventFilter } from "../lib/event-filter";
 import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task"; // Added import
 import { taskEvents } from "../service/task-events";
+import { spanConfig } from "../trace";
 
 // Define validation schemas
 const PaginationSchema = z.object({
@@ -86,6 +87,7 @@ const tasks = new Hono()
       uid = await taskService.createWithUserMessage(user.id, prompt, event);
       url = `vscode://TabbyML.pochi/?task=${uid}`;
     }
+    spanConfig.setAttribute("ragdoll.task.uid", uid);
 
     return c.json({
       success: true,
@@ -191,6 +193,7 @@ const tasks = new Hono()
     async (c) => {
       const { uid } = c.req.valid("param");
       const user = c.get("user");
+      spanConfig.setAttribute("ragdoll.task.uid", uid);
 
       const deleted = await taskService.delete(uid, user.id);
 
@@ -253,6 +256,7 @@ const tasks = new Hono()
       const { uid } = c.req.valid("param");
       const { prompt } = c.req.valid("json");
       const user = c.get("user");
+      spanConfig.setAttribute("ragdoll.task.uid", uid);
 
       await taskService.appendUserMessage(user.id, uid, prompt);
       return c.json({ success: true });

@@ -1,6 +1,7 @@
 import { getLogger } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
 import { db } from "../../db";
+import { spanConfig } from "../../trace";
 import { sandboxService } from "../sandbox";
 import { queueConfig } from "./redis";
 
@@ -61,7 +62,7 @@ export function createCleanupSandboxWorker() {
     QueueName,
     async (job) => {
       const { sandboxId } = job.data;
-      logger.debug(`Cleaning up sandbox ${sandboxId}`);
+      spanConfig.setAttribute("ragdoll.minion.sandboxId", sandboxId);
 
       try {
         // Check if minion still exists and is not already deleted
@@ -81,16 +82,18 @@ export function createCleanupSandboxWorker() {
           const ageInMs = now.getTime() - createdAt.getTime();
 
           if (ageInMs < SANDBOX_EXPIRY_TIME) {
+            const remainingTime = SANDBOX_EXPIRY_TIME - ageInMs;
             logger.debug(
-              `Sandbox ${sandboxId} is not old enough for cleanup (${ageInMs}ms < ${SANDBOX_EXPIRY_TIME}ms), skipping`,
+              `Sandbox ${sandboxId} is not old enough for cleanup (${ageInMs}ms < ${SANDBOX_EXPIRY_TIME}ms), rescheduling in ${remainingTime}ms.`,
             );
+            await scheduleCleanupExpiredSandbox({ sandboxId });
             return;
           }
         }
 
         // Delete the sandbox
         await sandboxService.delete(sandboxId);
-        logger.debug(`Sandbox ${sandboxId} deleted`);
+        logger.info(`Sandbox ${sandboxId} deleted`);
 
         // Update minion status to deleted
         if (minion) {

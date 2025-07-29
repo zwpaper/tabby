@@ -5,7 +5,7 @@ import {
   type LanguageModelV1StreamPart,
   generateId,
 } from "ai";
-import { tracer } from "../../trace";
+import { spanConfig } from "../../trace";
 import { getPotentialStartIndex } from "./utils";
 
 const logger = getLogger("ToolCallMiddleware");
@@ -396,7 +396,7 @@ export function createToolMiddleware(): LanguageModelV1Middleware {
       const stopSequences = params.stopSequences || [];
       stopSequences.push("</api-request>");
 
-      tracer.setAttribute("ai.prompt.rawMessages", promptWithTools);
+      spanConfig.setAttribute("ai.prompt.rawMessages", promptWithTools);
 
       return {
         ...params,

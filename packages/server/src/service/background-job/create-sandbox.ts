@@ -2,6 +2,7 @@ import path from "node:path";
 import { SandboxPath, getLogger } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
 import { db, minionIdCoder } from "../../db";
+import { spanConfig } from "../../trace";
 import { type CreateSandboxOptions, sandboxService } from "../sandbox";
 import { scheduleCleanupExpiredSandbox } from "./index";
 import { queueConfig } from "./redis";
@@ -44,9 +45,6 @@ export function createSandboxWorker() {
     QueueName,
     async (job) => {
       const { minionId, sandboxId, uid, envs, githubRepository } = job.data;
-
-      logger.debug(`Creating sandbox for minion ${minionId}`);
-
       try {
         // Check if minion still exists and doesn't already have a sandbox
         const minion = await db
@@ -56,9 +54,11 @@ export function createSandboxWorker() {
           .executeTakeFirst();
 
         if (!minion) {
-          logger.error(`Minion ${minionId} not found`);
+          logger.error(`Minion ${minionId} not found when creating sandbox`);
           throw new Error(`Minion ${minionId} not found`);
         }
+        spanConfig.setAttribute("ragdoll.minion.sandboxId", sandboxId);
+        spanConfig.setAttribute("ragdoll.task.uid", uid);
 
         if (minion.sandboxId) {
           logger.debug(
@@ -118,8 +118,6 @@ export function createSandboxWorker() {
         await scheduleCleanupExpiredSandbox({
           sandboxId: sandbox.id,
         });
-
-        logger.debug(`Sandbox creation completed for minion ${minionId}`);
       } catch (error) {
         logger.error(`Failed to create sandbox for minion ${minionId}:`, error);
 

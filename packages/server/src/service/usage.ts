@@ -11,7 +11,7 @@ import {
   computeCreditCost,
 } from "../lib/constants";
 import { stripeClient } from "../lib/stripe";
-import { tracer } from "../trace";
+import { spanConfig } from "../trace";
 import { organizationService } from "./organization";
 
 const logger = getLogger("UsageService");
@@ -34,7 +34,7 @@ export class UsageService {
         (await this.meterCreditCost(user, creditCostInput))) ||
       0;
 
-    tracer.setAttribute("ragdoll.metering.credit", credit);
+    spanConfig.setAttribute("ragdoll.metering.credit", credit);
 
     const organization = await organizationService.readActiveOrganizationByUser(
       user.id,

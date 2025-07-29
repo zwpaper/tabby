@@ -3,6 +3,7 @@ import * as jose from "jose";
 import { v5 as uuidv5 } from "uuid";
 import { auth } from "../better-auth";
 import { db, minionIdCoder } from "../db";
+import { spanConfig } from "../trace";
 import { scheduleCreateSandbox } from "./background-job";
 import { sandboxService } from "./sandbox";
 
@@ -90,6 +91,8 @@ class MinionService {
       envs,
       githubRepository,
     });
+
+    spanConfig.setAttribute("ragdoll.minion.sandboxId", sandboxId);
 
     return { ...res, id: minionId };
   }

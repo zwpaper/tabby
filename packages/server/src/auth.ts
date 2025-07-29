@@ -1,7 +1,7 @@
 import type { Organization } from "better-auth/plugins";
 import { createMiddleware } from "hono/factory";
 import { auth } from "./better-auth";
-import { tracer } from "./trace";
+import { spanConfig } from "./trace";
 
 export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
   (() => {
@@ -25,7 +25,7 @@ export const authRequest = createMiddleware<{ Variables: { user?: User } }>(
       if (session) {
         c.set("user", session.user);
 
-        tracer.setAttribute("ragdoll.user.email", session.user.email);
+        spanConfig.setAttribute("ragdoll.user.email", session.user.email);
       }
       await next();
     };

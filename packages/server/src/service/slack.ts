@@ -1,4 +1,5 @@
 import type { Server } from "node:http";
+import { trace } from "@opentelemetry/api";
 import type { DB } from "@ragdoll/db";
 import type { ButtonAction } from "@slack/bolt";
 import { App, type Installation } from "@slack/bolt";
@@ -7,11 +8,14 @@ import { sql } from "kysely";
 import { auth } from "../better-auth";
 import { db, uidCoder } from "../db";
 import { connectToWeb } from "../lib/connect";
+import { spanConfig } from "../trace";
 import { githubService } from "./github";
 import { slackTaskService } from "./slack-task";
 import { slackModalViewRenderer } from "./slack-task/slack-modal-view";
 import { slackRichTextRenderer } from "./slack-task/slack-rich-text";
 import { usageService } from "./usage";
+
+const tracer = trace.getTracer("ragdoll-slack", "0.0.1");
 
 class SlackService {
   private app: App;
@@ -162,76 +166,83 @@ class SlackService {
 
   private registerEvents() {
     // Handle slash commands for task creation
-    this.app.command("/newtask", async ({ command, ack, respond, context }) => {
-      // Acknowledge the command request
-      await ack();
+    this.app.command("/newtask", async ({ command, ack, respond, context }) =>
+      tracer.startActiveSpan("slack.newTask", async (span) => {
+        // Acknowledge the command request
+        await ack();
 
-      const vendorIntegrationId = context.teamId || context.enterpriseId;
-      if (!vendorIntegrationId) return;
+        const vendorIntegrationId = context.teamId || context.enterpriseId;
+        if (!vendorIntegrationId) return;
 
-      const webClient =
-        await this.getWebClientByIntegration(vendorIntegrationId);
+        const webClient =
+          await this.getWebClientByIntegration(vendorIntegrationId);
 
-      if (!webClient) return;
+        if (!webClient) return;
 
-      // Validate user
-      const validation = await this.validateUser(webClient, command.user_id);
-      if (!validation.success) {
-        await respond({
-          text: validation.error,
-          blocks: validation.blocks || [],
-          response_type: "ephemeral",
-        });
-        return;
-      }
+        // Validate user
+        const validation = await this.validateUser(webClient, command.user_id);
+        if (!validation.success) {
+          await respond({
+            text: validation.error,
+            blocks: validation.blocks || [],
+            response_type: "ephemeral",
+          });
+          return;
+        }
 
-      const { user } = validation;
-      if (!user) {
-        await respond({
-          text: "❌ User validation failed",
-          response_type: "ephemeral",
-        });
-        return;
-      }
+        const { user } = validation;
+        if (!user) {
+          await respond({
+            text: "❌ User validation failed",
+            response_type: "ephemeral",
+          });
+          return;
+        }
+        spanConfig.setAttribute("ragdoll.user.email", user.email, span);
 
-      const taskText = command.text?.trim();
-      if (!taskText) {
-        await respond({
-          text: "❌ Please provide a task description. Usage:\n• `/newtask [owner/repo] description`\n• Or `/newtask description` (if channel topic contains `[repo:owner/repo]`)\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set channel topic: `Project discussion [repo:TabbyML/tabby]` and use: `/newtask fix the login issue`",
-          response_type: "ephemeral",
-        });
-        return;
-      }
+        const taskText = command.text?.trim();
+        if (!taskText) {
+          await respond({
+            text: "❌ Please provide a task description. Usage:\n• `/newtask [owner/repo] description`\n• Or `/newtask description` (if channel topic contains `[repo:owner/repo]`)\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set channel topic: `Project discussion [repo:TabbyML/tabby]` and use: `/newtask fix the login issue`",
+            response_type: "ephemeral",
+          });
+          return;
+        }
 
-      // Update SlackConnect mapping
-      await db
-        .insertInto("slackConnect")
-        .values({
-          userId: user.id,
-          vendorIntegrationId,
-        })
-        .onConflict((oc) =>
-          oc.column("userId").doUpdateSet({
+        // Update SlackConnect mapping
+        await db
+          .insertInto("slackConnect")
+          .values({
+            userId: user.id,
             vendorIntegrationId,
-            updatedAt: sql`CURRENT_TIMESTAMP`,
-          }),
-        )
-        .execute();
+          })
+          .onConflict((oc) =>
+            oc.column("userId").doUpdateSet({
+              vendorIntegrationId,
+              updatedAt: sql`CURRENT_TIMESTAMP`,
+            }),
+          )
+          .execute();
 
-      try {
-        await slackTaskService.createTaskWithCloudRunner(
-          user,
-          command,
-          taskText,
-          command.user_id,
-        );
-      } catch (error) {
-        await respond({
-          text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage:\n• \`/newtask [owner/repo] description\`\n• Or \`/newtask description\` (if channel topic contains \`[repo:owner/repo]\`)\n\nExample: \`/newtask [TabbyML/tabby] fix the login issue\``,
-          response_type: "ephemeral",
-        });
-      }
-    });
+        try {
+          const uid = await slackTaskService.createTaskWithCloudRunner(
+            user,
+            command,
+            taskText,
+            command.user_id,
+          );
+          if (!uid) {
+            throw new Error("Failed to create task");
+          }
+          spanConfig.setAttribute("ragdoll.task.uid", uid, span);
+        } catch (error) {
+          await respond({
+            text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage:\n• \`/newtask [owner/repo] description\`\n• Or \`/newtask description\` (if channel topic contains \`[repo:owner/repo]\`)\n\nExample: \`/newtask [TabbyML/tabby] fix the login issue\``,
+            response_type: "ephemeral",
+          });
+        }
+      }),
+    );
 
     // Handle button actions
     this.app.action("view_task_button", ({ ack }) => ack());
@@ -241,176 +252,185 @@ class SlackService {
     // Unified followup/message action handler
     this.app.action(
       /^followup_(.+)$/,
-      async ({ action, ack, body, context, client }) => {
-        await ack();
+      async ({ action, ack, body, context, client }) =>
+        tracer.startActiveSpan("slack.followupAction", async (span) => {
+          await ack();
 
-        if (action.type !== "button") return;
+          if (action.type !== "button") return;
 
-        const buttonAction = action as ButtonAction;
-        const match = buttonAction.action_id.match(/^followup_(.+)$/);
-        if (!match) return;
+          const buttonAction = action as ButtonAction;
+          const match = buttonAction.action_id.match(/^followup_(.+)$/);
+          if (!match) return;
 
-        const [, payload] = match;
+          const [, payload] = match;
 
-        // Parse the payload
-        const parsed = slackTaskService.parseFollowupActionPayload(payload);
-        if (!parsed) return;
+          // Parse the payload
+          const parsed = slackTaskService.parseFollowupActionPayload(payload);
+          if (!parsed) return;
 
-        const { taskId, type, encodedContent } = parsed;
+          const { taskId, type, encodedContent } = parsed;
+          spanConfig.setAttribute("ragdoll.task.uid", parsed.taskId);
 
-        const vendorIntegrationId = context.teamId || context.enterpriseId;
-        if (!vendorIntegrationId) return;
+          const vendorIntegrationId = context.teamId || context.enterpriseId;
+          if (!vendorIntegrationId) return;
 
-        const webClient =
-          await this.getWebClientByIntegration(vendorIntegrationId);
-        if (!webClient) return;
+          const webClient =
+            await this.getWebClientByIntegration(vendorIntegrationId);
+          if (!webClient) return;
 
-        // Validate user (full validation for actions)
-        const validation = await this.validateUser(webClient, body.user.id);
-        if (!validation.success) {
-          await webClient.chat.postEphemeral({
+          // Validate user (full validation for actions)
+          const validation = await this.validateUser(webClient, body.user.id);
+          if (!validation.success) {
+            await webClient.chat.postEphemeral({
+              channel: body.channel?.id || "",
+              user: body.user.id,
+              text: validation.error || "❌ User validation failed",
+              blocks: validation.blocks,
+            });
+            return;
+          }
+
+          const { user: targetUser } = validation;
+          if (!targetUser) {
+            await webClient.chat.postEphemeral({
+              channel: body.channel?.id || "",
+              user: body.user.id,
+              text: "❌ User validation failed",
+            });
+            return;
+          }
+          spanConfig.setAttribute("ragdoll.user.email", targetUser.email, span);
+
+          // Get task belong to current user
+          const decodedTaskId = uidCoder.decode(taskId);
+          const task = await db
+            .selectFrom("task")
+            .select(["userId"])
+            .where("id", "=", decodedTaskId)
+            .executeTakeFirst();
+
+          if (!task) return;
+
+          if (task.userId !== targetUser.id) {
+            await webClient.chat.postEphemeral({
+              channel: body.channel?.id || "",
+              user: body.user.id,
+              text: "❌ You can only reply to your own tasks. This task belongs to another user.",
+            });
+            return;
+          }
+
+          const metadata = {
             channel: body.channel?.id || "",
-            user: body.user.id,
-            text: validation.error || "❌ User validation failed",
-            blocks: validation.blocks,
-          });
-          return;
-        }
+            messageTs: "message" in body && body.message ? body.message.ts : "",
+          };
 
-        const { user: targetUser } = validation;
-        if (!targetUser) {
-          await webClient.chat.postEphemeral({
-            channel: body.channel?.id || "",
-            user: body.user.id,
-            text: "❌ User validation failed",
-          });
-          return;
-        }
+          if (type === "custom") {
+            await client.views.open({
+              trigger_id: (body as { trigger_id: string }).trigger_id,
+              view: slackModalViewRenderer.renderFollowupModal(
+                taskId,
+                metadata,
+              ),
+            });
+          } else if (type === "direct") {
+            if (!encodedContent) return;
 
-        // Get task belong to current user
-        const decodedTaskId = uidCoder.decode(taskId);
-        const task = await db
-          .selectFrom("task")
-          .select(["userId"])
-          .where("id", "=", decodedTaskId)
-          .executeTakeFirst();
+            const content = slackTaskService.decodeContent(encodedContent);
+            if (!content) return;
 
-        if (!task) return;
-
-        if (task.userId !== targetUser.id) {
-          await webClient.chat.postEphemeral({
-            channel: body.channel?.id || "",
-            user: body.user.id,
-            text: "❌ You can only reply to your own tasks. This task belongs to another user.",
-          });
-          return;
-        }
-
-        const metadata = {
-          channel: body.channel?.id || "",
-          messageTs: "message" in body && body.message ? body.message.ts : "",
-        };
-
-        if (type === "custom") {
-          await client.views.open({
-            trigger_id: (body as { trigger_id: string }).trigger_id,
-            view: slackModalViewRenderer.renderFollowupModal(taskId, metadata),
-          });
-        } else if (type === "direct") {
-          if (!encodedContent) return;
-
-          const content = slackTaskService.decodeContent(encodedContent);
-          if (!content) return;
-
-          // Open a modal with prefilled suggestion content
-          await client.views.open({
-            trigger_id: (body as { trigger_id: string }).trigger_id,
-            view: slackModalViewRenderer.renderFollowupModal(
-              taskId,
-              metadata,
-              content,
-            ),
-          });
-        }
-      },
+            // Open a modal with prefilled suggestion content
+            await client.views.open({
+              trigger_id: (body as { trigger_id: string }).trigger_id,
+              view: slackModalViewRenderer.renderFollowupModal(
+                taskId,
+                metadata,
+                content,
+              ),
+            });
+          }
+        }),
     );
 
     // Handle followup modal submission (both numbered and custom)
     this.app.view(
       /^submit_followup_(.+)$/,
-      async ({ ack, body, view, context }) => {
-        await ack();
+      async ({ ack, body, view, context }) =>
+        tracer.startActiveSpan("slack.submitFollowupView", async (span) => {
+          await ack();
 
-        const match = view.callback_id.match(/^submit_followup_(.+)$/);
-        if (!match) return;
+          const match = view.callback_id.match(/^submit_followup_(.+)$/);
+          if (!match) return;
 
-        const [, taskId] = match;
-        const vendorIntegrationId = context.teamId || context.enterpriseId;
-        if (!vendorIntegrationId) return;
+          const [, taskId] = match;
+          const vendorIntegrationId = context.teamId || context.enterpriseId;
+          if (!vendorIntegrationId) return;
+          spanConfig.setAttribute("ragdoll.task.uid", taskId, span);
 
-        // Get the answer from the modal
-        const answer = view.state.values.answer_block.answer_input.value;
-        if (!answer) return;
+          // Get the answer from the modal
+          const answer = view.state.values.answer_block.answer_input.value;
+          if (!answer) return;
 
-        // Get the user info and validate user
-        const webClient =
-          await this.getWebClientByIntegration(vendorIntegrationId);
-        if (!webClient) return;
+          // Get the user info and validate user
+          const webClient =
+            await this.getWebClientByIntegration(vendorIntegrationId);
+          if (!webClient) return;
 
-        // Validate user (full validation for modal submissions)
-        const validation = await this.validateUser(webClient, body.user.id);
-        if (!validation.success) {
-          // For modal submissions, we can't show blocks, so just show text error
-          const channelId = context.channelId;
-          if (channelId) {
-            await webClient.chat.postEphemeral({
-              channel: channelId,
-              user: body.user.id,
-              text: validation.error || "❌ User validation failed",
-            });
+          // Validate user (full validation for modal submissions)
+          const validation = await this.validateUser(webClient, body.user.id);
+          if (!validation.success) {
+            // For modal submissions, we can't show blocks, so just show text error
+            const channelId = context.channelId;
+            if (channelId) {
+              await webClient.chat.postEphemeral({
+                channel: channelId,
+                user: body.user.id,
+                text: validation.error || "❌ User validation failed",
+              });
+            }
+            return;
           }
-          return;
-        }
 
-        const { user: targetUser } = validation;
-        if (!targetUser) {
-          const channelId = context.channelId;
-          if (channelId) {
-            await webClient.chat.postEphemeral({
-              channel: channelId,
-              user: body.user.id,
-              text: "❌ User validation failed",
-            });
+          const { user: targetUser } = validation;
+          if (!targetUser) {
+            const channelId = context.channelId;
+            if (channelId) {
+              await webClient.chat.postEphemeral({
+                channel: channelId,
+                user: body.user.id,
+                text: "❌ User validation failed",
+              });
+            }
+            return;
           }
-          return;
-        }
+          spanConfig.setAttribute("ragdoll.user.email", targetUser.email, span);
 
-        // Parse metadata from modal
-        const metadata = view.private_metadata
-          ? JSON.parse(view.private_metadata)
-          : null;
+          // Parse metadata from modal
+          const metadata = view.private_metadata
+            ? JSON.parse(view.private_metadata)
+            : null;
 
-        // Handle the followup action
-        const result = await slackTaskService.handleFollowupAction({
-          taskId,
-          content: answer,
-          userId: targetUser.id,
-          channel: metadata?.channel,
-          messageTs: metadata?.messageTs,
-        });
+          // Handle the followup action
+          const result = await slackTaskService.handleFollowupAction({
+            taskId,
+            content: answer,
+            userId: targetUser.id,
+            channel: metadata?.channel,
+            messageTs: metadata?.messageTs,
+          });
 
-        // Send error message if submission failed (success messages are handled in SlackTaskService)
-        if (!result.success) {
-          const channelId = metadata?.channel || context.channelId;
-          if (channelId) {
-            await webClient.chat.postEphemeral({
-              channel: channelId,
-              user: body.user.id,
-              text: `❌ Failed to submit: ${result.error}`,
-            });
+          // Send error message if submission failed (success messages are handled in SlackTaskService)
+          if (!result.success) {
+            const channelId = metadata?.channel || context.channelId;
+            if (channelId) {
+              await webClient.chat.postEphemeral({
+                channel: channelId,
+                user: body.user.id,
+                text: `❌ Failed to submit: ${result.error}`,
+              });
+            }
           }
-        }
-      },
+        }),
     );
   }
 

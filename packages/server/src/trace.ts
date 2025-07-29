@@ -1,24 +1,27 @@
-import { trace } from "@opentelemetry/api";
+import { type Span, trace } from "@opentelemetry/api";
 import type { LanguageModelV1Prompt } from "ai";
 
 type RagdollAttributes = {
   "ragdoll.user.email": string;
+  "ragdoll.task.uid": string;
   "ragdoll.metering.credit": number;
+  "ragdoll.minion.sandboxId": string;
   "ai.prompt.rawMessages": LanguageModelV1Prompt;
 };
 
-class RagdollTrace {
+class SpanConfigurator {
   setAttribute<K extends keyof RagdollAttributes>(
     key: K,
     value: RagdollAttributes[K],
+    span?: Span,
   ) {
-    const span = trace.getActiveSpan();
-    if (!span) return;
+    const targetSpan = span || trace.getActiveSpan();
+    if (!targetSpan) return;
 
     if (isPOD(value)) {
-      span.setAttribute(key, value);
+      targetSpan.setAttribute(key, value);
     } else {
-      span.setAttribute(key, JSON.stringify(value));
+      targetSpan.setAttribute(key, JSON.stringify(value));
     }
   }
 }
@@ -31,4 +34,4 @@ function isPOD(value: unknown) {
   );
 }
 
-export const tracer = new RagdollTrace();
+export const spanConfig = new SpanConfigurator();
