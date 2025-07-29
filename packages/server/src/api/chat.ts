@@ -325,7 +325,10 @@ const chat = new Hono()
           if (error instanceof Error) {
             span.recordException(error);
           }
-          span.setStatus({ code: SpanStatusCode.ERROR });
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: String(error),
+          });
         }
 
         // Failed to stream the response.
