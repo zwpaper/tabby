@@ -178,10 +178,9 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       let numAttempts = 0;
       do {
         if (numAttempts > 0) {
-          await new Promise((res) =>
-            setTimeout(res, 1000 * 2 ** numAttempts++),
-          );
+          await new Promise((res) => setTimeout(res, 1000 * 2 ** numAttempts));
         }
+        numAttempts++;
         resp = await fetch(url, options);
 
         // A 409 conflict can occur if the user aborts a streaming request and immediately retries,
