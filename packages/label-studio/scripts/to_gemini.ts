@@ -7,7 +7,7 @@ import {
 } from "node:fs";
 import type { GeminiData, Message, TaskData } from "../src/types";
 
-const data = readFileSync("./data/label.jsonl", "utf-8").split("\n");
+const data = readFileSync("./data/labeled.jsonl", "utf-8").trim().split("\n");
 
 const trainFilePath = "./data/train.jsonl";
 const validationFilePath = "./data/validation.jsonl";
@@ -100,7 +100,7 @@ for (const line of data) {
     });
   }
 
-  const isTrain = Math.abs(hashString(json.uid)) % 10 !== 0; // 90% train, 10% validation
+  const isTrain = Math.abs(hashString(json.uid)) % 8 !== 0; //87.5% train, 12.5% validation
   if (isTrain) {
     numTrain++;
   } else {
