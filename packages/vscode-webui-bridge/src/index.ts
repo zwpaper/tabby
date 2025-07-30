@@ -90,6 +90,10 @@ export type CustomModelSetting = {
   apiKey?: string;
 };
 
+export type PochiModelsSettings = {
+  modelEndpointId?: string;
+};
+
 export interface RuleFile {
   /**
    * rule file path, absolute path

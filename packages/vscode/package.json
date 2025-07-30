@@ -222,6 +222,15 @@
             "default": {},
             "description": "MCP servers configuration"
           },
+          "pochi.pochiModelSettings": {
+            "default": {},
+            "properties": {
+              "modelEndpointId": {
+                "type": "string",
+                "description": "Model endpoint ID"
+              }
+            }
+          },
           "pochi.customModelSettings": {
             "type": "array",
             "default": [],

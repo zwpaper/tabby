@@ -34,6 +34,7 @@ import { useMcp } from "@/lib/hooks/use-mcp";
 import { useMinionId } from "@/lib/hooks/use-minion-id";
 import { vscodeHost } from "@/lib/vscode";
 
+import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
 import { ServerErrors } from "@ragdoll/server";
 import type { GitDiff } from "@ragdoll/vscode-webui-bridge";
 import { ChatArea } from "./components/chat-area";
@@ -129,6 +130,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   const latestHttpCode = useRef<number | undefined>(undefined);
   const recentAborted = useRef<boolean>(false);
+  const pochiModelSettings = usePochiModelSettings();
   const chat = useChat({
     /*
      * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
@@ -172,6 +174,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         selectedModel?.id,
         minionId,
         openAIModelOverride,
+        pochiModelSettings?.modelEndpointId,
       ),
     fetch: async (url, options) => {
       let resp: Response | null = null;

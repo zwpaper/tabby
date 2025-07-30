@@ -8,6 +8,7 @@ import type {
   GitDiff,
   McpStatus,
   NewTaskParams,
+  PochiModelsSettings,
   ResourceURI,
   RuleFile,
   RunTaskOptions,
@@ -248,6 +249,10 @@ export interface VSCodeHostApi {
    */
   readCustomModelSetting(): Promise<
     ThreadSignalSerialization<CustomModelSetting[] | undefined>
+  >;
+
+  readPochiModelSettings(): Promise<
+    ThreadSignalSerialization<PochiModelsSettings>
   >;
 }
 
