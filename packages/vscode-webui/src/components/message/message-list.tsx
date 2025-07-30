@@ -24,8 +24,14 @@ import { MessageMarkdown } from "./markdown";
 
 export const MessageList: React.FC<{
   messages: UIMessage[];
-  user?: { name: string; image?: string | null };
-  logo?: string;
+  user?: {
+    name: string;
+    image?: string | null;
+  };
+  assistant?: {
+    name: string;
+    image?: string | null;
+  };
   isLoading: boolean;
   containerRef?: React.RefObject<HTMLDivElement>;
   showUserAvatar?: boolean;
@@ -34,7 +40,7 @@ export const MessageList: React.FC<{
   messages: renderMessages,
   isLoading,
   user = { name: "User" },
-  logo,
+  assistant,
   containerRef,
   showUserAvatar = true,
   className,
@@ -76,11 +82,18 @@ export const MessageList: React.FC<{
                   </Avatar>
                 ) : (
                   <Avatar className="size-7 select-none">
-                    <AvatarImage src={logo} className="scale-110" />
+                    <AvatarImage
+                      src={assistant?.image ?? undefined}
+                      className="scale-110"
+                    />
                     <AvatarFallback className="bg-[var(--vscode-chat-avatarBackground)] text-[var(--vscode-chat-avatarForeground)]" />
                   </Avatar>
                 )}
-                <strong>{m.role === "user" ? user?.name : "Pochi"}</strong>
+                <strong>
+                  {m.role === "user"
+                    ? user?.name
+                    : (assistant?.name ?? "Pochi")}
+                </strong>
                 {containsCompactPart(m) && (
                   <CompactPartToolTip className="ml-1" />
                 )}

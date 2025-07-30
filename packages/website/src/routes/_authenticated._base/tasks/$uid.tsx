@@ -118,11 +118,11 @@ function RouteComponent() {
       </TaskHeader>
 
       <TaskContent
+        theme={theme}
         messages={renderMessages}
         todos={loaderData.todos}
-        user={auth.user}
-        theme={theme}
         isLoading={isLoading}
+        user={auth.user}
       />
     </div>
   );

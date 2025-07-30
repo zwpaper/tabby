@@ -35,7 +35,10 @@ export function ChatArea({
       <MessageList
         messages={messages}
         user={user}
-        logo={resourceUri?.logo128}
+        assistant={{
+          name: "Pochi",
+          image: resourceUri?.logo128,
+        }}
         isLoading={isLoading || isTaskLoading}
         containerRef={messagesContainerRef}
       />

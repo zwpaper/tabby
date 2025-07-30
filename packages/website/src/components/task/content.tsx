@@ -11,19 +11,20 @@ import {
   useState,
 } from "react";
 
-// FIXME: move to a shared package
-interface User {
-  name?: string | null;
-  image?: string | null;
-}
-
 const isDEV = import.meta.env.DEV;
 const webviewOrigin = "http://localhost:4112";
 
 interface ContentProps extends ComponentProps<"div"> {
   messages?: UIMessage[] | null;
   todos?: Todo[] | null;
-  user?: User | null;
+  user?: {
+    name: string;
+    image?: string | null;
+  };
+  assistant?: {
+    name: string;
+    image?: string | null;
+  };
   theme?: string;
   isLoading?: boolean;
 }
@@ -31,6 +32,7 @@ interface ContentProps extends ComponentProps<"div"> {
 function TaskContent({
   messages,
   todos,
+  assistant,
   user,
   theme,
   className,
@@ -47,9 +49,17 @@ function TaskContent({
 
   const iframeUrl = useMemo(() => {
     const hostOrigin = window.location.origin;
-    const search = new URLSearchParams({
-      logo: `${hostOrigin}/logo192.png`,
-    }).toString();
+    const search = new URLSearchParams(
+      assistant
+        ? {
+            assistant_name: assistant.name,
+            assistant_image: assistant.image ?? "",
+          }
+        : {
+            assistant_name: "Pochi",
+            assistant_image: `${hostOrigin}/logo192.png`,
+          },
+    ).toString();
 
     const hash = new URLSearchParams({
       theme: theme || "light",
@@ -58,7 +68,7 @@ function TaskContent({
     return isDEV
       ? `${webviewOrigin}/share?${search}#${hash}`
       : `/share.html?${search}#${hash}`;
-  }, [theme]);
+  }, [theme, assistant]);
 
   const handleIframeError = useCallback(
     (event: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
@@ -110,6 +120,7 @@ function TaskContent({
           type: "share",
           messages,
           user,
+          assistant,
           todos,
           isLoading,
         },
@@ -118,7 +129,7 @@ function TaskContent({
         },
       );
     }
-  }, [messages, todos, isLoading, user, loaded]);
+  }, [messages, todos, isLoading, user, assistant, loaded]);
 
   return (
     <div className={cn("flex flex-1 flex-col", className)} {...props}>

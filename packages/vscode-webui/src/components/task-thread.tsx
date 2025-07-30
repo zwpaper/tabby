@@ -21,10 +21,16 @@ export type TaskThreadSource =
 
 export const TaskThread: React.FC<{
   source: TaskThreadSource;
-  user?: { name: string; image?: string | null };
-  logo?: string;
+  user?: {
+    name: string;
+    image?: string | null;
+  };
+  assistant?: {
+    name: string;
+    image?: string | null;
+  };
   showMessageList?: boolean;
-}> = ({ source, user, logo, showMessageList = true }) => {
+}> = ({ source, user, assistant, showMessageList = true }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -95,7 +101,7 @@ export const TaskThread: React.FC<{
               showUserAvatar={false}
               messages={renderMessages}
               user={user}
-              logo={logo}
+              assistant={assistant}
               isLoading={isLoading}
               containerRef={undefined}
             />

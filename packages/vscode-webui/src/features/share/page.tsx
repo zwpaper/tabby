@@ -12,11 +12,22 @@ import { TodoList } from "../todo";
 
 export function SharePage() {
   const searchParams = new URLSearchParams(location.search);
-  const logo = searchParams.get("logo") ?? undefined;
+  const assistant_name = searchParams.get("assistant_name");
+  const assistant_image = searchParams.get("assistant_image");
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [messages, setMessages] = useState<UIMessage[]>([]);
-  const [user, setUser] = useState<{ name: string; image?: string | null }>();
+  const [user, setUser] = useState<{
+    name: string;
+    image?: string | null;
+  }>();
+  const [assistant, setAssistant] = useState<{
+    name: string;
+    image?: string | null;
+  }>({
+    name: assistant_name ?? "Pochi",
+    image: assistant_image,
+  });
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -28,6 +39,9 @@ export function SharePage() {
         const shareMessage = event.data as ShareMessage;
         setMessages(shareMessage.messages ?? []);
         setUser(shareMessage.user);
+        if (shareMessage.assistant) {
+          setAssistant(shareMessage.assistant);
+        }
         setTodos(shareMessage.todos ?? []);
         setIsLoading(!!shareMessage.isLoading);
         setIsInitialized(true);
@@ -99,8 +113,8 @@ export function SharePage() {
                   })}
                 >
                   <MessageList
-                    logo={logo}
                     user={user}
+                    assistant={assistant}
                     messages={renderMessages}
                     isLoading={isLoading}
                   />
@@ -132,6 +146,12 @@ type ShareMessage = {
   type: "share";
   messages: UIMessage[] | undefined; // Array of messages to be displayed
   user:
+    | {
+        name: string;
+        image?: string | null;
+      }
+    | undefined;
+  assistant:
     | {
         name: string;
         image?: string | null;

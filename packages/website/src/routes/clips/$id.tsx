@@ -88,6 +88,10 @@ function ClipView() {
           name: "You",
           image: `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(title)}&scale=150`,
         }}
+        assistant={{
+          name: "Pochi",
+          image: `${window.location.origin}/logo192.png`,
+        }}
         theme={theme}
       />
     </div>

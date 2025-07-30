@@ -46,7 +46,10 @@ function RunnerComponent() {
     <div className="flex h-screen flex-col">
       <TaskThread
         user={authData?.user}
-        logo={resourceUri?.logo128}
+        assistant={{
+          name: "Pochi",
+          image: resourceUri?.logo128,
+        }}
         source={{ type: "taskRunner", runner: taskRunner }}
       />
       <div className="flex items-center justify-between border-t p-4">
