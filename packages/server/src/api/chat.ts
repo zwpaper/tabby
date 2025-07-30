@@ -12,9 +12,12 @@ import type { DBMessage, Environment } from "@ragdoll/db";
 import {
   type CoreMessage,
   type DataStreamWriter,
+  type FinishReason,
+  type LanguageModelUsage,
   type LanguageModelV1,
   type LanguageModelV1Middleware,
   NoSuchToolError,
+  type ProviderMetadata,
   type UIMessage,
   appendResponseMessages,
   createDataStream,
@@ -149,7 +152,7 @@ const chat = new Hono()
           ],
           tools,
           onFinish: async ({
-            usage,
+            usage: inputUsage,
             finishReason,
             response,
             providerMetadata,
@@ -162,83 +165,12 @@ const chat = new Hono()
               messages: preparedMessages,
               responseMessages: response.messages,
             }) as UIMessage[];
-            let creditCostInput: CreditCostInput | undefined;
-
-            if (providerMetadata?.anthropic) {
-              const cacheCreationInputTokens =
-                (providerMetadata.anthropic.cacheCreationInputTokens as
-                  | number
-                  | undefined) || 0;
-              const cacheReadInputTokens =
-                (providerMetadata.anthropic.cacheReadInputTokens as
-                  | number
-                  | undefined) || 0;
-              creditCostInput = {
-                type: "anthropic",
-                modelId: "claude-4-sonnet",
-                cacheWriteInputTokens: cacheCreationInputTokens,
-                cacheReadInputTokens,
-                inputTokens: usage.promptTokens,
-                outputTokens: usage.completionTokens,
-              };
-
-              const promptTokens =
-                (cacheReadInputTokens || cacheCreationInputTokens) +
-                usage.promptTokens;
-              usage = {
-                promptTokens,
-                completionTokens: usage.completionTokens,
-                totalTokens: promptTokens + usage.completionTokens,
-              };
-            } else if (providerMetadata?.google) {
-              const modelIdFromValidModelId = () => {
-                if (typeof validModelId !== "string")
-                  throw new Error("Unsupported model");
-
-                switch (validModelId) {
-                  case "google/gemini-2.5-flash":
-                  case "pochi/pro-1":
-                    return "gemini-2.5-flash";
-                  case "google/gemini-2.5-pro":
-                  case "pochi/max-1":
-                    return "gemini-2.5-pro";
-                  default:
-                    throw new Error(`Non google model: ${validModelId}`);
-                }
-              };
-
-              const cacheReadInputTokens =
-                (providerMetadata.google.cachedContentTokenCount as
-                  | number
-                  | undefined) || 0;
-              creditCostInput = {
-                type: "google",
-                modelId: modelIdFromValidModelId(),
-                cacheReadInputTokens,
-                inputTokens: usage.promptTokens - cacheReadInputTokens,
-                outputTokens: usage.completionTokens,
-              };
-            } else if (validModelId === "moonshotai/kimi-k2") {
-              creditCostInput = {
-                type: "groq",
-                modelId: "moonshotai/kimi-k2-instruct",
-                inputTokens: usage.promptTokens,
-                outputTokens: usage.completionTokens,
-              };
-            } else if (validModelId === "qwen/qwen3-coder") {
-              creditCostInput = {
-                type: "deepinfra",
-                modelId: "qwen/qwen3-coder",
-                inputTokens: usage.promptTokens,
-                outputTokens: usage.completionTokens,
-              };
-            } else if (typeof validModelId !== "string") {
-              // Custom model, do nothing.
-            } else {
-              throw new HTTPException(500, {
-                message: `Model: ${validModelId} is not properly supported.`,
-              });
-            }
+            const { usage, creditCostInput } = computeUsage(
+              inputUsage,
+              providerMetadata,
+              validModelId,
+              finishReason,
+            );
 
             const isUsageValid = !Number.isNaN(usage.totalTokens);
 
@@ -492,4 +424,100 @@ function checkDebugErrorTrigger(messages: DBMessage[] | undefined) {
 
     throw new HTTPException(400, { message: "Invalid model" });
   }
+}
+
+function computeUsage(
+  inputUsage: LanguageModelUsage,
+  providerMetadata: ProviderMetadata | undefined,
+  validModelId:
+    | AvailableModelId
+    | NonNullable<ChatRequest["openAIModelOverride"]>,
+  finishReason: FinishReason,
+) {
+  let usage = inputUsage;
+  let creditCostInput: CreditCostInput | undefined;
+  if (finishReason === "error") {
+    return {
+      usage,
+      creditCostInput,
+    };
+  }
+
+  if (providerMetadata?.anthropic) {
+    const cacheCreationInputTokens =
+      (providerMetadata.anthropic.cacheCreationInputTokens as
+        | number
+        | undefined) || 0;
+    const cacheReadInputTokens =
+      (providerMetadata.anthropic.cacheReadInputTokens as number | undefined) ||
+      0;
+    creditCostInput = {
+      type: "anthropic",
+      modelId: "claude-4-sonnet",
+      cacheWriteInputTokens: cacheCreationInputTokens,
+      cacheReadInputTokens,
+      inputTokens: usage.promptTokens,
+      outputTokens: usage.completionTokens,
+    };
+
+    const promptTokens =
+      (cacheReadInputTokens || cacheCreationInputTokens) + usage.promptTokens;
+    usage = {
+      promptTokens,
+      completionTokens: usage.completionTokens,
+      totalTokens: promptTokens + usage.completionTokens,
+    };
+  } else if (providerMetadata?.google) {
+    const modelIdFromValidModelId = () => {
+      if (typeof validModelId !== "string")
+        throw new Error("Unsupported model");
+
+      switch (validModelId) {
+        case "google/gemini-2.5-flash":
+        case "pochi/pro-1":
+          return "gemini-2.5-flash";
+        case "google/gemini-2.5-pro":
+        case "pochi/max-1":
+          return "gemini-2.5-pro";
+        default:
+          throw new Error(`Non google model: ${validModelId}`);
+      }
+    };
+
+    const cacheReadInputTokens =
+      (providerMetadata.google.cachedContentTokenCount as number | undefined) ||
+      0;
+    creditCostInput = {
+      type: "google",
+      modelId: modelIdFromValidModelId(),
+      cacheReadInputTokens,
+      inputTokens: usage.promptTokens - cacheReadInputTokens,
+      outputTokens: usage.completionTokens,
+    };
+  } else if (validModelId === "moonshotai/kimi-k2") {
+    creditCostInput = {
+      type: "groq",
+      modelId: "moonshotai/kimi-k2-instruct",
+      inputTokens: usage.promptTokens,
+      outputTokens: usage.completionTokens,
+    };
+  } else if (validModelId === "qwen/qwen3-coder") {
+    creditCostInput = {
+      type: "deepinfra",
+      modelId: "qwen/qwen3-coder",
+      inputTokens: usage.promptTokens,
+      outputTokens: usage.completionTokens,
+    };
+  } else if (typeof validModelId !== "string") {
+    // Custom model, do nothing.
+  } else {
+    throw new HTTPException(500, {
+      message: `Model: ${validModelId} is not properly supported.`,
+    });
+  }
+
+  return {
+    creditCostInput,
+    usage,
+  };
 }
