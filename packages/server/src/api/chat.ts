@@ -45,6 +45,7 @@ import {
   type NewTaskMiddlewareContext,
   createNewTaskMiddleware,
 } from "../lib/new-task-middleware";
+import { createReasoningMiddleware } from "../lib/reasoning-middleware";
 import { createToolMiddleware } from "../lib/tool-call-middleware";
 import { resolveServerTools } from "../lib/tools";
 import { setIdleTimeout, waitUntil } from "../server";
@@ -374,6 +375,9 @@ function createModel(
   // Create middlewares
   // Order matters, execution order is from last to first.
   const middleware: LanguageModelV1Middleware[] = [];
+  if (typeof modelId === "string" && modelId === "zai/glm-4.5") {
+    middleware.push(createReasoningMiddleware("think"));
+  }
 
   if (middlewareContext.newTask) {
     middleware.push(createNewTaskMiddleware(middlewareContext.newTask));
@@ -501,10 +505,13 @@ function computeUsage(
       inputTokens: usage.promptTokens,
       outputTokens: usage.completionTokens,
     };
-  } else if (validModelId === "qwen/qwen3-coder") {
+  } else if (
+    validModelId === "qwen/qwen3-coder" ||
+    validModelId === "zai/glm-4.5"
+  ) {
     creditCostInput = {
       type: "deepinfra",
-      modelId: "qwen/qwen3-coder",
+      modelId: validModelId,
       inputTokens: usage.promptTokens,
       outputTokens: usage.completionTokens,
     };

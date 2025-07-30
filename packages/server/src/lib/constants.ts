@@ -14,7 +14,8 @@ export type AvailableModelId =
   | "moonshotai/kimi-k2"
   | "pochi/pro-1"
   | "pochi/max-1"
-  | "qwen/qwen3-coder";
+  | "qwen/qwen3-coder"
+  | "zai/glm-4.5";
 
 export const AvailableModels: {
   id: AvailableModelId;
@@ -56,6 +57,11 @@ export const AvailableModels: {
     contextWindow: 262_144,
     costType: "basic",
   },
+  {
+    id: "zai/glm-4.5",
+    contextWindow: 131_072,
+    costType: "basic",
+  },
 ];
 
 export type CreditCostInput =
@@ -82,7 +88,7 @@ export type CreditCostInput =
     }
   | {
       type: "deepinfra";
-      modelId: "qwen/qwen3-coder";
+      modelId: "qwen/qwen3-coder" | "zai/glm-4.5";
       inputTokens: number;
       outputTokens: number;
     };
@@ -122,6 +128,10 @@ const PriceByModel = {
     },
   },
   deepinfra: {
+    "zai/glm-4.5": {
+      input: 5,
+      output: 20,
+    },
     "qwen/qwen3-coder": {
       input: 4,
       output: 16,
@@ -267,8 +277,8 @@ export function getModelById(
       return vertexFineTuning(modelEndpointId || "664840596455686144");
     case "qwen/qwen3-coder":
       return deepinfra("Qwen/Qwen3-Coder-480B-A35B-Instruct");
-    default:
-      throw new Error("Unknown model id");
+    case "zai/glm-4.5":
+      return deepinfra("zai-org/GLM-4.5");
   }
 }
 
@@ -316,6 +326,10 @@ export function getModelOptions(
     case "qwen/qwen3-coder":
       return {
         maxTokens: 1024 * 32,
+      };
+    case "zai/glm-4.5":
+      return {
+        maxTokens: 1024 * 14,
       };
   }
 }
