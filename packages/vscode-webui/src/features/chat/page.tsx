@@ -24,7 +24,7 @@ import { PublicShareButton } from "@/components/public-share-button";
 import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import { ApprovalButton, useApprovalAndRetry } from "@/features/approval";
-import { AutoApproveMenu, useEnableAutoCompact } from "@/features/settings";
+import { AutoApproveMenu } from "@/features/settings";
 import { LegacyTodoList, useTodos } from "@/features/todo";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
@@ -77,7 +77,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   const autoApproveGuard = useAutoApproveGuard();
   const { data: minionId } = useMinionId();
   const { uid, uidRef, setUid } = useUid(task);
-  const enableAutoCompact = useEnableAutoCompact();
   const [totalTokens, setTotalTokens] = useState<number>(
     task?.totalTokens || 0,
   );
@@ -173,7 +172,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         selectedModel?.id,
         minionId,
         openAIModelOverride,
-        enableAutoCompact,
       ),
     fetch: async (url, options) => {
       let resp: Response | null = null;

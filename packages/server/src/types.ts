@@ -43,10 +43,7 @@ export const ZodChatRequestType = z.object({
       maxOutputTokens: z.number().describe("Max output tokens of the model."),
     })
     .optional(),
-  enableAutoCompact: z
-    .boolean()
-    .optional()
-    .describe("Enable auto-compact for the task."),
+  forceCompact: z.boolean().optional().describe("Force compact mode."),
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;

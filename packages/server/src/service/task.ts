@@ -86,8 +86,12 @@ class TaskService {
     }
 
     if (
-      request.enableAutoCompact &&
-      shouldAutoCompact(contextWindow, totalTokens, messages)
+      shouldAutoCompact(
+        contextWindow,
+        totalTokens,
+        messages,
+        request.forceCompact,
+      )
     ) {
       const summary = await compactService.compact(messages);
       messages = summary.messages;
@@ -927,12 +931,15 @@ function shouldAutoCompact(
   contextWindow: number,
   totalTokens: number | null,
   messages: UIMessage[],
+  forceCompact?: boolean,
 ) {
   if (!totalTokens) return false;
-  if (totalTokens < contextWindow * 0.9) {
+  if (messages.at(-1)?.role !== "user") {
     return false;
   }
-  if (messages.at(-1)?.role !== "user") {
+  // Force compact is only used if the total tokens are greater than 50k.
+  if (forceCompact && totalTokens > 50_000) return true;
+  if (totalTokens < contextWindow * 0.9) {
     return false;
   }
 

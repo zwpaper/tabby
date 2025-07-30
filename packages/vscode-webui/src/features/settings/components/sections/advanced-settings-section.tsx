@@ -9,8 +9,6 @@ export const AdvancedSettingsSection: React.FC = () => {
 
     enablePochiModels,
     updateEnablePochiModels,
-    enableAutoCompact,
-    updateEnableAutoCompact,
   } = useSettingsStore();
 
   return (
@@ -33,16 +31,6 @@ export const AdvancedSettingsSection: React.FC = () => {
             checked={enablePochiModels}
             onCheckedChange={(checked) => {
               updateEnablePochiModels(!!checked);
-            }}
-          />
-        )}
-        {isDevMode && (
-          <SettingsCheckboxOption
-            id="enable-auto-compact"
-            label="Enable Auto Compact"
-            checked={enableAutoCompact}
-            onCheckedChange={(checked) => {
-              updateEnableAutoCompact(!!checked);
             }}
           />
         )}
