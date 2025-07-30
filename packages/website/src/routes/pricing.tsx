@@ -19,20 +19,6 @@ const modelPricingData = [
       outputAbove200k: 150,
       cacheReadAbove200k: 6,
     },
-    description: "Advanced model with tiered pricing based on context length.",
-  },
-  {
-    id: "google/gemini-2.5-flash",
-    contextWindow: 1_048_576,
-    costType: "Swift",
-    name: "Gemini 2.5 Flash",
-    pricing: {
-      input: 3,
-      output: 25,
-      cacheRead: 1,
-    },
-    description:
-      "Optimized for speed and efficiency with large context support.",
   },
   {
     id: "anthropic/claude-4-sonnet",
@@ -45,8 +31,16 @@ const modelPricingData = [
       cacheRead: 3,
       cacheWrite: 37,
     },
-    description:
-      "High-quality model with advanced reasoning capabilities and context caching.",
+  },
+  {
+    id: "zai/glm-4.5",
+    contextWindow: 131_072,
+    costType: "Swift",
+    name: "GLM 4.5",
+    pricing: {
+      input: 5,
+      output: 20,
+    },
   },
   {
     id: "moonshotai/kimi-k2",
@@ -57,7 +51,6 @@ const modelPricingData = [
       input: 10,
       output: 30,
     },
-    description: "Efficient multilingual model with competitive pricing.",
   },
   {
     id: "qwen/qwen3-coder",
@@ -68,7 +61,17 @@ const modelPricingData = [
       input: 4,
       output: 16,
     },
-    description: "Specialized coding model with the most competitive pricing.",
+  },
+  {
+    id: "google/gemini-2.5-flash",
+    contextWindow: 1_048_576,
+    costType: "Swift",
+    name: "Gemini 2.5 Flash",
+    pricing: {
+      input: 3,
+      output: 25,
+      cacheRead: 1,
+    },
   },
 ];
 
