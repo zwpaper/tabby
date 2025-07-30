@@ -3,10 +3,10 @@ import { forwardRef, useEffect, useState } from "react";
 import ReactDiffViewer from "react-diff-viewer-continued";
 import TextareaAutosize from "react-textarea-autosize";
 import { useTheme } from "../contexts/theme-context";
-import type { Part } from "../types";
+import type { Part, PartList } from "../types";
 
 interface MessageContentProps {
-  content: Part;
+  content: PartList;
   taskUid: string;
   messageIndex: number;
   role: "user" | "assistant" | "system";
@@ -79,7 +79,7 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
       return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const handleCopyPart = (part: Part[0], partIndex: number) => {
+    const handleCopyPart = (part: Part, partIndex: number) => {
       const textContent = part.newText !== undefined ? part.newText : part.text;
       const jsonString = JSON.stringify(textContent || "");
       navigator.clipboard.writeText(jsonString);

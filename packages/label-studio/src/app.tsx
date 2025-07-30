@@ -8,7 +8,7 @@ import { TaskList } from "./components/task-list";
 import { TaskView, type TaskViewHandle } from "./components/task-view";
 import { TaskViewProvider } from "./contexts/task-view-context";
 import { fetchTask } from "./lib/task-fetcher";
-import type { TaskData } from "./types";
+import { type TaskData, ZodCompatibleTaskDataType, toTaskData } from "./types";
 
 function App() {
   const [tasks, setTasks] = useState<TaskData[]>([]);
@@ -46,16 +46,20 @@ function App() {
       const text = await navigator.clipboard.readText();
       if (text) {
         const lines = text.trim().split("\n");
+        let errorCount = 0;
         const parsedTasks = lines
-          .map((line) => {
+          .map((line, index) => {
             try {
-              return JSON.parse(line);
+              return toTaskData(
+                ZodCompatibleTaskDataType.parse(JSON.parse(line)),
+              );
             } catch (error) {
-              console.error("Failed to parse line:", line, error);
+              errorCount++;
+              console.error(`Failed to parse line ${index}:`, error);
               return null;
             }
           })
-          .filter(Boolean) as TaskData[];
+          .filter((task): task is TaskData => task !== null);
         const existingUids = new Set(tasks.map((task) => task.uid));
         const uniqueTasks = parsedTasks.filter(
           (task) => !existingUids.has(task.uid),
@@ -63,6 +67,12 @@ function App() {
         setTasks((prevTasks) => [...uniqueTasks, ...prevTasks]);
         setSelectedTask(null);
         setEditingPart(null);
+
+        if (errorCount > 0) {
+          alert(
+            `Successfully imported ${uniqueTasks.length} tasks. ${errorCount} lines failed to parse. Check the console for details.`,
+          );
+        }
       }
     } catch (error) {
       console.error("Failed to read from clipboard:", error);
@@ -81,16 +91,20 @@ function App() {
     try {
       const text = await file.text();
       const lines = text.trim().split("\n");
+      let errorCount = 0;
       const parsedTasks = lines
-        .map((line) => {
+        .map((line, index) => {
           try {
-            return JSON.parse(line);
+            return toTaskData(
+              ZodCompatibleTaskDataType.parse(JSON.parse(line)),
+            );
           } catch (error) {
-            console.error("Failed to parse line:", line, error);
+            errorCount++;
+            console.error(`Failed to parse line ${index}:`, error);
             return null;
           }
         })
-        .filter(Boolean) as TaskData[];
+        .filter((task): task is TaskData => task !== null);
 
       const existingUids = new Set(tasks.map((task) => task.uid));
       const uniqueTasks = parsedTasks.filter(
@@ -100,6 +114,12 @@ function App() {
       setTasks((prevTasks) => [...uniqueTasks, ...prevTasks]);
       setSelectedTask(null);
       setEditingPart(null);
+
+      if (errorCount > 0) {
+        alert(
+          `Successfully imported ${uniqueTasks.length} tasks. ${errorCount} lines failed to parse. Check the console for details.`,
+        );
+      }
 
       // Reset the file input
       event.target.value = "";
@@ -138,7 +158,7 @@ function App() {
       );
       if (skippedTasks.length > 0) {
         alert(
-          `Skipped ${skippedTasks.length} duplicate tasks: ${skippedTasks.join(", ")}`,
+          `Will skip ${skippedTasks.length} duplicate tasks: ${skippedTasks.join(", ")}`,
         );
       }
 
@@ -146,17 +166,29 @@ function App() {
         (uid) => !existingTaskUids.has(uid),
       );
       const newTasks: TaskData[] = [];
+      let errorCount = 0;
 
       for (const uid of newTaskUids) {
-        const task = await fetchTask(uid, auth);
-        newTasks.push(task);
+        try {
+          const task = await fetchTask(uid, auth);
+          newTasks.push(task);
+        } catch (error) {
+          errorCount++;
+          console.error(`Failed to import task ${uid}:`, error);
+        }
       }
 
       setTasks((prevTasks) => [...newTasks, ...prevTasks]);
       setSelectedTask(null);
       setEditingPart(null);
 
-      alert(`Successfully imported ${newTasks.length} tasks!`);
+      if (errorCount > 0) {
+        alert(
+          `Successfully imported ${newTasks.length} tasks, but failed to import ${errorCount} tasks. Please check the console for more details.`,
+        );
+      } else {
+        alert(`Successfully imported ${newTasks.length} tasks!`);
+      }
     } catch (error) {
       console.error("Failed to import tasks:", error);
       alert("Failed to import tasks. Please the console for more details.");

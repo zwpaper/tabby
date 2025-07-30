@@ -1,4 +1,8 @@
-import type { TaskData } from "../types";
+import {
+  type TaskData,
+  ZodCompatibleMessageListType,
+  toMessageList,
+} from "../types";
 
 const QuickWitBaseUrl = "https://quickwit.jump.getpochi.com/";
 
@@ -12,15 +16,6 @@ function assistantToolCallToText({
   return `<api-request name="${toolName}">${JSON.stringify(
     args,
   )}</api-request>`;
-}
-
-function safeJsonParse(json: string) {
-  try {
-    return JSON.parse(json);
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
 }
 
 export async function fetchTask(uid: string, auth: string): Promise<TaskData> {
@@ -52,9 +47,11 @@ export async function fetchTask(uid: string, auth: string): Promise<TaskData> {
   const hit = data.hits[0];
   const prompt = hit.span_attributes["ai.prompt.rawMessages"];
 
-  const taskData: TaskData = {
+  const taskData = {
     uid,
-    messages: safeJsonParse(prompt) ?? [],
+    messages: toMessageList(
+      ZodCompatibleMessageListType.parse(JSON.parse(prompt)),
+    ),
   };
 
   const responseMessage: TaskData["messages"][number] = {
@@ -70,7 +67,13 @@ export async function fetchTask(uid: string, auth: string): Promise<TaskData> {
   }
 
   const responseToolCalls = hit.span_attributes["ai.response.toolCalls"];
-  const toolCalls = safeJsonParse(responseToolCalls);
+  let toolCalls = undefined;
+  if (
+    typeof responseToolCalls === "string" &&
+    responseToolCalls.trim().length > 0
+  ) {
+    toolCalls = JSON.parse(responseToolCalls);
+  }
   if (toolCalls && Array.isArray(toolCalls)) {
     for (const toolCall of toolCalls) {
       responseMessage.content.push({
