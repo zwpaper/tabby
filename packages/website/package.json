@@ -39,7 +39,7 @@
     "@ragdoll/server": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "@tabler/icons-react": "^3.31.0",
-    "@tailwindcss/vite": "^4.0.6",
+    "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "^5.71.5",
     "@tanstack/react-router": "^1.119.0",
     "@tanstack/react-router-devtools": "^1.119.0",
@@ -65,7 +65,7 @@
     "remeda": "catalog:",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.0.2",
-    "tailwindcss": "^4.0.6",
+    "tailwindcss": "catalog:",
     "tailwindcss-animate": "catalog:",
     "vaul": "^1.1.2",
     "zod": "catalog:"
