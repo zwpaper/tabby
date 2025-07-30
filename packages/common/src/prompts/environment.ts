@@ -171,12 +171,14 @@ export function injectEnvironmentDetails(
   } satisfies TextUIPart;
 
   const parts = messageToInject.parts || [];
-  const lastPart = parts.at(-1);
-  const remainParts = parts.slice(0, -1) || [];
+  const lastTextPartIndex = messageToInject.parts.findLastIndex(
+    (parts) => parts.type === "text",
+  );
+  // Insert remainderPart before lastTextPartIndex
   messageToInject.parts = [
-    ...remainParts,
+    ...parts.slice(0, lastTextPartIndex),
     reminderPart,
-    ...(lastPart ? [lastPart] : []),
+    ...parts.slice(lastTextPartIndex),
   ];
 
   return messages;
