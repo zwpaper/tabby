@@ -8,7 +8,7 @@ import {
 import { zValidator } from "@hono/zod-validator";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
-import type { Environment } from "@ragdoll/db";
+import type { DBMessage, Environment } from "@ragdoll/db";
 import {
   type CoreMessage,
   type DataStreamWriter,
@@ -68,6 +68,8 @@ const chat = new Hono()
     } = req;
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
+
+    checkDebugErrorTrigger(req.messages);
 
     const parsedMcpTools = parseMcpToolSet(mcpToolSet);
 
@@ -466,4 +468,28 @@ function getContextWindow(
   }
 
   return modelId.contextWindow;
+}
+
+function checkDebugErrorTrigger(messages: DBMessage[] | undefined) {
+  if (!messages?.length) return;
+
+  const triggerPrefix = "RAGDOLL_DEBUG_TRIGGER_ERROR";
+  const lastMessage = messages.at(-1);
+  const text =
+    lastMessage?.parts[0].type === "text"
+      ? lastMessage?.parts[0].text
+      : undefined;
+
+  if (text?.startsWith(triggerPrefix)) {
+    const rest = text.substring(triggerPrefix.length);
+
+    if (rest.startsWith(":")) {
+      const errorMessage = rest.substring(1).trim();
+      if (errorMessage) {
+        throw new HTTPException(400, { message: errorMessage });
+      }
+    }
+
+    throw new HTTPException(400, { message: "Invalid model" });
+  }
 }

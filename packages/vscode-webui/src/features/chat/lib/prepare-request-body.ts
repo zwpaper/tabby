@@ -30,12 +30,9 @@ export async function prepareRequestBody(
   const lastMessageToSend = messagesToSend.at(-1);
 
   await appendCheckpoint(lastMessageToSend as UIMessageWithRevisionId);
-  const triggerError =
-    lastMessageToSend?.parts[0].type === "text" &&
-    lastMessageToSend?.parts[0].text.includes("RAGDOLL_DEBUG_TRIGGER_ERROR");
   return {
     id: uid.current || undefined,
-    model: triggerError ? "fake-model" : model,
+    model,
     messages: fromUIMessages(messagesToSend),
     minionId: minionId || undefined,
     environment,
