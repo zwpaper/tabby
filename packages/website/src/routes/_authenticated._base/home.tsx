@@ -113,8 +113,20 @@ export function InstallPanel() {
                     onClick={() => setActiveEditor(editor.name)}
                   >
                     <div className="flex-shrink-0">{editor.icon}</div>
-                    <div className="text-left">
+                    <div className="flex items-center gap-2">
                       <div className="font-medium">{editor.name}</div>
+                      {editor.name === "Slack" && (
+                        <span
+                          className={cn(
+                            "rounded-full border border-transparent bg-stone-200 px-2 py-0 font-semibold text-stone-700 text-xs dark:bg-stone-700 dark:text-stone-200",
+                            {
+                              "border-border": activeEditor === editor.name,
+                            },
+                          )}
+                        >
+                          Beta
+                        </span>
+                      )}
                     </div>
                   </Button>
                 ))}
@@ -139,6 +151,11 @@ export function InstallPanel() {
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
                         {activeEditorData?.popularity}
                       </span>
+                      {activeEditor === "Slack" && (
+                        <span className="rounded-full bg-stone-200 px-3 py-1 font-semibold text-sm text-stone-700 dark:bg-stone-700 dark:text-stone-200">
+                          Beta
+                        </span>
+                      )}
                       <span className="text-muted-foreground">
                         Setup: {activeEditorData?.setupTime}
                       </span>
