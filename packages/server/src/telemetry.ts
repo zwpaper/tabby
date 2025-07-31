@@ -1,8 +1,10 @@
 import { trace } from "@opentelemetry/api";
 import { SeverityNumber, logs } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc";
+import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { SimpleLogRecordProcessor } from "@opentelemetry/sdk-logs";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { attachTransport } from "@ragdoll/common";
 
@@ -68,6 +70,9 @@ attachTransport((args, meta) => {
 const sdk = new NodeSDK({
   logRecordProcessors: [new SimpleLogRecordProcessor(new OTLPLogExporter())],
   traceExporter: new OTLPTraceExporter(),
+  metricReader: new PeriodicExportingMetricReader({
+    exporter: new OTLPMetricExporter(),
+  }),
 });
 
 sdk.start();

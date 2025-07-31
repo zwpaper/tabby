@@ -8,6 +8,7 @@ import { sql } from "kysely";
 import { auth } from "../better-auth";
 import { db, uidCoder } from "../db";
 import { connectToWeb } from "../lib/connect";
+import { metrics } from "../metrics";
 import { spanConfig } from "../trace";
 import { githubService } from "./github";
 import { slackTaskService } from "./slack-task";
@@ -168,11 +169,23 @@ class SlackService {
     // Handle slash commands for task creation
     this.app.command("/newtask", async ({ command, ack, respond, context }) =>
       tracer.startActiveSpan("slack.newTask", async (span) => {
+        // Track slash command metrics
+        metrics.counter.slackCommandsTotal.add(1, {
+          command: "newtask",
+          status: "received",
+        });
+
         // Acknowledge the command request
         await ack();
 
         const vendorIntegrationId = context.teamId || context.enterpriseId;
-        if (!vendorIntegrationId) return;
+        if (!vendorIntegrationId) {
+          metrics.counter.slackCommandsTotal.add(1, {
+            command: "newtask",
+            status: "no_integration",
+          });
+          return;
+        }
 
         const webClient =
           await this.getWebClientByIntegration(vendorIntegrationId);
@@ -182,6 +195,10 @@ class SlackService {
         // Validate user
         const validation = await this.validateUser(webClient, command.user_id);
         if (!validation.success) {
+          metrics.counter.slackCommandsTotal.add(1, {
+            command: "newtask",
+            status: "validation_failed",
+          });
           await respond({
             text: validation.error,
             blocks: validation.blocks || [],
@@ -202,6 +219,10 @@ class SlackService {
 
         const taskText = command.text?.trim();
         if (!taskText) {
+          metrics.counter.slackCommandsTotal.add(1, {
+            command: "newtask",
+            status: "no_description",
+          });
           await respond({
             text: "❌ Please provide a task description. Usage:\n• `/newtask [owner/repo] description`\n• Or `/newtask description` (if channel topic contains `[repo:owner/repo]`)\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set channel topic: `Project discussion [repo:TabbyML/tabby]` and use: `/newtask fix the login issue`",
             response_type: "ephemeral",
@@ -235,7 +256,18 @@ class SlackService {
             throw new Error("Failed to create task");
           }
           spanConfig.setAttribute("ragdoll.task.uid", uid, span);
+
+          // Track successful task creation
+          metrics.counter.slackTasksCreated.add(1);
+          metrics.counter.slackCommandsTotal.add(1, {
+            command: "newtask",
+            status: "success",
+          });
         } catch (error) {
+          metrics.counter.slackCommandsTotal.add(1, {
+            command: "newtask",
+            status: "error",
+          });
           await respond({
             text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage:\n• \`/newtask [owner/repo] description\`\n• Or \`/newtask description\` (if channel topic contains \`[repo:owner/repo]\`)\n\nExample: \`/newtask [TabbyML/tabby] fix the login issue\``,
             response_type: "ephemeral",
@@ -254,13 +286,29 @@ class SlackService {
       /^followup_(.+)$/,
       async ({ action, ack, body, context, client }) =>
         tracer.startActiveSpan("slack.followupAction", async (span) => {
+          metrics.counter.slackFollowupActions.add(1, {
+            type: "received",
+            status: "processing",
+          });
           await ack();
 
-          if (action.type !== "button") return;
+          if (action.type !== "button") {
+            metrics.counter.slackFollowupActions.add(1, {
+              type: "invalid",
+              status: "error",
+            });
+            return;
+          }
 
           const buttonAction = action as ButtonAction;
           const match = buttonAction.action_id.match(/^followup_(.+)$/);
-          if (!match) return;
+          if (!match) {
+            metrics.counter.slackFollowupActions.add(1, {
+              type: "invalid",
+              status: "error",
+            });
+            return;
+          }
 
           const [, payload] = match;
 
@@ -281,6 +329,10 @@ class SlackService {
           // Validate user (full validation for actions)
           const validation = await this.validateUser(webClient, body.user.id);
           if (!validation.success) {
+            metrics.counter.slackFollowupActions.add(1, {
+              type: "validation_failed",
+              status: "error",
+            });
             await webClient.chat.postEphemeral({
               channel: body.channel?.id || "",
               user: body.user.id,
@@ -326,6 +378,10 @@ class SlackService {
           };
 
           if (type === "custom") {
+            metrics.counter.slackFollowupActions.add(1, {
+              type: "custom",
+              status: "success",
+            });
             await client.views.open({
               trigger_id: (body as { trigger_id: string }).trigger_id,
               view: slackModalViewRenderer.renderFollowupModal(
@@ -334,11 +390,27 @@ class SlackService {
               ),
             });
           } else if (type === "direct") {
-            if (!encodedContent) return;
+            if (!encodedContent) {
+              metrics.counter.slackFollowupActions.add(1, {
+                type: "direct",
+                status: "error",
+              });
+              return;
+            }
 
             const content = slackTaskService.decodeContent(encodedContent);
-            if (!content) return;
+            if (!content) {
+              metrics.counter.slackFollowupActions.add(1, {
+                type: "direct",
+                status: "error",
+              });
+              return;
+            }
 
+            metrics.counter.slackFollowupActions.add(1, {
+              type: "direct",
+              status: "success",
+            });
             // Open a modal with prefilled suggestion content
             await client.views.open({
               trigger_id: (body as { trigger_id: string }).trigger_id,
