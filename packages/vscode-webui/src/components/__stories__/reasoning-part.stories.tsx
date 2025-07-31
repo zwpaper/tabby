@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ReasoningPartUI } from "../reasoning-part";
 
 const meta = {
-  title: "Pochi/ReasoningPartUI",
+  title: "Part-UI/Reasoning",
   component: ReasoningPartUI,
 } satisfies Meta<typeof ReasoningPartUI>;
 

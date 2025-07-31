@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 
 const meta: Meta<typeof LegacyTodoList> = {
-  title: "Pochi/TODO",
+  title: "Chat/TODO",
   component: Page,
 };
 

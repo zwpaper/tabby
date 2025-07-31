@@ -22,7 +22,7 @@ const ToolsGallery: React.FC<{
 };
 
 const meta: Meta<typeof ToolsGallery> = {
-  title: "Pochi/Tools",
+  title: "Part-UI/Tools",
   component: ToolsGallery,
 };
 

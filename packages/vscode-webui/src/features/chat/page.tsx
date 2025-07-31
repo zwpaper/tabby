@@ -8,16 +8,10 @@ import type { Todo } from "@getpochi/tools";
 import { formatters, prompts, toUIMessages } from "@ragdoll/common";
 import type { Environment, ExtendedUIMessage } from "@ragdoll/db";
 import type { InferResponseType } from "hono/client";
-import {
-  ExternalLinkIcon,
-  ImageIcon,
-  SendHorizonal,
-  StopCircleIcon,
-} from "lucide-react";
+import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DevModeButton } from "@/components/dev-mode-button"; // Added import
-import { ErrorMessage } from "@/components/error-message";
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { PreviewTool } from "@/components/preview-tool";
 import { PublicShareButton } from "@/components/public-share-button";
@@ -35,10 +29,10 @@ import { useMinionId } from "@/lib/hooks/use-minion-id";
 import { vscodeHost } from "@/lib/vscode";
 
 import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
-import { ServerErrors } from "@ragdoll/server";
 import type { GitDiff } from "@ragdoll/vscode-webui-bridge";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
+import { ErrorMessageView } from "./components/error-message-view";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
@@ -489,24 +483,17 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   );
 }
 
-class TaskError extends Error {
-  constructor(
-    readonly name: string,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-
 function useTaskError(status: UseChatHelpers["status"], task?: Task | null) {
   const init = useRef(false);
-  const [taskError, setTaskError] = useState<TaskError>();
+  const [taskError, setTaskError] = useState<Error>();
   useEffect(() => {
     if (init.current || !task) return;
     init.current = true;
     const { error } = task;
     if (error) {
-      setTaskError(new TaskError(error.kind, error.message));
+      const e = new Error(error.message);
+      e.name = error.kind;
+      setTaskError(e);
     }
   }, [task]);
 
@@ -517,121 +504,6 @@ function useTaskError(status: UseChatHelpers["status"], task?: Task | null) {
     }
   }, [status, taskError]);
   return taskError;
-}
-
-function ErrorMessageView({ error }: { error: TaskError | undefined }) {
-  return (
-    <ErrorMessage
-      error={error}
-      formatter={(e) => {
-        if (e.message === ServerErrors.ReachedCreditLimit) {
-          return (
-            <span>
-              You have reached the spending limit.{" "}
-              <a
-                href="https://app.getpochi.com/profile"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="!underline py-1"
-              >
-                <ExternalLinkIcon className="mx-0.5 inline size-4" />
-                See more
-              </a>
-            </span>
-          );
-        }
-
-        if (e.message === ServerErrors.ReachedOrgCreditLimit) {
-          return (
-            <span>
-              Your team has reached the spending limit.{" "}
-              <a
-                href="https://app.getpochi.com/team"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="!underline py-1"
-              >
-                <ExternalLinkIcon className="mx-0.5 inline size-4" />
-                See more
-              </a>
-            </span>
-          );
-        }
-
-        if (e.message === ServerErrors.RequireSubscription) {
-          return (
-            <span>
-              You've used all your free credits. To continue, please subscribe
-              to Pochi.{" "}
-              <a
-                href="https://app.getpochi.com/profile"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="!underline py-1"
-              >
-                <ExternalLinkIcon className="mx-0.5 inline size-4" />
-                Subscribe
-              </a>
-            </span>
-          );
-        }
-
-        if (e.message === ServerErrors.RequireOrgSubscription) {
-          return (
-            <span>
-              Your team does not have a subscription yet. To continue, please
-              subscribe to Pochi.{" "}
-              <a
-                href="https://app.getpochi.com/team"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="!underline py-1"
-              >
-                <ExternalLinkIcon className="mx-0.5 inline size-4" />
-                Subscribe
-              </a>
-            </span>
-          );
-        }
-
-        if (e.message === ServerErrors.RequirePayment) {
-          return (
-            <span>
-              You have unpaid invoices. Please{" "}
-              <a
-                href="https://app.getpochi.com/profile"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="!underline py-1"
-              >
-                make a payment
-              </a>{" "}
-              to continue using Pochi
-            </span>
-          );
-        }
-
-        if (e.message === ServerErrors.RequireOrgPayment) {
-          return (
-            <span>
-              Your team have unpaid invoices. Please{" "}
-              <a
-                href="https://app.getpochi.com/team"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="!underline py-1"
-              >
-                make a payment
-              </a>{" "}
-              to continue using Pochi
-            </span>
-          );
-        }
-
-        return e.message;
-      }}
-    />
-  );
 }
 
 function useUid(task: Task | null) {

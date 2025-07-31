@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ChatPage } from "../page";
 
 const meta = {
-  title: "Pochi/Chat",
+  title: "Chat/Page",
   component: ChatPage,
   parameters: {
     layout: "fullscreen",

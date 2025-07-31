@@ -3,7 +3,7 @@ import { fn } from "@storybook/test";
 import { FormEditor } from "../form-editor";
 
 const meta = {
-  title: "Pochi/FormEditor",
+  title: "Chat/FormEditor",
   component: FormEditor,
   parameters: {
     layout: "padded",

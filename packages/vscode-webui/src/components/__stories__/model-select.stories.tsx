@@ -4,7 +4,7 @@ import type { ModelGroups } from "@/features/settings";
 import { ModelSelect } from "../model-select";
 
 const meta = {
-  title: "Pochi/ModelSelect",
+  title: "Chat/ModelSelect",
   component: ModelSelect,
   parameters: {
     layout: "centered",
