@@ -85,6 +85,7 @@ class TaskService {
       newTitle = await taskService.checkAndGenerateTaskTitle(messages);
     }
 
+    let compact = false;
     if (
       shouldAutoCompact(
         contextWindow,
@@ -96,6 +97,7 @@ class TaskService {
       const summary = await compactService.compact(messages);
       messages = summary.messages;
       await this.resetTokens(uid, summary.totalTokens);
+      compact = true;
     }
 
     const messagesToSave = formatters.storage(messages);
@@ -131,6 +133,7 @@ class TaskService {
       streamId,
       messages,
       uid,
+      compact,
       isSubTask: parentId !== null,
     };
   }

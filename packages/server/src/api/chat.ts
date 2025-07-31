@@ -7,7 +7,12 @@ import {
 } from "@getpochi/tools";
 import { zValidator } from "@hono/zod-validator";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
-import { appendDataPart, formatters, prompts } from "@ragdoll/common";
+import {
+  appendDataPart,
+  formatters,
+  fromUIMessage,
+  prompts,
+} from "@ragdoll/common";
 import type { DBMessage, Environment } from "@ragdoll/db";
 import {
   type CoreMessage,
@@ -91,7 +96,7 @@ const chat = new Hono()
     const validModelId =
       req.openAIModelOverride || checkModel(requestedModelId);
 
-    const { streamId, messages, uid, isSubTask } =
+    const { streamId, messages, uid, isSubTask, compact } =
       await taskService.startStreaming(
         user.id,
         req,
@@ -118,6 +123,16 @@ const chat = new Hono()
       execute: async (stream) => {
         if (req.id === undefined) {
           appendDataPart({ type: "append-id", uid }, stream);
+        }
+
+        if (compact) {
+          const lastMessage = messages.at(-1);
+          if (lastMessage) {
+            appendDataPart(
+              { type: "compact", message: fromUIMessage(lastMessage) },
+              stream,
+            );
+          }
         }
 
         const preparedMessages = await prepareMessages(

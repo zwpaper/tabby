@@ -10,9 +10,15 @@ export type DataPart =
       type: "append-id";
       uid: string;
     }
-  | ({
-      type: "update-usage";
-    } & LanguageModelUsage);
+  | (
+      | ({
+          type: "update-usage";
+        } & LanguageModelUsage)
+      | {
+          type: "compact";
+          message: DBMessage;
+        }
+    );
 
 export function toUIMessage(message: DBMessage): UIMessage {
   return {
