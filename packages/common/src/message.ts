@@ -52,23 +52,13 @@ export function appendMessages(
   messages: UIMessage[],
   appendMessages: UIMessage[],
 ): UIMessage[] {
-  const messageMap = new Map<string, UIMessage>();
-
-  // Add existing messages to the map
-  for (const message of messages) {
-    messageMap.set(message.id, message);
+  const syncMessageId = appendMessages[0].id;
+  const syncMessageIndex = messages.findIndex((m) => m.id === syncMessageId);
+  if (syncMessageIndex !== -1) {
+    return [...messages.slice(0, syncMessageIndex), ...appendMessages];
   }
 
-  // Append or overwrite messages
-  for (const appendMessage of appendMessages) {
-    if (messageMap.has(appendMessage.id)) {
-      messageMap.set(appendMessage.id, appendMessage);
-    } else {
-      messageMap.set(appendMessage.id, appendMessage);
-    }
-  }
-
-  return Array.from(messageMap.values());
+  return [...messages, ...appendMessages];
 }
 
 /**
