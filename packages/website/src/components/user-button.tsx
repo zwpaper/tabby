@@ -4,6 +4,7 @@ import {
   UserAvatar,
   UserButton as UserButtonImpl,
 } from "@daveyplate/better-auth-ui";
+import { IconCreditCardPay } from "@tabler/icons-react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { CircleStopIcon, ShieldUser } from "lucide-react";
 import type React from "react";
@@ -32,6 +33,12 @@ export function UserButton({
       icon: <ShieldUser />,
     });
   }
+
+  additionalLinks.push({
+    href: "/pricing",
+    label: "Pricing",
+    icon: <IconCreditCardPay />,
+  });
 
   if (props.size === "icon") {
     classNames = merge(

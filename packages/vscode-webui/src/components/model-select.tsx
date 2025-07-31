@@ -66,7 +66,8 @@ export function ModelSelect({
               <DropdownMenuContent
                 onCloseAutoFocus={(e) => e.preventDefault()}
                 side="bottom"
-                align="end"
+                align="start"
+                alignOffset={6}
                 className="dropdown-menu max-h-[30vh] min-w-[18rem] animate-in overflow-y-auto overflow-x-hidden rounded-md border bg-background p-2 text-popover-foreground shadow"
               >
                 <DropdownMenuRadioGroup
@@ -109,7 +110,7 @@ export function ModelSelect({
                       })}
                     </div>
                   ))}
-                </DropdownMenuRadioGroup>{" "}
+                </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenuPortal>
           </DropdownMenu>
