@@ -1,21 +1,22 @@
 import { threadSignal } from "@quilted/threads/signals";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { vscodeHost } from "../vscode";
 
+/** @useSignals this comment is needed to enable signals in this hook */
 export const useAutoSaveDisabled = () => {
-  const [autoSaveDisabled, setAutoSaveDisabled] = useState(true);
+  const { data: autoSaveDisabledSignal } = useQuery({
+    queryKey: ["autoSaveDisabled"],
+    queryFn: fetchAutoSaveDisabled,
+  });
 
-  useEffect(() => {
-    const fetchAutoSaveDisabled = async () => {
-      const signal = threadSignal(await vscodeHost.readAutoSaveDisabled());
-      signal.subscribe((value) => {
-        setAutoSaveDisabled(value ?? true);
-      });
-      setAutoSaveDisabled(signal.value ?? true);
-    };
+  if (autoSaveDisabledSignal === undefined) {
+    return true;
+  }
 
-    fetchAutoSaveDisabled();
-  }, []);
-
-  return autoSaveDisabled;
+  return autoSaveDisabledSignal.value ?? true;
 };
+
+async function fetchAutoSaveDisabled() {
+  const signal = threadSignal(await vscodeHost.readAutoSaveDisabled());
+  return signal;
+}

@@ -1,11 +1,14 @@
 import { vscodeHost } from "@/lib/vscode";
 import { threadSignal } from "@quilted/threads/signals";
 import type { CustomModelSetting } from "@ragdoll/vscode-webui-bridge";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 const isValidCustomModelSettings = (
-  settings: CustomModelSetting[],
+  settings: CustomModelSetting[] | undefined,
 ): settings is CustomModelSetting[] => {
+  if (settings === undefined) {
+    return false;
+  }
   return (
     Array.isArray(settings) &&
     settings.every((setting) => {
@@ -24,34 +27,27 @@ const isValidCustomModelSettings = (
   );
 };
 
+/** @useSignals this comment is needed to enable signals in this hook */
 export const useCustomModelSetting = () => {
-  const [customModelSettings, setCustomModelSettings] = useState<
-    CustomModelSetting[] | undefined
-  >(undefined);
+  const { data: customModelSettingsSignal, isLoading } = useQuery({
+    queryKey: ["customModelSetting"],
+    queryFn: fetchCustomModelSetting,
+  });
 
-  const [isLoading, setIsLoading] = useState(true);
+  if (customModelSettingsSignal === undefined) {
+    return { customModelSettings: undefined, isLoading };
+  }
 
-  useEffect(() => {
-    const updateCustomModelSetting = (
-      settings: CustomModelSetting[] | undefined,
-    ) => {
-      if (settings && isValidCustomModelSettings(settings)) {
-        setCustomModelSettings(settings);
-      } else {
-        setCustomModelSettings(undefined);
-      }
-    };
-    const fetchCustomModelSetting = async () => {
-      setIsLoading(true);
-      const signal = threadSignal(await vscodeHost.readCustomModelSetting());
-      signal.subscribe((value) => {
-        updateCustomModelSetting(value);
-      });
-      updateCustomModelSetting(signal.value);
-      setIsLoading(false);
-    };
-    fetchCustomModelSetting();
-  }, []);
+  const settings = customModelSettingsSignal.value;
 
-  return { customModelSettings, isLoading };
+  if (!isValidCustomModelSettings(settings)) {
+    return { customModelSettings: undefined, isLoading };
+  }
+
+  return { customModelSettings: settings, isLoading };
 };
+
+async function fetchCustomModelSetting() {
+  const signal = threadSignal(await vscodeHost.readCustomModelSetting());
+  return signal;
+}
