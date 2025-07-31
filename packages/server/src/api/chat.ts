@@ -30,7 +30,7 @@ import { HTTPException } from "hono/http-exception";
 import { stream } from "hono/streaming";
 import { createResumableStreamContext } from "resumable-stream";
 import { z } from "zod";
-import { type User, requireAuth } from "../auth";
+import { type User, isInternalUser, requireAuth } from "../auth";
 import { createBatchCallMiddleware } from "../lib/batch-call-middleware";
 import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
@@ -78,6 +78,12 @@ const chat = new Hono()
     const parsedMcpTools = parseMcpToolSet(mcpToolSet);
 
     const user = c.get("user");
+
+    if (req.modelEndpointId && !isInternalUser(user)) {
+      throw new HTTPException(403, {
+        message: "modelEndpointId is only available for internal users.",
+      });
+    }
 
     if (!req.openAIModelOverride) {
       await checkUserQuota(user, requestedModelId);

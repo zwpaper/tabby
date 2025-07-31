@@ -14,7 +14,8 @@ import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Todo } from "@getpochi/tools";
 import type { Environment } from "@ragdoll/db";
 import { useRouter } from "@tanstack/react-router";
-import { Bot, CheckIcon, CopyIcon, SettingsIcon } from "lucide-react"; // Removed FilesIcon
+import { Bot, CheckIcon, CopyIcon } from "lucide-react"; // Removed FilesIcon
+import { IconHammer } from "obra-icons-react";
 import type React from "react";
 import { useCallback } from "react";
 
@@ -113,7 +114,7 @@ export function DevModeButton({
           className="h-6 w-6 rounded-md p-0"
           title="Dev mode"
         >
-          <SettingsIcon className="size-4" />
+          <IconHammer className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
