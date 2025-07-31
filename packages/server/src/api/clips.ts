@@ -1,15 +1,15 @@
 import { zValidator } from "@hono/zod-validator";
+import type { ClipData } from "@ragdoll/db";
 import { Hono } from "hono";
 import { rateLimiter } from "hono-rate-limiter";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { clipService } from "../service/clip";
-import { ZodMessageType } from "../types";
+
+const ZodClipDataType: z.ZodType<ClipData> = z.any();
 
 const ClipCreateSchema = z.object({
-  data: z.object({
-    messages: z.array(ZodMessageType).nullable(),
-  }),
+  data: ZodClipDataType,
 });
 
 const clips = new Hono()

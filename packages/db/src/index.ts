@@ -37,10 +37,13 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task" | "clip"> & {
   };
 
   clip: Omit<DbImpl["clip"], "data"> & {
-    data: {
-      messages: DBMessage[] | null;
-    };
+    data: ClipData;
   };
+};
+
+export type ClipData = {
+  messages: DBMessage[] | null;
+  assistant?: "claude-code" | "open-coder" | "gemini-cli";
 };
 
 export type {

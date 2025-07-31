@@ -1,8 +1,8 @@
-import type { DBMessage } from "@ragdoll/db";
+import type { ClipData } from "@ragdoll/db";
 import { clipIdCoder, db } from "../db";
 
 class ClipService {
-  async create(data: { messages: DBMessage[] | null }): Promise<string> {
+  async create(data: ClipData): Promise<string> {
     const { id } = await db
       .insertInto("clip")
       .values({ data })

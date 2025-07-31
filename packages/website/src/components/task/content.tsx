@@ -32,7 +32,7 @@ interface ContentProps extends ComponentProps<"div"> {
 function TaskContent({
   messages,
   todos,
-  assistant,
+  assistant: originalAssistant,
   user,
   theme,
   className,
@@ -47,19 +47,27 @@ function TaskContent({
 
   const displayError = iframeError;
 
-  const iframeUrl = useMemo(() => {
+  const assistant = useMemo(() => {
     const hostOrigin = window.location.origin;
-    const search = new URLSearchParams(
-      assistant
-        ? {
-            assistant_name: assistant.name,
-            assistant_image: assistant.image ?? "",
-          }
-        : {
-            assistant_name: "Pochi",
-            assistant_image: `${hostOrigin}/logo192.png`,
-          },
-    ).toString();
+    if (!originalAssistant) {
+      return {
+        name: "Pochi",
+        image: `${hostOrigin}/logo192.png`,
+      };
+    }
+    return {
+      ...originalAssistant,
+      image: originalAssistant.image
+        ? new URL(originalAssistant.image, hostOrigin).href
+        : "",
+    };
+  }, [originalAssistant]);
+
+  const iframeUrl = useMemo(() => {
+    const search = new URLSearchParams({
+      assistant_name: assistant.name,
+      assistant_image: assistant.image ?? "",
+    }).toString();
 
     const hash = new URLSearchParams({
       theme: theme || "light",

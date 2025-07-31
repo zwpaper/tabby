@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import claudeCodeAvatar from "@/assets/claude-code-avatar.png";
+import geminiCliAvatar from "@/assets/gemini-cli-avatar.png";
+import openCoderAvatar from "@/assets/open-coder-avatar.jpeg";
 import { TaskContent } from "@/components/task/content";
 import { TaskHeader } from "@/components/task/header";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
@@ -12,7 +15,7 @@ import { toUIMessages } from "@ragdoll/common";
 import { parseTitle } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { UIMessage } from "ai";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/clips/$id")({
   loader: async ({ params }) => {
@@ -35,6 +38,7 @@ export const Route = createFileRoute("/clips/$id")({
         title,
         todos,
         updatedAt,
+        assistant: data.assistant,
       };
     } catch (error) {
       throw normalizeApiError(error);
@@ -60,7 +64,8 @@ function ThemeWrapped() {
 
 function ClipView() {
   const { theme } = useTheme();
-  const { messages, todos, title, updatedAt } = Route.useLoaderData();
+  const { messages, todos, title, updatedAt, assistant } =
+    Route.useLoaderData();
 
   if (!messages || messages.length === 0) {
     return (
@@ -69,6 +74,26 @@ function ClipView() {
       </div>
     );
   }
+
+  const assistantInfo = useMemo(() => {
+    switch (assistant) {
+      case "claude-code":
+        return {
+          name: "Claude Code",
+          image: claudeCodeAvatar,
+        };
+      case "gemini-cli":
+        return {
+          name: "Gemini Cli",
+          image: geminiCliAvatar,
+        };
+      case "open-coder":
+        return {
+          name: "OpenCoder",
+          image: openCoderAvatar,
+        };
+    }
+  }, [assistant]);
 
   return (
     <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8 md:mt-6">
@@ -88,10 +113,7 @@ function ClipView() {
           name: "You",
           image: `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(title)}&scale=150`,
         }}
-        assistant={{
-          name: "Pochi",
-          image: `${window.location.origin}/logo192.png`,
-        }}
+        assistant={assistantInfo}
         theme={theme}
       />
     </div>
