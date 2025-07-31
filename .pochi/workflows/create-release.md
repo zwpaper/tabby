@@ -1,4 +1,5 @@
 Please help create a new release for the current main, following these guidelines:
+- you should always ensure main branch is sync with remote origin before doing anything (e.g run `git pull`)
 - by default, you should bump version for packages/vscode and packages/runner.
 - use git command to find all commits since last release tag for each package and show them to the user (note you need to find all changes from git root, not just from packages/vscode or packages/runner).
 - always use askFollowupQuestion with user to confirm whether they wanna bump major, minor, or patch version.
