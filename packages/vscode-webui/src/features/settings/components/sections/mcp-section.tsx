@@ -1,12 +1,15 @@
-import { Button } from "@/components/ui/button";
+import { FileIcon } from "@/components/tool-invocation/file-icon/file-icon";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { cn } from "@/lib/utils";
+import { getFileName } from "@/lib/utils/file";
+import { vscodeHost } from "@/lib/vscode";
 import type { McpConnection } from "@ragdoll/vscode-webui-bridge";
-import { ChevronsUpDown, Dot, Github, Plus, RotateCw } from "lucide-react";
-import { useState } from "react";
+import { ChevronsUpDown, Dot, Download, Github, RotateCw } from "lucide-react";
+import { useEffect, useState } from "react";
 import { SubSection } from "../ui/section";
 import { ToolBadge } from "../ui/tool-badge";
 
@@ -17,6 +20,11 @@ interface RecommendedMcpServer {
   githubUrl: string;
   command: string;
   args: string[];
+}
+interface McpConfigPath {
+  name: string;
+  description: string;
+  path: string;
 }
 
 const recommendedMcpServers: RecommendedMcpServer[] = [
@@ -31,29 +39,205 @@ const recommendedMcpServers: RecommendedMcpServer[] = [
   },
 ];
 
+function useThirdPartyMcp() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [availableConfigs, setAvailableConfigs] = useState<McpConfigPath[]>([]);
+  const [importFromAllConfigs, setImportFromAllConfigs] =
+    useState<() => Promise<void>>();
+  const [importFromConfig, setImportFromConfig] =
+    useState<(config: McpConfigPath) => Promise<void>>();
+
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchConfigs = async () => {
+      setIsLoading(true);
+      try {
+        const {
+          availableConfigs,
+          importFromAllConfigs: doImportAll,
+          importFromConfig: doImportSingle,
+        } = await vscodeHost.fetchAvailableThirdPartyMcpConfigs();
+        if (!isCancelled) {
+          setAvailableConfigs(availableConfigs);
+          setImportFromAllConfigs(() => doImportAll);
+          setImportFromConfig(() => doImportSingle);
+        }
+      } catch (e) {
+        console.error("Failed to fetch third party mcp configs", e);
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+    fetchConfigs();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  return {
+    isLoading,
+    availableConfigs,
+    importFromAllConfigs,
+    importFromConfig,
+  };
+}
+
+const ImportMcp: React.FC<{
+  availableConfigs: McpConfigPath[];
+  onImportAll: () => Promise<void>;
+  onImportSingle: (config: McpConfigPath) => Promise<void>;
+}> = ({ availableConfigs, onImportAll, onImportSingle }) => {
+  return (
+    <div className="rounded-md border p-3">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="font-medium text-sm">Import MCP Servers</span>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            Found {availableConfigs.length} source
+            {availableConfigs.length > 1 ? "s" : ""}
+          </span>
+          <Button
+            onClick={() => onImportAll()}
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+          >
+            <Download className="mr-1 size-3" />
+            Import All
+          </Button>
+        </div>
+        <McpConfigList
+          configs={availableConfigs}
+          onImportSingle={onImportSingle}
+        />
+      </div>
+    </div>
+  );
+};
+
+const McpConfigList: React.FC<{
+  configs: McpConfigPath[];
+  onImportSingle: (config: McpConfigPath) => Promise<void>;
+}> = ({ configs, onImportSingle }) => {
+  if (configs.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex max-h-[100px] flex-col gap-1 overflow-y-auto rounded border p-1">
+      {configs.map((config, index) => {
+        const fileName = getFileName(config.path);
+        return (
+          <div
+            key={config.path + index}
+            className="group flex items-center justify-between rounded px-1 py-0.5 hover:bg-secondary/50"
+          >
+            <div
+              className="flex flex-1 cursor-pointer items-center truncate"
+              onClick={() => {
+                vscodeHost.openFile(config.path, {
+                  preserveFocus: true,
+                });
+              }}
+              title={config.path}
+            >
+              <FileIcon
+                path={config.path}
+                className="mr-1 ml-0.5 shrink-0 text-xl/4"
+                defaultIconClassName="ml-0 mr-0.5"
+                isDirectory={false}
+              />
+              <span className="mr-1 truncate font-semibold text-foreground">
+                {fileName}
+              </span>
+              <span className="truncate text-foreground/70 text-sm">
+                {config.name}
+              </span>
+            </div>
+            <Button
+              onClick={() => onImportSingle(config)}
+              size="sm"
+              variant="outline"
+              className="ml-2 h-6 shrink-0 px-2 text-xs opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            >
+              <Download className="mr-1 size-3" />
+              Import
+            </Button>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export const McpSection: React.FC = () => {
-  const titleElement = (
-    <div className="flex gap-1">
-      {/* <a
-        href={commandForMcp("addServer")}
-        className={buttonVariants({ variant: "ghost", size: "sm" })}
-      >
-        <Plus className="size-4" />
-        Add
-      </a> */}
+  const { connections, isLoading: isLoadingConnections } = useMcp();
+  const {
+    isLoading: isLoadingThirdParty,
+    availableConfigs,
+    importFromAllConfigs,
+    importFromConfig,
+  } = useThirdPartyMcp();
+
+  const title = (
+    <div className="flex items-center gap-2">
       <a
         href={commandForMcp("openServerSettings")}
-        className="flex items-center gap-1"
+        target="_blank"
+        rel="noopener noreferrer"
       >
-        MCP Servers
-        <Plus className="size-4" />
+        <Button className={buttonVariants({ variant: "secondary" })}>
+          Edit MCP servers
+        </Button>
       </a>
+      <span className="text-muted-foreground text-sm">
+        Configuration MCP for Pochi globally.
+      </span>
     </div>
   );
 
+  const isLoading = isLoadingConnections || isLoadingThirdParty;
+  const hasConnections = Object.keys(connections).length > 0;
+  const hasAvailableConfigs =
+    !isLoading && availableConfigs && availableConfigs.length > 0;
+
   return (
-    <SubSection title={titleElement}>
-      <Connections />
+    <SubSection title={title}>
+      <div className="w-full">
+        <div className="space-y-2">
+          {isLoading ? (
+            <div className="flex justify-between rounded-md border px-2 py-2">
+              <Skeleton
+                className="h-6 bg-secondary"
+                style={{
+                  width: "15rem",
+                }}
+              />
+            </div>
+          ) : hasConnections ? (
+            Object.keys(connections).map((name) => (
+              <Connection
+                key={name}
+                name={name}
+                connection={connections[name]}
+              />
+            ))
+          ) : hasAvailableConfigs ? (
+            <ImportMcp
+              availableConfigs={availableConfigs}
+              onImportAll={importFromAllConfigs || (() => Promise.resolve())}
+              onImportSingle={importFromConfig || (() => Promise.resolve())}
+            />
+          ) : (
+            <EmptyPlaceholder />
+          )}
+        </div>
+      </div>
     </SubSection>
   );
 };
@@ -86,40 +270,6 @@ const EmptyPlaceholder: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
-
-const Connections: React.FC = () => {
-  const { connections, isLoading } = useMcp();
-  const keys = Object.keys(connections);
-
-  return (
-    <div className="w-full">
-      <div className="space-y-2">
-        {isLoading ? (
-          <div className="flex justify-between rounded-md border px-2 py-2">
-            <Skeleton
-              className="h-6 bg-secondary"
-              style={{
-                width: "15rem",
-              }}
-            />
-          </div>
-        ) : keys.length > 0 ? (
-          keys.map((name) => {
-            return (
-              <Connection
-                key={name}
-                name={name}
-                connection={connections[name]}
-              />
-            );
-          })
-        ) : (
-          <EmptyPlaceholder />
-        )}
-      </div>
     </div>
   );
 };
@@ -248,6 +398,7 @@ const McpToolBadgeList: React.FC<{
 function commandForMcp(
   command:
     | "addServer"
+    | "importServers"
     | "openServerSettings"
     | "startServer"
     | "stopServer"

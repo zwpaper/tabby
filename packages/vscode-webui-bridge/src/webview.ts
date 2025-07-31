@@ -161,6 +161,20 @@ export interface VSCodeHostApi {
     copyRules: () => Promise<void>;
   }>;
 
+  fetchAvailableThirdPartyMcpConfigs(): Promise<{
+    availableConfigs: {
+      name: string;
+      path: string;
+      description: string;
+    }[];
+    importFromAllConfigs: () => Promise<void>;
+    importFromConfig: (configPath: {
+      name: string;
+      path: string;
+      description: string;
+    }) => Promise<void>;
+  }>;
+
   /**
    * Opens the specified URI in the user's default web browser or external application.
    * @param uri - The URI to open in an external application.

@@ -69,6 +69,7 @@ export class McpHub implements vscode.Disposable {
   addServer(name?: string, serverConfig?: McpServerConfig): string {
     const uniqueName = this.generateUniqueName(
       name || "replace-your-mcp-name-here",
+      this.config,
     );
 
     this.updateServerConfig(
@@ -83,6 +84,40 @@ export class McpHub implements vscode.Disposable {
     return uniqueName;
   }
 
+  addServers(
+    serverConfigs: Array<McpServerConfig & { name: string }>,
+  ): string[] {
+    if (serverConfigs.length === 0) {
+      return [];
+    }
+
+    if (!this.config) {
+      logger.error("Cannot add servers: configuration not initialized");
+      return [];
+    }
+
+    const addedNames: string[] = [];
+    const updatedConfig = { ...this.config };
+
+    for (const serverConfig of serverConfigs) {
+      const uniqueName = this.generateUniqueName(
+        serverConfig.name,
+        updatedConfig,
+      );
+      const { name: _, ...config } = serverConfig;
+      updatedConfig[uniqueName] = config;
+      addedNames.push(uniqueName);
+    }
+
+    this.configuration.mcpServers.value = updatedConfig;
+    logger.debug(`Batch added ${addedNames.length} MCP servers`);
+
+    return addedNames;
+  }
+
+  getCurrentConfig(): PochiMcpServersSettings {
+    return this.config || {};
+  }
   toggleToolEnabled(serverName: string, toolName: string) {
     if (!this.config?.[serverName]) {
       logger.debug(
@@ -109,8 +144,10 @@ export class McpHub implements vscode.Disposable {
     this.updateServerConfig(serverName, serverConfig);
   }
 
-  private generateUniqueName(baseName: string): string {
-    const currentServers = this.config;
+  private generateUniqueName(
+    baseName: string,
+    currentServers?: PochiMcpServersSettings,
+  ): string {
     let serverName = baseName;
     let counter = 1;
 

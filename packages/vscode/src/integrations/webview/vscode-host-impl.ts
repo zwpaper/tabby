@@ -77,6 +77,9 @@ import { DiffChangesContentProvider } from "../editor/diff-changes-content-provi
 import { type FileSelection, TabState } from "../editor/tab-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "../mcp/mcp-hub";
+import type { McpConfigPath } from "../mcp/third-mcp/constants";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { ThirdMcpImporter } from "../mcp/third-mcp/importer";
 import { isExecutable } from "../mcp/types";
 import { listSymbols } from "../symbol";
 import {
@@ -105,6 +108,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly terminalState: TerminalState,
     private readonly posthog: PostHog,
     private readonly mcpHub: McpHub,
+    private readonly thirdMcpImporter: ThirdMcpImporter,
     private readonly taskRunnerManager: TaskRunnerManager,
     private readonly checkpointService: CheckpointService,
     private readonly pochiConfiguration: PochiConfiguration,
@@ -448,6 +452,17 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       await vscode.commands.executeCommand("pochi.editWorkspaceRules");
     };
     return { rulePaths, workspaceRuleExists, copyRules };
+  };
+
+  fetchAvailableThirdPartyMcpConfigs = async () => {
+    const availableConfigs = await this.thirdMcpImporter.getAvailableConfigs();
+    const importFromAllConfigs = async () => {
+      await this.thirdMcpImporter.importFromAllConfigs();
+    };
+    const importFromConfig = async (configPath: McpConfigPath) => {
+      await this.thirdMcpImporter.importFromConfig(configPath);
+    };
+    return { availableConfigs, importFromAllConfigs, importFromConfig };
   };
 
   openExternal = async (uri: string): Promise<void> => {

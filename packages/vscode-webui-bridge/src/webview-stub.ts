@@ -123,6 +123,25 @@ const VSCodeHostStub = {
       copyRules: () => Promise.resolve(),
     });
   },
+  fetchAvailableThirdPartyMcpConfigs: (): Promise<{
+    availableConfigs: {
+      name: string;
+      path: string;
+      description: string;
+    }[];
+    importFromAllConfigs: () => Promise<void>;
+    importFromConfig: (configPath: {
+      name: string;
+      path: string;
+      description: string;
+    }) => Promise<void>;
+  }> => {
+    return Promise.resolve({
+      availableConfigs: [],
+      importFromAllConfigs: () => Promise.resolve(),
+      importFromConfig: () => Promise.resolve(),
+    });
+  },
   openExternal: (_uri: string): Promise<void> => {
     return Promise.resolve();
   },
