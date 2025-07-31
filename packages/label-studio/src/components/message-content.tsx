@@ -79,6 +79,16 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
       return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    if (!Array.isArray(content)) {
+      return (
+        <div ref={ref} className="space-y-4">
+          <pre className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border border-border bg-background p-3 text-foreground text-sm">
+            {content}
+          </pre>
+        </div>
+      );
+    }
+
     const handleCopyPart = (part: Part, partIndex: number) => {
       const textContent = part.newText !== undefined ? part.newText : part.text;
       const jsonString = JSON.stringify(textContent || "");
