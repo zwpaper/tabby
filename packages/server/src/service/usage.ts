@@ -189,7 +189,6 @@ export class UsageService {
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();
 
-    // todo
     const subscriptions = await db
       .selectFrom("subscription")
       .select(["id", "plan", "status"])

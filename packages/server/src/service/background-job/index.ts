@@ -12,12 +12,18 @@ import {
   queue as slackQueue,
 } from "./notify-task-slack";
 
+import {
+  createMonitorStripeCreditUsageWorker,
+  queue as monitorStripeCreditUsageQueue,
+} from "./monitor-stripe-credit-usage";
+
 export function startWorkers() {
   createNotifyTaskSlackWorker();
   createSandboxWorker();
   if (process.env.NODE_ENV === "production") {
     createCleanupSandboxWorker();
   }
+  createMonitorStripeCreditUsageWorker();
 }
 
 export { enqueueNotifyTaskSlack } from "./notify-task-slack";
@@ -40,6 +46,11 @@ export const backgroundJobQueues = [
   {
     queue: createSandboxQueue,
     displayName: "CreateSandbox",
+    type: "bullmq" as const,
+  },
+  {
+    queue: monitorStripeCreditUsageQueue,
+    displayName: "MonitorStripeCreditUsage",
     type: "bullmq" as const,
   },
 ];
