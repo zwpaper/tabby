@@ -1,5 +1,5 @@
 import type { Server } from "node:http";
-import { trace } from "@opentelemetry/api";
+import { type Span, SpanStatusCode, trace } from "@opentelemetry/api";
 import type { DB } from "@ragdoll/db";
 import type { ButtonAction } from "@slack/bolt";
 import { App, type Installation } from "@slack/bolt";
@@ -17,6 +17,23 @@ import { slackRichTextRenderer } from "./slack-task/slack-rich-text";
 import { usageService } from "./usage";
 
 const tracer = trace.getTracer("ragdoll-slack", "0.0.1");
+
+export const withSpan = async <T>(
+  operationName: string,
+  func: (span: Span) => Promise<T>,
+): Promise<T | undefined> => {
+  return tracer.startActiveSpan(operationName, async (span) => {
+    try {
+      return await func(span);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      span.recordException(err);
+      span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+    } finally {
+      span.end();
+    }
+  });
+};
 
 class SlackService {
   private app: App;
@@ -167,113 +184,117 @@ class SlackService {
 
   private registerEvents() {
     // Handle slash commands for task creation
-    this.app.command("/newtask", async ({ command, ack, respond, context }) =>
-      tracer.startActiveSpan("slack.newTask", async (span) => {
-        // Track slash command metrics
-        metrics.counter.slackCommandsTotal.add(1, {
-          command: "newtask",
-          status: "received",
-        });
-
-        // Acknowledge the command request
-        await ack();
-
-        const vendorIntegrationId = context.teamId || context.enterpriseId;
-        if (!vendorIntegrationId) {
+    this.app.command(
+      "/newtask",
+      async ({ command, ack, respond, context }) =>
+        await withSpan("slack.newTask", async (span) => {
           metrics.counter.slackCommandsTotal.add(1, {
             command: "newtask",
-            status: "no_integration",
+            status: "received",
           });
-          return;
-        }
 
-        const webClient =
-          await this.getWebClientByIntegration(vendorIntegrationId);
+          await ack();
 
-        if (!webClient) return;
+          const vendorIntegrationId = context.teamId || context.enterpriseId;
+          if (!vendorIntegrationId) {
+            metrics.counter.slackCommandsTotal.add(1, {
+              command: "newtask",
+              status: "no_integration",
+            });
+            return;
+          }
 
-        // Validate user
-        const validation = await this.validateUser(webClient, command.user_id);
-        if (!validation.success) {
-          metrics.counter.slackCommandsTotal.add(1, {
-            command: "newtask",
-            status: "validation_failed",
-          });
-          await respond({
-            text: validation.error,
-            blocks: validation.blocks || [],
-            response_type: "ephemeral",
-          });
-          return;
-        }
+          const webClient =
+            await this.getWebClientByIntegration(vendorIntegrationId);
+          if (!webClient) return;
 
-        const { user } = validation;
-        if (!user) {
-          await respond({
-            text: "❌ User validation failed",
-            response_type: "ephemeral",
-          });
-          return;
-        }
-        spanConfig.setAttribute("ragdoll.user.email", user.email, span);
-
-        const taskText = command.text?.trim();
-        if (!taskText) {
-          metrics.counter.slackCommandsTotal.add(1, {
-            command: "newtask",
-            status: "no_description",
-          });
-          await respond({
-            text: "❌ Please provide a task description. Usage:\n• `/newtask [owner/repo] description`\n• Or `/newtask description` (if channel topic contains `[repo:owner/repo]`)\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set channel topic: `Project discussion [repo:TabbyML/tabby]` and use: `/newtask fix the login issue`",
-            response_type: "ephemeral",
-          });
-          return;
-        }
-
-        // Update SlackConnect mapping
-        await db
-          .insertInto("slackConnect")
-          .values({
-            userId: user.id,
-            vendorIntegrationId,
-          })
-          .onConflict((oc) =>
-            oc.column("userId").doUpdateSet({
-              vendorIntegrationId,
-              updatedAt: sql`CURRENT_TIMESTAMP`,
-            }),
-          )
-          .execute();
-
-        try {
-          const uid = await slackTaskService.createTaskWithCloudRunner(
-            user,
-            command,
-            taskText,
+          const validation = await this.validateUser(
+            webClient,
             command.user_id,
           );
-          if (!uid) {
-            throw new Error("Failed to create task");
+          if (!validation.success) {
+            metrics.counter.slackCommandsTotal.add(1, {
+              command: "newtask",
+              status: "validation_failed",
+            });
+            await respond({
+              text: validation.error,
+              blocks: validation.blocks || [],
+              response_type: "ephemeral",
+            });
+            return;
           }
-          spanConfig.setAttribute("ragdoll.task.uid", uid, span);
 
-          // Track successful task creation
-          metrics.counter.slackTasksCreated.add(1);
-          metrics.counter.slackCommandsTotal.add(1, {
-            command: "newtask",
-            status: "success",
-          });
-        } catch (error) {
-          metrics.counter.slackCommandsTotal.add(1, {
-            command: "newtask",
-            status: "error",
-          });
-          await respond({
-            text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage:\n• \`/newtask [owner/repo] description\`\n• Or \`/newtask description\` (if channel topic contains \`[repo:owner/repo]\`)\n\nExample: \`/newtask [TabbyML/tabby] fix the login issue\``,
-            response_type: "ephemeral",
-          });
-        }
-      }),
+          const { user } = validation;
+          if (!user) {
+            metrics.counter.slackCommandsTotal.add(1, {
+              command: "newtask",
+              status: "validation_failed",
+            });
+            await respond({
+              text: "❌ User validation failed",
+              blocks: validation.blocks || [],
+              response_type: "ephemeral",
+            });
+            return;
+          }
+          spanConfig.setAttribute("ragdoll.user.email", user.email, span);
+
+          const taskText = command.text?.trim();
+          if (!taskText) {
+            metrics.counter.slackCommandsTotal.add(1, {
+              command: "newtask",
+              status: "no_description",
+            });
+            await respond({
+              text: "❌ Please provide a task description. Usage:\n• `/newtask [owner/repo] description`\n• Or `/newtask description` (if channel topic contains `[repo:owner/repo]`)\n\nExample: `/newtask [TabbyML/tabby] fix the login issue`\nOr set channel topic: `Project discussion [repo:TabbyML/tabby]` and use: `/newtask fix the login issue`",
+              response_type: "ephemeral",
+            });
+            return;
+          }
+
+          await db
+            .insertInto("slackConnect")
+            .values({
+              userId: user.id,
+              vendorIntegrationId,
+            })
+            .onConflict((oc) =>
+              oc.column("userId").doUpdateSet({
+                vendorIntegrationId,
+                updatedAt: sql`CURRENT_TIMESTAMP`,
+              }),
+            )
+            .execute();
+
+          try {
+            const uid = await slackTaskService.createTaskWithCloudRunner(
+              user,
+              command,
+              taskText,
+              command.user_id,
+            );
+            if (!uid) {
+              throw new Error("Failed to create task");
+            }
+            spanConfig.setAttribute("ragdoll.task.uid", uid, span);
+            metrics.counter.slackTasksCreated.add(1);
+            metrics.counter.slackCommandsTotal.add(1, {
+              command: "newtask",
+              status: "success",
+            });
+          } catch (error) {
+            metrics.counter.slackCommandsTotal.add(1, {
+              command: "newtask",
+              status: "error",
+            });
+            await respond({
+              text: `❌ ${error instanceof Error ? error.message : "Invalid command format"}. Usage:\n• \`/newtask [owner/repo] description\`\n• Or \`/newtask description\` (if channel topic contains \`[repo:owner/repo]\`)\n\nExample: \`/newtask [TabbyML/tabby] fix the login issue\``,
+              response_type: "ephemeral",
+            });
+            throw error; // Re-throw to trigger span error handling
+          }
+        }),
     );
 
     // Handle button actions
@@ -285,7 +306,7 @@ class SlackService {
     this.app.action(
       /^followup_(.+)$/,
       async ({ action, ack, body, context, client }) =>
-        tracer.startActiveSpan("slack.followupAction", async (span) => {
+        await withSpan("slack.followupAction", async (span) => {
           metrics.counter.slackFollowupActions.add(1, {
             type: "received",
             status: "processing",
@@ -312,12 +333,11 @@ class SlackService {
 
           const [, payload] = match;
 
-          // Parse the payload
           const parsed = slackTaskService.parseFollowupActionPayload(payload);
           if (!parsed) return;
 
           const { taskId, type, encodedContent } = parsed;
-          spanConfig.setAttribute("ragdoll.task.uid", parsed.taskId);
+          spanConfig.setAttribute("ragdoll.task.uid", parsed.taskId, span);
 
           const vendorIntegrationId = context.teamId || context.enterpriseId;
           if (!vendorIntegrationId) return;
@@ -326,7 +346,6 @@ class SlackService {
             await this.getWebClientByIntegration(vendorIntegrationId);
           if (!webClient) return;
 
-          // Validate user (full validation for actions)
           const validation = await this.validateUser(webClient, body.user.id);
           if (!validation.success) {
             metrics.counter.slackFollowupActions.add(1, {
@@ -353,7 +372,6 @@ class SlackService {
           }
           spanConfig.setAttribute("ragdoll.user.email", targetUser.email, span);
 
-          // Get task belong to current user
           const decodedTaskId = uidCoder.decode(taskId);
           const task = await db
             .selectFrom("task")
@@ -411,7 +429,6 @@ class SlackService {
               type: "direct",
               status: "success",
             });
-            // Open a modal with prefilled suggestion content
             await client.views.open({
               trigger_id: (body as { trigger_id: string }).trigger_id,
               view: slackModalViewRenderer.renderFollowupModal(
@@ -428,7 +445,7 @@ class SlackService {
     this.app.view(
       /^submit_followup_(.+)$/,
       async ({ ack, body, view, context }) =>
-        tracer.startActiveSpan("slack.submitFollowupView", async (span) => {
+        await withSpan("slack.submitFollowupView", async (span) => {
           await ack();
 
           const match = view.callback_id.match(/^submit_followup_(.+)$/);
@@ -439,19 +456,15 @@ class SlackService {
           if (!vendorIntegrationId) return;
           spanConfig.setAttribute("ragdoll.task.uid", taskId, span);
 
-          // Get the answer from the modal
           const answer = view.state.values.answer_block.answer_input.value;
           if (!answer) return;
 
-          // Get the user info and validate user
           const webClient =
             await this.getWebClientByIntegration(vendorIntegrationId);
           if (!webClient) return;
 
-          // Validate user (full validation for modal submissions)
           const validation = await this.validateUser(webClient, body.user.id);
           if (!validation.success) {
-            // For modal submissions, we can't show blocks, so just show text error
             const channelId = context.channelId;
             if (channelId) {
               await webClient.chat.postEphemeral({
@@ -477,12 +490,10 @@ class SlackService {
           }
           spanConfig.setAttribute("ragdoll.user.email", targetUser.email, span);
 
-          // Parse metadata from modal
           const metadata = view.private_metadata
             ? JSON.parse(view.private_metadata)
             : null;
 
-          // Handle the followup action
           const result = await slackTaskService.handleFollowupAction({
             taskId,
             content: answer,
@@ -491,7 +502,6 @@ class SlackService {
             messageTs: metadata?.messageTs,
           });
 
-          // Send error message if submission failed (success messages are handled in SlackTaskService)
           if (!result.success) {
             const channelId = metadata?.channel || context.channelId;
             if (channelId) {
