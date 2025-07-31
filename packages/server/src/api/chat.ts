@@ -140,9 +140,13 @@ const chat = new Hono()
                   {
                     role: "system",
                     content: prompts.system(environment.info.customRules),
-                    providerOptions: {
-                      anthropic: { cacheControl: { type: "ephemeral" } },
-                    },
+                    providerOptions:
+                      typeof validModelId === "string" &&
+                      validModelId.includes("anthropic")
+                        ? {
+                            anthropic: { cacheControl: { type: "ephemeral" } },
+                          }
+                        : undefined,
                   } satisfies CoreMessage,
                 ]
               : []),

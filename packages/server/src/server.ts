@@ -54,5 +54,8 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-startWorkers();
+if (process.env.BACKGROUND_JOB_WORKER === "on") {
+  startWorkers();
+}
+
 startListenDBEvents();
