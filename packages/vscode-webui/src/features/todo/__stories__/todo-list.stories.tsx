@@ -1,58 +1,21 @@
-import { LegacyTodoList } from "@/features/todo";
+import { TodoList } from "@/features/todo";
 import type { Todo } from "@getpochi/tools";
 import type { Meta, StoryObj } from "@storybook/react";
-import { useState } from "react";
 
-const meta: Meta<typeof LegacyTodoList> = {
+const meta: Meta<typeof TodoList> = {
   title: "Chat/TODO",
   component: Page,
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 function Page(props: any) {
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [draftTodos, setDraftTodos] = useState<Todo[]>(props.todos || []);
-
-  const enterEditMode = () => {
-    setDraftTodos([...props.todos]);
-    setIsEditMode(true);
-  };
-
-  const exitEditMode = () => {
-    setIsEditMode(false);
-    setDraftTodos([]);
-  };
-
-  const saveTodos = () => {
-    console.log("Saving todos:", draftTodos);
-    setIsEditMode(false);
-    setDraftTodos([]);
-  };
-
-  const updateTodoStatus = (todoId: string, newStatus: Todo["status"]) => {
-    setDraftTodos(
-      draftTodos.map((todo) => {
-        if (todo.id === todoId) {
-          return { ...todo, status: newStatus };
-        }
-        return todo;
-      }),
-    );
-  };
-
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <div style={{ flex: 1 }} />
-      <LegacyTodoList
-        {...props}
-        isEditMode={isEditMode}
-        draftTodos={draftTodos}
-        enterEditMode={enterEditMode}
-        exitEditMode={exitEditMode}
-        saveTodos={saveTodos}
-        updateTodoStatus={updateTodoStatus}
-        hasDirtyChanges={true}
-      />
+      <TodoList {...props}>
+        <TodoList.Header />
+        <TodoList.Items />
+      </TodoList>
     </div>
   );
 }

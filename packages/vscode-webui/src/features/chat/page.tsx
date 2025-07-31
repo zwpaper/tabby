@@ -5,7 +5,7 @@ import { useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import type { Todo } from "@getpochi/tools";
-import { formatters, prompts, toUIMessages } from "@ragdoll/common";
+import { formatters, toUIMessages } from "@ragdoll/common";
 import type { Environment, ExtendedUIMessage } from "@ragdoll/db";
 import type { InferResponseType } from "hono/client";
 import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
@@ -19,7 +19,7 @@ import { TokenUsage } from "@/components/token-usage";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import { ApprovalButton, useApprovalAndRetry } from "@/features/approval";
 import { AutoApproveMenu } from "@/features/settings";
-import { LegacyTodoList, useTodos } from "@/features/todo";
+import { TodoList, useTodos } from "@/features/todo";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { useAutoResume } from "@/lib/hooks/use-auto-resume";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
@@ -230,16 +230,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     } satisfies Environment;
   }, [messages, autoApproveGuard.current]);
 
-  const {
-    todos,
-    isEditMode,
-    draftTodos,
-    hasDirtyChanges,
-    enterEditMode,
-    exitEditMode,
-    saveTodos: saveTodosImpl,
-    updateTodoStatus,
-  } = useTodos({
+  const { todos } = useTodos({
     initialTodos: task?.todos,
     messages,
     todosRef,
@@ -251,7 +242,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     isExecuting,
     isSubmitDisabled,
     showStopButton,
-    showEditTodos,
+
     showPreview,
     showApproval,
   } = useChatStatus({
@@ -311,16 +302,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     recentAborted,
   });
 
-  const saveTodos = useCallback(() => {
-    saveTodosImpl();
-    handleSubmit(
-      undefined,
-      prompts.createSystemReminder(
-        "User have updated the to-do list. Please review them and adjust the plan accordingly. NEVER WORK ON TASKS THAT HAS BEEN MARKED AS COMPLETED OR CANCELLED.",
-      ),
-    );
-  }, [saveTodosImpl, handleSubmit]);
-
   useScrollToBottom({
     messagesContainerRef,
     isLoading,
@@ -336,7 +317,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     (pendingApproval?.name === "retry" ? pendingApproval.error : undefined);
 
   // Only allow adding tool results when not loading
-  const allowAddToolResult = !(isLoading || isTaskLoading || isEditMode);
+  const allowAddToolResult = !(isLoading || isTaskLoading);
   useAddCompleteToolCalls({
     messages,
     addToolResult: allowAddToolResult ? addToolResult : undefined,
@@ -370,19 +351,10 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
               allowAddToolResult={allowAddToolResult}
             />
             {todos && todos.length > 0 && (
-              <LegacyTodoList
-                className="mt-2"
-                todos={todos}
-                status={status}
-                isEditMode={isEditMode}
-                draftTodos={draftTodos}
-                hasDirtyChanges={hasDirtyChanges}
-                enterEditMode={enterEditMode}
-                exitEditMode={exitEditMode}
-                saveTodos={saveTodos}
-                updateTodoStatus={updateTodoStatus}
-                showEdit={showEditTodos}
-              />
+              <TodoList todos={todos} className="mt-2">
+                <TodoList.Header />
+                <TodoList.Items viewportClassname="max-h-48" />
+              </TodoList>
             )}
             <AutoApproveMenu />
             {files.length > 0 && (
