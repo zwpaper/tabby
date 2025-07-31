@@ -280,7 +280,7 @@ export const formatters = {
     );
 
     const cacheControlMessage = coreMessages.at(-1);
-    if (cacheControlMessage) {
+    if (options?.isClaude && cacheControlMessage) {
       cacheControlMessage.providerOptions = {
         anthropic: { cacheControl: { type: "ephemeral" } },
       };
