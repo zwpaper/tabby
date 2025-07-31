@@ -198,11 +198,35 @@ class TaskService {
       .execute();
   }
 
+  private validateImageModelCompatibility(messages: DBMessage[], model = "") {
+    const hasImageContent = messages.some((msg) =>
+      msg.experimental_attachments?.some((attachment) =>
+        attachment.contentType?.startsWith("image"),
+      ),
+    );
+    if (
+      hasImageContent &&
+      !model.startsWith("google") &&
+      !model.startsWith("anthropic") &&
+      !model.startsWith("pochi")
+    ) {
+      throw new HTTPException(400, {
+        message: `${model} does not support image input. Please use a Gemini or Sonnet model.`,
+      });
+    }
+  }
+
   private async prepareTask(
     userId: string,
     request: z.infer<typeof ZodChatRequestType>,
   ) {
     const { id: chatId, event, environment, minionId } = request;
+
+    this.validateImageModelCompatibility(
+      request.messages ?? (request.message ? [request.message] : []),
+      request.model,
+    );
+
     let uid = chatId ?? undefined;
     if (uid === undefined) {
       uid = await this.create(userId, event);
