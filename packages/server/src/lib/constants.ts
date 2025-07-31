@@ -274,7 +274,7 @@ export function getModelById(
     case "pochi/pro-1":
       return vertexFineTuning(modelEndpointId || "2224986023618674688");
     case "pochi/max-1":
-      return vertexFineTuning(modelEndpointId || "664840596455686144");
+      return vertexFineTuning(modelEndpointId || "5890711611135492096");
     case "qwen/qwen3-coder":
       return deepinfra("Qwen/Qwen3-Coder-480B-A35B-Instruct");
     case "zai/glm-4.5":
