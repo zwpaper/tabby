@@ -148,15 +148,12 @@ export function InstallPanel() {
                       <h2 className="font-bold text-2xl">{activeEditor}</h2>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-sm">
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
-                        {activeEditorData?.popularity}
-                      </span>
-                      {activeEditor === "Slack" && (
-                        <span className="rounded-full bg-stone-200 px-3 py-1 font-semibold text-sm text-stone-700 dark:bg-stone-700 dark:text-stone-200">
-                          Beta
+                      {activeEditor !== "Slack" && (
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
+                          {activeEditorData?.popularity}
                         </span>
                       )}
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground leading-[1.75rem]">
                         Setup: {activeEditorData?.setupTime}
                       </span>
                     </div>
