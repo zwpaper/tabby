@@ -24,7 +24,7 @@ interface UseIsAtBottomOptions {
  *  - scrollToBottom: function to scroll to the bottom (with optional smooth behavior)
  */
 export function useIsAtBottom(
-  containerRef: RefObject<HTMLElement>,
+  containerRef: RefObject<HTMLElement | null>,
   options: UseIsAtBottomOptions = {},
 ) {
   const { threshold = 150, defaultIsAtBottom = true } = options;

@@ -47,7 +47,7 @@ export async function startListenDBEvents() {
       });
     } else if (msg.channel === "integrations_changed") {
       if (!msg.payload) {
-        console.warn("No payload in integrations_changed");
+        logger.warn("No payload in integrations_changed");
         return;
       }
       const payload = JSON.parse(msg.payload) as { userId: string };

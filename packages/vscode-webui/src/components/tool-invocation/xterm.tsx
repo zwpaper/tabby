@@ -224,7 +224,7 @@ export interface XTermProps
     UseXTermProps {
   // stream content
   content: string;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const maxRow = 10;

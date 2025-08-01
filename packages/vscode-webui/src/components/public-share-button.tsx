@@ -38,7 +38,7 @@ export function PublicShareButton({
   modelId,
   displayError,
 }: PublicShareButtonProps) {
-  const menuItemRef = useRef<"share" | "support">();
+  const menuItemRef = useRef<"share" | "support">(null);
   const [isPublicShared, setIsPublicShared] = useState(initialIsPublicShared);
   const [open, setOpen] = useState(false);
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });

@@ -21,6 +21,7 @@
       "packages/server/scripts/migrate-db-schema.ts",
       "packages/vscode/.vscode-test",
       "packages/vscode/out",
+      "packages/livestore/.wrangler",
       "**/node_modules/**"
     ]
   },

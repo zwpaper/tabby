@@ -10,7 +10,7 @@ interface ChatAreaProps {
   isTaskLoading: boolean;
   isLoading: boolean;
   user: { name: string; image?: string | null };
-  messagesContainerRef: React.RefObject<HTMLDivElement>;
+  messagesContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function ChatArea({

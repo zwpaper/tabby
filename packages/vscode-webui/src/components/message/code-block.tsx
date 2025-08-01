@@ -116,7 +116,6 @@ const CodeBlock: FC<CodeBlockProps> = memo(
         )}
         <div className="flex-1 overflow-y-auto rounded-b-sm">
           {/* FIXME fix type error */}
-          {/* @ts-expect-error */}
           <SyntaxHighlighter
             language={languageForSyntax}
             style={theme === "dark" ? vscDarkPlus : oneLight}

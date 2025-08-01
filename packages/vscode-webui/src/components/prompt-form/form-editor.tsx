@@ -46,7 +46,9 @@ import {
 const newLineCharacter = "\n";
 
 // Custom keyboard shortcuts extension that handles Enter key behavior
-function CustomEnterKeyHandler(formRef: React.RefObject<HTMLFormElement>) {
+function CustomEnterKeyHandler(
+  formRef: React.RefObject<HTMLFormElement | null>,
+) {
   return Extension.create({
     addKeyboardShortcuts() {
       return {

@@ -1,0 +1,36 @@
+{
+  "name": "@ragdoll/livestore",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@livestore/adapter-web": "0.3.1",
+    "@livestore/livestore": "0.3.1",
+    "@livestore/peer-deps": "0.3.1",
+    "@livestore/react": "0.3.1",
+    "@livestore/sync-cf": "^0.3.1",
+    "@livestore/wa-sqlite": "1.0.5-dev.2",
+    "@ai-v5-sdk/ai": "npm:ai@5",
+    "@ai-v5-sdk/openai-compatible": "npm:@ai-sdk/openai-compatible",
+    "@ai-v5-sdk/react": "npm:@ai-sdk/react@2",
+    "@overengineering/fps-meter": "^0.2.1",
+    "react": "catalog:",
+    "react-dom": "^19.0.0",
+    "todomvc-app-css": "2.4.3"
+  },
+  "devDependencies": {
+    "@livestore/devtools-vite": "^0.3.1",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.2.3",
+    "wrangler": "^4.27.0"
+  },
+  "engines": {
+    "node": ">=23.0.0"
+  },
+  "scripts": {
+    "build": "vite build",
+    "dev": "VITE_LIVESTORE_SYNC_URL=http://localhost:8787 vite --force",
+    "preview": "vite preview"
+  }
+}

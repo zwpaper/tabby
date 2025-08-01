@@ -189,6 +189,7 @@ const PackageIgnoreList: Record<string, string[]> = {
     // storybook
     "@storybook/*",
   ],
+  livestore: ["@livestore/peer-deps", "@livestore/wa-sqlite", "wrangler"],
   website: [
     // tailwind
     "tailwindcss",

@@ -33,7 +33,7 @@ export const MessageList: React.FC<{
     image?: string | null;
   };
   isLoading: boolean;
-  containerRef?: React.RefObject<HTMLDivElement>;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
   showUserAvatar?: boolean;
   className?: string;
 }> = ({

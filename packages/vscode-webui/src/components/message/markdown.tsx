@@ -66,7 +66,7 @@ export function MessageMarkdown({
   children,
   className,
   isMinimalView,
-}: MessageMarkdownProps): JSX.Element {
+}: MessageMarkdownProps) {
   const processedChildren = useMemo(() => {
     let result = children;
     for (const tag of CustomHtmlTags) {

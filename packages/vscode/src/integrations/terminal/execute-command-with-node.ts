@@ -45,7 +45,7 @@ export const executeCommandWithNode = async ({
       });
 
       let output = "";
-      let timeoutId: Timer;
+      let timeoutId: NodeJS.Timeout | undefined;
 
       // Set up timeout
       if (timeout > 0) {

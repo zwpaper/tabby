@@ -3,7 +3,7 @@ import type React from "react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 interface UseScrollToBottomProps {
-  messagesContainerRef: React.RefObject<HTMLDivElement>;
+  messagesContainerRef: React.RefObject<HTMLDivElement | null>;
   isLoading: boolean;
   pendingApprovalName?: string;
 }
