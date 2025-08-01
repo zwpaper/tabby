@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { EditFileOutputSchema, EditFileResultPrompt } from "./constants";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
-export const writeToFile = defineClientTool({
+const toolDef = {
   description: `
 Request to write full content to a file at the specified path.
 If the file exists, it will be overwritten with the provided content.
@@ -19,4 +19,8 @@ ${EditFileResultPrompt}`.trim(),
     content: z.string().describe("The content to write to the file."),
   }),
   outputSchema: EditFileOutputSchema,
-});
+};
+
+export const writeToFile = defineClientTool(toolDef);
+
+export const writeToFileV5 = defineClientToolV5(toolDef);

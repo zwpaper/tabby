@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
 export const ZodTodo = z.object({
   id: z
@@ -16,7 +16,7 @@ export const ZodTodo = z.object({
 
 export type Todo = z.infer<typeof ZodTodo>;
 
-export const todoWrite = defineClientTool({
+const toolDef = {
   description: `
 Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
 It also helps the user understand the progress of the task and overall progress of their requests.
@@ -193,4 +193,8 @@ When in doubt, use this tool. Being proactive with task management demonstrates 
       .boolean()
       .describe("Whether the todos were successfully updated."),
   }),
-});
+};
+
+export const todoWrite = defineClientTool(toolDef);
+
+export const todoWriteV5 = defineClientToolV5(toolDef);

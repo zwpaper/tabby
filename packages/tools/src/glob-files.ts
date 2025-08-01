@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
-export const globFiles = defineClientTool({
+const toolDef = {
   description:
     "Request to find files matching a glob pattern within a specified directory. Use this to get a list of files based on a pattern.",
   inputSchema: z.object({
@@ -25,4 +25,8 @@ export const globFiles = defineClientTool({
       .optional()
       .describe("Whether the list of files was truncated"),
   }),
-});
+};
+
+export const globFiles = defineClientTool(toolDef);
+
+export const globFilesV5 = defineClientToolV5(toolDef);

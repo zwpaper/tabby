@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
-export const askFollowupQuestion = defineClientTool({
+const toolDef = {
   description:
     `Ask the user a question to gather additional information needed to complete the task. 
 
@@ -24,4 +24,8 @@ Use this tool in the following scenarios:
       .boolean()
       .describe("Indicates whether the question was successfully asked."),
   }),
-});
+};
+
+export const askFollowupQuestion = defineClientTool(toolDef);
+
+export const askFollowupQuestionV5 = defineClientToolV5(toolDef);

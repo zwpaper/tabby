@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
-export const executeCommand = defineClientTool({
+const toolDef = {
   description:
     `Executes a given bash command in a persistent shell session with optional timeout, ensuring proper handling and security measures.
 
@@ -147,4 +147,8 @@ Important:
       .optional()
       .describe("Whether the output was truncated"),
   }),
-});
+};
+
+export const executeCommand = defineClientTool(toolDef);
+
+export const executeCommandV5 = defineClientToolV5(toolDef);

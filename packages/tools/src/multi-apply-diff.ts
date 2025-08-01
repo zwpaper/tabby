@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { EditFileOutputSchema, EditFileResultPrompt } from "./constants";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
-export const multiApplyDiff = defineClientTool({
+const toolDef = {
   description: `
 This is a tool for making multiple edits to a single file in one operation. It is built on top of the applyDiff tool and allows you to perform multiple find-and-replace operations efficiently. Prefer this tool over the applyDiff tool when you need to make multiple edits to the same file.
 
@@ -68,4 +68,8 @@ ${EditFileResultPrompt}`.trim(),
       ),
   }),
   outputSchema: EditFileOutputSchema, // Assuming similar output structure for now
-});
+};
+
+export const multiApplyDiff = defineClientTool(toolDef);
+
+export const multiApplyDiffV5 = defineClientToolV5(toolDef);

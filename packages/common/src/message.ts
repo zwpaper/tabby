@@ -23,10 +23,9 @@ export type DataPart =
 export function toUIMessage(message: DBMessage): UIMessage {
   return {
     // Force conversion to UIMessage
-    // @ts-expect-error
     ...(message as UIMessage),
     content: "",
-    createdAt: message.createdAt ? new Date(message.createdAt) : undefined,
+    createdAt: undefined,
   };
 }
 
@@ -38,7 +37,6 @@ export function fromUIMessage(message: UIMessage): DBMessage {
   const parts = (message.parts || []).filter((x) => x.type !== "source");
   return {
     ...message,
-    createdAt: message.createdAt?.toISOString() || new Date().toISOString(),
     parts,
   };
 }

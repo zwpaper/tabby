@@ -14,7 +14,6 @@ export type ExtendedUIMessage = Omit<UIMessage, "parts"> & {
 
 export type DBMessage = {
   id: string;
-  createdAt: string;
   role: UIMessage["role"];
   parts: Array<Exclude<ExtendedUIMessage["parts"][number], { type: "source" }>>;
   experimental_attachments?: UIMessage["experimental_attachments"];

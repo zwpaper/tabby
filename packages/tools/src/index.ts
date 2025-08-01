@@ -3,18 +3,21 @@ export {
   ZodMcpToolType,
   parseMcpToolSet,
 } from "./mcp-tools";
-import { applyDiff } from "./apply-diff";
-import { askFollowupQuestion } from "./ask-followup-question";
-import { attemptCompletion } from "./attempt-completion";
+import { applyDiff, applyDiffV5 } from "./apply-diff";
+import {
+  askFollowupQuestion,
+  askFollowupQuestionV5,
+} from "./ask-followup-question";
+import { attemptCompletion, attemptCompletionV5 } from "./attempt-completion";
 import { batchCall } from "./batch-call";
-import { executeCommand } from "./execute-command";
-import { globFiles } from "./glob-files";
-import { listFiles } from "./list-files";
-import { multiApplyDiff } from "./multi-apply-diff";
-import { newTask } from "./new-task";
-import { readFile } from "./read-file";
-import { searchFiles } from "./search-files";
-import { todoWrite } from "./todo-write";
+import { executeCommand, executeCommandV5 } from "./execute-command";
+import { globFiles, globFilesV5 } from "./glob-files";
+import { listFiles, listFilesV5 } from "./list-files";
+import { multiApplyDiff, multiApplyDiffV5 } from "./multi-apply-diff";
+import { newTask, newTaskV5 } from "./new-task";
+import { readFile, readFileV5 } from "./read-file";
+import { searchFiles, searchFilesV5 } from "./search-files";
+import { todoWrite, todoWriteV5 } from "./todo-write";
 export {
   ZodTodo,
   type Todo,
@@ -26,7 +29,7 @@ export type {
 } from "./types";
 import type { Tool } from "ai";
 import { webFetch } from "./web-fetch";
-import { writeToFile } from "./write-to-file";
+import { writeToFile, writeToFileV5 } from "./write-to-file";
 export type { SubTask } from "./new-task";
 
 export function isUserInputTool(toolName: string): boolean {
@@ -108,4 +111,19 @@ export const selectClientTools = (enableNewTask: boolean) => {
 
   const { newTask, ...rest } = ClientTools;
   return rest;
+};
+
+export const ClientToolsV5 = {
+  applyDiff: applyDiffV5,
+  askFollowupQuestion: askFollowupQuestionV5,
+  attemptCompletion: attemptCompletionV5,
+  executeCommand: executeCommandV5,
+  globFiles: globFilesV5,
+  listFiles: listFilesV5,
+  multiApplyDiff: multiApplyDiffV5,
+  newTask: newTaskV5,
+  readFile: readFileV5,
+  searchFiles: searchFilesV5,
+  todoWrite: todoWriteV5,
+  writeToFile: writeToFileV5,
 };

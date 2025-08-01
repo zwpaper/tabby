@@ -6,6 +6,8 @@ import {
   tool,
 } from "ai";
 
+export { tool as defineClientToolV5 } from "@ai-v5-sdk/ai";
+
 import type { z } from "zod";
 
 export function defineClientTool<

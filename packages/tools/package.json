@@ -8,6 +8,7 @@
     "@ai-sdk/ui-utils": "catalog:",
     "ai": "catalog:",
     "json-schema": "^0.4.0",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@ai-v5-sdk/ai": "catalog:"
   }
 }

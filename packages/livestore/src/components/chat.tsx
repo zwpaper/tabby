@@ -1,149 +1,64 @@
-import {
-  DefaultChatTransport,
-  convertToModelMessages,
-  streamText,
-} from "@ai-v5-sdk/ai";
-import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
-import { type UIMessage, useChat } from "@ai-v5-sdk/react";
-import { queryDb } from "@livestore/livestore";
 import { useStore } from "@livestore/react";
-import { useState } from "react";
-import { messageSeq } from "../livestore/queries";
-import { events, tables } from "../livestore/schema";
-
-const messages$ = queryDb(
-  () => {
-    return tables.messages.orderBy("seq", "asc");
-  },
-  { label: "messages" },
-);
-
-const environment$ = queryDb(
-  () => {
-    return tables.environment.select().where("id", "=", 1).first();
-  },
-  { label: "environment" },
-);
+import { useCallback, useEffect } from "react";
+import { tasks$, uiState$ } from "../livestore/queries";
+import { events } from "../livestore/schema";
+import { ChatView } from "./chat-view";
 
 export default function Chat() {
   const { store } = useStore();
-  const initMessages = store
-    .useQuery(messages$)
-    .map((x) => x.data as UIMessage);
-  const environment = store.useQuery(environment$);
+  const tasks = store.useQuery(tasks$);
+  const { taskId } = store.useQuery(uiState$);
 
-  const { messages, sendMessage, status } = useChat({
-    messages: initMessages,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      fetch: customFetch,
-      prepareSendMessagesRequest: ({ id, messages }) => {
-        const lastMessage = messages.at(-1);
-        if (lastMessage?.role === "user") {
-          store.commit(
-            events.messageCreated({
-              seq: store.query(messageSeq(lastMessage.id)),
-              data: lastMessage,
-            }),
-          );
-        }
-        return {
-          body: {
-            id,
-            messages,
-          },
-        };
-      },
-    }),
-    onFinish: ({ message }) => {
-      store.commit(
-        events.messageCreated({
-          seq: store.query(messageSeq(message.id)),
-          data: message,
-        }),
-      );
+  const setActiveTaskId = useCallback(
+    (taskId: string) => {
+      store.commit(events.uiStateSet({ taskId }));
     },
-  });
-  const [input, setInput] = useState("");
+    [store.commit],
+  );
+
+  const createNewTask = useCallback(() => {
+    const newTaskId = crypto.randomUUID();
+    store.commit(
+      events.taskCreated({
+        id: newTaskId,
+      }),
+    );
+    setActiveTaskId(newTaskId);
+  }, [setActiveTaskId, store]);
+
+  useEffect(() => {
+    if (tasks[0] && !taskId) {
+      setActiveTaskId(tasks[0].id);
+    }
+
+    if (tasks.length === 0) {
+      createNewTask();
+    }
+  }, [taskId, tasks, setActiveTaskId, createNewTask]);
 
   return (
-    <div className="chat-container">
-      <div className="chat-header">
-        <h1>LiveStore Chat</h1>
-        <div className="environment-display">
-          <strong>Environment:</strong>
-          <pre>{JSON.stringify(environment?.data, null, 2)}</pre>
+    <div className="chat-layout">
+      <div className="sidebar">
+        <button
+          type="button"
+          className="new-task-button"
+          onClick={createNewTask}
+        >
+          New Task
+        </button>
+        <div className="task-list">
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              className={`task-item ${task.id === taskId ? "active" : ""}`}
+              onClick={() => setActiveTaskId(task.id)}
+            >
+              {task.title || `Task ${task.id.slice(0, 8)}`}
+            </div>
+          ))}
         </div>
       </div>
-
-      <div className="message-container">
-        {messages.map((message) => (
-          <div key={message.id} className={`message-bubble ${message.role}`}>
-            <div className="message-text">
-              <strong>{message.role === "user" ? "You" : "AI"}</strong>
-              <div>
-                {message.parts.map((part, index) =>
-                  part.type === "text" ? (
-                    <span key={index}>{part.text}</span>
-                  ) : null,
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-        {status === "streaming" && (
-          <div className="typing-indicator">Typing...</div>
-        )}
-      </div>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (input.trim()) {
-            sendMessage({ text: input });
-            setInput("");
-          }
-        }}
-        className="chat-form"
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={status !== "ready"}
-          placeholder="Say something..."
-          className="chat-input"
-        />
-        <button
-          type="submit"
-          disabled={status !== "ready"}
-          className="send-button"
-        >
-          {status === "ready" ? "Send" : "Sending..."}
-        </button>
-      </form>
+      {taskId && <ChatView key={taskId} />}
     </div>
   );
 }
-
-const openai = createOpenAICompatible({
-  baseURL: "https://api.deepinfra.com/v1/openai",
-  apiKey: import.meta.env.VITE_DEEPINFRA_API_KEY,
-  name: "deepinfra",
-});
-
-const customFetch: typeof fetch = async (input, init) => {
-  if (input !== "/api/chat") {
-    return fetch(input, init);
-  }
-
-  if (typeof init?.body !== "string") {
-    throw new Error("Request body is required for custom fetch implementation");
-  }
-
-  const { messages } = JSON.parse(init.body);
-  const result = streamText({
-    model: openai("moonshotai/Kimi-K2-Instruct"),
-    messages: convertToModelMessages(messages),
-  });
-  return result.toUIMessageStreamResponse();
-};

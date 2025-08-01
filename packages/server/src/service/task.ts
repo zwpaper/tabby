@@ -302,7 +302,6 @@ class TaskService {
   ): Promise<string> {
     const message: DBMessage = {
       id: generateId(),
-      createdAt: new Date().toISOString(),
       role: "user",
       parts: [
         {
@@ -791,7 +790,6 @@ class TaskService {
   async appendUserMessage(userId: string, uid: string, prompt: string) {
     const userMessage: DBMessage = {
       id: generateId(),
-      createdAt: new Date().toISOString(),
       role: "user",
       parts: [
         {

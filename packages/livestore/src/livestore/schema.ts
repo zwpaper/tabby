@@ -1,4 +1,10 @@
-import { Events, Schema, State, makeSchema } from "@livestore/livestore";
+import {
+  Events,
+  Schema,
+  SessionIdSymbol,
+  State,
+  makeSchema,
+} from "@livestore/livestore";
 
 const DBTextUIPart = Schema.Struct({
   type: Schema.Literal("text"),
@@ -13,57 +19,75 @@ const DBMessage = Schema.Struct({
 });
 
 export const tables = {
-  // Contains only one row as this store is per-task.
-  environment: State.SQLite.table({
-    name: "environment",
+  tasks: State.SQLite.table({
+    name: "tasks",
     columns: {
-      id: State.SQLite.integer({ primaryKey: true }),
-      data: State.SQLite.json({
-        nullable: true,
-        default: null,
-        schema: Schema.JsonValue,
-      }),
+      id: State.SQLite.text({ primaryKey: true }),
+      createdAt: State.SQLite.integer(),
+      updatedAt: State.SQLite.integer(),
     },
   }),
+  // Many to one relationship with tasks
   messages: State.SQLite.table({
     name: "messages",
     columns: {
       id: State.SQLite.text({ primaryKey: true }),
+      taskId: State.SQLite.text(),
       seq: State.SQLite.integer(),
       data: State.SQLite.json({ schema: DBMessage }),
+    },
+  }),
+  uiState: State.SQLite.clientDocument({
+    name: "uiState",
+    schema: Schema.Struct({
+      taskId: Schema.optional(Schema.String),
+    }),
+    default: {
+      id: SessionIdSymbol,
+      value: {
+        taskId: undefined,
+      },
     },
   }),
 };
 
 // Events describe data changes (https://docs.livestore.dev/reference/events)
 export const events = {
-  messageCreated: Events.synced({
-    name: "v1.MessageCreated",
-    schema: Schema.Struct({ seq: Schema.Number, data: DBMessage }),
+  taskCreated: Events.synced({
+    name: "v1.TaskCreated",
+    schema: Schema.Struct({
+      id: Schema.String,
+    }),
   }),
-  environmentSet: Events.synced({
-    name: "v1.EnvironmentSet",
-    schema: Schema.Struct({ environment: Schema.JsonValue }),
+  messageUpdated: Events.synced({
+    name: "v1.MessageUpdated",
+    schema: Schema.Struct({
+      taskId: Schema.String,
+      seq: Schema.Number,
+      data: DBMessage,
+    }),
   }),
-  // uiStateSet: tables.uiState.set,
+  uiStateSet: tables.uiState.set,
 };
 
 // Materializers are used to map events to state (https://docs.livestore.dev/reference/state/materializers)
 const materializers = State.SQLite.materializers(events, {
-  "v1.MessageCreated": ({ seq, data }) =>
-    tables.messages.insert({
-      id: data.id,
-      data,
-      seq,
+  "v1.TaskCreated": ({ id }) =>
+    tables.tasks.insert({
+      id,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     }),
-
-  "v1.EnvironmentSet": ({ environment }) =>
-    tables.environment
-      .insert({ id: 1, data: environment })
+  "v1.MessageUpdated": ({ taskId, seq, data }) =>
+    tables.messages
+      .insert({
+        id: data.id,
+        seq,
+        taskId,
+        data,
+      })
       .onConflict("id", "replace"),
 });
-
-const max = tables.messages.select("id").orderBy("id", "desc").first();
 
 const state = State.SQLite.makeState({ tables, materializers });
 

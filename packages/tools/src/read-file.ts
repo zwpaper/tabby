@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
-export const readFile = defineClientTool({
+const toolDef = {
   description:
     "Request to read the contents of a file at the specified path. Use this when you need to examine the contents of an existing file you do not know the contents of, for example to analyze code, review text files, or extract information from configuration files.",
   inputSchema: z.object({
@@ -31,4 +31,8 @@ export const readFile = defineClientTool({
         "Whether the content is truncated due to exceeding the maximum length",
       ),
   }),
-});
+};
+
+export const readFile = defineClientTool(toolDef);
+
+export const readFileV5 = defineClientToolV5(toolDef);

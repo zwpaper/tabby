@@ -38,7 +38,11 @@
       "tailwindcss-animate": "^1.0.7",
       "tailwindcss": "^4.0.6",
       "@tailwindcss/vite": "^4.0.6",
-      "emittery": "^1.1.0"
+      "emittery": "^1.1.0",
+      "@ai-v5-sdk/ai": "npm:ai@5",
+      "@ai-v5-sdk/provider-utils": "npm:@ai-sdk/provider-utils@3",
+      "@ai-v5-sdk/openai-compatible": "npm:@ai-sdk/openai-compatible@1",
+      "@ai-v5-sdk/react": "npm:@ai-sdk/react@2"
     }
   },
   "devDependencies": {

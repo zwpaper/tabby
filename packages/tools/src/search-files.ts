@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
-export const searchFiles = defineClientTool({
+const toolDef = {
   description: `
 - Fast content search tool that works with any codebase size
 - Searches file contents using regular expressions
@@ -44,4 +44,8 @@ export const searchFiles = defineClientTool({
         "Whether the content is truncated due to exceeding the maximum buffer length",
       ),
   }),
-});
+};
+
+export const searchFiles = defineClientTool(toolDef);
+
+export const searchFilesV5 = defineClientToolV5(toolDef);

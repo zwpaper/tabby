@@ -1,7 +1,7 @@
 import type { UIMessage } from "ai";
 import { z } from "zod";
 import type { Todo } from "./todo-write";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
 export type SubTask = {
   uid: string;
@@ -9,7 +9,7 @@ export type SubTask = {
   todos: Todo[];
 };
 
-export const newTask = defineClientTool({
+const toolDef = {
   description:
     `Create a task that can be executed autonomously by a runner in the same environment as the current task. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries, use the Agent tool to perform the search for you.
 
@@ -54,4 +54,8 @@ Usage notes:
         "The result of the task, submitted through the `attemptCompletion` tool.",
       ),
   }),
-});
+};
+
+export const newTask = defineClientTool(toolDef);
+
+export const newTaskV5 = defineClientToolV5(toolDef);

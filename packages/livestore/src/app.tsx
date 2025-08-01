@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/prefer-global-this */
 import { makePersistedAdapter } from "@livestore/adapter-web";
 import LiveStoreSharedWorker from "@livestore/adapter-web/shared-worker?sharedworker";
 import { LiveStoreProvider } from "@livestore/react";
@@ -7,15 +6,13 @@ import type React from "react";
 import { unstable_batchedUpdates as batchUpdates } from "react-dom";
 
 import Chat from "./components/chat.js";
-import { InputForm } from "./components/input-form";
-import { getStoreId } from "./lib/store-id.js";
+import { getWorkspaceId } from "./lib/workspace-id.js";
 import LiveStoreWorker from "./livestore.worker?worker";
 import { schema } from "./livestore/schema.js";
 
 const AppBody: React.FC = () => (
   <div className="page-container">
     <section className="todoapp">
-      <InputForm />
       <Chat />
     </section>
   </div>
@@ -42,7 +39,7 @@ const adapter = makePersistedAdapter({
   resetPersistence,
 });
 
-const storeId = getStoreId();
+const workspaceId = getWorkspaceId();
 
 export const App: React.FC = () => (
   <LiveStoreProvider
@@ -50,7 +47,7 @@ export const App: React.FC = () => (
     adapter={adapter}
     renderLoading={(_) => <div>Loading LiveStore ({_.stage})...</div>}
     batchUpdates={batchUpdates}
-    storeId={storeId}
+    storeId={workspaceId}
   >
     <div style={{ top: 0, right: 0, position: "absolute", background: "#333" }}>
       <FPSMeter height={40} />

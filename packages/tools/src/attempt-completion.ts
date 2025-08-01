@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { defineClientTool } from "./types";
+import { defineClientTool, defineClientToolV5 } from "./types";
 
-export const attemptCompletion = defineClientTool({
+const toolDef = {
   description: `After each tool use. Once you've received the results of tool uses and can confirm that the task is complete, use this tool to present the result of your work to the user.`,
   inputSchema: z.object({
     result: z
@@ -21,4 +21,8 @@ export const attemptCompletion = defineClientTool({
       .boolean()
       .describe("Indicates whether the completion was successful."),
   }),
-});
+};
+
+export const attemptCompletion = defineClientTool(toolDef);
+
+export const attemptCompletionV5 = defineClientToolV5(toolDef);
