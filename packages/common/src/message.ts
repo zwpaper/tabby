@@ -16,7 +16,7 @@ export type DataPart =
         } & LanguageModelUsage)
       | {
           type: "compact";
-          message: DBMessage;
+          message: string;
         }
     );
 
@@ -82,6 +82,9 @@ export function appendDataPart(
       writer.writeData(dataPart);
       break;
     case "update-usage":
+      writer.writeData(dataPart);
+      break;
+    case "compact":
       writer.writeData(dataPart);
       break;
     default:
