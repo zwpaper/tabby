@@ -98,7 +98,7 @@
     },
     "packages/runner": {
       "name": "@ragdoll/runner",
-      "version": "0.2.14",
+      "version": "0.2.15",
       "bin": {
         "pochi": "src/cli.ts",
       },
@@ -196,7 +196,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.4.54",
+      "version": "0.4.55",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@orama/orama": "^3.1.11",

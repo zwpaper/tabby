@@ -1,7 +1,13 @@
-import { convertToModelMessages, streamText } from "@ai-v5-sdk/ai";
+import {
+  type ChatRequestOptions,
+  type ChatTransport,
+  type UIMessage,
+  type UIMessageChunk,
+  convertToModelMessages,
+  streamText,
+} from "@ai-v5-sdk/ai";
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
 import { ClientToolsV5 } from "@getpochi/tools";
-import type { Message } from "../livestore/types";
 
 const openai = createOpenAICompatible({
   baseURL: "https://api.deepinfra.com/v1/openai",
@@ -9,20 +15,41 @@ const openai = createOpenAICompatible({
   name: "deepinfra",
 });
 
-export const fetchChatApi: typeof fetch = async (input, init) => {
-  if (input !== "/api/chat") {
-    return fetch(input, init);
+type OnStartFunction = (options: { messages: UIMessage[] }) => void;
+
+export class FlexibleChatTransport implements ChatTransport<UIMessage> {
+  private readonly onStart?: OnStartFunction;
+
+  constructor({
+    onStart,
+  }: {
+    onStart?: OnStartFunction;
+  }) {
+    this.onStart = onStart;
   }
 
-  if (typeof init?.body !== "string") {
-    throw new Error("Request body is required for custom fetch implementation");
-  }
+  sendMessages: (
+    options: {
+      trigger: "submit-message" | "regenerate-message";
+      chatId: string;
+      messageId: string | undefined;
+      messages: UIMessage[];
+      abortSignal: AbortSignal | undefined;
+    } & ChatRequestOptions,
+  ) => Promise<ReadableStream<UIMessageChunk>> = async ({ messages }) => {
+    this.onStart?.({ messages });
 
-  const { messages } = JSON.parse(init.body) as { messages: Message[] };
-  const result = streamText({
-    model: openai("moonshotai/Kimi-K2-Instruct"),
-    messages: convertToModelMessages(messages),
-    tools: ClientToolsV5,
-  });
-  return result.toUIMessageStreamResponse();
-};
+    const result = streamText({
+      model: openai("moonshotai/Kimi-K2-Instruct"),
+      messages: convertToModelMessages(messages),
+      tools: ClientToolsV5,
+    });
+    return result.toUIMessageStream();
+  };
+
+  reconnectToStream: (
+    options: { chatId: string } & ChatRequestOptions,
+  ) => Promise<ReadableStream<UIMessageChunk> | null> = async () => {
+    return null;
+  };
+}

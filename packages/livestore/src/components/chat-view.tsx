@@ -1,9 +1,8 @@
-import { DefaultChatTransport } from "@ai-v5-sdk/ai";
 import type { UIMessage } from "@ai-v5-sdk/react";
 import { useChat } from "@ai-v5-sdk/react";
 import { useStore } from "@livestore/react";
 import { useEffect, useRef, useState } from "react";
-import { fetchChatApi } from "../lib/chat-api";
+import { FlexibleChatTransport } from "../lib/chat-api";
 import { messageSeq$, messages$, uiState$ } from "../livestore/queries";
 import { events } from "../livestore/schema";
 
@@ -19,10 +18,8 @@ export function ChatView() {
   const { messages, sendMessage, status } = useChat({
     generateId: () => crypto.randomUUID(),
     messages: initMessages,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      fetch: fetchChatApi,
-      prepareSendMessagesRequest: ({ id, messages }) => {
+    transport: new FlexibleChatTransport({
+      onStart: ({ messages }) => {
         const lastMessage = messages.at(-1);
         if (lastMessage?.role === "user" && taskId) {
           store.commit(
@@ -33,12 +30,6 @@ export function ChatView() {
             }),
           );
         }
-        return {
-          body: {
-            id,
-            messages,
-          },
-        };
       },
     }),
     onFinish: ({ message }) => {
