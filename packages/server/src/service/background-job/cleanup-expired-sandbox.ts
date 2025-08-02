@@ -101,7 +101,7 @@ export function createCleanupSandboxWorker() {
             .updateTable("minion")
             .where("id", "=", minion.id)
             .set({
-              url: undefined,
+              url: null,
               updatedAt: new Date(),
             })
             .execute();
