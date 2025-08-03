@@ -8,6 +8,9 @@ import {
 } from "@ai-v5-sdk/ai";
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
 import { ClientToolsV5 } from "@getpochi/tools";
+import { prompts } from "@ragdoll/common";
+import { ZodEnvironment } from "@ragdoll/db";
+import { z } from "zod";
 import { readEnv } from "./env";
 
 const openai = createOpenAICompatible({
@@ -37,13 +40,18 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
       messages: UIMessage[];
       abortSignal: AbortSignal | undefined;
     } & ChatRequestOptions,
-  ) => Promise<ReadableStream<UIMessageChunk>> = async ({ messages }) => {
+  ) => Promise<ReadableStream<UIMessageChunk>> = async ({
+    messages,
+    ...options
+  }) => {
+    const metadata = RequestMetadata.parse(options.metadata);
     this.onStart?.({ messages });
-
     const result = streamText({
-      model: openai("zai-org/GLM-4.5"),
+      model: openai(metadata?.model || "zai-org/GLM-4.5"),
       messages: convertToModelMessages(messages),
       tools: ClientToolsV5,
+      // FIXME: add customRules, inject environment details.
+      system: prompts.system(undefined),
     });
     return result.toUIMessageStream();
   };
@@ -54,3 +62,10 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
     return null;
   };
 }
+
+const RequestMetadata = z
+  .object({
+    environment: ZodEnvironment,
+    model: z.string().optional(),
+  })
+  .optional();

@@ -1,5 +1,5 @@
 {
-  "name": "@ragdoll/livestore",
+  "name": "livekit-web-example",
   "version": "0.0.1",
   "type": "module",
   "private": true,

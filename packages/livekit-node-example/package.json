@@ -1,0 +1,12 @@
+{
+  "name": "livekit-node-example",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@ai-v5-sdk/ai": "catalog:",
+    "@livestore/adapter-node": "^0.3.1",
+    "@livestore/livestore": "^0.3.1",
+    "@ragdoll/livekit": "workspace:*"
+  }
+}
