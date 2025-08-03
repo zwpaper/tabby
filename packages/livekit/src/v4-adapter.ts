@@ -166,7 +166,6 @@ export function toDBMessage(message: Message): DBMessage {
 
   return {
     id: message.id,
-    createdAt: new Date().toISOString(),
     role: message.role,
     parts,
     experimental_attachments: attachments,
@@ -275,6 +274,6 @@ function createDynamicToolPart(
   }
 }
 
-function assertUnreachable(x: never): never {
+function assertUnreachable(_: never): never {
   throw new Error("Didn't expect to get here");
 }

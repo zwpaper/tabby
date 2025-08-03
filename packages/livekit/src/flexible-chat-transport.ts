@@ -8,22 +8,23 @@ import {
 } from "@ai-v5-sdk/ai";
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
 import { ClientToolsV5 } from "@getpochi/tools";
+import { readEnv } from "./env";
 
 const openai = createOpenAICompatible({
   baseURL: "https://api.deepinfra.com/v1/openai",
-  apiKey: import.meta.env.VITE_DEEPINFRA_API_KEY,
+  apiKey: readEnv("DEEPINFRA_API_KEY"),
   name: "deepinfra",
 });
 
-type OnStartFunction = (options: { messages: UIMessage[] }) => void;
+export type OnStartCallback = (options: { messages: UIMessage[] }) => void;
 
 export class FlexibleChatTransport implements ChatTransport<UIMessage> {
-  private readonly onStart?: OnStartFunction;
+  readonly onStart?: OnStartCallback;
 
   constructor({
     onStart,
   }: {
-    onStart?: OnStartFunction;
+    onStart?: OnStartCallback;
   }) {
     this.onStart = onStart;
   }
@@ -40,7 +41,7 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
     this.onStart?.({ messages });
 
     const result = streamText({
-      model: openai("moonshotai/Kimi-K2-Instruct"),
+      model: openai("zai-org/GLM-4.5"),
       messages: convertToModelMessages(messages),
       tools: ClientToolsV5,
     });

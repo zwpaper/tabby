@@ -1,0 +1,20 @@
+{
+  "name": "@ragdoll/livekit",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "@livestore/livestore": "catalog:",
+    "@getpochi/tools": "workspace:*",
+    "@ai-v5-sdk/ai": "catalog:",
+    "@ai-v5-sdk/openai-compatible": "catalog:",
+    "@ai-v5-sdk/provider-utils": "catalog:",
+    "@ai-v5-sdk/provider": "catalog:",
+    "@ragdoll/db": "workspace:*"
+  }
+}

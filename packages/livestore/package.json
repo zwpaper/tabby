@@ -5,20 +5,16 @@
   "private": true,
   "dependencies": {
     "@livestore/adapter-web": "0.3.1",
-    "@livestore/livestore": "0.3.1",
-    "@livestore/peer-deps": "0.3.1",
+    "@livestore/peer-deps": "catalog:",
     "@livestore/react": "0.3.1",
     "@livestore/sync-cf": "^0.3.1",
-    "@livestore/wa-sqlite": "1.0.5-dev.2",
-    "@ai-v5-sdk/ai": "catalog:",
-    "@ai-v5-sdk/openai-compatible": "catalog:",
+    "@livestore/wa-sqlite": "catalog:",
     "@ai-v5-sdk/react": "catalog:",
     "@overengineering/fps-meter": "^0.2.1",
     "react": "catalog:",
     "react-dom": "^19.0.0",
     "todomvc-app-css": "2.4.3",
-    "@ragdoll/db": "workspace:*",
-    "@getpochi/tools": "workspace:*"
+    "@ragdoll/livekit": "workspace:*"
   },
   "devDependencies": {
     "@livestore/devtools-vite": "^0.3.1",
@@ -33,6 +29,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "VITE_LIVESTORE_SYNC_URL=http://localhost:8787 vite --force",
+    "tsc": "tsc",
     "preview": "vite preview"
   }
 }

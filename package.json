@@ -9,10 +9,12 @@
     "check:test": "biome check --config-path=./biome.test.json .",
     "test": "turbo test",
     "tsc": "turbo tsc",
-    "build:server": "turbo --filter @ragdoll/server --filter @ragdoll/website build",
+    "build:server": "turbo --filter @ragdoll/server --filterG @ragdoll/website build",
     "dep-check": "bun scripts/dep-check.ts",
     "prepare": "husky",
-    "pre-push": "bash ./.husky/pre-push"
+    "pre-push": "bash ./.husky/pre-push",
+    "check:resolve-v5-deps": "bun scripts/resolve-v5-deps",
+    "postinstall": "bun check:resolve-v5-deps --silent"
   },
   "workspaces": {
     "packages": ["packages/*"],
@@ -42,7 +44,11 @@
       "@ai-v5-sdk/ai": "npm:ai@5",
       "@ai-v5-sdk/provider-utils": "npm:@ai-sdk/provider-utils@3",
       "@ai-v5-sdk/openai-compatible": "npm:@ai-sdk/openai-compatible@1",
-      "@ai-v5-sdk/react": "npm:@ai-sdk/react@2"
+      "@ai-v5-sdk/react": "npm:@ai-sdk/react@2",
+      "@ai-v5-sdk/provider": "npm:@ai-sdk/provider@2",
+      "@livestore/livestore": "0.3.1",
+      "@livestore/peer-deps": "0.3.1",
+      "@livestore/wa-sqlite": "1.0.5-dev.2"
     }
   },
   "devDependencies": {

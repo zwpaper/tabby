@@ -12,7 +12,7 @@ export default defineConfig({
   worker: { format: "es" },
   plugins: [
     react(),
-    livestoreDevtoolsPlugin({ schemaPath: "./src/livestore/schema.ts" }),
+    livestoreDevtoolsPlugin({ schemaPath: "../livekit/src/store/schema.ts" }),
     // Running `wrangler dev` as part of `vite dev` needed for `@livestore/sync-cf`
     {
       name: "wrangler-dev",

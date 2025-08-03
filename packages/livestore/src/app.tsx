@@ -5,10 +5,10 @@ import { FPSMeter } from "@overengineering/fps-meter";
 import type React from "react";
 import { unstable_batchedUpdates as batchUpdates } from "react-dom";
 
+import { catalog } from "@ragdoll/livekit";
 import Chat from "./components/chat.js";
 import { getWorkspaceId } from "./lib/workspace-id.js";
 import LiveStoreWorker from "./livestore.worker?worker";
-import { schema } from "./livestore/schema.js";
 
 const AppBody: React.FC = () => (
   <div className="page-container">
@@ -43,7 +43,7 @@ const workspaceId = getWorkspaceId();
 
 export const App: React.FC = () => (
   <LiveStoreProvider
-    schema={schema}
+    schema={catalog.schema}
     adapter={adapter}
     renderLoading={(_) => <div>Loading LiveStore ({_.stage})...</div>}
     batchUpdates={batchUpdates}

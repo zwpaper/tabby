@@ -1,48 +1,15 @@
-import type { UIMessage } from "@ai-v5-sdk/react";
-import { useChat } from "@ai-v5-sdk/react";
+import { Chat, useChat } from "@ai-v5-sdk/react";
 import { useStore } from "@livestore/react";
+import { LiveChatKit } from "@ragdoll/livekit";
 import { useEffect, useRef, useState } from "react";
-import { FlexibleChatTransport } from "../lib/chat-api";
-import { messageSeq$, messages$, uiState$ } from "../livestore/queries";
-import { events } from "../livestore/schema";
 
-export function ChatView() {
+export function ChatView({ taskId }: { taskId: string }) {
   const { store } = useStore();
-  const { taskId } = store.useQuery(uiState$);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const initMessages = store
-    .useQuery(messages$)
-    .map((x) => x.data as UIMessage);
-
+  const chatKit = useRef(new LiveChatKit(store, taskId, Chat));
   const { messages, sendMessage, status } = useChat({
-    generateId: () => crypto.randomUUID(),
-    messages: initMessages,
-    transport: new FlexibleChatTransport({
-      onStart: ({ messages }) => {
-        const lastMessage = messages.at(-1);
-        if (lastMessage?.role === "user" && taskId) {
-          store.commit(
-            events.messageUpdated({
-              taskId,
-              seq: store.query(messageSeq$(taskId, lastMessage.id)),
-              data: lastMessage,
-            }),
-          );
-        }
-      },
-    }),
-    onFinish: ({ message }) => {
-      if (taskId) {
-        store.commit(
-          events.messageUpdated({
-            taskId,
-            seq: store.query(messageSeq$(taskId, message.id)),
-            data: message,
-          }),
-        );
-      }
-    },
+    chat: chatKit.current.chat,
   });
 
   const [input, setInput] = useState("");

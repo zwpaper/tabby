@@ -1,17 +1,16 @@
 import { useStore } from "@livestore/react";
+import { catalog } from "@ragdoll/livekit";
 import { useCallback, useEffect } from "react";
-import { tasks$, uiState$ } from "../livestore/queries";
-import { events } from "../livestore/schema";
 import { ChatView } from "./chat-view";
 
 export default function Chat() {
   const { store } = useStore();
-  const tasks = store.useQuery(tasks$);
-  const { taskId } = store.useQuery(uiState$);
+  const tasks = store.useQuery(catalog.queries.tasks$);
+  const { taskId } = store.useQuery(catalog.queries.uiState$);
 
   const setActiveTaskId = useCallback(
     (taskId: string) => {
-      store.commit(events.uiStateSet({ taskId }));
+      store.commit(catalog.events.uiStateSet({ taskId }));
     },
     [store.commit],
   );
@@ -19,7 +18,7 @@ export default function Chat() {
   const createNewTask = useCallback(() => {
     const newTaskId = crypto.randomUUID();
     store.commit(
-      events.taskCreated({
+      catalog.events.taskCreated({
         id: newTaskId,
       }),
     );
@@ -58,7 +57,7 @@ export default function Chat() {
           ))}
         </div>
       </div>
-      {taskId && <ChatView key={taskId} />}
+      {taskId && <ChatView key={taskId} taskId={taskId} />}
     </div>
   );
 }
