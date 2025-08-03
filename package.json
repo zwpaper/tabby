@@ -2,7 +2,7 @@
   "name": "ragdoll",
   "private": true,
   "scripts": {
-    "check": "npm-run-all check:default check:test check:ast-grep",
+    "check": "npm-run-all check:default check:test check:ast-grep check:resolve-v5-deps",
     "fix": "npm-run-all 'check:default -- --write' 'check:test -- --write'",
     "check:ast-grep": "ast-grep scan",
     "check:default": "biome check .",
