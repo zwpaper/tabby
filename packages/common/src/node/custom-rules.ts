@@ -1,5 +1,19 @@
 import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
+
+export const DefaultWorkspaceRulesFilePath = "README.pochi.md";
+
+export const SystemRulesFilepath = path.join(
+  homedir(),
+  ".pochi",
+  "README.pochi.md",
+);
+
+export const SystemRulesFileDisplayPath = SystemRulesFilepath.replace(
+  homedir(),
+  "~",
+);
 
 /**
  * Collects custom rules from README.pochi.md and specified custom rule files.
@@ -13,23 +27,43 @@ export async function collectCustomRules(
   cwd: string,
   customRuleFiles: string[] = [],
   includeDefaultRules = true,
+  includeSystemRules = true,
 ): Promise<string> {
   let rules = "";
-  const allRuleFiles = [...customRuleFiles];
+
+  const allRules: { filePath: string; label: string }[] = [];
+  if (includeSystemRules) {
+    allRules.push({
+      filePath: SystemRulesFilepath,
+      label: SystemRulesFileDisplayPath,
+    });
+  }
 
   // Add workspace rules file if requested
   if (includeDefaultRules) {
-    const defaultRulesPath = path.join(cwd, "README.pochi.md");
-    allRuleFiles.push(defaultRulesPath);
+    const defaultRulesPath = path.join(cwd, DefaultWorkspaceRulesFilePath);
+    allRules.push({
+      filePath: defaultRulesPath,
+      label: DefaultWorkspaceRulesFilePath,
+    });
   }
 
+  allRules.push(
+    ...customRuleFiles.map((rulePath) => {
+      const relativePath = path.relative(cwd, rulePath);
+      return {
+        filePath: rulePath,
+        label: relativePath,
+      };
+    }),
+  );
+
   // Read all rule files
-  for (const rulePath of allRuleFiles) {
+  for (const rule of allRules) {
     try {
-      const content = await readFile(rulePath, "utf-8");
+      const content = await readFile(rule.filePath, "utf-8");
       if (content.trim().length > 0) {
-        const relativePath = path.relative(cwd, rulePath);
-        rules += `# Rules from ${relativePath}\n${content}\n`;
+        rules += `# Rules from ${rule.label}\n${content}\n`;
       }
     } catch {
       // Ignore files that can't be read

@@ -1,6 +1,8 @@
-import { homedir } from "node:os";
 import path from "node:path";
 import {
+  DefaultWorkspaceRulesFilePath,
+  SystemRulesFileDisplayPath,
+  SystemRulesFilepath,
   collectCustomRules as collectCustomRulesImpl,
   getSystemInfo as getSystemInfoImpl,
 } from "@ragdoll/common/node";
@@ -14,10 +16,8 @@ import {
 } from "./fs";
 
 // Path constants - using arrays for consistency
-const DefaultWorkspaceRulesFilePath = "README.pochi.md";
 const WorkspaceRulesFilePath = [DefaultWorkspaceRulesFilePath];
 const WorkflowsDirPath = [".pochi", "workflows"];
-const SystemRuleFilepath = path.join(homedir(), ".pochi", "README.pochi.md");
 
 export function getCwd() {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
@@ -64,17 +64,17 @@ function getWorkflowsDirectoryUri() {
 export async function collectRuleFiles(): Promise<RuleFile[]> {
   const ruleFiles: RuleFile[] = [];
   const workspaceRuleFile = getWorkspaceRulesFileUri();
+  if (await isFileExists(vscode.Uri.file(SystemRulesFilepath))) {
+    ruleFiles.push({
+      filepath: SystemRulesFilepath,
+      label: SystemRulesFileDisplayPath,
+    });
+  }
+
   if (await isFileExists(workspaceRuleFile)) {
     ruleFiles.push({
       filepath: workspaceRuleFile.fsPath,
       relativeFilepath: vscode.workspace.asRelativePath(workspaceRuleFile),
-    });
-  }
-
-  if (await isFileExists(vscode.Uri.file(SystemRuleFilepath))) {
-    ruleFiles.push({
-      filepath: SystemRuleFilepath,
-      label: SystemRuleFilepath.replace(homedir(), "~"),
     });
   }
 
