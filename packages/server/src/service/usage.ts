@@ -273,7 +273,7 @@ export class UsageService {
       return;
     }
 
-    if (remainingFreeCredit - creditCost <= 0) {
+    if (remainingFreeCredit <= 0) {
       await stripeClient.billing.meterEvents.create({
         event_name: "credit",
         payload: {
