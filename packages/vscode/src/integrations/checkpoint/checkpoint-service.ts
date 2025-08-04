@@ -136,7 +136,17 @@ export class CheckpointService implements vscode.Disposable {
     }
     try {
       const changes = await this.shadowGit.getDiff(from, to);
-      return changes;
+      // Filter out binary files and files that exceed the size limit.
+      const maxChangeLimit = 8 * 1024; // 8KB
+      const nullbyte = "\u0000";
+      return changes.filter((change) => {
+        const isBinary =
+          change.before.includes(nullbyte) || change.after.includes(nullbyte);
+        const isTooLarge =
+          Buffer.byteLength(change.before, "utf8") > maxChangeLimit ||
+          Buffer.byteLength(change.after, "utf8") > maxChangeLimit;
+        return !isBinary && !isTooLarge;
+      });
     } catch (error) {
       const errorMessage = toErrorMessage(error);
       logger.error(

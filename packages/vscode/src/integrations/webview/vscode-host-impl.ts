@@ -544,7 +544,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
           return null;
         }
 
-        // Return the GitDiff array directly
         return changes;
       } catch (error) {
         logger.error(
