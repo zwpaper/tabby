@@ -175,6 +175,8 @@ const chat = new Hono()
             }),
           ],
           tools,
+          // FIXME(meng): onFinish adds ~1 second latency after stream finished.
+          // Optimize this to: move some workload to background (return instead of await).
           onFinish: async ({
             usage: inputUsage,
             finishReason,
@@ -207,19 +209,19 @@ const chat = new Hono()
             );
 
             if (isUsageValid) {
-              await usageService.trackUsage(
-                user,
-                requestedModelId,
-                usage,
-                creditCostInput,
-              );
-
               appendDataPart(
                 {
                   type: "update-usage",
                   ...usage,
                 },
                 stream,
+              );
+
+              await usageService.trackUsage(
+                user,
+                requestedModelId,
+                usage,
+                creditCostInput,
               );
             }
           },
