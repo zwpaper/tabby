@@ -8,10 +8,9 @@ export {
   type DataPart,
 } from "./message";
 
-export { formatters } from "./formatters";
+export { formatters, resolvePendingToolCalls } from "./formatters";
 export { attachTransport, getLogger } from "./logger";
 export { prompts, getReadEnvironmentResult } from "./prompts";
 
 export { SocialLinks } from "./social";
-
-export { SandboxPath } from "./constants";
+export { SandboxPath, CompactTaskMinTokens } from "./constants";

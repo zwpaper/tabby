@@ -17,6 +17,7 @@ interface UseChatSubmitProps {
   imageUpload: UseImageUploadReturn;
   isSubmitDisabled: boolean;
   isLoading: boolean;
+  isCompacting: boolean;
   pendingApproval: PendingApproval | undefined;
   recentAborted: MutableRefObject<boolean>;
 }
@@ -26,6 +27,7 @@ export function useChatSubmit({
   imageUpload,
   isSubmitDisabled,
   isLoading,
+  isCompacting,
   pendingApproval,
   recentAborted,
 }: UseChatSubmitProps) {
@@ -74,7 +76,7 @@ export function useChatSubmit({
     async (e?: React.FormEvent<HTMLFormElement>, prompt?: string) => {
       e?.preventDefault();
 
-      if (isSubmitDisabled && !prompt) {
+      if (isCompacting || (isSubmitDisabled && !prompt)) {
         return;
       }
       handleStop();
@@ -121,6 +123,7 @@ export function useChatSubmit({
       setInput,
       clearUploadImageError,
       recentAborted,
+      isCompacting,
     ],
   );
 

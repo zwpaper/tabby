@@ -1,12 +1,28 @@
-import { formatters, prompts } from "@ragdoll/common";
+import { formatters, prompts, resolvePendingToolCalls } from "@ragdoll/common";
 import { type CoreMessage, generateText } from "ai";
 import type { UIMessage } from "ai";
 import { geminiFlash } from "../lib/constants";
 
 export class CompactService {
-  async compact(inputMessages: UIMessage[]) {
+  async generateCompactText(inputMessages: UIMessage[]) {
     const messages = this.extractCompactMessages(inputMessages);
     const summary = await this.generateSummary(messages);
+    return prompts.createCompactPart(summary.text, messages.length).text;
+  }
+
+  /**
+   * compact current conversation messages by generating a summary
+   * and updating the last user message with the summary.
+   * @param inputMessages The messages to compact. The last user message will be updated with the summary.
+   * @returns new messages and total tokens used
+   */
+  async compact(inputMessages: UIMessage[]) {
+    const messages = this.extractCompactMessages(inputMessages);
+    const lastMessage = messages.at(-1);
+    // last user message is not included in summary
+    const compactMessages =
+      lastMessage?.role === "user" ? messages.slice(0, -1) : messages;
+    const summary = await this.generateSummary(compactMessages);
 
     const latestUserMessage = inputMessages.at(-1);
     if (latestUserMessage?.role !== "user") {
@@ -39,7 +55,12 @@ export class CompactService {
 
   private async generateSummary(messages: UIMessage[]) {
     const summaryMessages: CoreMessage[] = [
-      ...formatters.llm(messages),
+      ...formatters.llm(
+        resolvePendingToolCalls(messages, /* resolveLastMessage */ true),
+        {
+          isClaude: false,
+        },
+      ),
       {
         role: "user",
         content:

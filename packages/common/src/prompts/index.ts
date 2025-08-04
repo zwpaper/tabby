@@ -1,5 +1,5 @@
+import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment } from "@ragdoll/db";
-import type { UIMessage } from "ai";
 import { createCompactSummaryPrompt } from "./compact";
 import { injectEnvironmentDetails } from "./environment";
 import { generateSystemPrompt } from "./system";
@@ -13,6 +13,7 @@ export const prompts = {
   isCompactPart,
   compact: createCompactSummaryPrompt,
   createCompactPart,
+  extractSummaryFromPart,
 };
 
 export { getReadEnvironmentResult } from "./environment";
@@ -41,16 +42,22 @@ function isCompactPart(part: UIMessage["parts"][number]) {
   );
 }
 
-function createCompactPart(
-  summary: string,
-  messageCount: number,
-): UIMessage["parts"][number] {
+function createCompactPart(summary: string, messageCount: number): TextUIPart {
   const text = `<compact>
 Previous conversation summary (${messageCount} messages):
 ${summary}
 This section contains a summary of the conversation up to this point to save context. The full conversation history has been preserved but condensed for efficiency.
 </compact>`;
   return { type: "text", text };
+}
+
+function extractSummaryFromPart(
+  part: UIMessage["parts"][number],
+): string | undefined {
+  if (part.type !== "text" || !isCompactPart(part)) return undefined;
+
+  const match = part.text.match(/^<compact>(.*)<\/compact>$/s);
+  return match ? match[1] : undefined;
 }
 
 function formatUserEdits(

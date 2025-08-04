@@ -83,6 +83,15 @@ const tasks = new Hono()
       uid = remoteUid;
       url = `/api/minions/${minion.id}/redirect`;
       minionId = minion.id;
+    } else if (event?.type === "vscode:compact-new-task") {
+      const { sourceUid, messages } = event.data;
+      uid = await taskService.compactAndCreateTask(
+        sourceUid,
+        prompt,
+        messages,
+        user.id,
+      );
+      url = `/?task=${uid}`;
     } else {
       uid = await taskService.createWithUserMessage(user.id, prompt, event);
       url = `vscode://TabbyML.pochi/?task=${uid}`;

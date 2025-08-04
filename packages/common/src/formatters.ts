@@ -5,9 +5,15 @@ import { clone } from "remeda";
 import { KnownTags } from "./constants";
 import { prompts } from "./prompts";
 
-export function resolvePendingToolCalls(messages: UIMessage[]): UIMessage[] {
+export function resolvePendingToolCalls(
+  messages: UIMessage[],
+  resolveLastMessage = false,
+): UIMessage[] {
   return messages.map((message, index) => {
-    if (index < messages.length - 1 && message.role === "assistant") {
+    if (
+      (resolveLastMessage ? true : index < messages.length - 1) &&
+      message.role === "assistant"
+    ) {
       const parts = message.parts.map((part) => {
         if (
           part.type === "tool-invocation" &&

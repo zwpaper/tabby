@@ -14,3 +14,5 @@ export const SandboxPath = {
   initLog: `${SandboxLogDir}/init.log`,
   runnerLog: `${SandboxLogDir}/runner.log`,
 };
+
+export const CompactTaskMinTokens = 50_000;

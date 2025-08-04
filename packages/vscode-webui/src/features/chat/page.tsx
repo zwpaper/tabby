@@ -5,7 +5,11 @@ import { useSelectedModels } from "@/features/settings";
 import { apiClient, type authClient } from "@/lib/auth-client";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import type { Todo } from "@getpochi/tools";
-import { formatters, toUIMessages } from "@ragdoll/common";
+import {
+  CompactTaskMinTokens,
+  formatters,
+  toUIMessages,
+} from "@ragdoll/common";
 import type { Environment, ExtendedUIMessage } from "@ragdoll/db";
 import type { InferResponseType } from "hono/client";
 import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
@@ -36,6 +40,8 @@ import { ErrorMessageView } from "./components/error-message-view";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
+import { useCompactNewTask } from "./hooks/use-compact-new-task";
+import { useForceCompactTask } from "./hooks/use-force-compact-task";
 import { useNewTaskHandler } from "./hooks/use-new-task-handler";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
@@ -169,6 +175,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         minionId,
         openAIModelOverride,
         pochiModelSettings?.modelEndpointId,
+        req.messages.at(-1)?.role === "user" ? forceCompact.current : undefined,
       ),
     fetch: async (url, options) => {
       let resp: Response | null = null;
@@ -288,6 +295,33 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     retry,
   });
 
+  const forceCompact = useRef(false);
+
+  const compactTaskEnabled = !(
+    isLoading ||
+    isExecuting ||
+    isTaskLoading ||
+    totalTokens < CompactTaskMinTokens
+  );
+
+  const { isCompactingTask, handleCompactTask } = useForceCompactTask({
+    forceCompact,
+    append,
+    enabled: compactTaskEnabled,
+    data,
+    setMessages,
+  });
+
+  const {
+    isCompactingNewTask,
+    handleCompactNewTask,
+    error: compactNewTaskError,
+  } = useCompactNewTask({
+    uid,
+    enabled: compactTaskEnabled,
+    messages,
+  });
+
   const { handleSubmit, handleStop } = useChatSubmit({
     chat,
     imageUpload,
@@ -295,6 +329,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     isLoading,
     pendingApproval,
     recentAborted,
+    isCompacting: isCompactingTask || isCompactingNewTask,
   });
 
   useScrollToBottom({
@@ -309,7 +344,8 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     autoDismissError ||
     uploadImageError ||
     taskError ||
-    (pendingApproval?.name === "retry" ? pendingApproval.error : undefined);
+    (pendingApproval?.name === "retry" ? pendingApproval.error : undefined) ||
+    compactNewTaskError;
 
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading);
@@ -328,6 +364,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         messages={renderMessages}
         isTaskLoading={isTaskLoading}
         isLoading={isLoading}
+        isCompactingNewTask={isCompactingNewTask}
         user={auth.user}
         messagesContainerRef={messagesContainerRef}
       />
@@ -395,6 +432,17 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                     contextWindow={selectedModel.contextWindow}
                     totalTokens={totalTokens}
                     className="mr-5"
+                    compact={{
+                      isCompactingTask,
+                      handleCompactTask,
+                      isCompactingNewTask,
+                      handleCompactNewTask,
+                      enabled: !(
+                        !compactTaskEnabled ||
+                        isCompactingTask ||
+                        isCompactingNewTask
+                      ),
+                    }}
                   />
                 )}
                 <DevModeButton

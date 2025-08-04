@@ -1,6 +1,7 @@
 import { isAbortError } from "@ai-sdk/provider-utils";
 import { type Todo, isUserInputTool } from "@getpochi/tools";
 import {
+  CompactTaskMinTokens,
   appendMessages,
   formatters,
   fromUIMessages,
@@ -299,16 +300,23 @@ class TaskService {
     prompt: string,
     event?: TaskCreateEvent,
     parentId?: string | null,
+    compactText?: string,
   ): Promise<string> {
+    const parts = [];
+    if (compactText) {
+      parts.push({
+        type: "text" as const,
+        text: compactText,
+      });
+    }
+    parts.push({
+      type: "text" as const,
+      text: prompt,
+    });
     const message: DBMessage = {
       id: generateId(),
       role: "user",
-      parts: [
-        {
-          type: "text",
-          text: prompt,
-        },
-      ],
+      parts,
     };
 
     if (event?.type === "website:new-project") {
@@ -896,6 +904,55 @@ Generate a concise title that captures the essence of the above conversation. Re
       logger.error("Error generating task title", error);
     }
   }
+
+  async compactAndCreateTask(
+    sourceUid: string,
+    prompt: string,
+    messagesToAppend: DBMessage[],
+    userId: string,
+  ) {
+    const task = await taskService.get(sourceUid, userId);
+
+    if ((task.totalTokens ?? 0) < CompactTaskMinTokens) {
+      throw new HTTPException(400, {
+        message: `A task must have at least ${CompactTaskMinTokens} tokens to be compacted.`,
+      });
+    }
+
+    const messages = appendMessages(
+      toUIMessages(task.conversation?.messages ?? []),
+      toUIMessages(messagesToAppend),
+    );
+
+    const messagesToSave = formatters.storage(messages);
+    await db
+      .updateTable("task")
+      .set({
+        conversation: {
+          messages: fromUIMessages(messagesToSave),
+        },
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where("id", "=", uidCoder.decode(sourceUid))
+      .where("userId", "=", userId)
+      .executeTakeFirstOrThrow();
+
+    const compactText = await compactService.generateCompactText(messages);
+
+    return this.createWithUserMessage(
+      userId,
+      prompt,
+      {
+        type: "vscode:compact-new-task",
+        data: {
+          sourceUid: sourceUid,
+          messages: [],
+        },
+      },
+      undefined,
+      compactText,
+    );
+  }
 }
 
 export const taskService = new TaskService();
@@ -963,7 +1020,7 @@ function shouldAutoCompact(
     return false;
   }
   // Force compact is only used if the total tokens are greater than 50k.
-  if (forceCompact && totalTokens > 50_000) return true;
+  if (forceCompact && totalTokens > CompactTaskMinTokens) return true;
   if (totalTokens < contextWindow * 0.9) {
     return false;
   }

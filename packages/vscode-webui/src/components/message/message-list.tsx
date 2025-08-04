@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToolCallLifeCycle } from "@/features/chat";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
-import { isVSCodeEnvironment } from "@/lib/vscode";
+import { isVSCodeEnvironment, vscodeHost } from "@/lib/vscode";
 import { prompts } from "@ragdoll/common";
 import type { CheckpointPart, ExtendedUIMessage } from "@ragdoll/db";
 import { useEffect } from "react";
@@ -33,12 +33,14 @@ export const MessageList: React.FC<{
     image?: string | null;
   };
   isLoading: boolean;
+  isCompactingNewTask: boolean;
   containerRef?: React.RefObject<HTMLDivElement | null>;
   showUserAvatar?: boolean;
   className?: string;
 }> = ({
   messages: renderMessages,
   isLoading,
+  isCompactingNewTask,
   user = { name: "User" },
   assistant,
   containerRef,
@@ -95,7 +97,7 @@ export const MessageList: React.FC<{
                     : (assistant?.name ?? "Pochi")}
                 </strong>
                 {containsCompactPart(m) && (
-                  <CompactPartToolTip className="ml-1" />
+                  <CompactPartToolTip className="ml-1" message={m} />
                 )}
               </div>
             )}
@@ -131,6 +133,12 @@ export const MessageList: React.FC<{
           )}
         </div>
       ))}
+      {isCompactingNewTask && (
+        <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          <span>Compacting Task...</span>
+        </div>
+      )}
       {debouncedIsLoading && (
         <div className="py-2">
           <Loader2 className="mx-auto size-6 animate-spin" />
@@ -275,14 +283,29 @@ function containsCompactPart(message: UIMessage) {
   return message.parts.some(prompts.isCompactPart);
 }
 
-function CompactPartToolTip({ className }: { className?: string }) {
+function CompactPartToolTip({
+  message,
+  className,
+}: { message: UIMessage; className?: string }) {
+  const compactPart = message.parts.find(prompts.isCompactPart);
+  const summary = compactPart
+    ? prompts.extractSummaryFromPart(compactPart)
+    : undefined;
+  if (!summary) return null;
   return (
     <Tooltip>
       <TooltipTrigger asChild className={className}>
-        <IconLineSpacingCompact className="size-5 cursor-pointer" />
+        <IconLineSpacingCompact
+          className="size-5 cursor-pointer"
+          onClick={() =>
+            vscodeHost.openFile(`/task-summary-${message.id}.md`, {
+              base64Data: btoa(unescape(encodeURIComponent(summary))),
+            })
+          }
+        />
       </TooltipTrigger>
       <TooltipContent sideOffset={2} side="right">
-        <p className="m-0">
+        <p className="m-0 w-48">
           Conversation has been compacted from this point onward to reduce
           context usage
         </p>

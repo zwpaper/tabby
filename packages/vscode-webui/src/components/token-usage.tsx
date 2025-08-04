@@ -7,16 +7,43 @@ import {
 import { cn } from "@/lib/utils";
 import { vscodeHost } from "@/lib/vscode";
 import type { RuleFile } from "@ragdoll/vscode-webui-bridge";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { CompactTaskMinTokens } from "@ragdoll/common";
 import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
 
 interface Props {
   contextWindow: number;
   totalTokens: number;
   className?: string;
+  compact: {
+    isCompactingTask: boolean;
+    handleCompactTask: () => void;
+    isCompactingNewTask: boolean;
+    handleCompactNewTask: () => void;
+    enabled: boolean;
+  };
 }
 
-export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
+export function TokenUsage({
+  totalTokens,
+  contextWindow,
+  className,
+  compact: {
+    isCompactingTask,
+    handleCompactTask,
+    isCompactingNewTask,
+    handleCompactNewTask,
+    enabled,
+  },
+}: Props) {
   const percentage = Math.ceil((totalTokens / contextWindow) * 100);
   const [ruleFiles, setRuleFiles] = useState<RuleFile[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -57,6 +84,16 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
       setIsPinned(false);
     }
   };
+
+  const minTokenTooltip =
+    totalTokens < CompactTaskMinTokens ? (
+      <TooltipContent>
+        <p>
+          A task must have at least {CompactTaskMinTokens} tokens to be
+          compacted.
+        </p>
+      </TooltipContent>
+    ) : null;
 
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
@@ -106,14 +143,52 @@ export function TokenUsage({ totalTokens, contextWindow, className }: Props) {
               {formatTokens(totalTokens)} of {formatTokens(contextWindow)} used
             </div>
           </div>
-          {/* <div className="mt-2 flex items-center gap-x-2">
-            <Button variant="outline" size="sm" className="text-xs">
-              New Task with Summary
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs">
-              Compact Task
-            </Button>
-          </div> */}
+          <div className="mt-2 flex items-center gap-x-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        handleCompactNewTask();
+                        setIsOpen(false);
+                      }}
+                      disabled={!enabled}
+                    >
+                      {isCompactingNewTask
+                        ? "Compacting..."
+                        : "New Task with Summary"}
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {minTokenTooltip}
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        handleCompactTask();
+                        setIsOpen(false);
+                      }}
+                      disabled={!enabled}
+                    >
+                      {isCompactingTask ? "Compacting..." : "Compact Task"}
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {minTokenTooltip}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

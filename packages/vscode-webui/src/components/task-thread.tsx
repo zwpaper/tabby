@@ -104,6 +104,7 @@ export const TaskThread: React.FC<{
               assistant={assistant}
               isLoading={isLoading}
               containerRef={undefined}
+              isCompactingNewTask={false}
             />
           </div>
         )}
