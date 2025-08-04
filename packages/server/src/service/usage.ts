@@ -25,13 +25,18 @@ export class UsageService {
     modelId: string,
     usage: LanguageModelUsage,
     creditCostInput: CreditCostInput | undefined,
+    remainingFreeCredit: number,
   ): Promise<void> {
     // Track monthly usage count
     const now = moment.utc();
     const startDayOfMonth = now.startOf("month").toDate();
     const credit =
       (creditCostInput &&
-        (await this.meterCreditCost(user, creditCostInput))) ||
+        (await this.meterCreditCost(
+          user,
+          creditCostInput,
+          remainingFreeCredit,
+        ))) ||
       0;
 
     spanConfig.setAttribute("ragdoll.metering.credit", credit);
@@ -255,9 +260,12 @@ export class UsageService {
     };
   }
 
-  private async meterCreditCost(user: User, creditCostInput: CreditCostInput) {
+  private async meterCreditCost(
+    user: User,
+    creditCostInput: CreditCostInput,
+    remainingFreeCredit: number,
+  ) {
     const creditCost = computeCreditCost(creditCostInput);
-
     if (!user.stripeCustomerId) {
       logger.warn(
         "User does not have a Stripe customer ID, skipping billing event.",
@@ -265,13 +273,15 @@ export class UsageService {
       return;
     }
 
-    await stripeClient.billing.meterEvents.create({
-      event_name: "credit",
-      payload: {
-        value: creditCost.toString(),
-        stripe_customer_id: user.stripeCustomerId,
-      },
-    });
+    if (remainingFreeCredit - creditCost <= 0) {
+      await stripeClient.billing.meterEvents.create({
+        event_name: "credit",
+        payload: {
+          value: creditCost.toString(),
+          stripe_customer_id: user.stripeCustomerId,
+        },
+      });
+    }
 
     return creditCost;
   }

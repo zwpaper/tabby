@@ -85,8 +85,11 @@ const chat = new Hono()
       });
     }
 
+    let remainingFreeCredit = 0;
     if (!req.openAIModelOverride) {
-      await checkUserQuota(user, requestedModelId);
+      remainingFreeCredit =
+        (await checkUserQuota(user, requestedModelId))?.remainingFreeCredit ||
+        0;
     }
     const validModelId =
       req.openAIModelOverride || checkModel(requestedModelId);
@@ -222,6 +225,7 @@ const chat = new Hono()
                 requestedModelId,
                 usage,
                 creditCostInput,
+                remainingFreeCredit,
               );
             }
           },

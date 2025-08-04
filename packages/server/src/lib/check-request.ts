@@ -83,6 +83,10 @@ export async function checkUserQuota(user: User, modelId: string) {
       message: ServerErrors.ReachedCreditLimit,
     });
   }
+
+  return {
+    remainingFreeCredit: userQuota.credit.remainingFreeCredit,
+  };
 }
 
 export async function checkUserCodeCompletionQuota(user: User) {
