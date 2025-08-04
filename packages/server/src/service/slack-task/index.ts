@@ -124,9 +124,12 @@ class SlackTaskService {
       }
     }
 
+    logger.info(
+      `Updating slack message to ${text} while task status is ${task.status}`,
+    );
     await webClient.chat.update({
-      channel: channel,
-      ts: ts,
+      channel,
+      ts,
       text,
       blocks,
     });
