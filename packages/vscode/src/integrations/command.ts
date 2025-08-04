@@ -1,3 +1,7 @@
+import {
+  applyQuickFixes,
+  calcEditedRangeAfterAccept,
+} from "@/code-completion/auto-code-actions";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { RagdollWebviewProvider } from "@/integrations/webview/ragdoll-webview-provider";
 import type { AuthClient } from "@/lib/auth-client";
@@ -282,8 +286,20 @@ export class CommandManager implements vscode.Disposable {
 
       vscode.commands.registerCommand(
         "pochi.inlineCompletion.onDidAccept",
-        (_item: vscode.InlineCompletionItem) => {
+        async (item: vscode.InlineCompletionItem) => {
           this.posthog.capture("acceptCodeCompletion");
+
+          // Apply auto-import quick fixes after code completion is accepted
+          const editor = vscode.window.activeTextEditor;
+          if (editor) {
+            const editedRange = calcEditedRangeAfterAccept(item);
+            await vscode.commands.executeCommand(
+              "editor.action.inlineSuggest.commit",
+            );
+            if (editedRange) {
+              applyQuickFixes(editor.document.uri, editedRange);
+            }
+          }
         },
       ),
 
