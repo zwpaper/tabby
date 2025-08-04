@@ -3,6 +3,7 @@ import { prompts } from "@ragdoll/common";
 import type { DBMessage } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
 import slackifyMarkdown from "slackify-markdown";
+import { ServerErrors } from "../..";
 
 export interface TaskRenderContext {
   headerInfo: {
@@ -182,11 +183,33 @@ class SlackRichTextRenderer {
     return blocks;
   }
 
+  toRenderErrorMessage(errorMessage: string) {
+    switch (errorMessage) {
+      case ServerErrors.RequireSubscription:
+        return "You've used all your free credits. To continue, please subscribe to Pochi";
+      case ServerErrors.RequireOrgSubscription:
+        return "Your team does not have a subscription yet. To continue, please subscribe to Pochi";
+      case ServerErrors.RequirePayment:
+        return "You have unpaid invoices. Please make a payment to to continue using Pochi";
+      case ServerErrors.RequireOrgPayment:
+        return "Your team have unpaid invoices. Please make a payment to to continue using Pochi";
+      case ServerErrors.ReachedCreditLimit:
+        return "You have reached the spending limit";
+      case ServerErrors.ReachedOrgCreditLimit:
+        return "Your team has reached the spending limit";
+      default:
+        return `Something wrong happened, retrying ...*\n\n${errorMessage}`;
+    }
+  }
+
   renderTaskFailed(
     context: TaskRenderContext,
     errorMessage: string,
   ): AnyBlock[] {
     const { headerInfo, task, stats } = context;
+
+    const renderErrorMessage = this.toRenderErrorMessage(errorMessage);
+
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(
         headerInfo.prompt,
@@ -202,7 +225,7 @@ class SlackRichTextRenderer {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*❌ Something wrong happened, retrying ...*\n\n${errorMessage}`,
+          text: `*❌ ${renderErrorMessage}`,
         },
       },
     ];

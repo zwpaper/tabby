@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { UIMessage } from "ai";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ErrorMessageView } from "../chat/components/error-message-view";
 import { TodoList } from "../todo";
 
 export function SharePage() {
@@ -30,6 +31,7 @@ export function SharePage() {
   });
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | undefined>();
 
   const queryClient = useMemo(() => new QueryClient(), []);
 
@@ -44,6 +46,7 @@ export function SharePage() {
         }
         setTodos(shareMessage.todos ?? []);
         setIsLoading(!!shareMessage.isLoading);
+        setError(shareMessage.error ?? undefined);
         setIsInitialized(true);
       }
     };
@@ -118,6 +121,7 @@ export function SharePage() {
                     messages={renderMessages}
                     isLoading={isLoading}
                   />
+                  <ErrorMessageView error={error} />
                 </div>
                 {todos && todos.length > 0 && (
                   <div className="col-span-1">
@@ -159,4 +163,5 @@ type ShareMessage = {
     | undefined;
   todos: Todo[] | undefined;
   isLoading: boolean | undefined;
+  error?: Error | null;
 };

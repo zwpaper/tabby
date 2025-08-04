@@ -121,6 +121,7 @@ function RouteComponent() {
         theme={theme}
         messages={renderMessages}
         todos={loaderData.todos}
+        error={loaderData.error}
         isLoading={isLoading}
         user={auth.user}
       />

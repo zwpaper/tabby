@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
+import type { TaskError } from "@ragdoll/db";
 import type { UIMessage } from "ai";
 import {
   type ComponentProps,
@@ -27,6 +28,7 @@ interface ContentProps extends ComponentProps<"div"> {
   };
   theme?: string;
   isLoading?: boolean;
+  error?: TaskError | null;
 }
 
 function TaskContent({
@@ -37,6 +39,7 @@ function TaskContent({
   theme,
   className,
   isLoading,
+  error,
   ...props
 }: ContentProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -131,13 +134,14 @@ function TaskContent({
           assistant,
           todos,
           isLoading,
+          error,
         },
         {
           targetOrigin: isDEV ? webviewOrigin : "/",
         },
       );
     }
-  }, [messages, todos, isLoading, user, assistant, loaded]);
+  }, [messages, todos, isLoading, user, assistant, loaded, error]);
 
   return (
     <div className={cn("flex flex-1 flex-col", className)} {...props}>

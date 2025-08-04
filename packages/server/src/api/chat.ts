@@ -73,8 +73,6 @@ const chat = new Hono()
     c.header("X-Vercel-AI-Data-Stream", "v1");
     c.header("Content-Type", "text/plain; charset=utf-8");
 
-    checkDebugErrorTrigger(req.messages);
-
     const parsedMcpTools = parseMcpToolSet(mcpToolSet);
 
     const user = c.get("user");
@@ -85,12 +83,6 @@ const chat = new Hono()
       });
     }
 
-    let remainingFreeCredit = 0;
-    if (!req.openAIModelOverride) {
-      remainingFreeCredit =
-        (await checkUserQuota(user, requestedModelId))?.remainingFreeCredit ||
-        0;
-    }
     const validModelId =
       req.openAIModelOverride || checkModel(requestedModelId);
 
@@ -100,6 +92,21 @@ const chat = new Hono()
         req,
         getContextWindow(validModelId),
       );
+
+    let remainingFreeCredit = 0;
+    try {
+      checkDebugErrorTrigger(req.messages);
+      if (!req.openAIModelOverride) {
+        remainingFreeCredit =
+          (await checkUserQuota(user, requestedModelId))?.remainingFreeCredit ||
+          0;
+      }
+    } catch (error) {
+      const taskError = taskService.toTaskError(error);
+      await taskService.failStreaming(uid, user.id, taskError);
+
+      throw error;
+    }
 
     const enabledClientTools = selectClientTools(!isSubTask);
 
