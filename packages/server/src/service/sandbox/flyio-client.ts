@@ -212,7 +212,22 @@ export class FlyioClient {
       throw new Error(`Fly.io API error: ${response.status} ${error}`);
     }
 
-    return response.json() as T;
+    // Check if response has content before parsing JSON
+    const contentLength = response.headers.get("content-length");
+    if (contentLength === "0") {
+      return {} as T;
+    }
+
+    const text = await response.text();
+    if (!text || text.trim() === "") {
+      return {} as T;
+    }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch (error) {
+      throw new Error(`Invalid JSON response from Fly.io API: ${error}`);
+    }
   }
 
   // Fly.io only have a GraphQL endpoint for IP allocation, so we handle that separately
@@ -285,7 +300,10 @@ export class FlyioClient {
       });
     } catch (error) {
       // If the app doesn't exist, that's fine - it's already deleted
-      if (error instanceof Error && error.message.includes("not found")) {
+      if (
+        error instanceof Error &&
+        error.message.toLowerCase().includes("could not find app")
+      ) {
         return;
       }
       throw error;
