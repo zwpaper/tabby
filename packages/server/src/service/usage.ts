@@ -17,6 +17,7 @@ import { organizationService } from "./organization";
 const logger = getLogger("UsageService");
 
 const FreeCreditInDollars = 20;
+const FreeCredit = FreeCreditInDollars * 10_000_000;
 const CodeCompletionSubscriptionCountThreshold = 100;
 
 export class UsageService {
@@ -236,10 +237,7 @@ export class UsageService {
       }
     }
 
-    const remainingFreeCredit = Math.max(
-      FreeCreditInDollars - creditToDollars(spentCredit),
-      0,
-    );
+    const remainingFreeCredit = Math.max(FreeCredit - spentCredit, 0);
 
     const isLimitReached =
       creditToDollars(spentCredit) - FreeCreditInDollars >
@@ -252,9 +250,9 @@ export class UsageService {
       usages,
       credit: {
         spent: spentCredit,
-        limit: monthlyUserCreditLimit,
-        isLimitReached,
         remainingFreeCredit,
+        limit: monthlyUserCreditLimit, // in dollars
+        isLimitReached,
         isUnpaid: !!unpaidSubscription,
       },
     };
@@ -273,11 +271,12 @@ export class UsageService {
       return;
     }
 
-    if (remainingFreeCredit <= 0) {
+    const creditCostForStripe = creditCost - remainingFreeCredit;
+    if (creditCostForStripe > 0) {
       await stripeClient.billing.meterEvents.create({
         event_name: "credit",
         payload: {
-          value: creditCost.toString(),
+          value: creditCostForStripe.toString(),
           stripe_customer_id: user.stripeCustomerId,
         },
       });

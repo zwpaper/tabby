@@ -3,7 +3,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { apiClient, authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { creditToDollars } from "@/lib/utils/credit";
 import { IconCreditCard } from "@tabler/icons-react";
 import {
   useMutation,
@@ -335,4 +334,8 @@ function StatItem({
       )}
     </div>
   );
+}
+
+function creditToDollars(credit: number): number {
+  return credit / 10_000_000;
 }

@@ -34,6 +34,8 @@ import moment from "moment";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+const FreeCreditInDollars = 20;
+
 export const Route = createFileRoute("/_authenticated/_base/profile")({
   component: RouteComponent,
 });
@@ -507,14 +509,13 @@ function BillingCard({
   const totalCredit = billingQuotaQuery.data?.credit?.spent || 0;
   const isCreditLimitReached = billingQuotaQuery.data?.credit?.isLimitReached;
   const totalSpendingInDollars = creditToDollars(totalCredit);
-  const freeCreditInDollars = 20;
-  const freeCreditRemaining = Math.max(
+  const remainingFreeCreditInDollars = Math.max(
     0,
-    freeCreditInDollars - totalSpendingInDollars,
+    FreeCreditInDollars - totalSpendingInDollars,
   );
   const spentInDollars = Math.max(
     0,
-    totalSpendingInDollars - freeCreditInDollars,
+    totalSpendingInDollars - FreeCreditInDollars,
   );
 
   return (
@@ -592,7 +593,7 @@ function BillingCard({
           <div className="mb-4 grid grid-cols-2 items-start gap-8">
             <StatItem
               label="FREE CREDIT REMAINING"
-              value={freeCreditRemaining.toLocaleString("en-US", {
+              value={remainingFreeCreditInDollars.toLocaleString("en-US", {
                 style: "currency",
                 currency: "USD",
               })}
