@@ -5,6 +5,7 @@ interface FileControlsProps {
   onExport: () => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onImportTasks: () => void;
+  onImportSpanIds: () => void;
   isExportDisabled: boolean;
 }
 
@@ -13,6 +14,7 @@ export function FileControls({
   onExport,
   onFileUpload,
   onImportTasks,
+  onImportSpanIds,
   isExportDisabled,
 }: FileControlsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +52,13 @@ export function FileControls({
         className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 font-medium text-foreground text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
       >
         Import Tasks
+      </button>
+      <button
+        type="button"
+        onClick={onImportSpanIds}
+        className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 font-medium text-foreground text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
+      >
+        Import Span IDs
       </button>
       <button
         type="button"

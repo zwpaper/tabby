@@ -1,12 +1,13 @@
 import { useRef, useState } from "react";
 import { FileControls } from "./components/file-controls";
+import { ImportSpanIdsModal } from "./components/import-span-ids-modal";
 import { ImportTasksModal } from "./components/import-tasks-modal";
 import { ResponseToc } from "./components/response-toc";
 import { TaskBar } from "./components/task-bar";
 import { TaskList } from "./components/task-list";
 import { TaskView, type TaskViewHandle } from "./components/task-view";
 import { TaskViewProvider } from "./contexts/task-view-context";
-import { fetchTask } from "./lib/task-fetcher";
+import { fetchTask, fetchTaskBySpanId } from "./lib/task-fetcher";
 import { type TaskData, ZodCompatibleTaskDataType, toTaskData } from "./types";
 
 function App() {
@@ -22,6 +23,8 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isTocOpen, setIsTocOpen] = useState(true);
   const [isImportTasksModalOpen, setIsImportTasksModalOpen] = useState(false);
+  const [isImportSpanIdsModalOpen, setIsImportSpanIdsModalOpen] =
+    useState(false);
   const taskViewRef = useRef<TaskViewHandle>(null);
 
   const handleImport = async () => {
@@ -116,6 +119,10 @@ function App() {
     setIsImportTasksModalOpen(true);
   };
 
+  const openImportSpanIdsModal = () => {
+    setIsImportSpanIdsModalOpen(true);
+  };
+
   const handleImportTasks = async ({
     content,
     auth,
@@ -175,6 +182,53 @@ function App() {
     } catch (error) {
       console.error("Failed to import tasks:", error);
       alert("Failed to import tasks. Please the console for more details.");
+    }
+  };
+
+  const handleImportSpanIds = async ({
+    spanIds,
+    auth,
+  }: { spanIds: string[]; auth: string }) => {
+    try {
+      const existingTaskUids = new Set(tasks.map((task) => task.uid));
+      const newTasks: TaskData[] = [];
+      let errorCount = 0;
+      let skippedCount = 0;
+
+      for (const spanId of spanIds) {
+        try {
+          const task = await fetchTaskBySpanId(spanId, auth);
+          // Check if task already exists
+          if (existingTaskUids.has(task.uid)) {
+            skippedCount++;
+            console.log(`Skipping duplicate task: ${task.uid}`);
+            continue;
+          }
+          newTasks.push(task);
+          existingTaskUids.add(task.uid); // Add to set to avoid duplicates within this batch
+        } catch (error) {
+          errorCount++;
+          console.error(`Failed to import span ID ${spanId}:`, error);
+        }
+      }
+
+      setTasks((prevTasks) => [...newTasks, ...prevTasks]);
+      setSelectedTask(null);
+      setEditingPart(null);
+
+      let message = `Successfully imported ${newTasks.length} tasks from ${spanIds.length} span IDs.`;
+      if (skippedCount > 0) {
+        message += ` Skipped ${skippedCount} duplicate tasks.`;
+      }
+      if (errorCount > 0) {
+        message += ` Failed to import ${errorCount} span IDs. Please check the console for more details.`;
+      }
+      alert(message);
+    } catch (error) {
+      console.error("Failed to import tasks from span IDs:", error);
+      alert(
+        "Failed to import tasks from span IDs. Please check the console for more details.",
+      );
     }
   };
 
@@ -342,6 +396,7 @@ function App() {
             onExport={handleExport}
             onFileUpload={handleFileUpload}
             onImportTasks={openImportTasksModal}
+            onImportSpanIds={openImportSpanIdsModal}
             isExportDisabled={tasks.length === 0}
           />
           {selectedTask && (
@@ -398,6 +453,12 @@ function App() {
           isOpen={isImportTasksModalOpen}
           onClose={() => setIsImportTasksModalOpen(false)}
           onImport={handleImportTasks}
+        />
+
+        <ImportSpanIdsModal
+          isOpen={isImportSpanIdsModalOpen}
+          onClose={() => setIsImportSpanIdsModalOpen(false)}
+          onImport={handleImportSpanIds}
         />
       </div>
     </TaskViewProvider>

@@ -45,7 +45,54 @@ export async function fetchTask(uid: string, auth: string): Promise<TaskData> {
     throw new Error(`No task found for uid: ${uid}`);
   }
   const hit = data.hits[0];
-  const prompt = hit.span_attributes["ai.prompt.rawMessages"];
+
+  return processTaskHit(hit, uid);
+}
+
+export async function fetchTaskBySpanId(
+  spanId: string,
+  auth: string,
+): Promise<TaskData> {
+  const urlBuilder = new URL(QuickWitBaseUrl);
+  urlBuilder.pathname = "/api/v1/otel-traces-v0_7/search";
+  urlBuilder.searchParams.append(
+    "query",
+    `span_name:"ai.streamText.doStream" AND span_id:"${spanId}"`,
+  );
+  urlBuilder.searchParams.append("sort_by", "span_start_timestamp_nanos");
+  urlBuilder.searchParams.append("max_hits", "1");
+  urlBuilder.searchParams.append("format", "json");
+
+  const response = await fetch(urlBuilder.toString(), {
+    headers: {
+      Authorization: auth,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch task by span ID: ${response.status} ${response.statusText}`,
+    );
+  }
+  const data = await response.json();
+  if (data.hits.length === 0) {
+    throw new Error(`No task found for span ID: ${spanId}`);
+  }
+  const hit = data.hits[0];
+  const uid = hit.span_attributes["ai.telemetry.metadata.task-id"];
+
+  if (!uid) {
+    throw new Error(`No task ID found for span ID: ${spanId}`);
+  }
+
+  return processTaskHit(hit, uid);
+}
+
+function processTaskHit(
+  hit: { span_attributes: Record<string, unknown> },
+  uid: string,
+): TaskData {
+  const prompt = hit.span_attributes["ai.prompt.rawMessages"] as string;
 
   const taskData = {
     uid,
@@ -58,7 +105,7 @@ export async function fetchTask(uid: string, auth: string): Promise<TaskData> {
     role: "assistant",
     content: [],
   };
-  const responseText = hit.span_attributes["ai.response.text"];
+  const responseText = hit.span_attributes["ai.response.text"] as string;
   if (responseText) {
     responseMessage.content.push({
       type: "text",
