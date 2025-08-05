@@ -3,7 +3,7 @@ import type { Store } from "@livestore/livestore";
 import type { ReactApi } from "@livestore/react";
 import { type ReactNode, createContext, useContext, useMemo } from "react";
 import { LiveChatKitBase } from "./chat/live-chat-kit";
-import { messages$, task$ } from "./store/queries";
+import { messages$, task$ } from "./livestore/queries";
 import type { Message } from "./types";
 
 class LiveChatKit extends LiveChatKitBase<Chat<Message>> {

@@ -1,3 +1,3 @@
-export * as catalog from "./store";
+export * as catalog from "./livestore";
 
 export type { Message } from "./types";
