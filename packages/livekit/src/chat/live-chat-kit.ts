@@ -11,14 +11,14 @@ import {
 import { isAbortError } from "@ai-v5-sdk/provider-utils";
 import { isUserInputTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import type { catalog } from ".";
+import type { catalog } from "..";
+import { messages$, task$ } from "../store/queries";
+import { events, type tables } from "../store/schema";
+import type { Message } from "../types";
 import {
   FlexibleChatTransport,
   type OnStartCallback,
 } from "./flexible-chat-transport";
-import { messages$, task$ } from "./store/queries";
-import { events, type tables } from "./store/schema";
-import type { Message } from "./types";
 
 type LiveChatKitOptions<T> = {
   store: Store;

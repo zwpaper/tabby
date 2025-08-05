@@ -2,7 +2,7 @@ import { Chat } from "@ai-v5-sdk/react";
 import type { Store } from "@livestore/livestore";
 import type { ReactApi } from "@livestore/react";
 import { type ReactNode, createContext, useContext, useMemo } from "react";
-import { LiveChatKitBase } from "./live-chat-kit";
+import { LiveChatKitBase } from "./chat/live-chat-kit";
 import { messages$, task$ } from "./store/queries";
 import type { Message } from "./types";
 
