@@ -46,6 +46,8 @@
       "@ai-v5-sdk/openai-compatible": "npm:@ai-sdk/openai-compatible@1",
       "@ai-v5-sdk/react": "npm:@ai-sdk/react@2",
       "@ai-v5-sdk/provider": "npm:@ai-sdk/provider@2",
+      "@livestore/react": "0.3.1",
+      "@livestore/adapter-node": "0.3.1",
       "@livestore/livestore": "0.3.1",
       "@livestore/peer-deps": "0.3.1",
       "@livestore/wa-sqlite": "1.0.5-dev.2"

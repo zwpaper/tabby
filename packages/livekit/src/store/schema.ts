@@ -1,10 +1,4 @@
-import {
-  Events,
-  Schema,
-  SessionIdSymbol,
-  State,
-  makeSchema,
-} from "@livestore/livestore";
+import { Events, Schema, State, makeSchema } from "@livestore/livestore";
 
 const DBTextUIPart = Schema.Struct({
   type: Schema.Literal("text"),
@@ -18,13 +12,60 @@ const DBMessage = Schema.Struct({
   parts: Schema.Array(Schema.Union(DBTextUIPart, Schema.Unknown)),
 });
 
+const Todo = Schema.Struct({
+  id: Schema.String,
+  content: Schema.String,
+  status: Schema.Literal("pending", "in-progress", "completed", "cancelled"),
+  priority: Schema.Literal("low", "medium", "high"),
+});
+
+const Todos = Schema.Array(Todo);
+
+const TaskStatus = Schema.Literal(
+  "completed",
+  "pending-input",
+  "failed",
+  "streaming",
+  "pending-tool",
+  "pending-model",
+);
+
+const TaskError = Schema.Union(
+  Schema.Struct({
+    kind: Schema.Literal("InternalError"),
+    message: Schema.String,
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("APICallError"),
+    message: Schema.String,
+    requestBodyValues: Schema.Unknown,
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("AbortError"),
+    message: Schema.String,
+  }),
+);
+
 export const tables = {
-  tasks: State.SQLite.table({
-    name: "tasks",
+  task: State.SQLite.table({
+    name: "task",
     columns: {
-      id: State.SQLite.text({ primaryKey: true }),
-      createdAt: State.SQLite.integer(),
-      updatedAt: State.SQLite.integer(),
+      id: State.SQLite.text({
+        primaryKey: true,
+        schema: Schema.Literal("default"),
+      }),
+      status: State.SQLite.text({
+        default: "pending-input",
+        schema: TaskStatus,
+      }),
+      todos: State.SQLite.json({
+        default: [],
+        schema: Todos,
+      }),
+      totalTokens: State.SQLite.integer({ nullable: true }),
+      error: State.SQLite.json({ schema: TaskError, nullable: true }),
+      createdAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
+      updatedAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
     },
   }),
   // Many to one relationship with tasks
@@ -32,61 +73,100 @@ export const tables = {
     name: "messages",
     columns: {
       id: State.SQLite.text({ primaryKey: true }),
-      taskId: State.SQLite.text(),
-      seq: State.SQLite.integer(),
       data: State.SQLite.json({ schema: DBMessage }),
-    },
-  }),
-  uiState: State.SQLite.clientDocument({
-    name: "uiState",
-    schema: Schema.Struct({
-      taskId: Schema.optional(Schema.String),
-    }),
-    default: {
-      id: SessionIdSymbol,
-      value: {
-        taskId: undefined,
-      },
     },
   }),
 };
 
 // Events describe data changes (https://docs.livestore.dev/reference/events)
 export const events = {
-  taskCreated: Events.synced({
-    name: "v1.TaskCreated",
+  taskInited: Events.synced({
+    name: "v1.TaskInited",
     schema: Schema.Struct({
-      id: Schema.String,
+      createdAt: Schema.Date,
     }),
   }),
-  messageUpdated: Events.synced({
-    name: "v1.MessageUpdated",
+  chatStreamStarted: Events.synced({
+    name: "v1.ChatStreamStarted",
     schema: Schema.Struct({
-      taskId: Schema.String,
-      seq: Schema.Number,
       data: DBMessage,
+      todos: Todos,
+      updatedAt: Schema.Date,
     }),
   }),
-  uiStateSet: tables.uiState.set,
+  chatStreamFinished: Events.synced({
+    name: "v1.ChatStreamFinished",
+    schema: Schema.Struct({
+      data: DBMessage,
+      totalTokens: Schema.NullOr(Schema.Number),
+      status: TaskStatus,
+      updatedAt: Schema.Date,
+    }),
+  }),
+  chatStreamFailed: Events.synced({
+    name: "v1.ChatStreamFailed",
+    schema: Schema.Struct({
+      error: TaskError,
+      updatedAt: Schema.Date,
+    }),
+  }),
 };
 
 // Materializers are used to map events to state (https://docs.livestore.dev/reference/state/materializers)
 const materializers = State.SQLite.materializers(events, {
-  "v1.TaskCreated": ({ id }) =>
-    tables.tasks.insert({
-      id,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }),
-  "v1.MessageUpdated": ({ taskId, seq, data }) =>
+  "v1.TaskInited": ({ createdAt }, ctx) => {
+    const countTask = ctx.query(tables.task.count());
+    if (countTask !== 0) return [];
+
+    return [
+      tables.task.insert({
+        id: "default",
+        status: "pending-input",
+        createdAt,
+        updatedAt: createdAt,
+      }),
+    ];
+  },
+  "v1.ChatStreamStarted": ({ data, todos, updatedAt }) => [
+    tables.task
+      .update({
+        status: "streaming",
+        todos,
+        updatedAt,
+      })
+      .where({ id: "default" }),
     tables.messages
       .insert({
         id: data.id,
-        seq,
-        taskId,
         data,
       })
       .onConflict("id", "replace"),
+  ],
+  "v1.ChatStreamFinished": ({ data, totalTokens, status, updatedAt }) => [
+    tables.task
+      .update({
+        totalTokens,
+        status,
+        updatedAt,
+        // Clear error if the stream is finished
+        error: null,
+      })
+      .where({ id: "default" }),
+    tables.messages
+      .insert({
+        id: data.id,
+        data,
+      })
+      .onConflict("id", "replace"),
+  ],
+  "v1.ChatStreamFailed": ({ error, updatedAt }) =>
+    tables.task
+      .update({
+        status: "failed",
+        error,
+        updatedAt,
+      })
+      .where({ id: "default" }),
 });
 
 const state = State.SQLite.makeState({ tables, materializers });

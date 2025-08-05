@@ -1,7 +1,8 @@
 import * as readline from "node:readline/promises";
 import { makeAdapter } from "@livestore/adapter-node";
 import { type LiveStoreSchema, createStorePromise } from "@livestore/livestore";
-import { LiveChatKit, catalog } from "@ragdoll/livekit";
+import { catalog } from "@ragdoll/livekit";
+import { LiveChatKit } from "@ragdoll/livekit/node";
 import { Chat } from "./chat.node";
 
 const adapter = makeAdapter({
@@ -20,7 +21,7 @@ const terminal = readline.createInterface({
 });
 
 async function main() {
-  const { chat } = new LiveChatKit(store, "default", Chat);
+  const { chat } = new LiveChatKit({ store, chatClass: Chat });
 
   while (true) {
     const userInput = await terminal.question("You: ");

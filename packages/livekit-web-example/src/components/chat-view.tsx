@@ -1,16 +1,11 @@
-import { Chat, useChat } from "@ai-v5-sdk/react";
-import { useStore } from "@livestore/react";
-import { LiveChatKit } from "@ragdoll/livekit";
+import { useChat } from "@ai-v5-sdk/react";
+import { useLiveChatKit } from "@ragdoll/livekit/react";
 import { useEffect, useRef, useState } from "react";
 
-export function ChatView({ taskId }: { taskId: string }) {
-  const { store } = useStore();
+export function ChatView() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const chatKit = useRef(new LiveChatKit(store, taskId, Chat));
-  const { messages, sendMessage, status } = useChat({
-    chat: chatKit.current.chat,
-  });
+  const { chat } = useLiveChatKit();
+  const { messages, sendMessage, status } = useChat({ chat });
 
   const [input, setInput] = useState("");
 

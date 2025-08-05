@@ -1,7 +1,10 @@
 {
   "name": "@ragdoll/livekit",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./react": "./src/react.tsx",
+    "./node": "./src/node.ts",
+    "./v4-adapter": "./src/v4-adapter.ts"
   },
   "type": "module",
   "private": true,
@@ -10,13 +13,17 @@
   },
   "dependencies": {
     "@livestore/livestore": "catalog:",
+    "@livestore/react": "catalog:",
     "@getpochi/tools": "workspace:*",
     "@ai-v5-sdk/ai": "catalog:",
+    "@ai-v5-sdk/react": "catalog:",
     "@ai-v5-sdk/openai-compatible": "catalog:",
     "@ai-v5-sdk/provider-utils": "catalog:",
     "@ai-v5-sdk/provider": "catalog:",
     "@ragdoll/db": "workspace:*",
     "@ragdoll/common": "workspace:*",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "ai": "catalog:",
+    "react": "catalog:"
   }
 }

@@ -1,12 +1,12 @@
-export const getWorkspaceId = () => {
+export const getTaskId = () => {
   if (typeof window === "undefined") return "unused";
 
   const searchParams = new URLSearchParams(window.location.search);
-  const storeId = searchParams.get("workspaceId");
+  const storeId = searchParams.get("taskId");
   if (storeId !== null) return storeId;
 
   const newAppId = crypto.randomUUID();
-  searchParams.set("workspaceId", newAppId);
+  searchParams.set("taskId", newAppId);
 
   window.location.search = searchParams.toString();
 };

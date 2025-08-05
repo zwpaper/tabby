@@ -4,7 +4,9 @@
 
 import { type Tool, asSchema, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import { ClientToolsV5 } from "@getpochi/tools";
+import { fromUIMessage, toUIMessage } from "@ragdoll/common";
 import type { DBMessage } from "@ragdoll/db";
+import type { UIMessage as V4UIMessage } from "ai";
 import type { Message } from "./types";
 
 export async function fromDBMessage(x: DBMessage): Promise<Message> {
@@ -276,4 +278,12 @@ function createDynamicToolPart(
 
 function assertUnreachable(_: never): never {
   throw new Error("Didn't expect to get here");
+}
+
+export function toV4UIMessage(message: Message): V4UIMessage {
+  return toUIMessage(toDBMessage(message));
+}
+
+export async function fromV4UIMessage(message: V4UIMessage): Promise<Message> {
+  return await fromDBMessage(fromUIMessage(message));
 }

@@ -7,7 +7,7 @@ import {
   streamText,
 } from "@ai-v5-sdk/ai";
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
-import { ClientToolsV5 } from "@getpochi/tools";
+import { ClientToolsV5, type Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
 import { ZodEnvironment } from "@ragdoll/db";
 import { z } from "zod";
@@ -19,7 +19,10 @@ const openai = createOpenAICompatible({
   name: "deepinfra",
 });
 
-export type OnStartCallback = (options: { messages: UIMessage[] }) => void;
+export type OnStartCallback = (options: {
+  messages: UIMessage[];
+  todos: Todo[];
+}) => void;
 
 export class FlexibleChatTransport implements ChatTransport<UIMessage> {
   readonly onStart?: OnStartCallback;
@@ -45,7 +48,10 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
     ...options
   }) => {
     const metadata = RequestMetadata.parse(options.metadata);
-    this.onStart?.({ messages });
+    this.onStart?.({
+      messages,
+      todos: metadata?.environment.todos || [],
+    });
     const result = streamText({
       model: openai(metadata?.model || "zai-org/GLM-4.5"),
       messages: convertToModelMessages(messages),
@@ -53,7 +59,16 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
       // FIXME: add customRules, inject environment details.
       system: prompts.system(undefined),
     });
-    return result.toUIMessageStream();
+    return result.toUIMessageStream({
+      messageMetadata: ({ part }) => {
+        if (part.type === "finish") {
+          return {
+            totalTokens: part.totalUsage.totalTokens,
+            finishReason: part.finishReason,
+          };
+        }
+      },
+    });
   };
 
   reconnectToStream: (

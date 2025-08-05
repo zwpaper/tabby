@@ -6,14 +6,14 @@ import type React from "react";
 import { unstable_batchedUpdates as batchUpdates } from "react-dom";
 
 import { catalog } from "@ragdoll/livekit";
-import Chat from "./components/chat.js";
-import { getWorkspaceId } from "./lib/workspace-id.js";
+import Page from "./components/chat.js";
+import { getTaskId } from "./lib/workspace-id.js";
 import LiveStoreWorker from "./livestore.worker?worker";
 
 const AppBody: React.FC = () => (
   <div className="page-container">
     <section className="todoapp">
-      <Chat />
+      <Page />
     </section>
   </div>
 );
@@ -39,7 +39,7 @@ const adapter = makePersistedAdapter({
   resetPersistence,
 });
 
-const workspaceId = getWorkspaceId();
+const taskId = getTaskId();
 
 export const App: React.FC = () => (
   <LiveStoreProvider
@@ -47,7 +47,7 @@ export const App: React.FC = () => (
     adapter={adapter}
     renderLoading={(_) => <div>Loading LiveStore ({_.stage})...</div>}
     batchUpdates={batchUpdates}
-    storeId={workspaceId}
+    storeId={taskId}
   >
     <div style={{ top: 0, right: 0, position: "absolute", background: "#333" }}>
       <FPSMeter height={40} />
