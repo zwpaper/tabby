@@ -13,7 +13,7 @@ import { isUserInputTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import type { catalog } from "..";
 import { messages$, task$ } from "../livestore/queries";
-import { events, type tables } from "../livestore/schema";
+import { events, tables } from "../livestore/schema";
 import type { Message } from "../types";
 import {
   FlexibleChatTransport,
@@ -31,7 +31,10 @@ export class LiveChatKitBase<T> {
 
   constructor({ store, chatClass }: LiveChatKitOptions<T>) {
     this.store = store;
-    this.store.commit(events.taskInited({ createdAt: new Date() }));
+    const countTask = store.query(tables.task.count());
+    if (countTask === 0) {
+      this.store.commit(events.taskInited({ createdAt: new Date() }));
+    }
 
     this.chat = new chatClass({
       messages: this.messages,

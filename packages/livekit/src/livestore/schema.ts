@@ -114,10 +114,7 @@ export const events = {
 
 // Materializers are used to map events to state (https://docs.livestore.dev/reference/state/materializers)
 const materializers = State.SQLite.materializers(events, {
-  "v1.TaskInited": ({ createdAt }, ctx) => {
-    const countTask = ctx.query(tables.task.count());
-    if (countTask !== 0) return [];
-
+  "v1.TaskInited": ({ createdAt }) => {
     return [
       tables.task.insert({
         id: "default",
