@@ -9,7 +9,7 @@ import {
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
 import { ClientToolsV5, type Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
-import { ZodEnvironment } from "@ragdoll/db";
+import { type Environment, ZodEnvironment } from "@ragdoll/db";
 import { z } from "zod";
 import { readEnv } from "./env";
 
@@ -54,10 +54,9 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
     });
     const result = streamText({
       model: openai(metadata?.model || "zai-org/GLM-4.5"),
-      messages: convertToModelMessages(messages),
+      messages: prepareMessages(messages, metadata?.environment),
       tools: ClientToolsV5,
-      // FIXME: add customRules, inject environment details.
-      system: prompts.system(undefined),
+      system: prompts.system(metadata?.environment.info?.customRules),
     });
     return result.toUIMessageStream({
       messageMetadata: ({ part }) => {
@@ -84,3 +83,19 @@ const RequestMetadata = z
     model: z.string().optional(),
   })
   .optional();
+
+function prepareMessages(
+  inputMessages: UIMessage[],
+  environment: Environment | undefined,
+) {
+  // @ts-expect-error from an injectEnvironmentDetails perspective, v4 / v5 UIMessage are compatible, we can safely ignore type error.
+  const messages: UIMessage[] = prompts.injectEnvironmentDetails(
+    // @ts-expect-error from an injectEnvironmentDetails perspective, v4 / v5 UIMessage are compatible, we can safely ignore type error.
+    inputMessages,
+    environment,
+    // FIXME(meng): set user from git config
+    undefined,
+  );
+
+  return convertToModelMessages(messages);
+}
