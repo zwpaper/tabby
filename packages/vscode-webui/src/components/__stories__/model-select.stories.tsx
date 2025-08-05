@@ -21,6 +21,7 @@ const mockModels: ModelGroups = [
     models: [
       {
         id: "claude-3-opus",
+        modelId: "claude-3-opus",
         name: "Claude 3 Opus",
         type: "hosted",
         contextWindow: 200000,
@@ -28,6 +29,7 @@ const mockModels: ModelGroups = [
       },
       {
         id: "gpt-4o",
+        modelId: "gpt-4o",
         name: "GPT-4o",
         type: "hosted",
         contextWindow: 128000,
@@ -35,6 +37,7 @@ const mockModels: ModelGroups = [
       },
       {
         id: "gemini-1.5-flash",
+        modelId: "gemini-1.5-flash",
         name: "Gemini 1.5 Flash",
         type: "hosted",
         contextWindow: 1000000,
@@ -48,23 +51,29 @@ const mockModels: ModelGroups = [
     models: [
       {
         id: "custom-model-1",
+        modelId: "custom-model-1",
         name: "My Custom Model 1",
         type: "byok",
         contextWindow: 10000,
         maxTokens: 4000,
         costType: "basic",
         provider: {
+          id: "custom-provider",
+          name: "Custom Provider",
           baseURL: "http://localhost:8080",
         },
       },
       {
         id: "custom-model-2",
+        modelId: "custom-model-2",
         name: "My Custom Model 2",
         type: "byok",
         contextWindow: 20000,
         maxTokens: 8000,
         costType: "basic",
         provider: {
+          id: "custom-provider",
+          name: "Custom Provider",
           baseURL: "http://localhost:8080",
         },
       },

@@ -3,28 +3,34 @@ import { threadSignal } from "@quilted/threads/signals";
 import type { CustomModelSetting } from "@ragdoll/vscode-webui-bridge";
 import { useQuery } from "@tanstack/react-query";
 
-const isValidCustomModelSettings = (
-  settings: CustomModelSetting[] | undefined,
-): settings is CustomModelSetting[] => {
-  if (settings === undefined) {
-    return false;
-  }
+const isValidCustomModel = (model: CustomModelSetting["models"][number]) => {
   return (
-    Array.isArray(settings) &&
-    settings.every((setting) => {
-      return (
-        typeof setting.baseURL === "string" &&
-        Array.isArray(setting.models) &&
-        setting.models.every((model) => {
-          return (
-            typeof model.id === "string" &&
-            typeof model.contextWindow === "number" &&
-            typeof model.maxTokens === "number"
-          );
-        })
-      );
-    })
+    typeof model.id === "string" &&
+    typeof model.contextWindow === "number" &&
+    typeof model.maxTokens === "number"
   );
+};
+
+const isValidCustomModelSetting = (setting: CustomModelSetting) => {
+  return (
+    typeof setting.id === "string" &&
+    typeof setting.baseURL === "string" &&
+    Array.isArray(setting.models)
+  );
+};
+
+const getValidCustomModelSettings = (
+  settings: CustomModelSetting[] | undefined,
+): CustomModelSetting[] | undefined => {
+  if (settings === undefined) {
+    return undefined;
+  }
+  return settings.filter(isValidCustomModelSetting).map((setting) => {
+    return {
+      ...setting,
+      models: setting.models.filter(isValidCustomModel),
+    };
+  });
 };
 
 /** @useSignals this comment is needed to enable signals in this hook */
@@ -38,11 +44,7 @@ export const useCustomModelSetting = () => {
     return { customModelSettings: undefined, isLoading };
   }
 
-  const settings = customModelSettingsSignal.value;
-
-  if (!isValidCustomModelSettings(settings)) {
-    return { customModelSettings: undefined, isLoading };
-  }
+  const settings = getValidCustomModelSettings(customModelSettingsSignal.value);
 
   return { customModelSettings: settings, isLoading };
 };

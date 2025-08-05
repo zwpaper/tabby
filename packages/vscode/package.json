@@ -115,6 +115,11 @@
         "title": "Open File",
         "category": "Pochi",
         "icon": "$(go-to-file)"
+      },
+      {
+        "command": "pochi.openCustomModelSettings",
+        "title": "Open Custom Model Settings",
+        "category": "Pochi"
       }
     ],
     "menus": {
@@ -236,15 +241,42 @@
             "default": [],
             "items": {
               "type": "object",
-              "default": {},
+              "default": {
+                "id": "openai",
+                "name": "OpenAI",
+                "baseURL": "https://api.openai.com/v1",
+                "apiKey": "your api key here",
+                "models": [
+                  {
+                    "id": "gpt-4.1",
+                    "name": "GPT-4.1",
+                    "contextWindow": 1047576,
+                    "maxTokens": 32768
+                  },
+                  {
+                    "id": "o4-mini",
+                    "name": "o4 Mini",
+                    "contextWindow": 200000,
+                    "maxTokens": 100000
+                  }
+                ]
+              },
               "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the model provider, e.g., \"openai\", \"anthropic\", etc."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Model provider name, e.g., \"OpenAI\", \"Anthropic\", etc. If not provided, the `id` will be used."
+                },
                 "baseURL": {
                   "type": "string",
-                  "description": "Base URL of the custom model setting API (e.g., https://api.openai.com/v1)"
+                  "description": "Base URL for the model provider's API (e.g., https://api.openai.com/v1)"
                 },
                 "apiKey": {
                   "type": "string",
-                  "description": "API key for the custom model setting (optional)"
+                  "description": "API key for the model provider, if required."
                 },
                 "models": {
                   "type": "array",
@@ -254,7 +286,7 @@
                     "properties": {
                       "id": {
                         "type": "string",
-                        "description": "Unique identifier for the model"
+                        "description": "Unique identifier for the model. This is used for API calls."
                       },
                       "name": {
                         "type": "string",

@@ -8,6 +8,7 @@ export type DisplayModel =
   | {
       type: "hosted";
       id: string;
+      modelId: string;
       name: string;
       contextWindow: number;
       costType: "basic" | "premium";
@@ -15,11 +16,14 @@ export type DisplayModel =
   | {
       type: "byok";
       id: string;
+      modelId: string;
       name: string;
       contextWindow: number;
       maxTokens: number;
       costType: "basic";
       provider: {
+        id: string;
+        name?: string;
         baseURL: string;
         apiKey?: string;
       };
@@ -52,8 +56,9 @@ export function useModels() {
         return {
           ...model,
           type: "byok" as const,
-          name: model.name ?? model.id,
-          id: model.id,
+          name: `${provider.name ?? provider.id}/${model.name ?? model.id}`,
+          id: `${provider.id}/${model.id}`,
+          modelId: model.id,
           contextWindow: model.contextWindow,
           maxTokens: model.maxTokens,
           costType: "basic",
@@ -72,6 +77,7 @@ export function useModels() {
       type: "hosted" as const,
       ...model,
       name: model.id,
+      modelId: model.id,
     }));
     if (!enablePochiModels) {
       defaultModels = defaultModels.filter(

@@ -375,6 +375,15 @@ export class CommandManager implements vscode.Disposable {
           });
         }
       }),
+
+      vscode.commands.registerCommand(
+        "pochi.openCustomModelSettings",
+        async () => {
+          vscode.commands.executeCommand("workbench.action.openSettingsJson", {
+            revealSetting: { key: "pochi.customModelSettings", edit: true },
+          });
+        },
+      ),
     );
   }
 

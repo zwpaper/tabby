@@ -171,7 +171,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         req,
         await buildEnvironment(),
         mcpToolSet,
-        selectedModel?.id,
+        selectedModel?.modelId,
         minionId,
         openAIModelOverride,
         pochiModelSettings?.modelEndpointId,

@@ -74,9 +74,8 @@ export function ModelSelect({
                   value={value?.id}
                   onValueChange={onChange}
                 >
-                  {models.map((group, index) => (
+                  {models.map((group) => (
                     <div key={group.title}>
-                      {group.isCustom && index > 0 && <DropdownMenuSeparator />}
                       <div className="px-2 py-1.5 font-semibold text-muted-foreground text-sm">
                         {group.title}
                       </div>
@@ -103,13 +102,23 @@ export function ModelSelect({
                                 "font-semibold": isSelected,
                               })}
                             >
-                              {model.type === "hosted" ? model.id : model.name}
+                              {model.name}
                             </span>
                           </DropdownMenuRadioItem>
                         );
                       })}
                     </div>
                   ))}
+                  <DropdownMenuSeparator />
+                  <a
+                    href="command:pochi.openCustomModelSettings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="ml-3 text-primary text-xs">
+                      Manage custom models...
+                    </span>
+                  </a>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenuPortal>
