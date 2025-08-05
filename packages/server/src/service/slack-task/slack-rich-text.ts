@@ -198,7 +198,7 @@ class SlackRichTextRenderer {
       case ServerErrors.ReachedOrgCreditLimit:
         return "Your team has reached the spending limit";
       default:
-        return `Something wrong happened, retrying ...*\n\n${errorMessage}`;
+        return `*Something wrong happened, retrying ...*\n\n${errorMessage}`;
     }
   }
 
@@ -225,7 +225,7 @@ class SlackRichTextRenderer {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*❌ ${renderErrorMessage}`,
+          text: `❌ ${renderErrorMessage}`,
         },
       },
     ];
