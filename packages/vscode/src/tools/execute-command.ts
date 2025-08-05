@@ -1,12 +1,21 @@
 import * as path from "node:path";
 import { TerminalJob } from "@/integrations/terminal/terminal-job";
+import type { ExecuteCommandOptions } from "@/integrations/terminal/types";
 import { waitForWebviewSubscription } from "@/integrations/terminal/utils";
 import { getWorkspaceFolder } from "@/lib/fs";
 import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import { type Signal, signal } from "@preact/signals-core";
 import { ThreadSignal } from "@quilted/threads/signals";
+import { getLogger } from "@ragdoll/common";
+import { getShellPath } from "@ragdoll/common/node";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
-import { executeCommandWithPty } from "../integrations/terminal/execute-command-with-pty";
+import { executeCommandWithNode } from "../integrations/terminal/execute-command-with-node";
+import {
+  PtySpawnError,
+  executeCommandWithPty,
+} from "../integrations/terminal/execute-command-with-pty";
+
+const logger = getLogger("ExecuteCommand");
 
 export const executeCommand: ToolFunctionType<
   ClientToolsType["executeCommand"]
@@ -46,7 +55,7 @@ export const executeCommand: ToolFunctionType<
     });
 
     waitForWebviewSubscription().then(() => {
-      executeCommandWithPty({
+      executeCommandImpl({
         command,
         cwd,
         timeout: timeout ?? defaultTimeout,
@@ -78,3 +87,44 @@ export const executeCommand: ToolFunctionType<
   // biome-ignore lint/suspicious/noExplicitAny: pass thread signal
   return { output: ThreadSignal.serialize(output) as any, detach };
 };
+
+async function executeCommandImpl({
+  command,
+  cwd,
+  timeout,
+  abortSignal,
+  onData,
+}: ExecuteCommandOptions) {
+  const shell = getShellPath();
+  // FIXME(zhiming): node-pty impl is not working on windows for now
+  if (shell && process.platform !== "win32") {
+    try {
+      return await executeCommandWithPty({
+        command,
+        cwd,
+        timeout,
+        abortSignal,
+        onData,
+      });
+    } catch (error) {
+      if (error instanceof PtySpawnError) {
+        // should fallback
+        logger.warn(
+          `Failed to spawn pty, falling back to node's child_process.`,
+          error.cause,
+        );
+      } else {
+        // rethrow to exit
+        throw error;
+      }
+    }
+  }
+
+  return await executeCommandWithNode({
+    command,
+    cwd,
+    timeout,
+    abortSignal,
+    onData,
+  });
+}

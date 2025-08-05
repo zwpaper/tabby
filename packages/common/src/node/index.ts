@@ -18,4 +18,8 @@ export {
 } from "./custom-rules";
 export { MaxTerminalOutputSize } from "./limits";
 export { CredentialStorage } from "./credential-storage";
-export { getShellPath, fixExecuteCommandOutput } from "./shell";
+export {
+  getShellPath,
+  fixExecuteCommandOutput,
+  buildShellCommand,
+} from "./shell";

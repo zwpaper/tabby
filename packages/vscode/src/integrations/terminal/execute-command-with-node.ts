@@ -1,13 +1,10 @@
-import { spawn } from "node:child_process";
-import { fixExecuteCommandOutput, getShellPath } from "@ragdoll/common/node";
+import { type ChildProcess, exec, spawn } from "node:child_process";
+import {
+  buildShellCommand,
+  fixExecuteCommandOutput,
+} from "@ragdoll/common/node";
+import type { ExecuteCommandOptions } from "./types";
 import { ExecutionError, truncateOutput } from "./utils";
-
-interface ExecuteCommandOptions {
-  command: string;
-  cwd: string;
-  timeout: number;
-  abortSignal?: AbortSignal;
-}
 
 /**
  * Executes a command in a shell
@@ -25,24 +22,31 @@ export const executeCommandWithNode = async ({
   timeout,
   abortSignal,
   onData,
-}: ExecuteCommandOptions & {
-  onData?: (data: { output: string; isTruncated: boolean }) => void;
-}) => {
+}: ExecuteCommandOptions) => {
+  const shellCommand = buildShellCommand(command);
+  const options = {
+    cwd,
+    env: {
+      ...process.env,
+      PAGER: "cat",
+      COLORTERM: "truecolor",
+      TERM: "xterm-256color",
+      FORCE_COLOR: "1",
+      CLICOLOR_FORCE: "1",
+    },
+  };
+
   return new Promise<{ output: string; isTruncated: boolean }>(
     (resolve, reject) => {
-      const shell = getShellPath();
-      const child = spawn(shell || "/bin/bash", ["-c", command], {
-        cwd,
-        env: {
-          ...process.env,
-          PAGER: "cat",
-          COLORTERM: "truecolor",
-          TERM: "xterm-256color",
-          FORCE_COLOR: "1",
-          CLICOLOR_FORCE: "1",
-        },
-        stdio: ["pipe", "pipe", "pipe"],
-      });
+      let child: ChildProcess;
+      if (shellCommand) {
+        child = spawn(shellCommand.command, shellCommand.args, {
+          ...options,
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+      } else {
+        child = exec(command, options);
+      }
 
       let output = "";
       let timeoutId: NodeJS.Timeout | undefined;

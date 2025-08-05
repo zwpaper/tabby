@@ -1,15 +1,57 @@
 export const getShellPath = () => {
-  const defaultShell = process.env.SHELL ?? "";
+  if (process.platform === "win32") {
+    const defaultShell = process.env.ComSpec;
+    if (defaultShell) {
+      return defaultShell;
+    }
+    return "powershell.exe";
+  }
+  if (process.platform === "linux" || process.platform === "darwin") {
+    const defaultShell = process.env.SHELL;
+    if (defaultShell && /(bash|zsh)$/.test(defaultShell)) {
+      return defaultShell;
+    }
+    return "/bin/bash";
+  }
+  return undefined;
+};
 
-  const shellPath = ["/zsh", "/bash"].some((item) =>
-    defaultShell.endsWith(item),
-  )
-    ? defaultShell
-    : ["linux", "darwin"].includes(process.platform)
-      ? "/bin/bash"
-      : undefined;
+export const buildShellCommand = (
+  commandString: string,
+):
+  | {
+      command: string;
+      args: string[];
+    }
+  | undefined => {
+  const shellPath = getShellPath();
 
-  return shellPath;
+  if (shellPath) {
+    // Determine shell type and appropriate arguments using RegExp for precise matching
+    const shellName = shellPath.toLowerCase();
+    if (/powershell(\.exe)?$|pwsh(\.exe)?$/.test(shellName)) {
+      return {
+        command: shellPath,
+        args: ["-Command", commandString],
+      };
+    }
+
+    if (/cmd(\.exe)?$/.test(shellName)) {
+      return {
+        command: shellPath,
+        args: ["/d", "/s", "/c", commandString],
+      };
+    }
+
+    if (/(bash|zsh)$/.test(shellName)) {
+      return {
+        command: shellPath,
+        args: ["-c", commandString],
+      };
+    }
+  }
+
+  return undefined;
 };
 
 export const fixExecuteCommandOutput = (output: string): string => {

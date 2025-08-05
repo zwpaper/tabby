@@ -1,28 +1,27 @@
-import * as path from "node:path";
 import { getLogger } from "@ragdoll/common";
-import { getShellPath } from "@ragdoll/common/node";
+import { buildShellCommand } from "@ragdoll/common/node";
 import type * as nodePty from "node-pty";
 import * as vscode from "vscode";
-import { executeCommandWithNode } from "./execute-command-with-node";
+import type { ExecuteCommandOptions } from "./types";
 import { ExecutionError, truncateOutput } from "./utils";
 
 const logger = getLogger("ExecuteCommandWithPty");
 
-// Options for the execute command function
-interface ExecuteCommandOptions {
-  command: string;
-  cwd: string;
-  timeout: number;
-  abortSignal?: AbortSignal;
+export class PtySpawnError extends Error {
+  constructor(cause: unknown) {
+    super("Failed to spawn pty.");
+    this.name = "PtySpawnError";
+    this.cause = cause;
+  }
 }
 
-const nodePtyPath = path.join(
-  vscode.env.appRoot,
+const nodePtyPath = vscode.Uri.joinPath(
+  vscode.Uri.file(vscode.env.appRoot),
   "node_modules",
   "node-pty",
   "lib",
   "index.js",
-);
+).toString();
 
 export const executeCommandWithPty = async ({
   command,
@@ -30,32 +29,26 @@ export const executeCommandWithPty = async ({
   timeout,
   abortSignal,
   onData,
-}: ExecuteCommandOptions & {
-  onData?: (data: { output: string; isTruncated: boolean }) => void;
-}) => {
-  let pty: typeof nodePty;
-  try {
-    logger.debug(
-      `Executing command with pty: ${command} in ${cwd}, node-pty path: ${nodePtyPath}`,
-    );
-    pty = await import(nodePtyPath);
-  } catch (e) {
-    logger.warn(
-      `Failed to spawn pty, falling back to node's child_process.spawn: ${e}`,
-    );
-    return executeCommandWithNode({
-      command,
-      cwd,
-      timeout,
-      abortSignal,
-      onData,
-    });
+}: ExecuteCommandOptions) => {
+  const shellCommand = buildShellCommand(command);
+  if (!shellCommand) {
+    throw new PtySpawnError("Failed to get shell.");
   }
 
-  const shell = getShellPath() || "/bin/bash";
+  let pty: typeof nodePty;
+  try {
+    pty = await import(nodePtyPath);
+  } catch (error) {
+    throw new PtySpawnError(error);
+  }
+
   return new Promise<{ output: string; isTruncated: boolean }>(
     (resolve, reject) => {
-      const ptyProcess = pty.spawn(shell, ["-c", command], {
+      const { command: shell, args } = shellCommand;
+      logger.debug(
+        `Executing command with pty: ${command} in ${cwd}, shell: ${shell}, args: ${args}`,
+      );
+      const ptyProcess = pty.spawn(shell, args, {
         // Using 'xterm-256color' here helps ensure that the majority of Linux distributions will use a
         // color prompt as defined in the default ~/.bashrc file.
         name: "xterm-256color",

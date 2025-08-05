@@ -5,6 +5,7 @@ import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import {
   MaxTerminalOutputSize,
   fixExecuteCommandOutput,
+  getShellPath,
 } from "@ragdoll/common/node";
 import type { ToolCallOptions } from "../types";
 
@@ -36,18 +37,8 @@ export const executeCommand =
     }
 
     try {
-      const defaultShell = process.env.SHELL ?? "";
-
-      const shell = ["/zsh", "/bash"].some((item) =>
-        defaultShell.endsWith(item),
-      )
-        ? defaultShell
-        : ["linux", "darwin"].includes(process.platform)
-          ? "/bin/bash"
-          : undefined;
-
       const { stdout, stderr } = await execCommand(command, {
-        shell,
+        shell: getShellPath(),
         timeout: timeout * 1000, // Convert to milliseconds
         cwd: resolvedCwd,
         signal: abortSignal,
