@@ -153,7 +153,8 @@ export const CheckpointUI: React.FC<{
         <span
           className={cn(
             "flex items-center text-muted-foreground/60 group-hover:px-2.5 group-hover:text-foreground",
-            (isPending || showActionSuccessIcon) && "px-2.5",
+            (isPending || showActionSuccessIcon) &&
+              "pointer-events-none px-2.5",
           )}
         >
           <span className="hidden group-hover:flex">{getCompareIcon()}</span>
