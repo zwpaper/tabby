@@ -21,7 +21,11 @@ const terminal = readline.createInterface({
 });
 
 async function main() {
-  const { chat } = new LiveChatKit({ store, chatClass: Chat });
+  const { chat } = new LiveChatKit({
+    taskId: crypto.randomUUID(),
+    store,
+    chatClass: Chat,
+  });
 
   while (true) {
     const userInput = await terminal.question("You: ");

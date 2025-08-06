@@ -1,1 +1,5 @@
-export { events, schema, tables } from "./schema";
+export {
+  // events,
+  schema,
+  // tables
+} from "./schema";

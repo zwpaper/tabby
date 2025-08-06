@@ -3,13 +3,13 @@ import type { Store } from "@livestore/livestore";
 import type { ReactApi } from "@livestore/react";
 import { type ReactNode, createContext, useContext, useMemo } from "react";
 import { LiveChatKitBase } from "./chat/live-chat-kit";
-import { messages$, task$ } from "./livestore/queries";
+import { makeMessagesQuery, makeTaskQuery } from "./livestore/queries";
 import type { Message } from "./types";
 
 class LiveChatKit extends LiveChatKitBase<Chat<Message>> {
-  constructor(store: Store & ReactApi) {
+  constructor(options: { taskId: string; store: Store & ReactApi }) {
     super({
-      store,
+      ...options,
       chatClass: Chat,
     });
   }
@@ -19,12 +19,11 @@ class LiveChatKit extends LiveChatKitBase<Chat<Message>> {
   }
 
   readonly useTask = () => {
-    const task = this.reactApi.useQuery(task$);
-    return this.getTaskWithId(task);
+    return this.reactApi.useQuery(makeTaskQuery(this.taskId));
   };
 
   readonly useMessages = () => {
-    return this.reactApi.useQuery(messages$);
+    return this.reactApi.useQuery(makeMessagesQuery(this.taskId));
   };
 }
 
@@ -32,14 +31,19 @@ export const LiveChatKitContext = createContext<LiveChatKit | null>(null);
 
 export interface LiveChatKitProviderProps {
   children: ReactNode;
+  taskId: string;
   store: Store & ReactApi;
 }
 
 export function LiveChatKitProvider({
+  taskId,
   store,
   children,
 }: LiveChatKitProviderProps) {
-  const value = useMemo(() => new LiveChatKit(store), [store]);
+  const value = useMemo(
+    () => new LiveChatKit({ store, taskId }),
+    [store, taskId],
+  );
 
   return (
     <LiveChatKitContext.Provider value={value}>

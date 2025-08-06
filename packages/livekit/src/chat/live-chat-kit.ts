@@ -11,8 +11,7 @@ import {
 import { isAbortError } from "@ai-v5-sdk/provider-utils";
 import { isUserInputTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import type { catalog } from "..";
-import { messages$, task$ } from "../livestore/queries";
+import { makeMessagesQuery, makeTaskQuery } from "../livestore/queries";
 import { events, tables } from "../livestore/schema";
 import type { Message } from "../types";
 import {
@@ -21,19 +20,30 @@ import {
 } from "./flexible-chat-transport";
 
 type LiveChatKitOptions<T> = {
+  taskId: string;
   store: Store;
   chatClass: new (options: ChatInit<Message>) => T;
 };
 
 export class LiveChatKitBase<T> {
+  protected readonly taskId: string;
   protected readonly store: Store;
   readonly chat: T;
 
-  constructor({ store, chatClass }: LiveChatKitOptions<T>) {
+  constructor({ taskId, store, chatClass }: LiveChatKitOptions<T>) {
+    this.taskId = taskId;
     this.store = store;
-    const countTask = store.query(tables.task.count());
+
+    const countTask = store.query(
+      tables.tasks.where("id", "=", taskId).count(),
+    );
     if (countTask === 0) {
-      this.store.commit(events.taskInited({ createdAt: new Date() }));
+      store.commit(
+        events.taskInited({
+          id: taskId,
+          createdAt: new Date(),
+        }),
+      );
     }
 
     this.chat = new chatClass({
@@ -46,19 +56,13 @@ export class LiveChatKitBase<T> {
   }
 
   get task() {
-    const task = this.store.query(task$);
-    return this.getTaskWithId(task);
-  }
-
-  protected getTaskWithId(task: typeof catalog.tables.task.Type) {
-    return {
-      ...task,
-      id: this.store.storeId,
-    };
+    return this.store.query(makeTaskQuery(this.taskId));
   }
 
   get messages() {
-    return this.store.query(messages$).map((x) => x.data as Message);
+    return this.store
+      .query(makeMessagesQuery(this.taskId))
+      .map((x) => x.data as Message);
   }
 
   private readonly onStart: OnStartCallback = ({ messages, todos }) => {
@@ -67,6 +71,7 @@ export class LiveChatKitBase<T> {
     if (lastMessage) {
       store.commit(
         events.chatStreamStarted({
+          id: this.taskId,
           data: lastMessage,
           todos,
           updatedAt: new Date(),
@@ -83,6 +88,7 @@ export class LiveChatKitBase<T> {
     const { store } = this;
     store.commit(
       events.chatStreamFinished({
+        id: this.taskId,
         status: toTaskStatus(message),
         data: message,
         totalTokens: message.metadata?.totalTokens || null,
@@ -94,6 +100,7 @@ export class LiveChatKitBase<T> {
   private readonly onError: ChatOnErrorCallback = (error) => {
     this.store.commit(
       events.chatStreamFailed({
+        id: this.taskId,
         error: toTaskError(error),
         updatedAt: new Date(),
       }),
@@ -101,7 +108,7 @@ export class LiveChatKitBase<T> {
   };
 }
 
-function toTaskStatus(message: Message): (typeof tables.task.Type)["status"] {
+function toTaskStatus(message: Message): (typeof tables.tasks.Type)["status"] {
   const { finishReason } = message.metadata || {};
   if (!finishReason) return "failed";
 
@@ -130,7 +137,7 @@ function toTaskStatus(message: Message): (typeof tables.task.Type)["status"] {
 
 function toTaskError(
   error: unknown,
-): NonNullable<(typeof tables.task.Type)["error"]> {
+): NonNullable<(typeof tables.tasks.Type)["error"]> {
   if (APICallError.isInstance(error)) {
     return {
       kind: "APICallError",

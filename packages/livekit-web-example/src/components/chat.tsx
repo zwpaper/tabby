@@ -30,7 +30,7 @@ function TaskInfo() {
 export default function Page() {
   const { store } = useStore();
   return (
-    <LiveChatKitProvider store={store}>
+    <LiveChatKitProvider taskId="default" store={store}>
       <div className="chat-layout">
         <TaskInfo />
         <ChatView />
