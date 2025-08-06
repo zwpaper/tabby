@@ -1,6 +1,8 @@
 import type { InferUITool, UIMessage } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2FinishReason } from "@ai-v5-sdk/provider";
 import type { ClientToolsV5 } from "@getpochi/tools";
+import { ZodEnvironment } from "@ragdoll/db";
+import z from "zod";
 
 type Metadata = {
   totalTokens: number;
@@ -18,3 +20,16 @@ type UITools = {
 };
 
 export type Message = UIMessage<Metadata, DataParts, UITools>;
+
+export const ZodRequestMetadata = z.object({
+  environment: ZodEnvironment.optional(),
+  llm: z.object({
+    modelId: z.string(),
+    baseURL: z.string(),
+    apiKey: z.string().optional(),
+    contextWindow: z.number().describe("Context window of the model."),
+    maxOutputTokens: z.number().describe("Max output tokens of the model."),
+  }),
+});
+
+export type RequestMetadata = z.infer<typeof ZodRequestMetadata>;

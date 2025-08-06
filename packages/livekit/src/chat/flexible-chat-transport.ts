@@ -9,15 +9,8 @@ import {
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
 import { ClientToolsV5, type Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
-import { type Environment, ZodEnvironment } from "@ragdoll/db";
-import { z } from "zod";
-import { readEnv } from "./env";
-
-const openai = createOpenAICompatible({
-  baseURL: "https://api.deepinfra.com/v1/openai",
-  apiKey: readEnv("DEEPINFRA_API_KEY"),
-  name: "deepinfra",
-});
+import type { Environment } from "@ragdoll/db";
+import { type RequestMetadata, ZodRequestMetadata } from "../types";
 
 export type OnStartCallback = (options: {
   messages: UIMessage[];
@@ -47,16 +40,19 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
     messages,
     ...options
   }) => {
-    const metadata = RequestMetadata.parse(options.metadata);
+    const { environment, llm } = ZodRequestMetadata.parse(options.metadata);
+
     this.onStart?.({
       messages,
-      todos: metadata?.environment.todos || [],
+      todos: environment?.todos || [],
     });
     const result = streamText({
-      model: openai(metadata?.model || "zai-org/GLM-4.5"),
-      messages: prepareMessages(messages, metadata?.environment),
+      model: createModel(llm),
+      messages: prepareMessages(messages, environment),
       tools: ClientToolsV5,
-      system: prompts.system(metadata?.environment.info?.customRules),
+      system: prompts.system(environment?.info?.customRules),
+      maxOutputTokens: llm.maxOutputTokens,
+      maxRetries: 0,
     });
     return result.toUIMessageStream({
       messageMetadata: ({ part }) => {
@@ -77,13 +73,6 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
   };
 }
 
-const RequestMetadata = z
-  .object({
-    environment: ZodEnvironment,
-    model: z.string().optional(),
-  })
-  .optional();
-
 function prepareMessages(
   inputMessages: UIMessage[],
   environment: Environment | undefined,
@@ -98,4 +87,14 @@ function prepareMessages(
   );
 
   return convertToModelMessages(messages);
+}
+
+function createModel(llm: RequestMetadata["llm"]) {
+  const openai = createOpenAICompatible({
+    name: "BYOK",
+    baseURL: llm.baseURL,
+    apiKey: llm.apiKey,
+  });
+
+  return openai(llm.modelId);
 }

@@ -1,3 +1,3 @@
 export * as catalog from "./livestore";
 
-export type { Message } from "./types";
+export type { Message, RequestMetadata } from "./types";

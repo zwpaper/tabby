@@ -1,7 +1,7 @@
 import * as readline from "node:readline/promises";
 import { makeAdapter } from "@livestore/adapter-node";
 import { type LiveStoreSchema, createStorePromise } from "@livestore/livestore";
-import { catalog } from "@ragdoll/livekit";
+import { type RequestMetadata, catalog } from "@ragdoll/livekit";
 import { LiveChatKit } from "@ragdoll/livekit/node";
 import { Chat } from "./chat.node";
 
@@ -29,7 +29,22 @@ async function main() {
 
   while (true) {
     const userInput = await terminal.question("You: ");
-    await chat.sendMessage({ text: userInput });
+    await chat.sendMessage(
+      {
+        text: userInput,
+      },
+      {
+        metadata: {
+          llm: {
+            baseURL: "https://api.deepinfra.com/v1/openai",
+            apiKey: process.env.DEEPINFRA_API_KEY,
+            modelId: "zai-org/GLM-4.5",
+            maxOutputTokens: 1024 * 14,
+            contextWindow: 128_000,
+          },
+        } satisfies RequestMetadata,
+      },
+    );
     const lastMessage = chat.lastMessage;
     if (!lastMessage) continue;
     for (const part of lastMessage.parts) {
