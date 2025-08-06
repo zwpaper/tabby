@@ -47,7 +47,7 @@ const TaskError = Schema.Union(
 
 export const tables = {
   tasks: State.SQLite.table({
-    name: "task",
+    name: "tasks",
     columns: {
       id: State.SQLite.text({ primaryKey: true }),
       status: State.SQLite.text({

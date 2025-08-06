@@ -3,6 +3,7 @@ import type { LanguageModelV2FinishReason } from "@ai-v5-sdk/provider";
 import type { ClientToolsV5 } from "@getpochi/tools";
 import { ZodEnvironment } from "@ragdoll/db";
 import z from "zod";
+import type { tables } from "./livestore/schema";
 
 type Metadata = {
   totalTokens: number;
@@ -33,3 +34,5 @@ export const ZodRequestMetadata = z.object({
 });
 
 export type RequestMetadata = z.infer<typeof ZodRequestMetadata>;
+
+export type Task = typeof tables.tasks.Type;
