@@ -96,9 +96,11 @@ export const ToolsSection: React.FC = () => {
       <div className="flex flex-col gap-6">
         <McpSection />
 
-        <SubSection title={titleElement}>
-          <Connections integrations={connectedIntegrationsData || []} />
-        </SubSection>
+        {false && (
+          <SubSection title={titleElement}>
+            <Connections integrations={connectedIntegrationsData || []} />
+          </SubSection>
+        )}
 
         {renderToolsContent()}
       </div>
