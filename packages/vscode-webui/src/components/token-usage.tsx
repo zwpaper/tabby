@@ -5,8 +5,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { vscodeHost } from "@/lib/vscode";
-import type { RuleFile } from "@ragdoll/vscode-webui-bridge";
 
 import {
   Tooltip,
@@ -14,8 +12,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useRules } from "@/lib/hooks/use-rules";
 import { CompactTaskMinTokens } from "@ragdoll/common";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
 
@@ -45,13 +44,10 @@ export function TokenUsage({
   },
 }: Props) {
   const percentage = Math.ceil((totalTokens / contextWindow) * 100);
-  const [ruleFiles, setRuleFiles] = useState<RuleFile[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
 
-  useEffect(() => {
-    vscodeHost.listRuleFiles().then(setRuleFiles);
-  }, []);
+  const { rules } = useRules();
 
   const handleMouseEnter = () => {
     if (!isPinned) {
@@ -122,12 +118,12 @@ export function TokenUsage({
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <div className="flex flex-col gap-y-4 text-xs">
-          {ruleFiles.length > 0 && (
+          {rules?.length > 0 && (
             <div className="flex flex-col gap-y-1">
               <div className="mb-1 text-muted-foreground">Rules</div>
               <div>
                 <FileList
-                  matches={ruleFiles.map((item) => ({
+                  matches={rules.map((item) => ({
                     file: item.relativeFilepath ?? item.filepath,
                     label: item.label,
                   }))}

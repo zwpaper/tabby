@@ -1,14 +1,26 @@
 import { FileIcon } from "@/components/tool-invocation/file-icon/file-icon";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { cn } from "@/lib/utils";
 import { getFileName } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
 import type { McpConnection } from "@ragdoll/vscode-webui-bridge";
-import { ChevronsUpDown, Dot, Download, Github, RotateCw } from "lucide-react";
+import {
+  ChevronsUpDown,
+  Dot,
+  Download,
+  Github,
+  PencilIcon,
+  RotateCw,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { SubSection } from "../ui/section";
 import { ToolBadge } from "../ui/tool-badge";
@@ -185,20 +197,26 @@ export const McpSection: React.FC = () => {
   } = useThirdPartyMcp();
 
   const title = (
-    <div className="flex items-center gap-2">
-      <a
-        href={commandForMcp("openServerSettings")}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Button className={buttonVariants({ variant: "secondary" })}>
-          Edit MCP servers
-        </Button>
-      </a>
-      <span className="text-muted-foreground text-sm">
-        Configuration MCP for Pochi globally.
-      </span>
-    </div>
+    <TooltipProvider>
+      <div className="flex items-center">
+        MCP servers
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={commandForMcp("openServerSettings")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md p-1 hover:bg-muted"
+            >
+              <PencilIcon className="ml-1 size-3" />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Configuration MCP for Pochi globally.</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </TooltipProvider>
   );
 
   const isLoading = isLoadingConnections || isLoadingThirdParty;

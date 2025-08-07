@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 import type React from "react";
@@ -57,7 +58,7 @@ export const Section: React.FC<SectionProps> = ({
         <h2 className={sectionTitleVariants({ variant })}>{title}</h2>
       </div>
       {description && (
-        <p className="mb-4 text-muted-foreground text-sm">{description}</p>
+        <p className="mb-2 ml-1 text-muted-foreground text-sm">{description}</p>
       )}
       <div className="space-y-2">{children}</div>
     </div>
@@ -67,4 +68,37 @@ export const Section: React.FC<SectionProps> = ({
 // Keep SubSection as an alias for backward compatibility during migration
 export const SubSection: React.FC<SectionProps> = (props) => {
   return <Section {...props} variant="subsection" />;
+};
+
+export const ScetionItem: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  actions?: { icon: React.ReactNode; onClick: () => void }[];
+}> = ({ title, icon, actions }) => {
+  return (
+    <div className="group rounded-md border p-2">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-1 items-center overflow-x-hidden">
+          <div className="flex size-6 shrink-0 items-center justify-center">
+            {icon}
+          </div>
+          <span className="truncate font-semibold">{title}</span>
+        </div>
+        <div className="invisible flex shrink-0 items-center group-hover:visible">
+          {actions?.map(({ icon, onClick }, index) => (
+            <Button
+              key={index}
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-6"
+              onClick={onClick}
+            >
+              {icon}
+            </Button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };

@@ -1,10 +1,8 @@
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import { vscodeHost } from "@/lib/vscode";
 import { useQuery } from "@tanstack/react-query";
 import { Edit, Workflow } from "lucide-react";
-import { Section } from "../ui/section";
+import { ScetionItem, Section } from "../ui/section";
 
 export const WorkflowsSection: React.FC = () => {
   const { data: workflows, isLoading } = useQuery({
@@ -32,32 +30,22 @@ export const WorkflowsSection: React.FC = () => {
         <>
           {workflows.map(
             (workflow: { id: string; path: string; content: string }) => (
-              <div key={workflow.id} className={cn("rounded-md border p-2")}>
-                <div className="flex justify-between">
-                  <div className="flex flex-1 items-center overflow-x-hidden">
-                    <div className="flex size-6 shrink-0 items-center justify-center">
-                      {<Workflow className="size-4 text-muted-foreground" />}
-                    </div>
-                    <span className="truncate font-semibold">
-                      {workflow.id}
-                    </span>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-6"
-                    onClick={() => handleEditWorkflow(workflow.id)}
-                  >
-                    <Edit className="size-3.5" />
-                  </Button>
-                </div>
-              </div>
+              <ScetionItem
+                key={workflow.id}
+                title={workflow.id}
+                icon={<Workflow className="size-4 text-muted-foreground" />}
+                actions={[
+                  {
+                    icon: <Edit className="size-3.5" />,
+                    onClick: () => handleEditWorkflow(workflow.id),
+                  },
+                ]}
+              />
             ),
           )}
         </>
       ) : (
-        <div className="text-muted-foreground text-sm">
+        <div className="ml-1 text-muted-foreground text-sm">
           No workflows found in this workspace.
         </div>
       )}
