@@ -58,7 +58,13 @@
     "sqids": "^0.3.0",
     "stripe": "17",
     "uuid": "^11.1.0",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@ai-v5-sdk/ai": "catalog:",
+    "@ai-v5-sdk/anthropic": "npm:@ai-sdk/anthropic@2",
+    "@ai-v5-sdk/google": "npm:@ai-sdk/google@2",
+    "@ai-v5-sdk/google-vertex": "npm:@ai-sdk/google-vertex@3",
+    "@ai-v5-sdk/groq": "npm:@ai-sdk/groq@2",
+    "@ai-v5-sdk/deepinfra": "npm:@ai-sdk/deepinfra@1"
   },
   "scripts": {
     "tsc": "tsc --noEmit",

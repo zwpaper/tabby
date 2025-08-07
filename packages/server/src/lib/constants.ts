@@ -377,3 +377,100 @@ const vertexFineTuning = createVertex({
 });
 
 export const geminiFlash = vertex("gemini-2.5-flash");
+
+import type {
+  CallSettings,
+  JSONValue,
+  LanguageModel as LanguageModelNext,
+} from "@ai-v5-sdk/ai";
+import {
+  type AnthropicProviderOptions as AnthropicProviderOptionsNext,
+  anthropic as anthropicNext,
+} from "@ai-v5-sdk/anthropic";
+import {
+  createVertex as createVertexNext,
+  vertex as vertexNext,
+} from "@ai-v5-sdk/google-vertex";
+const vertexFineTuningNext = createVertexNext({
+  location: "us-central1",
+  baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/us-central1/publishers/google`,
+  googleAuthOptions: {
+    credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
+  },
+  fetch: patchedFetchForFinetune as unknown as typeof globalThis.fetch,
+});
+import { deepinfra as deepinfraNext } from "@ai-v5-sdk/deepinfra";
+import type { GoogleGenerativeAIProviderOptions as GoogleGenerativeAIProviderOptionsNext } from "@ai-v5-sdk/google";
+import { groq as groqNext } from "@ai-v5-sdk/groq";
+
+export function getModelByIdNext(
+  modelId: AvailableModelId,
+  modelEndpointId?: string,
+): LanguageModelNext {
+  switch (modelId) {
+    case "anthropic/claude-4-sonnet":
+      return anthropicNext("claude-4-sonnet-20250514");
+    case "google/gemini-2.5-pro":
+      return vertexNext("gemini-2.5-pro");
+    case "google/gemini-2.5-flash":
+      return vertexNext("gemini-2.5-flash");
+    case "moonshotai/kimi-k2":
+      return groqNext("moonshotai/kimi-k2-instruct");
+    case "pochi/pro-1":
+      return vertexFineTuningNext(modelEndpointId || "2224986023618674688");
+    case "pochi/max-1":
+      return vertexFineTuningNext(modelEndpointId || "5890711611135492096");
+    case "qwen/qwen3-coder":
+      return deepinfraNext("Qwen/Qwen3-Coder-480B-A35B-Instruct");
+    case "zai/glm-4.5":
+      return deepinfraNext("zai-org/GLM-4.5");
+  }
+}
+
+export function getModelOptionsNext(
+  modelId: AvailableModelId,
+): Partial<
+  CallSettings & { providerOptions: Record<string, Record<string, JSONValue>> }
+> {
+  switch (modelId) {
+    case "pochi/pro-1":
+    case "pochi/max-1":
+    case "google/gemini-2.5-flash":
+    case "google/gemini-2.5-pro":
+      return {
+        maxOutputTokens: 1024 * 32, // 32k tokens
+        providerOptions: {
+          google: {
+            thinkingConfig: {
+              includeThoughts: true,
+              thinkingBudget: 4096,
+            },
+          } satisfies GoogleGenerativeAIProviderOptionsNext,
+        },
+      };
+    case "anthropic/claude-4-sonnet":
+      return {
+        maxOutputTokens: 1024 * 32, // 32k tokens
+        providerOptions: {
+          anthropic: {
+            thinking: {
+              type: "enabled",
+              budgetTokens: 4096,
+            },
+          } satisfies AnthropicProviderOptionsNext,
+        },
+      };
+    case "moonshotai/kimi-k2":
+      return {
+        maxOutputTokens: 1024 * 14, // 14k tokens
+      };
+    case "qwen/qwen3-coder":
+      return {
+        maxOutputTokens: 1024 * 32,
+      };
+    case "zai/glm-4.5":
+      return {
+        maxOutputTokens: 1024 * 14,
+      };
+  }
+}

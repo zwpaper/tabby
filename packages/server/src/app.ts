@@ -6,6 +6,7 @@ import { logger } from "hono/logger";
 import admin from "./api/admin";
 import billing from "./api/billing";
 import chat from "./api/chat";
+import chatNext from "./api/chat-next";
 import clips from "./api/clips";
 import code from "./api/code";
 import enhance from "./api/enhance";
@@ -82,7 +83,8 @@ app.use(
           hostname.endsWith(".vscode-cdn.net") ||
           hostname === "vscode.ikw.app" ||
           hostname.endsWith(".runpochi.com") ||
-          hostname.endsWith(".fly.dev")
+          hostname.endsWith(".fly.dev") ||
+          hostname.startsWith("localhost")
         ) {
           return origin;
         }
@@ -114,6 +116,7 @@ const api = app.basePath("/api");
 export const route = api
   .route("/models", models)
   .route("/chat", chat)
+  .route("/chatNext", chatNext)
   .route("/code", code)
   .route("/usages", usages)
   .route("/billing", billing)

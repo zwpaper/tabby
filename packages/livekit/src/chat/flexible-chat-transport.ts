@@ -1,6 +1,7 @@
 import {
   type ChatRequestOptions,
   type ChatTransport,
+  DefaultChatTransport,
   type UIMessage,
   type UIMessageChunk,
   convertToModelMessages,
@@ -52,29 +53,23 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
       messages,
       environment,
     });
-    const result = streamText({
+
+    const system = prompts.system(environment?.info?.customRules);
+    const payload = {
+      system,
+      messages: await prepareMessages(messages as Message[], environment),
       abortSignal,
-      model: createModel(llm),
-      messages: await prepareMessages(
-        // @ts-expect-error: Force type conversion to Message.
-        messages as Message,
-        environment,
-      ),
-      tools: ClientToolsV5,
-      system: prompts.system(environment?.info?.customRules),
-      maxOutputTokens: llm.maxOutputTokens,
-      maxRetries: 0,
-    });
-    return result.toUIMessageStream({
-      messageMetadata: ({ part }) => {
-        if (part.type === "finish") {
-          return {
-            totalTokens: part.totalUsage.totalTokens,
-            finishReason: part.finishReason,
-          };
-        }
-      },
-    });
+    };
+
+    if (llm.type === "openai") {
+      return requestOpenAI(llm, payload);
+    }
+
+    if (llm.type === "pochi") {
+      return requestPochi(llm, payload);
+    }
+
+    throw new Error(`Unsupported LLM type: ${JSON.stringify(llm)}`);
   };
 
   reconnectToStream: (
@@ -83,6 +78,12 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
     return null;
   };
 }
+
+type RequestPayload = {
+  system: string;
+  abortSignal?: AbortSignal;
+  messages: Message[];
+};
 
 async function prepareMessages(
   inputMessages: Message[],
@@ -97,17 +98,71 @@ async function prepareMessages(
 
   const llmMessages = formatters.llmRaw(messages);
 
-  return convertToModelMessages(
-    await Promise.all(llmMessages.map(fromV4UIMessage)),
-  );
+  return Promise.all(llmMessages.map(fromV4UIMessage));
 }
 
-function createModel(llm: RequestData["llm"]) {
+async function requestOpenAI(
+  llm: Extract<RequestData["llm"], { type: "openai" }>,
+  payload: RequestPayload,
+) {
   const openai = createOpenAICompatible({
     name: "BYOK",
     baseURL: llm.baseURL,
     apiKey: llm.apiKey,
   });
 
-  return openai(llm.modelId);
+  const model = openai(llm.modelId);
+  const result = streamText({
+    model,
+    system: payload.system,
+    messages: convertToModelMessages(payload.messages),
+    tools: ClientToolsV5,
+    maxOutputTokens: llm.maxOutputTokens,
+    maxRetries: 0,
+  });
+  return result.toUIMessageStream({
+    messageMetadata: ({ part }) => {
+      if (part.type === "finish") {
+        return {
+          totalTokens: part.totalUsage.totalTokens,
+          finishReason: part.finishReason,
+        };
+      }
+    },
+  });
+}
+
+const defaultTransport = new DefaultChatTransport<Message>();
+
+async function requestPochi(
+  llm: Extract<RequestData["llm"], { type: "pochi" }>,
+  payload: RequestPayload,
+) {
+  const body = JSON.stringify({
+    system: payload.system,
+    messages: payload.messages,
+    model: llm.modelId,
+  });
+  const response = await fetch("http://localhost:4113/api/chatNext/stream", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${llm.token}`,
+    },
+    signal: payload.abortSignal,
+    body,
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      (await response.text()) ?? "Failed to fetch the chat response.",
+    );
+  }
+
+  if (!response.body) {
+    throw new Error("The response body is empty.");
+  }
+
+  // @ts-expect-error reuse default transport.
+  return defaultTransport.processResponseStream(response.body);
 }

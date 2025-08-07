@@ -18,6 +18,9 @@ const packagesToResolve = [
   ["ai", "ai"],
   ["@ai-sdk/provider", "provider"],
   ["@ai-sdk/provider-utils", "provider-utils"],
+  ["@ai-sdk/openai-compatible", "openai-compatible"],
+  ["@ai-sdk/google", "google"],
+  ["@ai-sdk/anthropic", "anthropic"],
 ];
 
 async function checkNodeModules(dirPath: string): Promise<boolean> {

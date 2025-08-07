@@ -12,6 +12,7 @@ export function ChatView({ taskId }: { taskId: string }) {
     prepareRequestData: async () => {
       return {
         llm: {
+          type: "openai",
           baseURL: "https://api.deepinfra.com/v1/openai",
           apiKey: import.meta.env.VITE_DEEPINFRA_API_KEY,
           modelId: "zai-org/GLM-4.5",

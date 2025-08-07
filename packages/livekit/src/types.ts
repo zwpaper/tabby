@@ -24,13 +24,21 @@ export type Message = UIMessage<Metadata, DataParts, UITools>;
 
 const ZodRequestData = z.object({
   environment: ZodEnvironment.optional(),
-  llm: z.object({
-    modelId: z.string(),
-    baseURL: z.string(),
-    apiKey: z.string().optional(),
-    contextWindow: z.number().describe("Context window of the model."),
-    maxOutputTokens: z.number().describe("Max output tokens of the model."),
-  }),
+  llm: z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("openai"),
+      modelId: z.string(),
+      baseURL: z.string(),
+      apiKey: z.string().optional(),
+      contextWindow: z.number().describe("Context window of the model."),
+      maxOutputTokens: z.number().describe("Max output tokens of the model."),
+    }),
+    z.object({
+      type: z.literal("pochi"),
+      modelId: z.string(),
+      token: z.string(),
+    }),
+  ]),
 });
 
 export type RequestData = z.infer<typeof ZodRequestData>;
