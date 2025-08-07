@@ -44,6 +44,7 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
       abortSignal: AbortSignal | undefined;
     } & ChatRequestOptions,
   ) => Promise<ReadableStream<UIMessageChunk>> = async ({
+    chatId,
     messages,
     abortSignal,
   }) => {
@@ -59,6 +60,7 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
       system,
       messages: await prepareMessages(messages as Message[], environment),
       abortSignal,
+      id: chatId,
     };
 
     if (llm.type === "openai") {
@@ -80,6 +82,7 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
 }
 
 type RequestPayload = {
+  id: string;
   system: string;
   abortSignal?: AbortSignal;
   messages: Message[];
@@ -139,11 +142,12 @@ async function requestPochi(
   payload: RequestPayload,
 ) {
   const body = JSON.stringify({
+    id: payload.id,
     system: payload.system,
     messages: payload.messages,
     model: llm.modelId,
   });
-  const response = await fetch("http://localhost:4113/api/chatNext/stream", {
+  const response = await fetch("https://app.getpochi.com/api/chatNext/stream", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

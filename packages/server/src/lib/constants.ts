@@ -387,10 +387,7 @@ import {
   type AnthropicProviderOptions as AnthropicProviderOptionsNext,
   anthropic as anthropicNext,
 } from "@ai-v5-sdk/anthropic";
-import {
-  createVertex as createVertexNext,
-  vertex as vertexNext,
-} from "@ai-v5-sdk/google-vertex";
+import { createVertex as createVertexNext } from "@ai-v5-sdk/google-vertex";
 const vertexFineTuningNext = createVertexNext({
   location: "us-central1",
   baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/us-central1/publishers/google`,
@@ -399,6 +396,14 @@ const vertexFineTuningNext = createVertexNext({
   },
   fetch: patchedFetchForFinetune as unknown as typeof globalThis.fetch,
 });
+
+const vertexNext = createVertexNext({
+  baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/${process.env.GOOGLE_VERTEX_LOCATION}/publishers/google`,
+  googleAuthOptions: {
+    credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
+  },
+});
+
 import { deepinfra as deepinfraNext } from "@ai-v5-sdk/deepinfra";
 import type { GoogleGenerativeAIProviderOptions as GoogleGenerativeAIProviderOptionsNext } from "@ai-v5-sdk/google";
 import { groq as groqNext } from "@ai-v5-sdk/groq";

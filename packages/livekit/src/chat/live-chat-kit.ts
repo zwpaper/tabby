@@ -52,6 +52,7 @@ export class LiveChatKit<T> {
 
     this.chat = new chatClass({
       ...chatInit,
+      id: taskId,
       messages: this.messages,
       generateId: () => crypto.randomUUID(),
       onFinish: this.onFinish,
