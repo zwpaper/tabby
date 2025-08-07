@@ -220,7 +220,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.4.57",
+      "version": "0.4.59",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@orama/orama": "^3.1.11",
@@ -477,6 +477,8 @@
     "@better-auth/stripe": "^1.2.9",
     "@daveyplate/better-auth-tanstack": "^1.3.6",
     "@livestore/adapter-node": "0.3.1",
+    "@livestore/adapter-web": "0.3.1",
+    "@livestore/devtools-vite": "0.3.1",
     "@livestore/livestore": "0.3.1",
     "@livestore/peer-deps": "0.3.1",
     "@livestore/react": "0.3.1",

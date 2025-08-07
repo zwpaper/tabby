@@ -17,41 +17,47 @@ import type { Message } from "../types";
 import {
   FlexibleChatTransport,
   type OnStartCallback,
+  type PrepareRequestDataCallback,
 } from "./flexible-chat-transport";
 
-type LiveChatKitOptions<T> = {
+export type LiveChatKitOptions<T> = {
   taskId: string;
   store: Store;
   chatClass: new (options: ChatInit<Message>) => T;
-};
+  prepareRequestData: PrepareRequestDataCallback;
+} & Omit<
+  ChatInit<Message>,
+  "id" | "messages" | "generateId" | "onFinish" | "onError" | "transport"
+>;
 
-export class LiveChatKitBase<T> {
+export class LiveChatKit<T> {
   protected readonly taskId: string;
   protected readonly store: Store;
   readonly chat: T;
+  private readonly transport: FlexibleChatTransport;
 
-  constructor({ taskId, store, chatClass }: LiveChatKitOptions<T>) {
+  constructor({
+    taskId,
+    store,
+    chatClass,
+    prepareRequestData,
+    ...chatInit
+  }: LiveChatKitOptions<T>) {
     this.taskId = taskId;
     this.store = store;
-
-    const countTask = store.query(
-      tables.tasks.where("id", "=", taskId).count(),
-    );
-    if (countTask === 0) {
-      store.commit(
-        events.taskInited({
-          id: taskId,
-          createdAt: new Date(),
-        }),
-      );
-    }
+    this.transport = new FlexibleChatTransport({
+      onStart: this.onStart,
+      prepareRequestData,
+    });
 
     this.chat = new chatClass({
+      ...chatInit,
       messages: this.messages,
       generateId: () => crypto.randomUUID(),
       onFinish: this.onFinish,
       onError: this.onError,
       transport: this.transport,
+      // sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     });
   }
 
@@ -65,24 +71,40 @@ export class LiveChatKitBase<T> {
       .map((x) => x.data as Message);
   }
 
-  private readonly onStart: OnStartCallback = ({ messages, todos }) => {
+  private readonly onStart: OnStartCallback = ({ messages, environment }) => {
     const { store } = this;
     const lastMessage = messages.at(-1);
     if (lastMessage) {
+      const countTask = store.query(
+        tables.tasks.where("id", "=", this.taskId).count(),
+      );
+      if (countTask === 0) {
+        store.commit(
+          events.taskInited({
+            id: this.taskId,
+            createdAt: new Date(),
+          }),
+        );
+      }
+
+      const { gitStatus } = environment?.workspace || {};
+
       store.commit(
         events.chatStreamStarted({
           id: this.taskId,
           data: lastMessage,
-          todos,
+          todos: environment?.todos || [],
+          git: gitStatus
+            ? {
+                origin: gitStatus.origin,
+                branch: gitStatus.currentBranch,
+              }
+            : undefined,
           updatedAt: new Date(),
         }),
       );
     }
   };
-
-  private readonly transport = new FlexibleChatTransport({
-    onStart: this.onStart,
-  });
 
   private readonly onFinish: ChatOnFinishCallback<Message> = ({ message }) => {
     const { store } = this;

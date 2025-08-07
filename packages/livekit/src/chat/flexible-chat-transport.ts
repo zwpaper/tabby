@@ -7,25 +7,31 @@ import {
   streamText,
 } from "@ai-v5-sdk/ai";
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
-import { ClientToolsV5, type Todo } from "@getpochi/tools";
-import { prompts } from "@ragdoll/common";
+import { ClientToolsV5 } from "@getpochi/tools";
+import { formatters, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
-import { type RequestMetadata, ZodRequestMetadata } from "../types";
+import type { Message, RequestData } from "../types";
+import { fromV4UIMessage, toV4UIMessage } from "../v4-adapter";
 
 export type OnStartCallback = (options: {
   messages: UIMessage[];
-  todos: Todo[];
+  environment?: Environment;
 }) => void;
 
-export class FlexibleChatTransport implements ChatTransport<UIMessage> {
-  readonly onStart?: OnStartCallback;
+export type PrepareRequestDataCallback = () =>
+  | RequestData
+  | Promise<RequestData>;
 
-  constructor({
-    onStart,
-  }: {
+export class FlexibleChatTransport implements ChatTransport<UIMessage> {
+  private readonly onStart?: OnStartCallback;
+  private readonly prepareRequestData: PrepareRequestDataCallback;
+
+  constructor(options: {
     onStart?: OnStartCallback;
+    prepareRequestData: PrepareRequestDataCallback;
   }) {
-    this.onStart = onStart;
+    this.onStart = options.onStart;
+    this.prepareRequestData = options.prepareRequestData;
   }
 
   sendMessages: (
@@ -38,17 +44,22 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
     } & ChatRequestOptions,
   ) => Promise<ReadableStream<UIMessageChunk>> = async ({
     messages,
-    ...options
+    abortSignal,
   }) => {
-    const { environment, llm } = ZodRequestMetadata.parse(options.metadata);
+    const { environment, llm } = await this.prepareRequestData();
 
     this.onStart?.({
       messages,
-      todos: environment?.todos || [],
+      environment,
     });
     const result = streamText({
+      abortSignal,
       model: createModel(llm),
-      messages: prepareMessages(messages, environment),
+      messages: await prepareMessages(
+        // @ts-expect-error: Force type conversion to Message.
+        messages as Message,
+        environment,
+      ),
       tools: ClientToolsV5,
       system: prompts.system(environment?.info?.customRules),
       maxOutputTokens: llm.maxOutputTokens,
@@ -73,23 +84,25 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
   };
 }
 
-function prepareMessages(
-  inputMessages: UIMessage[],
+async function prepareMessages(
+  inputMessages: Message[],
   environment: Environment | undefined,
 ) {
-  // @ts-expect-error from an injectEnvironmentDetails perspective, v4 / v5 UIMessage are compatible, we can safely ignore type error.
-  const messages: UIMessage[] = prompts.injectEnvironmentDetails(
-    // @ts-expect-error from an injectEnvironmentDetails perspective, v4 / v5 UIMessage are compatible, we can safely ignore type error.
-    inputMessages,
+  const messages = prompts.injectEnvironmentDetails(
+    inputMessages.map(toV4UIMessage),
     environment,
     // FIXME(meng): set user from git config
     undefined,
   );
 
-  return convertToModelMessages(messages);
+  const llmMessages = formatters.llmRaw(messages);
+
+  return convertToModelMessages(
+    await Promise.all(llmMessages.map(fromV4UIMessage)),
+  );
 }
 
-function createModel(llm: RequestMetadata["llm"]) {
+function createModel(llm: RequestData["llm"]) {
   const openai = createOpenAICompatible({
     name: "BYOK",
     baseURL: llm.baseURL,

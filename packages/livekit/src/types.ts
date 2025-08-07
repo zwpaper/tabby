@@ -22,7 +22,7 @@ type UITools = {
 
 export type Message = UIMessage<Metadata, DataParts, UITools>;
 
-export const ZodRequestMetadata = z.object({
+const ZodRequestData = z.object({
   environment: ZodEnvironment.optional(),
   llm: z.object({
     modelId: z.string(),
@@ -33,6 +33,6 @@ export const ZodRequestMetadata = z.object({
   }),
 });
 
-export type RequestMetadata = z.infer<typeof ZodRequestMetadata>;
+export type RequestData = z.infer<typeof ZodRequestData>;
 
 export type Task = typeof tables.tasks.Type;

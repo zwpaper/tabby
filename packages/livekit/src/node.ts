@@ -1,1 +1,1 @@
-export { LiveChatKitBase as LiveChatKit } from "./chat/live-chat-kit";
+export { LiveChatKit } from "./chat/live-chat-kit";

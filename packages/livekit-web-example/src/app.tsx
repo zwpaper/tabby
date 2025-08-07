@@ -7,7 +7,6 @@ import { unstable_batchedUpdates as batchUpdates } from "react-dom";
 
 import { catalog } from "@ragdoll/livekit";
 import Page from "./components/chat.js";
-import { getTaskId } from "./lib/workspace-id.js";
 import LiveStoreWorker from "./livestore.worker?worker";
 
 const AppBody: React.FC = () => (
@@ -39,15 +38,12 @@ const adapter = makePersistedAdapter({
   resetPersistence,
 });
 
-const taskId = getTaskId();
-
 export const App: React.FC = () => (
   <LiveStoreProvider
     schema={catalog.schema}
     adapter={adapter}
     renderLoading={(_) => <div>Loading LiveStore ({_.stage})...</div>}
     batchUpdates={batchUpdates}
-    storeId={taskId}
   >
     <div style={{ top: 0, right: 0, position: "absolute", background: "#333" }}>
       <FPSMeter height={40} />

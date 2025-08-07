@@ -1,11 +1,27 @@
 import { useChat } from "@ai-v5-sdk/react";
-import type { RequestMetadata } from "@ragdoll/livekit";
+import { useStore } from "@livestore/react";
+import { catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
 import { useEffect, useRef, useState } from "react";
 
-export function ChatView() {
+export function ChatView({ taskId }: { taskId: string }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { chat } = useLiveChatKit();
+  const { store } = useStore();
+  const { chat } = useLiveChatKit({
+    taskId,
+    prepareRequestData: async () => {
+      return {
+        llm: {
+          baseURL: "https://api.deepinfra.com/v1/openai",
+          apiKey: import.meta.env.VITE_DEEPINFRA_API_KEY,
+          modelId: "zai-org/GLM-4.5",
+          maxOutputTokens: 1024 * 14,
+          contextWindow: 128_000,
+        },
+      };
+    },
+  });
+  const task = store.useQuery(catalog.queries.makeTaskQuery(taskId));
   const { messages, sendMessage, status } = useChat({ chat });
 
   const [input, setInput] = useState("");
@@ -16,6 +32,9 @@ export function ChatView() {
 
   return (
     <div className="chat-container">
+      <div style={{ padding: 5 }}>
+        Task: {task?.title} TotalTokens: {task?.totalTokens}
+      </div>
       <div className="message-container">
         {messages.map((message) => (
           <div key={message.id} className={`message-bubble ${message.role}`}>
@@ -49,20 +68,7 @@ export function ChatView() {
         onSubmit={(e) => {
           e.preventDefault();
           if (input.trim()) {
-            sendMessage(
-              { text: input },
-              {
-                metadata: {
-                  llm: {
-                    baseURL: "https://api.deepinfra.com/v1/openai",
-                    apiKey: import.meta.env.VITE_DEEPINFRA_API_KEY,
-                    modelId: "zai-org/GLM-4.5",
-                    maxOutputTokens: 1024 * 14,
-                    contextWindow: 128_000,
-                  },
-                } satisfies RequestMetadata,
-              },
-            );
+            sendMessage({ text: input });
             setInput("");
           }
         }}

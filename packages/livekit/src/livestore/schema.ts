@@ -45,11 +45,17 @@ const TaskError = Schema.Union(
   }),
 );
 
+const Git = Schema.Struct({
+  origin: Schema.optional(Schema.String),
+  branch: Schema.String,
+});
+
 export const tables = {
   tasks: State.SQLite.table({
     name: "tasks",
     columns: {
       id: State.SQLite.text({ primaryKey: true }),
+      title: State.SQLite.text({ nullable: true }),
       status: State.SQLite.text({
         default: "pending-input",
         schema: TaskStatus,
@@ -57,6 +63,10 @@ export const tables = {
       todos: State.SQLite.json({
         default: [],
         schema: Todos,
+      }),
+      git: State.SQLite.json({
+        nullable: true,
+        schema: Git,
       }),
       totalTokens: State.SQLite.integer({ nullable: true }),
       error: State.SQLite.json({ schema: TaskError, nullable: true }),
@@ -96,6 +106,7 @@ export const events = {
       id: Schema.String,
       data: DBMessage,
       todos: Todos,
+      git: Schema.optional(Git),
       updatedAt: Schema.Date,
     }),
   }),
@@ -131,22 +142,44 @@ const materializers = State.SQLite.materializers(events, {
       }),
     ];
   },
-  "v1.ChatStreamStarted": ({ id, data, todos, updatedAt }) => [
-    tables.tasks
-      .update({
-        status: "pending-model",
-        todos,
-        updatedAt,
-      })
-      .where({ id }),
-    tables.messages
-      .insert({
-        id: data.id,
-        taskId: id,
-        data,
-      })
-      .onConflict("id", "replace"),
-  ],
+  "v1.ChatStreamStarted": ({ id, data, todos, git, updatedAt }, ctx) => {
+    const task = ctx.query(tables.tasks.where("id", "=", id)).at(0);
+    if (!task) {
+      throw new Error(`Task ${id} not found`);
+    }
+
+    let newTitle = undefined;
+    const message = data;
+    if (
+      task.title === null &&
+      data.role === "user" &&
+      typeof message.parts[0] === "object" &&
+      message.parts[0] &&
+      "text" in message.parts[0] &&
+      typeof message.parts[0].text === "string"
+    ) {
+      newTitle = message.parts[0].text.split("\n")[0].trim() || "(empty)";
+    }
+
+    return [
+      tables.tasks
+        .update({
+          status: "pending-model",
+          todos,
+          title: newTitle,
+          git,
+          updatedAt,
+        })
+        .where({ id }),
+      tables.messages
+        .insert({
+          id: data.id,
+          taskId: id,
+          data,
+        })
+        .onConflict("id", "replace"),
+    ];
+  },
   "v1.ChatStreamFinished": ({ id, data, totalTokens, status, updatedAt }) => [
     tables.tasks
       .update({

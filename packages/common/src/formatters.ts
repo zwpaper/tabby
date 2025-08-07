@@ -265,7 +265,7 @@ export const formatters = {
   ui: (messages: UIMessage[]) => formatMessages(messages, UIFormatOps),
 
   // Format messages before sending them to the LLM.
-  llm: (
+  llmRaw: (
     messages: UIMessage[],
     options?: {
       tools?: ToolSet;
@@ -278,8 +278,20 @@ export const formatters = {
       ...(options?.removeSystemReminder ? [removeSystemReminder] : []),
       ...LLMFormatOps,
     ];
+    return formatMessages(messages, llmFormatOps);
+  },
+
+  // Format messages before sending them to the LLM.
+  llm: (
+    messages: UIMessage[],
+    options?: {
+      tools?: ToolSet;
+      isClaude: boolean;
+      removeSystemReminder?: boolean;
+    },
+  ) => {
     const coreMessages = convertToCoreMessages(
-      formatMessages(messages, llmFormatOps),
+      formatters.llmRaw(messages, options),
       {
         tools: options?.tools,
       },
