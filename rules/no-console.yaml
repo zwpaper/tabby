@@ -1,5 +1,5 @@
 id: no-console
-language: TypeScript
+language: tsx
 rule:
   pattern: console.$$$
 message: Don't use console for logging, use getLogger instead.

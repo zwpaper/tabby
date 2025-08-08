@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
 import { formatters } from "@ragdoll/common";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// FIXME(meng): migrate this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { UIMessage } from "ai";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";

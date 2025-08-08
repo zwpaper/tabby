@@ -3,6 +3,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ToolInvocationPart } from "@/components/tool-invocation";
 import type { ToolProps } from "@/components/tool-invocation/types";
 import type { ClientToolsType } from "@getpochi/tools";
+// FIXME(meng): upgrade this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { ToolInvocation } from "ai";
 
 const ToolsGallery: React.FC<{

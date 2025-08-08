@@ -11,6 +11,8 @@ import {
 import { getLogger } from "@ragdoll/common";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
+// FIXME(meng): upgrade this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { ToolInvocation } from "ai";
 import Emittery from "emittery";
 import type z from "zod";

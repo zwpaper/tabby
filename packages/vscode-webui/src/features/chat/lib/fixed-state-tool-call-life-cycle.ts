@@ -1,3 +1,5 @@
+// FIXME(meng): upgrade this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { ToolInvocation } from "ai";
 import type { ToolCallLifeCycle } from "./tool-call-life-cycle";
 

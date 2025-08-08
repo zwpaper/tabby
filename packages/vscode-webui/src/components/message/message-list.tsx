@@ -1,3 +1,5 @@
+// FIXME(meng): migrate this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { ToolInvocationUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import { IconLineSpacingCompact } from "obra-icons-react";
 

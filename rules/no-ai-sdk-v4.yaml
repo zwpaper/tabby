@@ -1,0 +1,11 @@
+id: no-ai-sdk-v4
+language: tsx
+rule:
+  any:
+    - pattern: UIMessage
+    - pattern: ToolInvocation
+message: Don't use UIMessage (vercel v4), use Message (defined in @ragdoll/livekit) instead.
+severity: error
+files:
+  - "packages/vscode-webui/src/**/*.ts"
+  - "packages/vscode-webui/src/**/*.tsx"

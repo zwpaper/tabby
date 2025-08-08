@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
+// FIXME(meng): migrate this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { UIMessage } from "ai";
 import { MessageList } from "../message-list";
 

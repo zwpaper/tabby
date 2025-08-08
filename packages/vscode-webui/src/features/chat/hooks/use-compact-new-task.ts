@@ -2,6 +2,9 @@ import { apiClient } from "@/lib/auth-client";
 import { fromUIMessages } from "@ragdoll/common";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
+
+// FIXME(zhanba): migrate this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { UIMessage } from "ai";
 
 export const useCompactNewTask = ({

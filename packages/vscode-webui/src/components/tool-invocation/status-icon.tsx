@@ -7,6 +7,8 @@ import {
 import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
+// FIXME(meng): upgrade this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { ToolInvocation } from "ai";
 import {
   Check,

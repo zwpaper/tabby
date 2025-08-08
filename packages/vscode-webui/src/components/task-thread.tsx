@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
 import { formatters } from "@ragdoll/common";
 import type { TaskRunnerState } from "@ragdoll/runner";
+// FIXME(meng): migrate this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { UIMessage } from "ai";
 import { useEffect, useMemo, useState } from "react";
 import { FixedStateChatContextProvider } from "../features/chat/lib/chat-state";

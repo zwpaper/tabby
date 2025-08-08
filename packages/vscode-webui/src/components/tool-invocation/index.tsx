@@ -1,6 +1,8 @@
 import { useToolCallLifeCycle } from "@/features/chat";
 import { useIsDevMode } from "@/features/settings";
 import { cn } from "@/lib/utils";
+// FIXME(meng): upgrade this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { ToolInvocation } from "ai";
 import type { ToolCallCheckpoint } from "../message/message-list";
 import { McpToolCall } from "./mcp-tool-call";

@@ -1,6 +1,8 @@
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { MessageList } from "@/components/message/message-list";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
+// FIXME(meng): migrate this to v5
+// ast-grep-ignore: no-ai-sdk-v4
 import type { UIMessage } from "ai";
 import { Loader2 } from "lucide-react";
 import type React from "react";
