@@ -105,7 +105,7 @@ describe("formatters individual ops", () => {
                 args: {},
                 state: "result",
                 result: {
-                  error: { success: true },
+                  success: true
                 },
               },
             },

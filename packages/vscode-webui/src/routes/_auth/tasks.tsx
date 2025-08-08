@@ -14,6 +14,7 @@ import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
 import { useStore } from "@livestore/react";
+import { parseTitle } from "@ragdoll/common/message-utils";
 import { type Task, catalog } from "@ragdoll/livekit";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import {
@@ -27,6 +28,7 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
+import { useMemo } from "react";
 import { MdOutlineErrorOutline } from "react-icons/md";
 import { WorkspaceRequiredPlaceholder } from "../../components/workspace-required-placeholder";
 
@@ -305,6 +307,7 @@ function TaskRow({
   task,
   runningInBackground,
 }: { task: Task; runningInBackground: boolean | undefined }) {
+  const title = useMemo(() => parseTitle(task.title), [task.title]);
   return (
     <Link
       to={runningInBackground ? "/runner" : "/"}
@@ -326,7 +329,7 @@ function TaskRow({
                 className="max-w-full text-muted-foreground/80 text-xs"
               />
               <h3 className="line-clamp-2 flex-1 font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
-                {task.title}
+                {title}
               </h3>
             </div>
             <div className="mt-0.5 shrink-0">

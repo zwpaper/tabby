@@ -24,13 +24,11 @@ export function resolvePendingToolCalls(
             toolInvocation: {
               ...part.toolInvocation,
               state: "result",
-              result: {
-                error:
-                  isUserInputTool(part.toolInvocation.toolName) ||
-                  isAutoApproveTool(part.toolInvocation.toolName)
-                    ? { success: true }
-                    : "User cancelled the tool call.",
-              },
+              result:
+                isUserInputTool(part.toolInvocation.toolName) ||
+                isAutoApproveTool(part.toolInvocation.toolName)
+                  ? { success: true }
+                  : { error: "User cancelled the tool call." },
             },
           } satisfies UIMessage["parts"][number];
         }

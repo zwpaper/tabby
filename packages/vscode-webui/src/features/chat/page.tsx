@@ -556,6 +556,10 @@ function findLastCheckpointFromMessages(
 }
 
 async function appendCheckpoint(message: Message) {
+  if (message.parts.some((x) => x.type === "data-checkpoint")) {
+    return;
+  }
+
   const { id } = message;
   const ckpt = await vscodeHost.saveCheckpoint(`ckpt-msg-${id}`, {
     force: message.role === "user",
