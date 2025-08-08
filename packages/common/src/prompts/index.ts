@@ -1,16 +1,21 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { Environment } from "@ragdoll/db";
 import { createCompactSummaryPrompt } from "./compact";
-import { injectEnvironmentDetails } from "./environment";
+import {
+  injectEnvironmentDetails,
+  injectEnvironmentDetailsNext,
+} from "./environment";
 import { generateSystemPrompt } from "./system";
 
 export const prompts = {
   system: generateSystemPrompt,
   injectEnvironmentDetails,
+  injectEnvironmentDetailsNext,
   createSystemReminder,
   isSystemReminder,
   formatUserEdits,
   isCompactPart,
+  isCompact,
   compact: createCompactSummaryPrompt,
   createCompactPart,
   extractSummaryFromPart,
@@ -35,11 +40,11 @@ function isSystemReminder(content: string) {
 }
 
 function isCompactPart(part: UIMessage["parts"][number]) {
-  return (
-    part.type === "text" &&
-    part.text.startsWith("<compact>") &&
-    part.text.endsWith("</compact>")
-  );
+  return part.type === "text" && isCompact(part.text);
+}
+
+function isCompact(content: string) {
+  return content.startsWith("<compact>") && content.endsWith("</compact>");
 }
 
 function createCompactPart(summary: string, messageCount: number): TextUIPart {

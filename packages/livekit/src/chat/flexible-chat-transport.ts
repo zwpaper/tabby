@@ -3,6 +3,7 @@ import {
   type ChatTransport,
   DefaultChatTransport,
   type Tool,
+  type UIMessage,
   type UIMessageChunk,
   convertToModelMessages,
   jsonSchema,
@@ -11,10 +12,9 @@ import {
 } from "@ai-v5-sdk/ai";
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
 import { ClientToolsV5, type McpTool } from "@getpochi/tools";
-import { formatters, prompts } from "@ragdoll/common";
+import { formattersNext, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import type { Message, RequestData } from "../types";
-import { fromV4UIMessage, toV4UIMessage } from "../v4-adapter";
 
 export type OnStartCallback = (options: {
   messages: Message[];
@@ -64,7 +64,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     const system = prompts.system(environment?.info?.customRules);
     const payload = {
       system,
-      messages: await prepareMessages(messages as Message[], environment),
+      messages: prepareMessages(messages, environment),
       abortSignal,
       id: chatId,
       mcpToolSet,
@@ -96,20 +96,18 @@ type RequestPayload = {
   mcpToolSet?: Record<string, McpTool>;
 };
 
-async function prepareMessages(
-  inputMessages: Message[],
+function prepareMessages<T extends UIMessage>(
+  inputMessages: T[],
   environment: Environment | undefined,
-) {
-  const messages = prompts.injectEnvironmentDetails(
-    inputMessages.map(toV4UIMessage),
+): T[] {
+  const messages = prompts.injectEnvironmentDetailsNext(
+    inputMessages,
     environment,
     // FIXME(meng): set user from git config
     undefined,
   );
 
-  const llmMessages = formatters.llmRaw(messages);
-
-  return Promise.all(llmMessages.map(fromV4UIMessage));
+  return formattersNext.llm(messages) as T[];
 }
 
 async function requestOpenAI(
