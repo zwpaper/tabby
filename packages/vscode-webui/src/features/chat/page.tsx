@@ -22,6 +22,7 @@ import { DevModeButton } from "@/components/dev-mode-button";
 import { TokenUsage } from "@/components/token-usage";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { useLatest } from "@/lib/hooks/use-latest";
+import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
 import { vscodeHost } from "@/lib/vscode";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
 import { useStore } from "@livestore/react";
@@ -131,6 +132,7 @@ function Chat({ auth, uid }: ChatProps) {
   // FIXME(meng): add back Mcp
   // const { toolset: mcpToolSet } = useMcp();
 
+  const pochiModelSettings = usePochiModelSettings();
   const llmFromSelectedModel =
     selectedModel?.type === "byok"
       ? {
@@ -145,13 +147,13 @@ function Chat({ auth, uid }: ChatProps) {
         ? {
             type: "pochi" as const,
             modelId: selectedModel.modelId,
+            modelEndpointId: pochiModelSettings?.modelEndpointId,
           }
         : undefined;
   const llm = useLatest(llmFromSelectedModel);
 
   // const latestHttpCode = useRef<number | undefined>(undefined);
   // const recentAborted = useRef<boolean>(false);
-  // const pochiModelSettings = usePochiModelSettings();
   const chat = useChat({
     chat: chatKit.chat,
   });

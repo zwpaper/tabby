@@ -36,6 +36,7 @@ const ZodRequestData = z.object({
     z.object({
       type: z.literal("pochi"),
       modelId: z.string().optional(),
+      modelEndpointId: z.string().optional(),
       token: z.string(),
     }),
   ]),
