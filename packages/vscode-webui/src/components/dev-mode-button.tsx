@@ -8,11 +8,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
-import { createCoreMessagesForCopy } from "@/lib/utils/message";
 import { vscodeHost } from "@/lib/vscode";
-import type { UIMessage } from "@ai-sdk/ui-utils";
+import { convertToModelMessages } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
 import type { Environment } from "@ragdoll/db";
+import type { Message } from "@ragdoll/livekit";
 import { useRouter } from "@tanstack/react-router";
 import { Bot, CheckIcon, CopyIcon } from "lucide-react"; // Removed FilesIcon
 import { IconHammer } from "obra-icons-react";
@@ -47,7 +47,7 @@ function CopyMenuItem({ fetchContent, text }: UpdatedCopyMenuItemProps) {
 }
 
 interface DevModeButtonProps {
-  messages: UIMessage[];
+  messages: Message[];
   todos: Todo[] | undefined;
   buildEnvironment: () => Promise<Environment>;
   uid: string | undefined;
@@ -73,7 +73,9 @@ export function DevModeButton({
     return JSON.stringify(x, null, 2);
   };
   const getCoreMessagesContent = () => {
-    const coreMessages = createCoreMessagesForCopy(messages);
+    const coreMessages = convertToModelMessages(messages, {
+      ignoreIncompleteToolCalls: true,
+    });
     return JSON.stringify(coreMessages, null, 2);
   };
 

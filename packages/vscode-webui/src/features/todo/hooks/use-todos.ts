@@ -1,9 +1,9 @@
-import type { Message } from "@ai-sdk/react";
 import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
 import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
+import type { Message } from "@ragdoll/livekit";
 import { useCallback, useEffect, useState } from "react";
 
 export function useTodos({
@@ -77,7 +77,7 @@ export function useTodos({
     if (
       lastMessage &&
       lastMessage.role === "user" &&
-      !prompts.isSystemReminder(lastMessage.content)
+      !isSystemReminderMessage(lastMessage)
     ) {
       const todos = todosRef.current || [];
       // Check if all todos is canceled or done.
@@ -95,4 +95,10 @@ export function useTodos({
     todosRef,
     todos,
   };
+}
+
+function isSystemReminderMessage(message: Message): boolean {
+  return message.parts.some(
+    (x) => x.type === "text" && prompts.isSystemReminder(x.text),
+  );
 }

@@ -229,13 +229,16 @@ function Chat({ auth, uid }: ChatProps) {
   // });
 
   const [input, setInput] = useState("");
-  const { messages: v5Messages, sendMessage, status, addToolResult } = chat;
-  const messages = useMemo(() => v5Messages.map(toV4UIMessage), [v5Messages]);
+  const { messages, sendMessage, status, addToolResult } = chat;
+  const renderMessages = useMemo(
+    () => formatters.ui(messages.map(toV4UIMessage)),
+    [messages],
+  );
   const buildEnvironment = useCallback(async () => {
     const environment = await vscodeHost.readEnvironment();
 
     let userEdits: GitDiff[] | undefined;
-    const lastCheckpointHash = findLastCheckpointFromMessages(v5Messages);
+    const lastCheckpointHash = findLastCheckpointFromMessages(messages);
     if (lastCheckpointHash && autoApproveGuard.current) {
       userEdits =
         (await vscodeHost.diffWithCheckpoint(lastCheckpointHash)) ?? undefined;
@@ -246,7 +249,7 @@ function Chat({ auth, uid }: ChatProps) {
       ...environment,
       userEdits,
     } satisfies Environment;
-  }, [v5Messages, autoApproveGuard.current]);
+  }, [messages, autoApproveGuard.current]);
 
   const { todos } = useTodos({
     initialTodos: task?.todos,
@@ -288,7 +291,6 @@ function Chat({ auth, uid }: ChatProps) {
   // FIXME(meng): consider add back new task handler.
   // useNewTaskHandler({ data, setUid, enabled: !uidRef.current });
 
-  const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
   // const messages: UIMessage = [];
 
   const { pendingApproval, retry } = useApprovalAndRetry({
@@ -359,7 +361,7 @@ function Chat({ auth, uid }: ChatProps) {
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading);
   useAddCompleteToolCalls({
-    messages: v5Messages,
+    messages,
     enable: allowAddToolResult,
     addToolResult: addToolResult,
   });
@@ -368,7 +370,7 @@ function Chat({ auth, uid }: ChatProps) {
 
   return (
     <div className="flex h-screen flex-col">
-      {showPreview && <PreviewTool messages={v5Messages} />}
+      {showPreview && <PreviewTool messages={messages} />}
       <ChatArea
         messages={renderMessages}
         isTaskLoading={isTaskLoading}
