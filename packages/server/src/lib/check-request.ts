@@ -1,7 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import { ServerErrors } from "..";
 import { type User, isInternalOrganization } from "../auth";
-import { organizationService } from "../service/organization";
 import { usageService } from "../service/usage";
 import { type AvailableModelId, AvailableModels } from "./constants";
 
@@ -29,30 +28,27 @@ export async function checkUserQuota(user: User, modelId: string) {
     throw new HTTPException(400, { message: "Invalid model" });
   }
 
-  const organization = await organizationService.readActiveOrganizationByUser(
+  const orgQuota = await usageService.readCurrentMonthOrganizationQuotaByUser(
     user.id,
   );
-  const orgQuota = organization
-    ? await usageService.readCurrentMonthOrganizationQuota(organization.id)
-    : undefined;
-  const userQuota = await usageService.readCurrentMonthQuota(user);
 
   // If a user joins an organization, then only check the organization's quota
-  if (organization) {
+  if (orgQuota) {
+    const { organization, quota } = orgQuota;
     if (!isInternalOrganization(organization)) {
-      if (orgQuota?.credit?.isUnpaid) {
+      if (quota.credit.isUnpaid) {
         throw new HTTPException(422, {
           message: ServerErrors.RequireOrgPayment,
         });
       }
 
-      if (!orgQuota?.plan) {
+      if (!quota.plan) {
         throw new HTTPException(422, {
           message: ServerErrors.RequireOrgSubscription,
         });
       }
 
-      if (orgQuota?.credit.isLimitReached) {
+      if (quota.credit.isLimitReached) {
         throw new HTTPException(422, {
           message: ServerErrors.ReachedOrgCreditLimit,
         });
@@ -62,6 +58,8 @@ export async function checkUserQuota(user: User, modelId: string) {
     return;
   }
 
+  // otherwise, check user quota
+  const userQuota = await usageService.readCurrentMonthQuota(user);
   const userOutOfFreeCredit =
     userQuota.credit.remainingFreeCredit <= 0 && userQuota.plan === "Community";
 
@@ -95,32 +93,25 @@ export async function checkUserCodeCompletionQuota(user: User) {
     return;
   }
 
-  const usage = await usageService.readCodeCompletionUsage(user);
-  if (!usage.isSubscriptionRequired) {
-    // covered by free tier
-    return;
-  }
-
-  const organization = await organizationService.readActiveOrganizationByUser(
+  const orgQuota = await usageService.readCurrentMonthOrganizationQuotaByUser(
     user.id,
   );
-  if (organization && isInternalOrganization(organization)) {
-    // internal organization
-    return;
-  }
 
-  const orgQuota = organization
-    ? await usageService.readCurrentMonthOrganizationQuota(organization.id)
-    : undefined;
+  if (orgQuota) {
+    const { organization, quota } = orgQuota;
+    if (isInternalOrganization(organization)) {
+      // internal organization are not subject to quota
+      return;
+    }
 
-  if (organization) {
-    if (orgQuota?.credit?.isUnpaid) {
+    // check organization quota
+    if (quota.credit.isUnpaid) {
       throw new HTTPException(422, {
         message: ServerErrors.RequireOrgPayment,
       });
     }
 
-    if (!orgQuota?.plan) {
+    if (!quota.plan) {
       throw new HTTPException(422, {
         message: ServerErrors.RequireOrgSubscription,
       });
@@ -130,13 +121,20 @@ export async function checkUserCodeCompletionQuota(user: User) {
     return;
   }
 
-  const userQuota = await usageService.readCurrentMonthQuota(user);
-  if (userQuota.credit.isUnpaid) {
+  // check user quota
+  const usage = await usageService.readCodeCompletionUsage(user);
+  if (!usage.isSubscriptionRequired) {
+    // covered by free tier
+    return;
+  }
+
+  if (usage.isUnpaid) {
     throw new HTTPException(422, {
       message: ServerErrors.RequirePayment,
     });
   }
-  if (userQuota.plan === "Community") {
+
+  if (usage.plan === "Community") {
     // free plan
     throw new HTTPException(422, {
       message: ServerErrors.RequireSubscription,

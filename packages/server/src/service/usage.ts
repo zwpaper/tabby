@@ -1,6 +1,6 @@
 import { getLogger } from "@ragdoll/common";
 import type { LanguageModelUsage } from "ai";
-import { sql } from "kysely";
+import { jsonArrayFrom } from "kysely/helpers/postgres";
 import moment from "moment";
 import type { User } from "../auth";
 import { db } from "../db";
@@ -42,10 +42,6 @@ export class UsageService {
 
     spanConfig.setAttribute("ragdoll.metering.credit", credit);
 
-    const organization = await organizationService.readActiveOrganizationByUser(
-      user.id,
-    );
-
     // Track individual completion details
     await db
       .insertInto("chatCompletion")
@@ -58,6 +54,9 @@ export class UsageService {
       })
       .execute();
 
+    const organization = await organizationService.readActiveOrganizationByUser(
+      user.id,
+    );
     // If an org subscription exists, only track the organization's usage.
     if (organization) {
       await db
@@ -107,32 +106,41 @@ export class UsageService {
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();
 
-    const subscriptions = await db
-      .selectFrom("subscription")
-      .select(["id", "plan", "status"])
-      .where("referenceId", "=", organizationId)
-      .where("status", "in", ["active", "past_due", "unpaid"])
-      .execute();
+    const result = await db
+      .selectNoFrom([
+        (eb) =>
+          jsonArrayFrom(
+            eb
+              .selectFrom("subscription")
+              .select(["id", "plan", "status"])
+              .where("referenceId", "=", organizationId)
+              .where("status", "in", ["active", "past_due", "unpaid"]),
+          ).as("subscriptions"),
+        (eb) =>
+          eb
+            .selectFrom("monthlyOrganizationUsage")
+            .select((eb) => [eb.fn.sum<number>("credit").as("sum")])
+            .where("organizationId", "=", organizationId)
+            .where("startDayOfMonth", "=", startOfMonth)
+            .as("spentCredit"),
+        (eb) =>
+          eb
+            .selectFrom("monthlyOrganizationCreditLimit")
+            .select("limit")
+            .where("organizationId", "=", organizationId)
+            .as("monthlyOrganizationCreditLimit"),
+      ])
+      .executeTakeFirst();
 
+    const subscriptions = result?.subscriptions ?? [];
     const activeSubscription = subscriptions.find((x) => x.status === "active");
     const unpaidSubscription = subscriptions.find(
       (x) => x.status === "past_due" || x.status === "unpaid",
     );
 
-    const usageResults = await db
-      .selectFrom("monthlyOrganizationUsage")
-      .select(["credit"])
-      .where("organizationId", "=", organizationId)
-      .where(sql`"startDayOfMonth"`, "=", startOfMonth)
-      .execute();
-
-    let spentCredit = 0;
-    for (const x of usageResults) {
-      spentCredit += x.credit;
-    }
-
+    const spentCredit = result?.spentCredit ?? 0;
     const monthlyOrganizationCreditLimit =
-      await this.readMonthlyOrganizationLimit(organizationId);
+      result?.monthlyOrganizationCreditLimit;
 
     const isLimitReached =
       !activeSubscription ||
@@ -149,6 +157,75 @@ export class UsageService {
         isUnpaid: !!unpaidSubscription,
       },
     };
+  }
+
+  async readCurrentMonthOrganizationQuotaByUser(userId: string) {
+    const now = moment.utc();
+    const startOfMonth = now.startOf("month").toDate();
+
+    const result = await db
+      .selectFrom("member")
+      .innerJoin("organization", "organization.id", "member.organizationId")
+      .where("member.userId", "=", userId)
+      .selectAll("organization")
+      .select((eb) => [
+        jsonArrayFrom(
+          eb
+            .selectFrom("subscription")
+            .select(["id", "plan", "status"])
+            .whereRef("referenceId", "=", "organization.id")
+            .where("status", "in", ["active", "past_due", "unpaid"]),
+        ).as("subscriptions"),
+        eb
+          .selectFrom("monthlyOrganizationUsage")
+          .select((eb) => [eb.fn.sum<number>("credit").as("sum")])
+          .whereRef("organizationId", "=", "organization.id")
+          .where("startDayOfMonth", "=", startOfMonth)
+          .as("spentCreditResult"),
+        eb
+          .selectFrom("monthlyOrganizationCreditLimit")
+          .select("limit")
+          .whereRef("organizationId", "=", "organization.id")
+          .as("monthlyOrganizationCreditLimit"),
+      ])
+      .executeTakeFirst();
+
+    if (!result) {
+      return null;
+    }
+
+    const {
+      subscriptions,
+      spentCreditResult,
+      monthlyOrganizationCreditLimit,
+      ...organization
+    } = result;
+
+    const subs = subscriptions ?? [];
+    const activeSubscription = subs.find((x) => x.status === "active");
+    const unpaidSubscription = subs.find(
+      (x) => x.status === "past_due" || x.status === "unpaid",
+    );
+
+    const totalSpentCredit = spentCreditResult ?? 0;
+    const limit = monthlyOrganizationCreditLimit;
+
+    const isLimitReached =
+      !activeSubscription ||
+      // default monthly credit limit is $10
+      creditToDollars(totalSpentCredit) > (limit ?? 10);
+
+    const quota = {
+      // Used to determine if there is a active subscription.
+      plan: activeSubscription?.plan,
+      credit: {
+        spent: totalSpentCredit,
+        limit,
+        isLimitReached,
+        isUnpaid: !!unpaidSubscription,
+      },
+    };
+    return { organization, quota };
   }
 
   async readCurrentMonthUsage(userId: string): Promise<{
@@ -195,13 +272,34 @@ export class UsageService {
     const now = moment.utc();
     const startOfMonth = now.startOf("month").toDate();
 
-    const subscriptions = await db
-      .selectFrom("subscription")
-      .select(["id", "plan", "status"])
-      .where("referenceId", "=", user.id)
-      .where("status", "in", ["active", "past_due", "unpaid"])
-      .execute();
+    const result = await db
+      .selectNoFrom([
+        (eb) =>
+          jsonArrayFrom(
+            eb
+              .selectFrom("subscription")
+              .select(["id", "plan", "status"])
+              .where("referenceId", "=", user.id)
+              .where("status", "in", ["active", "past_due", "unpaid"]),
+          ).as("subscriptions"),
+        (eb) =>
+          jsonArrayFrom(
+            eb
+              .selectFrom("monthlyUsage")
+              .select(["modelId", "count", "credit"])
+              .where("userId", "=", user.id)
+              .where("startDayOfMonth", "=", startOfMonth),
+          ).as("usageResults"),
+        (eb) =>
+          eb
+            .selectFrom("monthlyCreditLimit")
+            .select("limit")
+            .where("userId", "=", user.id)
+            .as("monthlyUserCreditLimit"),
+      ])
+      .executeTakeFirst();
 
+    const subscriptions = result?.subscriptions ?? [];
     const activeSubscription = subscriptions.find((x) => x.status === "active");
     const unpaidSubscription = subscriptions.find(
       (x) => x.status === "past_due" || x.status === "unpaid",
@@ -211,31 +309,22 @@ export class UsageService {
       activeSubscription?.plan ?? StripePlans[0].name.toLowerCase();
     const plan = planId.charAt(0).toUpperCase() + planId.slice(1);
 
-    // Query the total usage count for the current month.
-    // Ensure the timestamp comparison works correctly with the database timezone (assuming UTC)
-    const results = await db
-      .selectFrom("monthlyUsage")
-      .select(["modelId", "count", "credit"])
-      .where("userId", "=", user.id)
-      // Compare the timestamp column directly with the Date object
-      .where(sql`"startDayOfMonth"`, "=", startOfMonth)
-      .execute(); // Use executeTakeFirstOrThrow() if you expect a result or want an error
-
-    const monthlyUserCreditLimit = await this.readMonthlyUserLimit(user.id);
-
+    const usageResults = result?.usageResults ?? [];
     let spentCredit = 0;
     const usages = {
       basic: 0,
       premium: 0,
     };
 
-    for (const x of results) {
+    for (const x of usageResults) {
       spentCredit += x.credit;
       const model = AvailableModels.find((m) => m.id === x.modelId);
       if (model) {
         usages[model.costType] += x.count;
       }
     }
+
+    const monthlyUserCreditLimit = result?.monthlyUserCreditLimit;
 
     const remainingFreeCredit = Math.max(FreeCredit - spentCredit, 0);
 
@@ -328,18 +417,40 @@ export class UsageService {
     const now = moment.utc();
     const startDayOfMonth = now.startOf("month").toDate();
 
-    const results = await db
-      .selectFrom("monthlyCodeCompletionUsage")
-      .select(["count"])
-      .where("userId", "=", user.id)
-      .where(sql`"startDayOfMonth"`, "=", startDayOfMonth)
+    const result = await db
+      .selectNoFrom([
+        (eb) =>
+          eb
+            .selectFrom("monthlyCodeCompletionUsage")
+            .select("count")
+            .where("userId", "=", user.id)
+            .where("startDayOfMonth", "=", startDayOfMonth)
+            .as("usageCount"),
+        (eb) =>
+          jsonArrayFrom(
+            eb
+              .selectFrom("subscription")
+              .select(["id", "plan", "status"])
+              .where("referenceId", "=", user.id)
+              .where("status", "in", ["active", "past_due", "unpaid"]),
+          ).as("subscriptions"),
+      ])
       .executeTakeFirst();
 
-    const count = results?.count ?? 0;
+    const count = result?.usageCount ?? 0;
+    const subscriptions = result?.subscriptions ?? [];
+    const activeSubscription = subscriptions.find((x) => x.status === "active");
+    const unpaidSubscription = subscriptions.find(
+      (x) => x.status === "past_due" || x.status === "unpaid",
+    );
+
+    const plan = activeSubscription?.plan ?? "Community";
 
     return {
       count,
       isSubscriptionRequired: count >= CodeCompletionSubscriptionCountThreshold,
+      isUnpaid: !!unpaidSubscription,
+      plan,
     };
   }
 }
