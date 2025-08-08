@@ -1,3 +1,10 @@
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Download, MoreHorizontal, Trash2, Upload } from "lucide-react";
 import { useRef } from "react";
 
 interface FileControlsProps {
@@ -6,6 +13,8 @@ interface FileControlsProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onImportTasks: () => void;
   onImportSpanIds: () => void;
+  onExportShareLinks: () => void;
+  onClearStorage: () => void;
   isExportDisabled: boolean;
 }
 
@@ -15,6 +24,8 @@ export function FileControls({
   onFileUpload,
   onImportTasks,
   onImportSpanIds,
+  onExportShareLinks,
+  onClearStorage,
   isExportDisabled,
 }: FileControlsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,21 +35,89 @@ export function FileControls({
   };
 
   return (
-    <div className="flex items-center gap-4">
-      <button
-        type="button"
-        onClick={onImport}
-        className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 font-medium text-foreground text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
-      >
+    <div className="flex items-center gap-3">
+      {/* Primary action - always visible */}
+      <Button onClick={onImport} className="bg-primary hover:bg-primary/90">
         Import from Clipboard
-      </button>
-      <button
-        type="button"
-        onClick={handleUploadClick}
-        className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 font-medium text-foreground text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
-      >
-        Upload File
-      </button>
+      </Button>
+
+      {/* Secondary actions in popover */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="icon">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56" align="start">
+          <div className="space-y-1">
+            <div className="px-2 py-1.5 font-medium text-muted-foreground text-sm">
+              Import Options
+            </div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={handleUploadClick}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Import From File
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={onImportTasks}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Import Tasks
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={onImportSpanIds}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Import Span IDs
+            </Button>
+
+            <div className="my-1 border-t" />
+
+            <div className="px-2 py-1.5 font-medium text-muted-foreground text-sm">
+              Export Options
+            </div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={onExport}
+              disabled={isExportDisabled}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export to Clipboard
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={onExportShareLinks}
+              disabled={isExportDisabled}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export Share Links
+            </Button>
+
+            <div className="my-1 border-t" />
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={onClearStorage}
+              disabled={isExportDisabled}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear Storage
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -46,28 +125,6 @@ export function FileControls({
         onChange={onFileUpload}
         className="hidden"
       />
-      <button
-        type="button"
-        onClick={onImportTasks}
-        className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 font-medium text-foreground text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
-      >
-        Import Tasks
-      </button>
-      <button
-        type="button"
-        onClick={onImportSpanIds}
-        className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 font-medium text-foreground text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
-      >
-        Import Span IDs
-      </button>
-      <button
-        type="button"
-        onClick={onExport}
-        disabled={isExportDisabled}
-        className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm shadow-sm transition-colors hover:bg-primary/90 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Export to Clipboard
-      </button>
     </div>
   );
 }

@@ -189,4 +189,75 @@ code {
   [role="button"]:not([disabled]) {
     cursor: pointer;
   }
+
+  /* Custom scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.5 0 0 / 0.15);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  /* Show scrollbar on container hover */
+  *:hover::-webkit-scrollbar-thumb {
+    opacity: 1;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.5 0 0 / 0.3);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: oklch(0.5 0 0 / 0.4);
+  }
+
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar-thumb {
+    background: oklch(0.8 0 0 / 0.15);
+    background-clip: padding-box;
+    opacity: 0;
+  }
+
+  .dark *:hover::-webkit-scrollbar-thumb {
+    opacity: 1;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.8 0 0 / 0.3);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:active {
+    background: oklch(0.8 0 0 / 0.4);
+  }
+
+  /* Firefox scrollbar styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.2s ease;
+  }
+
+  *:hover {
+    scrollbar-color: oklch(0.5 0 0 / 0.2) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: transparent transparent;
+  }
+
+  .dark *:hover {
+    scrollbar-color: oklch(0.8 0 0 / 0.2) transparent;
+  }
 }

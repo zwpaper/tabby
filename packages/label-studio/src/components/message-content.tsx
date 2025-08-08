@@ -31,6 +31,11 @@ interface MessageContentProps {
     messageIndex: number,
     partIndex: number,
   ) => void;
+  onRevertPart: (
+    taskUid: string,
+    messageIndex: number,
+    partIndex: number,
+  ) => void;
   onEditedContentChange: (content: string) => void;
 }
 
@@ -47,6 +52,7 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
       onSave,
       onCancel,
       onRemovePart,
+      onRevertPart,
       onEditedContentChange,
     },
     ref,
@@ -100,6 +106,7 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
             isEditing && editingPart?.partIndex === partIndex;
           const partIsDeleted = part.isDeleted || false;
           const hasNewText = part.newText !== undefined;
+          const isActuallyModified = hasNewText && part.newText !== part.text;
           const displayText = hasNewText ? part.newText : part.text;
 
           return (
@@ -117,23 +124,23 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
                     {part.type}
                   </strong>
                   {partIsDeleted && (
-                    <span className="inline-flex items-center rounded-md bg-red-600 px-2 py-1 font-medium text-white text-xs">
+                    <span className="inline-flex items-center rounded-md border border-destructive/50 bg-destructive/10 px-2 py-1 font-medium text-destructive text-xs">
                       Deleted
                     </span>
                   )}
-                  {hasNewText && !partIsDeleted && (
-                    <span className="inline-flex items-center rounded-md bg-blue-600 px-2 py-1 font-medium text-white text-xs">
+                  {isActuallyModified && !partIsDeleted && (
+                    <span className="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-1 font-medium text-blue-700 text-xs dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400">
                       Modified
                     </span>
                   )}
-                  {hasNewText && !partIsDeleted && (
+                  {isActuallyModified && !partIsDeleted && (
                     <button
                       type="button"
                       onClick={() => setShowDiff(!showDiff)}
                       className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-xs transition-colors ${
                         showDiff
-                          ? "bg-purple-600 text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       }`}
                     >
                       <GitCompare className="h-3 w-3" />
@@ -147,14 +154,14 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
                       <button
                         type="button"
                         onClick={onSave}
-                        className="inline-flex items-center justify-center rounded-md bg-green-600 px-3 py-1.5 font-medium text-white text-xs shadow-sm transition-colors hover:bg-green-700 focus:outline-none"
+                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground text-xs transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       >
                         Save
                       </button>
                       <button
                         type="button"
                         onClick={onCancel}
-                        className="inline-flex items-center justify-center rounded-md border bg-background px-3 py-1.5 font-medium text-foreground text-xs shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none"
+                        className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 font-medium text-foreground text-xs transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       >
                         Cancel
                       </button>
@@ -171,19 +178,36 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
                             displayText || "",
                           )
                         }
-                        className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground text-xs shadow-sm transition-colors hover:bg-primary/90 focus:outline-none"
+                        className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 font-medium text-foreground text-xs transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       >
                         Edit
                       </button>
+                      {isActuallyModified && !partIsDeleted && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                "Are you sure you want to revert this change? This will restore the original text.",
+                              )
+                            ) {
+                              onRevertPart(taskUid, messageIndex, partIndex);
+                            }
+                          }}
+                          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 font-medium text-foreground text-xs transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          Revert
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() =>
                           onRemovePart(taskUid, messageIndex, partIndex)
                         }
-                        className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 font-medium text-xs shadow-sm transition-colors focus:outline-none ${
+                        className={`inline-flex items-center justify-center rounded-md border px-3 py-1.5 font-medium text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
                           partIsDeleted
-                            ? "bg-green-600 text-white hover:bg-green-700"
-                            : "bg-red-600 text-white hover:bg-red-700"
+                            ? "border-green-600 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-500 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900"
+                            : "border-destructive/50 bg-background text-destructive hover:bg-destructive/10"
                         }`}
                       >
                         {partIsDeleted ? "Restore Part" : "Delete Part"}
@@ -191,7 +215,7 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
                       <button
                         type="button"
                         onClick={() => handleCopyPart(part, partIndex)}
-                        className="rounded-md bg-gray-500 px-3 py-1 font-medium text-white text-xs shadow-sm transition-colors hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 font-medium text-foreground text-xs transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       >
                         {copiedFeedback[partIndex] ? "Copied!" : "Copy Part"}
                       </button>
@@ -209,7 +233,7 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
                   minRows={3}
                   maxRows={10}
                 />
-              ) : showDiff && part.newText && !partIsDeleted ? (
+              ) : showDiff && isActuallyModified && !partIsDeleted ? (
                 <div className="rounded-md border border-border bg-background">
                   <div className="border-border border-b p-2 font-medium text-muted-foreground text-xs">
                     Changes:

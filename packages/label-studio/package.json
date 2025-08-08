@@ -10,17 +10,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "lucide-react": "^0.487.0",
+    "@radix-ui/react-popover": "^1.1.14",
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.536.0",
+    "lz-string": "^1.5.0",
     "react": "catalog:",
     "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "^19.0.0",
     "react-textarea-autosize": "^8.5.9",
+    "tailwind-merge": "^3.3.1",
     "tailwindcss": "catalog:",
     "tailwindcss-animate": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/vite": "catalog:",
+    "@types/lz-string": "^1.5.0",
     "@vitejs/plugin-react": "^4.3.4",
     "vite": "^6.2.3"
   }

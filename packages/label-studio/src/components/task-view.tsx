@@ -26,6 +26,11 @@ interface TaskViewProps {
     messageIndex: number,
     partIndex: number,
   ) => void;
+  onRevertPart: (
+    taskUid: string,
+    messageIndex: number,
+    partIndex: number,
+  ) => void;
   onEditedContentChange: (content: string) => void;
 }
 
@@ -45,6 +50,7 @@ export const TaskView = forwardRef<TaskViewHandle, TaskViewProps>(
       onCancel,
       onToggleDeleteMessage,
       onRemovePart,
+      onRevertPart,
       onEditedContentChange,
     },
     ref,
@@ -147,31 +153,31 @@ export const TaskView = forwardRef<TaskViewHandle, TaskViewProps>(
                         <button
                           type="button"
                           onClick={() =>
-                            handleCopyMessage(message, originalIndex)
-                          }
-                          className="inline-flex items-center justify-center rounded-md bg-gray-500 px-3 py-1.5 font-medium text-white text-xs shadow-sm transition-colors hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                        >
-                          {copiedMessageFeedback[originalIndex]
-                            ? "Copied!"
-                            : "Copy Message"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
                             onToggleDeleteMessage(
                               selectedTask.uid,
                               originalIndex,
                             )
                           }
-                          className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 font-medium text-white text-xs shadow-sm transition-colors focus:outline-none ${
+                          className={`inline-flex items-center justify-center rounded-md border px-3 py-1.5 font-medium text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
                             hasDeletedParts
-                              ? "bg-green-600 hover:bg-green-700"
-                              : "bg-red-600 hover:bg-red-700"
+                              ? "border-green-600 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-500 dark:bg-green-950 dark:text-green-400 dark:hover:bg-green-900"
+                              : "border-destructive/50 bg-background text-destructive hover:bg-destructive/10"
                           }`}
                         >
                           {hasDeletedParts
                             ? "Restore Message"
                             : "Delete Message"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleCopyMessage(message, originalIndex)
+                          }
+                          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 font-medium text-foreground text-xs transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        >
+                          {copiedMessageFeedback[originalIndex]
+                            ? "Copied!"
+                            : "Copy Message"}
                         </button>
                       </div>
                     </div>
@@ -189,6 +195,7 @@ export const TaskView = forwardRef<TaskViewHandle, TaskViewProps>(
                       onSave={onSave}
                       onCancel={onCancel}
                       onRemovePart={onRemovePart}
+                      onRevertPart={onRevertPart}
                       onEditedContentChange={onEditedContentChange}
                     />
                   </div>

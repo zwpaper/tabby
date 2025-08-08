@@ -1,23 +1,23 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const UsernameStorageKey = "storage-key-import-tasks-username";
-const PasswordStorageKey = "storage-key-import-tasks-password";
+const UsernameStorageKey = "storage-key-import-span-ids-username";
+const PasswordStorageKey = "storage-key-import-span-ids-password";
 
-interface ImportTasksModalProps {
+interface SpanIdsImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: ({ content, auth }: { content: string; auth: string }) => void;
+  onImport: ({ spanIds, auth }: { spanIds: string[]; auth: string }) => void;
 }
 
-export function ImportTasksModal({
+export function SpanIdsImportModal({
   isOpen,
   onClose,
   onImport,
-}: ImportTasksModalProps) {
+}: SpanIdsImportModalProps) {
   const [content, setContent] = useState("");
   const [username, setUsername] = useState(
-    () => localStorage.getItem(UsernameStorageKey) || "",
+    () => localStorage.getItem(UsernameStorageKey) || "ragdoll",
   );
   const [password, setPassword] = useState(
     () => localStorage.getItem(PasswordStorageKey) || "",
@@ -36,7 +36,35 @@ export function ImportTasksModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (content.trim()) {
-      onImport({ content, auth: `Basic ${btoa(`${username}:${password}`)}` });
+      try {
+        // Try to parse as JSON array first
+        const spanIds = JSON.parse(content.trim());
+        if (
+          Array.isArray(spanIds) &&
+          spanIds.every((id) => typeof id === "string")
+        ) {
+          onImport({
+            spanIds,
+            auth: `Basic ${btoa(`${username}:${password}`)}`,
+          });
+        } else {
+          throw new Error("Invalid format");
+        }
+      } catch {
+        // Fallback to parsing as newline/comma separated values
+        const spanIds = content
+          .trim()
+          .split(/[\n\s,;]+/)
+          .filter(Boolean)
+          .filter((id, idx, arr) => arr.indexOf(id) === idx); // dedup
+
+        if (spanIds.length > 0) {
+          onImport({
+            spanIds,
+            auth: `Basic ${btoa(`${username}:${password}`)}`,
+          });
+        }
+      }
       setContent("");
       onClose();
     }
@@ -47,12 +75,22 @@ export function ImportTasksModal({
     onClose();
   };
 
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setContent(text);
+    } catch (error) {
+      console.error("Failed to read from clipboard:", error);
+      alert("Failed to read from clipboard. Please paste manually.");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="mx-4 w-full max-w-2xl rounded-lg bg-card p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold text-foreground text-lg">
-            Import Tasks
+            Import Tasks from Span IDs
           </h2>
           <button
             type="button"
@@ -65,18 +103,26 @@ export function ImportTasksModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label
-              htmlFor="tasks-list"
-              className="mb-2 block font-medium text-foreground text-sm"
-            >
-              Paste the list of tasks here. Each line should contain a task uid
-              or a task url.
-            </label>
+            <div className="mb-2 flex items-center justify-between">
+              <label
+                htmlFor="span-ids-list"
+                className="block font-medium text-foreground text-sm"
+              >
+                Paste span IDs here (JSON array or newline/comma separated)
+              </label>
+              <button
+                type="button"
+                onClick={handlePasteFromClipboard}
+                className="rounded-md bg-secondary px-3 py-1 text-secondary-foreground text-xs transition-colors hover:bg-secondary/80"
+              >
+                Paste from Clipboard
+              </button>
+            </div>
             <textarea
-              id="tasks-list"
+              id="span-ids-list"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Paste your tasks here..."
+              placeholder={`Paste your span IDs here:\n\nJSON format:\n["span1", "span2", "span3"]\n\nOr separated format:\nspan1\nspan2\nspan3`}
               className="h-48 w-full resize-none rounded-md border bg-background px-3 py-2 text-foreground text-sm placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>

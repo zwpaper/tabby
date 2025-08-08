@@ -13,11 +13,13 @@ interface ApiRequestEntry {
   globalIndex: number;
 }
 
-interface ResponseTocProps {
+interface ConversationTocProps {
   messages: Message[];
 }
 
-export const ResponseToc: React.FC<ResponseTocProps> = ({ messages }) => {
+export const ConversationToc: React.FC<ConversationTocProps> = ({
+  messages,
+}) => {
   const { rounds, apiRequests } = useRounds(messages);
   const [uniqueToolNames, setUniqueToolNames] = useState<string[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -77,7 +79,15 @@ export const ResponseToc: React.FC<ResponseTocProps> = ({ messages }) => {
     }
     const element = document.getElementById(elementId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      const scrollableParent = element.closest("pre.overflow-y-auto");
+      if (scrollableParent) {
+        scrollableParent.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      } else {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     }
   };
 

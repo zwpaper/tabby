@@ -1,17 +1,29 @@
 import { useRef, useState } from "react";
+import { ConversationToc } from "./components/conversation-toc";
 import { FileControls } from "./components/file-controls";
-import { ImportSpanIdsModal } from "./components/import-span-ids-modal";
-import { ImportTasksModal } from "./components/import-tasks-modal";
-import { ResponseToc } from "./components/response-toc";
+import { SpanIdsImportModal } from "./components/span-ids-import-modal";
+import { StorageQuotaBadge } from "./components/storage-quota-badge";
 import { TaskBar } from "./components/task-bar";
 import { TaskList } from "./components/task-list";
 import { TaskView, type TaskViewHandle } from "./components/task-view";
+import { TasksImportModal } from "./components/tasks-import-modal";
 import { TaskViewProvider } from "./contexts/task-view-context";
+import { LocalStorageKey, useLocalStorage } from "./hooks/use-local-storage";
 import { fetchTask, fetchTaskBySpanId } from "./lib/task-fetcher";
 import { type TaskData, ZodCompatibleTaskDataType, toTaskData } from "./types";
 
+function normalizeTask(task: TaskData): TaskData {
+  return {
+    ...task,
+    verified: task.verified ?? false,
+    excluded: task.excluded ?? false,
+  };
+}
+
 function App() {
-  const [tasks, setTasks] = useState<TaskData[]>([]);
+  const [tasks, setTasks, clearTasksStorage, isQuotaExceeded] = useLocalStorage<
+    TaskData[]
+  >(LocalStorageKey, [], (tasks) => tasks.map(normalizeTask), 1000);
   const [selectedTask, setSelectedTask] = useState<TaskData | null>(null);
   const [editingPart, setEditingPart] = useState<{
     taskUid: string;
@@ -50,7 +62,10 @@ function App() {
         const uniqueTasks = parsedTasks.filter(
           (task) => !existingUids.has(task.uid),
         );
-        setTasks((prevTasks) => [...uniqueTasks, ...prevTasks]);
+        setTasks((prevTasks) => [
+          ...uniqueTasks.map(normalizeTask),
+          ...prevTasks,
+        ]);
         setSelectedTask(null);
         setEditingPart(null);
 
@@ -97,7 +112,10 @@ function App() {
         (task) => !existingUids.has(task.uid),
       );
 
-      setTasks((prevTasks) => [...uniqueTasks, ...prevTasks]);
+      setTasks((prevTasks) => [
+        ...uniqueTasks.map(normalizeTask),
+        ...prevTasks,
+      ]);
       setSelectedTask(null);
       setEditingPart(null);
 
@@ -168,7 +186,7 @@ function App() {
         }
       }
 
-      setTasks((prevTasks) => [...newTasks, ...prevTasks]);
+      setTasks((prevTasks) => [...newTasks.map(normalizeTask), ...prevTasks]);
       setSelectedTask(null);
       setEditingPart(null);
 
@@ -212,7 +230,7 @@ function App() {
         }
       }
 
-      setTasks((prevTasks) => [...newTasks, ...prevTasks]);
+      setTasks((prevTasks) => [...newTasks.map(normalizeTask), ...prevTasks]);
       setSelectedTask(null);
       setEditingPart(null);
 
@@ -366,6 +384,33 @@ function App() {
     setSelectedTask(updatedSelectedTask);
   };
 
+  const handleRevertPart = (
+    taskUid: string,
+    messageIndex: number,
+    partIndex: number,
+  ) => {
+    const newTasks = tasks.map((task) => {
+      if (task.uid === taskUid) {
+        const newMessages = [...task.messages];
+        const message = newMessages[messageIndex];
+        if (Array.isArray(message.content)) {
+          const newContent = [...message.content];
+          // Remove the newText property to revert to original text
+          const { newText, ...originalPart } = newContent[partIndex];
+          newContent[partIndex] = originalPart;
+          newMessages[messageIndex] = { ...message, content: newContent };
+          return { ...task, messages: newMessages };
+        }
+      }
+      return task;
+    });
+
+    setTasks(newTasks);
+    const updatedSelectedTask =
+      newTasks.find((task) => task.uid === selectedTask?.uid) || null;
+    setSelectedTask(updatedSelectedTask);
+  };
+
   const handleExport = () => {
     const jsonlContent = tasks.map((task) => JSON.stringify(task)).join("\n");
     navigator.clipboard.writeText(jsonlContent).then(
@@ -379,6 +424,34 @@ function App() {
     );
   };
 
+  const handleExportShareLinks = () => {
+    const shareLinks = tasks
+      .map((task) => `https://app.getpochi.com/share/${task.uid}`)
+      .join("\n");
+    navigator.clipboard.writeText(shareLinks).then(
+      () => {
+        alert("Share links copied to clipboard!");
+      },
+      (err) => {
+        console.error("Could not copy share links: ", err);
+        alert("Failed to copy share links to clipboard.");
+      },
+    );
+  };
+
+  const handleClearStorage = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all tasks? This action cannot be undone.",
+      )
+    ) {
+      clearTasksStorage();
+      setSelectedTask(null);
+      setEditingPart(null);
+      alert("All tasks have been cleared.");
+    }
+  };
+
   const scrollToTop = () => {
     taskViewRef.current?.scrollToTop();
   };
@@ -390,28 +463,33 @@ function App() {
   return (
     <TaskViewProvider>
       <div className="flex h-screen flex-col bg-background">
-        <header className="flex items-center justify-between gap-4 border-b bg-card p-4 shadow-sm">
-          <FileControls
-            onImport={handleImport}
-            onExport={handleExport}
-            onFileUpload={handleFileUpload}
-            onImportTasks={openImportTasksModal}
-            onImportSpanIds={openImportSpanIdsModal}
-            isExportDisabled={tasks.length === 0}
-          />
-          {selectedTask && (
-            <TaskBar
-              selectedTask={selectedTask}
-              onVerifiedChange={handleVerifiedChange}
-              onExcludedChange={handleExcludedChange}
-              scrollToTop={scrollToTop}
-              scrollToBottom={scrollToBottom}
-              isSidebarOpen={isSidebarOpen}
-              toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-              isTocOpen={isTocOpen}
-              toggleToc={() => setIsTocOpen(!isTocOpen)}
+        <header className="flex flex-col gap-2 border-b bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <FileControls
+              onImport={handleImport}
+              onExport={handleExport}
+              onFileUpload={handleFileUpload}
+              onImportTasks={openImportTasksModal}
+              onImportSpanIds={openImportSpanIdsModal}
+              onExportShareLinks={handleExportShareLinks}
+              onClearStorage={handleClearStorage}
+              isExportDisabled={tasks.length === 0}
             />
-          )}
+            {selectedTask && (
+              <TaskBar
+                selectedTask={selectedTask}
+                onVerifiedChange={handleVerifiedChange}
+                onExcludedChange={handleExcludedChange}
+                scrollToTop={scrollToTop}
+                scrollToBottom={scrollToBottom}
+                isSidebarOpen={isSidebarOpen}
+                toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                isTocOpen={isTocOpen}
+                toggleToc={() => setIsTocOpen(!isTocOpen)}
+              />
+            )}
+          </div>
+          <StorageQuotaBadge isVisible={isQuotaExceeded} />
         </header>
         <div className="flex flex-grow overflow-hidden">
           {isSidebarOpen && (
@@ -434,6 +512,7 @@ function App() {
                 onCancel={handleCancel}
                 onToggleDeleteMessage={handleToggleDeleteMessage}
                 onRemovePart={handleRemovePart}
+                onRevertPart={handleRevertPart}
                 onEditedContentChange={setEditedContent}
               />
             ) : (
@@ -444,18 +523,18 @@ function App() {
           </div>
           {isTocOpen && selectedTask && (
             <div className="w-1/5 overflow-y-auto border-l bg-muted/30 p-4">
-              <ResponseToc messages={selectedTask.messages} />
+              <ConversationToc messages={selectedTask.messages} />
             </div>
           )}
         </div>
 
-        <ImportTasksModal
+        <TasksImportModal
           isOpen={isImportTasksModalOpen}
           onClose={() => setIsImportTasksModalOpen(false)}
           onImport={handleImportTasks}
         />
 
-        <ImportSpanIdsModal
+        <SpanIdsImportModal
           isOpen={isImportSpanIdsModalOpen}
           onClose={() => setIsImportSpanIdsModalOpen(false)}
           onImport={handleImportSpanIds}
