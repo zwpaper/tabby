@@ -1,3 +1,4 @@
+import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
 import type { UIMessage } from "ai";
 
@@ -56,6 +57,30 @@ export function findTodos(message: UIMessage): Todo[] | undefined {
           part.toolInvocation.state === "result")
       ) {
         return mergeTodos(acc, part.toolInvocation.args.todos);
+      }
+      return acc;
+    }, [] as Todo[]);
+
+  return todos;
+}
+
+export function findTodosNext(message: UIMessageNext): Todo[] | undefined {
+  if (message.role !== "assistant") {
+    return;
+  }
+  const lastStepStartIndex = message.parts.reduce((lastIndex, part, index) => {
+    return part.type === "step-start" ? index : lastIndex;
+  }, -1);
+
+  const todos = message.parts
+    .slice(lastStepStartIndex + 1)
+    .reduce((acc, part) => {
+      if (
+        part.type === "tool-todoWrite" &&
+        (part.state === "input-available" || part.state === "output-available")
+      ) {
+        const input = part.input as { todos: Todo[] };
+        return mergeTodos(acc, input.todos);
       }
       return acc;
     }, [] as Todo[]);

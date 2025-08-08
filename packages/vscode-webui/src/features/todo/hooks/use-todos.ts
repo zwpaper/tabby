@@ -1,8 +1,7 @@
 import type { Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
-import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
+import { findTodosNext, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Message } from "@ragdoll/livekit";
-import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import { useCallback, useEffect, useState } from "react";
 
 export function useTodos({
@@ -32,7 +31,7 @@ export function useTodos({
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef.current): todosRef is a ref
   const updateTodos = useCallback(
     (message: Message) => {
-      const newTodos = findTodos(toV4UIMessage(message));
+      const newTodos = findTodosNext(message);
       if (newTodos !== undefined) {
         setTodos(mergeTodos(todosRef.current || [], newTodos));
       }
