@@ -6,7 +6,7 @@ import {
   convertToModelMessages,
   streamText,
 } from "@ai-v5-sdk/ai";
-import { ClientToolsV5 } from "@getpochi/tools";
+import { ClientToolsV5, ZodMcpTool } from "@getpochi/tools";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -29,6 +29,13 @@ const RequestType = z.object({
   messages: z.array(MessageType),
   system: z.string(),
   model: z.string().optional().describe("Model to use for this request."),
+  mcpToolSet: z
+    .record(
+      z.string().describe("Name of the MCP tool."),
+      ZodMcpTool.describe("Definition of the MCP tool."),
+    )
+    .optional()
+    .describe("MCP tools available for this request."),
 });
 
 const chat = new Hono()
@@ -68,8 +75,11 @@ const chat = new Hono()
         ...modelMessages,
       ],
       model,
-      // FIXME: pass tools from client, like MCP
-      tools: ClientToolsV5,
+      tools: {
+        // FIXME: pass tools from client, like MCP
+        ...ClientToolsV5,
+        ...(req.mcpToolSet || {}),
+      },
       abortSignal: c.req.raw.signal,
       ...getModelOptionsNext(validModelId),
       onFinish({ usage: inputUsage, providerMetadata, finishReason }) {

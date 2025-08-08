@@ -1,6 +1,6 @@
 import { getLogger } from "@/lib/logger";
+import type { McpTool } from "@getpochi/tools";
 import { type Signal, signal } from "@preact/signals-core";
-import type { McpTool } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection

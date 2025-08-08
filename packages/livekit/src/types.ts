@@ -1,6 +1,6 @@
 import type { InferUITool, UIMessage } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2FinishReason } from "@ai-v5-sdk/provider";
-import type { ClientToolsV5 } from "@getpochi/tools";
+import { type ClientToolsV5, ZodMcpTool } from "@getpochi/tools";
 import { ZodEnvironment } from "@ragdoll/db";
 import z from "zod";
 import type { tables } from "./livestore/schema";
@@ -40,6 +40,13 @@ const ZodRequestData = z.object({
       token: z.string(),
     }),
   ]),
+  mcpToolSet: z
+    .record(
+      z.string().describe("Name of the MCP tool."),
+      ZodMcpTool.describe("Definition of the MCP tool."),
+    )
+    .optional()
+    .describe("MCP tools available for this request."),
 });
 
 export type RequestData = z.infer<typeof ZodRequestData>;

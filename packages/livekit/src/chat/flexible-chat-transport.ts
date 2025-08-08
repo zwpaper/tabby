@@ -7,7 +7,7 @@ import {
   streamText,
 } from "@ai-v5-sdk/ai";
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
-import { ClientToolsV5 } from "@getpochi/tools";
+import { ClientToolsV5, type McpTool } from "@getpochi/tools";
 import { formatters, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import type { Message, RequestData } from "../types";
@@ -49,7 +49,9 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     messages,
     abortSignal,
   }) => {
-    const { environment, llm } = await this.prepareRequestData({ messages });
+    const { environment, llm, mcpToolSet } = await this.prepareRequestData({
+      messages,
+    });
 
     this.onStart?.({
       messages,
@@ -62,6 +64,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       messages: await prepareMessages(messages as Message[], environment),
       abortSignal,
       id: chatId,
+      mcpToolSet,
     };
 
     if (llm.type === "openai") {
@@ -87,6 +90,7 @@ type RequestPayload = {
   system: string;
   abortSignal?: AbortSignal;
   messages: Message[];
+  mcpToolSet?: Record<string, McpTool>;
 };
 
 async function prepareMessages(
@@ -121,7 +125,10 @@ async function requestOpenAI(
     abortSignal: payload.abortSignal,
     system: payload.system,
     messages: convertToModelMessages(payload.messages),
-    tools: ClientToolsV5,
+    tools: {
+      ...ClientToolsV5,
+      ...(payload.mcpToolSet || {}),
+    },
     maxOutputTokens: llm.maxOutputTokens,
     maxRetries: 0,
   });
@@ -148,6 +155,7 @@ async function requestPochi(
     system: payload.system,
     messages: payload.messages,
     model: llm.modelId,
+    mcpToolSet: payload.mcpToolSet,
   });
   const response = await fetch("https://app.getpochi.com/api/chatNext/stream", {
     method: "POST",

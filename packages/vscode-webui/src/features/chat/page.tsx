@@ -22,6 +22,7 @@ import { DevModeButton } from "@/components/dev-mode-button";
 import { TokenUsage } from "@/components/token-usage";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { useLatest } from "@/lib/hooks/use-latest";
+import { useMcp } from "@/lib/hooks/use-mcp";
 import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
 import { vscodeHost } from "@/lib/vscode";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
@@ -81,6 +82,7 @@ function Chat({ auth, uid }: ChatProps) {
           ...llm.current,
           token: (await readToken()) || "",
         },
+        mcpToolSet: mcpToolSet.current,
       };
     }, []),
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
@@ -129,9 +131,7 @@ function Chat({ auth, uid }: ChatProps) {
 
   const todosRef = useRef<Todo[] | undefined>(undefined);
 
-  // FIXME(meng): add back Mcp
-  // const { toolset: mcpToolSet } = useMcp();
-
+  const mcpToolSet = useMcpToolSet();
   const pochiModelSettings = usePochiModelSettings();
   const llmFromSelectedModel =
     selectedModel?.type === "byok"
@@ -593,4 +593,9 @@ function useStopBeforeNavigate({
       unsubscribe();
     };
   }, [stop, router]);
+}
+
+function useMcpToolSet() {
+  const { toolset } = useMcp();
+  return useLatest(toolset);
 }

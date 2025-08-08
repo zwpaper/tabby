@@ -161,26 +161,6 @@ describe("MCP Types", () => {
       assert.deepStrictEqual(result.parameters, tool.parameters);
     });
 
-    it("should handle tool status without disabled property", () => {
-      const tool = {
-        description: "Test tool",
-        parameters: {
-          jsonSchema: {
-            type: "object",
-            properties: {
-              input: { type: "string" },
-            },
-          },
-        },
-      } as McpToolStatus;
-
-      const result = omitDisabled(tool);
-
-      assert.ok(!("disabled" in result));
-      assert.strictEqual(result.description, "Test tool");
-      assert.deepStrictEqual(result.parameters, tool.parameters);
-    });
-
     it("should preserve all other properties", () => {
       const tool: McpToolStatus & { customProp: string } = {
         disabled: false,

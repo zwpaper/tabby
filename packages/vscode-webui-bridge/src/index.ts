@@ -10,7 +10,6 @@ export { createVscodeHostStub } from "./webview-stub";
 export type {
   McpStatus,
   McpConnection,
-  McpTool,
   McpToolStatus,
 } from "./mcp";
 

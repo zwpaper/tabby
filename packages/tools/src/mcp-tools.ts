@@ -3,7 +3,7 @@ import { type Tool, tool } from "ai";
 import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 
-export const ZodMcpToolType = z.object({
+export const ZodMcpTool = z.object({
   description: z
     .string()
     .optional()
@@ -16,7 +16,7 @@ export const ZodMcpToolType = z.object({
     .describe("The parameters of the MCP tool."),
 });
 
-type McpTool = z.infer<typeof ZodMcpToolType>;
+export type McpTool = z.infer<typeof ZodMcpTool>;
 
 function parseMcpTool(name: string, mcpTool: McpTool): Tool {
   let toToolResultContent: Tool["experimental_toToolResultContent"];

@@ -1,6 +1,7 @@
 export { defineServerTool } from "./types";
 export {
-  ZodMcpToolType,
+  ZodMcpTool,
+  type McpTool,
   parseMcpToolSet,
 } from "./mcp-tools";
 import { applyDiff, applyDiffV5 } from "./apply-diff";

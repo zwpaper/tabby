@@ -1,4 +1,4 @@
-import { ZodMcpToolType } from "@getpochi/tools";
+import { ZodMcpTool } from "@getpochi/tools";
 import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
 import { ZodEnvironment } from "@ragdoll/db";
 import { z } from "zod";
@@ -20,7 +20,7 @@ export const ZodChatRequestType = z.object({
   mcpToolSet: z
     .record(
       z.string().describe("Name of the MCP tool."),
-      ZodMcpToolType.describe("Definition of the MCP tool."),
+      ZodMcpTool.describe("Definition of the MCP tool."),
     )
     .optional()
     .describe("MCP tools available for this request."),
