@@ -1,14 +1,19 @@
 import type { UseChatHelpers } from "@ai-v5-sdk/react";
 import { prompts } from "@ragdoll/common";
+import { prepareLastMessageForRetryNext } from "@ragdoll/common/message-utils";
 import type { Message } from "@ragdoll/livekit";
 import { useCallback } from "react";
 import { ReadyForRetryError } from "./use-ready-for-retry-error";
 
 export function useRetry({
   messages,
+  setMessages,
   sendMessage,
   regenerate,
-}: Pick<UseChatHelpers<Message>, "messages" | "sendMessage" | "regenerate">) {
+}: Pick<
+  UseChatHelpers<Message>,
+  "messages" | "sendMessage" | "regenerate" | "setMessages"
+>) {
   const retryRequest = useCallback(
     async (error: Error) => {
       if (messages.length === 0) {
@@ -31,10 +36,9 @@ export function useRetry({
         });
       }
 
-      if (
-        error instanceof ReadyForRetryError &&
-        (error.kind === "tool-calls" || error.kind === "ready")
-      ) {
+      const lastMessageForRetry = prepareLastMessageForRetryNext(lastMessage);
+      if (lastMessageForRetry != null) {
+        setMessages([...messages.slice(0, -1), lastMessageForRetry]);
         return sendMessage(undefined);
       }
 
@@ -42,7 +46,7 @@ export function useRetry({
         messageId: lastMessage.id,
       });
     },
-    [messages, sendMessage, regenerate],
+    [messages, setMessages, sendMessage, regenerate],
   );
 
   return retryRequest;

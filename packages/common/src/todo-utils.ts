@@ -52,7 +52,8 @@ export function findTodos(message: UIMessage): Todo[] | undefined {
       if (
         part.type === "tool-invocation" &&
         part.toolInvocation.toolName === "todoWrite" &&
-        part.toolInvocation.state === "call"
+        (part.toolInvocation.state === "call" ||
+          part.toolInvocation.state === "result")
       ) {
         return mergeTodos(acc, part.toolInvocation.args.todos);
       }

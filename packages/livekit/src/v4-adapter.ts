@@ -47,15 +47,11 @@ export async function fromDBMessage(x: DBMessage): Promise<Message> {
           const { toolInvocation } = part;
           const toolName =
             toolInvocation.toolName as keyof typeof ClientToolsV5;
-          if (toolName in ClientToolsV5) {
-            const toolPart = await createToolPart(
-              toolInvocation,
-              ClientToolsV5[toolName],
-            );
-            parts.push(toolPart);
-          } else {
-            parts.push(createDynamicToolPart(toolInvocation));
-          }
+          const toolPart = await createToolPart(
+            toolInvocation,
+            ClientToolsV5[toolName] || null,
+          );
+          parts.push(toolPart);
         }
         break;
       case "file":
@@ -112,12 +108,12 @@ export function toDBMessage(message: Message): DBMessage {
         });
         break;
       case "source-document":
+      case "dynamic-tool":
       case "source-url":
         throw new Error("Unsupported part type");
       default:
-        if (part.type === "dynamic-tool" || isToolUIPart(part)) {
-          const toolName =
-            part.type === "dynamic-tool" ? part.toolName : getToolName(part);
+        if (isToolUIPart(part)) {
+          const toolName = getToolName(part);
           const base = {
             toolCallId: part.toolCallId,
             toolName,
@@ -179,10 +175,10 @@ async function createToolPart(
     DBMessage["parts"][number],
     { type: "tool-invocation" }
   >["toolInvocation"],
-  tool: Tool,
+  tool: Tool | null,
 ): Promise<Message["parts"][number]> {
-  const schema = asSchema(tool.inputSchema);
-  if (schema.validate) {
+  const schema = tool && asSchema(tool.inputSchema);
+  if (schema?.validate) {
     const result = await schema.validate(toolInvocation.args);
     if (!result.success) {
       throw result.error;
@@ -202,22 +198,8 @@ async function createToolPart(
       // @ts-expect-error
       return { ...base, state: "input-available" as const };
     case "result": {
-      if (
-        typeof toolInvocation.result === "object" &&
-        toolInvocation.result &&
-        "error" in toolInvocation.result &&
-        typeof toolInvocation.result.error === "string"
-      ) {
-        // @ts-expect-error
-        return {
-          ...base,
-          state: "output-error",
-          errorText: toolInvocation.result.error,
-        };
-      }
-
-      const schema = asSchema(tool.outputSchema);
-      if (schema.validate) {
+      const schema = tool && asSchema(tool.outputSchema);
+      if (schema?.validate) {
         const result = await schema.validate(toolInvocation.result);
         if (!result.success) {
           throw result.error;
@@ -230,47 +212,6 @@ async function createToolPart(
         output: toolInvocation.result,
       };
     }
-    default:
-      assertUnreachable(toolInvocation);
-  }
-}
-
-function createDynamicToolPart(
-  toolInvocation: Extract<
-    DBMessage["parts"][number],
-    { type: "tool-invocation" }
-  >["toolInvocation"],
-): Message["parts"][number] {
-  const base = {
-    type: "dynamic-tool" as const,
-    toolCallId: toolInvocation.toolCallId,
-    toolName: toolInvocation.toolName,
-    input: toolInvocation.args,
-  };
-
-  switch (toolInvocation.state) {
-    case "partial-call":
-      return { ...base, state: "input-streaming" };
-    case "call":
-      return { ...base, state: "input-available" };
-    case "result":
-      if (
-        typeof toolInvocation.result === "object" &&
-        toolInvocation.result &&
-        "error" in toolInvocation.result &&
-        typeof toolInvocation.result.error === "string"
-      ) {
-        return {
-          ...base,
-          state: "output-error",
-          errorText: toolInvocation.result.error,
-        };
-      }
-      return {
-        ...base,
-        state: "output-available",
-        output: toolInvocation.result,
-      };
     default:
       assertUnreachable(toolInvocation);
   }

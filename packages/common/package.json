@@ -28,7 +28,8 @@
     "rehype": "^13.0.2",
     "remeda": "catalog:",
     "tslog": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@ai-v5-sdk/ai": "catalog:"
   },
   "devDependencies": {
     "@types/fast-levenshtein": "^0.0.4",

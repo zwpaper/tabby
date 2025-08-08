@@ -8,6 +8,7 @@ import { useRetry } from "./use-retry";
 export function useApprovalAndRetry({
   error,
   messages,
+  setMessages,
   status,
   regenerate,
   sendMessage,
@@ -16,7 +17,7 @@ export function useApprovalAndRetry({
   showApproval: boolean;
 } & Pick<
   UseChatHelpers<Message>,
-  "error" | "messages" | "sendMessage" | "regenerate" | "status"
+  "error" | "messages" | "sendMessage" | "regenerate" | "status" | "setMessages"
 >) {
   const { pendingApproval, increaseRetryCount } = usePendingApproval({
     error: useMixinReadyForRetryError(messages, error),
@@ -26,6 +27,7 @@ export function useApprovalAndRetry({
 
   const retryImpl = useRetry({
     messages,
+    setMessages,
     sendMessage,
     regenerate,
   });

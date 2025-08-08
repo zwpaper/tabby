@@ -18,6 +18,7 @@
       "name": "@ragdoll/common",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
+        "@ai-v5-sdk/ai": "catalog:",
         "@getpochi/tools": "workspace:*",
         "@ragdoll/db": "workspace:*",
         "ai": "catalog:",
@@ -232,7 +233,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.5.3",
+      "version": "0.5.4",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@orama/orama": "^3.1.11",
