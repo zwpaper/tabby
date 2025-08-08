@@ -35,6 +35,7 @@ const ZodRequestData = z.object({
     }),
     z.object({
       type: z.literal("pochi"),
+      server: z.string().default("https://app.getpochi.com"),
       modelId: z.string().optional(),
       modelEndpointId: z.string().optional(),
       token: z.string(),
