@@ -24,6 +24,9 @@ export type LiveChatKitOptions<T> = {
   taskId: string;
   store: Store;
   chatClass: new (options: ChatInit<Message>) => T;
+  onBeforeMakeRequest?: (options: {
+    messages: Message[];
+  }) => void | Promise<void>;
   prepareRequestData: PrepareRequestDataCallback;
 } & Omit<
   ChatInit<Message>,
@@ -41,6 +44,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
     store,
     chatClass,
     prepareRequestData,
+    onBeforeMakeRequest,
     ...chatInit
   }: LiveChatKitOptions<T>) {
     this.taskId = taskId;
@@ -59,6 +63,19 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       onError: this.onError,
       transport: this.transport,
     });
+
+    if (onBeforeMakeRequest) {
+      // @ts-expect-error: monkey patch
+      const chat = this.chat as {
+        makeRequest: (...args: unknown[]) => Promise<unknown>;
+      };
+
+      const originMakeRequest = chat.makeRequest;
+      chat.makeRequest = async (...args) => {
+        await onBeforeMakeRequest({ messages: this.chat.messages });
+        return originMakeRequest.apply(chat, args);
+      };
+    }
   }
 
   get task() {

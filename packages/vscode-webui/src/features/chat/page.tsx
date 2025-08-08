@@ -66,14 +66,9 @@ function Chat({ auth, uid }: ChatProps) {
 
   const chatKit = useLiveChatKit({
     taskId: uid,
-    prepareRequestData: useCallback(async ({ messages }) => {
+    prepareRequestData: useCallback(async () => {
       if (!llm.current) {
         throw new Error("LLM is not set");
-      }
-
-      const lastMessage = messages.at(-1);
-      if (lastMessage) {
-        await appendCheckpoint(lastMessage);
       }
 
       return {
@@ -86,6 +81,12 @@ function Chat({ auth, uid }: ChatProps) {
       };
     }, []),
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onBeforeMakeRequest: async ({ messages }) => {
+      const lastMessage = messages.at(-1);
+      if (lastMessage) {
+        await appendCheckpoint(lastMessage);
+      }
+    },
   });
   const task = store.useQuery(catalog.queries.makeTaskQuery(uid));
   const totalTokens = task?.totalTokens || 0;
@@ -562,7 +563,15 @@ function findLastCheckpointFromMessages(
 }
 
 async function appendCheckpoint(message: Message) {
-  if (message.parts.some((x) => x.type === "data-checkpoint")) {
+  const lastStepStartIndex =
+    message.parts.reduce((lastIndex, part, index) => {
+      return part.type === "step-start" ? index : lastIndex;
+    }, -1) ?? -1;
+  if (
+    message.parts
+      .slice(lastStepStartIndex + 1)
+      .some((x) => x.type === "data-checkpoint")
+  ) {
     return;
   }
 

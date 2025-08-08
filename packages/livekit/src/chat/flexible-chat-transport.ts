@@ -21,11 +21,9 @@ export type OnStartCallback = (options: {
   environment?: Environment;
 }) => void;
 
-export type PrepareRequestDataCallback = ({
-  messages,
-}: {
-  messages: Message[];
-}) => RequestData | Promise<RequestData>;
+export type PrepareRequestDataCallback = () =>
+  | RequestData
+  | Promise<RequestData>;
 
 export class FlexibleChatTransport implements ChatTransport<Message> {
   private readonly onStart?: OnStartCallback;
@@ -52,9 +50,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     messages,
     abortSignal,
   }) => {
-    const { environment, llm, mcpToolSet } = await this.prepareRequestData({
-      messages,
-    });
+    const { environment, llm, mcpToolSet } = await this.prepareRequestData();
 
     this.onStart?.({
       messages,
@@ -146,7 +142,7 @@ async function requestOpenAI(
   });
 }
 
-const defaultTransport = new DefaultChatTransport<Message>();
+const defaultTransport = new DefaultChatTransport<Message>({});
 
 async function requestPochi(
   llm: Extract<RequestData["llm"], { type: "pochi" }>,
