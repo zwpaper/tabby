@@ -1,15 +1,10 @@
-import type { InferResponseType } from "hono/client";
 import { useEffect, useRef } from "react";
 
 import { ReadyForRetryError } from "@/features/approval";
-import type { apiClient } from "@/lib/auth-client";
-
-type Task = NonNullable<
-  InferResponseType<(typeof apiClient.api.tasks)[":uid"]["$get"]>
->;
+import type { Task } from "@ragdoll/livekit";
 
 interface UseEventAutoStartOptions {
-  task: Task | null;
+  task?: Task;
   retry: (error: Error) => void;
   enabled: boolean;
 }

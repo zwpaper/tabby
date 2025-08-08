@@ -31,6 +31,7 @@ import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
 import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import type { GitDiff } from "@ragdoll/vscode-webui-bridge";
+import { useRouter } from "@tanstack/react-router";
 import { ApprovalButton, useApprovalAndRetry } from "../approval";
 import { TodoList, useTodos } from "../todo";
 import { ChatArea } from "./components/chat-area";
@@ -39,6 +40,7 @@ import { ErrorMessageView } from "./components/error-message-view";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
+import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 
 export function ChatPage({
@@ -153,6 +155,7 @@ function Chat({ auth, uid }: ChatProps) {
   const chat = useChat({
     chat: chatKit.chat,
   });
+  useStopBeforeNavigate(chat);
   // const chat = useChat({
   //   /*
   //    * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
@@ -291,12 +294,11 @@ function Chat({ auth, uid }: ChatProps) {
     ...chat,
   });
 
-  // FIXME(meng): consider add back pending model auto start.
-  // usePendingModelAutoStart({
-  //   enabled: status === "ready" && messages.length === 1 && !isTaskLoading,
-  //   task: task,
-  //   retry,
-  // });
+  usePendingModelAutoStart({
+    enabled: status === "ready" && messages.length === 1 && !isTaskLoading,
+    task,
+    retry,
+  });
 
   // FIXME(meng): add back compact UX
   // const forceCompact = useRef(false);
@@ -572,4 +574,21 @@ async function appendCheckpoint(message: Message) {
       commit: ckpt,
     },
   });
+}
+
+function useStopBeforeNavigate({
+  stop,
+}: Pick<UseChatHelpers<Message>, "stop">) {
+  const router = useRouter();
+  useEffect(() => {
+    // Subscribe to the 'onBeforeLoad' event
+    const unsubscribe = router.subscribe("onBeforeLoad", () => {
+      stop();
+    });
+
+    // Clean up the subscription when the component unmounts
+    return () => {
+      unsubscribe();
+    };
+  }, [stop, router]);
 }
