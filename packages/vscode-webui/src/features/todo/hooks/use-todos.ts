@@ -1,9 +1,8 @@
-import type { UIMessage } from "@ai-sdk/ui-utils";
 import type { Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
-import { hasAttemptCompletion } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Message } from "@ragdoll/livekit";
+import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import { useCallback, useEffect, useState } from "react";
 
 export function useTodos({
@@ -32,8 +31,8 @@ export function useTodos({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef.current): todosRef is a ref
   const updateTodos = useCallback(
-    (message: UIMessage) => {
-      const newTodos = findTodos(message);
+    (message: Message) => {
+      const newTodos = findTodos(toV4UIMessage(message));
       if (newTodos !== undefined) {
         setTodos(mergeTodos(todosRef.current || [], newTodos));
       }
@@ -45,15 +44,11 @@ export function useTodos({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef.current): todosRef is a ref
   useEffect(() => {
-    if (
-      lastMessage &&
-      lastMessage.role === "assistant" &&
-      lastMessage.parts !== undefined
-    ) {
-      updateTodos(lastMessage as UIMessage);
+    if (lastMessage && lastMessage.role === "assistant") {
+      updateTodos(lastMessage);
 
       // Auto-mark todos as completed if this message has attempt completion
-      if (hasAttemptCompletion(lastMessage as UIMessage)) {
+      if (lastMessage.parts.some((x) => x.type === "tool-attemptCompletion")) {
         const currentTodos = todosRef.current || [];
         if (currentTodos.length > 0) {
           const updatedTodos = currentTodos.map((todo) => {

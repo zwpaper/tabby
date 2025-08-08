@@ -71,10 +71,11 @@ export function useChatSubmit({
   ]);
 
   const handleSubmit = useCallback(
-    async (e?: React.FormEvent<HTMLFormElement>, prompt?: string) => {
+    async (e?: React.FormEvent<HTMLFormElement>) => {
       e?.preventDefault();
 
-      if (isCompacting || (isSubmitDisabled && !prompt)) {
+      const content = input.trim();
+      if (isCompacting || (isSubmitDisabled && !content)) {
         return;
       }
       if (handleStop()) {
@@ -83,7 +84,6 @@ export function useChatSubmit({
       }
 
       autoApproveGuard.current = false;
-      const content = prompt || input.trim();
       if (files.length > 0) {
         try {
           const uploadedImages = await upload();
