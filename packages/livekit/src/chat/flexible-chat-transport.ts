@@ -2,7 +2,6 @@ import {
   type ChatRequestOptions,
   type ChatTransport,
   DefaultChatTransport,
-  type UIMessage,
   type UIMessageChunk,
   convertToModelMessages,
   streamText,
@@ -15,15 +14,17 @@ import type { Message, RequestData } from "../types";
 import { fromV4UIMessage, toV4UIMessage } from "../v4-adapter";
 
 export type OnStartCallback = (options: {
-  messages: UIMessage[];
+  messages: Message[];
   environment?: Environment;
 }) => void;
 
-export type PrepareRequestDataCallback = () =>
-  | RequestData
-  | Promise<RequestData>;
+export type PrepareRequestDataCallback = ({
+  messages,
+}: {
+  messages: Message[];
+}) => RequestData | Promise<RequestData>;
 
-export class FlexibleChatTransport implements ChatTransport<UIMessage> {
+export class FlexibleChatTransport implements ChatTransport<Message> {
   private readonly onStart?: OnStartCallback;
   private readonly prepareRequestData: PrepareRequestDataCallback;
 
@@ -40,7 +41,7 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
       trigger: "submit-message" | "regenerate-message";
       chatId: string;
       messageId: string | undefined;
-      messages: UIMessage[];
+      messages: Message[];
       abortSignal: AbortSignal | undefined;
     } & ChatRequestOptions,
   ) => Promise<ReadableStream<UIMessageChunk>> = async ({
@@ -48,7 +49,7 @@ export class FlexibleChatTransport implements ChatTransport<UIMessage> {
     messages,
     abortSignal,
   }) => {
-    const { environment, llm } = await this.prepareRequestData();
+    const { environment, llm } = await this.prepareRequestData({ messages });
 
     this.onStart?.({
       messages,

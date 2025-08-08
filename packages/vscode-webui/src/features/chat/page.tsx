@@ -59,23 +59,27 @@ interface ChatProps {
 
 function Chat({ auth, uid }: ChatProps) {
   const { store } = useStore();
-  const prepareRequestData = useCallback(async () => {
-    if (!llm.current) {
-      throw new Error("LLM is not set");
-    }
-
-    return {
-      environment: await buildEnvironment(),
-      llm: {
-        ...llm.current,
-        token: (await readToken()) || "",
-      },
-    };
-  }, []);
 
   const chatKit = useLiveChatKit({
     taskId: uid,
-    prepareRequestData,
+    prepareRequestData: useCallback(async ({ messages }) => {
+      if (!llm.current) {
+        throw new Error("LLM is not set");
+      }
+
+      const lastMessage = messages.at(-1);
+      if (lastMessage) {
+        await appendCheckpoint(lastMessage);
+      }
+
+      return {
+        environment: await buildEnvironment(),
+        llm: {
+          ...llm.current,
+          token: (await readToken()) || "",
+        },
+      };
+    }, []),
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
   const task = store.useQuery(catalog.queries.makeTaskQuery(uid));
@@ -549,4 +553,19 @@ function findLastCheckpointFromMessages(
     }
   }
   return undefined;
+}
+
+async function appendCheckpoint(message: Message) {
+  const { id } = message;
+  const ckpt = await vscodeHost.saveCheckpoint(`ckpt-msg-${id}`, {
+    force: message.role === "user",
+  });
+  if (!ckpt) return;
+
+  message.parts.push({
+    type: "data-checkpoint",
+    data: {
+      commit: ckpt,
+    },
+  });
 }

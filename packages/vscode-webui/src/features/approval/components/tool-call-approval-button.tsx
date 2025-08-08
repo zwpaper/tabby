@@ -61,6 +61,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
   const abortText = ToolAbortText[pendingApproval.name] || "Stop";
 
   const onAccept = useCallback(() => {
+    autoApproveGuard.current = true;
     for (const [i, lifecycle] of lifecycles.entries()) {
       if (lifecycle.status !== "ready") {
         continue;
@@ -70,7 +71,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
         model: selectedModel?.id,
       });
     }
-  }, [tools, lifecycles, selectedModel?.id]);
+  }, [tools, lifecycles, selectedModel?.id, autoApproveGuard]);
 
   const onReject = useCallback(() => {
     for (const lifecycle of lifecycles) {
