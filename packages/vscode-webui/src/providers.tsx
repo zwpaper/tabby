@@ -63,7 +63,7 @@ function LiveStoreProviderWrapper({ children }: { children: React.ReactNode }) {
     <LiveStoreProvider
       schema={catalog.schema}
       adapter={adapter}
-      renderLoading={(_) => <div>Loading LiveStore ({_.stage})...</div>}
+      renderLoading={(_) => <></>}
       batchUpdates={batchUpdates}
       storeId={storeId}
     >
