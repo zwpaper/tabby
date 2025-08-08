@@ -125,6 +125,7 @@ export const events = {
     schema: Schema.Struct({
       id: Schema.String,
       error: TaskError,
+      data: Schema.NullOr(DBMessage),
       updatedAt: Schema.Date,
     }),
   }),
@@ -198,7 +199,7 @@ const materializers = State.SQLite.materializers(events, {
       })
       .onConflict("id", "replace"),
   ],
-  "v1.ChatStreamFailed": ({ id, error, updatedAt }) =>
+  "v1.ChatStreamFailed": ({ id, error, updatedAt, data }) => [
     tables.tasks
       .update({
         status: "failed",
@@ -206,6 +207,18 @@ const materializers = State.SQLite.materializers(events, {
         updatedAt,
       })
       .where({ id }),
+    ...(data
+      ? [
+          tables.messages
+            .insert({
+              id: data.id,
+              taskId: id,
+              data,
+            })
+            .onConflict("id", "replace"),
+        ]
+      : []),
+  ],
 });
 
 const state = State.SQLite.makeState({ tables, materializers });

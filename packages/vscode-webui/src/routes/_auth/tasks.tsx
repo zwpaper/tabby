@@ -10,14 +10,12 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Import pagination components
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { apiClient } from "@/lib/auth-client";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
-import { useMinionId } from "@/lib/hooks/use-minion-id";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useStore } from "@livestore/react";
+import { type Task, catalog } from "@ragdoll/livekit";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import type { InferResponseType } from "hono/client";
 import {
   Bot,
   Brain,
@@ -25,7 +23,6 @@ import {
   Edit3,
   GitBranch,
   HelpCircle,
-  Loader2,
   TerminalIcon,
   Wrench,
   Zap,
@@ -157,8 +154,7 @@ const getPaginationItems = (
 function App() {
   const { data: currentWorkspace, isFetching: isFetchingWorkspace } =
     useCurrentWorkspace();
-  const { data: minionId, isFetching: isFetchingMinionId } = useMinionId();
-  if (isFetchingMinionId || isFetchingWorkspace) {
+  if (isFetchingWorkspace) {
     return;
   }
 
@@ -170,45 +166,28 @@ function App() {
     );
   }
 
-  return <Tasks cwd={currentWorkspace} minionId={minionId || undefined} />;
+  return <Tasks />;
 }
 
-function Tasks({ cwd, minionId }: { cwd: string; minionId?: string }) {
+function Tasks() {
   const limit = 20;
   const router = useRouter();
   const { page = 1 } = Route.useSearch();
-
-  const { data, isPlaceholderData, isLoading, isRefetching } = useQuery({
-    queryKey: ["tasks", page, limit, cwd],
-    queryFn: () =>
-      apiClient.api.tasks
-        .$get({
-          query: {
-            page: page.toString(),
-            limit: limit.toString(),
-            cwd,
-            minionId,
-          },
-        })
-        .then((x) => x.json()),
-    placeholderData: keepPreviousData,
-  });
-
+  const { store } = useStore();
+  const allTasks = store.useQuery(catalog.queries.tasks$);
+  const totalPages = Math.ceil(allTasks.length / limit);
+  const tasks = allTasks.slice((page - 1) * limit, page * limit);
   const taskRunners = useTaskRunners();
 
-  const tasks = data?.data || [];
-  const meta = data?.pagination; // Adjusted to use 'pagination' from API response
-  const isRefetchingFirstPage = !isLoading && isRefetching && page === 1;
-
   const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || (meta?.totalPages && newPage > meta.totalPages)) return;
+    if (newPage < 1 || (totalPages && newPage > totalPages)) return;
     router.navigate({
       to: "/tasks",
       search: (prev) => ({ ...prev, page: newPage }),
     });
   };
 
-  if (!isLoading && tasks.length === 0) {
+  if (tasks.length === 0) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center">
         <EmptyTaskPlaceholder />
@@ -222,46 +201,24 @@ function Tasks({ cwd, minionId }: { cwd: string; minionId?: string }) {
       <div className="min-h-0 flex-1">
         <ScrollArea className="h-full">
           <div className="flex flex-col gap-4 p-4 pb-6">
-            {isRefetchingFirstPage && (
-              <div className="flex justify-center">
-                <Loader2 className="size-6 animate-spin" />
-              </div>
-            )}
-            {isPlaceholderData || isLoading
-              ? [...Array(limit)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="animate-pulse rounded-lg border border-border/50 border-l-4 border-l-muted-foreground/50 bg-card"
-                  >
-                    <div className="px-4 py-3">
-                      <div className="mb-1 flex items-start justify-between">
-                        <div className="h-3 w-32 rounded bg-card/70" />
-                        <div className="h-5 w-5 rounded bg-card/70" />
-                      </div>
-                      <div className="h-5 w-3/4 rounded bg-card/70" />
-                    </div>
-                  </div>
-                ))
-              : tasks.map((task) => (
-                  <TaskRow
-                    key={task.uid}
-                    task={task}
-                    runningInBackground={
-                      taskRunners[task.uid]?.state === "running"
-                    }
-                  />
-                ))}
+            {tasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                runningInBackground={taskRunners[task.id]?.state === "running"}
+              />
+            ))}
           </div>
         </ScrollArea>
       </div>
 
       {/* Pagination footer */}
-      {meta?.totalPages && meta.totalPages > 1 && (
+      {totalPages && totalPages > 1 && (
         <div className="flex-shrink-0 border-border/50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="px-3 py-2.5 sm:px-4 sm:py-3">
             <Pagination>
               <PaginationContent className="gap-0.5 sm:gap-1">
-                {getPaginationItems(page, meta.totalPages, handlePageChange)}
+                {getPaginationItems(page, totalPages, handlePageChange)}
               </PaginationContent>
             </Pagination>
           </div>
@@ -344,10 +301,6 @@ const getStatusBorderColor = (status: string): string => {
   }
 };
 
-type Task = NonNullable<
-  InferResponseType<(typeof apiClient.api.tasks)["$get"]>
->["data"][number];
-
 function TaskRow({
   task,
   runningInBackground,
@@ -355,7 +308,7 @@ function TaskRow({
   return (
     <Link
       to={runningInBackground ? "/runner" : "/"}
-      search={{ uid: task.uid }}
+      search={{ uid: task.id }}
       className="group cursor-pointer"
     >
       <div

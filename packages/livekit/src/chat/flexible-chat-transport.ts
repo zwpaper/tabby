@@ -117,6 +117,7 @@ async function requestOpenAI(
   const model = openai(llm.modelId);
   const result = streamText({
     model,
+    abortSignal: payload.abortSignal,
     system: payload.system,
     messages: convertToModelMessages(payload.messages),
     tools: ClientToolsV5,

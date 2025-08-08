@@ -1,7 +1,22 @@
 import { persister, queryClient } from "@/lib/query-client";
 import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
+import { makePersistedAdapter } from "@livestore/adapter-web";
+import LiveStoreSharedWorker from "@livestore/adapter-web/shared-worker?sharedworker&inline";
+import { LiveStoreProvider } from "@livestore/react";
+import { catalog } from "@ragdoll/livekit";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { binary_to_base58 } from "base58-js";
+import { useMemo } from "react";
+import { unstable_batchedUpdates as batchUpdates } from "react-dom";
 import { ThemeProvider } from "./components/theme-provider";
+import { useCurrentWorkspace } from "./lib/hooks/use-current-workspace";
+import LiveStoreWorker from "./livestore.worker.ts?worker&inline";
+
+const adapter = makePersistedAdapter({
+  storage: { type: "opfs" },
+  worker: LiveStoreWorker,
+  sharedWorker: LiveStoreSharedWorker,
+});
 
 export const Providers: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -29,8 +44,30 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
           },
         }}
       >
-        <AuthQueryProvider>{children}</AuthQueryProvider>
+        <AuthQueryProvider>
+          <LiveStoreProviderWrapper>{children}</LiveStoreProviderWrapper>
+        </AuthQueryProvider>
       </PersistQueryClientProvider>
     </ThemeProvider>
   );
 };
+
+function LiveStoreProviderWrapper({ children }: { children: React.ReactNode }) {
+  const { data: cwd = "default" } = useCurrentWorkspace();
+  const storeId = useMemo(
+    () => binary_to_base58(new TextEncoder().encode(cwd)),
+    [cwd],
+  );
+
+  return (
+    <LiveStoreProvider
+      schema={catalog.schema}
+      adapter={adapter}
+      renderLoading={(_) => <div>Loading LiveStore ({_.stage})...</div>}
+      batchUpdates={batchUpdates}
+      storeId={storeId}
+    >
+      {children}
+    </LiveStoreProvider>
+  );
+}

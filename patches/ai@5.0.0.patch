@@ -1,0 +1,12 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 20a9d79b8df070c21bf48b17727370a9035d6c5d..da96323e0606810e13939470392edb53e54cb3e1 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -9156,6 +9156,7 @@ var AbstractChat = class {
+     } catch (err) {
+       if (err.name === "AbortError") {
+         this.setStatus({ status: "ready" });
++        this.onError(err);
+         return null;
+       }
+       if (this.onError && err instanceof Error) {

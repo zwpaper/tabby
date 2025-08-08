@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/auth-client";
 import { MaxImages } from "@/lib/constants";
 import { createImageFileName, validateImage } from "@/lib/utils/image";
-import type { Attachment } from "ai";
+import type { FileUIPart } from "@ai-v5-sdk/ai";
 import { useRef, useState } from "react";
 
 const UseDataURI = true;
@@ -121,7 +121,7 @@ export function useImageUpload(options?: UseImageUploadOptions) {
     return false;
   };
 
-  const upload = async (): Promise<Attachment[]> => {
+  const upload = async (): Promise<FileUIPart[]> => {
     if (!files.length) {
       return [];
     }
@@ -135,12 +135,13 @@ export function useImageUpload(options?: UseImageUploadOptions) {
     try {
       const uploadPromises = files.map(async (file) => {
         return {
-          name: file.name || "unnamed-image",
-          contentType: file.type,
+          type: "file",
+          filename: file.name || "unnamed-image",
+          mediaType: file.type,
           url: UseDataURI
             ? await fileToDataUri(file)
             : await fileToRemoteUri(file, abortController.current?.signal),
-        };
+        } satisfies FileUIPart;
       });
 
       const uploadedImages = await Promise.all(uploadPromises);

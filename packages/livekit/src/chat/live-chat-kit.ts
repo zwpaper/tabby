@@ -30,7 +30,7 @@ export type LiveChatKitOptions<T> = {
   "id" | "messages" | "generateId" | "onFinish" | "onError" | "transport"
 >;
 
-export class LiveChatKit<T> {
+export class LiveChatKit<T extends { messages: Message[] }> {
   protected readonly taskId: string;
   protected readonly store: Store;
   readonly chat: T;
@@ -58,7 +58,6 @@ export class LiveChatKit<T> {
       onFinish: this.onFinish,
       onError: this.onError,
       transport: this.transport,
-      // sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     });
   }
 
@@ -121,10 +120,12 @@ export class LiveChatKit<T> {
   };
 
   private readonly onError: ChatOnErrorCallback = (error) => {
+    const lastMessage = this.chat.messages.at(-1) || null;
     this.store.commit(
       events.chatStreamFailed({
         id: this.taskId,
         error: toTaskError(error),
+        data: lastMessage,
         updatedAt: new Date(),
       }),
     );

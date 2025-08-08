@@ -1,4 +1,5 @@
-import type { UIMessage } from "ai";
+import type { Message } from "@ragdoll/livekit";
+import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import {
   type PendingRetryApproval,
   usePendingRetryApproval,
@@ -16,7 +17,7 @@ export function usePendingApproval({
   status,
 }: {
   error?: Error;
-  messages: UIMessage[];
+  messages: Message[];
   status: "submitted" | "streaming" | "ready" | "error";
 }) {
   const { pendingApproval: pendingRetryApproval, increaseRetryCount } =
@@ -25,7 +26,10 @@ export function usePendingApproval({
       status,
     });
   const { pendingApproval: pendingToolCallApproval } =
-    usePendingToolCallApproval({ error, messages });
+    usePendingToolCallApproval({
+      error,
+      messages: messages.map(toV4UIMessage),
+    });
 
   if (status === "streaming" || status === "submitted") {
     return {

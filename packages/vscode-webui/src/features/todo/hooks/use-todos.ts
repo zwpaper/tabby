@@ -11,7 +11,7 @@ export function useTodos({
   messages,
   todosRef,
 }: {
-  initialTodos?: Todo[];
+  initialTodos?: Readonly<Todo[]>;
   messages: Message[];
   todosRef: React.MutableRefObject<Todo[] | undefined>;
 }) {
@@ -25,7 +25,8 @@ export function useTodos({
 
   useEffect(() => {
     if (initialTodos) {
-      setTodos(initialTodos);
+      // readonly -> mutable with json re-serialize
+      setTodos(JSON.parse(JSON.stringify(initialTodos)));
     }
   }, [initialTodos, setTodos]);
 

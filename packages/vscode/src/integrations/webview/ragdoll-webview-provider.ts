@@ -195,6 +195,24 @@ export class RagdollWebviewProvider
 
     if (isProd) {
       const nonce = getNonce();
+      const sqliteWasmUri = getUri(webview, this.context.extensionUri, [
+        "assets",
+        "webview-ui",
+        "dist",
+        "wa-sqlite.wasm",
+      ]);
+      const sqliteLoaderScript = `<script nonce="${nonce}" type="module">
+      const originURL = globalThis.URL;
+      globalThis.URL = class extends originURL {
+        constructor(url, base) {
+          if (url === "/wa-sqlite.wasm") {
+            super("${sqliteWasmUri}");
+          } else {
+            super(url, base);
+          }
+        }
+      }
+      </script>`;
 
       const scriptUri = getUri(webview, this.context.extensionUri, [
         "assets",
@@ -215,16 +233,17 @@ export class RagdollWebviewProvider
       const csp = [
         `default-src 'none';`,
         `img-src ${webview.cspSource} https://* blob: data:`,
-        `script-src 'nonce-${nonce}' '${webuiLoggingHash}'`,
+        `script-src 'nonce-${nonce}' '${webuiLoggingHash}' 'unsafe-eval'`,
         `style-src ${webview.cspSource} 'unsafe-inline'`,
         `font-src ${webview.cspSource}`,
-        `connect-src ${getServerBaseUrl()}`,
+        `connect-src ${getServerBaseUrl()} https://*.vscode-cdn.net`,
+        "worker-src data:",
       ];
       const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 
       return this.buildHtml(
         [cspHeader, style, setiFontStyle],
-        [webuiLoggingScript, script],
+        [sqliteLoaderScript, webuiLoggingScript, script],
       );
     }
 
@@ -255,7 +274,8 @@ export class RagdollWebviewProvider
       `script-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} '${reactRefreshHash}' '${webuiLoggingHash}' 'unsafe-eval'`,
       `style-src ${webview.cspSource} 'self' 'unsafe-inline'`,
       `font-src ${webview.cspSource}`,
-      `connect-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} ${devWebUIWsBaseUrl} ${devWebUIWsBaseUrlIp} ${getServerBaseUrl()}`,
+      `connect-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} ${devWebUIWsBaseUrl} ${devWebUIWsBaseUrlIp} ${getServerBaseUrl()} https://*`,
+      `worker-src ${devWebUIHttpBaseUrl} blob:`,
     ];
     const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 

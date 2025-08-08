@@ -1,35 +1,35 @@
 import type { PendingApproval } from "@/features/approval";
 import type { useImageUpload } from "@/lib/hooks/use-image-upload";
-import type { UseChatHelpers } from "@ai-sdk/react";
+import type { UseChatHelpers } from "@ai-v5-sdk/react";
+import type { Message } from "@ragdoll/livekit";
 import type React from "react";
-import { type MutableRefObject, useCallback } from "react";
+import { useCallback } from "react";
 import { useAutoApproveGuard, useToolCallLifeCycle } from "../lib/chat-state";
 
-type UseChatReturn = Pick<
-  UseChatHelpers,
-  "append" | "setInput" | "input" | "messages" | "stop"
->;
+type UseChatReturn = Pick<UseChatHelpers<Message>, "sendMessage" | "stop">;
 
 type UseImageUploadReturn = ReturnType<typeof useImageUpload>;
 
 interface UseChatSubmitProps {
   chat: UseChatReturn;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
   imageUpload: UseImageUploadReturn;
   isSubmitDisabled: boolean;
   isLoading: boolean;
   isCompacting: boolean;
   pendingApproval: PendingApproval | undefined;
-  recentAborted: MutableRefObject<boolean>;
 }
 
 export function useChatSubmit({
   chat,
+  input,
+  setInput,
   imageUpload,
   isSubmitDisabled,
   isLoading,
   isCompacting,
   pendingApproval,
-  recentAborted,
 }: UseChatSubmitProps) {
   const autoApproveGuard = useAutoApproveGuard();
   const { executingToolCalls } = useToolCallLifeCycle();
@@ -40,7 +40,7 @@ export function useChatSubmit({
     }
   }, [executingToolCalls]);
 
-  const { append, setInput, input, stop: stopChat } = chat;
+  const { sendMessage, stop: stopChat } = chat;
   const {
     files,
     isUploading,
@@ -50,14 +50,13 @@ export function useChatSubmit({
   } = imageUpload;
 
   const handleStop = useCallback(() => {
-    recentAborted.current = false;
     if (isExecuting) {
       abortToolCalls();
     } else if (isUploading) {
       cancelUpload();
     } else if (isLoading) {
       stopChat();
-      recentAborted.current = true;
+      return true;
     } else if (pendingApproval?.name === "retry") {
       pendingApproval.stopCountdown();
     }
@@ -69,7 +68,6 @@ export function useChatSubmit({
     abortToolCalls,
     cancelUpload,
     stopChat,
-    recentAborted,
   ]);
 
   const handleSubmit = useCallback(
@@ -79,8 +77,7 @@ export function useChatSubmit({
       if (isCompacting || (isSubmitDisabled && !prompt)) {
         return;
       }
-      handleStop();
-      if (recentAborted.current) {
+      if (handleStop()) {
         // break isLoading, we need to wait for some time to avoid racing between stop and submit.
         await new Promise((resolve) => setTimeout(resolve, 25));
       }
@@ -91,10 +88,9 @@ export function useChatSubmit({
         try {
           const uploadedImages = await upload();
 
-          append({
-            role: "user",
-            content: content.length === 0 ? " " : content,
-            experimental_attachments: uploadedImages,
+          sendMessage({
+            text: content.length === 0 ? " " : content,
+            files: uploadedImages,
           });
 
           setInput("");
@@ -105,9 +101,8 @@ export function useChatSubmit({
       } else if (content.length > 0) {
         autoApproveGuard.current = true;
         clearUploadImageError();
-        append({
-          role: "user",
-          content,
+        sendMessage({
+          text: content,
         });
         setInput("");
       }
@@ -119,10 +114,9 @@ export function useChatSubmit({
       input,
       autoApproveGuard,
       upload,
-      append,
+      sendMessage,
       setInput,
       clearUploadImageError,
-      recentAborted,
       isCompacting,
     ],
   );

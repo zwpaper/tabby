@@ -1,91 +1,98 @@
+import { ImagePreviewList } from "@/components/image-preview-list";
 import { ModelSelect } from "@/components/model-select";
+import { PreviewTool } from "@/components/preview-tool";
 import { Button } from "@/components/ui/button";
-import { ChatContextProvider, useAutoApproveGuard } from "@/features/chat";
-import { useSelectedModels } from "@/features/settings";
-import { apiClient, type authClient } from "@/lib/auth-client";
-import { type UseChatHelpers, useChat } from "@ai-sdk/react";
-import type { Todo } from "@getpochi/tools";
+import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import {
-  CompactTaskMinTokens,
-  formatters,
-  toUIMessages,
-} from "@ragdoll/common";
-import type { Environment, ExtendedUIMessage } from "@ragdoll/db";
-import type { InferResponseType } from "hono/client";
+  ChatContextProvider,
+  useAutoApproveGuard,
+  useHandleChatEvents,
+} from "@/features/chat";
+import { useSelectedModels } from "@/features/settings";
+import { AutoApproveMenu } from "@/features/settings";
+import { type authClient, readToken } from "@/lib/auth-client";
+import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
+import { useImageUpload } from "@/lib/hooks/use-image-upload";
+import { type UseChatHelpers, useChat } from "@ai-v5-sdk/react";
+import type { Todo } from "@getpochi/tools";
 import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { DevModeButton } from "@/components/dev-mode-button"; // Added import
-import { ImagePreviewList } from "@/components/image-preview-list";
-import { PreviewTool } from "@/components/preview-tool";
-import { PublicShareButton } from "@/components/public-share-button";
+import { DevModeButton } from "@/components/dev-mode-button";
 import { TokenUsage } from "@/components/token-usage";
-import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
-import { ApprovalButton, useApprovalAndRetry } from "@/features/approval";
-import { AutoApproveMenu } from "@/features/settings";
-import { TodoList, useTodos } from "@/features/todo";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
-import { useAutoResume } from "@/lib/hooks/use-auto-resume";
-import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
-import { useImageUpload } from "@/lib/hooks/use-image-upload";
-import { useMcp } from "@/lib/hooks/use-mcp";
-import { useMinionId } from "@/lib/hooks/use-minion-id";
+import { useLatest } from "@/lib/hooks/use-latest";
 import { vscodeHost } from "@/lib/vscode";
-
-import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
+import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
+import { useStore } from "@livestore/react";
+import { formatters } from "@ragdoll/common";
+import type { Environment } from "@ragdoll/db";
+import { type Message, type Task, catalog } from "@ragdoll/livekit";
+import { useLiveChatKit } from "@ragdoll/livekit/react";
+import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import type { GitDiff } from "@ragdoll/vscode-webui-bridge";
+import { ApprovalButton, useApprovalAndRetry } from "../approval";
+import { TodoList, useTodos } from "../todo";
 import { ChatArea } from "./components/chat-area";
 import { ChatInputForm } from "./components/chat-input-form";
 import { ErrorMessageView } from "./components/error-message-view";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
-import { useCompactNewTask } from "./hooks/use-compact-new-task";
-import { useForceCompactTask } from "./hooks/use-force-compact-task";
-import { useNewTaskHandler } from "./hooks/use-new-task-handler";
-import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
-import { useTokenUsageUpdater } from "./hooks/use-token-usage-updater";
-import { useHandleChatEvents } from "./lib/chat-events";
-import { prepareRequestBody } from "./lib/prepare-request-body";
 
 export function ChatPage({
-  task,
-  isTaskLoading,
+  uid,
   auth,
-}: {
-  task: Task | null;
-  isTaskLoading: boolean;
-  auth: typeof authClient.$Infer.Session;
-}) {
+}: { uid: string; auth: typeof authClient.$Infer.Session }) {
   return (
     <ChatContextProvider>
-      <Chat task={task} isTaskLoading={isTaskLoading} auth={auth} />
+      <Chat auth={auth} uid={uid} />
     </ChatContextProvider>
   );
 }
 
-type Task = NonNullable<
-  InferResponseType<(typeof apiClient.api.tasks)[":uid"]["$get"]>
->;
 interface ChatProps {
-  task: Task | null;
-  isTaskLoading: boolean;
+  uid: string;
   auth: typeof authClient.$Infer.Session;
 }
 
-function Chat({ auth, task, isTaskLoading }: ChatProps) {
-  const autoApproveGuard = useAutoApproveGuard();
-  const { data: minionId } = useMinionId();
-  const { uid, uidRef, setUid } = useUid(task);
-  const [totalTokens, setTotalTokens] = useState<number>(
-    task?.totalTokens || 0,
-  );
-  useEffect(() => {
-    if (task) {
-      setTotalTokens(task.totalTokens || 0);
+function Chat({ auth, uid }: ChatProps) {
+  const { store } = useStore();
+  const prepareRequestData = useCallback(async () => {
+    if (!llm.current) {
+      throw new Error("LLM is not set");
     }
-  }, [task]);
+
+    return {
+      environment: await buildEnvironment(),
+      llm: {
+        ...llm.current,
+        token: (await readToken()) || "",
+      },
+    };
+  }, []);
+
+  const chatKit = useLiveChatKit({
+    taskId: uid,
+    prepareRequestData,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+  });
+  const task = store.useQuery(catalog.queries.makeTaskQuery(uid));
+  const totalTokens = task?.totalTokens || 0;
+  const isTaskLoading = false;
+
+  const autoApproveGuard = useAutoApproveGuard();
+  // const { data: minionId } = useMinionId();
+  // const { uid, uidRef, setUid } = useUid(task);
+  // const [totalTokens, setTotalTokens] = useState<number>(
+  //   task?.totalTokens || 0,
+  // );
+  // useEffect(() => {
+  //   if (task) {
+  //     setTotalTokens(task.totalTokens || 0);
+  //   }
+  // }, [task]);
 
   const { data: currentWorkspace, isFetching } = useCurrentWorkspace();
   const isWorkspaceActive = !!currentWorkspace;
@@ -96,10 +103,9 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     isLoading: isModelsLoading,
     updateSelectedModelId: handleSelectModel,
   } = useSelectedModels();
-  const initialMessages = toUIMessages(task?.conversation?.messages || []);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const { error: autoDismissError, setError: setAutoDismissError } =
+  const { error: autoDismissError /* setError: setAutoDismissError */ } =
     useAutoDismissError();
 
   // Use the unified image upload hook
@@ -116,110 +122,111 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
 
   const todosRef = useRef<Todo[] | undefined>(undefined);
 
-  const { toolset: mcpToolSet } = useMcp();
+  // FIXME(meng): add back Mcp
+  // const { toolset: mcpToolSet } = useMcp();
 
-  const openAIModelOverride =
+  const llmFromSelectedModel =
     selectedModel?.type === "byok"
       ? {
+          type: "openai" as const,
+          modelId: selectedModel.modelId,
           baseURL: selectedModel.provider.baseURL,
           apiKey: selectedModel.provider.apiKey,
           maxOutputTokens: selectedModel.maxTokens,
           contextWindow: selectedModel.contextWindow,
         }
-      : undefined;
+      : selectedModel?.type === "hosted"
+        ? {
+            type: "pochi" as const,
+            modelId: selectedModel.modelId,
+          }
+        : undefined;
+  const llm = useLatest(llmFromSelectedModel);
 
-  const latestHttpCode = useRef<number | undefined>(undefined);
-  const recentAborted = useRef<boolean>(false);
-  const pochiModelSettings = usePochiModelSettings();
+  // const latestHttpCode = useRef<number | undefined>(undefined);
+  // const recentAborted = useRef<boolean>(false);
+  // const pochiModelSettings = usePochiModelSettings();
   const chat = useChat({
-    /*
-     * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
-     */
-    // experimental_throttle: 100,
-    initialMessages,
-    api: apiClient.api.chat.stream.$url().toString(),
-    onFinish: (message, { finishReason }) => {
-      autoApproveGuard.current = true;
-
-      let numToolCalls: number | undefined;
-      if (finishReason === "tool-calls") {
-        // Find the last step-start index
-        const lastStepStartIndex =
-          message.parts?.reduce((lastIndex, part, index) => {
-            return part.type === "step-start" ? index : lastIndex;
-          }, -1) ?? -1;
-
-        // Count tool invocations only from after the last step-start
-        numToolCalls =
-          message.parts
-            ?.slice(lastStepStartIndex + 1)
-            .filter((part) => part.type === "tool-invocation").length || 0;
-      }
-
-      vscodeHost.capture({
-        event: "chatFinish",
-        properties: {
-          modelId: selectedModel?.id,
-          finishReason,
-          numToolCalls,
-        },
-      });
-    },
-    experimental_prepareRequestBody: async (req) =>
-      prepareRequestBody(
-        uidRef,
-        req,
-        await buildEnvironment(),
-        mcpToolSet,
-        selectedModel?.modelId,
-        minionId,
-        openAIModelOverride,
-        pochiModelSettings?.modelEndpointId,
-        req.messages.at(-1)?.role === "user" ? forceCompact.current : undefined,
-      ),
-    fetch: async (url, options) => {
-      let resp: Response | null = null;
-      let numAttempts = 0;
-      do {
-        if (numAttempts > 0) {
-          await new Promise((res) => setTimeout(res, 1000 * 2 ** numAttempts));
-        }
-        numAttempts++;
-        resp = await fetch(url, options);
-
-        // A 409 conflict can occur if the user aborts a streaming request and immediately retries,
-        // as the task status in the database might still be 'streaming'.
-        // We use exponential backoff to handle this race condition.
-      } while (resp.status === 409 && recentAborted.current && numAttempts < 5);
-
-      latestHttpCode.current = resp.status;
-      recentAborted.current = false;
-      return resp;
-    },
-    headers: {
-      Authorization: `Bearer ${auth.session.token}`,
-    },
+    chat: chatKit.chat,
   });
+  // const chat = useChat({
+  //   /*
+  //    * DO NOT SET throttle - it'll cause messages got re-written after the chat became ready state.
+  //    */
+  //   // experimental_throttle: 100,
+  //   initialMessages,
+  //   api: apiClient.api.chat.stream.$url().toString(),
+  //   onFinish: (message, { finishReason }) => {
+  //     autoApproveGuard.current = true;
 
-  const {
-    data,
-    error,
-    messages,
-    setMessages,
-    reload,
-    setInput,
-    append,
-    input,
-    status,
-    addToolResult,
-    experimental_resume,
-  } = chat;
+  //     let numToolCalls: number | undefined;
+  //     if (finishReason === "tool-calls") {
+  //       // Find the last step-start index
+  //       const lastStepStartIndex =
+  //         message.parts?.reduce((lastIndex, part, index) => {
+  //           return part.type === "step-start" ? index : lastIndex;
+  //         }, -1) ?? -1;
 
+  //       // Count tool invocations only from after the last step-start
+  //       numToolCalls =
+  //         message.parts
+  //           ?.slice(lastStepStartIndex + 1)
+  //           .filter((part) => part.type === "tool-invocation").length || 0;
+  //     }
+
+  //     vscodeHost.capture({
+  //       event: "chatFinish",
+  //       properties: {
+  //         modelId: selectedModel?.id,
+  //         finishReason,
+  //         numToolCalls,
+  //       },
+  //     });
+  //   },
+  //   experimental_prepareRequestBody: async (req) =>
+  //     prepareRequestBody(
+  //       uidRef,
+  //       req,
+  //       await buildEnvironment(),
+  //       mcpToolSet,
+  //       selectedModel?.modelId,
+  //       minionId,
+  //       openAIModelOverride,
+  //       pochiModelSettings?.modelEndpointId,
+  //       req.messages.at(-1)?.role === "user" ? forceCompact.current : undefined,
+  //     ),
+  //   fetch: async (url, options) => {
+  //     let resp: Response | null = null;
+  //     let numAttempts = 0;
+  //     do {
+  //       if (numAttempts > 0) {
+  //         await new Promise((res) => setTimeout(res, 1000 * 2 ** numAttempts));
+  //       }
+  //       numAttempts++;
+  //       resp = await fetch(url, options);
+
+  //       // A 409 conflict can occur if the user aborts a streaming request and immediately retries,
+  //       // as the task status in the database might still be 'streaming'.
+  //       // We use exponential backoff to handle this race condition.
+  //     } while (resp.status === 409 && recentAborted.current && numAttempts < 5);
+
+  //     latestHttpCode.current = resp.status;
+  //     recentAborted.current = false;
+  //     return resp;
+  //   },
+  //   headers: {
+  //     Authorization: `Bearer ${auth.session.token}`,
+  //   },
+  // });
+
+  const [input, setInput] = useState("");
+  const { messages: v5Messages, sendMessage, status, addToolResult } = chat;
+  const messages = useMemo(() => v5Messages.map(toV4UIMessage), [v5Messages]);
   const buildEnvironment = useCallback(async () => {
     const environment = await vscodeHost.readEnvironment();
 
     let userEdits: GitDiff[] | undefined;
-    const lastCheckpointHash = findLastCheckpointFromMessages(messages);
+    const lastCheckpointHash = findLastCheckpointFromMessages(v5Messages);
     if (lastCheckpointHash && autoApproveGuard.current) {
       userEdits =
         (await vscodeHost.diffWithCheckpoint(lastCheckpointHash)) ?? undefined;
@@ -230,7 +237,7 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
       ...environment,
       userEdits,
     } satisfies Environment;
-  }, [messages, autoApproveGuard.current]);
+  }, [v5Messages, autoApproveGuard.current]);
 
   const { todos } = useTodos({
     initialTodos: task?.todos,
@@ -256,80 +263,74 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     isUploadingImages,
   });
 
-  useAutoResume({
-    autoResume:
-      !isTaskLoading &&
-      task?.status === "streaming" &&
-      initialMessages.length > 0 &&
-      initialMessages.length === messages.length,
-    initialMessages,
-    experimental_resume,
-    setMessages,
-    data,
-  });
+  // FIXME(meng): consider add back auto-resume
+  // useAutoResume({
+  //   autoResume:
+  //     !isTaskLoading &&
+  //     task?.status === "streaming" &&
+  //     initialMessages.length > 0 &&
+  //     initialMessages.length === messages.length,
+  //   initialMessages,
+  //   experimental_resume,
+  //   setMessages,
+  //   data,
+  // });
 
-  useNewTaskHandler({ data, setUid, enabled: !uidRef.current });
-
-  useTokenUsageUpdater({
-    data,
-    setTotalTokens,
-  });
+  // FIXME(meng): consider add back new task handler.
+  // useNewTaskHandler({ data, setUid, enabled: !uidRef.current });
 
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
+  // const messages: UIMessage = [];
 
   const { pendingApproval, retry } = useApprovalAndRetry({
-    error,
-    messages,
-    status,
-    append,
-    setMessages,
-    reload,
-    experimental_resume,
-    latestHttpCode,
     showApproval,
+    ...chat,
   });
 
-  usePendingModelAutoStart({
-    enabled: status === "ready" && messages.length === 1 && !isTaskLoading,
-    task: task,
-    retry,
-  });
+  // FIXME(meng): consider add back pending model auto start.
+  // usePendingModelAutoStart({
+  //   enabled: status === "ready" && messages.length === 1 && !isTaskLoading,
+  //   task: task,
+  //   retry,
+  // });
 
-  const forceCompact = useRef(false);
+  // FIXME(meng): add back compact UX
+  // const forceCompact = useRef(false);
+  // const compactTaskEnabled = !(
+  //   isLoading ||
+  //   isExecuting ||
+  //   isTaskLoading ||
+  //   totalTokens < CompactTaskMinTokens
+  // );
 
-  const compactTaskEnabled = !(
-    isLoading ||
-    isExecuting ||
-    isTaskLoading ||
-    totalTokens < CompactTaskMinTokens
-  );
+  // const { isCompactingTask, handleCompactTask } = useForceCompactTask({
+  //   forceCompact,
+  //   append,
+  //   enabled: compactTaskEnabled,
+  //   data,
+  //   setMessages,
+  // });
 
-  const { isCompactingTask, handleCompactTask } = useForceCompactTask({
-    forceCompact,
-    append,
-    enabled: compactTaskEnabled,
-    data,
-    setMessages,
-  });
-
-  const {
-    isCompactingNewTask,
-    handleCompactNewTask,
-    error: compactNewTaskError,
-  } = useCompactNewTask({
-    uid,
-    enabled: compactTaskEnabled,
-    messages,
-  });
+  // const {
+  //   isCompactingNewTask,
+  //   handleCompactNewTask,
+  //   error: compactNewTaskError,
+  // } = useCompactNewTask({
+  //   uid,
+  //   enabled: compactTaskEnabled,
+  //   messages,
+  // });
 
   const { handleSubmit, handleStop } = useChatSubmit({
     chat,
+    input,
+    setInput,
     imageUpload,
     isSubmitDisabled,
     isLoading,
     pendingApproval,
-    recentAborted,
-    isCompacting: isCompactingTask || isCompactingNewTask,
+    // isCompacting: isCompactingTask || isCompactingNewTask,
+    isCompacting: false,
   });
 
   useScrollToBottom({
@@ -344,18 +345,18 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
     autoDismissError ||
     uploadImageError ||
     taskError ||
-    (pendingApproval?.name === "retry" ? pendingApproval.error : undefined) ||
-    compactNewTaskError;
+    (pendingApproval?.name === "retry" ? pendingApproval.error : undefined);
+  // || compactNewTaskError;
 
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading);
   useAddCompleteToolCalls({
-    messages,
-    addToolResult: allowAddToolResult ? addToolResult : undefined,
-    setMessages: setMessages,
+    messages: v5Messages,
+    enable: allowAddToolResult,
+    addToolResult: addToolResult,
   });
 
-  useHandleChatEvents(isLoading || isTaskLoading ? undefined : append);
+  useHandleChatEvents(isLoading || isTaskLoading ? undefined : sendMessage);
 
   return (
     <div className="flex h-screen flex-col">
@@ -364,7 +365,8 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
         messages={renderMessages}
         isTaskLoading={isTaskLoading}
         isLoading={isLoading}
-        isCompactingNewTask={isCompactingNewTask}
+        // isCompactingNewTask={isCompactingNewTask}
+        isCompactingNewTask={false}
         user={auth.user}
         messagesContainerRef={messagesContainerRef}
       />
@@ -432,17 +434,6 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                     contextWindow={selectedModel.contextWindow}
                     totalTokens={totalTokens}
                     className="mr-5"
-                    compact={{
-                      isCompactingTask,
-                      handleCompactTask,
-                      isCompactingNewTask,
-                      handleCompactNewTask,
-                      enabled: !(
-                        !compactTaskEnabled ||
-                        isCompactingTask ||
-                        isCompactingNewTask
-                      ),
-                    }}
                   />
                 )}
                 <DevModeButton
@@ -452,14 +443,15 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
                   uid={uid}
                   selectedModel={selectedModel?.id}
                 />
-                <PublicShareButton
+                {/* FIXME(meng): add back share experience */}
+                {/* <PublicShareButton
                   isPublicShared={task?.isPublicShared === true}
                   disabled={isTaskLoading || isModelsLoading}
                   uid={uid}
                   onError={setAutoDismissError}
                   modelId={selectedModel?.id}
                   displayError={displayError?.message}
-                />
+                /> */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -498,7 +490,10 @@ function Chat({ auth, task, isTaskLoading }: ChatProps) {
   );
 }
 
-function useTaskError(status: UseChatHelpers["status"], task?: Task | null) {
+function useTaskError(
+  status: UseChatHelpers<Message>["status"],
+  task?: Task | null,
+) {
   const init = useRef(false);
   const [taskError, setTaskError] = useState<Error>();
   useEffect(() => {
@@ -521,35 +516,35 @@ function useTaskError(status: UseChatHelpers["status"], task?: Task | null) {
   return taskError;
 }
 
-function useUid(task: Task | null) {
-  const [uid, setUidImpl] = useState<string | undefined>(task?.uid);
-  const uidRef = useRef<string | undefined>(task?.uid);
+// function useUid(task: Task | null) {
+//   const [uid, setUidImpl] = useState<string | undefined>(task?.uid);
+//   const uidRef = useRef<string | undefined>(task?.uid);
 
-  const setUid = useCallback((newUid: string | undefined) => {
-    uidRef.current = newUid;
-    setUidImpl(newUid);
-  }, []);
+//   const setUid = useCallback((newUid: string | undefined) => {
+//     uidRef.current = newUid;
+//     setUidImpl(newUid);
+//   }, []);
 
-  useEffect(() => {
-    if (task) {
-      setUid(task.uid);
-    }
-  }, [task, setUid]);
-  return {
-    uid,
-    uidRef,
-    setUid,
-  };
-}
+//   useEffect(() => {
+//     if (task) {
+//       setUid(task.uid);
+//     }
+//   }, [task, setUid]);
+//   return {
+//     uid,
+//     uidRef,
+//     setUid,
+//   };
+// }
 
 function findLastCheckpointFromMessages(
-  messages: ExtendedUIMessage[],
+  messages: Message[],
 ): string | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
     for (const part of message.parts) {
-      if (part.type === "checkpoint" && part.checkpoint?.commit) {
-        return part.checkpoint.commit;
+      if (part.type === "data-checkpoint" && part.data?.commit) {
+        return part.data.commit;
       }
     }
   }

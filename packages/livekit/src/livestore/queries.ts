@@ -9,12 +9,14 @@ export const makeTaskQuery = (taskId: string) =>
       }),
     {
       label: "task",
+      deps: [taskId],
     },
   );
 
 export const makeMessagesQuery = (taskId: string) =>
   queryDb(() => tables.messages.where("taskId", "=", taskId), {
     label: "messages",
+    deps: [taskId],
   });
 
 export const tasks$ = queryDb(() => tables.tasks.orderBy("updatedAt", "desc"), {

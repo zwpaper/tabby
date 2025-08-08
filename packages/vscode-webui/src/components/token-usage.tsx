@@ -22,7 +22,7 @@ interface Props {
   contextWindow: number;
   totalTokens: number;
   className?: string;
-  compact: {
+  compact?: {
     isCompactingTask: boolean;
     handleCompactTask: () => void;
     isCompactingNewTask: boolean;
@@ -35,13 +35,7 @@ export function TokenUsage({
   totalTokens,
   contextWindow,
   className,
-  compact: {
-    isCompactingTask,
-    handleCompactTask,
-    isCompactingNewTask,
-    handleCompactNewTask,
-    enabled,
-  },
+  compact,
 }: Props) {
   const percentage = Math.ceil((totalTokens / contextWindow) * 100);
   const [isOpen, setIsOpen] = useState(false);
@@ -139,52 +133,56 @@ export function TokenUsage({
               {formatTokens(totalTokens)} of {formatTokens(contextWindow)} used
             </div>
           </div>
-          <div className="mt-2 flex items-center gap-x-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="inline-block">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => {
-                        handleCompactNewTask();
-                        setIsOpen(false);
-                      }}
-                      disabled={!enabled}
-                    >
-                      {isCompactingNewTask
-                        ? "Compacting..."
-                        : "New Task with Summary"}
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                {minTokenTooltip}
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="inline-block">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => {
-                        handleCompactTask();
-                        setIsOpen(false);
-                      }}
-                      disabled={!enabled}
-                    >
-                      {isCompactingTask ? "Compacting..." : "Compact Task"}
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                {minTokenTooltip}
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+          {false && (
+            <div className="mt-2 flex items-center gap-x-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="inline-block">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          compact?.handleCompactNewTask();
+                          setIsOpen(false);
+                        }}
+                        disabled={!compact?.enabled}
+                      >
+                        {compact?.isCompactingNewTask
+                          ? "Compacting..."
+                          : "New Task with Summary"}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {minTokenTooltip}
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="inline-block">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          compact?.handleCompactTask();
+                          setIsOpen(false);
+                        }}
+                        disabled={!compact?.enabled}
+                      >
+                        {compact?.isCompactingTask
+                          ? "Compacting..."
+                          : "Compact Task"}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {minTokenTooltip}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>

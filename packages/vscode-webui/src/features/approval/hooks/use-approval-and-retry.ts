@@ -1,6 +1,5 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { UIMessage } from "@ai-sdk/ui-utils";
-import type { MutableRefObject } from "react";
+import type { UseChatHelpers } from "@ai-v5-sdk/react";
+import type { Message } from "@ragdoll/livekit";
 import { useCallback } from "react";
 import { usePendingApproval } from "./use-pending-approval";
 import { useMixinReadyForRetryError } from "./use-ready-for-retry-error";
@@ -10,23 +9,15 @@ export function useApprovalAndRetry({
   error,
   messages,
   status,
-  append,
-  setMessages,
-  reload,
-  experimental_resume,
-  latestHttpCode,
+  regenerate,
+  sendMessage,
   showApproval,
 }: {
-  error: Error | undefined;
-  messages: UIMessage[];
-  status: UseChatHelpers["status"];
-  append: UseChatHelpers["append"];
-  setMessages: UseChatHelpers["setMessages"];
-  reload: UseChatHelpers["reload"];
-  experimental_resume: UseChatHelpers["experimental_resume"];
-  latestHttpCode: MutableRefObject<number | undefined>;
   showApproval: boolean;
-}) {
+} & Pick<
+  UseChatHelpers<Message>,
+  "error" | "messages" | "sendMessage" | "regenerate" | "status"
+>) {
   const { pendingApproval, increaseRetryCount } = usePendingApproval({
     error: useMixinReadyForRetryError(messages, error),
     messages,
@@ -35,11 +26,8 @@ export function useApprovalAndRetry({
 
   const retryImpl = useRetry({
     messages,
-    append,
-    setMessages,
-    reload,
-    experimental_resume,
-    latestHttpCode,
+    sendMessage,
+    regenerate,
   });
 
   const retry = useCallback(

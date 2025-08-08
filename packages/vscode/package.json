@@ -314,7 +314,7 @@
   },
   "private": true,
   "scripts": {
-    "copy:webui": "cd ../vscode-webui && cpy ./dist/index/index.js ./dist/index/index.css ../vscode/assets/webview-ui/dist --flat",
+    "copy:webui": "rm -rf ./assets/webview-ui/dist && bun ./scripts/copy-webui-dist.js",
     "build:vscode": "bun build ./src/extension.ts --outdir ./dist --external vscode --format cjs --target node --minify",
     "build": "npm-run-all --parallel build:vscode copy:webui",
     "vscode:prepublish": "bun turbo build",
@@ -378,7 +378,6 @@
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.3.2",
-    "cpy-cli": "^5.0.0",
     "esbuild-register": "^3.6.0",
     "node-pty": "^1.0.0",
     "ovsx": "^0.10.2",

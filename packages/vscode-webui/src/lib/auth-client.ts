@@ -58,4 +58,8 @@ function createApiClient() {
   return app;
 }
 
+export function readToken() {
+  return tokenPromise.then((x) => x.value);
+}
+
 export const apiClient = createApiClient();

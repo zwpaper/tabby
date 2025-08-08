@@ -1,24 +1,23 @@
 import { type ToolCallLifeCycle, useToolCallLifeCycle } from "@/features/chat";
-import { type UIMessage, updateToolCallResult } from "@ai-sdk/ui-utils";
+import { isToolUIPart } from "@ai-v5-sdk/ai";
+import type { Chat } from "@ai-v5-sdk/react";
+import type { Message } from "@ragdoll/livekit";
 import { useEffect } from "react";
 
 interface UseAddCompleteToolCallsProps {
-  messages: UIMessage[];
-  addToolResult?: (result: { toolCallId: string; result: unknown }) => void;
-  setMessages: (messages: UIMessage[]) => void;
+  messages: Message[];
+  enable: boolean;
+  addToolResult: Chat<Message>["addToolResult"];
 }
 
-function isToolStateCall(message: UIMessage, toolCallId: string): boolean {
+function isToolStateCall(message: Message, toolCallId: string): boolean {
   if (message.role !== "assistant") {
     return false;
   }
 
   for (const part of message.parts) {
-    if (
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolCallId === toolCallId
-    ) {
-      return part.toolInvocation.state === "call";
+    if (isToolUIPart(part) && part.toolCallId === toolCallId) {
+      return part.state === "input-available";
     }
   }
 
@@ -27,38 +26,32 @@ function isToolStateCall(message: UIMessage, toolCallId: string): boolean {
 
 export function useAddCompleteToolCalls({
   messages,
-  setMessages,
+  enable,
+  // setMessages,
   addToolResult,
 }: UseAddCompleteToolCallsProps): void {
   const { completeToolCalls } = useToolCallLifeCycle();
 
   useEffect(() => {
-    if (!addToolResult || completeToolCalls.length === 0) return;
+    if (!enable || completeToolCalls.length === 0) return;
 
     const lastMessage = messages.at(messages.length - 1);
     if (!lastMessage) return;
 
     for (const toolCall of completeToolCalls) {
+      if (toolCall.status !== "complete") continue;
       if (isToolStateCall(lastMessage, toolCall.toolCallId)) {
         const result = overrideResult(toolCall.complete);
-        if (toolCall.complete.reason !== "user-abort") {
-          addToolResult({
-            toolCallId: toolCall.toolCallId,
-            result,
-          });
-        } else {
-          // User abort, update the message with the result.
-          updateToolCallResult({
-            messages,
-            toolCallId: toolCall.toolCallId,
-            toolResult: result,
-          });
-          setMessages(messages);
-        }
+        addToolResult({
+          // @ts-expect-error
+          tool: toolCall.toolName,
+          toolCallId: toolCall.toolCallId,
+          output: result,
+        });
         toolCall.dispose();
       }
     }
-  }, [completeToolCalls, messages, setMessages, addToolResult]);
+  }, [enable, completeToolCalls, messages, addToolResult]);
 }
 
 function assertUnreachable(_x: never): never {

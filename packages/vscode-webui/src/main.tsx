@@ -1,3 +1,5 @@
+import "./remote-web-worker";
+
 import {
   RouterProvider,
   createHashHistory,

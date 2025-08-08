@@ -35,7 +35,6 @@ const auth = {
 export const Default: Story = {
   args: {
     auth,
-    isTaskLoading: false,
-    task: null,
+    uid: "default",
   },
 };
