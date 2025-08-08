@@ -237,7 +237,7 @@ export class RagdollWebviewProvider
         `style-src ${webview.cspSource} 'unsafe-inline'`,
         `font-src ${webview.cspSource}`,
         `connect-src ${getServerBaseUrl()} https://*.vscode-cdn.net`,
-        "worker-src data:",
+        "worker-src data: blob:",
       ];
       const cspHeader = `<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">`;
 

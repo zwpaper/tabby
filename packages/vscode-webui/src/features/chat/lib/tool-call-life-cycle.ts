@@ -113,14 +113,7 @@ export interface ToolCallLifeCycle {
    * @param args - Tool call arguments
    * @param state - Current tool invocation state
    */
-  preview(
-    args: unknown,
-    state: ToolInvocation["state"],
-    opts?: {
-      isFirstAssistantMessage: boolean;
-      step: number;
-    },
-  ): void;
+  preview(args: unknown, state: ToolInvocation["state"]): void;
 
   /**
    * Execute the tool call with given arguments and options.

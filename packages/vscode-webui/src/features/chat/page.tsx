@@ -368,7 +368,7 @@ function Chat({ auth, uid }: ChatProps) {
 
   return (
     <div className="flex h-screen flex-col">
-      {showPreview && <PreviewTool messages={renderMessages} />}
+      {showPreview && <PreviewTool messages={v5Messages} />}
       <ChatArea
         messages={renderMessages}
         isTaskLoading={isTaskLoading}

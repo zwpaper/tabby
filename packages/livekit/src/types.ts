@@ -16,7 +16,7 @@ type DataParts = {
   };
 };
 
-type UITools = {
+export type UITools = {
   [K in keyof typeof ClientToolsV5]: InferUITool<(typeof ClientToolsV5)[K]>;
 };
 
