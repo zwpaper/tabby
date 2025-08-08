@@ -17,7 +17,7 @@ function dedupeId(job: NotifyTaskSlack) {
 export const queue = new Queue<NotifyTaskSlack>(QueueName, queueConfig);
 
 export async function enqueueNotifyTaskSlack(data: NotifyTaskSlack) {
-  await queue.add(QueueName, data, {
+  await queue.add(data.uid, data, {
     attempts: 3,
     backoff: {
       type: "exponential",

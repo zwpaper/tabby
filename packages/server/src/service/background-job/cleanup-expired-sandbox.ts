@@ -42,7 +42,7 @@ export async function scheduleCleanupExpiredSandbox(
 
   const jobId = `cleanup-sandbox:${data.sandboxId}`;
   await queue.remove(jobId);
-  await queue.add(QueueName, data, {
+  await queue.add(data.sandboxId, data, {
     delay,
     jobId,
     attempts: 3,

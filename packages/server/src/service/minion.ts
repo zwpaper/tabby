@@ -122,6 +122,7 @@ class MinionService {
     // only accessing vscode would request jwt token,
     // so the parts0 is always sandboxId
     const sandboxId = hostParts[0];
+    spanConfig.setAttribute("ragdoll.minion.sandboxId", sandboxId);
     const minion = await db
       .selectFrom("minion")
       .selectAll()

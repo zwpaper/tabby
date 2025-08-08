@@ -25,19 +25,19 @@ function createUpDownCounter(
   return meter.createUpDownCounter(`${METRICS_PREFIX}_${name}`, options);
 }
 
-const slackCommandsTotal = createCounter("slack_commands_total", {
+const slackCommandsTotal = createCounter("slack_commands", {
   description: "Total number of slack commands processed",
 });
 
-const slackTasksCreated = createCounter("slack_tasks_created_total", {
+const slackTasksCreated = createCounter("slack_tasks_created", {
   description: "Total number of tasks created via Slack",
 });
 
-const slackFollowupActions = createCounter("slack_followup_actions_total", {
+const slackFollowupActions = createCounter("slack_followup_actions", {
   description: "Total number of followup actions processed",
 });
 
-const tasksTotal = createCounter("tasks_total", {
+const tasksTotal = createCounter("tasks", {
   description: "Total number of tasks",
 });
 

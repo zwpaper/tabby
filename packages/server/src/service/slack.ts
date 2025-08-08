@@ -1,5 +1,6 @@
 import type { Server } from "node:http";
 import { type Span, SpanStatusCode, trace } from "@opentelemetry/api";
+import { getLogger } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import type { ButtonAction } from "@slack/bolt";
 import { App, type Installation } from "@slack/bolt";
@@ -17,6 +18,7 @@ import { slackRichTextRenderer } from "./slack-task/slack-rich-text";
 import { usageService } from "./usage";
 
 const tracer = trace.getTracer("ragdoll-slack", "0.0.1");
+const logger = getLogger("SlackService");
 
 export const withSpan = async <T>(
   operationName: string,
@@ -284,6 +286,7 @@ class SlackService {
               status: "success",
             });
           } catch (error) {
+            logger.error("Failed to create slack task:", error);
             metrics.counter.slackCommandsTotal.add(1, {
               command: "newtask",
               status: "error",
