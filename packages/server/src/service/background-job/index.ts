@@ -23,7 +23,7 @@ export function startWorkers() {
   if (process.env.NODE_ENV === "production") {
     createCleanupSandboxWorker();
   }
-  false && createMonitorStripeCreditUsageWorker();
+  createMonitorStripeCreditUsageWorker();
 }
 
 export { enqueueNotifyTaskSlack } from "./notify-task-slack";
