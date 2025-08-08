@@ -2,11 +2,14 @@ import {
   type FinishReason,
   type LanguageModelUsage,
   type ProviderMetadata,
+  type Tool,
   type UIMessage,
   convertToModelMessages,
+  jsonSchema,
   streamText,
+  tool,
 } from "@ai-v5-sdk/ai";
-import { ClientToolsV5, ZodMcpTool } from "@getpochi/tools";
+import { ClientToolsV5, type McpTool, ZodMcpTool } from "@getpochi/tools";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -59,6 +62,8 @@ const chat = new Hono()
       };
     }
 
+    const mcpTools = req.mcpToolSet && parseMcpToolSet(req.mcpToolSet);
+
     const result = streamText({
       messages: [
         {
@@ -78,7 +83,7 @@ const chat = new Hono()
       tools: {
         // FIXME: pass tools from client, like MCP
         ...ClientToolsV5,
-        ...(req.mcpToolSet || {}),
+        ...(mcpTools || {}),
       },
       abortSignal: c.req.raw.signal,
       ...getModelOptionsNext(validModelId),
@@ -223,4 +228,24 @@ function computeUsage(
   }
 
   return { usage, creditCostInput };
+}
+
+function parseMcpTool(mcpTool: McpTool): Tool {
+  return tool({
+    description: mcpTool.description,
+    inputSchema: jsonSchema(mcpTool.parameters.jsonSchema),
+  });
+}
+
+function parseMcpToolSet(
+  mcpToolSet: Record<string, McpTool> | undefined,
+): Record<string, Tool> | undefined {
+  return mcpToolSet
+    ? Object.fromEntries(
+        Object.entries(mcpToolSet).map(([name, tool]) => [
+          name,
+          parseMcpTool(tool),
+        ]),
+      )
+    : undefined;
 }

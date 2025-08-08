@@ -1,5 +1,3 @@
-import { jsonSchema } from "@ai-sdk/ui-utils";
-import { type Tool, tool } from "ai";
 import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 
@@ -17,30 +15,3 @@ export const ZodMcpTool = z.object({
 });
 
 export type McpTool = z.infer<typeof ZodMcpTool>;
-
-function parseMcpTool(name: string, mcpTool: McpTool): Tool {
-  let toToolResultContent: Tool["experimental_toToolResultContent"];
-  if (name === "browser_take_screenshot") {
-    toToolResultContent = (result) => {
-      return result.content;
-    };
-  }
-  return tool({
-    description: mcpTool.description,
-    parameters: jsonSchema(mcpTool.parameters.jsonSchema),
-    experimental_toToolResultContent: toToolResultContent,
-  });
-}
-
-export function parseMcpToolSet(
-  mcpToolSet: Record<string, McpTool> | undefined,
-): Record<string, Tool> | undefined {
-  return mcpToolSet
-    ? Object.fromEntries(
-        Object.entries(mcpToolSet).map(([name, tool]) => [
-          name,
-          parseMcpTool(name, tool),
-        ]),
-      )
-    : undefined;
-}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAutoApproveGuard, useToolCallLifeCycle } from "@/features/chat";
 import { useSelectedModels, useToolAutoApproval } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
+import { getToolName } from "@ai-v5-sdk/ai";
 import type { PendingToolCallApproval } from "../hooks/use-pending-tool-call-approval";
 
 interface ToolCallApprovalButtonProps {
@@ -23,7 +24,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
         ? [
             pendingApproval.tools.map((tool) =>
               getToolCallLifeCycle({
-                toolName: tool.toolName,
+                toolName: getToolName(tool),
                 toolCallId: tool.toolCallId,
               }),
             ),
@@ -32,7 +33,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
         : [
             [
               getToolCallLifeCycle({
-                toolName: pendingApproval.tool.toolName,
+                toolName: getToolName(pendingApproval.tool),
                 toolCallId: pendingApproval.tool.toolCallId,
               }),
             ],
@@ -67,7 +68,7 @@ export const ToolCallApprovalButton: React.FC<ToolCallApprovalButtonProps> = ({
         continue;
       }
 
-      lifecycle.execute(tools[i].args, {
+      lifecycle.execute(tools[i].input, {
         model: selectedModel?.id,
       });
     }

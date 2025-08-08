@@ -1,7 +1,7 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { jsonSchema } from "@ai-sdk/ui-utils";
 import {
-  parseMcpToolSet,
+  type McpTool,
   selectClientTools,
   selectServerTools,
 } from "@getpochi/tools";
@@ -18,11 +18,13 @@ import {
   type LanguageModelV1Middleware,
   NoSuchToolError,
   type ProviderMetadata,
+  type Tool,
   type UIMessage,
   appendResponseMessages,
   createDataStream,
   generateObject,
   streamText,
+  tool,
   wrapLanguageModel,
 } from "ai";
 import { Hono } from "hono";
@@ -563,4 +565,31 @@ function computeUsage(
     creditCostInput,
     usage,
   };
+}
+
+function parseMcpTool(name: string, mcpTool: McpTool): Tool {
+  let toToolResultContent: Tool["experimental_toToolResultContent"];
+  if (name === "browser_take_screenshot") {
+    toToolResultContent = (result) => {
+      return result.content;
+    };
+  }
+  return tool({
+    description: mcpTool.description,
+    parameters: jsonSchema(mcpTool.parameters.jsonSchema),
+    experimental_toToolResultContent: toToolResultContent,
+  });
+}
+
+function parseMcpToolSet(
+  mcpToolSet: Record<string, McpTool> | undefined,
+): Record<string, Tool> | undefined {
+  return mcpToolSet
+    ? Object.fromEntries(
+        Object.entries(mcpToolSet).map(([name, tool]) => [
+          name,
+          parseMcpTool(name, tool),
+        ]),
+      )
+    : undefined;
 }

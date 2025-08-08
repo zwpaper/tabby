@@ -2,9 +2,12 @@ import {
   type ChatRequestOptions,
   type ChatTransport,
   DefaultChatTransport,
+  type Tool,
   type UIMessageChunk,
   convertToModelMessages,
+  jsonSchema,
   streamText,
+  tool,
 } from "@ai-v5-sdk/ai";
 import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
 import { ClientToolsV5, type McpTool } from "@getpochi/tools";
@@ -120,6 +123,7 @@ async function requestOpenAI(
   });
 
   const model = openai(llm.modelId);
+  const mcpTools = payload.mcpToolSet && parseMcpToolSet(payload.mcpToolSet);
   const result = streamText({
     model,
     abortSignal: payload.abortSignal,
@@ -127,7 +131,7 @@ async function requestOpenAI(
     messages: convertToModelMessages(payload.messages),
     tools: {
       ...ClientToolsV5,
-      ...(payload.mcpToolSet || {}),
+      ...(mcpTools || {}),
     },
     maxOutputTokens: llm.maxOutputTokens,
     maxRetries: 0,
@@ -179,4 +183,24 @@ async function requestPochi(
 
   // @ts-expect-error reuse default transport.
   return defaultTransport.processResponseStream(response.body);
+}
+
+function parseMcpTool(mcpTool: McpTool): Tool {
+  return tool({
+    description: mcpTool.description,
+    inputSchema: jsonSchema(mcpTool.parameters.jsonSchema),
+  });
+}
+
+function parseMcpToolSet(
+  mcpToolSet: Record<string, McpTool> | undefined,
+): Record<string, Tool> | undefined {
+  return mcpToolSet
+    ? Object.fromEntries(
+        Object.entries(mcpToolSet).map(([name, tool]) => [
+          name,
+          parseMcpTool(tool),
+        ]),
+      )
+    : undefined;
 }

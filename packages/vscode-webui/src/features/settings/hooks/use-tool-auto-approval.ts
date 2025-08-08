@@ -1,8 +1,9 @@
 import type { PendingToolCallApproval } from "@/features/approval";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { useTaskRunners } from "@/lib/hooks/use-task-runners";
+import { type ToolUIPart, getToolName } from "@ai-v5-sdk/ai";
 import { ToolsByPermission } from "@getpochi/tools";
-import type { ToolInvocation } from "ai";
+import type { UITools } from "@ragdoll/livekit";
 import { useAutoApprove } from "./use-auto-approve";
 
 export function useToolAutoApproval(
@@ -14,12 +15,11 @@ export function useToolAutoApproval(
   const { toolset } = useMcp();
   const runners = useTaskRunners();
 
-  const isToolApproved = (tool: ToolInvocation) => {
-    const { toolName } = tool;
-    if (toolName === "newTask" && tool.state === "call") {
-      const uid = tool.args._meta?.uid;
-      const runnerState = runners[uid];
-      if (runnerState) {
+  const isToolApproved = (tool: ToolUIPart<UITools>) => {
+    const toolName = getToolName(tool);
+    if (tool.type === "tool-newTask" && tool.state === "input-available") {
+      const uid = tool.input._meta?.uid;
+      if (uid && runners[uid]) {
         return true;
       }
     }
