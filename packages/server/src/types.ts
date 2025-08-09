@@ -1,10 +1,25 @@
-import { ZodMcpTool } from "@getpochi/tools";
+import type { JSONSchema7 } from "@ai-v5-sdk/ai";
 import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
 import { ZodEnvironment } from "@ragdoll/db";
 import { z } from "zod";
 
 export const ZodMessageType: z.ZodType<DBMessage> = z.any();
 const ZodEventType: z.ZodType<TaskCreateEvent> = z.any();
+
+const ZodMcpTool = z.object({
+  description: z
+    .string()
+    .optional()
+    .describe("An optional description of the MCP tool."),
+  parameters: z
+    .object({
+      jsonSchema: z.custom<JSONSchema7>().describe("Validated json schema."),
+    })
+    .required()
+    .describe("The parameters of the MCP tool."),
+});
+
+export type McpTool = z.infer<typeof ZodMcpTool>;
 
 export const ZodChatRequestType = z.object({
   id: z.string().optional().describe("Task uid."),

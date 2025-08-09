@@ -1,10 +1,6 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { jsonSchema } from "@ai-sdk/ui-utils";
-import {
-  type McpTool,
-  selectClientTools,
-  selectServerTools,
-} from "@getpochi/tools";
+import { selectClientTools, selectServerTools } from "@getpochi/tools";
 import { zValidator } from "@hono/zod-validator";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
@@ -53,7 +49,7 @@ import { resolveServerTools } from "../lib/tools";
 import { setIdleTimeout, waitUntil } from "../server";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
-import { type ChatRequest, ZodChatRequestType } from "../types";
+import { type ChatRequest, type McpTool, ZodChatRequestType } from "../types";
 
 const streamContext = createResumableStreamContext({
   waitUntil,
@@ -576,7 +572,7 @@ function parseMcpTool(name: string, mcpTool: McpTool): Tool {
   }
   return tool({
     description: mcpTool.description,
-    parameters: jsonSchema(mcpTool.inputSchema.jsonSchema),
+    parameters: jsonSchema(mcpTool.parameters.jsonSchema),
     experimental_toToolResultContent: toToolResultContent,
   });
 }
