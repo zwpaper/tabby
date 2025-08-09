@@ -3,12 +3,9 @@ import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
-import { formatters } from "@ragdoll/common";
-import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
+import { formattersNext } from "@ragdoll/common";
+import type { Message } from "@ragdoll/livekit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-// FIXME(meng): migrate this to v5
-// ast-grep-ignore: no-ai-sdk-v4
-import type { UIMessage } from "ai";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorMessageView } from "../chat/components/error-message-view";
@@ -20,7 +17,7 @@ export function SharePage() {
   const assistant_image = searchParams.get("assistant_image");
 
   const [isInitialized, setIsInitialized] = useState(false);
-  const [messages, setMessages] = useState<UIMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [user, setUser] = useState<{
     name: string;
     image?: string | null;
@@ -95,10 +92,7 @@ export function SharePage() {
     return () => resizeObserver.disconnect();
   }, []);
 
-  const renderMessages = useMemo(
-    () => formatters.ui(messages).map(fromV4UIMessage),
-    [messages],
-  );
+  const renderMessages = useMemo(() => formattersNext.ui(messages), [messages]);
   return (
     <VSCodeWebProvider>
       <ChatContextProvider>
@@ -155,7 +149,7 @@ export function SharePage() {
 
 type ShareMessage = {
   type: "share";
-  messages: UIMessage[] | undefined; // Array of messages to be displayed
+  messages: Message[] | undefined; // Array of messages to be displayed
   user:
     | {
         name: string;
