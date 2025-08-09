@@ -167,9 +167,7 @@ export function prepareLastMessageForRetryNext<T extends UIMessageNext>(
   };
 
   do {
-    if (
-      lastAssistantMessageIsCompleteWithToolCalls({ messages: [lastMessage] })
-    ) {
+    if (lastAssistantMessageIsCompleteWithToolCalls({ messages: [message] })) {
       return message;
     }
 
