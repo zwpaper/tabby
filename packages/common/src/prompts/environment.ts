@@ -239,7 +239,7 @@ function getUserEdits(userEdits: Environment["userEdits"]) {
   // Format structured user edits data
   const formattedFiles = userEdits
     .map((edit) => {
-      return `**${edit.relative}** (modified)
+      return `**${edit.filepath}** (modified)
 \`\`\`diff
 ${edit.diff}
 \`\`\``;

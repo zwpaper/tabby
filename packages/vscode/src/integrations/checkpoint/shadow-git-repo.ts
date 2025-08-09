@@ -305,12 +305,12 @@ export class ShadowGitRepo implements vscode.Disposable {
     const diffSummary = this.parseDiffOutput(diffSummaryOutput);
     const result = [];
     for (const file of diffSummary.files) {
-      const filePath = file.file;
-      const absolutePath = path.join(this.workspaceDir, filePath);
+      const filepath = file.file;
+      const absolutePath = path.join(this.workspaceDir, filepath);
 
       let beforeContent = "";
       try {
-        beforeContent = await this.git.show([`${from}:${filePath}`]);
+        beforeContent = await this.git.show([`${from}:${filepath}`]);
       } catch (_) {
         // file didn't exist in older commit => remains empty
       }
@@ -318,7 +318,7 @@ export class ShadowGitRepo implements vscode.Disposable {
       let afterContent = "";
       if (to) {
         try {
-          afterContent = await this.git.show([`${to}:${filePath}`]);
+          afterContent = await this.git.show([`${to}:${filepath}`]);
         } catch (_) {
           // file didn't exist
         }
@@ -331,8 +331,7 @@ export class ShadowGitRepo implements vscode.Disposable {
       }
 
       result.push({
-        relative: filePath,
-        absolute: absolutePath,
+        filepath,
         before: beforeContent,
         after: afterContent,
       });

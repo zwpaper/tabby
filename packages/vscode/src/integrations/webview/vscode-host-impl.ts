@@ -573,17 +573,17 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       }
       if (displayPath) {
         const changedFile = changedFiles.filter(
-          (file) => file.relative === displayPath,
+          (file) => file.filepath === displayPath,
         )[0];
         await vscode.commands.executeCommand(
           "vscode.diff",
           vscode.Uri.parse(
-            `${DiffChangesContentProvider.scheme}:${changedFile.relative}`,
+            `${DiffChangesContentProvider.scheme}:${changedFile.filepath}`,
           ).with({
             query: Buffer.from(changedFile.before ?? "").toString("base64"),
           }),
           vscode.Uri.parse(
-            `${DiffChangesContentProvider.scheme}:${changedFile.relative}`,
+            `${DiffChangesContentProvider.scheme}:${changedFile.filepath}`,
           ).with({
             query: Buffer.from(changedFile.after ?? "").toString("base64"),
           }),
@@ -599,13 +599,13 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         "vscode.changes",
         title,
         changedFiles.map((file) => [
-          vscode.Uri.file(file.absolute),
+          vscode.Uri.joinPath(getWorkspaceFolder().uri, file.filepath),
           vscode.Uri.parse(
-            `${DiffChangesContentProvider.scheme}:${file.relative}`,
+            `${DiffChangesContentProvider.scheme}:${file.filepath}`,
           ).with({
             query: Buffer.from(file.before ?? "").toString("base64"),
           }),
-          vscode.Uri.file(file.absolute),
+          vscode.Uri.joinPath(getWorkspaceFolder().uri, file.filepath),
         ]),
       );
       return true;

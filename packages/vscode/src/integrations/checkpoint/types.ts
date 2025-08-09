@@ -1,6 +1,6 @@
 export type GitDiff = {
-  relative: string;
-  absolute: string;
+  // Relative filepath to cwd
+  filepath: string;
   before: string;
   after: string;
 };

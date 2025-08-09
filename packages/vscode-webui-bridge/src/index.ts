@@ -17,7 +17,7 @@ export type { CaptureEvent } from "./capture-event";
 
 // Type for user edits with diff information
 export type UserEditsDiff = {
-  relative: string;
+  filepath: string;
   diff: string;
 };
 

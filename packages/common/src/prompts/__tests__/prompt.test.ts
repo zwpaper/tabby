@@ -67,7 +67,7 @@ test("environment", () => {
           shell: "bash",
         },
         userEdits: [{
-          relative: "path/to/file",
+          filepath: "path/to/file",
           diff: "-hello\n+world"
         }]}, {name: "Pochi", email: "noreply@getpochi.com"}),
   ).toMatchSnapshot();

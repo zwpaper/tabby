@@ -71,7 +71,7 @@ export function generateInlineDiffContent(
 export function processGitChangesToUserEdits(
   changes: GitDiff[],
   maxSizeLimit = 8 * 1024,
-): Array<{ relative: string; diff: string }> | null {
+): Array<{ filepath: string; diff: string }> | null {
   // Filter out binary files and files that exceed size limits
   const filteredChanges = filterGitChanges(changes, maxSizeLimit);
 
@@ -81,7 +81,7 @@ export function processGitChangesToUserEdits(
 
   // Generate structured diff data
   const userEdits = filteredChanges.map((change) => ({
-    relative: change.relative,
+    filepath: change.filepath,
     diff: generateInlineDiffContent(change.before, change.after),
   }));
 
