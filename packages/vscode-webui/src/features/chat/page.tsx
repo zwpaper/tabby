@@ -262,6 +262,16 @@ function Chat({ auth, uid }: ChatProps) {
 
   const isLoading = status === "streaming" || status === "submitted";
 
+  const { inlineCompactTask, inlineCompactTaskPending } = useInlineCompactTask({
+    ...chat,
+  });
+
+  const { newCompactTask, newCompactTaskPending } = useNewCompactTask({
+    compact: chatKit.spawn,
+  });
+
+  const isCompacting = inlineCompactTaskPending || newCompactTaskPending;
+
   const {
     isExecuting,
     isSubmitDisabled,
@@ -276,7 +286,15 @@ function Chat({ auth, uid }: ChatProps) {
     isInputEmpty: !input.trim(),
     isFilesEmpty: files.length === 0,
     isUploadingImages,
+    isCompacting,
   });
+
+  const compactEnabled = !(
+    isLoading ||
+    isTaskLoading ||
+    isExecuting ||
+    totalTokens < CompactTaskMinTokens
+  );
 
   // FIXME(meng): consider add back auto-resume
   // useAutoResume({
@@ -307,23 +325,6 @@ function Chat({ auth, uid }: ChatProps) {
     retry,
   });
 
-  const compactEnabled = !(
-    isLoading ||
-    isExecuting ||
-    isTaskLoading ||
-    totalTokens < CompactTaskMinTokens
-  );
-
-  const { inlineCompactTask, inlineCompactTaskPending } = useInlineCompactTask({
-    enabled: compactEnabled,
-    ...chat,
-  });
-
-  const { newCompactTask, newCompactTaskPending } = useNewCompactTask({
-    compact: chatKit.spawn,
-    enabled: compactEnabled,
-  });
-
   const { handleSubmit, handleStop } = useChatSubmit({
     chat,
     input,
@@ -332,7 +333,7 @@ function Chat({ auth, uid }: ChatProps) {
     isSubmitDisabled,
     isLoading,
     pendingApproval,
-    isCompacting: inlineCompactTaskPending || newCompactTaskPending,
+    isCompacting,
   });
 
   useScrollToBottom({
@@ -350,7 +351,7 @@ function Chat({ auth, uid }: ChatProps) {
     (pendingApproval?.name === "retry" ? pendingApproval.error : undefined);
 
   // Only allow adding tool results when not loading
-  const allowAddToolResult = !(isLoading || isTaskLoading);
+  const allowAddToolResult = !(isLoading || isTaskLoading || isCompacting);
   useAddCompleteToolCalls({
     messages,
     enable: allowAddToolResult,
@@ -435,7 +436,7 @@ function Chat({ auth, uid }: ChatProps) {
                     totalTokens={totalTokens}
                     className="mr-5"
                     compact={{
-                      enabled: compactEnabled,
+                      enabled: compactEnabled && !isExecuting,
                       inlineCompactTask,
                       inlineCompactTaskPending,
                       newCompactTask,

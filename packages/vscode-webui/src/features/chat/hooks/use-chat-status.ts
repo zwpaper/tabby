@@ -7,6 +7,7 @@ interface UseChatStatusProps {
   isInputEmpty: boolean;
   isFilesEmpty: boolean;
   isUploadingImages: boolean;
+  isCompacting: boolean;
 }
 
 export function useChatStatus({
@@ -16,11 +17,12 @@ export function useChatStatus({
   isInputEmpty,
   isFilesEmpty,
   isUploadingImages,
+  isCompacting,
 }: UseChatStatusProps) {
   const { executingToolCalls } = useToolCallLifeCycle();
   const isExecuting = executingToolCalls.length > 0;
 
-  const isBusyCore = isTaskLoading || isModelsLoading;
+  const isBusyCore = isTaskLoading || isModelsLoading || isCompacting;
 
   const showEditTodos = !isBusyCore;
 

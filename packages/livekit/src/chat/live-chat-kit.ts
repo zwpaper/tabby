@@ -77,13 +77,15 @@ export class LiveChatKit<T extends { messages: Message[] }> {
     const originMakeRequest = chat.makeRequest;
     chat.makeRequest = async (...args) => {
       // Mark status to make async behaivor blocked based on status (e.g isLoading )
-      chat.setStatus({ status: "submitted" });
       const { messages } = this.chat;
-      await compactTask({
-        messages,
-        getLLM,
-        overwrite: true,
-      });
+      const lastMessage = messages.at(-1);
+      if (lastMessage?.role === "user") {
+        await compactTask({
+          messages,
+          getLLM,
+          overwrite: true,
+        });
+      }
       if (onBeforeMakeRequest) {
         await onBeforeMakeRequest({ messages });
       }

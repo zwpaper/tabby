@@ -4,13 +4,10 @@ import { useState } from "react";
 
 export const useInlineCompactTask = ({
   sendMessage,
-  enabled,
-}: {
-  enabled: boolean;
-} & Pick<UseChatHelpers<Message>, "sendMessage">) => {
+}: {} & Pick<UseChatHelpers<Message>, "sendMessage">) => {
   const [isPending, setIsPending] = useState(false);
   const inlineCompactTask = async () => {
-    if (isPending || !enabled) {
+    if (isPending) {
       return;
     }
     setIsPending(true);
