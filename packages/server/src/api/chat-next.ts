@@ -21,6 +21,7 @@ import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
   type AvailableModelId,
   type CreditCostInput,
+  geminiFlashNext,
   getModelByIdNext,
   getModelOptionsNext,
 } from "../lib/constants";
@@ -135,7 +136,7 @@ const chat = new Hono()
         const tool = tools[toolCall.toolName as keyof typeof tools];
 
         const { object: repairedArgs } = await generateObject({
-          model,
+          model: geminiFlashNext,
           schema: tool.inputSchema,
           prompt: [
             `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,

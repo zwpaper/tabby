@@ -404,6 +404,8 @@ const vertexNext = createVertexNext({
   },
 });
 
+export const geminiFlashNext = vertexNext("gemini-2.5-flash");
+
 import { deepinfra as deepinfraNext } from "@ai-v5-sdk/deepinfra";
 import type { GoogleGenerativeAIProviderOptions as GoogleGenerativeAIProviderOptionsNext } from "@ai-v5-sdk/google";
 import { groq as groqNext } from "@ai-v5-sdk/groq";
