@@ -1,5 +1,9 @@
 import { getLogger } from "@/lib/logger";
 import {
+  type ToolSet,
+  experimental_createMCPClient as createClient,
+} from "@ai-v5-sdk/ai";
+import {
   StdioClientTransport,
   getDefaultEnvironment,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -7,7 +11,6 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { type Signal, signal } from "@preact/signals-core";
 import type { McpToolStatus } from "@ragdoll/vscode-webui-bridge";
 import { createMachine, interpret } from "@xstate/fsm";
-import { type ToolSet, experimental_createMCPClient as createClient } from "ai";
 import type * as vscode from "vscode";
 import {
   type McpServerConfig,
@@ -238,12 +241,16 @@ export class McpConnection implements vscode.Disposable {
       tools: Object.entries(toolset).reduce<
         Record<string, McpToolStatus & McpToolExecutable>
       >((acc, [name, tool]) => {
-        if ("jsonSchema" in tool.parameters && tool.execute) {
+        if (
+          tool.inputSchema &&
+          "jsonSchema" in tool.inputSchema &&
+          tool.execute
+        ) {
           acc[name] = {
             disabled: this.isToolDisabled(name),
             description: tool.description,
-            parameters: {
-              jsonSchema: tool.parameters.jsonSchema,
+            inputSchema: {
+              jsonSchema: tool.inputSchema.jsonSchema,
             },
             execute: async (args, options) => {
               try {

@@ -3,7 +3,7 @@ import { TerminalJob } from "@/integrations/terminal/terminal-job";
 import type { ExecuteCommandOptions } from "@/integrations/terminal/types";
 import { waitForWebviewSubscription } from "@/integrations/terminal/utils";
 import { getWorkspaceFolder } from "@/lib/fs";
-import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
+import type { ClientToolsV5Type, ToolFunctionTypeV5 } from "@getpochi/tools";
 import { type Signal, signal } from "@preact/signals-core";
 import { ThreadSignal } from "@quilted/threads/signals";
 import { getLogger } from "@ragdoll/common";
@@ -17,8 +17,8 @@ import {
 
 const logger = getLogger("ExecuteCommand");
 
-export const executeCommand: ToolFunctionType<
-  ClientToolsType["executeCommand"]
+export const executeCommand: ToolFunctionTypeV5<
+  ClientToolsV5Type["executeCommand"]
 > = async ({ command, cwd = ".", isDevServer, timeout }, { abortSignal }) => {
   const defaultTimeout = 120;
   if (!command) {

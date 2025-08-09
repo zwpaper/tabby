@@ -30,11 +30,12 @@ import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
 import { todoWrite } from "@/tools/todo-write";
 import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
+import type { Tool as ToolV5 } from "@ai-v5-sdk/ai";
 import {
-  type PreviewToolFunctionType,
+  type PreviewToolFunctionTypeV5,
   ServerToolApproved,
   ServerTools,
-  type ToolFunctionType,
+  type ToolFunctionTypeV5,
 } from "@getpochi/tools";
 import {
   ThreadAbortSignal,
@@ -64,7 +65,6 @@ import type {
   VSCodeHostApi,
   WorkspaceState,
 } from "@ragdoll/vscode-webui-bridge";
-import type { Tool } from "ai";
 import * as runExclusive from "run-exclusive";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
@@ -289,7 +289,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         return ServerToolApproved;
       }
 
-      let tool: ToolFunctionType<Tool> | undefined;
+      let tool: ToolFunctionTypeV5<ToolV5> | undefined;
 
       if (toolName in ToolMap) {
         tool = ToolMap[toolName];
@@ -318,9 +318,15 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         }),
       );
 
+      const status = abortSignal.aborted
+        ? "aborted"
+        : typeof result === "object" && result && "error" in result
+          ? "error"
+          : "success";
+
       const durationMs = Date.now() - toolCallStart;
       logger.debug(
-        `executeToolCall: ${toolName}(${options.toolCallId}) took ${durationMs}ms => ${result.error ? "error" : "success"}`,
+        `executeToolCall: ${toolName}(${options.toolCallId}) took ${durationMs}ms => ${status}`,
       );
 
       this.capture({
@@ -329,11 +335,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
           toolName,
           durationMs,
           batched: options.toolCallId.startsWith("batch-"),
-          status: abortSignal.aborted
-            ? "aborted"
-            : result.error
-              ? "error"
-              : "success",
+          status,
         },
       });
 
@@ -665,7 +667,7 @@ function safeCall<T>(x: Promise<T>) {
 const ToolMap: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-  ToolFunctionType<any>
+  ToolFunctionTypeV5<any>
 > = {
   readFile,
   executeCommand,
@@ -681,7 +683,7 @@ const ToolMap: Record<
 const ToolPreviewMap: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-  PreviewToolFunctionType<any>
+  PreviewToolFunctionTypeV5<any>
 > = {
   writeToFile: previewWriteToFile,
   applyDiff: previewApplyDiff,

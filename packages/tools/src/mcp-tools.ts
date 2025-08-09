@@ -6,7 +6,7 @@ export const ZodMcpTool = z.object({
     .string()
     .optional()
     .describe("An optional description of the MCP tool."),
-  parameters: z
+  inputSchema: z
     .object({
       jsonSchema: z.custom<JSONSchema7>().describe("Validated json schema."),
     })

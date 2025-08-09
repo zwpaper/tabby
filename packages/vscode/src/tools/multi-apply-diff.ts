@@ -1,10 +1,10 @@
 import { DiffView } from "@/integrations/editor/diff-view";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import type { ClientToolsType } from "@getpochi/tools";
+import type { ClientToolsV5Type } from "@getpochi/tools";
 import type {
-  PreviewToolFunctionType,
-  ToolFunctionType,
+  PreviewToolFunctionTypeV5,
+  ToolFunctionTypeV5,
 } from "@getpochi/tools";
 import { processMultipleDiffs } from "@ragdoll/common/diff-utils";
 import { validateTextFile } from "@ragdoll/common/node";
@@ -15,8 +15,8 @@ const logger = getLogger("multiApplyDiffTool");
 /**
  * Preview the diff using DiffView for multiple operations
  */
-export const previewMultiApplyDiff: PreviewToolFunctionType<
-  ClientToolsType["multiApplyDiff"]
+export const previewMultiApplyDiff: PreviewToolFunctionTypeV5<
+  ClientToolsV5Type["multiApplyDiff"]
 > = async (args, { toolCallId, state, abortSignal }) => {
   const { path, edits } = args || {};
   if (!args || !path || !edits || edits.length === 0) {
@@ -38,8 +38,8 @@ export const previewMultiApplyDiff: PreviewToolFunctionType<
 /**
  * Apply multiple diff operations to a file using DiffView
  */
-export const multiApplyDiff: ToolFunctionType<
-  ClientToolsType["multiApplyDiff"]
+export const multiApplyDiff: ToolFunctionTypeV5<
+  ClientToolsV5Type["multiApplyDiff"]
 > = async ({ path, edits }, { toolCallId }) => {
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);

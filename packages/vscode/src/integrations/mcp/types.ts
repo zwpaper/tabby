@@ -1,5 +1,5 @@
+import type { ToolCallOptions } from "@ai-v5-sdk/ai";
 import type { McpToolStatus } from "@ragdoll/vscode-webui-bridge";
-import type { ToolExecutionOptions } from "ai";
 
 interface McpServerTransportStdio {
   command: string;
@@ -35,13 +35,13 @@ export function isHttpTransport(
 }
 
 export interface McpToolExecutable {
-  execute?(args: unknown, options: ToolExecutionOptions): Promise<unknown>;
+  execute?(args: unknown, options: ToolCallOptions): Promise<unknown>;
 }
 
 export function isExecutable(
   tool: McpToolExecutable,
 ): tool is McpToolExecutable & {
-  execute: (args: unknown, options?: ToolExecutionOptions) => Promise<unknown>;
+  execute: (args: unknown, options?: ToolCallOptions) => Promise<unknown>;
 } {
   return typeof tool?.execute === "function";
 }

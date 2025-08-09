@@ -45,7 +45,7 @@ describe("McpConnection", () => {
 
     // Use proxyquire to mock dependencies
     McpConnection = proxyquire("../mcp-connection", {
-      "ai": {
+      "@ai-v5-sdk/ai": {
         experimental_createMCPClient: mockCreateClient,
       },
       "@modelcontextprotocol/sdk/client/stdio.js": {
@@ -169,7 +169,7 @@ describe("McpConnection", () => {
       // Mock shouldRestartDueToConfigChanged to return true
       const shouldRestartStub = sandbox.stub().returns(true);
       McpConnection = proxyquire("../mcp-connection", {
-        "ai": { experimental_createMCPClient: mockCreateClient },
+        "@ai-v5-sdk/ai": { experimental_createMCPClient: mockCreateClient },
         "@modelcontextprotocol/sdk/client/stdio.js": { StdioClientTransport: mockStdioTransport },
         "@modelcontextprotocol/sdk/client/streamableHttp.js": { StreamableHTTPClientTransport: mockStreamableTransport },
         "./utils": {
@@ -546,5 +546,3 @@ describe("McpConnection", () => {
     });
   });
 });
-
-

@@ -26,6 +26,8 @@ export type {
   PreviewToolFunctionType,
   ToolFunctionType,
   ToolInvocationUIPart,
+  ToolFunctionTypeV5,
+  PreviewToolFunctionTypeV5,
 } from "./types";
 import type { Tool } from "ai";
 import { webFetch } from "./web-fetch";
@@ -127,3 +129,5 @@ export const ClientToolsV5 = {
   todoWrite: todoWriteV5,
   writeToFile: writeToFileV5,
 };
+
+export type ClientToolsV5Type = typeof ClientToolsV5;

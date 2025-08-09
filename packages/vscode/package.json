@@ -345,7 +345,7 @@
     "@ragdoll/server": "workspace:*",
     "@vscode-logging/logger": "^2.0.0",
     "@xstate/fsm": "^2.1.0",
-    "ai": "catalog:",
+    "@ai-v5-sdk/ai": "catalog:",
     "better-auth": "catalog:",
     "diff": "^7.0.0",
     "fast-deep-equal": "^3.1.3",

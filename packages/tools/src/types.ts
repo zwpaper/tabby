@@ -7,6 +7,12 @@ import {
 } from "ai";
 
 export { tool as defineClientToolV5 } from "@ai-v5-sdk/ai";
+import type {
+  InferToolInput,
+  InferToolOutput,
+  ToolExecuteFunction,
+  Tool as ToolV5,
+} from "@ai-v5-sdk/ai";
 
 import type { z } from "zod";
 
@@ -38,8 +44,22 @@ export type ToolFunctionType<T extends Tool> = (
   options: ToolExecutionOptions,
 ) => Promise<ToolOutputType<T>>;
 
+export type ToolFunctionTypeV5<T extends ToolV5> = ToolExecuteFunction<
+  InferToolInput<T>,
+  InferToolOutput<T>
+>;
+
 export type PreviewToolFunctionType<T extends Tool> = (
   args: Partial<ToolInputType<T>> | null,
+  options: {
+    toolCallId: string;
+    state: "partial-call" | "call" | "result";
+    abortSignal?: AbortSignal;
+  },
+) => Promise<undefined>;
+
+export type PreviewToolFunctionTypeV5<T extends ToolV5> = (
+  args: Partial<InferToolInput<T>> | null,
   options: {
     toolCallId: string;
     state: "partial-call" | "call" | "result";

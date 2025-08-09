@@ -233,8 +233,9 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.5.8",
+      "version": "0.5.9",
       "dependencies": {
+        "@ai-v5-sdk/ai": "catalog:",
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@orama/orama": "^3.1.11",
         "@preact/signals-core": "catalog:",
@@ -244,7 +245,6 @@
         "@ragdoll/server": "workspace:*",
         "@vscode-logging/logger": "^2.0.0",
         "@xstate/fsm": "^2.1.0",
-        "ai": "catalog:",
         "better-auth": "catalog:",
         "diff": "^7.0.0",
         "fast-deep-equal": "^3.1.3",

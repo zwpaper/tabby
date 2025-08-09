@@ -51,7 +51,7 @@ export async function requestOpenAI(
 function parseMcpTool(mcpTool: McpTool): Tool {
   return tool({
     description: mcpTool.description,
-    inputSchema: jsonSchema(mcpTool.parameters.jsonSchema),
+    inputSchema: jsonSchema(mcpTool.inputSchema.jsonSchema),
   });
 }
 

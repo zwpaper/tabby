@@ -144,7 +144,7 @@ describe("MCP Types", () => {
       const tool: McpToolStatus = {
         disabled: true,
         description: "Test tool",
-        parameters: {
+        inputSchema: {
           jsonSchema: {
             type: "object",
             properties: {
@@ -158,14 +158,14 @@ describe("MCP Types", () => {
 
       assert.ok(!("disabled" in result));
       assert.strictEqual(result.description, "Test tool");
-      assert.deepStrictEqual(result.parameters, tool.parameters);
+      assert.deepStrictEqual(result.inputSchema, tool.inputSchema);
     });
 
     it("should preserve all other properties", () => {
       const tool: McpToolStatus & { customProp: string } = {
         disabled: false,
         description: "Test tool",
-        parameters: {
+        inputSchema: {
           jsonSchema: {
             type: "object",
             properties: {
@@ -181,14 +181,14 @@ describe("MCP Types", () => {
       assert.ok(!("disabled" in result));
       assert.strictEqual(result.description, "Test tool");
       assert.strictEqual((result as any).customProp, "custom value");
-      assert.deepStrictEqual(result.parameters, tool.parameters);
+      assert.deepStrictEqual(result.inputSchema, tool.inputSchema);
     });
 
     it("should work with complex tool status objects", () => {
       const tool: McpToolStatus = {
         disabled: true,
         description: "Complex test tool with detailed schema",
-        parameters: {
+        inputSchema: {
           jsonSchema: {
             type: "object",
             properties: {
@@ -214,7 +214,7 @@ describe("MCP Types", () => {
 
       assert.ok(!("disabled" in result));
       assert.strictEqual(result.description, tool.description);
-      assert.deepStrictEqual(result.parameters, tool.parameters);
+      assert.deepStrictEqual(result.inputSchema, tool.inputSchema);
     });
   });
 

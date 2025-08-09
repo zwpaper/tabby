@@ -576,7 +576,7 @@ function parseMcpTool(name: string, mcpTool: McpTool): Tool {
   }
   return tool({
     description: mcpTool.description,
-    parameters: jsonSchema(mcpTool.parameters.jsonSchema),
+    parameters: jsonSchema(mcpTool.inputSchema.jsonSchema),
     experimental_toToolResultContent: toToolResultContent,
   });
 }
