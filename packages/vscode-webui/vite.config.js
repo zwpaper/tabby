@@ -93,6 +93,10 @@ export default defineConfig({
     format: "es",
     rollupOptions: { output: OutputOptions[BuildTarget] },
   },
+  optimizeDeps: {
+    // TODO remove once fixed https://github.com/vitejs/vite/issues/8427
+    exclude: ["@livestore/wa-sqlite"],
+  },
   build: {
     rollupOptions: {
       input: {

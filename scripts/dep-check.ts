@@ -188,6 +188,10 @@ const PackageIgnoreList: Record<string, string[]> = {
 
     // storybook
     "@storybook/*",
+
+    // https://github.com/livestorejs/livestore/tree/main/packages/%40livestore/adapter-web
+    "@livestore/peer-deps",
+    "@livestore/wa-sqlite",
   ],
   "livekit-web-example": [
     "@livestore/peer-deps",

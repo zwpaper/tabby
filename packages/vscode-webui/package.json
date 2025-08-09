@@ -20,6 +20,8 @@
     "@daveyplate/better-auth-tanstack": "catalog:",
     "@leeoniya/ufuzzy": "^1.0.18",
     "@livestore/adapter-web": "catalog:",
+    "@livestore/peer-deps": "catalog:",
+    "@livestore/wa-sqlite": "catalog:",
     "@livestore/react": "catalog:",
     "@preact/signals-core": "catalog:",
     "@quilted/threads": "catalog:",

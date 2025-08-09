@@ -108,7 +108,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@ai-v5-sdk/react": "catalog:",
-        "@livestore/adapter-web": "0.3.1",
+        "@livestore/adapter-web": "catalog:",
         "@livestore/peer-deps": "catalog:",
         "@livestore/react": "catalog:",
         "@livestore/sync-cf": "^0.3.1",
@@ -295,7 +295,9 @@
         "@daveyplate/better-auth-tanstack": "catalog:",
         "@leeoniya/ufuzzy": "^1.0.18",
         "@livestore/adapter-web": "catalog:",
+        "@livestore/peer-deps": "catalog:",
         "@livestore/react": "catalog:",
+        "@livestore/wa-sqlite": "catalog:",
         "@preact/signals-core": "catalog:",
         "@quilted/threads": "catalog:",
         "@radix-ui/react-avatar": "^1.1.7",
