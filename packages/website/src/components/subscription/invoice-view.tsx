@@ -6,7 +6,7 @@ import { Card, CardContent } from "../ui/card";
 type Invoice = InferResponseType<typeof apiClient.api.billing.invoices.$get>;
 
 export function InvoiceView({ invoice }: { invoice: Invoice }) {
-  const total = invoice.total / 100;
+  const total = invoice.amount_due / 100;
 
   const dollar = total.toLocaleString("en-US", {
     style: "currency",
