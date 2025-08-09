@@ -188,12 +188,20 @@ export function injectEnvironmentDetails(
 export function injectEnvironmentDetailsNext(
   messages: UIMessageNext[],
   environment: Environment | undefined,
-  user: User | undefined,
 ): UIMessageNext[] {
   if (environment === undefined) return messages;
   const messageToInject = messages.at(-1);
   if (!messageToInject) return messages;
   if (messageToInject.role !== "user") return messages;
+
+  const { gitStatus } = environment.workspace;
+  const user =
+    gitStatus?.userEmail && gitStatus?.userName
+      ? {
+          name: gitStatus.userName,
+          email: gitStatus.userEmail,
+        }
+      : undefined;
 
   const environmentDetails =
     messages.length === 1

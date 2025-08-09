@@ -58,6 +58,11 @@ export const ZodEnvironment = z.object({
         .describe("Active editor selection in the current workspace."),
       gitStatus: z
         .object({
+          userName: z.string().describe("The name of the git user.").optional(),
+          userEmail: z
+            .string()
+            .describe("The email of the git user.")
+            .optional(),
           origin: z
             .string()
             .optional()

@@ -73,8 +73,6 @@ function prepareMessages<T extends import("@ai-v5-sdk/ai").UIMessage>(
   const messages = prompts.injectEnvironmentDetailsNext(
     inputMessages,
     environment,
-    // FIXME(meng): set user from git config
-    undefined,
   );
 
   return formattersNext.llm(messages) as T[];

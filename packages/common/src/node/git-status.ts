@@ -121,16 +121,25 @@ export class GitStatusReader {
    * Collects all git data and returns it as structured data
    */
   private async readGitStatusImpl(): Promise<GitStatus> {
-    const [rawOrigin, currentBranch, mainBranch, status, recentCommits] =
-      await Promise.all([
-        this.execGit("remote get-url origin").catch(() => undefined),
-        this.execGit("rev-parse --abbrev-ref HEAD").catch(() => "unknown"),
-        this.detectMainBranch().catch(() => "unknown"),
-        this.execGit("status --porcelain").catch(() => ""),
-        this.execGit('log -n 5 --pretty=format:"%h %s"')
-          .then((x) => x.split("\n"))
-          .catch(() => []),
-      ]);
+    const [
+      rawOrigin,
+      currentBranch,
+      mainBranch,
+      status,
+      recentCommits,
+      userName,
+      userEmail,
+    ] = await Promise.all([
+      this.execGit("remote get-url origin").catch(() => undefined),
+      this.execGit("rev-parse --abbrev-ref HEAD").catch(() => "unknown"),
+      this.detectMainBranch().catch(() => "unknown"),
+      this.execGit("status --porcelain").catch(() => ""),
+      this.execGit('log -n 5 --pretty=format:"%h %s"')
+        .then((x) => x.split("\n"))
+        .catch(() => []),
+      this.execGit("config user.name").catch(() => undefined),
+      this.execGit("config user.email").catch(() => undefined),
+    ]);
 
     const origin = this.sanitizeOriginUrl(rawOrigin);
 
@@ -140,6 +149,8 @@ export class GitStatusReader {
       mainBranch,
       status,
       recentCommits,
+      userName,
+      userEmail,
     };
   }
 
