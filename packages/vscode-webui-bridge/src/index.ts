@@ -15,12 +15,12 @@ export type {
 
 export type { CaptureEvent } from "./capture-event";
 
-export type GitDiff = {
+// Type for user edits with diff information
+export type UserEditsDiff = {
   relative: string;
-  absolute: string;
-  before: string;
-  after: string;
+  diff: string;
 };
+
 export interface ResourceURI {
   logo128: string;
 }

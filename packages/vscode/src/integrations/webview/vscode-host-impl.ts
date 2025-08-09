@@ -538,12 +538,12 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       try {
         // Get changes using existing method
         const changes =
-          await this.checkpointService.getCheckpointChanges(fromCheckpoint);
-
-        if (changes.length === 0) {
+          await this.checkpointService.getCheckpointUserEditsDiff(
+            fromCheckpoint,
+          );
+        if (!changes || changes.length === 0) {
           return null;
         }
-
         return changes;
       } catch (error) {
         logger.error(

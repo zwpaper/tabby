@@ -66,13 +66,9 @@ test("environment", () => {
           homedir: "/home/user",
           shell: "bash",
         },
-        userEdits: [
-          {
-            relative: "path/to/file",
-            absolute: "/path/to/file",
-            before: "hello",
-            after: "world"
-          }
-        ]}, {name: "Pochi", email: "noreply@getpochi.com"}),
+        userEdits: [{
+          relative: "path/to/file",
+          diff: "-hello\n+world"
+        }]}, {name: "Pochi", email: "noreply@getpochi.com"}),
   ).toMatchSnapshot();
 });

@@ -236,10 +236,18 @@ function getUserEdits(userEdits: Environment["userEdits"]) {
     return "";
   }
 
-  const formattedChanges = prompts.formatUserEdits(userEdits);
+  // Format structured user edits data
+  const formattedFiles = userEdits
+    .map((edit) => {
+      return `**${edit.relative}** (modified)
+\`\`\`diff
+${edit.diff}
+\`\`\``;
+    })
+    .join("\n\n");
 
   return `# User Edits
 The user has made the following edits to the workspace. Please take these changes into account when proceeding with the task.
 
-${formattedChanges}`;
+${formattedFiles}`;
 }

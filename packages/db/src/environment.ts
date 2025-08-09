@@ -97,10 +97,8 @@ export const ZodEnvironment = z.object({
   userEdits: z
     .array(
       z.object({
-        relative: z.string(),
-        absolute: z.string(),
-        before: z.string(),
-        after: z.string(),
+        relative: z.string().describe("Relative file path"),
+        diff: z.string().describe("Diff content with inline markers"),
       }),
     )
     .optional()

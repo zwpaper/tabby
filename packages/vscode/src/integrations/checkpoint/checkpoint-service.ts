@@ -3,13 +3,19 @@ import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@ragdoll/common";
 import type {
-  GitDiff,
   SaveCheckpointOptions,
+  UserEditsDiff,
 } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import { ShadowGitRepo } from "./shadow-git-repo";
-import { Deferred, toErrorMessage } from "./util";
+import type { GitDiff } from "./types";
+import {
+  Deferred,
+  filterGitChanges,
+  processGitChangesToUserEdits,
+  toErrorMessage,
+} from "./util";
 
 const logger = getLogger("CheckpointService");
 
@@ -136,17 +142,7 @@ export class CheckpointService implements vscode.Disposable {
     }
     try {
       const changes = await this.shadowGit.getDiff(from, to);
-      // Filter out binary files and files that exceed the size limit.
-      const maxChangeLimit = 8 * 1024; // 8KB
-      const nullbyte = "\u0000";
-      return changes.filter((change) => {
-        const isBinary =
-          change.before.includes(nullbyte) || change.after.includes(nullbyte);
-        const isTooLarge =
-          Buffer.byteLength(change.before, "utf8") > maxChangeLimit ||
-          Buffer.byteLength(change.after, "utf8") > maxChangeLimit;
-        return !isBinary && !isTooLarge;
-      });
+      return filterGitChanges(changes);
     } catch (error) {
       const errorMessage = toErrorMessage(error);
       logger.error(
@@ -154,6 +150,27 @@ export class CheckpointService implements vscode.Disposable {
         { error },
       );
       throw new Error(`Failed to get changes: ${errorMessage}`);
+    }
+  };
+
+  getCheckpointUserEditsDiff = async (
+    from: string,
+    to?: string,
+  ): Promise<UserEditsDiff[] | null> => {
+    await this.ensureInitialized();
+    if (!this.shadowGit) {
+      throw new Error("Shadow Git repository not initialized");
+    }
+    try {
+      const changes = await this.shadowGit.getDiff(from, to);
+      return processGitChangesToUserEdits(changes);
+    } catch (error) {
+      const errorMessage = toErrorMessage(error);
+      logger.error(
+        `Failed to get user edits for commit hash: ${from} to: ${to}: ${errorMessage}`,
+        { error },
+      );
+      return null;
     }
   };
 

@@ -5,12 +5,12 @@ import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
   CustomModelSetting,
-  GitDiff,
   McpStatus,
   PochiModelsSettings,
   ResourceURI,
   RuleFile,
   SessionState,
+  UserEditsDiff,
   VSCodeHostApi,
   WorkspaceState,
 } from "./index";
@@ -173,7 +173,7 @@ const VSCodeHostStub = {
   },
   diffWithCheckpoint: async (
     _fromCheckpoint: string,
-  ): Promise<GitDiff[] | null> => {
+  ): Promise<UserEditsDiff[] | null> => {
     return Promise.resolve(null);
   },
   showCheckpointDiff: async (): Promise<boolean> => {

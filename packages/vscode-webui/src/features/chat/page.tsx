@@ -32,7 +32,10 @@ import type { Environment } from "@ragdoll/db";
 import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
 import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
-import { type GitDiff, getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
+import {
+  type UserEditsDiff,
+  getServerBaseUrl,
+} from "@ragdoll/vscode-webui-bridge";
 import { useRouter } from "@tanstack/react-router";
 import { ApprovalButton, useApprovalAndRetry } from "../approval";
 import { TodoList, useTodos } from "../todo";
@@ -239,7 +242,7 @@ function Chat({ auth, uid }: ChatProps) {
   const buildEnvironment = useCallback(async () => {
     const environment = await vscodeHost.readEnvironment();
 
-    let userEdits: GitDiff[] | undefined;
+    let userEdits: UserEditsDiff[] | undefined;
     const lastCheckpointHash = findLastCheckpointFromMessages(messages);
     if (lastCheckpointHash && autoApproveGuard.current) {
       userEdits =

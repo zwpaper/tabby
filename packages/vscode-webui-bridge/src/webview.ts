@@ -5,7 +5,6 @@ import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
   CustomModelSetting,
-  GitDiff,
   McpStatus,
   NewTaskParams,
   PochiModelsSettings,
@@ -15,6 +14,7 @@ import type {
   SaveCheckpointOptions,
   SessionState,
   TaskIdParams,
+  UserEditsDiff,
   WorkspaceState,
 } from "./index";
 
@@ -215,11 +215,11 @@ export interface VSCodeHostApi {
   readCheckpointPath(): Promise<string | undefined>;
 
   /**
-   * Reads user edits since the last checkpoint as GitDiff array.
+   * Reads user edits since the last checkpoint as diff stats.
    * @param fromCheckpoint - checkpoint hash to compare from.
-   * @returns A promise that resolves to an array of GitDiff objects representing changes since the last checkpoint, or null if no edits.
+   * @returns A promise that resolves to an array of file diff stats, or null if no edits.
    */
-  diffWithCheckpoint(fromCheckpoint: string): Promise<GitDiff[] | null>;
+  diffWithCheckpoint(fromCheckpoint: string): Promise<UserEditsDiff[] | null>;
 
   /**
    * Shows the code diff between two checkpoints.
