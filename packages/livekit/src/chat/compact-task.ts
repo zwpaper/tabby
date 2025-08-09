@@ -5,23 +5,37 @@ import { requestLLM } from "./llm";
 export async function compactTask({
   getLLM,
   messages,
-}: { getLLM: () => Promise<RequestData["llm"]>; messages: Message[] }) {
+  overwrite,
+}: {
+  getLLM: () => Promise<RequestData["llm"]>;
+  messages: Message[];
+  overwrite: boolean;
+}): Promise<string | undefined> {
   const lastMessage = messages.at(-1);
   if (!lastMessage) {
     return;
   }
 
-  if (lastMessage.metadata?.kind !== "user") return;
-  if (!lastMessage.metadata.compact) return;
+  if (lastMessage.role === "user") {
+    if (lastMessage.metadata?.kind === "user" && lastMessage.metadata.compact) {
+      // DO Nothing.
+    } else {
+      return;
+    }
+  }
 
   const llm = await getLLM();
   try {
-    const summary = await createSummary(llm, messages.slice(0, -1));
-    lastMessage.parts.unshift(
-      prompts.createCompactPart(summary, messages.length - 1),
+    const part = prompts.createCompactPart(
+      await createSummary(llm, messages.slice(0, -1)),
+      messages.length - 1,
     );
+    if (overwrite) {
+      lastMessage.parts.unshift(part);
+    }
+    return part.text;
   } catch (err) {
-    console.warn("err");
+    console.warn("Failed to create summary", err);
   }
 }
 

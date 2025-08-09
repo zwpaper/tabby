@@ -22,7 +22,7 @@ function escapeUnknownXMLTags(message: string): string {
 }
 
 export function parseTitle(title: string | null) {
-  if (!title) return "(empty)";
+  if (!title?.trim()) return "(empty)";
 
   const formatXMLTags = (ast: Root) => {
     function processNode(node: Parent) {
@@ -50,7 +50,7 @@ export function parseTitle(title: string | null) {
 
   const hast = rehype().parse(escapeUnknownXMLTags(title));
   formatXMLTags(hast);
-  return toText(hast).slice(0, 256);
+  return toText(hast).slice(0, 256) || "(empty)";
 }
 
 export function hasAttemptCompletion(message: UIMessage): boolean {

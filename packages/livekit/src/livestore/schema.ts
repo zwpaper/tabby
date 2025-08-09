@@ -6,10 +6,12 @@ const DBTextUIPart = Schema.Struct({
   state: Schema.optional(Schema.Literal("streaming", "done")),
 });
 
+const DBUIPart = Schema.Union(DBTextUIPart, Schema.Unknown);
+
 const DBMessage = Schema.Struct({
   id: Schema.String,
   role: Schema.Literal("user", "assistant", "system"),
-  parts: Schema.Array(Schema.Union(DBTextUIPart, Schema.Unknown)),
+  parts: Schema.Array(DBUIPart),
 });
 
 const Todo = Schema.Struct({
@@ -98,6 +100,12 @@ export const events = {
     schema: Schema.Struct({
       id: Schema.String,
       createdAt: Schema.Date,
+      initMessage: Schema.optional(
+        Schema.Struct({
+          id: Schema.String,
+          parts: Schema.Array(DBUIPart),
+        }),
+      ),
     }),
   }),
   chatStreamStarted: Events.synced({
@@ -133,16 +141,27 @@ export const events = {
 
 // Materializers are used to map events to state (https://docs.livestore.dev/reference/state/materializers)
 const materializers = State.SQLite.materializers(events, {
-  "v1.TaskInited": ({ id, createdAt }) => {
-    return [
-      tables.tasks.insert({
-        id,
-        status: "pending-input",
-        createdAt,
-        updatedAt: createdAt,
-      }),
-    ];
-  },
+  "v1.TaskInited": ({ id, createdAt, initMessage }) => [
+    tables.tasks.insert({
+      id,
+      status: initMessage ? "pending-model" : "pending-input",
+      createdAt,
+      updatedAt: createdAt,
+    }),
+    ...(initMessage
+      ? [
+          tables.messages.insert({
+            id: initMessage.id,
+            taskId: id,
+            data: {
+              id: initMessage.id,
+              role: "user",
+              parts: initMessage.parts,
+            },
+          }),
+        ]
+      : []),
+  ],
   "v1.ChatStreamStarted": ({ id, data, todos, git, updatedAt }, ctx) => {
     const task = ctx.query(tables.tasks.where("id", "=", id)).at(0);
     if (!task) {
@@ -151,15 +170,18 @@ const materializers = State.SQLite.materializers(events, {
 
     let newTitle = undefined;
     const message = data;
+    const lastTextPart = message.parts.findLast(
+      (x) => typeof x === "object" && x && "type" in x && x.type === "text",
+    );
     if (
       task.title === null &&
       data.role === "user" &&
-      typeof message.parts[0] === "object" &&
-      message.parts[0] &&
-      "text" in message.parts[0] &&
-      typeof message.parts[0].text === "string"
+      typeof lastTextPart === "object" &&
+      lastTextPart &&
+      "text" in lastTextPart &&
+      typeof lastTextPart.text === "string"
     ) {
-      newTitle = message.parts[0].text.split("\n")[0].trim() || "(empty)";
+      newTitle = lastTextPart.text.split("\n")[0].trim() || "(empty)";
     }
 
     return [

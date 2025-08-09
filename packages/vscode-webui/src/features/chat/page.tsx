@@ -46,6 +46,7 @@ import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
 import { useInlineCompactTask } from "./hooks/use-inline-compact-task";
+import { useNewCompactTask } from "./hooks/use-new-compact-task";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 
@@ -322,15 +323,10 @@ function Chat({ auth, uid }: ChatProps) {
     ...chat,
   });
 
-  // const {
-  //   isCompactingNewTask,
-  //   handleCompactNewTask,
-  //   error: compactNewTaskError,
-  // } = useCompactNewTask({
-  //   uid,
-  //   enabled: compactTaskEnabled,
-  //   messages,
-  // });
+  const { newCompactTask, newCompactTaskPending } = useNewCompactTask({
+    compact: chatKit.spawn,
+    enabled: compactEnabled,
+  });
 
   const { handleSubmit, handleStop } = useChatSubmit({
     chat,
@@ -340,8 +336,7 @@ function Chat({ auth, uid }: ChatProps) {
     isSubmitDisabled,
     isLoading,
     pendingApproval,
-    // isCompacting: isCompactingTask || isCompactingNewTask,
-    isCompacting: inlineCompactTaskPending,
+    isCompacting: inlineCompactTaskPending || newCompactTaskPending,
   });
 
   useScrollToBottom({
@@ -357,7 +352,6 @@ function Chat({ auth, uid }: ChatProps) {
     uploadImageError ||
     taskError ||
     (pendingApproval?.name === "retry" ? pendingApproval.error : undefined);
-  // || compactNewTaskError;
 
   // Only allow adding tool results when not loading
   const allowAddToolResult = !(isLoading || isTaskLoading);
@@ -376,8 +370,7 @@ function Chat({ auth, uid }: ChatProps) {
         messages={renderMessages}
         isTaskLoading={isTaskLoading}
         isLoading={isLoading}
-        // isCompactingNewTask={isCompactingNewTask}
-        isCompactingNewTask={false}
+        isCompactingNewTask={newCompactTaskPending}
         user={auth.user}
         messagesContainerRef={messagesContainerRef}
       />
@@ -449,6 +442,8 @@ function Chat({ auth, uid }: ChatProps) {
                       enabled: compactEnabled,
                       inlineCompactTask,
                       inlineCompactTaskPending,
+                      newCompactTask,
+                      newCompactTaskPending,
                     }}
                   />
                 )}

@@ -65,6 +65,9 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       transport: this.transport,
     });
 
+    const getLLM = () =>
+      Promise.resolve(prepareRequestData()).then((data) => data.llm);
+
     // @ts-expect-error: monkey patch
     const chat = this.chat as {
       makeRequest: (...args: unknown[]) => Promise<unknown>;
@@ -78,13 +81,48 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       const { messages } = this.chat;
       await compactTask({
         messages,
-        getLLM: () =>
-          Promise.resolve(prepareRequestData()).then((data) => data.llm),
+        getLLM,
+        overwrite: true,
       });
       if (onBeforeMakeRequest) {
         await onBeforeMakeRequest({ messages });
       }
       return originMakeRequest.apply(chat, args);
+    };
+
+    this.spawn = async () => {
+      const { messages } = this.chat;
+      const summary = await compactTask({
+        messages,
+        getLLM,
+        overwrite: false,
+      });
+      if (!summary) {
+        throw new Error("Failed to compact task");
+      }
+
+      const taskId = crypto.randomUUID();
+      this.store.commit(
+        events.taskInited({
+          id: taskId,
+          createdAt: new Date(),
+          initMessage: {
+            id: crypto.randomUUID(),
+            parts: [
+              {
+                type: "text",
+                text: summary,
+              },
+
+              {
+                type: "text",
+                text: "I've summarized the task and start a new task with the summary. Please analysis the current status, and use askFollowUpQuestion with me to confirm the next steps",
+              },
+            ],
+          },
+        }),
+      );
+      return taskId;
     };
   }
 
@@ -97,6 +135,9 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       .query(makeMessagesQuery(this.taskId))
       .map((x) => x.data as Message);
   }
+
+  // Create a new task by compacting from current task, returns new taskId.
+  readonly spawn: () => Promise<string>;
 
   private readonly onStart: OnStartCallback = ({ messages, environment }) => {
     const { store } = this;

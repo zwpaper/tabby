@@ -25,8 +25,8 @@ interface Props {
   compact?: {
     inlineCompactTaskPending: boolean;
     inlineCompactTask: () => void;
-    // isCompactingNewTask: boolean;
-    // handleCompactNewTask: () => void;
+    newCompactTaskPending: boolean;
+    newCompactTask: () => void;
     enabled: boolean;
   };
 }
@@ -134,29 +134,29 @@ export function TokenUsage({
             </div>
           </div>
           <div className="mt-2 flex items-center gap-x-2">
-            {/* <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="inline-block">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => {
-                          compact?.handleCompactNewTask();
-                          setIsOpen(false);
-                        }}
-                        disabled={!compact?.enabled}
-                      >
-                        {compact?.isCompactingNewTask
-                          ? "Compacting..."
-                          : "New Task with Summary"}
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  {minTokenTooltip}
-                </Tooltip>
-              </TooltipProvider> */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-block">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        compact?.newCompactTask();
+                        setIsOpen(false);
+                      }}
+                      disabled={!compact?.enabled}
+                    >
+                      {compact?.newCompactTaskPending
+                        ? "Compacting..."
+                        : "New Task with Summary"}
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {minTokenTooltip}
+              </Tooltip>
+            </TooltipProvider>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

@@ -1,7 +1,7 @@
 /**
  * Known XML tags that should be preserved during processing
  */
-export const KnownTags = ["file", "workflow"] as const;
+export const KnownTags = ["file", "workflow", "compact"] as const;
 
 const SandboxHome = "/home/pochi";
 const SandboxLogDir = `${SandboxHome}/.log`;
