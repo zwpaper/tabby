@@ -1,8 +1,8 @@
-import type { ReasoningUIPart } from "@ai-sdk/ui-utils";
 import { Dot, Lightbulb } from "lucide-react";
 
 import { MessageMarkdown } from "@/components/message/markdown";
 import { cn, tw } from "@/lib/utils";
+import type { ReasoningUIPart } from "@ai-v5-sdk/ai";
 import { ExpandableToolContainer } from "./tool-invocation/tool-container";
 
 interface ReasoningPartUIProps {
@@ -33,7 +33,7 @@ export function ReasoningPartUI({
     </span>
   );
 
-  const detail = <MessageMarkdown>{part.reasoning}</MessageMarkdown>;
+  const detail = <MessageMarkdown>{part.text}</MessageMarkdown>;
 
   return (
     <div className={className}>

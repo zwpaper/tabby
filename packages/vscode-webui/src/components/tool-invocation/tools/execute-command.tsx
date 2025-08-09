@@ -1,5 +1,5 @@
 import { useToolCallLifeCycle } from "@/features/chat";
-import type { ClientToolsType } from "@getpochi/tools";
+import { getToolName } from "@ai-v5-sdk/ai";
 import { useCallback } from "react";
 import { CommandExecutionPanel } from "../command-execution-panel";
 import { HighlightedText } from "../highlight-text";
@@ -7,18 +7,19 @@ import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
-export const executeCommandTool: React.FC<
-  ToolProps<ClientToolsType["executeCommand"]>
-> = ({ tool, isExecuting }) => {
+export const executeCommandTool: React.FC<ToolProps<"executeCommand">> = ({
+  tool,
+  isExecuting,
+}) => {
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
-    toolName: tool.toolName,
+    toolName: getToolName(tool),
     toolCallId: tool.toolCallId,
   });
   const abortTool = useCallback(() => {
     lifecycle.abort();
   }, [lifecycle.abort]);
 
-  const { cwd, command, isDevServer } = tool.args || {};
+  const { cwd, command, isDevServer } = tool.input || {};
   const cwdNode = cwd ? (
     <span>
       {" "}
@@ -47,12 +48,12 @@ export const executeCommandTool: React.FC<
   let output = streamingResult?.output.content || "";
   let completed = false;
   if (
-    tool.state === "result" &&
-    typeof tool.result === "object" &&
-    tool.result !== null &&
-    "output" in tool.result
+    tool.state === "output-available" &&
+    typeof tool.output === "object" &&
+    tool.output !== null &&
+    "output" in tool.output
   ) {
-    output = tool.result.output;
+    output = tool.output.output;
     completed = true;
   }
 

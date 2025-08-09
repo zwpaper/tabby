@@ -242,7 +242,8 @@ function formatMessages(messages: UIMessage[], ops: FormatOp[]): UIMessage[] {
 
 export const formatters = {
   // Format messages for the Front-end UI rendering.
-  ui: (messages: UIMessage[]) => formatMessages(messages, UIFormatOps),
+  ui: <T extends UIMessage>(messages: T[]) =>
+    formatMessages(messages, UIFormatOps) as T[],
 
   // Format messages before sending them to the LLM.
   llm: <T extends UIMessage>(

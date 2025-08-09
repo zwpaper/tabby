@@ -1,26 +1,26 @@
-import type { ClientToolsType } from "@getpochi/tools";
 import { FileList } from "../file-list";
 import { HighlightedText } from "../highlight-text";
 import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
-export const globFilesTool: React.FC<
-  ToolProps<ClientToolsType["globFiles"]>
-> = ({ tool, isExecuting }) => {
-  const { path, globPattern } = tool.args || {};
+export const globFilesTool: React.FC<ToolProps<"globFiles">> = ({
+  tool,
+  isExecuting,
+}) => {
+  const { path, globPattern } = tool.input || {};
 
   let resultEl: React.ReactNode | null = null;
   let files: string[] = [];
   let isTruncated = false;
   if (
-    tool.state === "result" &&
-    typeof tool.result === "object" &&
-    tool.result !== null &&
-    !("error" in tool.result)
+    tool.state === "output-available" &&
+    typeof tool.output === "object" &&
+    tool.output !== null &&
+    !("error" in tool.output)
   ) {
-    files = tool.result.files;
-    isTruncated = tool.result.isTruncated ?? false;
+    files = tool.output.files;
+    isTruncated = tool.output.isTruncated ?? false;
     resultEl =
       files.length > 0 ? (
         <FileList
@@ -49,7 +49,7 @@ export const globFilesTool: React.FC<
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
       <span>
-        {isExecuting || tool.state !== "result" ? (
+        {isExecuting || tool.state !== "output-available" ? (
           <>Searching {searchCondition}</>
         ) : (
           <>

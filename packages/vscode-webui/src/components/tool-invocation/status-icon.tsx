@@ -7,9 +7,7 @@ import {
 import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
-// FIXME(meng): upgrade this to v5
-// ast-grep-ignore: no-ai-sdk-v4
-import type { ToolInvocation } from "ai";
+import type { ToolUIPart } from "@ai-v5-sdk/ai";
 import {
   Check,
   CheckIcon,
@@ -21,7 +19,7 @@ import {
 } from "lucide-react";
 
 interface StatusIconProps {
-  tool: ToolInvocation;
+  tool: ToolUIPart;
   isExecuting: boolean;
   className?: string;
 }
@@ -31,12 +29,17 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
   let error: string | undefined;
   if (
-    tool.state === "result" &&
-    typeof tool.result === "object" &&
-    "error" in tool.result &&
-    typeof tool.result.error === "string"
+    tool.state === "output-available" &&
+    typeof tool.output === "object" &&
+    tool.output !== null &&
+    "error" in tool.output &&
+    typeof tool.output.error === "string"
   ) {
-    error = tool.result.error;
+    error = tool.output.error;
+  }
+
+  if (tool.state === "output-error") {
+    error = tool.errorText;
   }
 
   const tooltipContent = [];
@@ -65,11 +68,11 @@ export function StatusIcon({ tool, isExecuting, className }: StatusIconProps) {
   if (error) {
     statusIcon = <X className="size-4 cursor-help text-error" />;
     tooltipContent.push(<p>{error}</p>);
-  } else if (tool.state === "result") {
+  } else if (tool.state === "output-available") {
     statusIcon = (
       <Check className="size-4 text-emerald-700 dark:text-emerald-300" />
     );
-  } else if (tool.state === "partial-call") {
+  } else if (tool.state === "input-streaming") {
     statusIcon = (
       <CircleSmall className="size-4 animate-bounce text-zinc-500 dark:text-zinc-400" />
     );

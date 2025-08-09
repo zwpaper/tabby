@@ -46,7 +46,7 @@ export class CompactService {
   private extractCompactMessages(messages: UIMessage[]) {
     for (let i = messages.length - 1; i >= 0; i--) {
       const message = messages[i];
-      if (message.parts.some(prompts.isCompactPart)) {
+      if (message.parts.some((x) => x.type === "text" && prompts.isCompact)) {
         return messages.slice(i);
       }
     }

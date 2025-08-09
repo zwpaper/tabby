@@ -1,13 +1,12 @@
 import { useSendMessage } from "@/features/chat";
 import { cn } from "@/lib/utils";
-import type { ClientToolsType } from "@getpochi/tools";
 import type { ToolProps } from "../types";
 
 export const AskFollowupQuestionTool: React.FC<
-  ToolProps<ClientToolsType["askFollowupQuestion"]>
+  ToolProps<"askFollowupQuestion">
 > = ({ tool: toolCall, isLoading }) => {
   const sendMessage = useSendMessage();
-  const { question, followUp } = toolCall.args || {};
+  const { question, followUp } = toolCall.input || {};
 
   return (
     <div className="flex flex-col gap-2">
@@ -25,7 +24,7 @@ export const AskFollowupQuestionTool: React.FC<
                 onClick={() =>
                   !isLoading &&
                   sendMessage({
-                    prompt: followUpText,
+                    prompt: followUpText || "",
                   })
                 }
               >

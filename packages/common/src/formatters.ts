@@ -220,7 +220,9 @@ function removeInvalidCharForStorage(messages: UIMessage[]): UIMessage[] {
 function extractCompactMessages(messages: UIMessage[]) {
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i];
-    if (message.parts.some(prompts.isCompactPart)) {
+    if (
+      message.parts.some((x) => x.type === "text" && prompts.isCompact(x.text))
+    ) {
       return messages.slice(i);
     }
   }

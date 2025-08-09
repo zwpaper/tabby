@@ -1,10 +1,9 @@
-import type { ToolInvocationUIPart } from "@getpochi/tools";
-import type { Tool } from "ai";
+import type { ToolUIPart } from "@ai-v5-sdk/ai";
+import type { UITools } from "@ragdoll/livekit";
 import type { ToolCallCheckpoint } from "../message/message-list";
 
-// biome-ignore lint/suspicious/noExplicitAny: template matching.
-export interface ToolProps<T extends Tool<any, any> = Tool<any, any>> {
-  tool: ToolInvocationUIPart<T>["toolInvocation"];
+export interface ToolProps<T extends string> {
+  tool: Extract<ToolUIPart<UITools>, { type: `tool-${T}` }>;
   isExecuting: boolean;
   isLoading: boolean;
   changes?: ToolCallCheckpoint;

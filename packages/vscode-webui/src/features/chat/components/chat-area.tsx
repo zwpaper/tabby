@@ -1,14 +1,12 @@
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { MessageList } from "@/components/message/message-list";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
-// FIXME(meng): migrate this to v5
-// ast-grep-ignore: no-ai-sdk-v4
-import type { UIMessage } from "ai";
+import type { Message } from "@ragdoll/livekit";
 import { Loader2 } from "lucide-react";
 import type React from "react";
 
 interface ChatAreaProps {
-  messages: UIMessage[];
+  messages: Message[];
   isTaskLoading: boolean;
   isLoading: boolean;
   isCompactingNewTask: boolean;

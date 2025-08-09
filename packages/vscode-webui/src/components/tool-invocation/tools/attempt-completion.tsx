@@ -1,12 +1,11 @@
 import { MessageMarkdown } from "@/components/message";
-import type { ClientToolsType } from "@getpochi/tools";
 import { Check } from "lucide-react";
 import type { ToolProps } from "../types";
 
 export const AttemptCompletionTool: React.FC<
-  ToolProps<ClientToolsType["attemptCompletion"]>
+  ToolProps<"attemptCompletion">
 > = ({ tool: toolCall }) => {
-  const { result = "", command = "" } = toolCall.args || {};
+  const { result = "", command = "" } = toolCall.input || {};
 
   // Return null if there's nothing to display
   if (!result) {

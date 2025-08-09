@@ -1,20 +1,23 @@
 import { CodeBlock, MessageMarkdown } from "@/components/message";
 import { vscodeHost } from "@/lib/vscode";
+import { getToolName } from "@ai-v5-sdk/ai";
 import { filterPlayrightMarkdown } from "./filter-playwright";
 import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";
 import { ExpandableToolContainer } from "./tool-container";
 import type { ToolProps } from "./types";
 
-export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
+// biome-ignore lint/suspicious/noExplicitAny: MCP matches any.
+export const McpToolCall: React.FC<ToolProps<any>> = ({
   tool,
   isExecuting,
 }) => {
-  const { toolName, args } = tool;
+  const toolName = getToolName(tool);
+  const { input } = tool;
 
   let result = undefined;
-  if (tool.state === "result") {
-    result = tool.result ?? "No output";
+  if (tool.state === "output-available") {
+    result = tool.output ?? "No output";
   }
 
   const title = (
@@ -39,7 +42,7 @@ export const McpToolCall: React.FC<Pick<ToolProps, "tool" | "isExecuting">> = ({
           </div>
           <CodeBlock
             language={"json"}
-            value={JSON.stringify(args, null, 2)}
+            value={JSON.stringify(input, null, 2)}
             canWrapLongLines={true}
             isMinimalView={true}
             className="border-0"

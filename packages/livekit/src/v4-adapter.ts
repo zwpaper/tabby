@@ -9,7 +9,7 @@ import type { DBMessage } from "@ragdoll/db";
 import type { UIMessage as V4UIMessage } from "ai";
 import type { Message } from "./types";
 
-export async function fromDBMessage(x: DBMessage): Promise<Message> {
+export function fromDBMessage(x: DBMessage): Message {
   if (x.role === "data") {
     throw new Error("Data messages are not supported in v5");
   }
@@ -47,7 +47,7 @@ export async function fromDBMessage(x: DBMessage): Promise<Message> {
           const { toolInvocation } = part;
           const toolName =
             toolInvocation.toolName as keyof typeof ClientToolsV5;
-          const toolPart = await createToolPart(
+          const toolPart = createToolPart(
             toolInvocation,
             ClientToolsV5[toolName] || null,
           );
@@ -170,17 +170,17 @@ export function toDBMessage(message: Message): DBMessage {
   };
 }
 
-async function createToolPart(
+function createToolPart(
   toolInvocation: Extract<
     DBMessage["parts"][number],
     { type: "tool-invocation" }
   >["toolInvocation"],
   tool: Tool | null,
-): Promise<Message["parts"][number]> {
+): Message["parts"][number] {
   const schema = tool && asSchema(tool.inputSchema);
   if (schema?.validate) {
-    const result = await schema.validate(toolInvocation.args);
-    if (!result.success) {
+    const result = schema.validate(toolInvocation.args);
+    if (!("then" in result) && !result.success) {
       throw result.error;
     }
   }
@@ -200,8 +200,8 @@ async function createToolPart(
     case "result": {
       const schema = tool && asSchema(tool.outputSchema);
       if (schema?.validate) {
-        const result = await schema.validate(toolInvocation.result);
-        if (!result.success) {
+        const result = schema.validate(toolInvocation.result);
+        if (!("then" in result) && !result.success) {
           throw result.error;
         }
       }
@@ -225,6 +225,6 @@ export function toV4UIMessage(message: Message): V4UIMessage {
   return toUIMessage(toDBMessage(message));
 }
 
-export async function fromV4UIMessage(message: V4UIMessage): Promise<Message> {
-  return await fromDBMessage(fromUIMessage(message));
+export function fromV4UIMessage(message: V4UIMessage): Message {
+  return fromDBMessage(fromUIMessage(message));
 }

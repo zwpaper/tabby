@@ -15,8 +15,7 @@ export const Default: Story = {
     isLoading: false,
     part: {
       type: "reasoning",
-      reasoning: "This is a reasoning message.",
-      details: [],
+      text: "This is a reasoning message.",
     },
   },
 };
@@ -26,8 +25,7 @@ export const Loading: Story = {
     isLoading: true,
     part: {
       type: "reasoning",
-      reasoning: "This is a reasoning message.",
-      details: [],
+      text: "This is a reasoning message.",
     },
   },
 };

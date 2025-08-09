@@ -27,11 +27,10 @@ import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
 import { vscodeHost } from "@/lib/vscode";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
 import { useStore } from "@livestore/react";
-import { CompactTaskMinTokens, formatters } from "@ragdoll/common";
+import { CompactTaskMinTokens, formattersNext } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
-import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import {
   type UserEditsDiff,
   getServerBaseUrl,
@@ -237,10 +236,7 @@ function Chat({ auth, uid }: ChatProps) {
 
   const [input, setInput] = useState("");
   const { messages, sendMessage, status, addToolResult } = chat;
-  const renderMessages = useMemo(
-    () => formatters.ui(messages.map(toV4UIMessage)),
-    [messages],
-  );
+  const renderMessages = useMemo(() => formattersNext.ui(messages), [messages]);
   const buildEnvironment = useCallback(async () => {
     const environment = await vscodeHost.readEnvironment();
 

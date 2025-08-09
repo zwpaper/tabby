@@ -1,12 +1,12 @@
-import type { ClientToolsType } from "@getpochi/tools";
 import { Bug } from "lucide-react";
 import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
-export const todoWriteTool: React.FC<
-  ToolProps<ClientToolsType["todoWrite"]>
-> = ({ tool, isExecuting }) => {
+export const todoWriteTool: React.FC<ToolProps<"todoWrite">> = ({
+  tool,
+  isExecuting,
+}) => {
   const title = (
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />

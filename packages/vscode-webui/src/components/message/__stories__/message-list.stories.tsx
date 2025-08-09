@@ -1,3 +1,4 @@
+import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import type { Meta, StoryObj } from "@storybook/react";
 // FIXME(meng): migrate this to v5
 // ast-grep-ignore: no-ai-sdk-v4
@@ -385,7 +386,7 @@ const messages1: UIMessage[] = [
 
 export const Messages1: Story = {
   args: {
-    messages: messages1,
+    messages: messages1.map(fromV4UIMessage),
     user: {
       name: "User",
       image: "https://example.com/user-avatar.png",

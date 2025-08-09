@@ -5,23 +5,24 @@ import { useToolCallLifeCycle } from "@/features/chat";
 import { apiClient } from "@/lib/auth-client";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { cn } from "@/lib/utils";
-import type { ClientToolsType } from "@getpochi/tools";
-import { toUIMessages } from "@ragdoll/common";
+
+import { getToolName } from "@ai-v5-sdk/ai";
+import { fromDBMessage, fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { StatusIcon } from "../status-icon";
 import { ExpandIcon, ToolTitle } from "../tool-container";
 import type { ToolProps } from "../types";
 
-export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
+export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
   tool,
   isExecuting,
 }) => {
-  const uid = tool.args?._meta?.uid;
-  const description = tool.args?.description ?? "";
+  const uid = tool.input?._meta?.uid;
+  const description = tool.input?.description ?? "";
 
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
-    toolName: tool.toolName,
+    toolName: getToolName(tool),
     toolCallId: tool.toolCallId,
   });
 
@@ -34,10 +35,14 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
   }
 
   const taskRunnerState = lifecycleStreamingResult?.state;
-  const inlinedTask = tool.args?._transient?.task;
+  const inlinedTask =
+    tool.state !== "input-streaming" ? tool.input?._transient?.task : undefined;
 
   const shouldQueryTask =
-    tool.state !== "partial-call" && !inlinedTask && !taskRunnerState && !!uid;
+    tool.state !== "input-streaming" &&
+    !inlinedTask &&
+    !taskRunnerState &&
+    !!uid;
   const { data: loadedTask, isFetching: isTaskLoading } = useQuery({
     queryKey: ["task", uid],
     queryFn: async () => {
@@ -101,14 +106,16 @@ export const newTaskTool: React.FC<ToolProps<ClientToolsType["newTask"]>> = ({
       ? {
           // inlined subtask, no need to query
           type: "task",
-          messages: inlinedTask.messages ?? [],
+          messages: inlinedTask.messages.map(fromV4UIMessage) ?? [],
           todos: inlinedTask.todos ?? [],
         }
       : shouldQueryTask
         ? {
             // query task
             type: "task",
-            messages: toUIMessages(loadedTask?.conversation?.messages ?? []),
+            messages: (loadedTask?.conversation?.messages ?? []).map(
+              fromDBMessage,
+            ),
             todos: loadedTask?.todos ?? [],
             isLoading: isTaskLoading,
           }

@@ -1,4 +1,3 @@
-import type { ClientToolsType } from "@getpochi/tools";
 import type React from "react";
 import { FileList } from "../file-list";
 import { HighlightedText } from "../highlight-text";
@@ -6,22 +5,18 @@ import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
-export const searchFilesTool: React.FC<
-  ToolProps<ClientToolsType["searchFiles"]>
-> = ({ tool, isExecuting }) => {
-  const { path, regex, filePattern } = tool.args || {};
+export const searchFilesTool: React.FC<ToolProps<"searchFiles">> = ({
+  tool,
+  isExecuting,
+}) => {
+  const { path, regex, filePattern } = tool.input || {};
 
   let resultEl: React.ReactNode;
   let matches: { file: string; line: number; context: string }[] = [];
   let isTruncated = false;
-  if (
-    tool.state === "result" &&
-    typeof tool.result === "object" &&
-    tool.result !== null &&
-    !("error" in tool.result)
-  ) {
-    matches = tool.result.matches ?? [];
-    isTruncated = tool.result.isTruncated ?? false;
+  if (tool.state === "output-available" && !("error" in tool.output)) {
+    matches = tool.output.matches ?? [];
+    isTruncated = tool.output.isTruncated ?? false;
     resultEl =
       matches.length > 0 ? (
         <div className="flex flex-col gap-1 text-sm">
@@ -34,11 +29,7 @@ export const searchFilesTool: React.FC<
     <>
       <HighlightedText>{regex}</HighlightedText> in{" "}
       <HighlightedText>{path}</HighlightedText>
-      {filePattern && (
-        <>
-          matching <HighlightedText>{filePattern}</HighlightedText>
-        </>
-      )}
+      {filePattern && <HighlightedText>{filePattern}</HighlightedText>}
     </>
   );
 
@@ -46,11 +37,11 @@ export const searchFilesTool: React.FC<
     <>
       <StatusIcon isExecuting={isExecuting} tool={tool} />
       <span className="ml-2" />
-      {isExecuting || tool.state !== "result" ? (
+      {isExecuting || tool.state !== "output-available" ? (
         <span>Searching for {searchCondition}</span>
       ) : (
         <span>
-          Searched for {searchCondition}, {matches.length} match
+          Searching for {searchCondition}, {matches.length} matched
           {matches.length > 1 ? "es" : ""}
           {isTruncated && ", results truncated"}
         </span>

@@ -1,5 +1,5 @@
 import { isFolder } from "@/lib/utils/file";
-import type { ClientToolsType } from "@getpochi/tools";
+
 import { useMemo } from "react";
 import { FileBadge } from "../file-badge";
 import { FileList } from "../file-list";
@@ -7,10 +7,11 @@ import { StatusIcon } from "../status-icon";
 import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 
-export const listFilesTool: React.FC<
-  ToolProps<ClientToolsType["listFiles"]>
-> = ({ tool, isExecuting }) => {
-  const { path } = tool.args || {};
+export const listFilesTool: React.FC<ToolProps<"listFiles">> = ({
+  tool,
+  isExecuting,
+}) => {
+  const { path } = tool.input || {};
   const isDirectory = useMemo(() => {
     return isFolder(path ?? "");
   }, [path]);
@@ -18,14 +19,9 @@ export const listFilesTool: React.FC<
   let resultEl: React.ReactNode | null = null;
   let files: string[] = [];
   let isTruncated = false;
-  if (
-    tool.state === "result" &&
-    typeof tool.result === "object" &&
-    tool.result !== null &&
-    !("error" in tool.result)
-  ) {
-    files = tool.result.files;
-    isTruncated = tool.result.isTruncated ?? false;
+  if (tool.state === "output-available" && !("error" in tool.output)) {
+    files = tool.output.files;
+    isTruncated = tool.output.isTruncated ?? false;
 
     resultEl =
       files.length > 0 ? (
@@ -45,7 +41,7 @@ export const listFilesTool: React.FC<
       <span className="ml-2" />
       Reading{" "}
       <FileBadge className="ml-1" path={path ?? ""} isDirectory={isDirectory} />
-      {tool.state === "result" && (
+      {tool.state === "output-available" && (
         <>
           , {files.length} result
           {files.length > 1 ? "s" : ""} {isTruncated && ", results truncated"}

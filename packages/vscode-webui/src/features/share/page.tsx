@@ -4,6 +4,7 @@ import { ChatContextProvider } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
 import { formatters } from "@ragdoll/common";
+import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // FIXME(meng): migrate this to v5
 // ast-grep-ignore: no-ai-sdk-v4
@@ -94,7 +95,10 @@ export function SharePage() {
     return () => resizeObserver.disconnect();
   }, []);
 
-  const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
+  const renderMessages = useMemo(
+    () => formatters.ui(messages).map(fromV4UIMessage),
+    [messages],
+  );
   return (
     <VSCodeWebProvider>
       <ChatContextProvider>

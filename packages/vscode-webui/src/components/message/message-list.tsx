@@ -1,10 +1,5 @@
-// FIXME(meng): migrate this to v5
-// ast-grep-ignore: no-ai-sdk-v4
-import type { ToolInvocationUIPart, UIMessage } from "@ai-sdk/ui-utils";
-import { IconLineSpacingCompact } from "obra-icons-react";
-
-import type { TextPart } from "ai";
 import { Loader2, UserIcon } from "lucide-react";
+import { IconLineSpacingCompact } from "obra-icons-react";
 import type React from "react";
 
 import { ReasoningPartUI } from "@/components/reasoning-part.tsx";
@@ -16,8 +11,14 @@ import { useToolCallLifeCycle } from "@/features/chat";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
 import { isVSCodeEnvironment, vscodeHost } from "@/lib/vscode";
+import {
+  type FileUIPart,
+  type TextUIPart,
+  type ToolUIPart,
+  isToolUIPart,
+} from "@ai-v5-sdk/ai";
 import { prompts } from "@ragdoll/common";
-import type { CheckpointPart, ExtendedUIMessage } from "@ragdoll/db";
+import type { Message, UITools } from "@ragdoll/livekit";
 import { useEffect } from "react";
 import { CheckpointUI } from "../checkpoint-ui";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
@@ -25,7 +26,7 @@ import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
 
 export const MessageList: React.FC<{
-  messages: UIMessage[];
+  messages: Message[];
   user?: {
     name: string;
     image?: string | null;
@@ -98,7 +99,7 @@ export const MessageList: React.FC<{
                     ? user?.name
                     : (assistant?.name ?? "Pochi")}
                 </strong>
-                {containsCompactPart(m) && (
+                {findCompactPart(m) && (
                   <CompactPartToolTip className="ml-1" message={m} />
                 )}
               </div>
@@ -121,11 +122,7 @@ export const MessageList: React.FC<{
               ))}
             </div>
             {/* Display attachments at the bottom of the message */}
-            {m.role === "user" && !!m.experimental_attachments?.length && (
-              <div className="mt-3">
-                <MessageAttachments attachments={m.experimental_attachments} />
-              </div>
-            )}
+            <UserAttachments message={m} />
           </div>
           {messageIndex < renderMessages.length - 1 && (
             <SeparatorWithCheckpoint
@@ -150,6 +147,20 @@ export const MessageList: React.FC<{
   );
 };
 
+function UserAttachments({ message }: { message: Message }) {
+  const fileParts = message.parts.filter(
+    (part) => part.type === "file",
+  ) as FileUIPart[];
+
+  if (message.role === "user" && fileParts.length) {
+    return (
+      <div className="mt-3">
+        <MessageAttachments attachments={fileParts} />
+      </div>
+    );
+  }
+}
+
 function Part({
   role,
   part,
@@ -159,13 +170,13 @@ function Part({
   isExecuting,
   messages,
 }: {
-  role: UIMessage["role"];
+  role: Message["role"];
   partIndex: number;
-  part: NonNullable<ExtendedUIMessage["parts"]>[number];
+  part: NonNullable<Message["parts"]>[number];
   isLastPartInMessages: boolean;
   isLoading: boolean;
   isExecuting: boolean;
-  messages: UIMessage[];
+  messages: Message[];
 }) {
   const paddingClass = partIndex === 0 ? "" : "mt-2";
   if (part.type === "text") {
@@ -186,11 +197,11 @@ function Part({
     return;
   }
 
-  if (part.type === "checkpoint") {
+  if (part.type === "data-checkpoint") {
     if (role === "assistant" && isVSCodeEnvironment()) {
       return (
         <CheckpointUI
-          checkpoint={part.checkpoint}
+          checkpoint={part.data}
           isLoading={isLoading || isExecuting}
         />
       );
@@ -198,11 +209,11 @@ function Part({
     return null;
   }
 
-  if (part.type === "tool-invocation") {
+  if (isToolUIPart(part)) {
     return (
       <ToolInvocationPart
         className={paddingClass}
-        tool={part.toolInvocation}
+        tool={part}
         isLoading={isLoading}
         changes={getToolCallCheckpoint(part, messages)}
       />
@@ -215,12 +226,12 @@ function Part({
 function TextPartUI({
   className,
   part,
-}: { part: TextPart; className?: string }) {
+}: { part: TextUIPart; className?: string }) {
   if (part.text.trim().length === 0) {
     return null; // Skip empty text parts
   }
 
-  if (prompts.isCompactPart(part)) {
+  if (prompts.isCompact(part.text)) {
     return null; // Skip compact parts
   }
 
@@ -228,17 +239,17 @@ function TextPartUI({
 }
 
 const SeparatorWithCheckpoint: React.FC<{
-  message: ExtendedUIMessage;
+  message: Message;
   isLoading: boolean;
 }> = ({ message, isLoading }) => {
   const sep = <Separator className="mt-1 mb-2" />;
   if (message.role === "assistant") return sep;
   const part = message.parts.at(-1);
-  if (part && part.type === "checkpoint" && isVSCodeEnvironment()) {
+  if (part && part.type === "data-checkpoint" && isVSCodeEnvironment()) {
     return (
       <div className="mt-1 mb-2">
         <CheckpointUI
-          checkpoint={part.checkpoint}
+          checkpoint={part.data}
           isLoading={isLoading}
           hideBorderOnHover={false}
           className="max-w-full"
@@ -256,42 +267,47 @@ export interface ToolCallCheckpoint {
 }
 
 const getToolCallCheckpoint = (
-  part: ToolInvocationUIPart,
-  messages: ExtendedUIMessage[],
+  part: ToolUIPart<UITools>,
+  messages: Message[],
 ): ToolCallCheckpoint => {
   const allParts = messages.flatMap((msg) => msg.parts);
 
   const currentIndex = allParts.findIndex(
-    (p) =>
-      p.type === "tool-invocation" &&
-      p.toolInvocation.toolCallId === part.toolInvocation.toolCallId,
+    (p) => isToolUIPart(p) && p.toolCallId === part.toolCallId,
   );
 
-  const beforeCheckpoint = allParts.findLast(
-    (item, index) => item.type === "checkpoint" && index < currentIndex,
-  ) as CheckpointPart | undefined;
-
-  const afterCheckpoint = allParts.find(
-    (item, index) => item.type === "checkpoint" && index > currentIndex,
-  ) as CheckpointPart | undefined;
+  const beforeCheckpoint = findCheckpointPart(allParts);
+  const afterCheckpoint = findCheckpointPart(allParts.slice(currentIndex + 1));
 
   return {
-    origin: beforeCheckpoint?.checkpoint.commit,
-    modified: afterCheckpoint?.checkpoint.commit,
+    origin: beforeCheckpoint?.data.commit,
+    modified: afterCheckpoint?.data.commit,
   };
 };
 
-function containsCompactPart(message: UIMessage) {
-  return message.parts.some(prompts.isCompactPart);
+function findCheckpointPart(parts: Message["parts"]) {
+  for (const x of parts) {
+    if (x.type === "data-checkpoint") {
+      return x;
+    }
+  }
+}
+
+function findCompactPart(message: Message): TextUIPart | undefined {
+  for (const x of message.parts) {
+    if (x.type === "text" && prompts.isCompact(x.text)) {
+      return x;
+    }
+  }
 }
 
 function CompactPartToolTip({
   message,
   className,
-}: { message: UIMessage; className?: string }) {
-  const compactPart = message.parts.find(prompts.isCompactPart);
+}: { message: Message; className?: string }) {
+  const compactPart = findCompactPart(message);
   const summary = compactPart
-    ? prompts.extractSummaryFromPart(compactPart)
+    ? prompts.extractSummary(compactPart.text)
     : undefined;
   if (!summary) return null;
   return (

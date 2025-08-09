@@ -1,4 +1,4 @@
-import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
+import type { TextUIPart } from "@ai-sdk/ui-utils";
 import { createCompactSummaryPrompt } from "./compact";
 import {
   injectEnvironmentDetails,
@@ -12,11 +12,10 @@ export const prompts = {
   injectEnvironmentDetailsNext,
   createSystemReminder,
   isSystemReminder,
-  isCompactPart,
   isCompact,
   compact: createCompactSummaryPrompt,
   createCompactPart,
-  extractSummaryFromPart,
+  extractSummary,
 };
 
 export { getReadEnvironmentResult } from "./environment";
@@ -37,10 +36,6 @@ function isSystemReminder(content: string) {
   );
 }
 
-function isCompactPart(part: UIMessage["parts"][number]) {
-  return part.type === "text" && isCompact(part.text);
-}
-
 function isCompact(content: string) {
   return content.startsWith("<compact>") && content.endsWith("</compact>");
 }
@@ -54,11 +49,7 @@ This section contains a summary of the conversation up to this point to save con
   return { type: "text", text };
 }
 
-function extractSummaryFromPart(
-  part: UIMessage["parts"][number],
-): string | undefined {
-  if (part.type !== "text" || !isCompactPart(part)) return undefined;
-
-  const match = part.text.match(/^<compact>(.*)<\/compact>$/s);
+function extractSummary(text: string): string | undefined {
+  const match = text.match(/^<compact>(.*)<\/compact>$/s);
   return match ? match[1] : undefined;
 }

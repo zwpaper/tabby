@@ -1,9 +1,8 @@
 import { useToolCallLifeCycle } from "@/features/chat";
 import { useIsDevMode } from "@/features/settings";
 import { cn } from "@/lib/utils";
-// FIXME(meng): upgrade this to v5
-// ast-grep-ignore: no-ai-sdk-v4
-import type { ToolInvocation } from "ai";
+import { type ToolUIPart, getToolName } from "@ai-v5-sdk/ai";
+import type { UITools } from "@ragdoll/livekit";
 import type { ToolCallCheckpoint } from "../message/message-list";
 import { McpToolCall } from "./mcp-tool-call";
 import { applyDiffTool } from "./tools/apply-diff";
@@ -27,19 +26,20 @@ export function ToolInvocationPart({
   className,
   changes,
 }: {
-  tool: ToolInvocation;
+  tool: ToolUIPart<UITools>;
   isLoading: boolean;
   className?: string;
   changes?: ToolCallCheckpoint;
 }) {
+  const toolName = getToolName(tool);
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
-    toolName: tool.toolName,
+    toolName,
     toolCallId: tool.toolCallId,
   });
   const isExecuting = lifecycle.status.startsWith("execute");
-  const C = Tools[tool.toolName];
+  const C = Tools[toolName];
   const [isDevMode] = useIsDevMode();
-  if (tool.toolName === "todoWrite" && !isDevMode) {
+  if (toolName === "todoWrite" && !isDevMode) {
     return null; // Skip rendering the todoWrite tool in non-dev mode
   }
 
@@ -53,13 +53,18 @@ export function ToolInvocationPart({
           changes={changes}
         />
       ) : (
-        <McpToolCall tool={tool} isExecuting={isExecuting} />
+        <McpToolCall
+          tool={tool}
+          isLoading={isLoading}
+          isExecuting={isExecuting}
+        />
       )}
     </div>
   );
 }
 
-const Tools: Record<string, React.FC<ToolProps>> = {
+// biome-ignore lint/suspicious/noExplicitAny: matching all tools
+const Tools: Record<string, React.FC<ToolProps<any>>> = {
   attemptCompletion: AttemptCompletionTool,
   readFile: readFileTool,
   writeToFile: writeToFileTool,

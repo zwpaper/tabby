@@ -36,7 +36,7 @@ function PreviewOneTool({
             toolCallId: tool.toolCallId,
           });
           if (lifecycle.status === "init") {
-            lifecycle.preview(tool.input, convertToolState(tool.state));
+            lifecycle.preview(tool.input, tool.state);
           }
         },
         {
@@ -51,16 +51,4 @@ function PreviewOneTool({
   }, [tool, debouncedPreview]);
 
   return null;
-}
-
-function convertToolState(state: ToolUIPart<UITools>["state"]) {
-  switch (state) {
-    case "input-streaming":
-      return "partial-call";
-    case "input-available":
-      return "call";
-    case "output-available":
-    case "output-error":
-      return "result";
-  }
 }

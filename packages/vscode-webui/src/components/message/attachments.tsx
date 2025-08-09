@@ -4,11 +4,11 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-import type { Attachment } from "ai";
+import type { FileUIPart } from "@ai-v5-sdk/ai";
 import { FileIcon } from "lucide-react";
 
 interface MessageAttachmentsProps {
-  attachments: Attachment[];
+  attachments: FileUIPart[];
 }
 
 export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
@@ -17,7 +17,7 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
   return (
     <div className="my-2 flex flex-wrap gap-2">
       {attachments.map((attachment, index) => {
-        const isImage = attachment.contentType?.startsWith("image/");
+        const isImage = attachment.mediaType?.startsWith("image/");
 
         return (
           <HoverCard key={index} openDelay={300} closeDelay={200}>
@@ -34,19 +34,19 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
                       <div className="h-5 w-5 overflow-hidden rounded-sm border border-[var(--vscode-input-border)]">
                         <img
                           src={attachment.url}
-                          alt={attachment.name}
+                          alt={attachment.filename}
                           className="h-full w-full object-cover"
                         />
                       </div>
                       <span className="max-w-[100px] truncate">
-                        {attachment.name}
+                        {attachment.filename}
                       </span>
                     </>
                   ) : (
                     <>
                       <FileIcon className="h-4 w-4 shrink-0 text-[var(--vscode-symbolIcon-fileForeground)]" />
                       <span className="max-w-[100px] truncate">
-                        {attachment.name}
+                        {attachment.filename}
                       </span>
                     </>
                   )}
@@ -60,13 +60,13 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
             >
               <div className="flex flex-col gap-2">
                 <div className="max-w-[300px] truncate font-medium text-xs">
-                  {attachment.name}
+                  {attachment.filename}
                 </div>
                 {isImage ? (
                   <div className="overflow-hidden rounded-md border border-[var(--vscode-input-border)]">
                     <img
                       src={attachment.url}
-                      alt={attachment.name}
+                      alt={attachment.filename}
                       className="h-auto max-w-[90vw] object-contain"
                       style={{
                         maxHeight: "calc(60vh - 1rem)",
@@ -77,7 +77,7 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
                 ) : (
                   <div className="flex items-center gap-2 text-sm">
                     <FileIcon className="h-5 w-5 text-[var(--vscode-symbolIcon-fileForeground)]" />
-                    <span>{attachment.contentType}</span>
+                    <span>{attachment.mediaType}</span>
                   </div>
                 )}
               </div>

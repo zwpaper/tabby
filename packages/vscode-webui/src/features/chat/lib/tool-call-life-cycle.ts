@@ -1,4 +1,5 @@
 import { vscodeHost } from "@/lib/vscode";
+import type { ToolUIPart } from "@ai-v5-sdk/ai";
 import type { ClientToolsType } from "@getpochi/tools";
 import {
   ThreadAbortSignal,
@@ -11,9 +12,6 @@ import {
 import { getLogger } from "@ragdoll/common";
 import type { TaskRunnerState } from "@ragdoll/runner";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
-// FIXME(meng): upgrade this to v5
-// ast-grep-ignore: no-ai-sdk-v4
-import type { ToolInvocation } from "ai";
 import Emittery from "emittery";
 import type z from "zod";
 import type { ToolCallLifeCycleKey } from "./chat-state/types";
@@ -115,7 +113,7 @@ export interface ToolCallLifeCycle {
    * @param args - Tool call arguments
    * @param state - Current tool invocation state
    */
-  preview(args: unknown, state: ToolInvocation["state"]): void;
+  preview(args: unknown, state: ToolUIPart["state"]): void;
 
   /**
    * Execute the tool call with given arguments and options.
@@ -177,7 +175,7 @@ export class ManagedToolCallLifeCycle
     this.transitTo("complete", { type: "dispose" });
   }
 
-  preview(args: unknown, state: ToolInvocation["state"]) {
+  preview(args: unknown, state: ToolUIPart["state"]) {
     if (this.status === "ready") {
       this.previewReady(args, state);
     } else {
@@ -185,33 +183,33 @@ export class ManagedToolCallLifeCycle
     }
   }
 
-  private previewReady(args: unknown, state: ToolInvocation["state"]) {
+  private previewReady(args: unknown, state: ToolUIPart["state"]) {
     const { abortController } = this.checkState("Preview", "ready");
     vscodeHost.previewToolCall(this.toolName, args, {
-      state,
+      state: convertState(state),
       toolCallId: this.toolCallId,
       abortSignal: ThreadAbortSignal.serialize(abortController.signal),
     });
   }
 
-  private previewInit(args: unknown, state: ToolInvocation["state"]) {
+  private previewInit(args: unknown, state: ToolUIPart["state"]) {
     let { previewJob } = this.checkState("Preview", "init");
     const previewToolCall = (abortSignal?: AbortSignal) =>
       vscodeHost.previewToolCall(this.toolName, args, {
-        state,
+        state: convertState(state),
         toolCallId: this.toolCallId,
         abortSignal: abortSignal
           ? ThreadAbortSignal.serialize(abortSignal)
           : undefined,
       });
 
-    if (state === "partial-call") {
+    if (state === "input-streaming") {
       previewJob = previewJob.then(() => previewToolCall());
       this.transitTo("init", {
         type: "init",
         previewJob,
       });
-    } else if (state === "call") {
+    } else if (state === "input-available") {
       const abortController = new AbortController();
       previewJob = previewJob.then(() =>
         previewToolCall(abortController.signal),
@@ -463,4 +461,16 @@ export class ManagedToolCallLifeCycle
     );
     this.emit(this.state.type, this.state);
   }
+}
+
+function convertState(state: ToolUIPart["state"]) {
+  if (state === "input-streaming") {
+    return "partial-call";
+  }
+
+  if (state === "input-available") {
+    return "call";
+  }
+
+  return "result";
 }

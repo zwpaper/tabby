@@ -1,5 +1,5 @@
 import { useToolCallLifeCycle } from "@/features/chat";
-import type { ClientToolsType } from "@getpochi/tools";
+import { getToolName } from "@ai-v5-sdk/ai";
 import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
 import { NewProblems, NewProblemsIcon } from "../new-problems";
@@ -8,21 +8,23 @@ import { ExpandableToolContainer } from "../tool-container";
 import type { ToolProps } from "../types";
 import { UserEdits } from "../user-edits";
 
-export const applyDiffTool: React.FC<
-  ToolProps<ClientToolsType["applyDiff"]>
-> = ({ tool, isExecuting, changes }) => {
-  const { path } = tool.args || {};
+export const applyDiffTool: React.FC<ToolProps<"applyDiff">> = ({
+  tool,
+  isExecuting,
+  changes,
+}) => {
+  const { path } = tool.input || {};
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
-    toolName: tool.toolName,
+    toolName: getToolName(tool),
     toolCallId: tool.toolCallId,
   });
   const handleClick = useCallback(() => {
-    lifecycle.preview(tool.args, tool.state);
+    lifecycle.preview(tool.input, tool.state);
   }, [tool, lifecycle]);
 
   const result =
-    tool.state === "result" && !("error" in tool.result)
-      ? tool.result
+    tool.state === "output-available" && !("error" in tool.output)
+      ? tool.output
       : undefined;
 
   const title = (
@@ -34,7 +36,7 @@ export const applyDiffTool: React.FC<
         <FileBadge
           className="ml-1"
           path={path}
-          onClick={tool.state !== "result" ? handleClick : undefined}
+          onClick={tool.state !== "output-available" ? handleClick : undefined}
           editSummary={result?._meta?.editSummary}
           changes={changes}
         />

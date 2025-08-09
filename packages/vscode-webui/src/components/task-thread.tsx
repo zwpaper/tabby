@@ -1,18 +1,17 @@
 import { MessageList } from "@/components/message/message-list";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
-import { formatters } from "@ragdoll/common";
+import { formattersNext } from "@ragdoll/common";
+import type { Message } from "@ragdoll/livekit";
+import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import type { TaskRunnerState } from "@ragdoll/runner";
-// FIXME(meng): migrate this to v5
-// ast-grep-ignore: no-ai-sdk-v4
-import type { UIMessage } from "ai";
 import { useEffect, useMemo, useState } from "react";
 import { FixedStateChatContextProvider } from "../features/chat/lib/chat-state";
 
 export type TaskThreadSource =
   | {
       type: "task";
-      messages: UIMessage[];
+      messages: Message[];
       todos: Todo[];
       isLoading?: boolean;
     }
@@ -34,7 +33,7 @@ export const TaskThread: React.FC<{
   showMessageList?: boolean;
 }> = ({ source, user, assistant, showMessageList = true }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<UIMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [todos, setTodos] = useState<Todo[]>([]);
 
   const sourceTask = source.type === "task" ? source : undefined;
@@ -58,7 +57,7 @@ export const TaskThread: React.FC<{
     if (sourceTaskRunner.state === "initial") {
       setIsLoading(true);
     } else {
-      setMessages(sourceTaskRunner.messages);
+      setMessages(sourceTaskRunner.messages.map(fromV4UIMessage));
       setTodos(sourceTaskRunner.todos);
 
       if (
@@ -115,9 +114,9 @@ export const TaskThread: React.FC<{
   );
 };
 
-function prepareForRender(messages: UIMessage[]): UIMessage[] {
+function prepareForRender(messages: Message[]): Message[] {
   // Remove user messages.
   const filteredMessages = messages.filter((x) => x.role !== "user");
-  const x = formatters.ui(filteredMessages);
+  const x = formattersNext.ui(filteredMessages);
   return x;
 }

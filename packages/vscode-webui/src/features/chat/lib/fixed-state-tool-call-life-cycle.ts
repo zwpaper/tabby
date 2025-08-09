@@ -1,6 +1,4 @@
-// FIXME(meng): upgrade this to v5
-// ast-grep-ignore: no-ai-sdk-v4
-import type { ToolInvocation } from "ai";
+import type { ToolUIPart } from "@ai-v5-sdk/ai";
 import type { ToolCallLifeCycle } from "./tool-call-life-cycle";
 
 export class FixedStateToolCallLifeCycle implements ToolCallLifeCycle {
@@ -25,7 +23,7 @@ export class FixedStateToolCallLifeCycle implements ToolCallLifeCycle {
     // no-op
   }
 
-  preview(_args: unknown, _state: ToolInvocation["state"]) {
+  preview(_args: unknown, _state: ToolUIPart["state"]) {
     // no-op for preview tool call on FixedStateToolCallLifeCycle
   }
 
