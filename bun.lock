@@ -233,7 +233,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.5.9",
+      "version": "0.5.10",
       "dependencies": {
         "@ai-v5-sdk/ai": "catalog:",
         "@modelcontextprotocol/sdk": "^1.12.0",
