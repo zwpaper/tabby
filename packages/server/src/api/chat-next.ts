@@ -30,7 +30,7 @@ import { usageService } from "../service/usage";
 const MessageType: z.ZodType<UIMessage> = z.any();
 
 const RequestType = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   messages: z.array(MessageType),
   system: z.string(),
   model: z.string().optional().describe("Model to use for this request."),
@@ -114,8 +114,12 @@ const chat = new Hono()
         metadata: {
           "user-id": user.id,
           "user-email": user.email,
-          "task-id": req.id,
           "model-id": validModelId,
+          ...(req.id
+            ? {
+                "task-id": req.id,
+              }
+            : {}),
         },
       },
       experimental_repairToolCall: async ({
@@ -163,6 +167,7 @@ const chat = new Hono()
             return part.totalUsage.totalTokens || 0;
           };
           return {
+            kind: "assistant",
             totalTokens: computeTotalTokens(),
             finishReason: part.finishReason,
           };

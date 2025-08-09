@@ -27,7 +27,7 @@ import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
 import { vscodeHost } from "@/lib/vscode";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
 import { useStore } from "@livestore/react";
-import { formatters } from "@ragdoll/common";
+import { CompactTaskMinTokens, formatters } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
@@ -45,6 +45,7 @@ import { ErrorMessageView } from "./components/error-message-view";
 import { useAutoDismissError } from "./hooks/use-auto-dismiss-error";
 import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
+import { useInlineCompactTask } from "./hooks/use-inline-compact-task";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 
@@ -309,22 +310,17 @@ function Chat({ auth, uid }: ChatProps) {
     retry,
   });
 
-  // FIXME(meng): add back compact UX
-  // const forceCompact = useRef(false);
-  // const compactTaskEnabled = !(
-  //   isLoading ||
-  //   isExecuting ||
-  //   isTaskLoading ||
-  //   totalTokens < CompactTaskMinTokens
-  // );
+  const compactEnabled = !(
+    isLoading ||
+    isExecuting ||
+    isTaskLoading ||
+    totalTokens < CompactTaskMinTokens
+  );
 
-  // const { isCompactingTask, handleCompactTask } = useForceCompactTask({
-  //   forceCompact,
-  //   append,
-  //   enabled: compactTaskEnabled,
-  //   data,
-  //   setMessages,
-  // });
+  const { inlineCompactTask, inlineCompactTaskPending } = useInlineCompactTask({
+    enabled: compactEnabled,
+    ...chat,
+  });
 
   // const {
   //   isCompactingNewTask,
@@ -345,7 +341,7 @@ function Chat({ auth, uid }: ChatProps) {
     isLoading,
     pendingApproval,
     // isCompacting: isCompactingTask || isCompactingNewTask,
-    isCompacting: false,
+    isCompacting: inlineCompactTaskPending,
   });
 
   useScrollToBottom({
@@ -449,6 +445,11 @@ function Chat({ auth, uid }: ChatProps) {
                     contextWindow={selectedModel.contextWindow}
                     totalTokens={totalTokens}
                     className="mr-5"
+                    compact={{
+                      enabled: compactEnabled,
+                      inlineCompactTask,
+                      inlineCompactTaskPending,
+                    }}
                   />
                 )}
                 <DevModeButton

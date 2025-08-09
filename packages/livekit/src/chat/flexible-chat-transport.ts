@@ -6,9 +6,7 @@ import type {
 import { formattersNext, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import type { Message, RequestData } from "../types";
-import { requestOpenAI } from "./llm-openai";
-import { requestPochi } from "./llm-pochi";
-import type { LLMRequest } from "./types";
+import { requestLLM } from "./llm";
 
 export type OnStartCallback = (options: {
   messages: Message[];
@@ -52,15 +50,13 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     });
 
     const system = prompts.system(environment?.info?.customRules);
-    const req = {
+    return requestLLM(llm, {
       system,
       messages: prepareMessages(messages, environment),
       abortSignal,
       id: chatId,
       mcpToolSet,
-    };
-
-    return requestLLM(llm, req);
+    });
   };
 
   reconnectToStream: (
@@ -82,16 +78,4 @@ function prepareMessages<T extends import("@ai-v5-sdk/ai").UIMessage>(
   );
 
   return formattersNext.llm(messages) as T[];
-}
-
-function requestLLM(llm: RequestData["llm"], req: LLMRequest) {
-  if (llm.type === "openai") {
-    return requestOpenAI(llm, req);
-  }
-
-  if (llm.type === "pochi") {
-    return requestPochi(llm, req);
-  }
-
-  throw new Error(`Unsupported LLM type: ${JSON.stringify(llm)}`);
 }

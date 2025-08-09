@@ -5,10 +5,16 @@ import { ZodEnvironment } from "@ragdoll/db";
 import z from "zod";
 import type { tables } from "./livestore/schema";
 
-type Metadata = {
-  totalTokens: number;
-  finishReason: LanguageModelV2FinishReason;
-};
+type Metadata =
+  | {
+      kind: "assistant";
+      totalTokens: number;
+      finishReason: LanguageModelV2FinishReason;
+    }
+  | {
+      kind: "user";
+      compact?: boolean;
+    };
 
 type DataParts = {
   checkpoint: {

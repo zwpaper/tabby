@@ -1,6 +1,6 @@
 import { DefaultChatTransport } from "@ai-v5-sdk/ai";
 
-import type { Message, RequestData } from "../types";
+import type { Message, RequestData } from "../../types";
 import type { LLMRequest } from "./types";
 
 const defaultTransport = new DefaultChatTransport<Message>({});

@@ -245,8 +245,8 @@ export const formatters = {
   ui: (messages: UIMessage[]) => formatMessages(messages, UIFormatOps),
 
   // Format messages before sending them to the LLM.
-  llm: (
-    messages: UIMessage[],
+  llm: <T extends UIMessage>(
+    messages: T[],
     options?: {
       tools?: ToolSet;
       isClaude: boolean;
@@ -258,7 +258,7 @@ export const formatters = {
       ...(options?.removeSystemReminder ? [removeSystemReminder] : []),
       ...LLMFormatOps,
     ];
-    return formatMessages(messages, llmFormatOps);
+    return formatMessages(messages, llmFormatOps) as T[];
   },
 
   // Format messages before storing them in the database.

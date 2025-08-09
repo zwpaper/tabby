@@ -1,8 +1,8 @@
 import type { McpTool } from "@getpochi/tools";
-import type { Message } from "../types";
+import type { Message } from "../../types";
 
 export type LLMRequest = {
-  id: string;
+  id?: string;
   system: string;
   abortSignal?: AbortSignal;
   messages: Message[];

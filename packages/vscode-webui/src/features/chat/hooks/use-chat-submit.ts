@@ -50,6 +50,9 @@ export function useChatSubmit({
   } = imageUpload;
 
   const handleStop = useCallback(() => {
+    // Compacting is not allowed to be stopped.
+    if (isCompacting) return;
+
     if (isExecuting) {
       abortToolCalls();
     } else if (isUploading) {
@@ -61,6 +64,7 @@ export function useChatSubmit({
       pendingApproval.stopCountdown();
     }
   }, [
+    isCompacting,
     isExecuting,
     isUploading,
     isLoading,
@@ -74,8 +78,11 @@ export function useChatSubmit({
     async (e?: React.FormEvent<HTMLFormElement>) => {
       e?.preventDefault();
 
+      // Compacting is not allowed to be stopped.
+      if (isCompacting) return;
+
       const content = input.trim();
-      if (isCompacting || (isSubmitDisabled && !content)) {
+      if (isSubmitDisabled && !content) {
         return;
       }
       if (handleStop()) {

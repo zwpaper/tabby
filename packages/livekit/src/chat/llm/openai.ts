@@ -11,7 +11,7 @@ import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
 import { ClientToolsV5 } from "@getpochi/tools";
 import type { McpTool } from "@getpochi/tools";
 
-import type { RequestData } from "../types";
+import type { RequestData } from "../../types";
 import type { LLMRequest } from "./types";
 
 export async function requestOpenAI(

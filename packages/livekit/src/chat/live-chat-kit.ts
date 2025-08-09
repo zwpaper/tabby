@@ -14,6 +14,7 @@ import type { Store } from "@livestore/livestore";
 import { makeMessagesQuery, makeTaskQuery } from "../livestore/queries";
 import { events, tables } from "../livestore/schema";
 import type { Message } from "../types";
+import { compactTask } from "./compact-task";
 import {
   FlexibleChatTransport,
   type OnStartCallback,
@@ -64,18 +65,27 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       transport: this.transport,
     });
 
-    if (onBeforeMakeRequest) {
-      // @ts-expect-error: monkey patch
-      const chat = this.chat as {
-        makeRequest: (...args: unknown[]) => Promise<unknown>;
-      };
+    // @ts-expect-error: monkey patch
+    const chat = this.chat as {
+      makeRequest: (...args: unknown[]) => Promise<unknown>;
+      setStatus: (status: { status: string; error?: unknown }) => void;
+    };
 
-      const originMakeRequest = chat.makeRequest;
-      chat.makeRequest = async (...args) => {
-        await onBeforeMakeRequest({ messages: this.chat.messages });
-        return originMakeRequest.apply(chat, args);
-      };
-    }
+    const originMakeRequest = chat.makeRequest;
+    chat.makeRequest = async (...args) => {
+      // Mark status to make async behaivor blocked based on status (e.g isLoading )
+      chat.setStatus({ status: "submitted" });
+      const { messages } = this.chat;
+      await compactTask({
+        messages,
+        getLLM: () =>
+          Promise.resolve(prepareRequestData()).then((data) => data.llm),
+      });
+      if (onBeforeMakeRequest) {
+        await onBeforeMakeRequest({ messages });
+      }
+      return originMakeRequest.apply(chat, args);
+    };
   }
 
   get task() {
@@ -130,7 +140,10 @@ export class LiveChatKit<T extends { messages: Message[] }> {
         id: this.taskId,
         status: toTaskStatus(message),
         data: message,
-        totalTokens: message.metadata?.totalTokens || null,
+        totalTokens:
+          message.metadata?.kind === "assistant"
+            ? message.metadata.totalTokens
+            : null,
         updatedAt: new Date(),
       }),
     );
@@ -150,7 +163,9 @@ export class LiveChatKit<T extends { messages: Message[] }> {
 }
 
 function toTaskStatus(message: Message): (typeof tables.tasks.Type)["status"] {
-  const { finishReason } = message.metadata || {};
+  if (message.metadata?.kind !== "assistant") return "failed";
+
+  const { finishReason } = message.metadata;
   if (!finishReason) return "failed";
 
   if (finishReason === "tool-calls") {

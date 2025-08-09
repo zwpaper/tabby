@@ -308,8 +308,8 @@ function CompactPartToolTip({
       </TooltipTrigger>
       <TooltipContent sideOffset={2} side="right">
         <p className="m-0 w-48">
-          Conversation has been compacted from this point onward to reduce
-          context usage
+          Conversation has been compacted from this point onward to reduce token
+          usage
         </p>
       </TooltipContent>
     </Tooltip>
