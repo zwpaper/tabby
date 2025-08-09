@@ -11,6 +11,7 @@ import {
 } from "@/lib/fs";
 import { createPrettyPatch } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import { resolvePath } from "@ragdoll/common/node";
 import * as diff from "diff";
 import * as runExclusive from "run-exclusive";
 import * as vscode from "vscode";
@@ -342,7 +343,9 @@ export class DiffView implements vscode.Disposable {
     id: string,
     relpath: string,
   ): Promise<DiffView> {
-    const fileUri = vscode.Uri.joinPath(getWorkspaceFolder().uri, relpath);
+    const workspaceFolder = getWorkspaceFolder();
+    const resolvedPath = resolvePath(relpath, workspaceFolder.uri.fsPath);
+    const fileUri = vscode.Uri.file(resolvedPath);
     const fileExists = await isFileExists(fileUri);
     if (!fileExists) {
       await ensureFileDirectoryExists(fileUri);
