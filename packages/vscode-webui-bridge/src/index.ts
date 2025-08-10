@@ -1,5 +1,3 @@
-import type { ThreadAbortSignalSerialization } from "@quilted/threads";
-
 export type {
   VSCodeHostApi,
   WebviewHostApi,
@@ -48,11 +46,6 @@ export interface ExecuteCommandResult {
   isTruncated: boolean;
   error?: string; // Optional error message if the execution aborted / failed
 }
-
-export type RunTaskOptions = {
-  model?: string;
-  abortSignal?: ThreadAbortSignalSerialization;
-};
 
 export type SaveCheckpointOptions = {
   /**

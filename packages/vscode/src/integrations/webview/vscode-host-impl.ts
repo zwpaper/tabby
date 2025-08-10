@@ -15,8 +15,6 @@ import { getLogger } from "@/lib/logger";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PostHog } from "@/lib/posthog";
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { TaskRunnerManager } from "@/lib/task-runner-manager";
-// biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
 import { applyDiff, previewApplyDiff } from "@/tools/apply-diff";
 import { executeCommand } from "@/tools/execute-command";
@@ -51,7 +49,6 @@ import {
   listWorkspaceFiles,
 } from "@ragdoll/common/node";
 import type { Environment } from "@ragdoll/db";
-import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
   CustomModelSetting,
@@ -59,7 +56,6 @@ import type {
   PochiModelsSettings,
   ResourceURI,
   RuleFile,
-  RunTaskOptions,
   SaveCheckpointOptions,
   SessionState,
   VSCodeHostApi,
@@ -109,7 +105,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly posthog: PostHog,
     private readonly mcpHub: McpHub,
     private readonly thirdMcpImporter: ThirdMcpImporter,
-    private readonly taskRunnerManager: TaskRunnerManager,
     private readonly checkpointService: CheckpointService,
     private readonly pochiConfiguration: PochiConfiguration,
   ) {}
@@ -482,35 +477,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       }
     }
     await vscode.env.openExternal(parsedUri);
-  };
-
-  runTask = runExclusive.build(
-    this.toolCallGroup,
-    async (uid: string, options?: RunTaskOptions) => {
-      if (options?.abortSignal) {
-        const abortSignal = new ThreadAbortSignal(options.abortSignal);
-        abortSignal.throwIfAborted();
-        abortSignal.addEventListener(
-          "abort",
-          () => {
-            this.taskRunnerManager.stopTask(uid);
-          },
-          { once: true },
-        );
-      }
-
-      const runnerState = await this.taskRunnerManager.startTask(uid, {
-        model: options?.model,
-      });
-      const result = ThreadSignal.serialize(runnerState);
-      return { result };
-    },
-  );
-
-  readTaskRunners = async (): Promise<
-    ThreadSignalSerialization<Record<string, TaskRunnerState>>
-  > => {
-    return ThreadSignal.serialize(this.taskRunnerManager.status);
   };
 
   saveCheckpoint = runExclusive.build(
