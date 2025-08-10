@@ -1,6 +1,4 @@
 import { getLogger } from "@ragdoll/common";
-import type { TaskEvent } from "@ragdoll/db";
-import { createPochiEventSourceWithApiClient } from "@ragdoll/server";
 import chalk from "chalk";
 import { stepToString } from "./lib/step-count";
 import type { TaskRunner, TaskRunnerState } from "./task-runner";
@@ -184,47 +182,7 @@ export class TaskRunnerSupervisor {
   }
 
   private async waitForPendingModelStatus(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const taskEventSource = createPochiEventSourceWithApiClient(
-        this.runner.options.uid,
-        this.runner.options.apiClient,
-        {
-          heartbeat: true,
-          logFn: (message: string) => {
-            logger.debug(message);
-          },
-        },
-      );
-      const unsubscribe = taskEventSource.subscribe<TaskEvent>(
-        "task:status-changed",
-        async ({ data }) => {
-          if (data.uid !== this.runner.options.uid) {
-            return;
-          }
-
-          if (data.status === "pending-model") {
-            unsubscribe();
-            taskEventSource.dispose();
-            resolve();
-          }
-        },
-      );
-
-      // Handle abort signal
-      const abortSignal = this.abortController?.signal;
-      if (abortSignal) {
-        abortSignal.addEventListener(
-          "abort",
-          () => {
-            unsubscribe();
-            taskEventSource.dispose();
-            reject(abortSignal.reason);
-          },
-          {
-            once: true,
-          },
-        );
-      }
-    });
+    // FIXME: implement this
+    return new Promise((resolve) => setTimeout(resolve, 1000000000000));
   }
 }

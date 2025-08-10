@@ -499,7 +499,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         );
       }
 
-      const runnerState = this.taskRunnerManager.startTask(uid, {
+      const runnerState = await this.taskRunnerManager.startTask(uid, {
         model: options?.model,
       });
       const result = ThreadSignal.serialize(runnerState);

@@ -1,6 +1,5 @@
 import {
   type ToolInvocationUIPart,
-  generateId,
   getMessageParts,
   isAssistantMessageWithCompletedToolCalls,
   prepareAttachmentsForRequest,
@@ -12,13 +11,9 @@ import {
   type Todo,
   type ToolFunctionType,
 } from "@getpochi/tools";
+import type { Store } from "@livestore/livestore";
 import { type Signal, signal } from "@preact/signals-core";
-import {
-  fromUIMessage,
-  getLogger,
-  prompts,
-  toUIMessages,
-} from "@ragdoll/common";
+import { fromUIMessage, getLogger, prompts } from "@ragdoll/common";
 import {
   isAssistantMessageWithEmptyParts,
   isAssistantMessageWithNoToolCalls,
@@ -26,18 +21,15 @@ import {
   prepareLastMessageForRetry,
 } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
-import type { Environment, TaskEvent } from "@ragdoll/db";
-import {
-  type AppType,
-  createPochiEventSourceWithApiClient,
-} from "@ragdoll/server";
-import type { ChatRequest } from "@ragdoll/server";
+import type { Environment } from "@ragdoll/db";
+import type { LLMRequestData, Task } from "@ragdoll/livekit";
+import { LiveChatKit } from "@ragdoll/livekit/node";
+import { fromDBMessage, toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
-import type { hc } from "hono/client";
 import { toError, toErrorString } from "./lib/error-utils";
 import { readEnvironment } from "./lib/read-environment";
 import { StepCount, type StepInfo } from "./lib/step-count";
-import { withAttempts } from "./lib/with-attempts";
+import { Chat } from "./livekit";
 import { applyDiff } from "./tools/apply-diff";
 import { executeCommand } from "./tools/execute-command";
 import { globFiles } from "./tools/glob-files";
@@ -49,24 +41,18 @@ import { todoWrite } from "./tools/todo-write";
 import { writeToFile } from "./tools/write-to-file";
 import type { ToolCallOptions } from "./types";
 
-type ApiClient = ReturnType<typeof hc<AppType>>;
-
-export type Task = Awaited<
-  ReturnType<
-    Awaited<ReturnType<ApiClient["api"]["tasks"][":uid"]["$get"]>>["json"]
-  >
->;
-
 export interface RunnerOptions {
   /**
    * The uid of the task to run.
    */
   uid: string;
 
-  /**
-   * This is the API client used to communicate with the server.
-   */
-  apiClient: ApiClient;
+  llm: LLMRequestData;
+
+  store: Store;
+
+  // The prompt to use for creating the task
+  prompt?: string;
 
   /**
    * The current working directory for the task runner.
@@ -82,16 +68,6 @@ export interface RunnerOptions {
   rg: string;
 
   /**
-   * The llm model to use for the task runner.
-   */
-  model?: string;
-
-  /**
-   * The llm model endpoint id to override pochi/pro-1
-   */
-  modelEndpointId?: string;
-
-  /**
    * Force stop the runner after max rounds reached.
    * If a task cannot be completed in max rounds, it is likely stuck in an infinite loop.
    */
@@ -101,8 +77,6 @@ export interface RunnerOptions {
    * Force stop the runner after max retries reached in a single round.
    */
   maxRetries?: number;
-
-  openAIModelOverride?: ChatRequest["openAIModelOverride"];
 
   // Add more context properties here as needed in the future
   // e.g., environment variables, workspace settings, etc.
@@ -188,7 +162,7 @@ const ToolMap: Record<
 
 const DefaultMaxRounds = 24;
 const DefaultMaxRetries = 3;
-const ApiRequestTimeout = 60_000; // 60 seconds
+// const ApiRequestTimeout = 60_000; // 60 seconds
 
 const baseLogger = getLogger("TaskRunner");
 
@@ -201,10 +175,11 @@ export class TaskRunner {
   private task?: Task;
   private messages: UIMessage[] = [];
   private todos: Todo[] = [];
+  private chatKit: LiveChatKit<Chat>;
 
   readonly state: Signal<TaskRunnerState>;
 
-  constructor(readonly options: RunnerOptions) {
+  constructor(options: RunnerOptions) {
     this.logger = baseLogger.getSubLogger({
       name: `task-${options.uid}`,
     });
@@ -219,6 +194,22 @@ export class TaskRunner {
       options.maxRounds ?? DefaultMaxRounds,
       options.maxRetries ?? DefaultMaxRetries,
     );
+    this.chatKit = new LiveChatKit<Chat>({
+      taskId: options.uid,
+      store: options.store,
+      chatClass: Chat,
+      getters: {
+        getLLM: () => {
+          return options.llm;
+        },
+        getEnvironment: () => {
+          return buildEnvironment(options.cwd, this.todos);
+        },
+      },
+    });
+    if (options.prompt) {
+      this.chatKit.init(options.prompt);
+    }
   }
 
   start() {
@@ -275,8 +266,8 @@ export class TaskRunner {
         }
       }
 
-      const task = this.getTaskOrThrow();
-      const result = extractTaskResult(task);
+      const messages = this.chatKit.messages.map(toV4UIMessage);
+      const result = extractTaskResult(messages);
       this.logger.trace("Completed with result:", result);
 
       finishWithState({
@@ -322,7 +313,7 @@ export class TaskRunner {
   private async loadTask() {
     const signal = this.abortController?.signal;
 
-    this.logger.trace("Loading task:", this.options.uid);
+    this.logger.trace("Loading task:", this.chatKit.chat.id);
     this.updateState({
       state: "running",
       progress: {
@@ -333,21 +324,15 @@ export class TaskRunner {
     });
     signal?.throwIfAborted();
 
-    const task = await loadTaskAndWaitStreaming({
-      uid: this.options.uid,
-      apiClient: this.options.apiClient,
-      logger: this.logger,
-      abortSignal: signal,
-    });
+    const task = this.chatKit.task;
+    if (!task) {
+      throw new Error("Task not found");
+    }
     this.task = task;
-
-    this.messages = toUIMessages(task.conversation?.messages ?? []);
+    this.messages = this.chatKit.messages.map(toV4UIMessage);
     const lastMessage = this.getLastMessageOrThrow();
 
-    this.todos = mergeTodos(
-      mergeTodos(this.todos, task.todos ?? []),
-      findTodos(lastMessage) ?? [],
-    );
+    this.todos = mergeTodos(this.todos, findTodos(lastMessage) ?? []);
 
     this.logger.trace("Task loaded:", task);
     this.updateState({
@@ -380,7 +365,7 @@ export class TaskRunner {
     }
 
     if (task.status === "failed") {
-      this.logger.trace(
+      this.logger.error(
         "Task is failed, trying to resend last message to resume it.",
         task.error,
       );
@@ -511,46 +496,11 @@ export class TaskRunner {
     });
     signal?.throwIfAborted();
 
-    const environment = await buildEnvironment(
-      this.options.cwd,
-      this.todos,
-      signal,
-    );
+    const message = await fromDBMessage(fromUIMessage(lastMessage));
+    this.chatKit.chat.appendMessage(message);
+    const promise = this.chatKit.chat.sendMessage(undefined);
 
-    await withAttempts(
-      async () => {
-        const url = this.options.apiClient.api.chat.stream.$url();
-        const timeout = AbortSignal.timeout(ApiRequestTimeout);
-        this.logger.debug(`Request: POST ${url}`);
-        const resp = await this.options.apiClient.api.chat.stream.$post(
-          {
-            json: {
-              id: this.options.uid,
-              message: fromUIMessage(lastMessage),
-              environment,
-              model: this.options.model,
-              modelEndpointId: this.options.modelEndpointId,
-              openAIModelOverride: this.options.openAIModelOverride,
-            },
-          },
-          {
-            init: {
-              signal: AbortSignal.any([timeout, ...(signal ? [signal] : [])]),
-            },
-          },
-        );
-        this.logger.debug(
-          `Response: POST ${url}: ${resp.status} ${resp.statusText}`,
-        );
-        if (!resp.ok) {
-          const error = await resp.text();
-          throw new Error(
-            `Failed to send message: ${resp.statusText}: ${error}`,
-          );
-        }
-      },
-      { abortSignal: signal },
-    );
+    signal?.addEventListener("abort", () => this.chatKit.chat.stop());
 
     this.logger.trace("Message sent successfully.");
     this.updateState({
@@ -563,7 +513,7 @@ export class TaskRunner {
         messageReason,
       },
     });
-    signal?.throwIfAborted();
+    return promise;
   }
 
   private updateState(
@@ -605,130 +555,17 @@ export class TaskRunner {
   }
 }
 
-/**
- * Loads the task and waits for it to be in a non-streaming state.
- */
-async function loadTaskAndWaitStreaming({
-  uid,
-  apiClient,
-  logger,
-  abortSignal,
-}: {
-  uid: string;
-  apiClient: ApiClient;
-  logger: ReturnType<typeof getLogger>;
-  abortSignal?: AbortSignal;
-}): Promise<Task> {
-  const loadTask = async () => {
-    return await withAttempts(
-      async () => {
-        const url = apiClient.api.tasks[":uid"].$url({ param: { uid } });
-        const timeout = AbortSignal.timeout(ApiRequestTimeout);
-        logger.debug(`Request: GET ${url}`);
-        const resp = await apiClient.api.tasks[":uid"].$get(
-          {
-            param: {
-              uid,
-            },
-          },
-          {
-            init: {
-              signal: AbortSignal.any([
-                timeout,
-                ...(abortSignal ? [abortSignal] : []),
-              ]),
-            },
-          },
-        );
-        logger.debug(`Response: GET ${url}: ${resp.status} ${resp.statusText}`);
-        if (!resp.ok) {
-          const error = await resp.text();
-          throw new Error(`Failed to fetch task: ${resp.statusText}: ${error}`);
-        }
-        return await resp.json();
-      },
-      { abortSignal },
-    );
-  };
-
-  return new Promise<Task>((resolve, reject) => {
-    const cleanups: (() => void)[] = [];
-    const runCleanups = () => {
-      const cleanupFns = cleanups.splice(0, cleanups.length).reverse();
-      for (const cleanup of cleanupFns) {
-        cleanup();
-      }
-    };
-    const cleanupAndResolve = (task: Task | Promise<Task>) => {
-      runCleanups();
-      resolve(task);
-    };
-    const cleanupAndReject = (error: Error) => {
-      runCleanups();
-      reject(error);
-    };
-
-    // Fetch and subscribe to task status events
-    const taskEventSource = createPochiEventSourceWithApiClient(
-      uid,
-      apiClient,
-      {
-        heartbeat: true,
-        logFn: (message: string) => {
-          logger.debug(message);
-        },
-      },
-    );
-    const unsubscribe = taskEventSource.subscribe<TaskEvent>(
-      "task:status-changed",
-      ({ data }) => {
-        if (data.uid !== uid) {
-          return;
-        }
-        if (data.status !== "streaming") {
-          cleanupAndResolve(loadTask());
-        }
-      },
-    );
-    cleanups.push(() => {
-      unsubscribe();
-      taskEventSource.dispose();
-    });
-
-    if (abortSignal) {
-      abortSignal.addEventListener(
-        "abort",
-        () => {
-          cleanupAndReject(abortSignal.reason);
-        },
-        { once: true },
-      );
-    }
-  });
-}
-
 async function buildEnvironment(
   cwd: string,
   todos: Todo[],
-  signal?: AbortSignal,
 ): Promise<Environment> {
-  return new Promise<Environment>((resolve, reject) => {
+  return new Promise<Environment>((resolve) => {
     readEnvironment({ cwd }).then((environment) => {
       resolve({
         ...environment,
         todos,
       });
     });
-
-    if (signal) {
-      signal.addEventListener(
-        "abort",
-        () => {
-          reject(signal.reason);
-        },
-        { once: true },
-      );
-    }
   });
 }
 
@@ -740,7 +577,7 @@ async function createUIMessage(
   );
   return {
     ...message,
-    id: message.id ?? generateId(),
+    id: message.id ?? crypto.randomUUID(),
     createdAt: message.createdAt ?? new Date(),
     experimental_attachments:
       attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
@@ -801,8 +638,7 @@ function isResultMessage(message: Message): boolean {
   );
 }
 
-export function extractTaskResult(task: Task): string {
-  const messages = toUIMessages(task.conversation?.messages || []);
+export function extractTaskResult(messages: UIMessage[]): string {
   const lastMessage = messages.at(-1);
   if (!lastMessage) {
     throw new Error("No messages found in the task.");

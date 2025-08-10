@@ -3,9 +3,8 @@ import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
 import { makePersistedAdapter } from "@livestore/adapter-web";
 import LiveStoreSharedWorker from "@livestore/adapter-web/shared-worker?sharedworker&inline";
 import { LiveStoreProvider } from "@livestore/react";
-import { catalog } from "@ragdoll/livekit";
+import { catalog, getStoreId } from "@ragdoll/livekit";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { binary_to_base58 } from "base58-js";
 import { useMemo } from "react";
 import { unstable_batchedUpdates as batchUpdates } from "react-dom";
 import { ThemeProvider } from "./components/theme-provider";
@@ -53,11 +52,8 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
 };
 
 function LiveStoreProviderWrapper({ children }: { children: React.ReactNode }) {
-  const { data: cwd, isLoading } = useCurrentWorkspace();
-  const storeId = useMemo(
-    () => binary_to_base58(new TextEncoder().encode(cwd)),
-    [cwd],
-  );
+  const { data: cwd = "default", isLoading } = useCurrentWorkspace();
+  const storeId = useMemo(() => getStoreId(cwd), [cwd]);
 
   if (isLoading) {
     return;

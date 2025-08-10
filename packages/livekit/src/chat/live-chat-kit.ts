@@ -135,6 +135,24 @@ export class LiveChatKit<T extends { messages: Message[] }> {
     };
   }
 
+  init(prompt: string) {
+    this.store.commit(
+      events.taskInited({
+        id: this.taskId,
+        createdAt: new Date(),
+        initMessage: {
+          id: crypto.randomUUID(),
+          parts: [
+            {
+              type: "text",
+              text: prompt,
+            },
+          ],
+        },
+      }),
+    );
+  }
+
   get task() {
     return this.store.query(makeTaskQuery(this.taskId));
   }

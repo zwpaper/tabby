@@ -4,14 +4,13 @@ import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@ragdoll/common";
 import { CredentialStorage } from "@ragdoll/common/node";
-import type { AppType, ChatRequest } from "@ragdoll/server";
+import type { LLMRequestData } from "@ragdoll/livekit";
+import type { ChatRequest } from "@ragdoll/server";
 import chalk from "chalk";
 import * as commander from "commander";
-import { hc } from "hono/client";
 import packageJson from "../package.json";
-import { toError } from "./lib/error-utils";
 import { findRipgrep } from "./lib/find-ripgrep";
-import { withAttempts } from "./lib/with-attempts";
+import { createStore } from "./livekit/store";
 import { TaskRunner } from "./task-runner";
 import { TaskRunnerOutputStream } from "./task-runner-output";
 import { TaskRunnerSupervisor } from "./task-runner-supervisor";
@@ -32,7 +31,7 @@ logger.debug(`pochi v${packageJson.version}`);
 
 const prodServerUrl = "https://app.getpochi.com";
 
-const userAgent = `PochiRunner/${packageJson.version} ${`Node/${process.version}`} (${process.platform}; ${process.arch})`;
+// const userAgent = `PochiRunner/${packageJson.version} ${`Node/${process.version}`} (${process.platform}; ${process.arch})`;
 
 const parsePositiveInt = (input: string) => {
   if (!input) {
@@ -104,7 +103,7 @@ program
     parsePositiveInt,
   )
   .action(async (options) => {
-    let uid = options.task ?? process.env.POCHI_TASK_ID;
+    const uid = options.task ?? process.env.POCHI_TASK_ID;
 
     let prompt = options.prompt;
     if (!prompt && !process.stdin.isTTY) {
@@ -160,15 +159,7 @@ program
       }
     }
 
-    const apiClient = hc<AppType>(options.url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "User-Agent": userAgent,
-      },
-    });
-
     const output = new TaskRunnerOutputStream(process.stdout);
-    let creatingTaskAbortController: AbortController | undefined = undefined;
     let supervisor: TaskRunnerSupervisor | undefined = undefined;
 
     process.on("SIGTERM", () => handleShutdown("SIGTERM"));
@@ -176,7 +167,6 @@ program
 
     const handleShutdown = (signal: "SIGTERM" | "SIGINT") => {
       logger.debug(`Received ${signal}, shutting down gracefully...`);
-      creatingTaskAbortController?.abort();
       if (supervisor) {
         supervisor.stop(signal);
         // process.exit will be handled by the supervisor
@@ -186,7 +176,8 @@ program
       }
     };
 
-    if (!uid) {
+    const store = await createStore(options.cwd);
+    if (prompt !== undefined) {
       // Create a new task with the provided prompt
       const validPrompt = prompt?.trim();
       if (!validPrompt) {
@@ -194,66 +185,36 @@ program
           "error: Prompt cannot be empty to create a new task",
         );
       }
-
-      output.println(1);
-      output.startLoading("Creating task...");
-      const abortController = new AbortController();
-      creatingTaskAbortController = abortController;
-
-      try {
-        uid = await withAttempts(
-          async () => {
-            const response = await apiClient.api.tasks.$post(
-              {
-                json: {
-                  prompt: validPrompt,
-                },
-              },
-              {
-                init: {
-                  signal: abortController.signal,
-                },
-              },
-            );
-
-            if (!response.ok) {
-              const error = await response.text();
-              throw new Error(
-                `Failed to create task: ${response.status} ${error}`,
-              );
-            }
-
-            const task = await response.json();
-            return task.uid;
-          },
-          { abortSignal: abortController.signal },
-        );
-      } catch (error) {
-        if (abortController.signal.aborted) {
-          return; // just exit if aborted
-        }
-        output.failLoading(chalk.bold(chalk.red("Failed to create task.")));
-        output.printError(toError(error));
-        output.finish();
-        throw error; // rethrow to exit the process
-      }
-
-      const taskUrl = chalk.underline(`${options.url}/tasks/${uid}`);
-      output.succeedLoading(
-        `${chalk.bold(chalk.green("✨ Your task is ready! View it here:"))} ${taskUrl}`,
-      );
     }
 
+    const llm = (
+      openAIModelOverride
+        ? {
+            type: "openai",
+            modelId: options.model || "<default>",
+            baseURL: openAIModelOverride.baseURL,
+            apiKey: openAIModelOverride.apiKey,
+            contextWindow: openAIModelOverride.contextWindow,
+            maxOutputTokens: openAIModelOverride.maxOutputTokens,
+          }
+        : {
+            type: "pochi",
+            modelId: options.model,
+            modelEndpointId: options.modelEndpointId,
+            server: options.url,
+            token,
+          }
+    ) satisfies LLMRequestData;
+
     const runner = new TaskRunner({
-      uid,
-      apiClient,
+      uid: uid || crypto.randomUUID(),
+      store,
+      llm,
+      prompt,
       cwd: options.cwd,
       rg: options.rg,
-      model: options.model,
       maxRounds: options.maxRounds,
       maxRetries: options.maxRetries,
-      modelEndpointId: options.modelEndpointId,
-      openAIModelOverride,
     });
 
     supervisor = new TaskRunnerSupervisor(runner, output, options.daemon);

@@ -24,6 +24,7 @@
     "@ragdoll/common": "workspace:*",
     "zod": "catalog:",
     "ai": "catalog:",
-    "react": "catalog:"
+    "react": "catalog:",
+    "base58-js": "^3.0.3"
   }
 }

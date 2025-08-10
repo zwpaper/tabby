@@ -1,11 +1,12 @@
 import { type Signal, signal } from "@preact/signals-core";
 import type { TaskRunnerState } from "@ragdoll/runner";
-import { TaskRunner } from "@ragdoll/runner/node";
-import { inject, injectable, singleton } from "tsyringe";
+import { TaskRunner, createStore } from "@ragdoll/runner/node";
+import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
+import { injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
-import type { ApiClient } from "./auth-client";
 import { getWorkspaceFolder, vscodeRipgrepPath } from "./fs";
 import { getLogger } from "./logger";
+import type { TokenStorage } from "./token-storage";
 
 const logger = getLogger("TaskRunnerManager");
 
@@ -18,18 +19,15 @@ export class TaskRunnerManager implements vscode.Disposable {
   > = new Map();
   readonly status: Signal<ReturnType<typeof this.buildStatus>>;
 
-  constructor(
-    @inject("ApiClient")
-    private readonly apiClient: ApiClient,
-  ) {
+  constructor(private readonly tokenStorage: TokenStorage) {
     logger.debug("TaskRunnerManager created.");
     this.status = signal(this.buildStatus());
   }
 
-  startTask(
+  async startTask(
     uid: string,
-    option?: { model?: string | undefined },
-  ): Signal<TaskRunnerState> {
+    option?: { model?: string },
+  ): Promise<Signal<TaskRunnerState>> {
     const entry = this.taskRunnerMap.get(uid);
     const existingRunner = entry?.runner;
     if (existingRunner) {
@@ -43,10 +41,20 @@ export class TaskRunnerManager implements vscode.Disposable {
     }
 
     logger.debug(`Starting task runner ${uid}`);
+    const cwd = getWorkspaceFolder().uri.fsPath;
+    const store = await createStore(cwd);
+    // FIXME(jackson): support BYOK settings / modelEndpointId settings
+    const llm = {
+      type: "pochi" as const,
+      modelId: "zai/glm-4.5",
+      token: this.tokenStorage.token.value || "",
+      server: getServerBaseUrl(),
+    };
     const taskRunner = new TaskRunner({
       uid,
-      apiClient: this.apiClient,
-      cwd: getWorkspaceFolder().uri.fsPath,
+      llm,
+      store,
+      cwd,
       rg: vscodeRipgrepPath,
       ...option,
     });
