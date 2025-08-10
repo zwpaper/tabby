@@ -1,4 +1,3 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Editor } from "@tiptap/react";
 import { useRef } from "react";
 
@@ -6,6 +5,8 @@ import { DevRetryCountdown } from "@/components/dev-retry-countdown";
 import { ActiveSelectionBadge } from "@/components/prompt-form/active-selection-badge";
 import { FormEditor } from "@/components/prompt-form/form-editor";
 import type { useApprovalAndRetry } from "@/features/approval";
+import type { UseChatHelpers } from "@ai-v5-sdk/react";
+import type { Message } from "@ragdoll/livekit";
 
 interface ChatInputFormProps {
   input: string;
@@ -14,7 +15,7 @@ interface ChatInputFormProps {
   isLoading: boolean;
   onPaste: (event: ClipboardEvent) => void;
   pendingApproval: ReturnType<typeof useApprovalAndRetry>["pendingApproval"];
-  status: UseChatHelpers["status"];
+  status: UseChatHelpers<Message>["status"];
 }
 
 export function ChatInputForm({
