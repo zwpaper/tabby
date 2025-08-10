@@ -28,7 +28,7 @@ export const queue = new Queue<CreateSandboxJobData>(QueueName, queueConfig);
 export async function scheduleCreateSandbox(data: CreateSandboxJobData) {
   const jobId = `create-sandbox:${data.minionId}`;
   await queue.remove(jobId);
-  await queue.add(data.minionId, data, {
+  await queue.add(QueueName, data, {
     jobId,
     attempts: 3,
     removeOnComplete: {
