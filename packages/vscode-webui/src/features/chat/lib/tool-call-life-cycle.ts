@@ -1,6 +1,6 @@
 import { vscodeHost } from "@/lib/vscode";
-import type { ToolUIPart } from "@ai-v5-sdk/ai";
-import type { ClientToolsType } from "@getpochi/tools";
+import type { InferToolInput, ToolUIPart } from "@ai-v5-sdk/ai";
+import type { ClientToolsV5Type } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import {
   ThreadAbortSignal,
@@ -14,7 +14,6 @@ import { getLogger } from "@ragdoll/common";
 import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import Emittery from "emittery";
-import type z from "zod";
 import type { ToolCallLifeCycleKey } from "./chat-state/types";
 
 type PreviewReturnType = { error: string } | undefined;
@@ -22,7 +21,7 @@ type ExecuteCommandReturnType = {
   output: ThreadSignalSerialization<ExecuteCommandResult>;
   detach: () => void;
 };
-type NewTaskParameterType = z.infer<ClientToolsType["newTask"]["parameters"]>;
+type NewTaskParameterType = InferToolInput<ClientToolsV5Type["newTask"]>;
 type NewTaskReturnType = {
   uid: string;
   serializedAbortSignal: ThreadAbortSignalSerialization;

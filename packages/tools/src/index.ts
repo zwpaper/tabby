@@ -23,9 +23,6 @@ export {
   type Todo,
 } from "./todo-write";
 export type {
-  PreviewToolFunctionType,
-  ToolFunctionType,
-  ToolInvocationUIPart,
   ToolFunctionTypeV5,
   PreviewToolFunctionTypeV5,
 } from "./types";
@@ -60,8 +57,6 @@ export const ClientTools = {
   todoWrite,
   writeToFile,
 };
-
-export type ClientToolsType = typeof ClientTools;
 
 export const ServerTools = {
   webFetch,

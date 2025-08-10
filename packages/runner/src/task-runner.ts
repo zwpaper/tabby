@@ -1,4 +1,3 @@
-import type { ToolInvocationUIPart } from "@ai-sdk/ui-utils";
 import {
   type ToolUIPart,
   getToolName,
@@ -24,8 +23,6 @@ import { findTodosNext, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Environment } from "@ragdoll/db";
 import type { LLMRequestData, Message, Task, UITools } from "@ragdoll/livekit";
 import { LiveChatKit } from "@ragdoll/livekit/node";
-import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
-import type { UIMessage } from "ai";
 import { toError, toErrorString } from "./lib/error-utils";
 import { readEnvironment } from "./lib/read-environment";
 import { StepCount, type StepInfo } from "./lib/step-count";
@@ -268,8 +265,7 @@ export class TaskRunner {
         }
       }
 
-      const messages = this.chatKit.messages.map(toV4UIMessage);
-      const result = extractTaskResult(messages);
+      const result = extractTaskResult(this.messages);
       this.logger.trace("Completed with result:", result);
 
       finishWithState({
@@ -620,7 +616,7 @@ function isResultMessage(message: Message): boolean {
   );
 }
 
-export function extractTaskResult(messages: UIMessage[]): string {
+export function extractTaskResult(messages: Message[]): string {
   const lastMessage = messages.at(-1);
   if (!lastMessage) {
     throw new Error("No messages found in the task.");
@@ -632,25 +628,20 @@ export function extractTaskResult(messages: UIMessage[]): string {
     );
   }
 
-  const attemptCompletionPart = lastMessage.parts.findLast(
-    (part): part is ToolInvocationUIPart =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolName === "attemptCompletion",
-  );
-  if (attemptCompletionPart) {
-    return attemptCompletionPart.toolInvocation.args.result;
-  }
+  for (const part of lastMessage.parts) {
+    if (
+      part.type === "tool-attemptCompletion" &&
+      part.state !== "input-streaming"
+    ) {
+      return part.input.result;
+    }
 
-  const askFollowupQuestionPart = lastMessage.parts.findLast(
-    (part): part is ToolInvocationUIPart =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolName === "askFollowupQuestion",
-  );
-  if (askFollowupQuestionPart) {
-    return JSON.stringify({
-      question: askFollowupQuestionPart.toolInvocation.args.question,
-      followUp: askFollowupQuestionPart.toolInvocation.args.followUp,
-    });
+    if (
+      part.type === "tool-askFollowupQuestion" &&
+      part.state !== "input-streaming"
+    ) {
+      return JSON.stringify(part.input);
+    }
   }
 
   throw new Error("No result found in the last message.");
