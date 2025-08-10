@@ -1,9 +1,9 @@
 import type { PendingToolCallApproval } from "@/features/approval";
 import { useMcp } from "@/lib/hooks/use-mcp";
-import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { type ToolUIPart, getToolName } from "@ai-v5-sdk/ai";
 import { ToolsByPermission } from "@getpochi/tools";
-import type { UITools } from "@ragdoll/livekit";
+import { useStore } from "@livestore/react";
+import { type UITools, catalog } from "@ragdoll/livekit";
 import { useAutoApprove } from "./use-auto-approve";
 
 export function useToolAutoApproval(
@@ -12,16 +12,17 @@ export function useToolAutoApproval(
 ): boolean {
   const { autoApproveActive, autoApproveSettings } =
     useAutoApprove(autoApproveGuard);
+  const { store } = useStore();
   const { toolset } = useMcp();
-  const runners = useTaskRunners();
 
   const isToolApproved = (tool: ToolUIPart<UITools>) => {
     const toolName = getToolName(tool);
     if (tool.type === "tool-newTask" && tool.state === "input-available") {
-      const uid = tool.input._meta?.uid;
-      if (uid && runners[uid]) {
-        return true;
-      }
+      const countMessages = store.query(
+        catalog.queries.makeMessagesQuery(tool.input._meta?.uid || ""),
+      ).length;
+      // If the task has already started, approve it automatically.
+      return countMessages > 1;
     }
 
     if (ToolsByPermission.default.includes(toolName)) {

@@ -410,8 +410,6 @@ function Chat({ auth, uid }: ChatProps) {
                   messages={messages}
                   buildEnvironment={buildEnvironment}
                   todos={todos}
-                  uid={uid}
-                  selectedModel={selectedModel?.id}
                 />
                 {/* FIXME(meng): add back share experience */}
                 {/* <PublicShareButton

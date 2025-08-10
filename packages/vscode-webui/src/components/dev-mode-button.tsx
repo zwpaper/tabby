@@ -13,8 +13,8 @@ import { convertToModelMessages } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
 import type { Environment } from "@ragdoll/db";
 import type { Message } from "@ragdoll/livekit";
-import { useRouter } from "@tanstack/react-router";
-import { Bot, CheckIcon, CopyIcon } from "lucide-react"; // Removed FilesIcon
+
+import { CheckIcon, CopyIcon } from "lucide-react"; // Removed FilesIcon
 import { IconHammer } from "obra-icons-react";
 import type React from "react";
 import { useCallback } from "react";
@@ -50,16 +50,12 @@ interface DevModeButtonProps {
   messages: Message[];
   todos: Todo[] | undefined;
   buildEnvironment: () => Promise<Environment>;
-  uid: string | undefined;
-  selectedModel?: string;
 }
 
 export function DevModeButton({
   messages,
   buildEnvironment,
   todos,
-  uid,
-  selectedModel,
 }: DevModeButtonProps) {
   const [isDevMode] = useIsDevMode();
   if (!isDevMode) return null;
@@ -87,16 +83,6 @@ export function DevModeButton({
   const getTodosContent = () => {
     return JSON.stringify(todos, null, 2);
   };
-
-  const { navigate } = useRouter();
-
-  const handleRunInBackground = useCallback(() => {
-    if (!uid) {
-      return;
-    }
-    vscodeHost.runTask(uid, { model: selectedModel });
-    navigate({ to: "/runner", replace: true, search: { uid } });
-  }, [uid, navigate, selectedModel]);
 
   const getCheckpintCommand = useCallback(async () => {
     const checkpointPath = await vscodeHost.readCheckpointPath();
@@ -142,15 +128,6 @@ export function DevModeButton({
             text="Copy Checkpoint Command"
           />
           <CopyMenuItem fetchContent={getTodosContent} text="Copy TODOs" />
-          {uid && (
-            <DropdownMenuItem
-              onClick={handleRunInBackground}
-              className="cursor-pointer"
-            >
-              <Bot className="inline" />
-              <span className="ml-2">Run in Background</span>
-            </DropdownMenuItem>
-          )}
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>

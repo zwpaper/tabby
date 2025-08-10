@@ -1,7 +1,6 @@
 import type { ThreadAbortSignalSerialization } from "@quilted/threads";
 import type { ThreadSignalSerialization } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/db";
-import type { TaskRunnerState } from "@ragdoll/runner";
 import type {
   CaptureEvent,
   CustomModelSetting,
@@ -10,7 +9,6 @@ import type {
   PochiModelsSettings,
   ResourceURI,
   RuleFile,
-  RunTaskOptions,
   SaveCheckpointOptions,
   SessionState,
   TaskIdParams,
@@ -180,21 +178,6 @@ export interface VSCodeHostApi {
    * @param uri - The URI to open in an external application.
    */
   openExternal(uri: string): Promise<void>;
-
-  /**
-   * Start running a task in the background.
-   */
-  runTask(
-    uid: string,
-    options?: RunTaskOptions,
-  ): Promise<{ result: ThreadSignalSerialization<TaskRunnerState> }>;
-
-  /**
-   * Reads the current task runners.
-   */
-  readTaskRunners(): Promise<
-    ThreadSignalSerialization<Record<string, TaskRunnerState>>
-  >;
 
   /**
    * Saves a checkpoint with the given message.

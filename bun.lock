@@ -403,7 +403,6 @@
         "@getpochi/tools": "workspace:*",
         "@quilted/threads": "catalog:",
         "@ragdoll/db": "workspace:*",
-        "@ragdoll/runner": "workspace:*",
       },
     },
     "packages/website": {

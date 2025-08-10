@@ -3,7 +3,6 @@
   "main": "src/index.ts",
   "devDependencies": {
     "@ragdoll/db": "workspace:*",
-    "@ragdoll/runner": "workspace:*",
     "@quilted/threads": "catalog:",
     "@getpochi/tools": "workspace:*"
   },

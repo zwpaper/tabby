@@ -11,14 +11,12 @@ import {
 } from "@/components/ui/pagination"; // Import pagination components
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
-import { useTaskRunners } from "@/lib/hooks/use-task-runners";
 import { cn } from "@/lib/utils";
 import { useStore } from "@livestore/react";
 import { parseTitle } from "@ragdoll/common/message-utils";
 import { type Task, catalog } from "@ragdoll/livekit";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import {
-  Bot,
   Brain,
   CheckCircle2,
   Edit3,
@@ -179,7 +177,6 @@ function Tasks() {
   const allTasks = store.useQuery(catalog.queries.tasks$);
   const totalPages = Math.ceil(allTasks.length / limit);
   const tasks = allTasks.slice((page - 1) * limit, page * limit);
-  const taskRunners = useTaskRunners();
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || (totalPages && newPage > totalPages)) return;
@@ -204,11 +201,7 @@ function Tasks() {
         <ScrollArea className="h-full">
           <div className="flex flex-col gap-4 p-4 pb-6">
             {tasks.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                runningInBackground={taskRunners[task.id]?.state === "running"}
-              />
+              <TaskRow key={task.id} task={task} />
             ))}
           </div>
         </ScrollArea>
@@ -253,19 +246,8 @@ function EmptyTaskPlaceholder() {
   );
 }
 
-const TaskStatusIcon = ({
-  status,
-  runningInBackground,
-}: { status: string; runningInBackground: boolean | undefined }) => {
+const TaskStatusIcon = ({ status }: { status: string }) => {
   const iconProps = { className: "size-5 text-muted-foreground" };
-  if (runningInBackground) {
-    return (
-      <Bot
-        className={cn(iconProps.className, "animate-bounce")}
-        aria-label="Running in Background"
-      />
-    );
-  }
   switch (status) {
     case "streaming":
       return <Zap {...iconProps} aria-label="Streaming" />;
@@ -303,17 +285,10 @@ const getStatusBorderColor = (status: string): string => {
   }
 };
 
-function TaskRow({
-  task,
-  runningInBackground,
-}: { task: Task; runningInBackground: boolean | undefined }) {
+function TaskRow({ task }: { task: Task }) {
   const title = useMemo(() => parseTitle(task.title), [task.title]);
   return (
-    <Link
-      to={runningInBackground ? "/runner" : "/"}
-      search={{ uid: task.id }}
-      className="group cursor-pointer"
-    >
+    <Link to={"/"} search={{ uid: task.id }} className="group cursor-pointer">
       <div
         className={cn(
           "cursor-pointer rounded-lg border border-border/50 bg-card transition-all duration-200 hover:border-border hover:bg-card/90 hover:shadow-md",
@@ -333,10 +308,7 @@ function TaskRow({
               </h3>
             </div>
             <div className="mt-0.5 shrink-0">
-              <TaskStatusIcon
-                status={task.status}
-                runningInBackground={runningInBackground}
-              />
+              <TaskStatusIcon status={task.status} />
             </div>
           </div>
         </div>

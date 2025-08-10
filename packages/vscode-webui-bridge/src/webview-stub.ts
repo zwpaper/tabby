@@ -1,7 +1,7 @@
 import type { ThreadAbortSignalSerialization } from "@quilted/threads";
 import type { ThreadSignalSerialization } from "@quilted/threads/signals";
 import type { Environment } from "@ragdoll/db";
-import type { TaskRunnerState } from "@ragdoll/runner";
+
 import type {
   CaptureEvent,
   CustomModelSetting,
@@ -144,20 +144,6 @@ const VSCodeHostStub = {
   },
   openExternal: (_uri: string): Promise<void> => {
     return Promise.resolve();
-  },
-  runTask: (
-    _uid: string,
-  ): Promise<{ result: ThreadSignalSerialization<TaskRunnerState> }> => {
-    return Promise.resolve({
-      result: {} as ThreadSignalSerialization<TaskRunnerState>,
-    });
-  },
-  readTaskRunners: (): Promise<
-    ThreadSignalSerialization<Record<string, TaskRunnerState>>
-  > => {
-    return Promise.resolve(
-      {} as ThreadSignalSerialization<Record<string, TaskRunnerState>>,
-    );
   },
   readMinionId: async () => {
     return Promise.resolve(null);

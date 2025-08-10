@@ -64,8 +64,6 @@ function createVSCodeHost(): VSCodeHostApi {
         "fetchThirdPartyRules",
         "fetchAvailableThirdPartyMcpConfigs",
         "openExternal",
-        "runTask",
-        "readTaskRunners",
         "readMinionId",
         "saveCheckpoint",
         "restoreCheckpoint",
