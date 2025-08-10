@@ -1,6 +1,7 @@
 import { vscodeHost } from "@/lib/vscode";
 import type { ToolUIPart } from "@ai-v5-sdk/ai";
 import type { ClientToolsType } from "@getpochi/tools";
+import type { Store } from "@livestore/livestore";
 import {
   ThreadAbortSignal,
   type ThreadAbortSignalSerialization,
@@ -10,7 +11,7 @@ import {
   threadSignal,
 } from "@quilted/threads/signals";
 import { getLogger } from "@ragdoll/common";
-import type { TaskRunnerState } from "@ragdoll/runner";
+import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import Emittery from "emittery";
 import type z from "zod";
@@ -23,7 +24,9 @@ type ExecuteCommandReturnType = {
 };
 type NewTaskParameterType = z.infer<ClientToolsType["newTask"]["parameters"]>;
 type NewTaskReturnType = {
-  result: ThreadSignalSerialization<TaskRunnerState>;
+  uid: string;
+  serializedAbortSignal: ThreadAbortSignalSerialization;
+  abortSignal: AbortSignal;
 };
 type ExecuteReturnType = ExecuteCommandReturnType | NewTaskReturnType | unknown;
 
@@ -35,7 +38,8 @@ type StreamingResult =
     }
   | {
       toolName: "newTask";
-      state: TaskRunnerState;
+      abortSignal: AbortSignal;
+      serializedAbortSignal: ThreadAbortSignalSerialization;
     };
 
 type CompleteReason =
@@ -147,7 +151,10 @@ export class ManagedToolCallLifeCycle
   readonly toolName: string;
   readonly toolCallId: string;
 
-  constructor(key: ToolCallLifeCycleKey) {
+  constructor(
+    private readonly store: Store,
+    key: ToolCallLifeCycleKey,
+  ) {
     super();
     this.toolName = key.toolName;
     this.toolCallId = key.toolCallId;
@@ -234,7 +241,7 @@ export class ManagedToolCallLifeCycle
     }
   }
 
-  execute(args: unknown, options: { model?: string }) {
+  execute(args: unknown) {
     const abortController = new AbortController();
     const abortSignal = ThreadAbortSignal.serialize(abortController.signal);
     let executePromise: Promise<unknown>;
@@ -243,7 +250,7 @@ export class ManagedToolCallLifeCycle
       executePromise = this.runNewTask(
         args as NewTaskParameterType,
         abortSignal,
-        options.model,
+        abortController.signal,
       );
     } else {
       executePromise = vscodeHost.executeToolCall(this.toolName, args, {
@@ -269,16 +276,18 @@ export class ManagedToolCallLifeCycle
 
   private runNewTask(
     args: NewTaskParameterType,
-    abortSignal: ThreadAbortSignalSerialization,
-    model?: string,
-  ) {
+    serializedAbortSignal: ThreadAbortSignalSerialization,
+    abortSignal: AbortSignal,
+  ): Promise<NewTaskReturnType> {
     const uid = args._meta?.uid;
     if (!uid) {
       throw new Error("Missing uid in newTask arguments");
     }
-    return vscodeHost.runTask(uid, {
+
+    return Promise.resolve({
+      uid,
+      serializedAbortSignal,
       abortSignal,
-      model,
     });
   }
 
@@ -287,7 +296,7 @@ export class ManagedToolCallLifeCycle
       this.state.type === "execute" ||
       this.state.type === "execute:streaming"
     ) {
-      this.state.abortController.abort();
+      this.state.abortController.abort("user-abort");
     }
   }
 
@@ -313,12 +322,7 @@ export class ManagedToolCallLifeCycle
       "output" in result
     ) {
       this.onExecuteCommand(result as ExecuteCommandReturnType);
-    } else if (
-      this.toolName === "newTask" &&
-      typeof result === "object" &&
-      result !== null &&
-      "result" in result
-    ) {
+    } else if (this.toolName === "newTask") {
       this.onExecuteNewTask(result as NewTaskReturnType);
     } else {
       this.transitTo("execute", {
@@ -387,25 +391,36 @@ export class ManagedToolCallLifeCycle
     });
   }
 
-  private onExecuteNewTask(result: NewTaskReturnType) {
-    const signal = threadSignal(result.result);
+  private onExecuteNewTask({
+    uid,
+    abortSignal,
+    serializedAbortSignal,
+  }: NewTaskReturnType) {
     const { abortController } = this.checkState("onExecuteNewTask", "execute");
     this.transitTo("execute", {
       type: "execute:streaming",
       abortController,
       streamingResult: {
         toolName: "newTask",
-        state: signal.value,
+        abortSignal,
+        serializedAbortSignal,
       },
     });
 
-    const unsubscribe = signal.subscribe((runnerState) => {
-      if (runnerState.state === "stopped" || runnerState.state === "error") {
+    const onTaskUpdate = (task: Task | undefined) => {
+      // FIXME(meng): handle retry exceed / step exeed error, as they're stopping signal for sub task.
+      if (
+        (task?.status === "failed" && task.error?.kind === "AbortError") ||
+        task?.status === "completed"
+      ) {
         const result =
-          runnerState.state === "stopped"
-            ? { result: runnerState.result }
-            : { error: runnerState.error.message };
-
+          task.status === "failed"
+            ? {
+                error: task.error,
+              }
+            : {
+                result: extractCompletionResult(this.store, uid),
+              };
         this.transitTo("execute:streaming", {
           type: "complete",
           result,
@@ -413,18 +428,18 @@ export class ManagedToolCallLifeCycle
             ? "user-abort"
             : "execute-finish",
         });
+
         unsubscribe();
-      } else {
-        this.transitTo("execute:streaming", {
-          type: "execute:streaming",
-          abortController,
-          streamingResult: {
-            toolName: "newTask",
-            state: runnerState,
-          },
-        });
       }
-    });
+    };
+
+    const unsubscribe = this.store.subscribe(
+      catalog.queries.makeTaskQuery(uid),
+      {
+        onSubscribe: (query) => onTaskUpdate(this.store.query(query)),
+        onUpdate: (task) => onTaskUpdate(task),
+      },
+    );
   }
 
   private checkState<T extends ToolCallState["type"]>(
@@ -473,4 +488,34 @@ function convertState(state: ToolUIPart["state"]) {
   }
 
   return "result";
+}
+
+function extractCompletionResult(store: Store, uid: string) {
+  const lastMessage = store
+    .query(catalog.queries.makeMessagesQuery(uid))
+    .map((x) => x.data as Message)
+    .at(-1);
+  if (!lastMessage) {
+    throw new Error(`No message found for uid ${uid}`);
+  }
+
+  const lastStepStart = lastMessage.parts.findLastIndex(
+    (x) => x.type === "step-start",
+  );
+
+  for (const part of lastMessage.parts.slice(lastStepStart + 1)) {
+    if (
+      part.type === "tool-attemptCompletion" &&
+      part.state !== "input-streaming"
+    ) {
+      return part.input.result;
+    }
+
+    if (
+      part.type === "tool-askFollowupQuestion" &&
+      part.state !== "input-streaming"
+    ) {
+      return part.input.question;
+    }
+  }
 }

@@ -11,6 +11,6 @@ export function useLiveChatKit(
   // biome-ignore lint/correctness/useExhaustiveDependencies: create new kit on taskId change.
   return useMemo(
     () => new LiveChatKit({ ...props, store, chatClass: Chat }),
-    [props.taskId],
+    [store.storeId, props.taskId],
   );
 }

@@ -40,6 +40,7 @@ export async function requestOpenAI(
     messageMetadata: ({ part }) => {
       if (part.type === "finish") {
         return {
+          kind: "assistant",
           totalTokens: part.totalUsage.totalTokens,
           finishReason: part.finishReason,
         };

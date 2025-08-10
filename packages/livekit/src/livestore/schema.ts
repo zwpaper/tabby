@@ -58,6 +58,7 @@ export const tables = {
     columns: {
       id: State.SQLite.text({ primaryKey: true }),
       title: State.SQLite.text({ nullable: true }),
+      parentId: State.SQLite.text({ nullable: true }),
       status: State.SQLite.text({
         default: "pending-input",
         schema: TaskStatus,
@@ -75,6 +76,12 @@ export const tables = {
       createdAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
       updatedAt: State.SQLite.integer({ schema: Schema.DateFromNumber }),
     },
+    indexes: [
+      {
+        name: "idx-parentId",
+        columns: ["parentId"],
+      },
+    ],
   }),
   // Many to one relationship with tasks
   messages: State.SQLite.table({
@@ -99,6 +106,7 @@ export const events = {
     name: "v1.TaskInited",
     schema: Schema.Struct({
       id: Schema.String,
+      parentId: Schema.optional(Schema.String),
       createdAt: Schema.Date,
       initMessage: Schema.optional(
         Schema.Struct({
@@ -141,10 +149,11 @@ export const events = {
 
 // Materializers are used to map events to state (https://docs.livestore.dev/reference/state/materializers)
 const materializers = State.SQLite.materializers(events, {
-  "v1.TaskInited": ({ id, createdAt, initMessage }) => [
+  "v1.TaskInited": ({ id, parentId, createdAt, initMessage }) => [
     tables.tasks.insert({
       id,
       status: initMessage ? "pending-model" : "pending-input",
+      parentId,
       createdAt,
       updatedAt: createdAt,
     }),

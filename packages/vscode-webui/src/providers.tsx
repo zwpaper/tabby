@@ -53,11 +53,15 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
 };
 
 function LiveStoreProviderWrapper({ children }: { children: React.ReactNode }) {
-  const { data: cwd = "default" } = useCurrentWorkspace();
+  const { data: cwd, isLoading } = useCurrentWorkspace();
   const storeId = useMemo(
     () => binary_to_base58(new TextEncoder().encode(cwd)),
     [cwd],
   );
+
+  if (isLoading) {
+    return;
+  }
 
   return (
     <LiveStoreProvider

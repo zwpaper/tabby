@@ -5,11 +5,10 @@ import {
   type ChatOnFinishCallback,
   InvalidToolInputError,
   NoSuchToolError,
-  getToolName,
   isToolUIPart,
 } from "@ai-v5-sdk/ai";
 import { isAbortError } from "@ai-v5-sdk/provider-utils";
-import { type McpTool, isUserInputTool } from "@getpochi/tools";
+import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import type { Environment } from "@ragdoll/db";
 import type { LLMRequestData } from "..";
@@ -61,6 +60,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
     this.taskId = taskId;
     this.store = store;
     this.transport = new FlexibleChatTransport({
+      store,
       onStart: this.onStart,
       getters,
     });
@@ -148,30 +148,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
   // Create a new task by compacting from current task, returns new taskId.
   readonly spawn: () => Promise<string>;
 
-  // Init a new task with a prompt.
-  init(prompt: string) {
-    if (this.taskInited) {
-      throw new Error("Task already inited");
-    }
-
-    this.store.commit(
-      events.taskInited({
-        id: this.taskId,
-        createdAt: new Date(),
-        initMessage: {
-          id: crypto.randomUUID(),
-          parts: [
-            {
-              type: "text",
-              text: prompt,
-            },
-          ],
-        },
-      }),
-    );
-  }
-
-  private get taskInited() {
+  get inited() {
     const countTask = this.store.query(
       tables.tasks.where("id", "=", this.taskId).count(),
     );
@@ -182,7 +159,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
     const { store } = this;
     const lastMessage = messages.at(-1);
     if (lastMessage) {
-      if (!this.taskInited) {
+      if (!this.inited) {
         store.commit(
           events.taskInited({
             id: this.taskId,
@@ -212,15 +189,18 @@ export class LiveChatKit<T extends { messages: Message[] }> {
 
   private readonly onFinish: ChatOnFinishCallback<Message> = ({ message }) => {
     const { store } = this;
+    if (message.metadata?.kind !== "assistant") {
+      const error = new Error("Transport is aborted");
+      error.name = "AbortError";
+      throw error;
+    }
+
     store.commit(
       events.chatStreamFinished({
         id: this.taskId,
-        status: toTaskStatus(message),
+        status: toTaskStatus(message, message.metadata),
         data: message,
-        totalTokens:
-          message.metadata?.kind === "assistant"
-            ? message.metadata.totalTokens
-            : null,
+        totalTokens: message.metadata.totalTokens,
         updatedAt: new Date(),
       }),
     );
@@ -239,29 +219,31 @@ export class LiveChatKit<T extends { messages: Message[] }> {
   };
 }
 
-function toTaskStatus(message: Message): (typeof tables.tasks.Type)["status"] {
-  if (message.metadata?.kind !== "assistant") return "failed";
+function toTaskStatus(
+  message: Message,
+  metadata: Extract<NonNullable<Message["metadata"]>, { kind: "assistant" }>,
+): (typeof tables.tasks.Type)["status"] {
+  const lastStepStart = message.parts.findLastIndex(
+    (x) => x.type === "step-start",
+  );
 
-  const { finishReason } = message.metadata;
+  const { finishReason } = metadata;
   if (!finishReason) return "failed";
 
-  if (finishReason === "tool-calls") {
-    if (message.parts.some((x) => x.type === "tool-attemptCompletion")) {
+  for (const part of message.parts.slice(lastStepStart + 1)) {
+    if (
+      part.type === "tool-askFollowupQuestion" ||
+      part.type === "tool-attemptCompletion"
+    ) {
       return "completed";
     }
 
-    if (
-      message.parts.some(
-        (x) => isToolUIPart(x) && isUserInputTool(getToolName(x)),
-      )
-    ) {
-      return "pending-input";
+    if (isToolUIPart(part)) {
+      return "pending-tool";
     }
-
-    return "pending-tool";
   }
 
-  if (finishReason === "stop") {
+  if (finishReason !== "error") {
     return "pending-input";
   }
 
