@@ -3,6 +3,7 @@ import type {
   ChatTransport,
   UIMessageChunk,
 } from "@ai-v5-sdk/ai";
+import type { McpTool } from "@getpochi/tools";
 import { formattersNext, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import type { Message, RequestData } from "../types";
@@ -13,20 +14,24 @@ export type OnStartCallback = (options: {
   environment?: Environment;
 }) => void;
 
-export type PrepareRequestDataCallback = () =>
-  | RequestData
-  | Promise<RequestData>;
+export type PrepareRequestGetters = {
+  getLLM: () => RequestData["llm"];
+  getEnvironment?: (options: {
+    readonly messages: Message[];
+  }) => Promise<Environment>;
+  getMcpToolSet?: () => Record<string, McpTool>;
+};
 
 export class FlexibleChatTransport implements ChatTransport<Message> {
   private readonly onStart?: OnStartCallback;
-  private readonly prepareRequestData: PrepareRequestDataCallback;
+  private readonly getters: PrepareRequestGetters;
 
   constructor(options: {
     onStart?: OnStartCallback;
-    prepareRequestData: PrepareRequestDataCallback;
+    getters: PrepareRequestGetters;
   }) {
     this.onStart = options.onStart;
-    this.prepareRequestData = options.prepareRequestData;
+    this.getters = options.getters;
   }
 
   sendMessages: (
@@ -42,7 +47,9 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     messages,
     abortSignal,
   }) => {
-    const { environment, llm, mcpToolSet } = await this.prepareRequestData();
+    const llm = await this.getters.getLLM();
+    const environment = await this.getters.getEnvironment?.({ messages });
+    const mcpToolSet = this.getters.getMcpToolSet?.();
 
     this.onStart?.({
       messages,

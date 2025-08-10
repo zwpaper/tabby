@@ -9,8 +9,10 @@ import {
   isToolUIPart,
 } from "@ai-v5-sdk/ai";
 import { isAbortError } from "@ai-v5-sdk/provider-utils";
-import { isUserInputTool } from "@getpochi/tools";
+import { type McpTool, isUserInputTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
+import type { Environment } from "@ragdoll/db";
+import type { LLMRequestData } from "..";
 import { makeMessagesQuery, makeTaskQuery } from "../livestore/queries";
 import { events, tables } from "../livestore/schema";
 import type { Message } from "../types";
@@ -18,17 +20,25 @@ import { compactTask } from "./compact-task";
 import {
   FlexibleChatTransport,
   type OnStartCallback,
-  type PrepareRequestDataCallback,
 } from "./flexible-chat-transport";
 
 export type LiveChatKitOptions<T> = {
   taskId: string;
+
+  // Request related getters
+  getters: {
+    getLLM: () => LLMRequestData;
+    getEnvironment?: (options: {
+      readonly messages: Message[];
+    }) => Promise<Environment>;
+    getMcpTools?: () => Record<string, McpTool>;
+  };
+
   store: Store;
   chatClass: new (options: ChatInit<Message>) => T;
   onBeforeMakeRequest?: (options: {
     messages: Message[];
   }) => void | Promise<void>;
-  prepareRequestData: PrepareRequestDataCallback;
 } & Omit<
   ChatInit<Message>,
   "id" | "messages" | "generateId" | "onFinish" | "onError" | "transport"
@@ -44,15 +54,15 @@ export class LiveChatKit<T extends { messages: Message[] }> {
     taskId,
     store,
     chatClass,
-    prepareRequestData,
     onBeforeMakeRequest,
+    getters,
     ...chatInit
   }: LiveChatKitOptions<T>) {
     this.taskId = taskId;
     this.store = store;
     this.transport = new FlexibleChatTransport({
       onStart: this.onStart,
-      prepareRequestData,
+      getters,
     });
 
     this.chat = new chatClass({
@@ -64,9 +74,6 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       onError: this.onError,
       transport: this.transport,
     });
-
-    const getLLM = () =>
-      Promise.resolve(prepareRequestData()).then((data) => data.llm);
 
     // @ts-expect-error: monkey patch
     const chat = this.chat as {
@@ -82,7 +89,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       if (lastMessage?.role === "user") {
         await compactTask({
           messages,
-          getLLM,
+          getLLM: getters.getLLM,
           overwrite: true,
         });
       }
@@ -96,7 +103,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       const { messages } = this.chat;
       const summary = await compactTask({
         messages,
-        getLLM,
+        getLLM: getters.getLLM,
         overwrite: false,
       });
       if (!summary) {
@@ -141,14 +148,41 @@ export class LiveChatKit<T extends { messages: Message[] }> {
   // Create a new task by compacting from current task, returns new taskId.
   readonly spawn: () => Promise<string>;
 
+  // Init a new task with a prompt.
+  init(prompt: string) {
+    if (this.taskInited) {
+      throw new Error("Task already inited");
+    }
+
+    this.store.commit(
+      events.taskInited({
+        id: this.taskId,
+        createdAt: new Date(),
+        initMessage: {
+          id: crypto.randomUUID(),
+          parts: [
+            {
+              type: "text",
+              text: prompt,
+            },
+          ],
+        },
+      }),
+    );
+  }
+
+  private get taskInited() {
+    const countTask = this.store.query(
+      tables.tasks.where("id", "=", this.taskId).count(),
+    );
+    return countTask > 0;
+  }
+
   private readonly onStart: OnStartCallback = ({ messages, environment }) => {
     const { store } = this;
     const lastMessage = messages.at(-1);
     if (lastMessage) {
-      const countTask = store.query(
-        tables.tasks.where("id", "=", this.taskId).count(),
-      );
-      if (countTask === 0) {
+      if (!this.taskInited) {
         store.commit(
           events.taskInited({
             id: this.taskId,

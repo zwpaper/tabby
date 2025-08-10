@@ -9,17 +9,15 @@ export function ChatView({ taskId }: { taskId: string }) {
   const { store } = useStore();
   const { chat } = useLiveChatKit({
     taskId,
-    prepareRequestData: async () => {
-      return {
-        llm: {
-          type: "openai",
-          baseURL: "https://api.deepinfra.com/v1/openai",
-          apiKey: import.meta.env.VITE_DEEPINFRA_API_KEY,
-          modelId: "zai-org/GLM-4.5",
-          maxOutputTokens: 1024 * 14,
-          contextWindow: 128_000,
-        },
-      };
+    getters: {
+      getLLM: () => ({
+        type: "openai",
+        baseURL: "https://api.deepinfra.com/v1/openai",
+        apiKey: import.meta.env.VITE_DEEPINFRA_API_KEY,
+        modelId: "zai-org/GLM-4.5",
+        maxOutputTokens: 1024 * 14,
+        contextWindow: 128_000,
+      }),
     },
   });
   const task = store.useQuery(catalog.queries.makeTaskQuery(taskId));

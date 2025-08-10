@@ -10,7 +10,7 @@ import {
 } from "@/features/chat";
 import { useSelectedModels } from "@/features/settings";
 import { AutoApproveMenu } from "@/features/settings";
-import { type authClient, readToken } from "@/lib/auth-client";
+import type { authClient } from "@/lib/auth-client";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { type UseChatHelpers, useChat } from "@ai-v5-sdk/react";
@@ -21,9 +21,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DevModeButton } from "@/components/dev-mode-button";
 import { TokenUsage } from "@/components/token-usage";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
-import { useLatest } from "@/lib/hooks/use-latest";
-import { useMcp } from "@/lib/hooks/use-mcp";
-import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
 import { vscodeHost } from "@/lib/vscode";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
 import { useStore } from "@livestore/react";
@@ -31,10 +28,7 @@ import { CompactTaskMinTokens, formattersNext } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
 import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
-import {
-  type UserEditsDiff,
-  getServerBaseUrl,
-} from "@ragdoll/vscode-webui-bridge";
+import type { UserEditsDiff } from "@ragdoll/vscode-webui-bridge";
 import { useRouter } from "@tanstack/react-router";
 import { ApprovalButton, useApprovalAndRetry } from "../approval";
 import { TodoList, useTodos } from "../todo";
@@ -48,6 +42,7 @@ import { useInlineCompactTask } from "./hooks/use-inline-compact-task";
 import { useNewCompactTask } from "./hooks/use-new-compact-task";
 import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
+import { useLiveChatKitGetters } from "./lib/use-live-chat-kit-getters";
 
 export function ChatPage({
   uid,
@@ -67,23 +62,14 @@ interface ChatProps {
 
 function Chat({ auth, uid }: ChatProps) {
   const { store } = useStore();
+  const todosRef = useRef<Todo[] | undefined>(undefined);
+  const getters = useLiveChatKitGetters({
+    todos: todosRef,
+  });
 
   const chatKit = useLiveChatKit({
     taskId: uid,
-    prepareRequestData: useCallback(async () => {
-      if (!llm.current) {
-        throw new Error("LLM is not set");
-      }
-
-      return {
-        environment: await buildEnvironment(),
-        llm: {
-          ...llm.current,
-          token: (await readToken()) || "",
-        },
-        mcpToolSet: mcpToolSet.current,
-      };
-    }, []),
+    getters,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onBeforeMakeRequest: async ({ messages }) => {
       const lastMessage = messages.at(-1);
@@ -133,30 +119,6 @@ function Chat({ auth, uid }: ChatProps) {
     handleFileSelect,
     handlePaste: handlePasteImage,
   } = imageUpload;
-
-  const todosRef = useRef<Todo[] | undefined>(undefined);
-
-  const mcpToolSet = useMcpToolSet();
-  const pochiModelSettings = usePochiModelSettings();
-  const llmFromSelectedModel =
-    selectedModel?.type === "byok"
-      ? {
-          type: "openai" as const,
-          modelId: selectedModel.modelId,
-          baseURL: selectedModel.provider.baseURL,
-          apiKey: selectedModel.provider.apiKey,
-          maxOutputTokens: selectedModel.maxTokens,
-          contextWindow: selectedModel.contextWindow,
-        }
-      : selectedModel?.type === "hosted"
-        ? {
-            type: "pochi" as const,
-            modelId: selectedModel.modelId,
-            modelEndpointId: pochiModelSettings?.modelEndpointId,
-            server: getServerBaseUrl(),
-          }
-        : undefined;
-  const llm = useLatest(llmFromSelectedModel);
 
   // const latestHttpCode = useRef<number | undefined>(undefined);
   // const recentAborted = useRef<boolean>(false);
@@ -601,9 +563,4 @@ function useStopBeforeNavigate({
       unsubscribe();
     };
   }, [stop, router]);
-}
-
-function useMcpToolSet() {
-  const { toolset } = useMcp();
-  return useLatest(toolset);
 }

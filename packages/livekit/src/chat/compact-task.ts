@@ -7,7 +7,7 @@ export async function compactTask({
   messages,
   overwrite,
 }: {
-  getLLM: () => Promise<RequestData["llm"]>;
+  getLLM: () => RequestData["llm"];
   messages: Message[];
   overwrite: boolean;
 }): Promise<string | undefined> {
@@ -24,7 +24,7 @@ export async function compactTask({
     }
   }
 
-  const llm = await getLLM();
+  const llm = getLLM();
   try {
     const part = prompts.createCompactPart(
       await createSummary(llm, messages.slice(0, -1)),

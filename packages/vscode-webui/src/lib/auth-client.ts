@@ -2,6 +2,7 @@ import { createAuthHooks } from "@daveyplate/better-auth-tanstack";
 import { threadSignal } from "@quilted/threads/signals";
 import type { AppType } from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
+import { useQuery } from "@tanstack/react-query";
 import {
   type ResponseContext,
   createAuthClient as createAuthClientImpl,
@@ -58,8 +59,13 @@ function createApiClient() {
   return app;
 }
 
-export function readToken() {
-  return tokenPromise.then((x) => x.value);
+export function useToken(): string | undefined {
+  const { data } = useQuery({
+    queryKey: ["token"],
+    queryFn: () => tokenPromise,
+  });
+
+  return data?.value;
 }
 
 export const apiClient = createApiClient();
