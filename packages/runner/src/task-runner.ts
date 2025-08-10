@@ -1,31 +1,31 @@
+import type { ToolInvocationUIPart } from "@ai-sdk/ui-utils";
 import {
-  type ToolInvocationUIPart,
-  getMessageParts,
-  isAssistantMessageWithCompletedToolCalls,
-  prepareAttachmentsForRequest,
-  updateToolCallResult,
-} from "@ai-sdk/ui-utils";
+  type ToolUIPart,
+  getToolName,
+  isToolUIPart,
+  lastAssistantMessageIsCompleteWithToolCalls,
+} from "@ai-v5-sdk/ai";
 import {
   ServerToolApproved,
   ServerTools,
   type Todo,
-  type ToolFunctionType,
+  type ToolFunctionTypeV5,
 } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { type Signal, signal } from "@preact/signals-core";
-import { fromUIMessage, getLogger, prompts } from "@ragdoll/common";
+import { getLogger, prompts } from "@ragdoll/common";
 import {
-  isAssistantMessageWithEmptyParts,
-  isAssistantMessageWithNoToolCalls,
-  isAssistantMessageWithPartialToolCalls,
-  prepareLastMessageForRetry,
+  isAssistantMessageWithEmptyPartsNext,
+  isAssistantMessageWithNoToolCallsNext,
+  isAssistantMessageWithPartialToolCallsNext,
+  prepareLastMessageForRetryNext,
 } from "@ragdoll/common/message-utils";
-import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
+import { findTodosNext, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Environment } from "@ragdoll/db";
-import type { LLMRequestData, Task } from "@ragdoll/livekit";
+import type { LLMRequestData, Message, Task, UITools } from "@ragdoll/livekit";
 import { LiveChatKit } from "@ragdoll/livekit/node";
-import { fromDBMessage, toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
-import type { CreateMessage, Message, ToolInvocation, UIMessage } from "ai";
+import { toV4UIMessage } from "@ragdoll/livekit/v4-adapter";
+import type { UIMessage } from "ai";
 import { toError, toErrorString } from "./lib/error-utils";
 import { readEnvironment } from "./lib/read-environment";
 import { StepCount, type StepInfo } from "./lib/step-count";
@@ -110,13 +110,13 @@ type TaskRunnerProgress = { step: StepInfo } & (
   | {
       type: "sending-message";
       phase: "begin";
-      message: UIMessage;
+      message: Message;
       messageReason: "next" | "retry";
     }
   | {
       type: "sending-message";
       phase: "end";
-      message: UIMessage;
+      message: Message;
       messageReason: "next" | "retry";
     }
 );
@@ -140,14 +140,14 @@ export type TaskRunnerState =
         }
     ) & {
       task?: Task;
-      messages: UIMessage[];
+      messages: Message[];
       todos: Todo[];
     });
 
 const ToolMap: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: ToolFunctionType requires any for generic tool parameters
-  (options: ToolCallOptions) => ToolFunctionType<any>
+  (options: ToolCallOptions) => ToolFunctionTypeV5<any>
 > = {
   readFile,
   applyDiff,
@@ -173,7 +173,9 @@ export class TaskRunner {
   private abortController?: AbortController;
 
   private task?: Task;
-  private messages: UIMessage[] = [];
+  private get messages(): Message[] {
+    return this.chatKit.chat.messages;
+  }
   private todos: Todo[] = [];
   private chatKit: LiveChatKit<Chat>;
 
@@ -329,10 +331,9 @@ export class TaskRunner {
       throw new Error("Task not found");
     }
     this.task = task;
-    this.messages = this.chatKit.messages.map(toV4UIMessage);
     const lastMessage = this.getLastMessageOrThrow();
 
-    this.todos = mergeTodos(this.todos, findTodos(lastMessage) ?? []);
+    this.todos = mergeTodos(this.todos, findTodosNext(lastMessage) ?? []);
 
     this.logger.trace("Task loaded:", task);
     this.updateState({
@@ -380,14 +381,14 @@ export class TaskRunner {
     }
 
     if (
-      isAssistantMessageWithEmptyParts(lastMessage) ||
-      isAssistantMessageWithPartialToolCalls(lastMessage) ||
-      isAssistantMessageWithCompletedToolCalls(lastMessage)
+      isAssistantMessageWithEmptyPartsNext(lastMessage) ||
+      isAssistantMessageWithPartialToolCallsNext(lastMessage) ||
+      lastAssistantMessageIsCompleteWithToolCalls({ messages: this.messages })
     ) {
       this.logger.trace(
         "Last message is assistant with empty parts or partial/completed tool calls, resending it to resume the task.",
       );
-      const processed = prepareLastMessageForRetry(lastMessage);
+      const processed = prepareLastMessageForRetryNext(lastMessage);
       if (processed) {
         this.messages.splice(-1, 1, processed);
       } else {
@@ -398,84 +399,80 @@ export class TaskRunner {
 
     if (this.stepCount.willReachMaxRounds()) {
       this.logger.trace("Will reach max rounds, sending a new user reminder.");
-      const message = await createUIMessage({
-        role: "user",
-        content: prompts.createSystemReminder(
+      const message = await createUserMessage(
+        prompts.createSystemReminder(
           "You've been working on this task for a while and don't seem to be making progress. Please use askFollowupQuestion to engage with the user and clarify what they need, or use attemptCompletion if you think the task is complete.",
         ),
-      });
+      );
       this.messages.push(message);
       return "next";
     }
 
-    if (isAssistantMessageWithNoToolCalls(lastMessage)) {
+    if (isAssistantMessageWithNoToolCallsNext(lastMessage)) {
       this.logger.trace(
         "Last message is assistant with no tool calls, sending a new user reminder.",
       );
-      const message = await createUIMessage({
-        role: "user",
-        content: prompts.createSystemReminder(
+      const message = createUserMessage(
+        prompts.createSystemReminder(
           "You should use tool calls to answer the question, for example, use attemptCompletion if the job is done, or use askFollowupQuestions to clarify the request.",
         ),
-      });
+      );
       this.messages.push(message);
       return "next";
     }
-
-    /* otherwise, processing tool calls */ {
-      this.logger.trace("Processing tool calls in the last message.");
-      let toolCall = findNextToolCall(lastMessage);
-      while (toolCall) {
-        this.logger.trace(
-          `Found tool call: ${toolCall.toolName} with args: ${JSON.stringify(
-            toolCall.args,
-          )}`,
-        );
-        this.updateState({
-          state: "running",
-          progress: {
-            step: this.stepCount,
-            type: "executing-tool-call",
-            phase: "begin",
-            toolName: toolCall.toolName,
-            toolCallId: toolCall.toolCallId,
-            toolArgs: toolCall.args,
-          },
-        });
-        signal?.throwIfAborted();
-
-        const toolResult = await executeToolCall(
-          toolCall,
-          this.toolCallOptions,
-          signal,
-        );
-
-        updateToolCallResult({
-          messages: this.messages,
+    this.logger.trace("Processing tool calls in the last message.");
+    for (const toolCall of lastMessage.parts.filter(isToolUIPart)) {
+      if (toolCall.state !== "input-available") continue;
+      const toolName = getToolName(toolCall);
+      this.logger.trace(
+        `Found tool call: ${toolName} with args: ${JSON.stringify(
+          toolCall.input,
+        )}`,
+      );
+      this.updateState({
+        state: "running",
+        progress: {
+          step: this.stepCount,
+          type: "executing-tool-call",
+          phase: "begin",
+          toolName,
           toolCallId: toolCall.toolCallId,
+          toolArgs: toolCall.input,
+        },
+      });
+      signal?.throwIfAborted();
+
+      const toolResult = await executeToolCall(
+        toolCall,
+        this.toolCallOptions,
+        signal,
+      );
+
+      this.chatKit.chat.addToolResult({
+        // @ts-expect-error
+        tool: toolName,
+        toolCallId: toolCall.toolCallId,
+        // @ts-expect-error
+        output: toolResult,
+      });
+
+      this.logger.trace(`Tool call result: ${JSON.stringify(toolResult)}`);
+      this.updateState({
+        state: "running",
+        progress: {
+          step: this.stepCount,
+          type: "executing-tool-call",
+          phase: "end",
+          toolName,
+          toolCallId: toolCall.toolCallId,
+          toolArgs: toolCall.input,
           toolResult,
-        });
-
-        this.logger.trace(`Tool call result: ${JSON.stringify(toolResult)}`);
-        this.updateState({
-          state: "running",
-          progress: {
-            step: this.stepCount,
-            type: "executing-tool-call",
-            phase: "end",
-            toolName: toolCall.toolName,
-            toolCallId: toolCall.toolCallId,
-            toolArgs: toolCall.args,
-            toolResult,
-          },
-        });
-        signal?.throwIfAborted();
-
-        toolCall = findNextToolCall(lastMessage);
-      }
-      this.logger.trace("All tool calls processed in the last message.");
-      return "next";
+        },
+      });
+      signal?.throwIfAborted();
     }
+    this.logger.trace("All tool calls processed in the last message.");
+    return "next";
   }
 
   private async sendMessage(messageReason: "next" | "retry") {
@@ -496,8 +493,7 @@ export class TaskRunner {
     });
     signal?.throwIfAborted();
 
-    const message = await fromDBMessage(fromUIMessage(lastMessage));
-    this.chatKit.chat.appendMessage(message);
+    this.chatKit.chat.appendMessage(lastMessage);
     const promise = this.chatKit.chat.sendMessage(undefined);
 
     signal?.addEventListener("abort", () => this.chatKit.chat.stop());
@@ -546,7 +542,7 @@ export class TaskRunner {
     return this.task;
   }
 
-  private getLastMessageOrThrow(): UIMessage {
+  private getLastMessageOrThrow(): Message {
     const lastMessage = this.messages.at(-1);
     if (!lastMessage) {
       throw new Error("No messages found in the task.");
@@ -569,51 +565,38 @@ async function buildEnvironment(
   });
 }
 
-async function createUIMessage(
-  message: Message | CreateMessage,
-): Promise<UIMessage> {
-  const attachmentsForRequest = await prepareAttachmentsForRequest(
-    message.experimental_attachments,
-  );
+function createUserMessage(prompt: string): Message {
   return {
-    ...message,
-    id: message.id ?? crypto.randomUUID(),
-    createdAt: message.createdAt ?? new Date(),
-    experimental_attachments:
-      attachmentsForRequest.length > 0 ? attachmentsForRequest : undefined,
-    parts: getMessageParts(message),
+    id: crypto.randomUUID(),
+    role: "user",
+    parts: [
+      {
+        type: "text",
+        text: prompt,
+      },
+    ],
   };
 }
 
-function findNextToolCall(message: UIMessage): ToolInvocation | undefined {
-  for (const part of message.parts) {
-    if (
-      part.type === "tool-invocation" &&
-      part.toolInvocation.state === "call"
-    ) {
-      return part.toolInvocation;
-    }
-  }
-}
-
 async function executeToolCall(
-  tool: ToolInvocation,
+  tool: ToolUIPart<UITools>,
   options: ToolCallOptions,
   abortSignal?: AbortSignal,
 ) {
-  if (tool.toolName in ServerTools) {
+  const toolName = getToolName(tool);
+  if (toolName in ServerTools) {
     return ServerToolApproved;
   }
 
-  const toolFunction = ToolMap[tool.toolName];
+  const toolFunction = ToolMap[toolName];
   if (!toolFunction) {
     return {
-      error: `Tool ${tool.toolName} not found.`,
+      error: `Tool ${toolName} not found.`,
     };
   }
 
   try {
-    return await toolFunction(options)(tool.args, {
+    return await toolFunction(options)(tool.input, {
       messages: [],
       toolCallId: tool.toolCallId,
       abortSignal,
@@ -630,9 +613,8 @@ function isResultMessage(message: Message): boolean {
     message.role === "assistant" &&
     (message.parts?.some(
       (part) =>
-        part.type === "tool-invocation" &&
-        (part.toolInvocation.toolName === "attemptCompletion" ||
-          part.toolInvocation.toolName === "askFollowupQuestion"),
+        part.type === "tool-attemptCompletion" ||
+        part.type === "tool-askFollowupQuestion",
     ) ??
       false)
   );

@@ -72,10 +72,12 @@ export class TaskRunnerSupervisor {
           if (progress.phase === "begin") {
             logger.debug(`[${stepInfo}] Executing tool: ${progress.toolName}`);
             this.output.updateToolCall({
-              state: "call",
+              // @ts-expect-error
+              type: `tool-${progress.toolName}`,
+              state: "input-available",
               toolCallId: progress.toolCallId,
-              toolName: progress.toolName,
-              args: progress.toolArgs,
+              // @ts-expect-error
+              input: progress.toolArgs,
             });
           } else if (progress.phase === "end") {
             const error =
@@ -93,11 +95,14 @@ export class TaskRunnerSupervisor {
               logger.debug(`[${stepInfo}] Tool ${progress.toolName} ✓`);
             }
             this.output.updateToolCall({
-              state: "result",
+              // @ts-expect-error
+              type: `tool-${progress.toolName}`,
+              state: "output-available",
               toolCallId: progress.toolCallId,
-              toolName: progress.toolName,
-              args: progress.toolArgs,
-              result: progress.toolResult,
+              // @ts-expect-error
+              input: progress.toolArgs,
+              // @ts-expect-error
+              output: progress.toolResult,
             });
           }
           break;

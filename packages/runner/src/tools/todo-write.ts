@@ -1,4 +1,4 @@
-import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
+import type { ClientToolsV5Type, ToolFunctionTypeV5 } from "@getpochi/tools";
 
 /**
  * Implements the todoWrite tool for runner.
@@ -11,7 +11,9 @@ import type { ToolCallOptions } from "../types";
  * Currently a no-op implementation that just returns success.
  */
 export const todoWrite =
-  (_options: ToolCallOptions): ToolFunctionType<ClientToolsType["todoWrite"]> =>
+  (
+    _options: ToolCallOptions,
+  ): ToolFunctionTypeV5<ClientToolsV5Type["todoWrite"]> =>
   async () => {
     return {
       success: true,

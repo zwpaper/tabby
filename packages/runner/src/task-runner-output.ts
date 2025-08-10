@@ -1,25 +1,25 @@
-import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
-import { formatters } from "@ragdoll/common";
-import type { Tool, ToolCall, ToolResult, UIMessage } from "ai";
+import { type ToolUIPart, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
+import { formattersNext } from "@ragdoll/common";
+import type { Message, UITools } from "@ragdoll/livekit";
 import chalk from "chalk";
 import deepEqual from "fast-deep-equal";
 import loading from "loading-cli";
 import PrettyError from "pretty-error";
 
 export class TaskRunnerOutputStream {
-  private renderedMessages: UIMessage[] = [];
-  private renderedToolCalls: ToolInvocation[] = [];
+  private renderedMessages: Message[] = [];
+  private renderedToolCalls: ToolUIPart<UITools>[] = [];
   private loading:
     | {
         indicator: loading.Loading;
-        toolCall?: ToolInvocation | undefined;
+        toolCall?: ToolUIPart<UITools> | undefined;
       }
     | undefined = undefined;
 
   constructor(readonly stream: NodeJS.WriteStream) {}
 
-  updateMessage(messages: UIMessage[]) {
-    const formattedMessages = formatters.ui(messages);
+  updateMessage(messages: Message[]) {
+    const formattedMessages = formattersNext.ui(messages);
     for (const message of formattedMessages) {
       if (message.role !== "user" && message.role !== "assistant") {
         continue; // Only render user and assistant messages
@@ -59,7 +59,7 @@ export class TaskRunnerOutputStream {
     this.renderedMessages = formattedMessages;
   }
 
-  updateToolCall(toolCall: ToolInvocation) {
+  updateToolCall(toolCall: ToolUIPart<UITools>) {
     this.renderToolCallPart(toolCall);
   }
 
@@ -110,52 +110,49 @@ export class TaskRunnerOutputStream {
   }
 
   private renderPart(
-    part: UIMessage["parts"][number],
+    part: Message["parts"][number],
     role: "user" | "assistant",
   ) {
     switch (part.type) {
       case "text":
         this.renderTextPart(role, part.text);
-        break;
+        return;
       case "reasoning":
-        this.renderReasoningPart(part.reasoning);
-        break;
-      case "tool-invocation":
-        {
-          if (part.toolInvocation.state === "partial-call") {
-            // Skip rendering for partial calls
-            return;
-          }
-          if (
-            this.renderedToolCalls.find(
-              (call) => call.toolCallId === part.toolInvocation.toolCallId,
-            )
-          ) {
-            // Skip rendering for already rendered tool calls
-            return;
-          }
-          this.renderedToolCalls.push(part.toolInvocation);
+        this.renderReasoningPart(part.text);
+        return;
+    }
 
-          if (part.toolInvocation.toolName in StaticToolRenderers) {
-            // Tool calls not handled by the runner, render directly with the static renderer
-            this.renderToolCallPart(part.toolInvocation);
-          } else if (part.toolInvocation.toolName in RunnerToolRenderers) {
-            // Tool calls handled by the runner
-            if (part.toolInvocation.state === "result") {
-              // Render the finished tool call
-              this.renderToolCallPart(part.toolInvocation);
-            } else {
-              // Ignore all `call` state tool calls,
-              // they should be rendered by invoking `updateToolCall`
-            }
-          } else {
-            this.renderRawJson(JSON.stringify(part.toolInvocation, null, 2));
-          }
-        }
-        break;
-      default:
-        // not support other types
-        break;
+    if (!isToolUIPart(part)) {
+      // Not support other parts.
+      return;
+    }
+    if (part.state === "input-streaming") {
+      // Skip rendering for partial calls
+      return;
+    }
+    if (
+      this.renderedToolCalls.find((call) => call.toolCallId === part.toolCallId)
+    ) {
+      // Skip rendering for already rendered tool calls
+      return;
+    }
+    this.renderedToolCalls.push(part);
+
+    const toolName = getToolName(part);
+    if (toolName in StaticToolRenderers) {
+      // Tool calls not handled by the runner, render directly with the static renderer
+      this.renderToolCallPart(part);
+    } else if (toolName in RunnerToolRenderers) {
+      // Tool calls handled by the runner
+      if (part.state === "output-available") {
+        // Render the finished tool call
+        this.renderToolCallPart(part);
+      } else {
+        // Ignore all `call` state tool calls,
+        // they should be rendered by invoking `updateToolCall`
+      }
+    } else {
+      this.renderRawJson(JSON.stringify(part, null, 2));
     }
   }
 
@@ -177,9 +174,10 @@ export class TaskRunnerOutputStream {
     this.println();
   }
 
-  private renderToolCallPart(toolCall: ToolInvocation) {
+  private renderToolCallPart(toolCall: ToolUIPart<UITools>) {
+    const toolName = getToolName(toolCall);
     const renderers = { ...StaticToolRenderers, ...RunnerToolRenderers };
-    const renderer = renderers[toolCall.toolName];
+    const renderer = renderers[toolName];
     if (!renderer) {
       return;
     }
@@ -195,6 +193,7 @@ export class TaskRunnerOutputStream {
       }
     }
 
+    // @ts-expect-error cast to any
     const rendered = renderer(toolCall, () => {
       return current || this.createLoadingIndicator();
     });
@@ -223,112 +222,81 @@ export class TaskRunnerOutputStream {
   }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: used for type inference
-type ToolInvocation<INPUT = any, OUTPUT = any> =
-  | ({
-      state: "call";
-    } & ToolCall<string, INPUT>)
-  | ({
-      state: "result";
-    } & ToolResult<string, INPUT, OUTPUT>);
-
-type ToolProps<T extends Tool> = ToolInvocation<
-  Parameters<ToolFunctionType<T>>[0],
-  Awaited<ReturnType<ToolFunctionType<T>>> | { error: string }
->;
-
 // Renderer returns:
 // - string: Static text to render
 // - loading.Loading: A loading indicator in progress
 // - undefined: Nothing to render, or the current loading indicator has been finalized
 
-type ToolRenderer<T extends Tool> = (
-  tool: ToolProps<T>,
+type ToolProps<T extends string> = Exclude<
+  Extract<ToolUIPart<UITools>, { type: `tool-${T}` }>,
+  { state: "input-streaming" }
+>;
+
+type ToolRenderer<T extends string> = (
+  toolCall: ToolProps<T>,
   // Get the current loading indicator or create a new one
   loading: () => loading.Loading,
 ) => string | loading.Loading | undefined;
 
-const StaticToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
-  attemptCompletion: (
-    toolCall: ToolProps<ClientToolsType["attemptCompletion"]>,
-  ) => {
-    const { result } = toolCall.args || {};
+const StaticToolRenderers = {
+  attemptCompletion: (toolCall: ToolProps<"attemptCompletion">) => {
+    const { result } = toolCall.input || {};
     return `\n${chalk.bold(chalk.green("🎉 Task Completed"))}\n${chalk.dim("└─")} ${result}\n`;
   },
-  askFollowupQuestion: (
-    toolCall: ToolProps<ClientToolsType["askFollowupQuestion"]>,
-  ) => {
-    const { question, followUp } = toolCall.args || {};
-    return `\n${chalk.bold(chalk.yellow(`❓ ${question}`))}\n${followUp.map((option, i) => `${chalk.dim(`   ${i + 1}.`)} ${option}`).join("\n")}\n`;
-  },
-  // biome-ignore lint/suspicious/noExplicitAny: ToolProps<ServerToolsType["webFetch"]>
-  webFetch: (toolCall: any) => {
-    const { url } = toolCall.args || {};
-    if (!url) return `${Icon.done} Web fetch completed`;
-    try {
-      const domain = new URL(url).hostname;
-      // Check if this is an error result
-      if (toolCall.result && "error" in toolCall.result) {
-        return `${Icon.error} Failed to fetch ${chalk.blue(domain)} ${ErrorLabel} ${toolCall.result.error}`;
-      }
-
-      // Check if content was truncated (based on server implementation)
-      const isTruncated = toolCall.result?.isTruncated;
-      const truncatedNote = isTruncated
-        ? chalk.dim(" (content truncated)")
-        : "";
-
-      return `${Icon.done} Fetched content from ${chalk.blue(domain)}${truncatedNote} ${chalk.dim(`(${url})`)}`;
-    } catch (error) {
-      return `${Icon.error} Invalid URL: ${chalk.dim(url)}`;
-    }
+  askFollowupQuestion: (toolCall: ToolProps<"askFollowupQuestion">) => {
+    const { question, followUp } = toolCall.input || {};
+    return `\n${chalk.bold(chalk.yellow(`❓ ${question}`))}\n${followUp?.map((option, i) => `${chalk.dim(`   ${i + 1}.`)} ${option}`).join("\n")}\n`;
   },
   todoWrite: undefined,
   newTask: undefined,
-};
+  // biome-ignore lint/suspicious/noExplicitAny: dynamic type
+} as Record<string, ToolRenderer<any> | undefined>;
 
-const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
+const RunnerToolRenderers = {
   readFile: (
-    toolCall: ToolProps<ClientToolsType["readFile"]>,
+    toolCall: ToolProps<"readFile">,
     loading: () => loading.Loading,
   ) => {
-    const { path, startLine, endLine } = toolCall.args || {};
+    const { path, startLine, endLine } = toolCall.input || {};
     const pathString = styledPathString(
       `${path}${startLine !== undefined && endLine !== undefined ? `:${startLine}-${endLine}` : ""}`,
       "read",
     );
-    if (toolCall.state === "call") {
+    if (toolCall.state === "input-available") {
       return loading().start(`Reading ${pathString}`);
     }
-    if (!("error" in toolCall.result)) {
+    if (!toolCall.output) return;
+    if (!toolCall.output) return;
+    if (!("error" in toolCall.output)) {
       loading().succeed(`Read ${pathString}`);
     } else {
       loading().fail(
-        `Read ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Read ${pathString} ${ErrorLabel} ${toolCall.output.error}`,
       );
     }
     return undefined;
   },
   writeToFile: (
-    toolCall: ToolProps<ClientToolsType["writeToFile"]>,
+    toolCall: ToolProps<"writeToFile">,
     loading: () => loading.Loading,
   ) => {
-    const { path } = toolCall.args || {};
+    const { path } = toolCall.input || {};
     const pathString = styledPathString(path, "write");
-    if (toolCall.state === "call") {
+    if (toolCall.state === "input-available") {
       return loading().start(`Writing ${pathString}`);
     }
-    if (!("error" in toolCall.result)) {
+    if (!toolCall.output) return;
+    if (!("error" in toolCall.output)) {
       loading().succeed(`Wrote ${pathString}`);
     } else {
       loading().fail(
-        `Write ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Write ${pathString} ${ErrorLabel} ${toolCall.output.error}`,
       );
     }
     return undefined;
   },
   applyDiff: (
-    toolCall: ToolProps<ClientToolsType["applyDiff"]>,
+    toolCall: ToolProps<"applyDiff">,
     loading: () => loading.Loading,
   ) => {
     const {
@@ -336,7 +304,7 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
       searchContent,
       replaceContent,
       expectedReplacements = 1,
-    } = toolCall.args || {};
+    } = toolCall.input || {};
     const pathString = styledPathString(path);
     const countLines = (content: string) => {
       return content.split("\n").length;
@@ -347,27 +315,28 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
       addedLines > 0 || deletedLines > 0
         ? `${chalk.dim("(")}${chalk.green(`+${addedLines}`)}${chalk.dim("/")}${chalk.red(`-${deletedLines}`)}${chalk.dim(")")}`
         : "";
-    if (toolCall.state === "call") {
+    if (toolCall.state === "input-available") {
       return loading().start(
         `Applying diff to ${pathString}${diff ? ` ${diff}` : ""}`,
       );
     }
-    if (!("error" in toolCall.result)) {
+    if (!toolCall.output) return;
+    if (!("error" in toolCall.output)) {
       loading().succeed(
         `Applied diff to ${pathString}${diff ? ` ${diff}` : ""}`,
       );
     } else {
       loading().fail(
-        `Apply diff to ${pathString}${diff ? ` ${diff}` : ""} ${ErrorLabel} ${toolCall.result.error}`,
+        `Apply diff to ${pathString}${diff ? ` ${diff}` : ""} ${ErrorLabel} ${toolCall.output.error}`,
       );
     }
     return undefined;
   },
   multiApplyDiff: (
-    toolCall: ToolProps<ClientToolsType["multiApplyDiff"]>,
+    toolCall: ToolProps<"multiApplyDiff">,
     loading: () => loading.Loading,
   ) => {
-    const { path, edits } = toolCall.args || {};
+    const { path, edits } = toolCall.input || {};
     const pathString = styledPathString(path);
     const countDeletedLines = (edit: {
       searchContent: string;
@@ -401,60 +370,63 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
         ? `${chalk.dim("(")}${chalk.green(`+${addedLines}`)}${chalk.dim("/")}${chalk.red(`-${deletedLines}`)}${chalk.dim(")")}`
         : "";
     const editCount = `${chalk.dim("(")}${edits.length} edit${edits.length !== 1 ? "s" : ""}${chalk.dim(")")}`;
-    if (toolCall.state === "call") {
+    if (toolCall.state === "input-available") {
       return loading().start(
         `Applying ${editCount} to ${pathString}${diff ? ` ${diff}` : ""}`,
       );
     }
-    if (!("error" in toolCall.result)) {
+    if (!toolCall.output) return;
+    if (!("error" in toolCall.output)) {
       loading().succeed(
         `Applied ${editCount} to ${pathString}${diff ? ` ${diff}` : ""}`,
       );
     } else {
       loading().fail(
-        `Apply ${editCount} to ${pathString}${diff ? ` ${diff}` : ""} ${ErrorLabel} ${toolCall.result.error}`,
+        `Apply ${editCount} to ${pathString}${diff ? ` ${diff}` : ""} ${ErrorLabel} ${toolCall.output.error}`,
       );
     }
     return undefined;
   },
   executeCommand: (
-    toolCall: ToolProps<ClientToolsType["executeCommand"]>,
+    toolCall: ToolProps<"executeCommand">,
     loading: () => loading.Loading,
   ) => {
-    const { command, cwd } = toolCall.args || {};
+    const { command, cwd } = toolCall.input || {};
     const cwdString = cwd ? chalk.dim(` in ${cwd}`) : "";
     let renderedCommand = command.replace(/\r\n|\r|\n/g, " "); // no multiline
     if (renderedCommand.length > 60) {
       renderedCommand = `${renderedCommand.slice(0, 50)}...${chalk.dim(`(+${renderedCommand.length - 50})`)}`;
     }
-    if (toolCall.state === "call") {
+    if (toolCall.state === "input-available") {
       return loading().start(
         `Running ${chalk.cyan(renderedCommand)}${cwdString}`,
       );
     }
-    if (!("error" in toolCall.result)) {
+    if (!toolCall.output) return;
+    if (!("error" in toolCall.output)) {
       loading().succeed(`Ran ${chalk.cyan(renderedCommand)}${cwdString}`);
     } else {
       loading().fail(
-        `Run ${chalk.cyan(renderedCommand)}${cwdString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Run ${chalk.cyan(renderedCommand)}${cwdString} ${ErrorLabel} ${toolCall.output.error}`,
       );
     }
     return undefined;
   },
   searchFiles: (
-    toolCall: ToolProps<ClientToolsType["searchFiles"]>,
+    toolCall: ToolProps<"searchFiles">,
     loading: () => loading.Loading,
   ) => {
-    const { regex, path } = toolCall.args || {};
+    const { regex, path } = toolCall.input || {};
     const pathString = styledPathString(path);
     const regexString = chalk.magenta(regex);
-    if (toolCall.state === "call") {
+    if (toolCall.state === "input-available") {
       return loading().start(`Searching ${regexString} in ${pathString}`);
     }
-    if (!("error" in toolCall.result)) {
-      const matchCount = toolCall.result.matches?.length || 0;
+    if (!toolCall.output) return;
+    if (!("error" in toolCall.output)) {
+      const matchCount = toolCall.output.matches?.length || 0;
       const matchText = `${matchCount} match${matchCount !== 1 ? "es" : ""}`;
-      const truncated = toolCall.result.isTruncated
+      const truncated = toolCall.output.isTruncated
         ? chalk.dim(" (results truncated)")
         : "";
       loading().succeed(
@@ -462,24 +434,25 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
       );
     } else {
       loading().fail(
-        `Search ${regexString} in ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Search ${regexString} in ${pathString} ${ErrorLabel} ${toolCall.output.error}`,
       );
     }
     return undefined;
   },
   listFiles: (
-    toolCall: ToolProps<ClientToolsType["listFiles"]>,
+    toolCall: ToolProps<"listFiles">,
     loading: () => loading.Loading,
   ) => {
-    const { path } = toolCall.args || {};
+    const { path } = toolCall.input || {};
     const pathString = styledPathString(path);
-    if (toolCall.state === "call") {
+    if (toolCall.state === "input-available") {
       return loading().start(`Listing ${pathString}`);
     }
-    if (!("error" in toolCall.result)) {
-      const fileCount = toolCall.result.files?.length || 0;
+    if (!toolCall.output) return;
+    if (!("error" in toolCall.output)) {
+      const fileCount = toolCall.output.files?.length || 0;
       const fileText = `${fileCount} file${fileCount !== 1 ? "s" : ""}`;
-      const truncated = toolCall.result.isTruncated
+      const truncated = toolCall.output.isTruncated
         ? chalk.dim(" (results truncated)")
         : "";
       loading().succeed(
@@ -487,25 +460,26 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
       );
     } else {
       loading().fail(
-        `List ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `List ${pathString} ${ErrorLabel} ${toolCall.output.error}`,
       );
     }
     return undefined;
   },
   globFiles: (
-    toolCall: ToolProps<ClientToolsType["globFiles"]>,
+    toolCall: ToolProps<"globFiles">,
     loading: () => loading.Loading,
   ) => {
-    const { globPattern, path } = toolCall.args || {};
+    const { globPattern, path } = toolCall.input || {};
     const pathString = styledPathString(path);
     const globPatternString = chalk.magenta(globPattern);
-    if (toolCall.state === "call") {
+    if (toolCall.state === "input-available") {
       return loading().start(`Globbing ${globPatternString} in ${pathString}`);
     }
-    if (!("error" in toolCall.result)) {
-      const matchCount = toolCall.result.files?.length || 0;
+    if (!toolCall.output) return;
+    if (!("error" in toolCall.output)) {
+      const matchCount = toolCall.output.files?.length || 0;
       const matchText = `${matchCount} match${matchCount !== 1 ? "es" : ""}`;
-      const truncated = toolCall.result.isTruncated
+      const truncated = toolCall.output.isTruncated
         ? chalk.dim(" (results truncated)")
         : "";
       loading().succeed(
@@ -513,12 +487,13 @@ const RunnerToolRenderers: Record<string, ToolRenderer<Tool> | undefined> = {
       );
     } else {
       loading().fail(
-        `Glob ${globPatternString} in ${pathString} ${ErrorLabel} ${toolCall.result.error}`,
+        `Glob ${globPatternString} in ${pathString} ${ErrorLabel} ${toolCall.output.error}`,
       );
     }
     return undefined;
   },
-};
+  // biome-ignore lint/suspicious/noExplicitAny: dynamic type
+} as Record<string, ToolRenderer<any> | undefined>;
 
 const styledPathString = (path: string, operation?: "read" | "write") => {
   const baseStyle = chalk.italic(path);
@@ -531,9 +506,5 @@ const styledPathString = (path: string, operation?: "read" | "write") => {
   return baseStyle;
 };
 const ErrorLabel = chalk.bold(chalk.red("ERROR:"));
-const Icon = {
-  done: chalk.green("✔"),
-  error: chalk.red("✖"),
-};
 const LoadingFrames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const LoadingFramesInterval = 100; // ms

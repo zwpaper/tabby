@@ -151,6 +151,9 @@ export class LiveChatKit<T extends { messages: Message[] }> {
         },
       }),
     );
+
+    // Sync the chat messages.
+    this.chat.messages = this.messages;
   }
 
   get task() {

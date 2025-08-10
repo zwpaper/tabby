@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
-import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
+import type { ClientToolsV5Type, ToolFunctionTypeV5 } from "@getpochi/tools";
 import { processMultipleDiffs } from "@ragdoll/common/diff-utils";
 import { validateTextFile } from "@ragdoll/common/node";
 import { ensureFileDirectoryExists } from "../lib/fs";
@@ -12,7 +12,7 @@ import type { ToolCallOptions } from "../types";
 export const multiApplyDiff =
   (
     context: ToolCallOptions,
-  ): ToolFunctionType<ClientToolsType["multiApplyDiff"]> =>
+  ): ToolFunctionTypeV5<ClientToolsV5Type["multiApplyDiff"]> =>
   async ({ path, edits }) => {
     const fileUri = nodePath.join(context.cwd, path);
     await ensureFileDirectoryExists(fileUri);

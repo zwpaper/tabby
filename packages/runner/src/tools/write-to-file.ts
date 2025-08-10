@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
-import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
+import type { ClientToolsV5Type, ToolFunctionTypeV5 } from "@getpochi/tools";
 import { fixCodeGenerationOutput } from "@ragdoll/common/output-utils";
 import type { ToolCallOptions } from "../types";
 
@@ -11,7 +11,7 @@ import type { ToolCallOptions } from "../types";
 export const writeToFile =
   (
     context: ToolCallOptions,
-  ): ToolFunctionType<ClientToolsType["writeToFile"]> =>
+  ): ToolFunctionTypeV5<ClientToolsV5Type["writeToFile"]> =>
   async ({ path, content }) => {
     const fileUri = nodePath.join(context.cwd, path);
     const processedContent = fixCodeGenerationOutput(content);
