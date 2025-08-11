@@ -7,13 +7,13 @@ import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { formattersNext, prompts } from "@ragdoll/common";
 import type { Environment } from "@ragdoll/db";
+import type { Message, RequestData } from "../types";
+import { requestLLM } from "./llm";
 import {
   createNewTaskMiddleware,
   createReasoningMiddleware,
   createToolCallMiddleware,
-} from "../middlewares";
-import type { Message, RequestData } from "../types";
-import { requestLLM } from "./llm";
+} from "./middlewares";
 
 export type OnStartCallback = (options: {
   messages: Message[];

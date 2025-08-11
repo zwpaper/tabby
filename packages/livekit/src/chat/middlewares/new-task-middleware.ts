@@ -6,7 +6,7 @@ import type {
 import { safeParseJSON } from "@ai-v5-sdk/provider-utils";
 import { ClientToolsV5 } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import { events } from "../livestore/schema";
+import { events } from "../../livestore/schema";
 
 export function createNewTaskMiddleware(
   store: Store,
