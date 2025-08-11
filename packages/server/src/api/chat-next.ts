@@ -29,6 +29,7 @@ const RequestType = z.object({
   id: z.string().optional(),
   model: z.string().optional().describe("Model to use for this request."),
   prompt: ZodPromptType,
+  stopSequences: z.array(z.string()).optional(),
 });
 
 const chat = new Hono()
@@ -63,6 +64,7 @@ const chat = new Hono()
       prompt: req.prompt,
       temperature: 0.7,
       abortSignal: c.req.raw.signal,
+      stopSequences: req.stopSequences,
       ...getModelOptionsNext(validModelId),
     });
     const sseStream = doStream.stream

@@ -9,7 +9,7 @@ import {
   askFollowupQuestionV5,
 } from "./ask-followup-question";
 import { attemptCompletion, attemptCompletionV5 } from "./attempt-completion";
-import { batchCall } from "./batch-call";
+import { batchCall, batchCallV5 } from "./batch-call";
 import { executeCommand, executeCommandV5 } from "./execute-command";
 import { globFiles, globFilesV5 } from "./glob-files";
 import { listFiles, listFilesV5 } from "./list-files";
@@ -123,6 +123,7 @@ export const ClientToolsV5 = {
   searchFiles: searchFilesV5,
   todoWrite: todoWriteV5,
   writeToFile: writeToFileV5,
+  batchCall: batchCallV5,
 };
 
 export type ClientToolsV5Type = typeof ClientToolsV5;

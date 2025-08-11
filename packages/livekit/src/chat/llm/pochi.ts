@@ -12,7 +12,7 @@ export function createPochiModel(
     // FIXME(meng): fill supported urls based on modelId.
     supportedUrls: {},
     doGenerate: async () => Promise.reject("Not implemented"),
-    doStream: async ({ prompt, abortSignal }) => {
+    doStream: async ({ prompt, abortSignal, stopSequences }) => {
       const resp = await fetch(`${llm.server}/api/chatNext/stream`, {
         method: "POST",
         headers: {
@@ -20,7 +20,7 @@ export function createPochiModel(
           Authorization: `Bearer ${llm.token}`,
         },
         signal: abortSignal,
-        body: JSON.stringify({ prompt, model: llm.modelId }),
+        body: JSON.stringify({ prompt, model: llm.modelId, stopSequences }),
       });
 
       if (!resp.ok || !resp.body) {

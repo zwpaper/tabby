@@ -10,6 +10,7 @@ import type { Environment } from "@ragdoll/db";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
 import {
+  createBatchCallMiddleware,
   createNewTaskMiddleware,
   createReasoningMiddleware,
   createToolCallMiddleware,
@@ -66,11 +67,11 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     });
 
     const middlewares = [createNewTaskMiddleware(this.store, chatId)];
-    if (llm.type === "pochi") {
-      middlewares.unshift(createToolCallMiddleware());
-    }
     if (isWellKnownReasoningModel(llm.modelId)) {
       middlewares.push(createReasoningMiddleware());
+    }
+    if (llm.type === "pochi") {
+      middlewares.push(createBatchCallMiddleware(), createToolCallMiddleware());
     }
 
     const system = prompts.system(environment?.info?.customRules);

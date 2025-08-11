@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { declareServerTool } from "./types";
+import { declareServerTool, defineClientToolV5 } from "./types";
 
 export const BatchCallTools = [
   "applyDiff",
@@ -15,7 +15,7 @@ export const BatchCallTools = [
   "writeToFile",
 ];
 
-export const batchCall = declareServerTool({
+const toolDef = {
   description: `
 - batchCall execution tool that runs multiple tool invocations in a single request
 - Tools are executed in parallel
@@ -72,4 +72,7 @@ Example usage:
       .boolean()
       .describe("Whether the batch operation was successful or not"),
   }),
-});
+};
+
+export const batchCall = declareServerTool(toolDef);
+export const batchCallV5 = defineClientToolV5(toolDef);

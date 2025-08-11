@@ -14,6 +14,26 @@ export function createNewTaskMiddleware(
 ): LanguageModelV2Middleware {
   return {
     middlewareVersion: "v2",
+    transformParams: async ({ params }) => {
+      const tools = params.tools;
+      if (!tools) return params;
+
+      for (const x of tools) {
+        if (x.name !== "newTask") continue;
+        if (x.type === "function") {
+          if (x.inputSchema?.properties) {
+            // biome-ignore lint/performance/noDelete: type safe
+            delete x.inputSchema.properties._meta;
+            // biome-ignore lint/performance/noDelete: type safe
+            delete x.inputSchema.properties._transient;
+          }
+        }
+      }
+
+      return {
+        ...params,
+      };
+    },
     wrapStream: async ({ doStream }) => {
       const { stream, ...rest } = await doStream();
 
