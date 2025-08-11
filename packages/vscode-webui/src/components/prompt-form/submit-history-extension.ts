@@ -1,5 +1,4 @@
 import { vscodeHost } from "@/lib/vscode";
-import { Selection, TextSelection } from "@tiptap/pm/state";
 import { Extension } from "@tiptap/react";
 
 interface SubmitHistoryOptions {
@@ -12,6 +11,8 @@ interface SubmitHistoryStorage {
   isNavigating: boolean;
   currentDraft: string; // Store current user input
 }
+
+export const extensionName = "submitHistory";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -28,7 +29,7 @@ export const SubmitHistoryExtension = Extension.create<
   SubmitHistoryOptions,
   SubmitHistoryStorage
 >({
-  name: "submitHistory",
+  name: extensionName,
 
   addOptions() {
     return {
@@ -140,8 +141,6 @@ export const SubmitHistoryExtension = Extension.create<
                   node,
                 );
 
-                transaction.setSelection(Selection.atEnd(transaction.doc));
-
                 if (dispatch) {
                   dispatch(transaction);
                 }
@@ -169,24 +168,7 @@ export const SubmitHistoryExtension = Extension.create<
 
               // Use transaction to replace content safely and position cursor appropriately
               const transaction = tr.replaceWith(0, tr.doc.content.size, node);
-
-              // Position cursor based on navigation direction
-              let selection: TextSelection | null = null;
-              if (direction === "up") {
-                // For up navigation, position cursor at the end of the first line
-                const firstNodeSize = node.firstChild?.nodeSize || 0;
-                const cursorPos =
-                  node.children.length === 1
-                    ? firstNodeSize
-                    : firstNodeSize - 1;
-                selection = TextSelection.create(transaction.doc, cursorPos);
-              }
-
-              transaction.setSelection(
-                selection ?? Selection.atEnd(transaction.doc),
-              );
-
-              transaction.scrollIntoView();
+              transaction.setMeta(extensionName, { direction });
 
               if (dispatch) {
                 dispatch(transaction);
@@ -204,7 +186,6 @@ export const SubmitHistoryExtension = Extension.create<
         storage.history = [];
         storage.currentIndex = -1;
         storage.isNavigating = false;
-
         try {
           vscodeHost.setWorkspaceState(
             "chatInputSubmitHistory",

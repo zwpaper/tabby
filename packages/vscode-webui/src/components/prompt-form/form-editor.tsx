@@ -351,9 +351,24 @@ export function FormEditor({
         if (
           enableSubmitHistory &&
           props.editor.extensionManager.extensions.find(
-            (ext) => ext.name === "submitHistory",
+            (ext) => ext.name === SubmitHistoryExtension.name,
           )
         ) {
+          const trMeta = props.transaction.getMeta(SubmitHistoryExtension.name);
+          if (trMeta?.direction === "up") {
+            const { doc } = props.editor.state;
+            const firstNode = doc.firstChild;
+            if (firstNode) {
+              const endOfFirstLine = 1 + firstNode.content.size;
+              props.editor
+                .chain()
+                .focus()
+                .setTextSelection(endOfFirstLine)
+                .scrollIntoView()
+                .run();
+            }
+          }
+
           props.editor.commands.updateCurrentDraft(
             JSON.stringify(props.editor.getJSON()),
           );
