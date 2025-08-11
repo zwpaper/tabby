@@ -1,67 +1,92 @@
-import type { InferToolInput, UIMessageChunk } from "@ai-v5-sdk/ai";
-import type { ClientToolsV5Type } from "@getpochi/tools";
+import { InvalidToolInputError } from "@ai-v5-sdk/ai";
+import type {
+  LanguageModelV2Middleware,
+  LanguageModelV2StreamPart,
+} from "@ai-v5-sdk/provider";
+import { safeParseJSON } from "@ai-v5-sdk/provider-utils";
+import { ClientToolsV5 } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { events } from "../livestore/schema";
 
-export function createNewTaskMiddleware(store: Store, parentTaskId: string) {
-  return (stream: ReadableStream<UIMessageChunk>) => {
-    let toolCallId = "";
-    return stream.pipeThrough(
-      new TransformStream({
-        transform(chunk, controller) {
-          if (
-            chunk.type === "tool-input-start" &&
-            chunk.toolName === "newTask"
-          ) {
-            toolCallId = chunk.toolCallId;
-            return;
-          }
+export function createNewTaskMiddleware(
+  store: Store,
+  parentTaskId: string,
+): LanguageModelV2Middleware {
+  return {
+    middlewareVersion: "v2",
+    wrapStream: async ({ doStream }) => {
+      const { stream, ...rest } = await doStream();
 
-          if (
-            chunk.type === "tool-input-delta" &&
-            chunk.toolCallId === toolCallId
-          ) {
-            return;
-          }
+      let toolCallId = "";
+      const transformedStream = stream.pipeThrough(
+        new TransformStream<
+          LanguageModelV2StreamPart,
+          LanguageModelV2StreamPart
+        >({
+          async transform(chunk, controller) {
+            if (
+              chunk.type === "tool-input-start" &&
+              chunk.toolName === "newTask"
+            ) {
+              toolCallId = chunk.id;
+              return;
+            }
 
-          if (
-            chunk.type === "tool-input-available" &&
-            chunk.toolCallId === toolCallId
-          ) {
-            const arg = chunk.input as InferToolInput<
-              ClientToolsV5Type["newTask"]
-            >;
-            const uid = crypto.randomUUID();
-            arg._meta = {
-              uid,
-            };
-            store.commit(
-              events.taskInited({
-                id: uid,
-                parentId: parentTaskId,
-                createdAt: new Date(),
-                initMessage: {
-                  id: crypto.randomUUID(),
-                  parts: [
-                    {
-                      type: "text",
-                      text: arg.prompt,
-                    },
-                  ],
-                },
-              }),
-            );
+            if (chunk.type === "tool-input-delta" && chunk.id === toolCallId) {
+              return;
+            }
 
-            controller.enqueue({
-              ...chunk,
-            });
-            toolCallId = "";
-            return;
-          }
+            if (chunk.type === "tool-call" && chunk.toolCallId === toolCallId) {
+              const parsedResult = await safeParseJSON({
+                text: chunk.input,
+                schema: ClientToolsV5.newTask.inputSchema,
+              });
+              if (!parsedResult.success) {
+                throw new InvalidToolInputError({
+                  toolName: "newTask",
+                  toolInput: chunk.input,
+                  cause: parsedResult.error,
+                });
+              }
+              const args = parsedResult.value;
+              const uid = crypto.randomUUID();
+              args._meta = {
+                uid,
+              };
+              store.commit(
+                events.taskInited({
+                  id: uid,
+                  parentId: parentTaskId,
+                  createdAt: new Date(),
+                  initMessage: {
+                    id: crypto.randomUUID(),
+                    parts: [
+                      {
+                        type: "text",
+                        text: args.prompt,
+                      },
+                    ],
+                  },
+                }),
+              );
 
-          controller.enqueue(chunk);
-        },
-      }),
-    );
+              controller.enqueue({
+                ...chunk,
+                input: JSON.stringify(args),
+              });
+              toolCallId = "";
+              return;
+            }
+
+            controller.enqueue(chunk);
+          },
+        }),
+      );
+
+      return {
+        stream: transformedStream,
+        ...rest,
+      };
+    },
   };
 }

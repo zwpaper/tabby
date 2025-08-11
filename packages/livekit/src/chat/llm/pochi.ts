@@ -1,41 +1,46 @@
-import { DefaultChatTransport } from "@ai-v5-sdk/ai";
+import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
+import { EventSourceParserStream } from "@ai-v5-sdk/provider-utils";
+import type { RequestData } from "../../types";
 
-import type { Message, RequestData } from "../../types";
-import type { LLMRequest } from "./types";
-
-const defaultTransport = new DefaultChatTransport<Message>({});
-
-export async function requestPochi(
+export function createPochiModel(
   llm: Extract<RequestData["llm"], { type: "pochi" }>,
-  payload: LLMRequest,
-) {
-  const body = JSON.stringify({
-    id: payload.id,
-    system: payload.system,
-    messages: payload.messages,
-    model: llm.modelId,
-    mcpToolSet: payload.mcpToolSet,
-  });
-  const response = await fetch(`${llm.server}/api/chatNext/stream`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${llm.token}`,
+): LanguageModelV2 {
+  return {
+    specificationVersion: "v2",
+    provider: "Pochi",
+    modelId: llm.modelId || "<default>",
+    // FIXME(meng): fill supported urls based on modelId.
+    supportedUrls: {},
+    doGenerate: async () => Promise.reject("Not implemented"),
+    doStream: async ({ prompt, abortSignal }) => {
+      const resp = await fetch(`${llm.server}/api/chatNext/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${llm.token}`,
+        },
+        signal: abortSignal,
+        body: JSON.stringify({ prompt, model: llm.modelId }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        throw new Error(`Failed to fetch: ${resp.status} ${resp.statusText}`);
+      }
+
+      const stream = resp.body
+        .pipeThrough(new TextDecoderStream())
+        .pipeThrough(new EventSourceParserStream())
+        .pipeThrough(
+          new TransformStream({
+            async transform({ data }, controller) {
+              if (data === "[DONE]") {
+                return;
+              }
+              controller.enqueue(JSON.parse(data));
+            },
+          }),
+        );
+      return { stream };
     },
-    signal: payload.abortSignal,
-    body,
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      (await response.text()) ?? "Failed to fetch the chat response.",
-    );
-  }
-
-  if (!response.body) {
-    throw new Error("The response body is empty.");
-  }
-
-  // @ts-expect-error reuse default transport.
-  return defaultTransport.processResponseStream(response.body);
+  };
 }

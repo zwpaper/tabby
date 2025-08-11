@@ -1,3 +1,4 @@
+import type { LanguageModelV2Middleware } from "@ai-v5-sdk/provider";
 import type { McpTool } from "@getpochi/tools";
 import type { Message } from "../../types";
 
@@ -7,4 +8,5 @@ export type LLMRequest = {
   abortSignal?: AbortSignal;
   messages: Message[];
   mcpToolSet?: Record<string, McpTool>;
+  middlewares?: LanguageModelV2Middleware[];
 };

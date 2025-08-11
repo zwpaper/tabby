@@ -10,6 +10,7 @@ import type { Environment } from "@ragdoll/db";
 import {
   createNewTaskMiddleware,
   createReasoningMiddleware,
+  createToolCallMiddleware,
 } from "../middlewares";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
@@ -64,26 +65,23 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       environment,
     });
 
+    const middlewares = [createNewTaskMiddleware(this.store, chatId)];
+    if (llm.type === "pochi") {
+      middlewares.unshift(createToolCallMiddleware());
+    }
+    if (isWellKnownReasoningModel(llm.modelId)) {
+      middlewares.push(createReasoningMiddleware());
+    }
+
     const system = prompts.system(environment?.info?.customRules);
-    let stream = await requestLLM(llm, {
+    return requestLLM(llm, {
       system,
       messages: prepareMessages(messages, environment),
       abortSignal,
       id: chatId,
       mcpToolSet,
+      middlewares,
     });
-
-    const middlewares = [createNewTaskMiddleware(this.store, chatId)];
-    if (isWellKnownReasoningModel(llm.modelId)) {
-      middlewares.push(createReasoningMiddleware());
-    }
-
-    if (llm.modelId?.toLowerCase().includes("glm-4.5"))
-      for (const middleware of middlewares) {
-        stream = middleware(stream);
-      }
-
-    return stream;
   };
 
   reconnectToStream: (

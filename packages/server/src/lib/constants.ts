@@ -3,6 +3,10 @@ import { deepinfra } from "@ai-sdk/deepinfra";
 import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
 import { createVertex } from "@ai-sdk/google-vertex";
 import { groq } from "@ai-sdk/groq";
+import type {
+  LanguageModelV2,
+  LanguageModelV2CallOptions,
+} from "@ai-v5-sdk/provider";
 import type { LanguageModelV1, streamText } from "ai";
 import type { ChatRequest } from "../types";
 
@@ -377,12 +381,6 @@ const vertexFineTuning = createVertex({
 });
 
 export const geminiFlash = vertex("gemini-2.5-flash");
-
-import type {
-  CallSettings,
-  JSONValue,
-  LanguageModel as LanguageModelNext,
-} from "@ai-v5-sdk/ai";
 import {
   type AnthropicProviderOptions as AnthropicProviderOptionsNext,
   anthropic as anthropicNext,
@@ -413,7 +411,7 @@ import { groq as groqNext } from "@ai-v5-sdk/groq";
 export function getModelByIdNext(
   modelId: AvailableModelId,
   modelEndpointId?: string,
-): LanguageModelNext {
+): LanguageModelV2 {
   switch (modelId) {
     case "anthropic/claude-4-sonnet":
       return anthropicNext("claude-4-sonnet-20250514");
@@ -436,9 +434,7 @@ export function getModelByIdNext(
 
 export function getModelOptionsNext(
   modelId: AvailableModelId,
-): Partial<
-  CallSettings & { providerOptions: Record<string, Record<string, JSONValue>> }
-> {
+): Partial<LanguageModelV2CallOptions> {
   switch (modelId) {
     case "pochi/pro-1":
     case "pochi/max-1":

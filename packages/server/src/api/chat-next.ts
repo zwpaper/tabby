@@ -1,17 +1,13 @@
 import {
   type FinishReason,
+  JsonToSseTransformStream,
   type LanguageModelUsage,
-  NoSuchToolError,
   type ProviderMetadata,
-  type Tool,
-  type UIMessage,
-  convertToModelMessages,
-  generateObject,
-  jsonSchema,
-  streamText,
-  tool,
 } from "@ai-v5-sdk/ai";
-import { ClientToolsV5, type McpTool, ZodMcpTool } from "@getpochi/tools";
+import type {
+  LanguageModelV2Prompt,
+  LanguageModelV2StreamPart,
+} from "@ai-v5-sdk/provider";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -21,27 +17,18 @@ import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
   type AvailableModelId,
   type CreditCostInput,
-  geminiFlashNext,
   getModelByIdNext,
   getModelOptionsNext,
 } from "../lib/constants";
 import { setIdleTimeout } from "../server";
 import { usageService } from "../service/usage";
 
-const MessageType: z.ZodType<UIMessage> = z.any();
+const ZodPromptType: z.ZodType<LanguageModelV2Prompt> = z.any();
 
 const RequestType = z.object({
   id: z.string().optional(),
-  messages: z.array(MessageType),
-  system: z.string(),
   model: z.string().optional().describe("Model to use for this request."),
-  mcpToolSet: z
-    .record(
-      z.string().describe("Name of the MCP tool."),
-      ZodMcpTool.describe("Definition of the MCP tool."),
-    )
-    .optional()
-    .describe("MCP tools available for this request."),
+  prompt: ZodPromptType,
 });
 
 const chat = new Hono()
@@ -57,124 +44,78 @@ const chat = new Hono()
       (await checkUserQuota(user, validModelId))?.remainingFreeCredit || 0;
 
     const model = getModelByIdNext(validModelId);
-    const modelMessages = convertToModelMessages(req.messages);
-    const lastMessage = modelMessages.at(-1);
-    if (validModelId.includes("anthropic") && lastMessage) {
-      lastMessage.providerOptions = {
-        anthropic: { cacheControl: { type: "ephemeral" } },
-      };
+    if (validModelId.includes("anthropic")) {
+      const lastMessage = req.prompt.at(-1);
+      if (lastMessage) {
+        lastMessage.providerOptions = {
+          anthropic: { cacheControl: { type: "ephemeral" } },
+        };
+      }
+
+      if (req.prompt[0].role === "system") {
+        req.prompt[0].providerOptions = {
+          anthropic: { cacheControl: { type: "ephemeral" } },
+        };
+      }
     }
 
-    const mcpTools = req.mcpToolSet && parseMcpToolSet(req.mcpToolSet);
-
-    const result = streamText({
-      messages: [
-        {
-          role: "system",
-          content: req.system,
-          providerOptions:
-            typeof validModelId === "string" &&
-            validModelId.includes("anthropic")
-              ? {
-                  anthropic: { cacheControl: { type: "ephemeral" } },
-                }
-              : undefined,
-        },
-        ...modelMessages,
-      ],
-      model,
-      tools: {
-        // FIXME: pass tools from client, like MCP
-        ...ClientToolsV5,
-        ...(mcpTools || {}),
-      },
+    const doStream = await model.doStream({
+      prompt: req.prompt,
+      temperature: 0.7,
       abortSignal: c.req.raw.signal,
       ...getModelOptionsNext(validModelId),
-      onFinish({ usage: inputUsage, providerMetadata, finishReason }) {
-        const { usage, creditCostInput } = computeUsage(
-          inputUsage,
-          providerMetadata,
-          validModelId,
-          finishReason,
-        );
-
-        usageService.trackUsage(
-          user,
-          validModelId,
-          {
-            promptTokens: usage.inputTokens || 0,
-            completionTokens: usage.outputTokens || 0,
-            totalTokens: usage.totalTokens || 0,
-          },
-          creditCostInput,
-          remainingFreeCredit,
-        );
-      },
-      experimental_telemetry: {
-        isEnabled: true,
-        metadata: {
-          "user-id": user.id,
-          "user-email": user.email,
-          "model-id": validModelId,
-          ...(req.id
-            ? {
-                "task-id": req.id,
-              }
-            : {}),
-        },
-      },
-      experimental_repairToolCall: async ({
-        toolCall,
-        tools,
-        inputSchema,
-        error,
-      }) => {
-        if (NoSuchToolError.isInstance(error)) {
-          return null; // do not attempt to fix invalid tool names
-        }
-
-        const tool = tools[toolCall.toolName as keyof typeof tools];
-
-        const { object: repairedArgs } = await generateObject({
-          model: geminiFlashNext,
-          schema: tool.inputSchema,
-          prompt: [
-            `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
-            JSON.stringify(toolCall.input),
-            "The tool accepts the following schema:",
-            JSON.stringify(inputSchema(toolCall)),
-            "Please fix the arguments.",
-          ].join("\n"),
-          experimental_telemetry: {
-            isEnabled: true,
-          },
-        });
-
-        return { ...toolCall, input: JSON.stringify(repairedArgs) };
-      },
     });
-
-    return result.toUIMessageStreamResponse({
-      messageMetadata: ({ part }) => {
-        if (part.type === "finish") {
-          const computeTotalTokens = () => {
-            if (validModelId.includes("claude")) {
-              return (
-                (part.totalUsage.cachedInputTokens || 0) +
-                (part.totalUsage.inputTokens || 0) +
-                (part.totalUsage.outputTokens || 0)
+    const sseStream = doStream.stream
+      .pipeThrough(
+        new TransformStream<
+          LanguageModelV2StreamPart,
+          LanguageModelV2StreamPart
+        >({
+          transform(chunk, controller) {
+            controller.enqueue(chunk);
+            if (chunk.type === "finish") {
+              const { usage, creditCostInput } = computeUsage(
+                chunk.usage,
+                chunk.providerMetadata,
+                validModelId,
+                chunk.finishReason,
+              );
+              usageService.trackUsage(
+                user,
+                validModelId,
+                {
+                  promptTokens: usage.inputTokens || 0,
+                  completionTokens: usage.outputTokens || 0,
+                  totalTokens: usage.totalTokens || 0,
+                },
+                creditCostInput,
+                remainingFreeCredit,
               );
             }
-            return part.totalUsage.totalTokens || 0;
-          };
-          return {
-            kind: "assistant",
-            totalTokens: computeTotalTokens(),
-            finishReason: part.finishReason,
-          };
-        }
+          },
+        }),
+      )
+      .pipeThrough(new JsonToSseTransformStream());
+    return new Response(sseStream.pipeThrough(new TextEncoderStream()), {
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
       },
     });
+
+    // FIXME(meng): add back telemetry
+    //   experimental_telemetry: {
+    //     isEnabled: true,
+    //     metadata: {
+    //       "user-id": user.id,
+    //       "user-email": user.email,
+    //       "model-id": validModelId,
+    //       ...(req.id
+    //         ? {
+    //             "task-id": req.id,
+    //           }
+    //         : {}),
+    //     },
+    //   },
   });
 
 export default chat;
@@ -265,24 +206,4 @@ function computeUsage(
   }
 
   return { usage, creditCostInput };
-}
-
-function parseMcpTool(mcpTool: McpTool): Tool {
-  return tool({
-    description: mcpTool.description,
-    inputSchema: jsonSchema(mcpTool.inputSchema.jsonSchema),
-  });
-}
-
-function parseMcpToolSet(
-  mcpToolSet: Record<string, McpTool> | undefined,
-): Record<string, Tool> | undefined {
-  return mcpToolSet
-    ? Object.fromEntries(
-        Object.entries(mcpToolSet).map(([name, tool]) => [
-          name,
-          parseMcpTool(tool),
-        ]),
-      )
-    : undefined;
 }

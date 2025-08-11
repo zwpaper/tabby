@@ -14,6 +14,7 @@
     "@ai-sdk/provider-utils": "catalog:",
     "@ai-sdk/ui-utils": "catalog:",
     "@ai-v5-sdk/ai": "catalog:",
+    "@ai-v5-sdk/provider": "catalog:",
     "@ai-v5-sdk/anthropic": "npm:@ai-sdk/anthropic@2",
     "@ai-v5-sdk/deepinfra": "npm:@ai-sdk/deepinfra@1",
     "@ai-v5-sdk/google": "npm:@ai-sdk/google@2",
