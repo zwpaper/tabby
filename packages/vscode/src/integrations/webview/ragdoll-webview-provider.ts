@@ -175,7 +175,7 @@ export class RagdollWebviewProvider
 
   private getHtmlForWebview(webview: vscode.Webview) {
     const isProd =
-      true || this.context.extensionMode === vscode.ExtensionMode.Production;
+      this.context.extensionMode === vscode.ExtensionMode.Production;
 
     const setiFontUri = getUri(webview, this.context.extensionUri, [
       "assets",
@@ -189,19 +189,17 @@ export class RagdollWebviewProvider
       }
     </style>`;
 
-    const webuiLoggingScript = `<script type="module">window.POCHI_LOG = "${this.pochiConfiguration.webui.value.POCHI_LOG || ""}";</script>`;
-    const webuiLoggingHash =
-      "sha256-droQu+3vZK1UeaO+ojGIph4AhUvK17d3hKVX6323MFk=";
+    const nonce = getNonce();
+    const webuiLoggingScript = `<script type="module" nonce="${nonce}">window.POCHI_LOG = "${this.pochiConfiguration.webui.value.POCHI_LOG || ""}";</script>`;
 
     if (isProd) {
-      const nonce = getNonce();
       const sqliteWasmUri = getUri(webview, this.context.extensionUri, [
         "assets",
         "webview-ui",
         "dist",
         "wa-sqlite.wasm",
       ]);
-      const assetLoaderScript = `<script type="module">
+      const assetLoaderScript = `<script nonce="${nonce}" type="module">
       window.__assetsPath = (path) => {
         if (path === "wa-sqlite.wasm") {
           return "${sqliteWasmUri}";
@@ -210,8 +208,6 @@ export class RagdollWebviewProvider
       }
       window.__workerAssetsPathScript = 'self.__assetsPath = (path) => { if (path === "wa-sqlite.wasm") { return "${sqliteWasmUri}"; }};';
       </script>`;
-      const assetLoaderScriptHash =
-        "sha256-KH/sFuMGQCM0ClCNhAzIqwE8E80mcfGaYX3rxS7x0RQ=";
 
       const scriptUri = getUri(webview, this.context.extensionUri, [
         "assets",
@@ -229,12 +225,10 @@ export class RagdollWebviewProvider
       ]);
       const style = `<link rel="stylesheet" href="${styleUri}">`;
 
-      const miscProdHash =
-        "sha256-afngIeLieZbdM0GpRFXqcOGIDI3O+Rpmgl+BChxv9xE=";
       const csp = [
         `default-src 'none';`,
         `img-src ${webview.cspSource} https://* blob: data:`,
-        `script-src 'nonce-${nonce}' '${webuiLoggingHash}' '${assetLoaderScriptHash}' '${miscProdHash}' 'unsafe-eval'`,
+        `script-src 'nonce-${nonce}' 'unsafe-eval'`,
         `style-src ${webview.cspSource} 'unsafe-inline'`,
         `font-src ${webview.cspSource}`,
         // https://* is required for local BYOK
@@ -273,7 +267,7 @@ export class RagdollWebviewProvider
     const csp = [
       `default-src 'none';`,
       `img-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} https://* blob: data:`,
-      `script-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} '${reactRefreshHash}' '${webuiLoggingHash}' 'unsafe-eval'`,
+      `script-src 'nonce-${nonce}' ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} '${reactRefreshHash}' 'unsafe-eval'`,
       `style-src ${webview.cspSource} 'self' 'unsafe-inline'`,
       `font-src ${webview.cspSource}`,
       `connect-src ${devWebUIHttpBaseUrl} ${devWebUIHttpBaseUrlIp} ${devWebUIWsBaseUrl} ${devWebUIWsBaseUrlIp} ${getServerBaseUrl()} https://*`,
