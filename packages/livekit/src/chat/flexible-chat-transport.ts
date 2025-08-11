@@ -66,12 +66,17 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       environment,
     });
 
-    const middlewares = [createNewTaskMiddleware(this.store, chatId)];
+    const middlewares = [
+      createNewTaskMiddleware(this.store, chatId),
+      createBatchCallMiddleware(),
+    ];
+
     if (isWellKnownReasoningModel(llm.modelId)) {
       middlewares.push(createReasoningMiddleware());
     }
+
     if (llm.type === "pochi") {
-      middlewares.push(createBatchCallMiddleware(), createToolCallMiddleware());
+      middlewares.push(createToolCallMiddleware());
     }
 
     const system = prompts.system(environment?.info?.customRules);
