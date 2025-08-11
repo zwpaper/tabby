@@ -4,6 +4,7 @@ import type { RequestData } from "../../types";
 
 export function createPochiModel(
   llm: Extract<RequestData["llm"], { type: "pochi" }>,
+  taskId?: string,
 ): LanguageModelV2 {
   return {
     specificationVersion: "v2",
@@ -20,7 +21,12 @@ export function createPochiModel(
           Authorization: `Bearer ${llm.token}`,
         },
         signal: abortSignal,
-        body: JSON.stringify({ prompt, model: llm.modelId, stopSequences }),
+        body: JSON.stringify({
+          id: taskId,
+          prompt,
+          model: llm.modelId,
+          stopSequences,
+        }),
       });
 
       if (!resp.ok || !resp.body) {

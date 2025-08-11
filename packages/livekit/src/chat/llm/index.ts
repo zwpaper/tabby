@@ -5,17 +5,17 @@ import { request } from "./request";
 import type { LLMRequest } from "./types";
 
 export function requestLLM(llm: RequestData["llm"], payload: LLMRequest) {
-  const model = createModel(llm);
+  const model = createModel(llm, payload.id);
   return request(model, payload);
 }
 
-function createModel(llm: RequestData["llm"]) {
+function createModel(llm: RequestData["llm"], taskId?: string) {
   if (llm.type === "openai") {
     return createOpenAIModel(llm);
   }
 
   if (llm.type === "pochi") {
-    return createPochiModel(llm);
+    return createPochiModel(llm, taskId);
   }
 
   throw new Error(`Unknown LLM type: ${llm}`);
