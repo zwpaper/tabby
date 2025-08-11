@@ -1,10 +1,8 @@
-import { isAssistantMessageWithCompletedToolCalls } from "@ai-sdk/ui-utils";
 import {
-  type UIMessage as UIMessageNext,
+  type UIMessage,
   isToolUIPart,
   lastAssistantMessageIsCompleteWithToolCalls,
 } from "@ai-v5-sdk/ai";
-import type { UIMessage } from "ai";
 import type { Parent, Root, Text } from "hast";
 import { toText } from "hast-util-to-text";
 import { rehype } from "rehype";
@@ -53,36 +51,8 @@ export function parseTitle(title: string | null) {
   return toText(hast).slice(0, 256) || "(empty)";
 }
 
-export function hasAttemptCompletion(message: UIMessage): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolName === "attemptCompletion",
-  );
-}
-
-export function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  const lastStepStartIndex = message.parts.reduce((lastIndex, part, index) => {
-    return part.type === "step-start" ? index : lastIndex;
-  }, -1);
-
-  const lastStepToolInvocations = message.parts
-    .slice(lastStepStartIndex + 1)
-    .filter((part) => part.type === "tool-invocation");
-
-  return message.parts.length > 0 && lastStepToolInvocations.length === 0;
-}
-
 export function isAssistantMessageWithNoToolCallsNext(
-  message: UIMessageNext,
+  message: UIMessage,
 ): boolean {
   if (message.role !== "assistant") {
     return false;
@@ -100,28 +70,13 @@ export function isAssistantMessageWithNoToolCallsNext(
 }
 
 export function isAssistantMessageWithEmptyPartsNext(
-  message: UIMessageNext,
+  message: UIMessage,
 ): boolean {
   return message.role === "assistant" && message.parts.length === 0;
 }
 
-export function isAssistantMessageWithEmptyParts(message: UIMessage): boolean {
-  return message.role === "assistant" && message.parts.length === 0;
-}
-
-export function isAssistantMessageWithPartialToolCalls(lastMessage: UIMessage) {
-  return (
-    lastMessage.role === "assistant" &&
-    lastMessage.parts.some(
-      (part) =>
-        part.type === "tool-invocation" &&
-        part.toolInvocation.state === "partial-call",
-    )
-  );
-}
-
 export function isAssistantMessageWithPartialToolCallsNext(
-  lastMessage: UIMessageNext,
+  lastMessage: UIMessage,
 ) {
   return (
     lastMessage.role === "assistant" &&
@@ -131,34 +86,7 @@ export function isAssistantMessageWithPartialToolCallsNext(
   );
 }
 
-export function prepareLastMessageForRetry(
-  lastMessage: UIMessage,
-): UIMessage | null {
-  const message = {
-    ...lastMessage,
-    parts: [...lastMessage.parts],
-  };
-
-  do {
-    if (isAssistantMessageWithCompletedToolCalls(message)) {
-      return message;
-    }
-
-    if (isAssistantMessageWithNoToolCalls(message)) {
-      return message;
-    }
-
-    const lastStepStartIndex = message.parts.findLastIndex(
-      (part) => part.type === "step-start",
-    );
-
-    message.parts = message.parts.slice(0, lastStepStartIndex);
-  } while (message.parts.length > 0);
-
-  return null;
-}
-
-export function prepareLastMessageForRetryNext<T extends UIMessageNext>(
+export function prepareLastMessageForRetryNext<T extends UIMessage>(
   lastMessage: T,
 ): T | null {
   const message = {

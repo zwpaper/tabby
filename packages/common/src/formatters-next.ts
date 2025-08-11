@@ -1,6 +1,5 @@
 import { type UIMessage, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import { isAutoApproveTool, isUserInputTool } from "@getpochi/tools";
-import type { ToolSet } from "ai";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
 import { prompts } from "./prompts";
@@ -249,7 +248,6 @@ export const formatters = {
   llm: <T extends UIMessage>(
     messages: T[],
     options?: {
-      tools?: ToolSet;
       isClaude: boolean;
       removeSystemReminder?: boolean;
     },

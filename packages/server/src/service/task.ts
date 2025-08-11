@@ -8,10 +8,7 @@ import {
   getLogger,
   toUIMessages,
 } from "@ragdoll/common";
-import {
-  hasAttemptCompletion,
-  parseTitle,
-} from "@ragdoll/common/message-utils";
+import { parseTitle } from "@ragdoll/common/message-utils";
 import type {
   DB,
   DBMessage,
@@ -1030,4 +1027,16 @@ function shouldAutoCompact(
   }
 
   return true;
+}
+
+function hasAttemptCompletion(message: UIMessage): boolean {
+  if (message.role !== "assistant") {
+    return false;
+  }
+
+  return !!message.parts?.some(
+    (part) =>
+      part.type === "tool-invocation" &&
+      part.toolInvocation.toolName === "attemptCompletion",
+  );
 }

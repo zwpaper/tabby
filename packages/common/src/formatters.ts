@@ -241,12 +241,6 @@ const LLMFormatOps: FormatOp[] = [
   removeToolCallArgumentTransientData,
   removeCheckpointPart,
 ];
-const UIFormatOps = [
-  resolvePendingToolCalls,
-  removeSystemReminder,
-  combineConsecutiveAssistantMessages,
-  removeContentInMessages,
-];
 const StorageFormatOps = [
   removeDeprecatedToolInvocations,
   removeContentInMessages,
@@ -261,9 +255,6 @@ function formatMessages(messages: UIMessage[], ops: FormatOp[]): UIMessage[] {
 }
 
 export const formatters = {
-  // Format messages for the Front-end UI rendering.
-  ui: (messages: UIMessage[]) => formatMessages(messages, UIFormatOps),
-
   // Format messages before sending them to the LLM.
   llmRaw: (
     messages: UIMessage[],
