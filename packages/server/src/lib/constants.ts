@@ -426,7 +426,7 @@ export function getModelByIdNext(
     case "pochi/pro-1":
       return vertexFineTuningNext(modelEndpointId || "2224986023618674688");
     case "pochi/max-1":
-      return vertexFineTuningNext(modelEndpointId || "5890711611135492096");
+      return vertexFineTuningNext(modelEndpointId || "4041983964099903488");
     case "qwen/qwen3-coder":
       return deepinfraNext("Qwen/Qwen3-Coder-480B-A35B-Instruct");
     case "zai/glm-4.5":
