@@ -175,7 +175,7 @@ export class RagdollWebviewProvider
 
   private getHtmlForWebview(webview: vscode.Webview) {
     const isProd =
-      this.context.extensionMode === vscode.ExtensionMode.Production;
+      true || this.context.extensionMode === vscode.ExtensionMode.Production;
 
     const setiFontUri = getUri(webview, this.context.extensionUri, [
       "assets",
@@ -201,15 +201,17 @@ export class RagdollWebviewProvider
         "dist",
         "wa-sqlite.wasm",
       ]);
-      const assetLoaderScript = `<script nonce="${nonce}" type="module">
+      const assetLoaderScript = `<script type="module">
       window.__assetsPath = (path) => {
         if (path === "wa-sqlite.wasm") {
           return "${sqliteWasmUri}";
         }
         return path;
       }
-      window.__workerAssetsPathScript = 'self.__assetsPath = (path) => { if (path === "wa-sqlite.wasm") { return "${sqliteWasmUri}"; }}';
+      window.__workerAssetsPathScript = 'self.__assetsPath = (path) => { if (path === "wa-sqlite.wasm") { return "${sqliteWasmUri}"; }};';
       </script>`;
+      const assetLoaderScriptHash =
+        "sha256-KH/sFuMGQCM0ClCNhAzIqwE8E80mcfGaYX3rxS7x0RQ=";
 
       const scriptUri = getUri(webview, this.context.extensionUri, [
         "assets",
@@ -227,10 +229,12 @@ export class RagdollWebviewProvider
       ]);
       const style = `<link rel="stylesheet" href="${styleUri}">`;
 
+      const miscProdHash =
+        "sha256-afngIeLieZbdM0GpRFXqcOGIDI3O+Rpmgl+BChxv9xE=";
       const csp = [
         `default-src 'none';`,
         `img-src ${webview.cspSource} https://* blob: data:`,
-        `script-src 'nonce-${nonce}' '${webuiLoggingHash}' 'unsafe-eval'`,
+        `script-src 'nonce-${nonce}' '${webuiLoggingHash}' '${assetLoaderScriptHash}' '${miscProdHash}' 'unsafe-eval'`,
         `style-src ${webview.cspSource} 'unsafe-inline'`,
         `font-src ${webview.cspSource}`,
         // https://* is required for local BYOK

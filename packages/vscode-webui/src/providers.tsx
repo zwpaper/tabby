@@ -52,8 +52,8 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({
 };
 
 function LiveStoreProviderWrapper({ children }: { children: React.ReactNode }) {
-  const { data: cwd = "default" } = useCurrentWorkspace();
-  const storeId = useMemo(() => getStoreId(cwd), [cwd]);
+  const { data: cwd } = useCurrentWorkspace();
+  const storeId = useMemo(() => (cwd ? getStoreId(cwd) : "default"), [cwd]);
 
   return (
     <LiveStoreProvider
