@@ -1,4 +1,5 @@
 import "./remote-web-worker";
+import "./resolve-worker-asset";
 
 import {
   RouterProvider,

@@ -201,17 +201,14 @@ export class RagdollWebviewProvider
         "dist",
         "wa-sqlite.wasm",
       ]);
-      const sqliteLoaderScript = `<script nonce="${nonce}" type="module">
-      const originURL = globalThis.URL;
-      globalThis.URL = class extends originURL {
-        constructor(url, base) {
-          if (url === "/wa-sqlite.wasm") {
-            super("${sqliteWasmUri}");
-          } else {
-            super(url, base);
-          }
+      const assetLoaderScript = `<script nonce="${nonce}" type="module">
+      window.__assetsPath = (path) => {
+        if (path === "wa-sqlite.wasm") {
+          return "${sqliteWasmUri}";
         }
+        return path;
       }
+      window.__workerAssetsPathScript = 'self.__assetsPath = (path) => { if (path === "wa-sqlite.wasm") { return "${sqliteWasmUri}"; }}';
       </script>`;
 
       const scriptUri = getUri(webview, this.context.extensionUri, [
@@ -244,7 +241,7 @@ export class RagdollWebviewProvider
 
       return this.buildHtml(
         [cspHeader, style, setiFontStyle],
-        [sqliteLoaderScript, webuiLoggingScript, script],
+        [assetLoaderScript, webuiLoggingScript, script],
       );
     }
 

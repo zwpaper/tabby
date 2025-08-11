@@ -105,6 +105,20 @@ export default defineConfig({
       output: OutputOptions[BuildTarget],
     },
   },
+  experimental: {
+    renderBuiltUrl(filename, { hostId, hostType, type }) {
+      if (hostId === "index.js") {
+        return {
+          runtime: `window.__assetsPath(${JSON.stringify(filename)})`,
+        };
+      }
+      if (hostId === "livestore.worker.js") {
+        return {
+          runtime: `self.__assetsPath(${JSON.stringify(filename)})`,
+        };
+      }
+    },
+  },
   test: {
     globals: true,
     environment: "jsdom",
