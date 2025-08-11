@@ -35,6 +35,8 @@ export async function requestOpenAI(
     },
     maxOutputTokens: llm.maxOutputTokens,
     maxRetries: 0,
+    // error log is handled in live chat kit.
+    onError: () => {},
   });
   return result.toUIMessageStream({
     messageMetadata: ({ part }) => {

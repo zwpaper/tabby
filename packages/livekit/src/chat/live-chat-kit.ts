@@ -228,6 +228,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
   };
 
   private readonly onError: ChatOnErrorCallback = (error) => {
+    console.error("onError", error);
     const lastMessage = this.chat.messages.at(-1) || null;
     this.store.commit(
       events.chatStreamFailed({
