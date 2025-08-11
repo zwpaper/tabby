@@ -3,6 +3,7 @@ import { EventSourceParserStream } from "@ai-v5-sdk/provider-utils";
 import type { RequestData } from "../../types";
 
 export function createPochiModel(
+  taskId: string | undefined,
   llm: Extract<RequestData["llm"], { type: "pochi" }>,
 ): LanguageModelV2 {
   return {
@@ -20,7 +21,12 @@ export function createPochiModel(
           Authorization: `Bearer ${llm.token}`,
         },
         signal: abortSignal,
-        body: JSON.stringify({ prompt, model: llm.modelId, stopSequences }),
+        body: JSON.stringify({
+          id: taskId,
+          prompt,
+          model: llm.modelId,
+          stopSequences,
+        }),
       });
 
       if (!resp.ok || !resp.body) {

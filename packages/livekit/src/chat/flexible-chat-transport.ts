@@ -80,7 +80,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     }
 
     const system = prompts.system(environment?.info?.customRules);
-    return requestLLM(llm, {
+    return requestLLM(chatId, llm, {
       system,
       messages: prepareMessages(messages, environment),
       abortSignal,

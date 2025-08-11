@@ -57,7 +57,7 @@ async function createSummary(
     },
   ]);
 
-  const stream = await requestLLM(llm, {
+  const stream = await requestLLM(undefined, llm, {
     messages,
     system: prompts.compact(),
   });
