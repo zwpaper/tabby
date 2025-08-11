@@ -1,12 +1,9 @@
 import "./styles.css";
 import { StrictMode, useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import {
-  type Theme,
-  ThemeProvider,
-  useTheme,
-} from "./components/theme-provider";
+import { type Theme, useTheme } from "./components/theme-provider";
 import { SharePage } from "./features/share";
+import { ShareProviders } from "./providers";
 
 function ThemeUpdater() {
   const { setTheme } = useTheme();
@@ -44,10 +41,10 @@ function ThemeUpdater() {
 
 function App() {
   return (
-    <ThemeProvider>
+    <ShareProviders>
       <ThemeUpdater />
       <SharePage />
-    </ThemeProvider>
+    </ShareProviders>
   );
 }
 

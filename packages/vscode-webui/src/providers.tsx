@@ -1,6 +1,9 @@
 import { persister, queryClient } from "@/lib/query-client";
 import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
-import { makePersistedAdapter } from "@livestore/adapter-web";
+import {
+  makeInMemoryAdapter,
+  makePersistedAdapter,
+} from "@livestore/adapter-web";
 import LiveStoreSharedWorker from "@livestore/adapter-web/shared-worker?sharedworker&inline";
 import { LiveStoreProvider } from "@livestore/react";
 import { catalog, getStoreId } from "@ragdoll/livekit";
@@ -67,3 +70,22 @@ function LiveStoreProviderWrapper({ children }: { children: React.ReactNode }) {
     </LiveStoreProvider>
   );
 }
+
+const inMemoryAdapter = makeInMemoryAdapter();
+
+export const ShareProviders: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  return (
+    <ThemeProvider>
+      <LiveStoreProvider
+        schema={catalog.schema}
+        adapter={inMemoryAdapter}
+        renderLoading={(_) => <></>}
+        batchUpdates={batchUpdates}
+      >
+        {children}
+      </LiveStoreProvider>
+    </ThemeProvider>
+  );
+};
