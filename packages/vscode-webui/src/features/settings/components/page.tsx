@@ -7,7 +7,7 @@ import { ToolsSection } from "./sections/tools-section";
 import { WorkflowsSection } from "./sections/workflows-section";
 import { WorkspaceRulesSection } from "./sections/workspace-rules-section";
 
-export function SettingsPage({ user }: { user: User }) {
+export function SettingsPage({ user }: { user?: User }) {
   return (
     <div className="container mx-auto h-screen max-w-6xl">
       <ScrollArea className="h-full p-4">

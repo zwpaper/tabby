@@ -17,24 +17,7 @@ function RouteComponent() {
   const { uid: uidFromRoute, ts = Date.now() } = Route.useSearch();
   const key = uidFromRoute !== undefined ? `task-${uidFromRoute}` : `new-${ts}`;
 
-  // const { data: task, isFetching: isTaskLoading } = useQuery({
-  //   queryKey: ["task", uidFromRoute],
-  //   queryFn: async () => {
-  //     if (uidFromRoute) {
-  //       const resp = await apiClient.api.tasks[":uid"].$get({
-  //         param: {
-  //           uid: uidFromRoute,
-  //         },
-  //       });
-  //       return resp.json();
-  //     }
-  //     return null;
-  //   },
-  //   refetchOnWindowFocus: false,
-  //   enabled: !!uidFromRoute,
-  // });
-
   const { auth } = Route.useRouteContext();
   const uid = uidFromRoute || crypto.randomUUID();
-  return <ChatPage key={key} auth={auth} uid={uid} />;
+  return <ChatPage key={key} user={auth?.user} uid={uid} />;
 }

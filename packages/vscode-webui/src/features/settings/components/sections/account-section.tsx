@@ -10,10 +10,30 @@ import { ChevronsUpDown, HelpCircle, LogOut, UserIcon } from "lucide-react";
 import { Section } from "../ui/section";
 
 interface AccountSectionProps {
-  user: User;
+  user?: User;
 }
 
 export const AccountSection: React.FC<AccountSectionProps> = ({ user }) => {
+  if (!user) {
+    return (
+      <Section title="" className="pt-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex h-10 cursor-pointer gap-3 rounded-md p-2 hover:bg-secondary">
+              <a
+                href="command:pochi.openLoginPage"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Sign-In for Pochi models
+              </a>
+            </div>
+          </DropdownMenuTrigger>
+        </DropdownMenu>
+      </Section>
+    );
+  }
+
   return (
     <Section title="" className="pt-0">
       <DropdownMenu>

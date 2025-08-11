@@ -10,7 +10,7 @@ interface ChatAreaProps {
   isTaskLoading: boolean;
   isLoading: boolean;
   isCompactingNewTask: boolean;
-  user: { name: string; image?: string | null };
+  user?: { name: string; image?: string | null };
   messagesContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 

@@ -10,7 +10,7 @@ import {
 } from "@/features/chat";
 import { useSelectedModels } from "@/features/settings";
 import { AutoApproveMenu } from "@/features/settings";
-import type { authClient } from "@/lib/auth-client";
+import type { User } from "@/lib/auth-client";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { type UseChatHelpers, useChat } from "@ai-v5-sdk/react";
@@ -44,28 +44,30 @@ import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useLiveChatKitGetters } from "./lib/use-live-chat-kit-getters";
 
-export function ChatPage({
-  uid,
-  auth,
-}: { uid: string; auth: typeof authClient.$Infer.Session }) {
+export function ChatPage({ uid, user }: { uid: string; user?: User }) {
   return (
     <ChatContextProvider>
-      <Chat auth={auth} uid={uid} />
+      <Chat user={user} uid={uid} />
     </ChatContextProvider>
   );
 }
 
 interface ChatProps {
   uid: string;
-  auth: typeof authClient.$Infer.Session;
+  user?: User;
 }
 
-function Chat({ auth, uid }: ChatProps) {
+function Chat({ user, uid }: ChatProps) {
   const { store } = useStore();
   const todosRef = useRef<Todo[] | undefined>(undefined);
   const getters = useLiveChatKitGetters({
     todos: todosRef,
   });
+
+  const defaultUser = {
+    name: "You",
+    image: `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(store.clientId)}&scale=120`,
+  };
 
   const chatKit = useLiveChatKit({
     taskId: uid,
@@ -330,7 +332,7 @@ function Chat({ auth, uid }: ChatProps) {
         isTaskLoading={isTaskLoading}
         isLoading={isLoading}
         isCompactingNewTask={newCompactTaskPending}
-        user={auth.user}
+        user={user || defaultUser}
         messagesContainerRef={messagesContainerRef}
       />
       <div className="flex flex-col px-4">

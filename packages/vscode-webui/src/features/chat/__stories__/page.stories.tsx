@@ -34,7 +34,7 @@ const auth = {
 
 export const Default: Story = {
   args: {
-    auth,
+    user: auth.user,
     uid: "default",
   },
 };
