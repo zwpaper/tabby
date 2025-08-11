@@ -744,7 +744,11 @@ class TaskService {
     }
 
     if (!(error instanceof Error)) {
-      logger.error("Unknown error", error);
+      // Skip logging for client connection errors in unknown errors
+      const message = String(error);
+      if (!message.includes("Client connection prematurely closed")) {
+        logger.error("Unknown error", error);
+      }
       return internalError("Something went wrong. Please try again.");
     }
 
