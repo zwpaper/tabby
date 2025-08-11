@@ -135,11 +135,17 @@ const VSCodeHostStub = {
       path: string;
       description: string;
     }) => Promise<void>;
+    openConfig: (configPath: {
+      name: string;
+      path: string;
+      description: string;
+    }) => Promise<void>;
   }> => {
     return Promise.resolve({
       availableConfigs: [],
       importFromAllConfigs: () => Promise.resolve(),
       importFromConfig: () => Promise.resolve(),
+      openConfig: () => Promise.resolve(),
     });
   },
   openExternal: (_uri: string): Promise<void> => {

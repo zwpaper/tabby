@@ -171,6 +171,11 @@ export interface VSCodeHostApi {
       path: string;
       description: string;
     }) => Promise<void>;
+    openConfig: (configPath: {
+      name: string;
+      path: string;
+      description: string;
+    }) => Promise<void>;
   }>;
 
   /**

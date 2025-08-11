@@ -73,9 +73,9 @@ import { DiffChangesContentProvider } from "../editor/diff-changes-content-provi
 import { type FileSelection, TabState } from "../editor/tab-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "../mcp/mcp-hub";
-import type { McpConfigPath } from "../mcp/third-mcp/constants";
+
 // biome-ignore lint/style/useImportType: needed for dependency injection
-import { ThirdMcpImporter } from "../mcp/third-mcp/importer";
+import { ThirdMcpImporter } from "../mcp/third-party-mcp";
 import { isExecutable } from "../mcp/types";
 import { listSymbols } from "../symbol";
 import {
@@ -452,14 +452,48 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
   };
 
   fetchAvailableThirdPartyMcpConfigs = async () => {
-    const availableConfigs = await this.thirdMcpImporter.getAvailableConfigs();
+    const availableProviders =
+      await this.thirdMcpImporter.getAvailableProviders();
+    const availableConfigs = availableProviders.map((provider) => ({
+      name: provider.name,
+      description: provider.description,
+      path: provider.getDisplayPath?.() ?? "",
+    }));
+
     const importFromAllConfigs = async () => {
-      await this.thirdMcpImporter.importFromAllConfigs();
+      await this.thirdMcpImporter.importFromAllProviders();
     };
-    const importFromConfig = async (configPath: McpConfigPath) => {
-      await this.thirdMcpImporter.importFromConfig(configPath);
+
+    const importFromConfig = async (config: {
+      name: string;
+      path: string;
+      description: string;
+    }) => {
+      const provider = availableProviders.find((p) => p.name === config.name);
+      if (provider) {
+        await this.thirdMcpImporter.importFromProvider(provider);
+      } else {
+        logger.error(`Provider with name ${config.name} not found for import.`);
+      }
     };
-    return { availableConfigs, importFromAllConfigs, importFromConfig };
+
+    const openConfig = async (config: { name: string }) => {
+      const provider = availableProviders.find((p) => p.name === config.name);
+      if (provider) {
+        await provider.openConfig();
+      } else {
+        logger.error(
+          `Provider with name ${config.name} not found for opening.`,
+        );
+      }
+    };
+
+    return {
+      availableConfigs,
+      importFromAllConfigs,
+      importFromConfig,
+      openConfig,
+    };
   };
 
   openExternal = async (uri: string): Promise<void> => {

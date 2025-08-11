@@ -58,6 +58,8 @@ function useThirdPartyMcp() {
     useState<() => Promise<void>>();
   const [importFromConfig, setImportFromConfig] =
     useState<(config: McpConfigPath) => Promise<void>>();
+  const [openConfig, setOpenConfig] =
+    useState<(config: McpConfigPath) => Promise<void>>();
 
   useEffect(() => {
     let isCancelled = false;
@@ -68,11 +70,13 @@ function useThirdPartyMcp() {
           availableConfigs,
           importFromAllConfigs: doImportAll,
           importFromConfig: doImportSingle,
+          openConfig: doOpenConfig,
         } = await vscodeHost.fetchAvailableThirdPartyMcpConfigs();
         if (!isCancelled) {
           setAvailableConfigs(availableConfigs);
           setImportFromAllConfigs(() => doImportAll);
           setImportFromConfig(() => doImportSingle);
+          setOpenConfig(() => doOpenConfig);
         }
       } catch (e) {
         console.error("Failed to fetch third party mcp configs", e);
@@ -93,6 +97,7 @@ function useThirdPartyMcp() {
     availableConfigs,
     importFromAllConfigs,
     importFromConfig,
+    openConfig,
   };
 }
 
@@ -100,7 +105,8 @@ const ImportMcp: React.FC<{
   availableConfigs: McpConfigPath[];
   onImportAll: () => Promise<void>;
   onImportSingle: (config: McpConfigPath) => Promise<void>;
-}> = ({ availableConfigs, onImportAll, onImportSingle }) => {
+  onOpenConfig: (config: McpConfigPath) => Promise<void>;
+}> = ({ availableConfigs, onImportAll, onImportSingle, onOpenConfig }) => {
   return (
     <div className="rounded-md border p-3">
       <div className="mb-2 flex items-center gap-2">
@@ -126,6 +132,7 @@ const ImportMcp: React.FC<{
         <McpConfigList
           configs={availableConfigs}
           onImportSingle={onImportSingle}
+          onOpenConfig={onOpenConfig}
         />
       </div>
     </div>
@@ -135,7 +142,8 @@ const ImportMcp: React.FC<{
 const McpConfigList: React.FC<{
   configs: McpConfigPath[];
   onImportSingle: (config: McpConfigPath) => Promise<void>;
-}> = ({ configs, onImportSingle }) => {
+  onOpenConfig: (config: McpConfigPath) => Promise<void>;
+}> = ({ configs, onImportSingle, onOpenConfig }) => {
   if (configs.length === 0) {
     return null;
   }
@@ -151,11 +159,7 @@ const McpConfigList: React.FC<{
           >
             <div
               className="flex flex-1 cursor-pointer items-center truncate"
-              onClick={() => {
-                vscodeHost.openFile(config.path, {
-                  preserveFocus: true,
-                });
-              }}
+              onClick={() => onOpenConfig(config)}
               title={config.path}
             >
               <FileIcon
@@ -194,6 +198,7 @@ export const McpSection: React.FC = () => {
     availableConfigs,
     importFromAllConfigs,
     importFromConfig,
+    openConfig,
   } = useThirdPartyMcp();
 
   const title = (
@@ -252,6 +257,7 @@ export const McpSection: React.FC = () => {
                 availableConfigs={availableConfigs}
                 onImportAll={importFromAllConfigs || (() => Promise.resolve())}
                 onImportSingle={importFromConfig || (() => Promise.resolve())}
+                onOpenConfig={openConfig || (() => Promise.resolve())}
               />
             </>
           ) : (
