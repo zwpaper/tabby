@@ -112,10 +112,10 @@ function prepareMessages<T extends import("@ai-v5-sdk/ai").UIMessage>(
 function isWellKnownReasoningModel(model?: string): boolean {
   if (!model) return false;
 
-  const models = ["glm-4.5"];
+  const models = [/glm-4.5/, /qwen3.*thinking/];
   const x = model.toLowerCase();
   for (const m of models) {
-    if (x.includes(m)) {
+    if (x.match(m)?.length) {
       return true;
     }
   }
