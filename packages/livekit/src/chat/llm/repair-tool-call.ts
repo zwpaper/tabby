@@ -24,6 +24,8 @@ export const makeRepairToolCall: (
         JSON.stringify(inputSchema(toolCall)),
         "Please fix the arguments. Please ONLY output the json string, without any other text (no markdown code block wrapper, either)",
       ].join("\n"),
+      maxOutputTokens: 3_000,
+      maxRetries: 0,
     });
 
     let text = "";
