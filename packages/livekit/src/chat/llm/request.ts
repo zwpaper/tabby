@@ -6,6 +6,7 @@ import {
 import { ClientToolsV5 } from "@getpochi/tools";
 
 import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
+import { makeRepairToolCall } from "./repair-tool-call";
 import type { LLMRequest } from "./types";
 import { parseMcpToolSet } from "./utils";
 
@@ -26,6 +27,7 @@ export async function request(model: LanguageModelV2, payload: LLMRequest) {
     maxRetries: 0,
     // error log is handled in live chat kit.
     onError: () => {},
+    experimental_repairToolCall: makeRepairToolCall(model),
   });
   return result.toUIMessageStream({
     messageMetadata: ({ part }) => {
