@@ -14,8 +14,7 @@ import type { Todo } from "@getpochi/tools";
 import type { Environment } from "@ragdoll/db";
 import type { Message } from "@ragdoll/livekit";
 
-import { CheckIcon, CopyIcon } from "lucide-react"; // Removed FilesIcon
-import { IconHammer } from "obra-icons-react";
+import { CheckIcon, CopyIcon, Gavel } from "lucide-react"; // Removed FilesIcon
 import type React from "react";
 import { useCallback } from "react";
 
@@ -102,7 +101,7 @@ export function DevModeButton({
           className="h-6 w-6 rounded-md p-0"
           title="Dev mode"
         >
-          <IconHammer className="size-4" />
+          <Gavel className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>

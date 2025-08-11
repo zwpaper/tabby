@@ -34,6 +34,10 @@ const OutputOptions = {
         return "xterm";
       }
 
+      if (id.includes("@tiptap")) {
+        return "tiptap";
+      }
+
       if (id.includes("refractor")) {
         if (id.includes("/lang/")) {
           return "refractor-lang";
@@ -57,8 +61,16 @@ const OutputOptions = {
         return "markdown";
       }
 
-      if (id.includes("/ai/") || id.includes("@ai-sdk")) {
+      if (
+        id.includes("/ai/") ||
+        id.includes("@ai-sdk") ||
+        id.includes("@ai-v5-sdk")
+      ) {
         return "ai";
+      }
+
+      if (id.includes("/effect") || id.includes("/@livestore")) {
+        return "livestore";
       }
 
       if (id.includes("motion")) {

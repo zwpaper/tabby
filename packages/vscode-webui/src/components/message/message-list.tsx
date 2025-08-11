@@ -1,5 +1,4 @@
-import { Loader2, UserIcon } from "lucide-react";
-import { IconLineSpacingCompact } from "obra-icons-react";
+import { Loader2, SquareChartGantt, UserIcon } from "lucide-react";
 import type React from "react";
 
 import { ReasoningPartUI } from "@/components/reasoning-part.tsx";
@@ -313,7 +312,7 @@ function CompactPartToolTip({
   return (
     <Tooltip>
       <TooltipTrigger asChild className={className}>
-        <IconLineSpacingCompact
+        <SquareChartGantt
           className="size-5 cursor-pointer"
           onClick={() =>
             vscodeHost.openFile(`/task-summary-${message.id}.md`, {
