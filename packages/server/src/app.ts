@@ -12,6 +12,7 @@ import code from "./api/code";
 import enhance from "./api/enhance";
 import integrations from "./api/integrations";
 import invitation from "./api/invitation";
+import live from "./api/live";
 import minions from "./api/minions";
 import models from "./api/models";
 import tasks from "./api/tasks";
@@ -128,6 +129,7 @@ export const route = api
   .route("/enhancePrompt", enhance)
   .route("/tools", tools)
   .route("/clips", clips)
-  .route("/admin", admin);
+  .route("/admin", admin)
+  .route("/live", live);
 
 export type AppType = typeof route;

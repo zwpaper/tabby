@@ -32,6 +32,7 @@ import { Route as AuthenticatedAuthDeviceLinkImport } from './routes/_authentica
 import { Route as AuthenticatedAdminUsersImport } from './routes/_authenticated.admin/users'
 import { Route as AuthenticatedBaseTeamImport } from './routes/_authenticated._base/team'
 import { Route as AuthenticatedBaseProfileImport } from './routes/_authenticated._base/profile'
+import { Route as AuthenticatedBaseLiveImport } from './routes/_authenticated._base/live'
 import { Route as AuthenticatedBaseLeaderboardImport } from './routes/_authenticated._base/leaderboard'
 import { Route as AuthenticatedBaseHomeImport } from './routes/_authenticated._base/home'
 import { Route as AuthenticatedBaseCreateImport } from './routes/_authenticated._base/create'
@@ -174,6 +175,12 @@ const AuthenticatedBaseTeamRoute = AuthenticatedBaseTeamImport.update({
 const AuthenticatedBaseProfileRoute = AuthenticatedBaseProfileImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AuthenticatedBaseRouteRoute,
+} as any)
+
+const AuthenticatedBaseLiveRoute = AuthenticatedBaseLiveImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => AuthenticatedBaseRouteRoute,
 } as any)
 
@@ -402,6 +409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBaseLeaderboardImport
       parentRoute: typeof AuthenticatedBaseRouteImport
     }
+    '/_authenticated/_base/live': {
+      id: '/_authenticated/_base/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof AuthenticatedBaseLiveImport
+      parentRoute: typeof AuthenticatedBaseRouteImport
+    }
     '/_authenticated/_base/profile': {
       id: '/_authenticated/_base/profile'
       path: '/profile'
@@ -526,6 +540,7 @@ interface AuthenticatedBaseRouteRouteChildren {
   AuthenticatedBaseCreateRoute: typeof AuthenticatedBaseCreateRoute
   AuthenticatedBaseHomeRoute: typeof AuthenticatedBaseHomeRoute
   AuthenticatedBaseLeaderboardRoute: typeof AuthenticatedBaseLeaderboardRoute
+  AuthenticatedBaseLiveRoute: typeof AuthenticatedBaseLiveRoute
   AuthenticatedBaseProfileRoute: typeof AuthenticatedBaseProfileRoute
   AuthenticatedBaseTeamRoute: typeof AuthenticatedBaseTeamRoute
   AuthenticatedBaseTasksUidRoute: typeof AuthenticatedBaseTasksUidRoute
@@ -541,6 +556,7 @@ const AuthenticatedBaseRouteRouteChildren: AuthenticatedBaseRouteRouteChildren =
     AuthenticatedBaseCreateRoute: AuthenticatedBaseCreateRoute,
     AuthenticatedBaseHomeRoute: AuthenticatedBaseHomeRoute,
     AuthenticatedBaseLeaderboardRoute: AuthenticatedBaseLeaderboardRoute,
+    AuthenticatedBaseLiveRoute: AuthenticatedBaseLiveRoute,
     AuthenticatedBaseProfileRoute: AuthenticatedBaseProfileRoute,
     AuthenticatedBaseTeamRoute: AuthenticatedBaseTeamRoute,
     AuthenticatedBaseTasksUidRoute: AuthenticatedBaseTasksUidRoute,
@@ -613,6 +629,7 @@ export interface FileRoutesByFullPath {
   '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
   '/leaderboard': typeof AuthenticatedBaseLeaderboardRoute
+  '/live': typeof AuthenticatedBaseLiveRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
   '/team': typeof AuthenticatedBaseTeamRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -647,6 +664,7 @@ export interface FileRoutesByTo {
   '/create': typeof AuthenticatedBaseCreateRoute
   '/home': typeof AuthenticatedBaseHomeRoute
   '/leaderboard': typeof AuthenticatedBaseLeaderboardRoute
+  '/live': typeof AuthenticatedBaseLiveRoute
   '/profile': typeof AuthenticatedBaseProfileRoute
   '/team': typeof AuthenticatedBaseTeamRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -684,6 +702,7 @@ export interface FileRoutesById {
   '/_authenticated/_base/create': typeof AuthenticatedBaseCreateRoute
   '/_authenticated/_base/home': typeof AuthenticatedBaseHomeRoute
   '/_authenticated/_base/leaderboard': typeof AuthenticatedBaseLeaderboardRoute
+  '/_authenticated/_base/live': typeof AuthenticatedBaseLiveRoute
   '/_authenticated/_base/profile': typeof AuthenticatedBaseProfileRoute
   '/_authenticated/_base/team': typeof AuthenticatedBaseTeamRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -720,6 +739,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/home'
     | '/leaderboard'
+    | '/live'
     | '/profile'
     | '/team'
     | '/admin/users'
@@ -753,6 +773,7 @@ export interface FileRouteTypes {
     | '/create'
     | '/home'
     | '/leaderboard'
+    | '/live'
     | '/profile'
     | '/team'
     | '/admin/users'
@@ -788,6 +809,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_base/create'
     | '/_authenticated/_base/home'
     | '/_authenticated/_base/leaderboard'
+    | '/_authenticated/_base/live'
     | '/_authenticated/_base/profile'
     | '/_authenticated/_base/team'
     | '/_authenticated/admin/users'
@@ -888,6 +910,7 @@ export const routeTree = rootRoute
         "/_authenticated/_base/create",
         "/_authenticated/_base/home",
         "/_authenticated/_base/leaderboard",
+        "/_authenticated/_base/live",
         "/_authenticated/_base/profile",
         "/_authenticated/_base/team",
         "/_authenticated/_base/tasks/$uid",
@@ -951,6 +974,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_base/leaderboard": {
       "filePath": "_authenticated._base/leaderboard.tsx",
+      "parent": "/_authenticated/_base"
+    },
+    "/_authenticated/_base/live": {
+      "filePath": "_authenticated._base/live.tsx",
       "parent": "/_authenticated/_base"
     },
     "/_authenticated/_base/profile": {
