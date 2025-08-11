@@ -66,7 +66,7 @@ const chat = new Hono()
     const stream = await new Promise<ReadableStream<LanguageModelV2StreamPart>>(
       (resolve) => {
         streamText({
-          prompt: "<placeholder>",
+          messages: req.prompt,
           abortSignal,
           model: wrapLanguageModel({
             model,
