@@ -13,7 +13,7 @@ export function createPochiModel(
     // FIXME(meng): fill supported urls based on modelId.
     supportedUrls: {},
     doGenerate: async () => Promise.reject("Not implemented"),
-    doStream: async ({ prompt, abortSignal, stopSequences }) => {
+    doStream: async ({ prompt, abortSignal, stopSequences, tools }) => {
       const resp = await fetch(`${llm.server}/api/chatNext/stream`, {
         method: "POST",
         headers: {
@@ -23,9 +23,12 @@ export function createPochiModel(
         signal: abortSignal,
         body: JSON.stringify({
           id: taskId,
-          prompt,
           model: llm.modelId,
-          stopSequences,
+          callOptions: {
+            prompt,
+            stopSequences,
+            tools,
+          },
         }),
       });
 

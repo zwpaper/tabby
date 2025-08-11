@@ -75,7 +75,11 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       middlewares.push(createReasoningMiddleware());
     }
 
-    if (llm.type === "pochi") {
+    if (
+      llm.type === "pochi" &&
+      // Turn on ToolCallMiddleware only for gemini backed models for now
+      (llm.modelId?.startsWith("google/") || llm.modelId?.startsWith("pochi/"))
+    ) {
       middlewares.push(createToolCallMiddleware());
     }
 

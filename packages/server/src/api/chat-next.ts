@@ -7,7 +7,7 @@ import {
   wrapLanguageModel,
 } from "@ai-v5-sdk/ai";
 import type {
-  LanguageModelV2Prompt,
+  LanguageModelV2CallOptions,
   LanguageModelV2StreamPart,
 } from "@ai-v5-sdk/provider";
 import { zValidator } from "@hono/zod-validator";
@@ -25,13 +25,14 @@ import {
 import { setIdleTimeout } from "../server";
 import { usageService } from "../service/usage";
 
-const ZodPromptType: z.ZodType<LanguageModelV2Prompt> = z.any();
+const ZodCallOptions: z.ZodType<
+  Pick<LanguageModelV2CallOptions, "prompt" | "stopSequences" | "tools">
+> = z.any();
 
 const RequestType = z.object({
   id: z.string().optional(),
   model: z.string().optional().describe("Model to use for this request."),
-  prompt: ZodPromptType,
-  stopSequences: z.array(z.string()).optional(),
+  callOptions: ZodCallOptions,
 });
 
 const chat = new Hono()
@@ -40,6 +41,7 @@ const chat = new Hono()
     setIdleTimeout(c.req.raw, 120);
 
     const req = await c.req.valid("json");
+    const { prompt, tools, stopSequences } = req.callOptions;
     const validModelId = checkModel(req.model || "google/gemini-2.5-pro");
 
     const user = c.get("user");
@@ -48,15 +50,15 @@ const chat = new Hono()
 
     const model = getModelByIdNext(validModelId);
     if (validModelId.includes("anthropic")) {
-      const lastMessage = req.prompt.at(-1);
+      const lastMessage = prompt.at(-1);
       if (lastMessage) {
         lastMessage.providerOptions = {
           anthropic: { cacheControl: { type: "ephemeral" } },
         };
       }
 
-      if (req.prompt[0].role === "system") {
-        req.prompt[0].providerOptions = {
+      if (prompt[0].role === "system") {
+        prompt[0].providerOptions = {
           anthropic: { cacheControl: { type: "ephemeral" } },
         };
       }
@@ -66,18 +68,20 @@ const chat = new Hono()
     const stream = await new Promise<ReadableStream<LanguageModelV2StreamPart>>(
       (resolve) => {
         streamText({
-          messages: req.prompt,
+          messages: prompt,
           abortSignal,
+          stopSequences,
           model: wrapLanguageModel({
             model,
             middleware: {
               middlewareVersion: "v2",
               async wrapStream() {
                 const { stream, ...rest } = await model.doStream({
-                  prompt: req.prompt,
+                  prompt,
                   temperature: 0.7,
                   abortSignal,
-                  stopSequences: req.stopSequences,
+                  stopSequences,
+                  tools,
                   ...getModelOptionsNext(validModelId),
                 });
 
