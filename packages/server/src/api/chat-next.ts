@@ -90,6 +90,7 @@ const chat = new Hono()
               },
             },
           }),
+          maxRetries: 0,
           experimental_telemetry: {
             isEnabled: true,
             metadata: {
