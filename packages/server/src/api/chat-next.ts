@@ -3,6 +3,8 @@ import {
   JsonToSseTransformStream,
   type LanguageModelUsage,
   type ProviderMetadata,
+  streamText,
+  wrapLanguageModel,
 } from "@ai-v5-sdk/ai";
 import type {
   LanguageModelV2Prompt,
@@ -60,14 +62,52 @@ const chat = new Hono()
       }
     }
 
-    const doStream = await model.doStream({
-      prompt: req.prompt,
-      temperature: 0.7,
-      abortSignal: c.req.raw.signal,
-      stopSequences: req.stopSequences,
-      ...getModelOptionsNext(validModelId),
-    });
-    const sseStream = doStream.stream
+    const abortSignal = c.req.raw.signal;
+    const stream = await new Promise<ReadableStream<LanguageModelV2StreamPart>>(
+      (resolve) => {
+        streamText({
+          prompt: "<placeholder>",
+          abortSignal,
+          model: wrapLanguageModel({
+            model,
+            middleware: {
+              middlewareVersion: "v2",
+              async wrapStream() {
+                const { stream, ...rest } = await model.doStream({
+                  prompt: req.prompt,
+                  temperature: 0.7,
+                  abortSignal,
+                  stopSequences: req.stopSequences,
+                  ...getModelOptionsNext(validModelId),
+                });
+
+                const [stream1, stream2] = stream.tee();
+                resolve(stream2);
+                return {
+                  stream: stream1,
+                  ...rest,
+                };
+              },
+            },
+          }),
+          experimental_telemetry: {
+            isEnabled: true,
+            metadata: {
+              "user-id": user.id,
+              "user-email": user.email,
+              "model-id": validModelId,
+              ...(req.id
+                ? {
+                    "task-id": req.id,
+                  }
+                : {}),
+            },
+          },
+        });
+      },
+    );
+
+    const sseStream = stream
       .pipeThrough(
         new TransformStream<
           LanguageModelV2StreamPart,
@@ -98,26 +138,12 @@ const chat = new Hono()
         }),
       )
       .pipeThrough(new JsonToSseTransformStream());
+
     return new Response(sseStream.pipeThrough(new TextEncoderStream()), {
       headers: {
         "content-type": "text/plain; charset=utf-8",
       },
     });
-
-    // FIXME(meng): add back telemetry
-    //   experimental_telemetry: {
-    //     isEnabled: true,
-    //     metadata: {
-    //       "user-id": user.id,
-    //       "user-email": user.email,
-    //       "model-id": validModelId,
-    //       ...(req.id
-    //         ? {
-    //             "task-id": req.id,
-    //           }
-    //         : {}),
-    //     },
-    //   },
   });
 
 export default chat;
