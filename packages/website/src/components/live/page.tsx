@@ -36,7 +36,6 @@ export const LivePage: React.FC = () => {
           animate="visible"
           className="w-full max-w-4xl"
         >
-          {/* Title */}
           <motion.h1
             variants={itemVariants}
             className="mb-8 text-center font-bold text-4xl text-gray-900 sm:text-5xl md:text-6xl dark:text-gray-100"
@@ -61,6 +60,7 @@ export const LivePage: React.FC = () => {
               playsInline
               muted
             />
+            {/* <Transcription /> */}
           </div>
         </motion.div>
         <MediaInput videoRef={videoRef} onVideoStreamChange={setVideoStream} />

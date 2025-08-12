@@ -25,15 +25,16 @@ const declaration: FunctionDeclaration = {
 
 export const ToolCallComponnet = () => {
   const [jsonString, setJSONString] = useState<string>("");
-  const { client, setConfig, setModel } = useLiveAPIContext();
+  const { client, setConfig, languageCode } = useLiveAPIContext();
 
   useEffect(() => {
-    setModel("models/gemini-2.0-flash-exp");
     setConfig({
       responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
+        languageCode,
       },
+      outputAudioTranscription: {},
       systemInstruction: {
         parts: [
           {
@@ -47,7 +48,7 @@ export const ToolCallComponnet = () => {
         { functionDeclarations: [declaration] },
       ],
     });
-  }, [setConfig, setModel]);
+  }, [setConfig, languageCode]);
 
   useEffect(() => {
     const onToolCall = (toolCall: LiveServerToolCall) => {

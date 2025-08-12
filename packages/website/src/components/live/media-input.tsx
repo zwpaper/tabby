@@ -5,7 +5,7 @@ import { useWebcam } from "@/hooks/live/use-webcam";
 import { AudioRecorder } from "@/lib/live/audio-recorder";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ArrowUp, Mic, Monitor, PauseIcon, Plus, Video } from "lucide-react";
+import { Loader2, Mic, Monitor, PauseIcon, PlayIcon, Plus } from "lucide-react";
 import {
   type RefObject,
   useCallback,
@@ -15,6 +15,13 @@ import {
 } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import { SettingsPanel } from "./settings-panel";
 
 export const itemVariants = {
   hidden: { y: 20, opacity: 0 },
@@ -47,7 +54,7 @@ export const MediaInput: React.FC<MediaInputProps> = ({
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
   const connectButtonRef = useRef<HTMLButtonElement>(null);
 
-  const { client, connected, connect, disconnect, volume } =
+  const { client, connected, connect, disconnect, volume, isConnecting } =
     useLiveAPIContext();
 
   useEffect(() => {
@@ -124,31 +131,51 @@ export const MediaInput: React.FC<MediaInputProps> = ({
   }, [connected, activeVideoStream, client, videoRef.current]);
 
   //handler for swapping from one video-stream to the next
-  const changeStreams = (next?: UseMediaStreamResult) => async () => {
-    if (next) {
-      const mediaStream = await next.start();
-      setActiveVideoStream(mediaStream);
-      onVideoStreamChange(mediaStream);
-    } else {
-      setActiveVideoStream(null);
-      onVideoStreamChange(null);
-    }
-    // biome-ignore lint/complexity/noForEach: <explanation>
-    videoStreams.filter((msr) => msr !== next).forEach((msr) => msr.stop());
-  };
+  const changeStreams = useCallback(
+    async (next?: UseMediaStreamResult) => {
+      if (next) {
+        const mediaStream = await next.start();
+        setActiveVideoStream(mediaStream);
+        onVideoStreamChange(mediaStream);
+      } else {
+        setActiveVideoStream(null);
+        onVideoStreamChange(null);
+      }
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      [webcam, screenCapture]
+        .filter((msr) => msr !== next)
+        .forEach((msr) => msr.stop());
+    },
+    [webcam, screenCapture, onVideoStreamChange],
+  );
 
   const handleSubmit = useCallback(async () => {
     setPrompt("");
 
     if (connected) {
       await disconnect();
+      await changeStreams();
     } else {
       await connect();
       if (prompt && prompt.trim().length > 0) {
         client.send([{ text: prompt }]);
       }
     }
-  }, [connected, disconnect, client.send, prompt, connect]);
+  }, [connected, disconnect, client.send, prompt, connect, changeStreams]);
+
+  const handleShareScreenChange = useCallback(async () => {
+    if (connected) {
+      await disconnect();
+    } else {
+      await connect();
+    }
+
+    if (screenCapture.isStreaming) {
+      await changeStreams();
+    } else {
+      await changeStreams(screenCapture);
+    }
+  }, [screenCapture, connected, disconnect, connect, changeStreams]);
 
   return (
     <>
@@ -163,7 +190,7 @@ export const MediaInput: React.FC<MediaInputProps> = ({
             <Input
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Start typing a prompt"
+              placeholder="Type a message, or use audio or screen share to communicate with Pochi Live"
               className="border-none bg-transparent text-lg shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -175,66 +202,78 @@ export const MediaInput: React.FC<MediaInputProps> = ({
             />
 
             <div className="flex items-center gap-2">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  onClick={handleSubmit}
-                  size="icon"
-                  className={cn(
-                    "relative shrink-0 overflow-hidden rounded-full text-white transition-all disabled:opacity-50",
-                    connected
-                      ? "bg-orange-400 hover:bg-orange-500 dark:bg-orange-500 dark:hover:bg-orange-600"
-                      : "bg-orange-400 hover:bg-orange-500 dark:bg-orange-500 dark:hover:bg-orange-600",
-                  )}
-                  style={
-                    connected
-                      ? {
-                          boxShadow:
-                            connected && volume > 0.02
-                              ? "0 0 var(--volume, 5px) rgba(251, 146, 60, 0.6), 0 0 calc(var(--volume, 5px) * 2) rgba(251, 146, 60, 0.4), 0 0 calc(var(--volume, 5px) * 3) rgba(251, 146, 60, 0.2)"
-                              : undefined,
-                          transform:
-                            connected && volume > 0.01
-                              ? `scale(${1 + volume * 0.2})`
-                              : undefined,
-                          backgroundColor:
-                            connected && volume > 0.01
-                              ? `rgba(251, 146, 60, ${Math.max(0.8, 0.8 + volume * 0.3)})`
-                              : undefined,
-                          transition: connected
-                            ? "all 0.1s ease-out"
-                            : undefined,
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={isConnecting}
+                        size="icon"
+                        className={cn(
+                          "relative shrink-0 overflow-hidden rounded-full text-white transition-all disabled:opacity-50",
+                          connected
+                            ? "bg-orange-400 hover:bg-orange-500 dark:bg-orange-500 dark:hover:bg-orange-600"
+                            : "bg-orange-400 hover:bg-orange-500 dark:bg-orange-500 dark:hover:bg-orange-600",
+                        )}
+                        style={
+                          connected
+                            ? {
+                                boxShadow:
+                                  connected && volume > 0.02
+                                    ? "0 0 var(--volume, 5px) rgba(251, 146, 60, 0.6), 0 0 calc(var(--volume, 5px) * 2) rgba(251, 146, 60, 0.4), 0 0 calc(var(--volume, 5px) * 3) rgba(251, 146, 60, 0.2)"
+                                    : undefined,
+                                transform:
+                                  connected && volume > 0.01
+                                    ? `scale(${1 + volume * 0.2})`
+                                    : undefined,
+                                backgroundColor:
+                                  connected && volume > 0.01
+                                    ? `rgba(251, 146, 60, ${Math.max(0.8, 0.8 + volume * 0.3)})`
+                                    : undefined,
+                                transition: connected
+                                  ? "all 0.1s ease-out"
+                                  : undefined,
+                              }
+                            : undefined
                         }
-                      : undefined
-                  }
-                >
-                  {connected ? (
-                    <PauseIcon className="h-4 w-4" />
-                  ) : (
-                    <ArrowUp className="h-4 w-4" />
-                  )}
-                  {connected && volume > 0.02 && (
-                    <>
-                      <div
-                        className="absolute inset-0 animate-ping rounded-full border-2 border-orange-300"
-                        style={{
-                          animationDuration: `${Math.max(0.4, 2 - volume * 3)}s`,
-                          opacity: Math.max(0.2, volume * 2),
-                        }}
-                      />
-                      <div
-                        className="absolute inset-[-4px] animate-pulse rounded-full border border-orange-200"
-                        style={{
-                          animationDuration: `${Math.max(1, 3 - volume * 5)}s`,
-                          opacity: Math.max(0.15, volume * 1.5),
-                        }}
-                      />
-                    </>
-                  )}
-                </Button>
-              </motion.div>
+                      >
+                        {isConnecting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : connected ? (
+                          <PauseIcon className="h-4 w-4" />
+                        ) : (
+                          <PlayIcon className="h-4 w-4" />
+                        )}
+                        {connected && volume > 0.02 && (
+                          <>
+                            <div
+                              className="absolute inset-0 animate-ping rounded-full border-2 border-orange-300"
+                              style={{
+                                animationDuration: `${Math.max(0.4, 2 - volume * 3)}s`,
+                                opacity: Math.max(0.2, volume * 2),
+                              }}
+                            />
+                            <div
+                              className="absolute inset-[-4px] animate-pulse rounded-full border border-orange-200"
+                              style={{
+                                animationDuration: `${Math.max(1, 3 - volume * 5)}s`,
+                                opacity: Math.max(0.15, volume * 1.5),
+                              }}
+                            />
+                          </>
+                        )}
+                      </Button>
+                    </motion.div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {connected ? "Stop streaming" : "Start streaming"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         </div>
@@ -294,7 +333,7 @@ export const MediaInput: React.FC<MediaInputProps> = ({
           </motion.div>
 
           {/* Webcam Button */}
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          {/* <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
               variant="outline"
               onClick={() => {
@@ -313,17 +352,13 @@ export const MediaInput: React.FC<MediaInputProps> = ({
               <Video className="h-4 w-4" />
               Webcam
             </Button>
-          </motion.div>
+          </motion.div> */}
 
           {/* Share Screen Button */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
               variant="outline"
-              onClick={() => {
-                screenCapture.isStreaming
-                  ? changeStreams()()
-                  : changeStreams(screenCapture)();
-              }}
+              onClick={handleShareScreenChange}
               className={cn(
                 "rounded-full border px-4 py-2 font-medium transition-all",
                 screenCapture.isStreaming
@@ -335,6 +370,8 @@ export const MediaInput: React.FC<MediaInputProps> = ({
               Share Screen
             </Button>
           </motion.div>
+
+          <SettingsPanel />
         </div>
       </motion.div>
       {/* Suggestion Buttons */}

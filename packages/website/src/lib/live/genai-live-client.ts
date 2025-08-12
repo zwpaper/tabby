@@ -10,6 +10,7 @@ import {
   type LiveServerToolCallCancellation,
   type Part,
   type Session,
+  type Transcription,
 } from "@google/genai";
 
 import EventEmitter from "emittery";
@@ -45,6 +46,8 @@ export interface LiveClientEventTypes {
   toolcallcancellation: LiveServerToolCallCancellation;
   // Emitted when the current turn is complete
   turncomplete: undefined;
+  // Emitted when the output transcription is received
+  outputTranscription: Transcription | undefined;
 }
 
 /**
@@ -219,6 +222,11 @@ export class GenAILiveClient extends EventEmitter<LiveClientEventTypes> {
         const content: { modelTurn: Content } = { modelTurn: { parts } };
         this.emit("content", content);
         this.log("server.content", message);
+      }
+
+      if ("outputTranscription" in serverContent) {
+        this.log("server.send", "outputTranscription");
+        this.emit("outputTranscription", serverContent.outputTranscription);
       }
     } else {
       console.log("received unmatched message", message);
