@@ -130,7 +130,8 @@ function removeToolCallArgumentMetadata(messages: UIMessage[]): UIMessage[] {
         part.input &&
         "_meta" in part.input
       ) {
-        part.input._meta = undefined;
+        // biome-ignore lint/performance/noDelete: need delete to make zod happy
+        delete part.input._meta;
       }
       return part;
     });
@@ -149,7 +150,8 @@ function removeToolCallArgumentTransientData(
         part.input &&
         "_transient" in part.input
       ) {
-        part.input._transient = undefined;
+        // biome-ignore lint/performance/noDelete: need delete to make zod happy
+        delete part.input._transient;
       }
       return part;
     });
@@ -167,7 +169,8 @@ function removeToolCallResultMetadata(messages: UIMessage[]): UIMessage[] {
         part.output &&
         "_meta" in part.output
       ) {
-        part.output._meta = undefined;
+        // biome-ignore lint/performance/noDelete: need delete to make zod happy
+        delete part.output._meta;
       }
       return part;
     });
