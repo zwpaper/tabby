@@ -69,10 +69,6 @@ const OutputOptions = {
         return "ai";
       }
 
-      if (id.includes("/effect") || id.includes("/@livestore")) {
-        return "livestore";
-      }
-
       if (id.includes("motion")) {
         return "motion";
       }
