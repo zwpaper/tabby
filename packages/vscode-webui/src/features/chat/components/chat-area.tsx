@@ -9,7 +9,6 @@ interface ChatAreaProps {
   messages: Message[];
   isTaskLoading: boolean;
   isLoading: boolean;
-  isCompactingNewTask: boolean;
   user?: { name: string; image?: string | null };
   messagesContainerRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -18,7 +17,6 @@ export function ChatArea({
   messages,
   isTaskLoading,
   isLoading,
-  isCompactingNewTask,
   user,
   messagesContainerRef,
 }: ChatAreaProps) {
@@ -43,7 +41,6 @@ export function ChatArea({
         }}
         isLoading={isLoading || isTaskLoading}
         containerRef={messagesContainerRef}
-        isCompactingNewTask={isCompactingNewTask}
       />
     </>
   );

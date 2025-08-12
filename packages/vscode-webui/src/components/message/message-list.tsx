@@ -35,14 +35,12 @@ export const MessageList: React.FC<{
     image?: string | null;
   };
   isLoading: boolean;
-  isCompactingNewTask: boolean;
   containerRef?: React.RefObject<HTMLDivElement | null>;
   showUserAvatar?: boolean;
   className?: string;
 }> = ({
   messages: renderMessages,
   isLoading,
-  isCompactingNewTask,
   user = { name: "User" },
   assistant,
   containerRef,
@@ -131,12 +129,6 @@ export const MessageList: React.FC<{
           )}
         </div>
       ))}
-      {isCompactingNewTask && (
-        <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          <span>Compacting Task...</span>
-        </div>
-      )}
       {debouncedIsLoading && (
         <div className="py-2">
           <Loader2 className="mx-auto size-6 animate-spin" />

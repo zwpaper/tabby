@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useRules } from "@/lib/hooks/use-rules";
 import { CompactTaskMinTokens } from "@ragdoll/common";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
@@ -99,8 +100,15 @@ export function TokenUsage({
             className,
           )}
         >
-          <span className="select-none whitespace-nowrap font-medium">
-            {percentage}% of {formatTokens(contextWindow)} tokens
+          <span className="flex select-none items-center gap-1 whitespace-nowrap font-medium">
+            {compact?.newCompactTaskPending ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Compacting...
+              </>
+            ) : (
+              `${percentage}% of ${formatTokens(contextWindow)} tokens`
+            )}
           </span>
         </div>
       </PopoverTrigger>

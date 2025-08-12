@@ -120,7 +120,6 @@ export function SharePage() {
                     assistant={assistant}
                     messages={renderMessages}
                     isLoading={isLoading}
-                    isCompactingNewTask={false}
                   />
                   <ErrorMessageView error={error} />
                 </div>

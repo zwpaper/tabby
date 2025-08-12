@@ -331,7 +331,6 @@ function Chat({ user, uid }: ChatProps) {
         messages={renderMessages}
         isTaskLoading={isTaskLoading}
         isLoading={isLoading}
-        isCompactingNewTask={newCompactTaskPending}
         user={user || defaultUser}
         messagesContainerRef={messagesContainerRef}
       />
@@ -400,7 +399,10 @@ function Chat({ user, uid }: ChatProps) {
                     totalTokens={totalTokens}
                     className="mr-5"
                     compact={{
-                      enabled: compactEnabled && !isExecuting,
+                      enabled:
+                        compactEnabled &&
+                        !inlineCompactTaskPending &&
+                        !newCompactTaskPending,
                       inlineCompactTask,
                       inlineCompactTaskPending,
                       newCompactTask,
