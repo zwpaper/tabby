@@ -24,6 +24,7 @@ import {
 } from "../lib/constants";
 import { setIdleTimeout } from "../server";
 import { usageService } from "../service/usage";
+import { spanConfig } from "../trace";
 
 const ZodCallOptions: z.ZodType<
   Pick<LanguageModelV2CallOptions, "prompt" | "stopSequences" | "tools">
@@ -43,6 +44,9 @@ const chat = new Hono()
     const req = await c.req.valid("json");
     const { prompt, tools, stopSequences } = req.callOptions;
     const validModelId = checkModel(req.model || "google/gemini-2.5-pro");
+    if (req.id) {
+      spanConfig.setAttribute("ragdoll.task.uid", req.id);
+    }
 
     const user = c.get("user");
     const remainingFreeCredit =

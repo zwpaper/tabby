@@ -49,6 +49,7 @@ import { resolveServerTools } from "../lib/tools";
 import { setIdleTimeout, waitUntil } from "../server";
 import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
+import { spanConfig } from "../trace";
 import { type ChatRequest, type McpTool, ZodChatRequestType } from "../types";
 
 const streamContext = createResumableStreamContext({
@@ -90,6 +91,7 @@ const chat = new Hono()
         req,
         getContextWindow(validModelId),
       );
+    spanConfig.setAttribute("ragdoll.task.uid", uid);
 
     let remainingFreeCredit = 0;
     try {
