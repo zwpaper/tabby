@@ -2,9 +2,7 @@ import { ErrorMessage } from "@/components/error-message";
 import { ServerErrors } from "@ragdoll/server";
 import { ExternalLinkIcon } from "lucide-react";
 
-export function ErrorMessageView({
-  error,
-}: { error: { message: string } | undefined }) {
+export function ErrorMessageView({ error }: { error: Error | undefined }) {
   return (
     <ErrorMessage
       error={error}

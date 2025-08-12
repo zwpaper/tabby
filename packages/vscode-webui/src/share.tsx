@@ -1,14 +1,9 @@
 import "./styles.css";
-import { createChannel } from "bidc";
 import { StrictMode, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { type Theme, useTheme } from "./components/theme-provider";
 import { SharePage } from "./features/share";
 import { ShareProviders } from "./providers";
-
-// Omitting the target will create a channel to the parent window by default
-// This is equivalent to `createChannel(window.parent)`
-const channel = createChannel();
 
 function ThemeUpdater() {
   const { setTheme } = useTheme();
@@ -48,7 +43,7 @@ function App() {
   return (
     <ShareProviders>
       <ThemeUpdater />
-      <SharePage {...channel} />
+      <SharePage />
     </ShareProviders>
   );
 }

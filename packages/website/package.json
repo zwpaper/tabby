@@ -71,8 +71,7 @@
     "tailwindcss": "catalog:",
     "tailwindcss-animate": "catalog:",
     "vaul": "^1.1.2",
-    "zod": "catalog:",
-    "bidc": "catalog:"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",

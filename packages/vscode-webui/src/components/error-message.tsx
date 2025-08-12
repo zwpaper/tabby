@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 
 interface ErrorMessageProps {
-  error: { message: string } | undefined;
-  formatter?: (e: { message: string }) => ReactNode;
+  error: Error | undefined;
+  formatter?: (e: Error) => ReactNode;
 }
 
 export const ErrorMessage: React.FC<ErrorMessageProps> = ({
