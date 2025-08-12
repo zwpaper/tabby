@@ -1,4 +1,6 @@
 #!/usr/bin/env bun
+// Workaround for https://github.com/oven-sh/bun/issues/18145
+import "@livestore/wa-sqlite/dist/wa-sqlite.node.wasm" with { type: "file" };
 
 import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";

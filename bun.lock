@@ -139,6 +139,7 @@
         "@commander-js/extra-typings": "^14.0.0",
         "@livestore/adapter-node": "catalog:",
         "@livestore/livestore": "catalog:",
+        "@livestore/wa-sqlite": "catalog:",
         "@preact/signals-core": "^1.6.2",
         "@ragdoll/common": "workspace:*",
         "@ragdoll/livekit": "workspace:*",
