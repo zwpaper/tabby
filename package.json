@@ -53,7 +53,8 @@
       "@livestore/livestore": "0.3.1",
       "@livestore/peer-deps": "0.3.1",
       "@livestore/devtools-vite": "0.3.1",
-      "@livestore/wa-sqlite": "1.0.5-dev.2"
+      "@livestore/wa-sqlite": "1.0.5-dev.2",
+      "bidc": "^0.0.2"
     }
   },
   "devDependencies": {

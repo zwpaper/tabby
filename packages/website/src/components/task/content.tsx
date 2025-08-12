@@ -4,6 +4,7 @@ import type { Todo } from "@getpochi/tools";
 import type { TaskError } from "@ragdoll/db";
 import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import type { UIMessage } from "ai";
+import { createChannel } from "bidc";
 import {
   type ComponentProps,
   useCallback,
@@ -12,9 +13,15 @@ import {
   useRef,
   useState,
 } from "react";
+import z from "zod";
 
 const isDEV = import.meta.env.DEV;
 const webviewOrigin = "http://localhost:4112";
+
+const ZodResizeEvent = z.object({
+  type: z.literal("resize"),
+  height: z.number(),
+});
 
 interface ContentProps extends ComponentProps<"div"> {
   messages?: UIMessage[] | null;
@@ -48,6 +55,7 @@ function TaskContent({
   const [iframeError, setIframeError] = useState<Error | undefined>(undefined);
   const [iframeHeight, setIframeHeight] = useState<number>(600); // Default height
   const [isIframeInitialized, setIsIframeInitialized] = useState(false);
+  const channelRef = useRef<ReturnType<typeof createChannel> | null>(null);
 
   const displayError = iframeError;
 
@@ -102,33 +110,26 @@ function TaskContent({
     [],
   );
 
-  // Listen for height updates from iframe content
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // Verify origin for security
-      if (isDEV && event.origin !== webviewOrigin) return;
-      if (!isDEV && event.origin !== window.location.origin) return;
-
-      if (event.data?.type === "messagesLoaded") {
-        setIsIframeInitialized(true);
-      }
-
-      if (
-        event.data?.type === "resize" &&
-        typeof event.data.height === "number"
-      ) {
-        setIframeHeight(Math.max(event.data.height, 300)); // Minimum height of 300px
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  const handleIframeMessage = useCallback(
+    (channel: ReturnType<typeof createChannel>) => {
+      channel.receive((data) => {
+        const { height } = ZodResizeEvent.parse(data);
+        setIframeHeight(Math.max(height, 300)); // Minimum height of 300px
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
-    if (loaded && iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow?.postMessage(
-        {
+    const sendMessage = async () => {
+      if (loaded && iframeRef.current?.contentWindow) {
+        // create channel
+        if (!channelRef.current) {
+          channelRef.current = createChannel(iframeRef.current.contentWindow);
+          handleIframeMessage(channelRef.current);
+        }
+
+        await channelRef.current.send({
           type: "share",
           messages: messages?.map(fromV4UIMessage),
           user,
@@ -136,13 +137,30 @@ function TaskContent({
           todos,
           isLoading,
           error,
-        },
-        {
-          targetOrigin: isDEV ? webviewOrigin : "/",
-        },
-      );
-    }
-  }, [messages, todos, isLoading, user, assistant, loaded, error]);
+        });
+
+        if (!isIframeInitialized) {
+          setIsIframeInitialized(true);
+        }
+      }
+    };
+
+    sendMessage();
+
+    return () => {
+      channelRef.current?.cleanup();
+    };
+  }, [
+    messages,
+    todos,
+    isLoading,
+    user,
+    assistant,
+    error,
+    loaded,
+    isIframeInitialized,
+    handleIframeMessage,
+  ]);
 
   return (
     <div className={cn("flex flex-1 flex-col", className)} {...props}>
