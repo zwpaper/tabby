@@ -88,7 +88,7 @@ const editors = [
       "https://marketplace.visualstudio.com/items?itemName=TabbyML.pochi",
     callToAction: "Install Now ↗",
   },
-];
+].filter((x) => x.name !== "Slack");
 
 export function InstallPanel() {
   const [activeEditor, setActiveEditor] = useState(editors[0].name);

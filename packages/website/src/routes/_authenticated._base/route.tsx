@@ -28,15 +28,17 @@ function NavHeader() {
           <span className="font-semibold text-base">Pochi</span>
         </Link>
         <span className="flex items-center gap-2 font-normal text-muted-foreground text-sm transition-colors duration-150 md:gap-4">
-          <Link
-            to="/create"
-            className="hidden justify-center py-1.5 hover:text-foreground md:inline-flex"
-            activeProps={{
-              className: "text-foreground",
-            }}
-          >
-            Create
-          </Link>
+          {false && (
+            <Link
+              to="/create"
+              className="hidden justify-center py-1.5 hover:text-foreground md:inline-flex"
+              activeProps={{
+                className: "text-foreground",
+              }}
+            >
+              Create
+            </Link>
+          )}
           <Link
             to="/tasks"
             search={{
