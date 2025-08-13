@@ -2,7 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { User } from "@/lib/auth-client";
 import { AccountSection } from "./sections/account-section";
 import { AdvancedSettingsSection } from "./sections/advanced-settings-section";
-import { CustomModelSection } from "./sections/custom-model-section";
+import { ModelSection } from "./sections/model-section";
 import { ToolsSection } from "./sections/tools-section";
 import { WorkflowsSection } from "./sections/workflows-section";
 import { WorkspaceRulesSection } from "./sections/workspace-rules-section";
@@ -16,7 +16,7 @@ export function SettingsPage({ user }: { user?: User }) {
           <WorkspaceRulesSection />
           <WorkflowsSection />
           <ToolsSection />
-          <CustomModelSection />
+          <ModelSection user={user} />
           <AdvancedSettingsSection />
         </div>
       </ScrollArea>
