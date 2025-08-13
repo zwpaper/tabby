@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { TaskCreateEvent, TaskEvent } from "@ragdoll/db";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { streamSSE } from "hono/streaming";
+import { type SSEStreamingApi, streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { isInternalUser, optionalAuth, requireAuth } from "../auth";
 import { parseEventFilter } from "../lib/event-filter";
@@ -152,34 +152,48 @@ const tasks = new Hono()
       const { heartbeat } = c.req.valid("query") || {};
       const user = c.get("user");
 
-      const task = await taskService.get(uid, user.id);
+      let latestTaskEvent: TaskEvent | undefined = undefined;
+      let sseStream: SSEStreamingApi | undefined = undefined;
+      const unsubscribe = taskEvents.subscribe(uid, (e) => {
+        latestTaskEvent = e;
+        sseStream?.writeSSE({
+          data: JSON.stringify(e),
+        });
+      });
+
+      let task: Awaited<ReturnType<typeof taskService.get>> | undefined =
+        undefined;
+      try {
+        task = await taskService.get(uid, user.id);
+      } catch (error) {
+        unsubscribe();
+        throw error;
+      }
 
       return streamSSE(c, async (stream) => {
-        const unsubscribe = taskEvents.subscribe(uid, (e) => {
-          stream.writeSSE({
-            data: JSON.stringify(e),
-          });
-        });
-
         stream.onAbort(() => {
           unsubscribe();
         });
+        sseStream = stream;
 
         // Send initial task data
         await stream.writeSSE({
-          data: JSON.stringify({
-            type: "task:status-changed",
-            data: {
-              uid,
-              status: task.status,
-            },
-          } satisfies TaskEvent),
+          data: JSON.stringify(
+            latestTaskEvent ??
+              ({
+                type: "task:status-changed",
+                data: {
+                  uid,
+                  status: task.status,
+                },
+              } satisfies TaskEvent),
+          ),
         });
 
-        while (true) {
+        while (!stream.aborted && !stream.closed) {
           setIdleTimeout(c.req.raw, 120);
           await new Promise((resolve) => setTimeout(resolve, 15 * 1000));
-          if (heartbeat) {
+          if (heartbeat && !stream.aborted && !stream.closed) {
             await stream.writeSSE({
               data: JSON.stringify({
                 type: "heartbeat",
