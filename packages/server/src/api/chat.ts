@@ -1,10 +1,11 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { jsonSchema } from "@ai-sdk/ui-utils";
+import type { Environment } from "@getpochi/base";
 import { selectClientTools, selectServerTools } from "@getpochi/tools";
 import { zValidator } from "@hono/zod-validator";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { appendDataPart, formatters, prompts } from "@ragdoll/common";
-import type { DBMessage, Environment } from "@ragdoll/db";
+import type { DBMessage } from "@ragdoll/db";
 import {
   type CoreMessage,
   type DataStreamWriter,

@@ -1,4 +1,5 @@
 import { isAbortError } from "@ai-sdk/provider-utils";
+import type { Environment } from "@getpochi/base";
 import { type Todo, isUserInputTool } from "@getpochi/tools";
 import {
   CompactTaskMinTokens,
@@ -9,13 +10,7 @@ import {
   toUIMessages,
 } from "@ragdoll/common";
 import { parseTitle } from "@ragdoll/common/message-utils";
-import type {
-  DB,
-  DBMessage,
-  Environment,
-  TaskCreateEvent,
-  TaskError,
-} from "@ragdoll/db";
+import type { DB, DBMessage, TaskCreateEvent, TaskError } from "@ragdoll/db";
 import {
   APICallError,
   type FinishReason,

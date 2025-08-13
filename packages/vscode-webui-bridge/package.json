@@ -2,9 +2,9 @@
   "name": "@ragdoll/vscode-webui-bridge",
   "main": "src/index.ts",
   "devDependencies": {
-    "@ragdoll/db": "workspace:*",
     "@quilted/threads": "catalog:",
-    "@getpochi/tools": "workspace:*"
+    "@getpochi/tools": "workspace:*",
+    "@getpochi/base": "workspace:*"
   },
   "private": true
 }

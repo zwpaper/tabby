@@ -1,4 +1,4 @@
-import type { Environment } from "@ragdoll/db";
+import type { Environment } from "@getpochi/base";
 
 type CustomRules = Environment["info"]["customRules"];
 

@@ -8,9 +8,9 @@ import {
   isToolUIPart,
 } from "@ai-v5-sdk/ai";
 import { isAbortError } from "@ai-v5-sdk/provider-utils";
+import type { Environment } from "@getpochi/base";
 import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import type { Environment } from "@ragdoll/db";
 import type { LLMRequestData } from "..";
 import { makeMessagesQuery, makeTaskQuery } from "../livestore/queries";
 import { events, tables } from "../livestore/schema";

@@ -18,6 +18,7 @@
   "dependencies": {
     "@ai-v5-sdk/ai": "catalog:",
     "@commander-js/extra-typings": "^14.0.0",
+    "@getpochi/base": "workspace:*",
     "@livestore/adapter-node": "catalog:",
     "@livestore/livestore": "catalog:",
     "@livestore/wa-sqlite": "catalog:",
@@ -32,7 +33,6 @@
     "pretty-error": "^4.0.0"
   },
   "devDependencies": {
-    "@getpochi/tools": "workspace:*",
-    "@ragdoll/db": "workspace:*"
+    "@getpochi/tools": "workspace:*"
   }
 }

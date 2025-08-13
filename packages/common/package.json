@@ -18,6 +18,7 @@
   "dependencies": {
     "@ai-sdk/ui-utils": "catalog:",
     "@ragdoll/db": "workspace:*",
+    "@getpochi/base": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "ai": "catalog:",
     "fast-levenshtein": "^3.0.0",

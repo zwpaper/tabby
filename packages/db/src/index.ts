@@ -1,5 +1,5 @@
+import type { Environment } from "@getpochi/base";
 import type { ColumnType, Generated, JSONColumnType } from "kysely";
-import type { Environment } from "./environment";
 import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";
 import type { DBMessage, TaskCreateEvent, TaskError } from "./types";
@@ -55,11 +55,6 @@ export type {
   TaskEvent,
   ExternalIntegrationsEvent,
 } from "./types";
-export {
-  ZodEnvironment,
-  type Environment,
-  type GitStatus,
-} from "./environment";
 
 export type TaskCreateEventDataHelper<T extends TaskCreateEvent["type"]> =
   Extract<TaskCreateEvent, { type: T }>["data"];

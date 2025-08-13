@@ -3,10 +3,10 @@ import type {
   ChatTransport,
   UIMessageChunk,
 } from "@ai-v5-sdk/ai";
+import type { Environment } from "@getpochi/base";
 import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { formattersNext, prompts } from "@ragdoll/common";
-import type { Environment } from "@ragdoll/db";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
 import {

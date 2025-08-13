@@ -4,6 +4,7 @@ import {
   isToolUIPart,
   lastAssistantMessageIsCompleteWithToolCalls,
 } from "@ai-v5-sdk/ai";
+import type { Environment } from "@getpochi/base";
 import {
   ServerToolApproved,
   ServerTools,
@@ -20,7 +21,6 @@ import {
   prepareLastMessageForRetryNext,
 } from "@ragdoll/common/message-utils";
 import { findTodosNext, mergeTodos } from "@ragdoll/common/todo-utils";
-import type { Environment } from "@ragdoll/db";
 import type { LLMRequestData, Message, Task, UITools } from "@ragdoll/livekit";
 import { LiveChatKit } from "@ragdoll/livekit/node";
 import { toError, toErrorString } from "./lib/error-utils";

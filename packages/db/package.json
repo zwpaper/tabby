@@ -5,9 +5,8 @@
   },
   "dependencies": {
     "kysely": "catalog:",
-    "zod": "catalog:",
-    "ai": "catalog:",
-    "@getpochi/tools": "workspace:*"
+    "@getpochi/base": "workspace:*",
+    "ai": "catalog:"
   },
   "scripts": {
     "tsc": "tsc",

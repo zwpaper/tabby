@@ -1,6 +1,6 @@
 import type { JSONSchema7 } from "@ai-v5-sdk/ai";
+import { ZodEnvironment } from "@getpochi/base";
 import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
-import { ZodEnvironment } from "@ragdoll/db";
 import { z } from "zod";
 
 export const ZodMessageType: z.ZodType<DBMessage> = z.any();

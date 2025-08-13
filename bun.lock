@@ -14,11 +14,19 @@
         "vitest": "^3.2.4",
       },
     },
+    "packages/base": {
+      "name": "@getpochi/base",
+      "dependencies": {
+        "@getpochi/tools": "workspace:*",
+        "zod": "catalog:",
+      },
+    },
     "packages/common": {
       "name": "@ragdoll/common",
       "dependencies": {
         "@ai-sdk/ui-utils": "catalog:",
         "@ai-v5-sdk/ai": "catalog:",
+        "@getpochi/base": "workspace:*",
         "@getpochi/tools": "workspace:*",
         "@ragdoll/db": "workspace:*",
         "ai": "catalog:",
@@ -40,10 +48,9 @@
     "packages/db": {
       "name": "@ragdoll/db",
       "dependencies": {
-        "@getpochi/tools": "workspace:*",
+        "@getpochi/base": "workspace:*",
         "ai": "catalog:",
         "kysely": "catalog:",
-        "zod": "catalog:",
       },
       "devDependencies": {
         "@slack/bolt": "catalog:",
@@ -84,6 +91,7 @@
         "@ai-v5-sdk/provider": "catalog:",
         "@ai-v5-sdk/provider-utils": "catalog:",
         "@ai-v5-sdk/react": "catalog:",
+        "@getpochi/base": "workspace:*",
         "@getpochi/tools": "workspace:*",
         "@livestore/livestore": "catalog:",
         "@livestore/react": "catalog:",
@@ -137,6 +145,7 @@
       "dependencies": {
         "@ai-v5-sdk/ai": "catalog:",
         "@commander-js/extra-typings": "^14.0.0",
+        "@getpochi/base": "workspace:*",
         "@livestore/adapter-node": "catalog:",
         "@livestore/livestore": "catalog:",
         "@livestore/wa-sqlite": "catalog:",
@@ -152,7 +161,6 @@
       },
       "devDependencies": {
         "@getpochi/tools": "workspace:*",
-        "@ragdoll/db": "workspace:*",
       },
     },
     "packages/server": {
@@ -174,6 +182,7 @@
         "@ai-v5-sdk/groq": "npm:@ai-sdk/groq@2",
         "@ai-v5-sdk/provider": "catalog:",
         "@better-auth/stripe": "catalog:",
+        "@getpochi/base": "workspace:*",
         "@getpochi/tools": "workspace:*",
         "@google/genai": "catalog:",
         "@hono-storage/s3": "^0.0.13",
@@ -241,6 +250,7 @@
       "version": "0.5.22",
       "dependencies": {
         "@ai-v5-sdk/ai": "catalog:",
+        "@getpochi/base": "workspace:*",
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@orama/orama": "^3.1.11",
         "@preact/signals-core": "catalog:",
@@ -296,6 +306,7 @@
         "@ai-v5-sdk/ai": "catalog:",
         "@ai-v5-sdk/react": "catalog:",
         "@daveyplate/better-auth-tanstack": "catalog:",
+        "@getpochi/base": "workspace:*",
         "@leeoniya/ufuzzy": "^1.0.18",
         "@livestore/adapter-web": "catalog:",
         "@livestore/livestore": "catalog:",
@@ -370,7 +381,6 @@
         "@getpochi/tools": "workspace:*",
         "@livestore/devtools-vite": "catalog:",
         "@preact/signals-react-transform": "^0.5.1",
-        "@ragdoll/db": "workspace:*",
         "@ragdoll/vscode-webui-bridge": "workspace:*",
         "@storybook/addon-essentials": "^8.6.12",
         "@storybook/addon-interactions": "^8.6.12",
@@ -399,9 +409,9 @@
     "packages/vscode-webui-bridge": {
       "name": "@ragdoll/vscode-webui-bridge",
       "devDependencies": {
+        "@getpochi/base": "workspace:*",
         "@getpochi/tools": "workspace:*",
         "@quilted/threads": "catalog:",
-        "@ragdoll/db": "workspace:*",
       },
     },
     "packages/website": {
@@ -905,6 +915,8 @@
     "@floating-ui/react-dom": ["@floating-ui/react-dom@2.1.2", "", { "dependencies": { "@floating-ui/dom": "^1.0.0" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-06okr5cgPzMNBy+Ycse2A6udMi4bqwW/zgBF/rwjcNqWkyr82Mcg8b0vjX8OJpZFy/FKjJmw6wV7t44kK6kW7A=="],
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.9", "", {}, "sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg=="],
+
+    "@getpochi/base": ["@getpochi/base@workspace:packages/base"],
 
     "@getpochi/tools": ["@getpochi/tools@workspace:packages/tools"],
 

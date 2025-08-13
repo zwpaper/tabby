@@ -1,6 +1,6 @@
 import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
 import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
-import type { Environment, GitStatus } from "@ragdoll/db";
+import type { Environment, GitStatus } from "@getpochi/base";
 import { prompts } from "./index";
 
 type User = { name: string; email: string };

@@ -1,5 +1,5 @@
 import os from "node:os";
-import type { Environment } from "@ragdoll/db";
+import type { Environment } from "@getpochi/base";
 
 /**
  * Gets system information such as current working directory, shell, OS, and home directory.

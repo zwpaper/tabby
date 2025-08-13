@@ -9,14 +9,14 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { CheckpointPart } from "@ragdoll/db";
+import type { DataParts } from "@ragdoll/livekit";
 import { useState } from "react";
 import { Button } from "./ui/button";
 
 type ActionType = "compare" | "restore";
 
 export const CheckpointUI: React.FC<{
-  checkpoint: CheckpointPart["checkpoint"];
+  checkpoint: DataParts["checkpoint"];
   isLoading: boolean;
   className?: string;
   hideBorderOnHover?: boolean;

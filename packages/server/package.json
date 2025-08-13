@@ -38,6 +38,7 @@
     "@opentelemetry/sdk-metrics": "^2.0.1",
     "@opentelemetry/sdk-node": "^0.203.0",
     "@queuedash/api": "^3.6.0",
+    "@getpochi/base": "workspace:*",
     "@ragdoll/common": "workspace:*",
     "@ragdoll/db": "workspace:*",
     "@slack/bolt": "catalog:",

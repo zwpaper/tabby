@@ -14,6 +14,7 @@
   "dependencies": {
     "@livestore/livestore": "catalog:",
     "@livestore/react": "catalog:",
+    "@getpochi/base": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "@ai-v5-sdk/ai": "catalog:",
     "@ai-v5-sdk/react": "catalog:",

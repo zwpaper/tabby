@@ -1,7 +1,7 @@
 import type { InferUITool, UIMessage } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2FinishReason } from "@ai-v5-sdk/provider";
+import { ZodEnvironment } from "@getpochi/base";
 import { type ClientToolsV5, ZodMcpTool } from "@getpochi/tools";
-import { ZodEnvironment } from "@ragdoll/db";
 import z from "zod";
 import type { tables } from "./livestore/schema";
 
@@ -16,7 +16,7 @@ type Metadata =
       compact?: boolean;
     };
 
-type DataParts = {
+export type DataParts = {
   checkpoint: {
     commit: string;
   };
