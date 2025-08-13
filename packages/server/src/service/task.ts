@@ -336,28 +336,15 @@ class TaskService {
       parentId: number | null;
     }>,
   ): Promise<string> {
-    const { id } = await db.transaction().execute(async (trx) => {
-      const { nextTaskId } = await trx
-        .insertInto("taskSequence")
-        .values({ userId })
-        .onConflict((oc) =>
-          oc.column("userId").doUpdateSet({
-            nextTaskId: sql`\"taskSequence\".\"nextTaskId\" + 1`,
-          }),
-        )
-        .returning("nextTaskId")
-        .executeTakeFirstOrThrow();
-
-      return await trx
-        .insertInto("task")
-        .values({
-          userId,
-          taskId: nextTaskId,
-          ...taskData,
-        })
-        .returning("id")
-        .executeTakeFirstOrThrow();
-    });
+    const { id } = await db
+      .insertInto("task")
+      .values({
+        userId,
+        taskId: 0,
+        ...taskData,
+      })
+      .returning("id")
+      .executeTakeFirstOrThrow();
     return uidCoder.encode(id);
   }
 
