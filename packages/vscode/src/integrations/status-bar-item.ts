@@ -39,7 +39,6 @@ export class StatusBarItem implements vscode.Disposable {
   }
 
   private initialize() {
-    this.statusBarItem.show();
     this.disposables.push(this.statusBarItem);
 
     this.update();
@@ -66,6 +65,7 @@ export class StatusBarItem implements vscode.Disposable {
     );
     this.disposables.push({
       dispose: this.status.subscribe((status) => {
+        this.updateVisibility(status);
         this.renderStatus(status);
       }),
     });
@@ -121,6 +121,14 @@ export class StatusBarItem implements vscode.Disposable {
     // Normal case
 
     return "ready";
+  }
+
+  private updateVisibility(status: StatusBarItem["status"]["value"]) {
+    if (status === "logged-out") {
+      this.statusBarItem.hide();
+    } else {
+      this.statusBarItem.show();
+    }
   }
 
   private renderStatus(status: StatusBarItem["status"]["value"]) {

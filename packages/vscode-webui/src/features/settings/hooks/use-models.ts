@@ -1,8 +1,8 @@
-import { apiClient } from "@/lib/auth-client";
+import { apiClient, authHooks } from "@/lib/auth-client";
+import { useCustomModelSetting } from "@/lib/hooks/use-custom-model-setting";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useSettingsStore } from "../store";
-import { useCustomModelSetting } from "./use-custom-model-setting";
 
 export type DisplayModel =
   | {
@@ -37,13 +37,16 @@ export type ModelGroup = {
 export type ModelGroups = ModelGroup[];
 
 export function useModels() {
+  const { data: auth } = authHooks.useSession();
+  const user = auth?.user;
   const { enablePochiModels } = useSettingsStore();
   const { data, isLoading } = useQuery({
-    queryKey: ["models"],
+    queryKey: ["models", user?.id],
     queryFn: async () => {
       const res = await apiClient.api.models.$get();
       return await res.json();
     },
+    enabled: !!user,
   });
 
   const { customModelSettings, isLoading: isLoadingCustomModelSettings } =
@@ -68,9 +71,10 @@ export function useModels() {
     });
   }, [customModelSettings]);
 
+  const hasUser = !!user;
   const models = useMemo(() => {
-    if (!data) {
-      return undefined;
+    if (isLoading || !hasUser || !data) {
+      return customModels || [];
     }
 
     let defaultModels = data.map<DisplayModel>((model) => ({
@@ -91,7 +95,7 @@ export function useModels() {
     }
 
     return defaultModels;
-  }, [data, enablePochiModels, customModels]);
+  }, [data, enablePochiModels, customModels, hasUser, isLoading]);
 
   return {
     models,
@@ -102,7 +106,6 @@ export function useModels() {
 export function useSelectedModels() {
   const { selectedModelId, updateSelectedModelId } = useSettingsStore();
   const { models, isLoading } = useModels();
-
   const groupedModels = useMemo<ModelGroups | undefined>(() => {
     if (!models) return undefined;
     const groups: ModelGroups = [];

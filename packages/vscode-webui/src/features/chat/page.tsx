@@ -294,7 +294,6 @@ function Chat({ user, uid }: ChatProps) {
     task,
     retry,
   });
-
   const { handleSubmit, handleStop } = useChatSubmit({
     chat,
     input,

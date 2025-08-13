@@ -5,8 +5,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCustomModelSetting } from "@/lib/hooks/use-custom-model-setting";
 import { DotIcon, PencilIcon } from "lucide-react";
-import { useCustomModelSetting } from "../../hooks/use-custom-model-setting";
 import { EmptySectionPlaceholder, ScetionItem, Section } from "../ui/section";
 
 export const CustomModelSection: React.FC = () => {

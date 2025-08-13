@@ -6,7 +6,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { User } from "@/lib/auth-client";
-import { ChevronsUpDown, HelpCircle, LogOut, UserIcon } from "lucide-react";
+import {
+  ChevronsUpDown,
+  HelpCircle,
+  LogIn,
+  LogOut,
+  UserIcon,
+} from "lucide-react";
 import { Section } from "../ui/section";
 
 interface AccountSectionProps {
@@ -17,19 +23,26 @@ export const AccountSection: React.FC<AccountSectionProps> = ({ user }) => {
   if (!user) {
     return (
       <Section title="" className="pt-0">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div className="flex h-10 cursor-pointer gap-3 rounded-md p-2 hover:bg-secondary">
-              <a
-                href="command:pochi.openLoginPage"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Sign-In for Pochi models
-              </a>
+        <div className="my-2">
+          <a
+            href="command:pochi.openLoginPage"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex cursor-pointer items-center gap-4 rounded-lg border border-[var(--vscode-textLink-foreground)]/70 border-dashed bg-[var(--vscode-textLink-foreground)]/5 px-4 py-5 transition-all hover:border-[var(--vscode-textLink-foreground)]/90 hover:bg-[var(--vscode-textLink-foreground)]/10 hover:shadow-sm"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--vscode-textLink-foreground)]/25 shadow-sm">
+              <LogIn className="h-5 w-5 text-[var(--vscode-textLink-foreground)]" />
             </div>
-          </DropdownMenuTrigger>
-        </DropdownMenu>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold text-[var(--vscode-textLink-foreground)] text-sm">
+                Sign-In for Pochi models
+              </span>
+              <span className="text-muted-foreground text-xs leading-tight">
+                Access premium AI models and features
+              </span>
+            </div>
+          </a>
+        </div>
       </Section>
     );
   }
