@@ -72,7 +72,13 @@ function Chat({ user, uid }: ChatProps) {
   const chatKit = useLiveChatKit({
     taskId: uid,
     getters,
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    sendAutomaticallyWhen: (x) => {
+      // AI SDK v5 will retry regardless of the status if sendAutomaticallyWhen is set.
+      if (chatKit.chat.status === "error") {
+        return false;
+      }
+      return lastAssistantMessageIsCompleteWithToolCalls(x);
+    },
     onBeforeMakeRequest: async ({ messages }) => {
       const lastMessage = messages.at(-1);
       if (lastMessage) {
