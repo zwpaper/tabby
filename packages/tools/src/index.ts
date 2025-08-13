@@ -127,3 +127,14 @@ export const ClientToolsV5 = {
 };
 
 export type ClientToolsV5Type = typeof ClientToolsV5;
+
+export const selectClientToolsNext = (enableNewTask: boolean) => {
+  if (enableNewTask) {
+    return {
+      ...ClientToolsV5,
+    };
+  }
+
+  const { newTask, ...rest } = ClientToolsV5;
+  return rest;
+};

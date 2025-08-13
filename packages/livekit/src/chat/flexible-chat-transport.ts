@@ -4,11 +4,12 @@ import type {
   UIMessageChunk,
 } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
-import type { McpTool } from "@getpochi/tools";
+import { type McpTool, selectClientToolsNext } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { formattersNext, prompts } from "@ragdoll/common";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
+import { parseMcpToolSet } from "./llm/utils";
 import {
   createBatchCallMiddleware,
   createNewTaskMiddleware,
@@ -90,14 +91,18 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     }
 
     const system = prompts.system(environment?.info?.customRules);
+    const mcpTools = mcpToolSet && parseMcpToolSet(mcpToolSet);
+    const tools = {
+      ...selectClientToolsNext(!!this.allowNewTask),
+      ...(mcpTools || {}),
+    };
     return requestLLM(chatId, llm, {
       system,
       messages: prepareMessages(messages, environment),
       abortSignal,
       id: chatId,
-      mcpToolSet,
+      tools,
       middlewares,
-      allowNewTask: this.allowNewTask,
     });
   };
 

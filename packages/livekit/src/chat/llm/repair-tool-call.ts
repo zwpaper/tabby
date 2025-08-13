@@ -1,14 +1,14 @@
 import {
   NoSuchToolError,
+  type Tool,
   type ToolCallRepairFunction,
   streamText,
 } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
-import type { ClientToolsV5Type } from "@getpochi/tools";
 
 export const makeRepairToolCall: (
   model: LanguageModelV2,
-) => ToolCallRepairFunction<ClientToolsV5Type> =
+) => ToolCallRepairFunction<Record<string, Tool>> =
   (model) =>
   async ({ toolCall, inputSchema, error }) => {
     if (NoSuchToolError.isInstance(error)) {
