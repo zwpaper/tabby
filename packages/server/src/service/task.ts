@@ -578,7 +578,12 @@ class TaskService {
     userId: string | undefined,
     isInternalUser: boolean,
   ) {
-    const taskId = uidCoder.decode(uid);
+    let taskId: number;
+    try {
+      taskId = uidCoder.decode(uid);
+    } catch (err) {
+      throw new HTTPException(400, { message: "Invalid task ID" });
+    }
     const taskQuery = db
       .selectFrom("task")
       .innerJoin("user", "task.userId", "user.id")

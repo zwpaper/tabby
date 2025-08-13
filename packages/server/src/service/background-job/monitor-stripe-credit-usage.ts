@@ -375,7 +375,11 @@ export async function createMonitorStripeCreditUsageWorker() {
   return new Worker(
     QueueName,
     async () => {
-      await compareSpentCredit();
+      try {
+        await compareSpentCredit();
+      } catch (error) {
+        logger.error({ error }, "Monitor stripe credit usage worker failed");
+      }
     },
     queueConfig,
   );

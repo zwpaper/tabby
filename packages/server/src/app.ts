@@ -1,7 +1,9 @@
 import { otel } from "@hono/otel";
+import { getLogger } from "@ragdoll/common";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { etag } from "hono/etag";
+import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import admin from "./api/admin";
 import billing from "./api/billing";
@@ -24,7 +26,41 @@ import { auth } from "./better-auth";
 import { queuedash } from "./queuedash";
 import { slackService } from "./service/slack";
 
+const log = getLogger("HonoHandler");
+
 export const app = new Hono();
+
+// Add global error handler
+app.onError((error, c) => {
+  const method = c.req.method;
+  const path = c.req.path;
+  const userAgent = c.req.header("User-Agent") || "unknown";
+
+  if (error instanceof HTTPException) {
+    if (error.status >= 500) {
+      log.error("HTTP Exception", {
+        status: error.status,
+        message: error.message,
+        method,
+        path,
+        userAgent,
+      });
+    }
+  } else {
+    // Log all other errors as error level
+    // FIXME(wei): Should alert and fix these unknown error when occurred
+    log.error("Unhandled Error", {
+      error: error.message,
+      stack: error.stack,
+      method,
+      path,
+      userAgent,
+    });
+  }
+
+  // Re-throw to let Hono handle the response
+  throw error;
+});
 
 if (process.env.NODE_ENV === "production") {
   app.use(otel());
