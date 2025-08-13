@@ -9,6 +9,7 @@ export const useMcp = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["mcpStatus"],
     queryFn: fetchMcpStatus,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   const mcpStatus: McpStatus = data?.value ?? { connections: {}, toolset: {} };

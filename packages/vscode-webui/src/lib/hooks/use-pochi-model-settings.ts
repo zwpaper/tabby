@@ -7,6 +7,7 @@ export const usePochiModelSettings = () => {
   const { data: pochiModelSettingsSignal } = useQuery({
     queryKey: ["pochiModelSettings"],
     queryFn: fetchPochiModelSettings,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   if (pochiModelSettingsSignal === undefined) {

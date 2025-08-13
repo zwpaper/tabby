@@ -11,6 +11,7 @@ export const useActiveSelection = () => {
   const { data: activeSelectionSignal } = useQuery({
     queryKey: ["activeSelection"],
     queryFn: fetchActiveSelection,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   if (activeSelectionSignal === undefined) {

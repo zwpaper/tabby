@@ -38,6 +38,7 @@ export const useCustomModelSetting = () => {
   const { data: customModelSettingsSignal, isLoading } = useQuery({
     queryKey: ["customModelSetting"],
     queryFn: fetchCustomModelSetting,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   if (customModelSettingsSignal === undefined) {

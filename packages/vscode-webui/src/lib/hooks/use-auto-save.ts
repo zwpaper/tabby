@@ -7,6 +7,7 @@ export const useAutoSaveDisabled = () => {
   const { data: autoSaveDisabledSignal } = useQuery({
     queryKey: ["autoSaveDisabled"],
     queryFn: fetchAutoSaveDisabled,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   if (autoSaveDisabledSignal === undefined) {

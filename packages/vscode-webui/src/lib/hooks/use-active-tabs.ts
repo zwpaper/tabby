@@ -11,6 +11,7 @@ export const useActiveTabs = () => {
   const { data: activeTabsSignal } = useQuery({
     queryKey: ["activeTabs"],
     queryFn: fetchActiveTabs,
+    staleTime: Number.POSITIVE_INFINITY,
   });
 
   if (activeTabsSignal === undefined) {
