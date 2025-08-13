@@ -1,6 +1,7 @@
 import { DiffView } from "@/integrations/editor/diff-view";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import { writeTextDocument } from "@/lib/write-text-document";
 import type { ClientToolsV5Type } from "@getpochi/tools";
 import type {
   PreviewToolFunctionTypeV5,
@@ -40,7 +41,7 @@ export const previewMultiApplyDiff: PreviewToolFunctionTypeV5<
  */
 export const multiApplyDiff: ToolFunctionTypeV5<
   ClientToolsV5Type["multiApplyDiff"]
-> = async ({ path, edits }, { toolCallId }) => {
+> = async ({ path, edits }, { toolCallId, abortSignal, nonInteractive }) => {
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
   await ensureFileDirectoryExists(fileUri);
@@ -50,6 +51,14 @@ export const multiApplyDiff: ToolFunctionTypeV5<
 
   const fileContent = fileBuffer.toString();
   const updatedContent = await processMultipleDiffs(fileContent, edits);
+
+  if (nonInteractive) {
+    const edits = await writeTextDocument(path, updatedContent, abortSignal);
+    logger.info(
+      `Successfully applied multiple diff to ${path} in non-interactive mode`,
+    );
+    return { success: true, ...edits };
+  }
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
   await diffView.update(updatedContent, true);

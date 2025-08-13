@@ -32,15 +32,18 @@ export type PrepareRequestGetters = {
 export class FlexibleChatTransport implements ChatTransport<Message> {
   private readonly onStart?: OnStartCallback;
   private readonly getters: PrepareRequestGetters;
+  private readonly allowNewTask?: boolean;
   private readonly store: Store;
 
   constructor(options: {
     onStart?: OnStartCallback;
     getters: PrepareRequestGetters;
+    allowNewTask?: boolean;
     store: Store;
   }) {
     this.onStart = options.onStart;
     this.getters = options.getters;
+    this.allowNewTask = options.allowNewTask;
     this.store = options.store;
   }
 
@@ -66,10 +69,13 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       environment,
     });
 
-    const middlewares = [
-      createNewTaskMiddleware(this.store, chatId),
-      createBatchCallMiddleware(),
-    ];
+    const middlewares = [];
+
+    if (this.allowNewTask) {
+      middlewares.push(createNewTaskMiddleware(this.store, chatId));
+    }
+
+    middlewares.push(createBatchCallMiddleware());
 
     if (isWellKnownReasoningModel(llm.modelId)) {
       middlewares.push(createReasoningMiddleware());
@@ -91,6 +97,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       id: chatId,
       mcpToolSet,
       middlewares,
+      allowNewTask: this.allowNewTask,
     });
   };
 

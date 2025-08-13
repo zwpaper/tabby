@@ -1,6 +1,7 @@
 import { DiffView } from "@/integrations/editor/diff-view";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
+import { writeTextDocument } from "@/lib/write-text-document";
 import type { ClientToolsV5Type } from "@getpochi/tools";
 import type {
   PreviewToolFunctionTypeV5,
@@ -55,7 +56,7 @@ export const applyDiff: ToolFunctionTypeV5<
   ClientToolsV5Type["applyDiff"]
 > = async (
   { path, searchContent, replaceContent, expectedReplacements },
-  { toolCallId },
+  { toolCallId, abortSignal, nonInteractive },
 ) => {
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
@@ -72,6 +73,12 @@ export const applyDiff: ToolFunctionTypeV5<
     replaceContent,
     expectedReplacements,
   );
+
+  if (nonInteractive) {
+    const edits = await writeTextDocument(path, updatedContent, abortSignal);
+    logger.info(`Successfully applied diff to ${path} in non-interactive mode`);
+    return { success: true, ...edits };
+  }
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
   await diffView.update(updatedContent, true);

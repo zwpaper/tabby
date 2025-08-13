@@ -72,6 +72,7 @@ function Chat({ user, uid }: ChatProps) {
   const chatKit = useLiveChatKit({
     taskId: uid,
     getters,
+    allowNewTask: true,
     sendAutomaticallyWhen: (x) => {
       // AI SDK v5 will retry regardless of the status if sendAutomaticallyWhen is set.
       if (chatKit.chat.status === "error") {

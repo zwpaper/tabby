@@ -9,4 +9,5 @@ export type LLMRequest = {
   messages: Message[];
   mcpToolSet?: Record<string, McpTool>;
   middlewares?: LanguageModelV2Middleware[];
+  allowNewTask?: boolean;
 };

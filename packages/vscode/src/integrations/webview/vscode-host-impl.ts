@@ -278,6 +278,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       options: {
         toolCallId: string;
         abortSignal: ThreadAbortSignalSerialization;
+        nonInteractive?: boolean;
       },
     ) => {
       if (toolName in ServerTools) {
@@ -310,6 +311,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
           abortSignal,
           messages: [],
           toolCallId: options.toolCallId,
+          nonInteractive: options.nonInteractive,
         }),
       );
 

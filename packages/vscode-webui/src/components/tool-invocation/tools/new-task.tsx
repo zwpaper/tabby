@@ -49,17 +49,25 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onToolCall: async ({ toolCall }) => {
       if (lifecycle.streamingResult?.toolName !== "newTask") {
-        throw new Error(`Unexpected ${toolCall.toolName} (expected: newTask)`);
+        throw new Error("Unexpected parent toolCall state");
       }
 
-      // FIXME: avoid ui like diff view, execute Command when calling from sub task.
-      // FIXME: for executeCommand, properly handle executeCommand
+      // completion tools
+      if (
+        toolCall.toolName === "attemptCompletion" ||
+        toolCall.toolName === "askFollowupQuestion"
+      ) {
+        // no-op
+        return;
+      }
+
       const output = await vscodeHost.executeToolCall(
         toolCall.toolName,
         toolCall.input,
         {
           toolCallId: toolCall.toolCallId,
           abortSignal: lifecycle.streamingResult.serializedAbortSignal,
+          nonInteractive: true,
         },
       );
 

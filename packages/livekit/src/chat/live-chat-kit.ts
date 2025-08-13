@@ -32,6 +32,7 @@ export type LiveChatKitOptions<T> = {
     }) => Promise<Environment>;
     getMcpTools?: () => Record<string, McpTool>;
   };
+  allowNewTask?: boolean;
 
   store: Store;
   chatClass: new (options: ChatInit<Message>) => T;
@@ -55,6 +56,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
     chatClass,
     onBeforeMakeRequest,
     getters,
+    allowNewTask,
     ...chatInit
   }: LiveChatKitOptions<T>) {
     this.taskId = taskId;
@@ -63,6 +65,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       store,
       onStart: this.onStart,
       getters,
+      allowNewTask,
     });
 
     this.chat = new chatClass({

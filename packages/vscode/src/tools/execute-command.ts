@@ -19,7 +19,10 @@ const logger = getLogger("ExecuteCommand");
 
 export const executeCommand: ToolFunctionTypeV5<
   ClientToolsV5Type["executeCommand"]
-> = async ({ command, cwd = ".", isDevServer, timeout }, { abortSignal }) => {
+> = async (
+  { command, cwd = ".", isDevServer, timeout },
+  { abortSignal, nonInteractive },
+) => {
   const defaultTimeout = 120;
   if (!command) {
     throw new Error("Command is required to execute.");
@@ -84,6 +87,34 @@ export const executeCommand: ToolFunctionTypeV5<
         });
     });
   }
+
+  if (nonInteractive) {
+    return new Promise((resolve) => {
+      logger.debug(
+        "Executing in non-interactive mode, waiting for output to complete...",
+      );
+      const unsubscribe = output.subscribe((outputResult) => {
+        if (outputResult.status === "completed") {
+          const result: {
+            output: string;
+            isTruncated: boolean;
+            error?: string;
+          } = {
+            output: outputResult.content,
+            isTruncated: outputResult.isTruncated ?? false,
+          };
+          // do not set error property if it is undefined
+          if (outputResult.error) {
+            result.error = outputResult.error;
+          }
+
+          unsubscribe();
+          resolve(result);
+        }
+      });
+    });
+  }
+
   // biome-ignore lint/suspicious/noExplicitAny: pass thread signal
   return { output: ThreadSignal.serialize(output) as any, detach };
 };

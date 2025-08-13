@@ -12,6 +12,12 @@ import { parseMcpToolSet } from "./utils";
 
 export async function request(model: LanguageModelV2, payload: LLMRequest) {
   const mcpTools = payload.mcpToolSet && parseMcpToolSet(payload.mcpToolSet);
+  const tools = {
+    ...ClientToolsV5,
+    ...(mcpTools || {}),
+  };
+  const toolNames = Object.keys(tools) as Array<keyof typeof tools>;
+
   const result = streamText({
     model: wrapLanguageModel({
       model,
@@ -20,10 +26,10 @@ export async function request(model: LanguageModelV2, payload: LLMRequest) {
     abortSignal: payload.abortSignal,
     system: payload.system,
     messages: convertToModelMessages(payload.messages),
-    tools: {
-      ...ClientToolsV5,
-      ...(mcpTools || {}),
-    },
+    tools,
+    activeTools: payload.allowNewTask
+      ? undefined
+      : toolNames.filter((tool) => tool !== "newTask"),
     maxRetries: 0,
     // error log is handled in live chat kit.
     onError: () => {},
