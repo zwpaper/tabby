@@ -176,7 +176,17 @@ export function MessageMarkdown({
 
                 // children may be file path, folder path, symbol or normal text, we need to handle each case
                 if (isFilePath(children)) {
-                  return <FileBadge path={children} />;
+                  const pathSeparatorCount = (children.match(/[\/\\]/g) || [])
+                    .length;
+                  return (
+                    <FileBadge
+                      path={children}
+                      fallbackGlobPattern={
+                        // glob pattern use `/` as path separator even on windows; when applied, glob pattern will match paths with both `/` and `\`
+                        pathSeparatorCount >= 2 ? `**/${children}` : undefined
+                      }
+                    />
+                  );
                 }
                 if (isFolderPath(children)) {
                   return <FileBadge path={children} isDirectory={true} />;

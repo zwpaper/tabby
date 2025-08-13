@@ -19,6 +19,7 @@ interface FileBadgeProps {
     removed: number;
   };
   changes?: ToolCallCheckpoint;
+  fallbackGlobPattern?: string;
 }
 
 export const FileBadge: React.FC<FileBadgeProps> = ({
@@ -32,6 +33,7 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
   isDirectory = false,
   editSummary,
   changes,
+  fallbackGlobPattern,
 }) => {
   const lineRange = startLine
     ? endLine && startLine !== endLine
@@ -51,10 +53,19 @@ export const FileBadge: React.FC<FileBadgeProps> = ({
       );
       return;
     }
-    vscodeHost.openFile(
-      path,
-      startLine ? { start: startLine, end: endLine } : undefined,
-    );
+    const options: {
+      start?: number;
+      end?: number;
+      fallbackGlobPattern?: string;
+    } = {
+      fallbackGlobPattern: fallbackGlobPattern,
+    };
+    if (startLine) {
+      options.start = startLine;
+      options.end = endLine;
+    }
+
+    vscodeHost.openFile(path, options);
   };
   return (
     <span

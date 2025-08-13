@@ -50,6 +50,12 @@ describe("McpConnection", () => {
       },
       "@modelcontextprotocol/sdk/client/stdio.js": {
         StdioClientTransport: mockStdioTransport,
+        getDefaultEnvironment: () => ({
+          PATH: process.env.PATH || "/usr/local/bin:/usr/bin:/bin",
+          HOME: process.env.HOME || process.env.USERPROFILE || "/home/user",
+          USERPROFILE: process.env.USERPROFILE || process.env.HOME || "C:\\Users\\user",
+          SYSTEMDRIVE: process.env.SYSTEMDRIVE || "C:",
+        }),
       },
       "@modelcontextprotocol/sdk/client/streamableHttp.js": {
         StreamableHTTPClientTransport: mockStreamableTransport,
@@ -275,7 +281,10 @@ describe("McpConnection", () => {
       assert.strictEqual(env.NODE_ENV, "test");
       // Should also have default environment variables
       assert.ok(env.PATH);
-      assert.ok(env.HOME || env.USERPROFILE); // HOME on Unix, USERPROFILE on Windows
+      assert.ok(env.HOME || env.USERPROFILE, "HOME or USERPROFILE should be set"); // HOME on Unix, USERPROFILE on Windows
+      if (process.platform === 'win32') {
+        assert.ok(env.SYSTEMDRIVE, 'SYSTEMDRIVE should be set on Windows');
+      }
     });
   });
 

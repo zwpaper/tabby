@@ -133,7 +133,7 @@ describe("globFiles Tool", () => {
     );
     assert.deepStrictEqual(
       result.files.sort(),
-      ["file1.txt", "sub1/file2.txt", "sub2/file3.txt"].sort(),
+      ["file1.txt", _path.join("sub1", "file2.txt"), _path.join("sub2", "file3.txt")].sort(),
     );
     assert.strictEqual(result.isTruncated, false);
   });
@@ -215,21 +215,21 @@ describe("globFiles Tool", () => {
       { path: currentTestTempDirRelativePath, globPattern: "targetdir/*.txt" },
       dummyToolOptions,
     );
-    assert.deepStrictEqual(result.files.sort(), ["targetdir/fileA.txt"]);
+    assert.deepStrictEqual(result.files.sort(), [_path.join("targetdir", "fileA.txt")]);
     assert.strictEqual(result.isTruncated, false);
 
     result = await globFiles(
       { path: currentTestTempDirRelativePath, globPattern: "**/fileA.txt" },
       dummyToolOptions,
     );
-    assert.deepStrictEqual(result.files.sort(), ["targetdir/fileA.txt"]);
+    assert.deepStrictEqual(result.files.sort(), [_path.join("targetdir", "fileA.txt")]);
     assert.strictEqual(result.isTruncated, false);
 
     result = await globFiles(
       { path: currentTestTempDirRelativePath, globPattern: "otherdir/*"},
       dummyToolOptions,
     );
-    assert.deepStrictEqual(result.files.sort(), ["otherdir/fileC.txt"]);
+    assert.deepStrictEqual(result.files.sort(), [_path.join("otherdir", "fileC.txt")]);
      assert.strictEqual(result.isTruncated, false);
   });
 
@@ -260,4 +260,3 @@ describe("globFiles Tool", () => {
   });
 
 });
-

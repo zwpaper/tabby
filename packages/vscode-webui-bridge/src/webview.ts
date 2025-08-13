@@ -121,6 +121,7 @@ export interface VSCodeHostApi {
    * @param options.start - The starting line number (1-based) to open the file at.
    * @param options.end - The ending line number (1-based) to open the file at.
    * @param options.preserveFocus - If true, the file will be opened without changing focus. Only applicable for text files.
+   * @param options.fallbackGlobPattern - A glob pattern to find file to open if filePath not exist.
    */
   openFile(
     filePath: string,
@@ -129,6 +130,7 @@ export interface VSCodeHostApi {
       end?: number;
       preserveFocus?: boolean;
       base64Data?: string;
+      fallbackGlobPattern?: string;
     },
   ): void;
 

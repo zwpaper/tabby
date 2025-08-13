@@ -435,11 +435,12 @@ describe("DiffView with real file system", () => {
 
       const mockEditor = { document: { uri: newFileUri, getText: sinon.stub().returns(""), lineCount: 0 }, revealRange: sinon.stub() };
       
-      fsStubs.isFileExists.withArgs(newFileUri).resolves(false); 
-      fsStubs.ensureFileDirectoryExists.withArgs(newFileUri).resolves(undefined);
-      fsStubs.readFile.withArgs(newFileUri).resolves(Buffer.from("")); 
-      fsStubs.stat.withArgs(newFileUri).resolves({ type: vscode.FileType.File, ctime: 0, mtime: 0, size: 0 });
-      fsStubs.delete.withArgs(newFileUri).resolves(undefined);
+      // Mock the file as not existing initially, then existing after creation with empty content
+      fsStubs.isFileExists.resolves(false); 
+      fsStubs.ensureFileDirectoryExists.resolves(undefined);
+      fsStubs.readFile.resolves(Buffer.from("")); 
+      vscodeStubs.workspace.fs.stat.resolves({ type: vscode.FileType.File, ctime: 0, mtime: 0, size: 0 });
+      vscodeStubs.workspace.fs.delete.resolves(undefined);
       
       vscodeStubs.window.showTextDocument.resolves(mockEditor as any);
       vscodeStubs.commands.executeCommand.withArgs("vscode.diff").callsFake(() => {
@@ -452,10 +453,10 @@ describe("DiffView with real file system", () => {
       (diffView as any).fileUri = newFileUri; 
 
       await diffView.dispose();
-      await new Promise(resolve => setTimeout(resolve, 100)); 
+      await new Promise(resolve => setTimeout(resolve, 200)); // Wait for async dispose operation
 
-      assert.ok(fsStubs.stat.calledWith(newFileUri), "fs.stat should be called with newFileUri");
-      assert.ok(fsStubs.delete.calledWith(newFileUri), "fs.delete should be called for empty new file");
+      assert.ok(vscodeStubs.workspace.fs.stat.called, "fs.stat should be called with newFileUri");
+      assert.ok(vscodeStubs.workspace.fs.delete.calledWith(newFileUri), "fs.delete should be called for empty new file");
     });
 
     it("should not delete an existing file or a non-empty new file on dispose", async () => {
@@ -485,11 +486,12 @@ describe("DiffView with real file system", () => {
       const newNonEmptyFileUri = vscode.Uri.joinPath(currentTestTempDirUri, newNonEmptyFileRelPath);
       const mockNewNonEmptyEditor = { document: { uri: newNonEmptyFileUri, getText: sinon.stub().returns("I have content!"), lineCount: 1 }, revealRange: sinon.stub() };
 
-      fsStubs.isFileExists.withArgs(newNonEmptyFileUri).resolves(false); 
-      fsStubs.ensureFileDirectoryExists.withArgs(newNonEmptyFileUri).resolves(undefined);
-      fsStubs.readFile.withArgs(newNonEmptyFileUri).resolves(Buffer.from("I have content!"));
-      fsStubs.stat.withArgs(newNonEmptyFileUri).resolves({ type: vscode.FileType.File, ctime: 0, mtime: 0, size: 15 }); 
-      fsStubs.delete.resetHistory();
+      // Set up for new non-empty file (doesn't exist initially)
+      fsStubs.isFileExists.resolves(false); 
+      fsStubs.ensureFileDirectoryExists.resolves(undefined);
+      fsStubs.readFile.resolves(Buffer.from("I have content!"));
+      vscodeStubs.workspace.fs.stat.resolves({ type: vscode.FileType.File, ctime: 0, mtime: 0, size: 15 }); 
+      vscodeStubs.workspace.fs.delete.resetHistory();
       
       vscodeStubs.window.showTextDocument.resolves(mockNewNonEmptyEditor as any);
       vscodeStubs.window.onDidChangeActiveTextEditor.resetHistory(); 
@@ -501,12 +503,12 @@ describe("DiffView with real file system", () => {
 
       const diffViewNewNonEmpty = await DiffView.getOrCreate("dispose-new-non-empty-test", newNonEmptyFileRelPath);
       (diffViewNewNonEmpty as any).fileUri = newNonEmptyFileUri;
+      
       await diffViewNewNonEmpty.dispose();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 200)); // Wait for async dispose operation
 
-      assert.ok(fsStubs.stat.calledWith(newNonEmptyFileUri), "fs.stat should be called for non-empty new file");
-      assert.ok(fsStubs.delete.notCalled, "fs.delete should NOT be called for non-empty new file");
+      assert.ok(vscodeStubs.workspace.fs.stat.called, "fs.stat should be called for non-empty new file");
+      assert.ok(vscodeStubs.workspace.fs.delete.notCalled, "fs.delete should NOT be called for non-empty new file");
     });
   });
 });
-

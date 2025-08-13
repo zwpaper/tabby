@@ -123,8 +123,25 @@ describe("executeCommand", () => {
   });
 
   it("should set GIT_COMMITTER environment variables", async () => {
+    // Use platform-appropriate syntax for environment variables
+    let command: string;
+    if (process.platform === "win32") {
+      // Check if we're using PowerShell or cmd
+      const shell = process.env.ComSpec?.toLowerCase();
+      if (shell?.includes("powershell") || !shell) {
+        // PowerShell syntax
+        command = "Write-Output \"$env:GIT_COMMITTER_NAME $env:GIT_COMMITTER_EMAIL\"";
+      } else {
+        // cmd.exe syntax
+        command = "echo %GIT_COMMITTER_NAME% %GIT_COMMITTER_EMAIL%";
+      }
+    } else {
+      // Unix-style (bash/zsh/sh)
+      command = "echo $GIT_COMMITTER_NAME $GIT_COMMITTER_EMAIL";
+    }
+
     const result = await executeCommand(mockContext)(
-      { command: "echo $GIT_COMMITTER_NAME $GIT_COMMITTER_EMAIL" },
+      { command },
       mockToolExecutionOptions,
     );
 

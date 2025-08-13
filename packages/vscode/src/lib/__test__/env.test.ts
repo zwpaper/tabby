@@ -155,9 +155,7 @@ describe("env.ts", () => {
 
           for (const [name, type] of entries) {
             if (fileFilter(name, type)) {
-              const fileUri = vscode.Uri.joinPath(directoryUri, name);
-              const relativePath = vscode.workspace.asRelativePath(fileUri);
-              files.push(relativePath);
+              files.push(name);
             }
           }
 
@@ -512,10 +510,8 @@ describe("env.ts", () => {
       // The function should detect .MD and .Md files (case-insensitive)
       assert.strictEqual(workflows.length, 2);
       
-      // Note: The current implementation has a bug where it only strips lowercase .md
-      // So the IDs will include the extension for non-lowercase extensions
-      const uppercaseWorkflow = workflows.find(w => w.id === "uppercase.MD" || w.id === "uppercase");
-      const mixedcaseWorkflow = workflows.find(w => w.id === "mixedcase.Md" || w.id === "mixedcase");
+      const uppercaseWorkflow = workflows.find(w => w.id === "uppercase");
+      const mixedcaseWorkflow = workflows.find(w => w.id === "mixedcase");
       
       assert.ok(uppercaseWorkflow, "Should find uppercase workflow");
       assert.ok(mixedcaseWorkflow, "Should find mixedcase workflow");
@@ -526,24 +522,3 @@ describe("env.ts", () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

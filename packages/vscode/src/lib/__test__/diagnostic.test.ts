@@ -2,6 +2,7 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import { getNewDiagnostics, diagnosticsToProblemsString } from "../diagnostic";
 import { describe, it } from "mocha";
+import * as path from "node:path";
 
 // Helper function to create a diagnostic
 function createDiagnostic(
@@ -229,10 +230,10 @@ file2.ts
         [vscode.DiagnosticSeverity.Error],
         differentCwd,
       );
-      const expected = `test/file1.ts
+      const expected = `${path.join("test", "file1.ts")}
 - [eslint Error] Line 1: Error 1
 
-test/file2.ts
+${path.join("test", "file2.ts")}
 - [eslint Error] Line 6: Error 2`;
       assert.strictEqual(result, expected);
     });
@@ -255,4 +256,3 @@ test/file2.ts
     });
   });
 });
-

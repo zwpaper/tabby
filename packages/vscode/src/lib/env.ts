@@ -119,7 +119,7 @@ export async function collectWorkflows(): Promise<
       const content = await readFileContent(absolutePath);
 
       // e.g., ".pochi/workflows/workflow1.md" -> "workflow1.md"
-      const fileName = file.split("/").pop()?.replace(/\.md$/, "") || file;
+      const fileName = path.basename(file).replace(/\.md$/i, "");
 
       return {
         id: fileName,

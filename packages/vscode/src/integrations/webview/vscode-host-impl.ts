@@ -383,6 +383,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       end?: number;
       preserveFocus?: boolean;
       base64Data?: string;
+      fallbackGlobPattern?: string;
     },
   ) => {
     const current = getWorkspaceFolder().uri;
@@ -415,7 +416,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       // file may not exist, check if has base64Data
       if (options?.base64Data) {
         try {
-          // If base64 data is present, open it as a file
+          // If base64 data is present, open it as a temp file
           const tempFile = vscode.Uri.file(
             path.join(os.tmpdir(), fileUri.path),
           );
@@ -426,6 +427,20 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
           await vscode.commands.executeCommand("vscode.open", tempFile);
         } catch (error) {
           logger.error(`Failed to open file from base64 data: ${error}`);
+        }
+      }
+
+      if (options?.fallbackGlobPattern) {
+        const result = await vscode.workspace.findFiles(
+          options.fallbackGlobPattern,
+          null,
+          1,
+        );
+
+        logger.info("found file by glob pattern", result[0]);
+
+        if (result.length > 0) {
+          await vscode.commands.executeCommand("vscode.open", result[0]);
         }
       }
     }
