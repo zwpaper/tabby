@@ -254,7 +254,10 @@ async function compareSpentCredit() {
       };
       if (Math.abs(diff) > 1) {
         if (isInWhiteList) {
-          logger.info(logPayload, "Stripe credit usage mismatch (whitelisted)");
+          logger.debug(
+            logPayload,
+            "Stripe credit usage mismatch (whitelisted)",
+          );
         } else {
           logger.error(logPayload, "Stripe credit usage mismatch");
         }
@@ -335,7 +338,10 @@ async function compareSpentCredit() {
 
       if (Math.abs(diff) > 1) {
         if (isInWhiteList) {
-          logger.info(logPayload, "Stripe credit usage mismatch (whitelisted)");
+          logger.debug(
+            logPayload,
+            "Stripe credit usage mismatch (whitelisted)",
+          );
         } else {
           logger.error(logPayload, "Stripe credit usage mismatch");
         }
