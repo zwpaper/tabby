@@ -10,6 +10,7 @@ import { type User, apiClient } from "@/lib/auth-client";
 import { useCustomModelSetting } from "@/lib/hooks/use-custom-model-setting";
 import { useQuery } from "@tanstack/react-query";
 import { DotIcon, PencilIcon } from "lucide-react";
+import { useMemo } from "react";
 import { AccordionSection } from "../ui/accordion-section";
 import { EmptySectionPlaceholder, Section } from "../ui/section";
 
@@ -18,7 +19,7 @@ interface ModelSectionProps {
 }
 
 export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
-  const { data: pochiModels, isLoading: isPochiModelLoading } = useQuery({
+  const { data: pochiModelsData, isLoading: isPochiModelLoading } = useQuery({
     queryKey: ["models", user?.id],
     queryFn: async () => {
       const res = await apiClient.api.models.$get();
@@ -26,6 +27,20 @@ export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
     },
     enabled: !!user,
   });
+
+  const pochiModels = useMemo(() => {
+    if (!pochiModelsData) return undefined;
+
+    return pochiModelsData.slice().sort((a, b) => {
+      if (a.costType === "premium" && b.costType !== "premium") {
+        return -1;
+      }
+      if (a.costType !== "premium" && b.costType === "premium") {
+        return 1;
+      }
+      return 0;
+    });
+  }, [pochiModelsData]);
 
   const { customModelSettings, isLoading: isCustomModelLoading } =
     useCustomModelSetting();
@@ -37,6 +52,8 @@ export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
   const getCostTypeBadgeVariant = (costType: "basic" | "premium") => {
     return costType === "premium" ? "default" : "secondary";
   };
+
+  const hasModels = !!pochiModels?.length || !!customModelSettings?.length;
 
   return (
     <Section
@@ -69,92 +86,53 @@ export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
             <Skeleton key={i} className="h-10 w-full bg-secondary" />
           ))}
         </div>
-      ) : (
+      ) : hasModels ? (
         <div className="space-y-3">
           {/* Pochi Models Section */}
-          <div className="ml-1">
-            <AccordionSection
-              title={<div className="py-1">Pochi</div>}
-              variant="compact"
-              className="py-0"
-              defaultOpen
-            >
-              {pochiModels && pochiModels.length > 0 ? (
+          {!!user && (
+            <div className="ml-1">
+              <AccordionSection
+                title={<div className="py-1">Pochi</div>}
+                variant="compact"
+                className="py-0"
+                defaultOpen
+              >
                 <div className="space-y-2">
-                  {[...pochiModels]
-                    .sort((a, b) => {
-                      if (
-                        a.costType === "premium" &&
-                        b.costType !== "premium"
-                      ) {
-                        return -1;
-                      }
-                      if (
-                        a.costType !== "premium" &&
-                        b.costType === "premium"
-                      ) {
-                        return 1;
-                      }
-                      return 0;
-                    })
-                    .map((model) => (
-                      <div
-                        key={model.id}
-                        className="group rounded-md border p-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-1 items-center gap-2 overflow-x-hidden">
-                            <div className="flex size-6 shrink-0 items-center justify-center">
-                              <DotIcon className="size-6 text-muted-foreground" />
-                            </div>
-                            <span className="truncate font-semibold">
-                              {model.id}
-                            </span>
+                  {pochiModels?.map((model) => (
+                    <div key={model.id} className="group rounded-md border p-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-1 items-center gap-2 overflow-x-hidden">
+                          <div className="flex size-6 shrink-0 items-center justify-center">
+                            <DotIcon className="size-6 text-muted-foreground" />
                           </div>
-                          <a
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            href="https://app.getpochi.com/pricing"
-                            className="cursor-pointer"
-                          >
-                            <Badge
-                              variant={
-                                getCostTypeBadgeVariant(model.costType) as
-                                  | "default"
-                                  | "secondary"
-                              }
-                              className="text-xs"
-                            >
-                              {getCostTypeBadgeText(model.costType)}
-                            </Badge>
-                          </a>
+                          <span className="truncate font-semibold">
+                            {model.id}
+                          </span>
                         </div>
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <EmptySectionPlaceholder
-                  content={
-                    user ? (
-                      "No Pochi models available."
-                    ) : (
-                      <span>
                         <a
-                          href="command:pochi.openLoginPage"
-                          className="!text-[var(--vscode-textLink-foreground)] hover:underline"
                           target="_blank"
                           rel="noopener noreferrer"
+                          href="https://app.getpochi.com/pricing"
+                          className="cursor-pointer"
                         >
-                          Sign-in
-                        </a>{" "}
-                        for Pochi models.
-                      </span>
-                    )
-                  }
-                />
-              )}
-            </AccordionSection>
-          </div>
+                          <Badge
+                            variant={
+                              getCostTypeBadgeVariant(model.costType) as
+                                | "default"
+                                | "secondary"
+                            }
+                            className="text-xs"
+                          >
+                            {getCostTypeBadgeText(model.costType)}
+                          </Badge>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionSection>
+            </div>
+          )}
           {/* Custom Models Section */}
           {customModelSettings?.map(
             (provider) =>
@@ -193,6 +171,8 @@ export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
               ),
           )}
         </div>
+      ) : (
+        <EmptySectionPlaceholder content="No models found" />
       )}
     </Section>
   );
