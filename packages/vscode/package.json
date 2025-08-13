@@ -241,23 +241,6 @@
             "default": [],
             "items": {
               "type": "object",
-              "default": {
-                "id": "openai",
-                "baseURL": "https://api.openai.com/v1",
-                "apiKey": "your api key here",
-                "models": [
-                  {
-                    "id": "gpt-4.1",
-                    "contextWindow": 1047576,
-                    "maxTokens": 32768
-                  },
-                  {
-                    "id": "o4-mini",
-                    "contextWindow": 200000,
-                    "maxTokens": 100000
-                  }
-                ]
-              },
               "properties": {
                 "id": {
                   "type": "string",

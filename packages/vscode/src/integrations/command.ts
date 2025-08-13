@@ -379,12 +379,57 @@ export class CommandManager implements vscode.Disposable {
       vscode.commands.registerCommand(
         "pochi.openCustomModelSettings",
         async () => {
-          vscode.commands.executeCommand("workbench.action.openSettingsJson", {
-            revealSetting: { key: "pochi.customModelSettings", edit: true },
-          });
+          await this.ensureDefaultCustomModelSettings();
+          await vscode.commands.executeCommand(
+            "workbench.action.openSettingsJson",
+            {
+              revealSetting: { key: "pochi.customModelSettings" },
+            },
+          );
         },
       ),
     );
+  }
+
+  private async ensureDefaultCustomModelSettings() {
+    const currentSettings = this.pochiConfiguration.customModelSettings.value;
+
+    // If there are already settings, don't add defaults
+    if (currentSettings && currentSettings.length > 0) {
+      return;
+    }
+
+    // Define default custom model settings
+    const defaultSettings = [
+      {
+        id: "openai",
+        baseURL: "https://api.openai.com/v1",
+        apiKey: "your api key here",
+        models: [
+          {
+            id: "gpt-4.1",
+            contextWindow: 1047576,
+            maxTokens: 32768,
+          },
+          {
+            id: "o4-mini",
+            contextWindow: 200000,
+            maxTokens: 100000,
+          },
+        ],
+      },
+    ];
+
+    try {
+      // Update the settings with defaults
+      await vscode.workspace
+        .getConfiguration("pochi")
+        .update("customModelSettings", defaultSettings, true);
+
+      logger.debug("Default custom model settings inserted");
+    } catch (error) {
+      logger.error("Failed to insert default custom model settings:", error);
+    }
   }
 
   dispose() {

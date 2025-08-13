@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -119,16 +120,18 @@ export function ModelSelect({
                   </div>
                 ))}
                 {!!models?.length && <DropdownMenuSeparator />}
-                <a
-                  href="command:pochi.openCustomModelSettings"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-1"
-                >
-                  <span className="text-[var(--vscode-textLink-foreground)] text-xs">
-                    Manage custom models...
-                  </span>
-                </a>
+                <DropdownMenuItem asChild>
+                  <a
+                    href="command:pochi.openCustomModelSettings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex cursor-pointer items-center gap-2 px-3 py-1"
+                  >
+                    <span className="text-[var(--vscode-textLink-foreground)] text-xs">
+                      Manage custom models...
+                    </span>
+                  </a>
+                </DropdownMenuItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenuPortal>
