@@ -9,9 +9,8 @@ import { usePochiEvents } from "@/hooks/use-pochi-events";
 import { apiClient } from "@/lib/auth-client";
 import { normalizeApiError, toHttpError } from "@/lib/error";
 import type { UIMessage } from "@ai-v5-sdk/ai";
-import { toUIMessage } from "@ragdoll/common";
 import type { TaskEvent } from "@ragdoll/db";
-import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
+import { fromV4DBMessage } from "@ragdoll/livekit/v4-adapter";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
@@ -80,9 +79,7 @@ function RouteComponent() {
     () =>
       // @ts-ignore
       loaderData.conversation?.messagesNext ||
-      (loaderData.conversation?.messages || [])
-        .map(toUIMessage)
-        .map(fromV4UIMessage),
+      (loaderData.conversation?.messages || []).map(fromV4DBMessage),
     [loaderData],
   );
 

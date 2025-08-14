@@ -9,9 +9,7 @@ import { useSession } from "@/lib/auth-hooks";
 import { normalizeApiError, toHttpError } from "@/lib/error";
 import { cn } from "@/lib/utils";
 import type { UIMessage } from "@ai-v5-sdk/ai";
-import type { SubTask } from "@getpochi/tools";
-import { toUIMessage, toUIMessages } from "@ragdoll/common";
-import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
+import { fromV4DBMessage } from "@ragdoll/livekit/v4-adapter";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
@@ -36,14 +34,6 @@ export const Route = createFileRoute("/share/$uid")({
       const { subtasks, ...rest } = await resp.json();
       return {
         ...rest,
-        subtasks: subtasks?.map(
-          (x) =>
-            ({
-              uid: x.uid,
-              messages: toUIMessages(x.conversation?.messages || []),
-              todos: x.todos || [],
-            }) satisfies SubTask,
-        ),
       };
     } catch (error) {
       throw normalizeApiError(error);
@@ -75,9 +65,7 @@ function RouteComponent() {
     () =>
       // @ts-ignore
       loaderData.conversation?.messagesNext ||
-      (loaderData.conversation?.messages || [])
-        .map(toUIMessage)
-        .map(fromV4UIMessage),
+      (loaderData.conversation?.messages || []).map(fromV4DBMessage),
     [loaderData],
   );
 

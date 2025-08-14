@@ -5,12 +5,7 @@ import {
   lastAssistantMessageIsCompleteWithToolCalls,
 } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
-import {
-  ServerToolApproved,
-  ServerTools,
-  type Todo,
-  type ToolFunctionTypeV5,
-} from "@getpochi/tools";
+import type { Todo, ToolFunctionTypeV5 } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { type Signal, signal } from "@preact/signals-core";
 import { getLogger, prompts } from "@ragdoll/common";
@@ -580,10 +575,6 @@ async function executeToolCall(
   abortSignal?: AbortSignal,
 ) {
   const toolName = getToolName(tool);
-  if (toolName in ServerTools) {
-    return ServerToolApproved;
-  }
-
   const toolFunction = ToolMap[toolName];
   if (!toolFunction) {
     return {

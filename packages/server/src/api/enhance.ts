@@ -1,12 +1,12 @@
+import { APICallError, RetryError, generateText } from "@ai-v5-sdk/ai";
 import { zValidator } from "@hono/zod-validator";
 import { getLogger } from "@ragdoll/common";
-import { APICallError, RetryError, generateText } from "ai";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { requireAuth } from "../auth";
 
-import { geminiFlash } from "../lib/constants";
+import { geminiFlashNext } from "../lib/constants";
 
 const logger = getLogger("EnhanceApi");
 
@@ -23,7 +23,7 @@ const enhance = new Hono().post(
 
     try {
       const result = await generateText({
-        model: geminiFlash,
+        model: geminiFlashNext,
         system:
           "Enhance the user's prompt to make it clearer and more specific while maintaining its original intent. Make it concise and straightforward. Do NOT use markdown formatting, bullet points, or numbered lists. Avoid creating complex structured templates. Keep the enhancement natural, conversational, and directly usable as text input. Return only the enhanced prompt without any explanations, comments, headings, or special formatting.",
         messages: [

@@ -122,8 +122,8 @@ const chat = new Hono()
                 user,
                 validModelId,
                 {
-                  promptTokens: usage.inputTokens || 0,
-                  completionTokens: usage.outputTokens || 0,
+                  inputTokens: usage.inputTokens || 0,
+                  outputTokens: usage.outputTokens || 0,
                   totalTokens: usage.totalTokens || 0,
                 },
                 creditCostInput,

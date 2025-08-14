@@ -1,14 +1,7 @@
-import { type AnthropicProviderOptions, anthropic } from "@ai-sdk/anthropic";
-import { deepinfra } from "@ai-sdk/deepinfra";
-import type { GoogleGenerativeAIProviderOptions } from "@ai-sdk/google";
-import { createVertex } from "@ai-sdk/google-vertex";
-import { groq } from "@ai-sdk/groq";
 import type {
   LanguageModelV2,
   LanguageModelV2CallOptions,
 } from "@ai-v5-sdk/provider";
-import type { LanguageModelV1, streamText } from "ai";
-import type { ChatRequest } from "../types";
 
 // Define available models
 export type AvailableModelId =
@@ -262,89 +255,6 @@ export const StripePlans = [
   },
 ];
 
-export function getModelById(
-  modelId: AvailableModelId,
-  modelEndpointId?: string,
-): LanguageModelV1 {
-  switch (modelId) {
-    case "anthropic/claude-4-sonnet":
-      return anthropic("claude-4-sonnet-20250514");
-    case "google/gemini-2.5-pro":
-      return vertex("gemini-2.5-pro");
-    case "google/gemini-2.5-flash":
-      return geminiFlash;
-    case "moonshotai/kimi-k2":
-      return groq("moonshotai/kimi-k2-instruct");
-    case "pochi/pro-1":
-      return vertexFineTuning(modelEndpointId || "2224986023618674688");
-    case "pochi/max-1":
-      return vertexFineTuning(modelEndpointId || "5890711611135492096");
-    case "qwen/qwen3-coder":
-      return deepinfra("Qwen/Qwen3-Coder-480B-A35B-Instruct");
-    case "zai/glm-4.5":
-      return deepinfra("zai-org/GLM-4.5");
-  }
-}
-
-export function getModelOptions(
-  modelId: AvailableModelId | NonNullable<ChatRequest["openAIModelOverride"]>,
-): Partial<Parameters<typeof streamText>["0"]> {
-  if (typeof modelId !== "string") {
-    return {
-      maxTokens: modelId.maxOutputTokens,
-    };
-  }
-
-  switch (modelId) {
-    case "pochi/pro-1":
-    case "pochi/max-1":
-    case "google/gemini-2.5-flash":
-    case "google/gemini-2.5-pro":
-      return {
-        maxTokens: 1024 * 32, // 32k tokens
-        providerOptions: {
-          google: {
-            thinkingConfig: {
-              includeThoughts: true,
-              thinkingBudget: 4096,
-            },
-          } satisfies GoogleGenerativeAIProviderOptions,
-        },
-      };
-    case "anthropic/claude-4-sonnet":
-      return {
-        maxTokens: 1024 * 32, // 32k tokens
-        providerOptions: {
-          anthropic: {
-            thinking: {
-              type: "enabled",
-              budgetTokens: 4096,
-            },
-          } satisfies AnthropicProviderOptions,
-        },
-      };
-    case "moonshotai/kimi-k2":
-      return {
-        maxTokens: 1024 * 14, // 14k tokens
-      };
-    case "qwen/qwen3-coder":
-      return {
-        maxTokens: 1024 * 32,
-      };
-    case "zai/glm-4.5":
-      return {
-        maxTokens: 1024 * 14,
-      };
-  }
-}
-
-const vertex = createVertex({
-  baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/${process.env.GOOGLE_VERTEX_LOCATION}/publishers/google`,
-  googleAuthOptions: {
-    credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
-  },
-});
-
 function patchedFetchForFinetune(
   requestInfo: Request | URL | string,
   requestInit?: RequestInit,
@@ -371,16 +281,6 @@ function patchedFetchForFinetune(
   throw new Error(`Unexpected requestInfo type: ${typeof requestInfo}`);
 }
 
-const vertexFineTuning = createVertex({
-  location: "us-central1",
-  baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/us-central1/publishers/google`,
-  googleAuthOptions: {
-    credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
-  },
-  fetch: patchedFetchForFinetune as unknown as typeof globalThis.fetch,
-});
-
-export const geminiFlash = vertex("gemini-2.5-flash");
 import {
   type AnthropicProviderOptions as AnthropicProviderOptionsNext,
   anthropic as anthropicNext,

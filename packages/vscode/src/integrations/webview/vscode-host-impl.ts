@@ -30,11 +30,9 @@ import { todoWrite } from "@/tools/todo-write";
 import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
 import type { Tool as ToolV5 } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
-import {
-  type PreviewToolFunctionTypeV5,
-  ServerToolApproved,
-  ServerTools,
-  type ToolFunctionTypeV5,
+import type {
+  PreviewToolFunctionTypeV5,
+  ToolFunctionTypeV5,
 } from "@getpochi/tools";
 import {
   ThreadAbortSignal,
@@ -281,10 +279,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         nonInteractive?: boolean;
       },
     ) => {
-      if (toolName in ServerTools) {
-        return ServerToolApproved;
-      }
-
       let tool: ToolFunctionTypeV5<ToolV5> | undefined;
 
       if (toolName in ToolMap) {

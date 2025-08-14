@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { declareServerTool, defineClientToolV5 } from "./types";
+import { defineClientToolV5 } from "./types";
 
 export const BatchCallTools = [
   "applyDiff",
@@ -74,5 +74,4 @@ Example usage:
   }),
 };
 
-export const batchCall = declareServerTool(toolDef);
-export const batchCallV5 = defineClientToolV5(toolDef);
+export const batchCall = defineClientToolV5(toolDef);

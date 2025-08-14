@@ -21,5 +21,3 @@ export type PreviewToolFunctionTypeV5<T extends ToolV5> = (
     abortSignal?: AbortSignal;
   },
 ) => Promise<undefined>;
-
-export * from "./legacy-types";

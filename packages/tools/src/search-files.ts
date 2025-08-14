@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool, defineClientToolV5 } from "./types";
+import { defineClientToolV5 } from "./types";
 
 const toolDef = {
   description: `
@@ -46,6 +46,4 @@ const toolDef = {
   }),
 };
 
-export const searchFiles = defineClientTool(toolDef);
-
-export const searchFilesV5 = defineClientToolV5(toolDef);
+export const searchFiles = defineClientToolV5(toolDef);

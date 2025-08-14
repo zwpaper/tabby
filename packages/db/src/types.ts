@@ -46,14 +46,6 @@ export type TaskCreateEvent =
         }[];
         githubTemplateUrl?: string;
       };
-    }
-  | {
-      type: "vscode:compact-new-task";
-      data: {
-        sourceUid: string;
-        /** Last unsaved conversation message (last user+assistant or last assistant only) */
-        messages: DBMessage[];
-      };
     };
 
 export type TaskError = {

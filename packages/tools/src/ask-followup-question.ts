@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientTool, defineClientToolV5 } from "./types";
+import { defineClientToolV5 } from "./types";
 
 const toolDef = {
   description:
@@ -26,6 +26,4 @@ Use this tool in the following scenarios:
   }),
 };
 
-export const askFollowupQuestion = defineClientTool(toolDef);
-
-export const askFollowupQuestionV5 = defineClientToolV5(toolDef);
+export const askFollowupQuestion = defineClientToolV5(toolDef);

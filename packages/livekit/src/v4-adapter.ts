@@ -4,7 +4,6 @@
 
 import { type Tool, asSchema, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import { ClientToolsV5 } from "@getpochi/tools";
-import { fromUIMessage, toUIMessage } from "@ragdoll/common";
 import type { DBMessage } from "@ragdoll/db";
 import type { UIMessage as V4UIMessage } from "ai";
 import type { Message } from "./types";
@@ -227,4 +226,25 @@ export function toV4UIMessage(message: Message): V4UIMessage {
 
 export function fromV4UIMessage(message: V4UIMessage): Message {
   return fromDBMessage(fromUIMessage(message));
+}
+
+export function fromV4DBMessage(message: DBMessage): Message {
+  return fromDBMessage(message);
+}
+
+function fromUIMessage(message: V4UIMessage): DBMessage {
+  const parts = (message.parts || []).filter((x) => x.type !== "source");
+  return {
+    ...message,
+    parts,
+  };
+}
+
+function toUIMessage(message: DBMessage): V4UIMessage {
+  return {
+    // Force conversion to UIMessage
+    ...(message as V4UIMessage),
+    content: "",
+    createdAt: undefined,
+  };
 }

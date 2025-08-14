@@ -1,5 +1,4 @@
-import type { TextUIPart, UIMessage } from "@ai-sdk/ui-utils";
-import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
+import type { TextUIPart, UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
 import type { Environment, GitStatus } from "@getpochi/base";
 import { prompts } from "./index";
 
@@ -141,48 +140,6 @@ function getGitStatus(gitStatus: GitStatus | undefined) {
   }
 
   return result;
-}
-
-/**
- * Injects environment details into the messages as system-reminder
- *
- * @param messages - The array of UI messages.
- * @param environment - The environment object containing workspace and todos.
- * @param event - The user event that triggered this task.
- * @returns The updated array of UI messages with injected environment details.
- */
-export function injectEnvironmentDetails(
-  messages: UIMessage[],
-  environment: Environment | undefined,
-  user: User | undefined,
-): UIMessage[] {
-  if (environment === undefined) return messages;
-  const messageToInject = messages.at(-1);
-  if (!messageToInject) return messages;
-  if (messageToInject.role !== "user") return messages;
-
-  const environmentDetails =
-    messages.length === 1
-      ? getReadEnvironmentResult(environment, user)
-      : getLiteReadEnvironmentResult(environment);
-
-  const reminderPart = {
-    type: "text",
-    text: prompts.createSystemReminder(environmentDetails),
-  } satisfies TextUIPart;
-
-  const parts = messageToInject.parts || [];
-  const lastTextPartIndex = messageToInject.parts.findLastIndex(
-    (parts) => parts.type === "text",
-  );
-  // Insert remainderPart before lastTextPartIndex
-  messageToInject.parts = [
-    ...parts.slice(0, lastTextPartIndex),
-    reminderPart,
-    ...parts.slice(lastTextPartIndex),
-  ];
-
-  return messages;
 }
 
 export function injectEnvironmentDetailsNext(

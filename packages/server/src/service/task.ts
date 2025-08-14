@@ -1,35 +1,12 @@
-import { isAbortError } from "@ai-sdk/provider-utils";
-import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
+import { type UIMessage as UIMessageNext, generateId } from "@ai-v5-sdk/ai";
 import { type Environment, PochiApiErrors } from "@getpochi/base";
-import { type Todo, isUserInputTool } from "@getpochi/tools";
-import {
-  CompactTaskMinTokens,
-  appendMessages,
-  formatters,
-  fromUIMessages,
-  getLogger,
-  toUIMessages,
-} from "@ragdoll/common";
+import type { Todo } from "@getpochi/tools";
 import { parseTitle } from "@ragdoll/common/message-utils";
-import type { DB, DBMessage, TaskCreateEvent, TaskError } from "@ragdoll/db";
-import {
-  APICallError,
-  type FinishReason,
-  InvalidToolArgumentsError,
-  type Message,
-  NoSuchToolError,
-  type UIMessage,
-  generateId,
-  generateText,
-} from "ai";
+import type { DB, DBMessage, TaskCreateEvent } from "@ragdoll/db";
 import { HTTPException } from "hono/http-exception";
 import { type ExpressionWrapper, type SqlBool, sql } from "kysely";
-import type { z } from "zod";
 import { db, minionIdCoder, uidCoder } from "../db";
-import { geminiFlash } from "../lib/constants";
 import { applyEventFilter } from "../lib/event-filter";
-import type { ZodChatRequestType } from "../types";
-import { compactService } from "./compact";
 import { githubService } from "./github";
 import { minionService } from "./minion";
 
@@ -51,244 +28,7 @@ const legacyMinionId = sql<string | null>`environment->'info'->>'minionId'`.as(
   "legacyMinionId",
 );
 
-const logger = getLogger("TaskService");
-
 class TaskService {
-  async startStreaming(
-    userId: string,
-    request: z.infer<typeof ZodChatRequestType>,
-    contextWindow: number,
-  ) {
-    const streamId = generateId();
-    const { conversation, totalTokens, uid, parentId, title } =
-      await this.prepareTask(userId, request);
-
-    const messagesToAppend =
-      request.messages ?? (request.message ? [request.message] : []);
-
-    if (messagesToAppend.length === 0) {
-      throw new Error("No messages to append");
-    }
-
-    let messages = appendMessages(
-      toUIMessages(conversation?.messages ?? []),
-      toUIMessages(messagesToAppend),
-    );
-
-    let newTitle = undefined;
-    if (!title && messages.length) {
-      newTitle = await taskService.checkAndGenerateTaskTitle(messages);
-    }
-
-    let compact = false;
-    if (
-      shouldAutoCompact(
-        contextWindow,
-        totalTokens,
-        messages,
-        request.forceCompact,
-      )
-    ) {
-      const summary = await compactService.compact(messages);
-      messages = summary.messages;
-      await this.resetTokens(uid, summary.totalTokens);
-      compact = true;
-    }
-
-    const messagesToSave = formatters.storage(messages);
-
-    await db
-      .updateTable("task")
-      .set({
-        // underlying we merged two state transition - pending-input -> pending-model -> streaming
-        status: "streaming",
-        conversation: {
-          messages: fromUIMessages(messagesToSave),
-        },
-        environment: request.environment,
-        minionId: request.minionId
-          ? minionIdCoder.decode(request.minionId)
-          : undefined,
-        streamIds: sql<
-          string[]
-        >`COALESCE("streamIds", '{}') || ARRAY[${streamId}]`,
-        title: newTitle,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("id", "=", uidCoder.decode(uid))
-      .where("userId", "=", userId)
-      .executeTakeFirstOrThrow();
-
-    // Keep the minion active
-    if (request.minionId) {
-      minionService.signalKeepAliveMinion(userId, request.minionId);
-    }
-
-    return {
-      streamId,
-      messages,
-      uid,
-      compact,
-      isSubTask: parentId !== null,
-    };
-  }
-
-  async finishStreaming(
-    uid: string,
-    userId: string,
-    messages: UIMessage[],
-    finishReason: FinishReason,
-    totalTokens: number | undefined,
-  ) {
-    const status = getTaskStatus(messages, finishReason);
-    const messagesToSave = formatters.storage(messages);
-    await db
-      .updateTable("task")
-      .set({
-        status,
-        conversation: {
-          messages: fromUIMessages(messagesToSave),
-        },
-        totalTokens,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-        // Clear error on successful completion
-        error: null,
-        // Update pending/in-progress todos to completed status when task is completed
-        environment: sql`
-          CASE
-            WHEN ${status} = 'completed' THEN
-              jsonb_set(
-                COALESCE(environment, '{}'),
-                '{todos}',
-                COALESCE(
-                  (
-                    SELECT jsonb_agg(
-                      CASE
-                        WHEN todo_item->>'status' != 'cancelled' THEN
-                          jsonb_set(todo_item, '{status}', '"completed"')
-                        ELSE todo_item
-                      END
-                    )
-                    FROM jsonb_array_elements(COALESCE(environment->'todos', '[]'::jsonb)) AS todo_item
-                  ),
-                  '[]'::jsonb
-                )
-              )
-            ELSE environment
-          END
-        `,
-      })
-      .where("id", "=", uidCoder.decode(uid))
-      .where("userId", "=", userId)
-      .executeTakeFirstOrThrow();
-  }
-
-  async failStreaming(uid: string, userId: string, error: TaskError) {
-    await db
-      .updateTable("task")
-      .set({
-        status: "failed",
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-        error,
-      })
-      .where("id", "=", uidCoder.decode(uid))
-      .where("userId", "=", userId)
-      .execute();
-  }
-
-  private validateImageModelCompatibility(messages: DBMessage[], model = "") {
-    const hasImageContent = messages.some((msg) =>
-      msg.experimental_attachments?.some((attachment) =>
-        attachment.contentType?.startsWith("image"),
-      ),
-    );
-    if (
-      hasImageContent &&
-      !model.startsWith("google") &&
-      !model.startsWith("anthropic") &&
-      !model.startsWith("pochi")
-    ) {
-      throw new HTTPException(400, {
-        message: `${model} does not support image input. Please use a Gemini or Sonnet model.`,
-      });
-    }
-  }
-
-  private async prepareTask(
-    userId: string,
-    request: z.infer<typeof ZodChatRequestType>,
-  ) {
-    const { id: chatId, event, environment, minionId } = request;
-
-    this.validateImageModelCompatibility(
-      request.messages ?? (request.message ? [request.message] : []),
-      request.model,
-    );
-
-    let uid = chatId ?? undefined;
-    if (uid === undefined) {
-      uid = await this.create(userId, event);
-    }
-
-    const {
-      id,
-      environment: taskEnvironment,
-      status,
-      minionId: taskMinionId,
-      legacyMinionId: taskMinionIdFromEnv,
-      ...data
-    } = await db
-      .selectFrom("task")
-      .select([
-        "conversation",
-        "event",
-        "environment",
-        "status",
-        "id",
-        "parentId",
-        "title",
-        "totalTokens",
-        minionIdFromTable,
-        legacyMinionId,
-      ])
-      .where("id", "=", uidCoder.decode(uid))
-      .where("userId", "=", userId)
-      .executeTakeFirstOrThrow();
-
-    this.verifyEnvironment(environment, taskEnvironment);
-
-    const effectiveTaskMinionIdString = taskMinionId
-      ? minionIdCoder.encode(taskMinionId)
-      : taskMinionIdFromEnv;
-
-    if (
-      minionId &&
-      effectiveTaskMinionIdString &&
-      minionId !== effectiveTaskMinionIdString
-    ) {
-      throw new HTTPException(400, {
-        message: "Minion ID mismatch",
-      });
-    }
-
-    if (status === "streaming") {
-      throw new HTTPException(409, {
-        message: "Task is already streaming",
-      });
-    }
-
-    return {
-      ...data,
-      uid: uidCoder.encode(id),
-    };
-  }
-
-  private async create(userId: string, event: TaskCreateEvent | null = null) {
-    return await this.createTaskImpl(userId, {
-      event,
-    });
-  }
-
   async createWithUserMessage(
     userId: string,
     prompt: string,
@@ -351,28 +91,6 @@ class TaskService {
       .returning("id")
       .executeTakeFirstOrThrow();
     return uidCoder.encode(id);
-  }
-
-  private verifyEnvironment(
-    environment: Environment | undefined,
-    expectedEnvironment: Environment | null,
-  ) {
-    if (expectedEnvironment === null) return;
-    if (environment === undefined) {
-      return;
-    }
-
-    if (environment.info.os !== expectedEnvironment.info.os) {
-      throw new HTTPException(400, {
-        message: "Environment OS mismatch",
-      });
-    }
-
-    if (environment.info.cwd !== expectedEnvironment.info.cwd) {
-      throw new HTTPException(400, {
-        message: "Environment CWD mismatch",
-      });
-    }
   }
 
   async list(
@@ -670,17 +388,6 @@ class TaskService {
     return result.numUpdatedRows > 0;
   }
 
-  private async resetTokens(uid: string, newTokenCount: number) {
-    await db
-      .updateTable("task")
-      .set({
-        totalTokens: newTokenCount,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("id", "=", uidCoder.decode(uid))
-      .executeTakeFirstOrThrow();
-  }
-
   async fetchLatestStreamId(
     uid: string,
     userId: string,
@@ -697,51 +404,6 @@ class TaskService {
       .executeTakeFirst();
 
     return result?.latestStreamId ?? null;
-  }
-
-  toTaskError(error: unknown): TaskError {
-    if (APICallError.isInstance(error)) {
-      return {
-        kind: "APICallError",
-        message: error.message,
-        requestBodyValues: error.requestBodyValues,
-      };
-    }
-
-    const internalError = (message: string): TaskError => {
-      return {
-        kind: "InternalError",
-        message,
-      };
-    };
-
-    if (InvalidToolArgumentsError.isInstance(error)) {
-      return internalError(
-        `Invalid arguments provided to tool "${error.toolName}". Please try again.`,
-      );
-    }
-
-    if (NoSuchToolError.isInstance(error)) {
-      return internalError(`${error.toolName} is not a valid tool.`);
-    }
-
-    if (isAbortError(error)) {
-      return {
-        kind: "AbortError",
-        message: error.message,
-      };
-    }
-
-    if (!(error instanceof Error)) {
-      // Skip logging for client connection errors in unknown errors
-      const message = String(error);
-      if (!message.includes("Client connection prematurely closed")) {
-        logger.error("Unknown error", error);
-      }
-      return internalError("Something went wrong. Please try again.");
-    }
-
-    return internalError(error.message);
   }
 
   async createWithRunner({
@@ -847,57 +509,6 @@ class TaskService {
     }
   }
 
-  async generateTaskTitle(messages: UIMessage[]) {
-    const result = await generateText({
-      model: geminiFlash,
-      messages: formatters.llm(
-        [
-          ...messages,
-          {
-            role: "user",
-            parts: [
-              {
-                type: "text",
-                text: `
-Generate a concise title that captures the essence of the above conversation. Requirements:
-- Create a single descriptive phrase or short sentence
-- Focus on the user's main request or topic
-- Use plain text only (no markdown, formatting, or special characters)
-- Do not include any punctuation at the end
-- Return only the title text, nothing else
-              `,
-              },
-            ],
-            content: "",
-            id: generateId(),
-          },
-        ],
-        {
-          isClaude: false,
-          removeSystemReminder: true,
-        },
-      ),
-    });
-    const generatedTitle = await result.text;
-
-    return trimEndingPunctuation(generatedTitle);
-  }
-
-  async checkAndGenerateTaskTitle(messages: UIMessage[]) {
-    try {
-      let partCount = 0;
-      for (const message of messages) {
-        partCount += message.parts.length;
-      }
-      if (partCount < 5 || partCount > 10) return undefined;
-
-      const generatedTitle = await this.generateTaskTitle(messages);
-      return generatedTitle;
-    } catch (error) {
-      logger.error("Error generating task title", error);
-    }
-  }
-
   async persistTask(
     userId: string,
     clientTaskId: string,
@@ -930,93 +541,9 @@ Generate a concise title that captures the essence of the above conversation. Re
       .executeTakeFirstOrThrow();
     return uidCoder.encode(id);
   }
-
-  async compactAndCreateTask(
-    sourceUid: string,
-    prompt: string,
-    messagesToAppend: DBMessage[],
-    userId: string,
-  ) {
-    const task = await taskService.get(sourceUid, userId);
-
-    if ((task.totalTokens ?? 0) < CompactTaskMinTokens) {
-      throw new HTTPException(400, {
-        message: `A task must have at least ${CompactTaskMinTokens} tokens to be compacted.`,
-      });
-    }
-
-    const messages = appendMessages(
-      toUIMessages(task.conversation?.messages ?? []),
-      toUIMessages(messagesToAppend),
-    );
-
-    const messagesToSave = formatters.storage(messages);
-    await db
-      .updateTable("task")
-      .set({
-        conversation: {
-          messages: fromUIMessages(messagesToSave),
-        },
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("id", "=", uidCoder.decode(sourceUid))
-      .where("userId", "=", userId)
-      .executeTakeFirstOrThrow();
-
-    const compactText = await compactService.generateCompactText(messages);
-
-    return this.createWithUserMessage(
-      userId,
-      prompt,
-      {
-        type: "vscode:compact-new-task",
-        data: {
-          sourceUid: sourceUid,
-          messages: [],
-        },
-      },
-      undefined,
-      compactText,
-    );
-  }
 }
 
 export const taskService = new TaskService();
-
-export function getTaskStatus(
-  messages: UIMessage[],
-  finishReason: FinishReason,
-): DB["task"]["status"]["__select__"] {
-  const lastMessage = messages[messages.length - 1];
-
-  if (finishReason === "tool-calls") {
-    if (hasAttemptCompletion(lastMessage)) {
-      return "completed";
-    }
-    if (hasUserInputTool(lastMessage)) {
-      return "pending-input";
-    }
-    return "pending-tool";
-  }
-
-  if (finishReason === "stop") {
-    return "pending-input";
-  }
-
-  return "failed";
-}
-
-function hasUserInputTool(message: Message): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      isUserInputTool(part.toolInvocation.toolName),
-  );
-}
 
 // Build git object with origin and branch from environment
 const gitSelect = sql<{ origin: string; branch: string } | null>`
@@ -1028,40 +555,3 @@ const gitSelect = sql<{ origin: string; branch: string } | null>`
     )
   END
 `.as("git");
-
-const trimEndingPunctuation = (text: string) => {
-  // This regex removes common sentence-ending punctuation and whitespace from the end of a string.
-  // It targets characters like periods, commas, question marks, exclamation marks, and their full-width equivalents.
-  return text.replace(/[.,?_!\s。，？！]+$/gu, "");
-};
-
-function shouldAutoCompact(
-  contextWindow: number,
-  totalTokens: number | null,
-  messages: UIMessage[],
-  forceCompact?: boolean,
-) {
-  if (!totalTokens) return false;
-  if (messages.at(-1)?.role !== "user") {
-    return false;
-  }
-  // Force compact is only used if the total tokens are greater than 50k.
-  if (forceCompact && totalTokens > CompactTaskMinTokens) return true;
-  if (totalTokens < contextWindow * 0.9) {
-    return false;
-  }
-
-  return true;
-}
-
-function hasAttemptCompletion(message: UIMessage): boolean {
-  if (message.role !== "assistant") {
-    return false;
-  }
-
-  return !!message.parts?.some(
-    (part) =>
-      part.type === "tool-invocation" &&
-      part.toolInvocation.toolName === "attemptCompletion",
-  );
-}

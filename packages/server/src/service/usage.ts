@@ -1,5 +1,5 @@
+import type { LanguageModelUsage } from "@ai-v5-sdk/ai";
 import { getLogger } from "@ragdoll/common";
-import type { LanguageModelUsage } from "ai";
 import { jsonArrayFrom } from "kysely/helpers/postgres";
 import moment from "moment";
 import type { User } from "../auth";
@@ -48,8 +48,8 @@ export class UsageService {
       .values({
         modelId,
         userId: user.id,
-        promptTokens: usage.promptTokens,
-        completionTokens: usage.completionTokens,
+        promptTokens: usage.inputTokens || 0,
+        completionTokens: usage.outputTokens || 0,
         credit: credit,
       })
       .execute();

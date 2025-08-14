@@ -11,11 +11,10 @@ import { apiClient } from "@/lib/auth-client";
 import { normalizeApiError, toHttpError } from "@/lib/error";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
-import { toUIMessages } from "@ragdoll/common";
 import { parseTitle } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
-import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
-import type { UIMessage } from "ai";
+import type { DBMessage } from "@ragdoll/db";
+import { fromV4DBMessage } from "@ragdoll/livekit/v4-adapter";
 import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/clips/$id")({
@@ -31,7 +30,7 @@ export const Route = createFileRoute("/clips/$id")({
         throw toHttpError(response);
       }
       const { data, updatedAt } = await response.json();
-      const messages = toUIMessages(data.messages || []);
+      const messages = data.messages || [];
       const title = createTitle(messages);
       const todos = createTodos(messages);
       return {
@@ -69,7 +68,7 @@ function ClipView() {
     Route.useLoaderData();
 
   const renderMessages = useMemo(
-    () => messages.map(fromV4UIMessage),
+    () => messages.map(fromV4DBMessage),
     [messages],
   );
 
@@ -126,7 +125,7 @@ function ClipView() {
   );
 }
 
-function createTodos(messages: UIMessage[]) {
+function createTodos(messages: DBMessage[]) {
   let todos: Todo[] = [];
   for (const x of messages) {
     const newTodos = findTodos(x);
@@ -140,7 +139,7 @@ function createTodos(messages: UIMessage[]) {
   }
 }
 
-function createTitle(messages: UIMessage[]) {
+function createTitle(messages: DBMessage[]) {
   for (const x of messages) {
     if (x.role !== "user") continue;
     for (const part of x.parts) {

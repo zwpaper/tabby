@@ -4,10 +4,9 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { etag } from "hono/etag";
 import { HTTPException } from "hono/http-exception";
-import { logger } from "hono/logger";
+import { logger as loggerMiddleware } from "hono/logger";
 import admin from "./api/admin";
 import billing from "./api/billing";
-import chat from "./api/chat";
 import chatNext from "./api/chat-next";
 import clips from "./api/clips";
 import code from "./api/code";
@@ -26,7 +25,7 @@ import { auth } from "./better-auth";
 import { queuedash } from "./queuedash";
 import { slackService } from "./service/slack";
 
-const log = getLogger("HonoHandler");
+const logger = getLogger("HonoApp");
 
 export const app = new Hono();
 
@@ -38,7 +37,7 @@ app.onError((error, c) => {
 
   if (error instanceof HTTPException) {
     if (error.status >= 500) {
-      log.error("HTTP Exception", {
+      logger.error("HTTP Exception", {
         status: error.status,
         message: error.message,
         method,
@@ -49,7 +48,7 @@ app.onError((error, c) => {
   } else {
     // Log all other errors as error level
     // FIXME(wei): Should alert and fix these unknown error when occurred
-    log.error("Unhandled Error", {
+    logger.error("Unhandled Error", {
       error: error.message,
       stack: error.stack,
       method,
@@ -66,7 +65,7 @@ if (process.env.NODE_ENV === "production") {
   app.use(otel());
 } else {
   // Only use logger in development / testing.
-  app.use(logger());
+  app.use(loggerMiddleware());
 }
 
 // after otel so user info is traced.
@@ -152,7 +151,6 @@ const api = app.basePath("/api");
 // Endpoint to list available models
 export const route = api
   .route("/models", models)
-  .route("/chat", chat)
   .route("/chatNext", chatNext)
   .route("/code", code)
   .route("/usages", usages)

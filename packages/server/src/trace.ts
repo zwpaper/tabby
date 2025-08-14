@@ -1,12 +1,10 @@
 import { type Span, trace } from "@opentelemetry/api";
-import type { LanguageModelV1Prompt } from "ai";
 
 type RagdollAttributes = {
   "ragdoll.user.email": string;
   "ragdoll.task.uid": string;
   "ragdoll.metering.credit": number;
   "ragdoll.minion.sandboxId": string;
-  "ai.prompt.rawMessages": LanguageModelV1Prompt;
 };
 
 class SpanConfigurator {

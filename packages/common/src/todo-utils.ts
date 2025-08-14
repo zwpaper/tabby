@@ -1,6 +1,6 @@
 import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
-import type { UIMessage } from "ai";
+import type { DBMessage } from "@ragdoll/db";
 
 export function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
   // If newTodos is empty, return existing todos
@@ -39,7 +39,7 @@ export function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
   return ret;
 }
 
-export function findTodos(message: UIMessage): Todo[] | undefined {
+export function findTodos(message: DBMessage): Todo[] | undefined {
   if (message.role !== "assistant") {
     return;
   }

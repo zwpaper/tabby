@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { EditFileOutputSchema, EditFileResultPrompt } from "./constants";
-import { defineClientTool, defineClientToolV5 } from "./types";
+import { defineClientToolV5 } from "./types";
 
 const toolDef = {
   description: `This is a tool for editing files. For moving or renaming files, you should generally use the executeCommand tool with the 'mv' command instead. For larger edits, use the writeFile tool to overwrite files.
@@ -72,6 +72,4 @@ ${EditFileResultPrompt}`,
   outputSchema: EditFileOutputSchema,
 };
 
-export const applyDiff = defineClientTool(toolDef);
-
-export const applyDiffV5 = defineClientToolV5(toolDef);
+export const applyDiff = defineClientToolV5(toolDef);
