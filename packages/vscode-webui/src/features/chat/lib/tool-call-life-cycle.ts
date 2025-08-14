@@ -39,6 +39,7 @@ type StreamingResult =
       toolName: "newTask";
       abortSignal: AbortSignal;
       serializedAbortSignal: ThreadAbortSignalSerialization;
+      throws: (error: string) => void;
     };
 
 type CompleteReason =
@@ -403,11 +404,20 @@ export class ManagedToolCallLifeCycle
         toolName: "newTask",
         abortSignal,
         serializedAbortSignal,
+        throws: (error: string) => {
+          this.transitTo("execute:streaming", {
+            type: "complete",
+            result: {
+              error,
+            },
+            reason: "execute-finish",
+          });
+          unsubscribe();
+        },
       },
     });
 
     const onTaskUpdate = (task: Task | undefined) => {
-      // FIXME(meng): handle retry exceed / step exeed error, as they're stopping signal for sub task.
       if (
         (task?.status === "failed" && task.error?.kind === "AbortError") ||
         task?.status === "completed"

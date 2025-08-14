@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { ReadyForRetryError } from "@/features/approval";
 import type { Task } from "@ragdoll/livekit";
+import { ReadyForRetryError } from "./use-ready-for-retry-error";
 
 interface UseEventAutoStartOptions {
   task?: Task;

@@ -5,7 +5,13 @@ import { useLiveChatKitGetters, useToolCallLifeCycle } from "@/features/chat";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { cn } from "@/lib/utils";
 
+import {
+  ReadyForRetryError,
+  useMixinReadyForRetryError,
+  useRetry,
+} from "@/features/retry";
 import { useTodos } from "@/features/todo";
+import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { vscodeHost } from "@/lib/vscode";
 import {
   getToolName,
@@ -14,10 +20,17 @@ import {
 import { useChat } from "@ai-v5-sdk/react";
 import type { Todo } from "@getpochi/tools";
 import { useStore } from "@livestore/react";
-import { type Task, catalog } from "@ragdoll/livekit";
+import { catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { StatusIcon } from "../status-icon";
 import { ExpandIcon, ToolTitle } from "../tool-container";
 import type { ToolProps } from "../types";
@@ -46,7 +59,13 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
   const chatKit = useLiveChatKit({
     taskId: uid,
     getters,
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    sendAutomaticallyWhen: (x) => {
+      // AI SDK v5 will retry regardless of the status if sendAutomaticallyWhen is set.
+      if (chatKit.chat.status === "error") {
+        return false;
+      }
+      return lastAssistantMessageIsCompleteWithToolCalls(x);
+    },
     onToolCall: async ({ toolCall }) => {
       if (lifecycle.streamingResult?.toolName !== "newTask") {
         throw new Error("Unexpected parent toolCall state");
@@ -81,13 +100,21 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
     },
   });
 
-  const { messages, stop, sendMessage, addToolResult } = useChat({
+  const {
+    messages,
+    status,
+    error,
+    stop,
+    setMessages,
+    sendMessage,
+    addToolResult,
+    regenerate,
+  } = useChat({
     chat: chatKit.chat,
   });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies(isExecuting): watch for executing changed.
   useEffect(() => {
-    if (lifecycle.streamingResult?.toolName !== "newTask") {
+    if (!isExecuting || lifecycle.streamingResult?.toolName !== "newTask") {
       return;
     }
 
@@ -97,13 +124,106 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
     return () => {
       abortSignal.removeEventListener("abort", onAbort);
     };
-  }, [isExecuting, lifecycle, stop]);
+  }, [isExecuting, lifecycle.streamingResult, stop]);
 
-  usePendingModelAutoStart({
-    task,
-    start: () => sendMessage(undefined),
+  const [retryCount, setRetryCount] = useState(0);
+  const retryImpl = useRetry({
+    messages,
+    setMessages,
+    sendMessage,
+    regenerate,
+  });
+  const retry = useCallback(
+    (error?: Error) => {
+      if (isExecuting && (status === "ready" || status === "error")) {
+        retryImpl(error ?? new ReadyForRetryError());
+      }
+    },
+    [retryImpl, status, isExecuting],
+  );
+  const retryWithCount = useCallback(
+    (error?: Error) => {
+      if (!isExecuting || lifecycle.streamingResult?.toolName !== "newTask") {
+        return;
+      }
+      setRetryCount((count) => count + 1);
+      if (retryCount > SubtaskMaxRetry) {
+        lifecycle.streamingResult.throws(
+          "The sub-task failed to complete, max retry count reached.",
+        );
+        return;
+      }
+      retry(error);
+    },
+    [retry, retryCount, lifecycle.streamingResult, isExecuting],
+  );
+
+  const errorForRetry = useMixinReadyForRetryError(messages, error);
+  const [
+    pendingErrorForRetry,
+    setPendingErrorForRetry,
+    setDebouncedPendingErrorForRetry,
+  ] = useDebounceState<Error | undefined>(undefined, 1000);
+  useEffect(() => {
+    if (
+      isExecuting &&
+      errorForRetry &&
+      (status === "ready" || status === "error")
+    ) {
+      setPendingErrorForRetry(errorForRetry);
+    }
+  }, [errorForRetry, setPendingErrorForRetry, status, isExecuting]);
+  useEffect(() => {
+    if (!isExecuting || lifecycle.streamingResult?.toolName !== "newTask") {
+      return;
+    }
+    if (pendingErrorForRetry) {
+      setDebouncedPendingErrorForRetry(undefined);
+      retryWithCount(pendingErrorForRetry);
+    }
+  }, [
+    retryWithCount,
+    pendingErrorForRetry,
+    setDebouncedPendingErrorForRetry,
+    lifecycle.streamingResult,
+    isExecuting,
+  ]);
+
+  const stepCount = useMemo(() => {
+    return messages
+      .flatMap((message) => message.parts)
+      .filter((part) => part.type === "step-start").length;
+  }, [messages]);
+  const [currentStepCount, setCurrentStepCount] = useState(0);
+  useEffect(() => {
+    if (isExecuting && stepCount > currentStepCount) {
+      setCurrentStepCount(stepCount);
+      setRetryCount(0); // Reset retry count when a new step is started
+    }
+  }, [stepCount, currentStepCount, isExecuting]);
+
+  useEffect(() => {
+    if (!isExecuting || lifecycle.streamingResult?.toolName !== "newTask") {
+      return;
+    }
+    if (currentStepCount > SubtaskMaxStep) {
+      lifecycle.streamingResult.throws(
+        "The sub-task failed to complete, max step count reached.",
+      );
+    }
+  }, [currentStepCount, lifecycle.streamingResult, isExecuting]);
+
+  useInitAutoStart({
+    start: retry,
     enabled:
-      tool.state === "input-available" && isExecuting && messages.length === 1,
+      tool.state === "input-available" &&
+      isExecuting &&
+      currentStepCount <= SubtaskMaxStep &&
+      // task is not completed or aborted
+      !(
+        (task?.status === "failed" && task.error?.kind === "AbortError") ||
+        task?.status === "completed"
+      ),
   });
 
   const { todos } = useTodos({
@@ -188,22 +308,21 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
   );
 };
 
-const usePendingModelAutoStart = ({
-  task,
+const SubtaskMaxStep = 24;
+const SubtaskMaxRetry = 2;
+
+const useInitAutoStart = ({
   start,
   enabled,
 }: {
-  task?: Task;
   start: () => void;
   enabled: boolean;
 }) => {
-  const init = task?.status === "pending-model";
-
   const initStarted = useRef(false);
   useEffect(() => {
-    if (enabled && init && !initStarted.current) {
+    if (enabled && !initStarted.current) {
       initStarted.current = true;
       start();
     }
-  }, [init, start, enabled]);
+  }, [start, enabled]);
 };

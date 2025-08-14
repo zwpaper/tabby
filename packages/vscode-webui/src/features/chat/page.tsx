@@ -21,6 +21,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DevModeButton } from "@/components/dev-mode-button";
 import { PublicShareButton } from "@/components/public-share-button";
 import { TokenUsage } from "@/components/token-usage";
+import { usePendingModelAutoStart } from "@/features/retry";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { vscodeHost } from "@/lib/vscode";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
@@ -41,7 +42,6 @@ import { useChatStatus } from "./hooks/use-chat-status";
 import { useChatSubmit } from "./hooks/use-chat-submit";
 import { useInlineCompactTask } from "./hooks/use-inline-compact-task";
 import { useNewCompactTask } from "./hooks/use-new-compact-task";
-import { usePendingModelAutoStart } from "./hooks/use-pending-model-auto-start";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useLiveChatKitGetters } from "./lib/use-live-chat-kit-getters";
 

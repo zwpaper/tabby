@@ -28,7 +28,8 @@
       "@/features/chat": ["./src/features/chat"],
       "@/features/settings": ["./src/features/settings"],
       "@/features/share": ["./src/features/share"],
-      "@/features/todo": ["./src/features/todo"]
+      "@/features/todo": ["./src/features/todo"],
+      "@/features/retry": ["./src/features/retry"]
     }
   }
 }
