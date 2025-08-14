@@ -169,13 +169,13 @@ const chat = new Hono()
   .post("/persist", zValidator("json", PersistRequestType), async (c) => {
     const req = c.req.valid("json");
     const user = c.get("user");
-    const uid = await taskService.persistTask(
+    const shareId = await taskService.persistTask(
       user.id,
       req.id,
       req.messages,
       req.environment,
     );
-    return c.json({ uid });
+    return c.json({ shareId });
   });
 
 export default chat;

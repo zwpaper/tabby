@@ -57,6 +57,7 @@ export const tables = {
     name: "tasks",
     columns: {
       id: State.SQLite.text({ primaryKey: true }),
+      shareId: State.SQLite.text({ nullable: true }),
       title: State.SQLite.text({ nullable: true }),
       parentId: State.SQLite.text({ nullable: true }),
       status: State.SQLite.text({
@@ -80,6 +81,11 @@ export const tables = {
       {
         name: "idx-parentId",
         columns: ["parentId"],
+      },
+      {
+        name: "idx-shareId",
+        columns: ["shareId"],
+        isUnique: true,
       },
     ],
   }),
@@ -142,6 +148,14 @@ export const events = {
       id: Schema.String,
       error: TaskError,
       data: Schema.NullOr(DBMessage),
+      updatedAt: Schema.Date,
+    }),
+  }),
+  updateShareId: Events.synced({
+    name: "v1.UpdateShareId",
+    schema: Schema.Struct({
+      id: Schema.String,
+      shareId: Schema.String,
       updatedAt: Schema.Date,
     }),
   }),
@@ -250,6 +264,8 @@ const materializers = State.SQLite.materializers(events, {
         ]
       : []),
   ],
+  "v1.UpdateShareId": ({ id, shareId, updatedAt }) =>
+    tables.tasks.update({ shareId, updatedAt }).where({ id, shareId: null }),
 });
 
 const state = State.SQLite.makeState({ tables, materializers });

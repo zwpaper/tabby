@@ -1,9 +1,12 @@
 import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
 import { EventSourceParserStream } from "@ai-v5-sdk/provider-utils";
+import type { Store } from "@livestore/livestore";
+import { events, tables } from "../../livestore/schema";
 import type { RequestData } from "../../types";
 import type { LLMRequest, OnFinishCallback } from "./types";
 
 export function createPochiModel(
+  store: Store | undefined,
   taskId: string | undefined,
   llm: Extract<RequestData["llm"], { type: "pochi" }>,
   payload: LLMRequest,
@@ -60,6 +63,8 @@ export function createPochiModel(
   };
 
   const onFinish: OnFinishCallback = async ({ messages }) => {
+    if (!store || !taskId) return;
+
     const resp = await fetch(`${llm.server}/api/chatNext/persist`, {
       method: "POST",
       headers: {
@@ -75,6 +80,23 @@ export function createPochiModel(
 
     if (resp.status !== 200) {
       throw new Error(`Failed to persist chat: ${resp.statusText}`);
+    }
+
+    const { shareId } = (await resp.json()) as { shareId: string };
+    const existingShareId = store.query(
+      tables.tasks
+        .select("shareId")
+        .where("id", "=", taskId)
+        .first({ fallback: () => null }),
+    );
+    if (!existingShareId) {
+      store.commit(
+        events.updateShareId({
+          id: taskId,
+          shareId,
+          updatedAt: new Date(),
+        }),
+      );
     }
   };
 

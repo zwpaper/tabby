@@ -3,43 +3,35 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { apiClient } from "@/lib/auth-client";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
 import { SocialLinks, getReadEnvironmentResult } from "@ragdoll/common";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
-import { useMutation } from "@tanstack/react-query";
 import {
   CheckIcon,
   CopyIcon,
-  Loader2,
   MessageSquareShare,
   Share2Icon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 interface PublicShareButtonProps {
-  isPublicShared: boolean;
   disabled?: boolean;
-  uid: string | undefined;
+  shareId: string | undefined | null;
   onError?: (e: Error) => void;
   modelId?: string;
   displayError?: string;
 }
 
 export function PublicShareButton({
-  isPublicShared: initialIsPublicShared,
   disabled,
-  uid,
-  onError,
+  shareId,
   modelId,
   displayError,
 }: PublicShareButtonProps) {
   const menuItemRef = useRef<"share" | "support">(null);
-  const [isPublicShared, setIsPublicShared] = useState(initialIsPublicShared);
   const [open, setOpen] = useState(false);
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
 
@@ -51,82 +43,23 @@ export function PublicShareButton({
     }, 1000);
   };
 
-  useEffect(() => {
-    setIsPublicShared(initialIsPublicShared);
-  }, [initialIsPublicShared]);
-
-  const shareToggleMutation = useMutation({
-    mutationFn: async (newIsPublicShared: boolean) => {
-      if (!uid) {
-        throw new Error("Task ID is required");
-      }
-
-      const resp = await apiClient.api.tasks[":uid"].share.$post({
-        param: {
-          uid,
-        },
-        json: {
-          isPublicShared: newIsPublicShared,
-        },
-      });
-
-      if (!resp.ok) {
-        throw new Error(resp.statusText || "Failed to update share status");
-      }
-
-      const data = await resp.json();
-      if (!data.success) {
-        throw new Error("Failed to update share status");
-      }
-
-      return data;
-    },
-    onSuccess: (_, newIsPublicShared) => {
-      setIsPublicShared(newIsPublicShared);
-
-      // Capture sharePublic event when user shares a thread publicly
-      if (newIsPublicShared) {
-        vscodeHost.capture({
-          event: "sharePublic",
-        });
-      }
-    },
-    onError: (error) => {
-      const err =
-        error instanceof Error
-          ? error
-          : new Error("Failed to update share status");
-      onError?.(err);
-    },
-  });
-
-  const handleToggleShare = (
-    e: React.MouseEvent,
-    newIsPublicShared: boolean,
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (shareToggleMutation.isPending || !uid) return;
-    shareToggleMutation.mutate(newIsPublicShared);
-  };
-
   const handleCopyLink: React.MouseEventHandler<HTMLDivElement> = (e) => {
-    if (!uid) return;
+    if (!shareId) return;
     menuItemRef.current = "share";
     e.preventDefault();
-    const shareUrl = `${getServerBaseUrl()}/share/${uid}`;
+    const shareUrl = `${getServerBaseUrl()}/share/${shareId}`;
     doCopy(shareUrl);
   };
 
   const handleShareSupport: React.MouseEventHandler<HTMLDivElement> = async (
     e,
   ) => {
-    if (!uid) return;
+    if (!shareId) return;
     menuItemRef.current = "support";
     e.preventDefault();
     const version = await vscodeHost.readExtensionVersion();
     const environment = await vscodeHost.readEnvironment();
-    const shareUrl = `${getServerBaseUrl()}/share/${uid}`;
+    const shareUrl = `${getServerBaseUrl()}/share/${shareId}`;
 
     const environmentInfo = getReadEnvironmentResult(environment, undefined);
     const supportInfo = `Support Information
@@ -149,7 +82,7 @@ ${environmentInfo}
     vscodeHost.capture({
       event: "shareSupport",
       properties: {
-        uid,
+        uid: shareId,
         text: supportInfo,
       },
     });
@@ -159,7 +92,7 @@ ${environmentInfo}
       "Task shared with the Pochi team",
       {
         modal: true,
-        detail: `This task and relevant debug information have been sent. For support, please join our Discord server and reference this issue with the ID: ${uid}.`,
+        detail: `This task and relevant debug information have been sent. For support, please join our Discord server and reference this issue with the ID: ${shareId}.`,
       },
       openDiscordButtonText,
       "OK",
@@ -177,63 +110,15 @@ ${environmentInfo}
           variant="ghost"
           size="icon"
           className="h-6 w-6 rounded-md p-0 transition-opacity"
-          disabled={!uid || disabled || shareToggleMutation.isPending}
+          disabled={!shareId || disabled}
         >
           <Share2Icon className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          onClick={(e) => handleToggleShare(e, true)}
-          disabled={shareToggleMutation.isPending}
-          className="cursor-pointer"
-        >
-          <div className="flex items-center">
-            <div className="mr-2 flex w-4 justify-center">
-              {shareToggleMutation.isPending &&
-              shareToggleMutation.variables === true ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : isPublicShared ? (
-                <CheckIcon className="size-4" />
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2 px-1.5 py-1">
-              <span>Public</span>
-              <span className="text-muted-foreground text-xs">
-                Anyone with the link
-              </span>
-            </div>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          onClick={(e) => handleToggleShare(e, false)}
-          disabled={shareToggleMutation.isPending}
-          className="cursor-pointer"
-        >
-          <div className="flex items-center">
-            <div className="mr-2 flex w-4 justify-center">
-              {shareToggleMutation.isPending &&
-              shareToggleMutation.variables === false ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : !isPublicShared ? (
-                <CheckIcon className="size-4" />
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2 px-1.5 py-1">
-              <span>Private</span>
-              <span className="text-muted-foreground text-xs">
-                Visible only to you
-              </span>
-            </div>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem
           onClick={handleCopyLink}
-          disabled={shareToggleMutation.isPending || !uid}
+          disabled={!shareId}
           className="cursor-pointer"
         >
           {menuItemRef.current === "share" && isCopied ? (
@@ -242,7 +127,7 @@ ${environmentInfo}
             <CopyIcon className="mr-2 size-4" />
           )}
           Copy link
-          {!uid && (
+          {!shareId && (
             <span className="ml-2 text-muted-foreground text-xs">
               (Share first)
             </span>
@@ -250,7 +135,7 @@ ${environmentInfo}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleShareSupport}
-          disabled={shareToggleMutation.isPending || !uid}
+          disabled={!shareId}
           className="cursor-pointer"
         >
           {menuItemRef.current === "support" && isCopied ? (
@@ -259,7 +144,7 @@ ${environmentInfo}
             <MessageSquareShare className="mr-2 size-4" />
           )}
           Share with Support
-          {!uid && (
+          {!shareId && (
             <span className="ml-2 text-muted-foreground text-xs">
               (Share first)
             </span>

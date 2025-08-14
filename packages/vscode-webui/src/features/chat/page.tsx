@@ -19,6 +19,7 @@ import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DevModeButton } from "@/components/dev-mode-button";
+import { PublicShareButton } from "@/components/public-share-button";
 import { TokenUsage } from "@/components/token-usage";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
 import { vscodeHost } from "@/lib/vscode";
@@ -421,15 +422,12 @@ function Chat({ user, uid }: ChatProps) {
                   buildEnvironment={buildEnvironment}
                   todos={todos}
                 />
-                {/* FIXME(meng): add back share experience */}
-                {/* <PublicShareButton
-                  isPublicShared={task?.isPublicShared === true}
+                <PublicShareButton
                   disabled={isTaskLoading || isModelsLoading}
-                  uid={uid}
-                  onError={setAutoDismissError}
+                  shareId={task?.shareId}
                   modelId={selectedModel?.id}
                   displayError={displayError?.message}
-                /> */}
+                />
                 <Button
                   variant="ghost"
                   size="icon"
