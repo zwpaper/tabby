@@ -2,6 +2,7 @@ import { useSelectedModels } from "@/features/settings";
 import { apiClient } from "@/lib/auth-client";
 import { useLatest } from "@/lib/hooks/use-latest";
 import { useMcp } from "@/lib/hooks/use-mcp";
+import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
 import { vscodeHost } from "@/lib/vscode";
 import type { Environment } from "@getpochi/base";
 import type { Todo } from "@getpochi/tools";
@@ -67,6 +68,7 @@ function findLastCheckpointFromMessages(
 
 function useLLM(): React.RefObject<LLMRequestData> {
   const { selectedModel } = useSelectedModels();
+  const pochiModelSettings = usePochiModelSettings();
 
   const llmFromSelectedModel =
     selectedModel?.type === "byok"
@@ -82,6 +84,7 @@ function useLLM(): React.RefObject<LLMRequestData> {
         ? {
             type: "pochi" as const,
             modelId: selectedModel.modelId,
+            modelEndpointId: pochiModelSettings?.modelEndpointId,
             apiClient,
           }
         : (undefined as never);

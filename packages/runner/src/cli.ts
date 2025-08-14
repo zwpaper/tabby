@@ -204,6 +204,7 @@ program
         : {
             type: "pochi",
             modelId: options.model,
+            modelEndpointId: options.modelEndpointId,
             apiClient: hc<PochiApi>(options.url, {
               headers: {
                 Authorization: `Bearer ${options.token}`,

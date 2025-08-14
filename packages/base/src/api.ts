@@ -9,6 +9,7 @@ import { Environment } from "./environment";
 export const ModelGatewayRequest = z.object({
   id: z.string().optional(),
   model: z.string().optional().describe("Model to use for this request."),
+  modelEndpointId: z.string().optional(),
   callOptions:
     z.custom<
       Pick<LanguageModelV2CallOptions, "prompt" | "stopSequences" | "tools">

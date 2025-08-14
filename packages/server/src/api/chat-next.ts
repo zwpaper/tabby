@@ -11,7 +11,7 @@ import { ModelGatewayRequest, PersistRequest } from "@getpochi/base";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { requireAuth } from "../auth";
+import { isInternalUser, requireAuth } from "../auth";
 import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
   type AvailableModelId,
@@ -39,7 +39,11 @@ const chat = new Hono()
     const remainingFreeCredit =
       (await checkUserQuota(user, validModelId))?.remainingFreeCredit || 0;
 
-    const model = getModelById(validModelId);
+    if (req.modelEndpointId && !isInternalUser(user)) {
+      throw new HTTPException(403, { message: "Forbidden" });
+    }
+
+    const model = getModelById(validModelId, req.modelEndpointId);
     if (validModelId.includes("anthropic")) {
       const lastMessage = prompt.at(-1);
       if (lastMessage) {
