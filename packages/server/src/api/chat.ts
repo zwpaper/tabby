@@ -114,7 +114,6 @@ const chat = new Hono()
           LanguageModelV2StreamPart
         >({
           async transform(chunk, controller) {
-            controller.enqueue(chunk);
             if (chunk.type === "finish") {
               const { usage, creditCostInput } = computeUsage(
                 chunk.usage,
@@ -134,6 +133,7 @@ const chat = new Hono()
                 remainingFreeCredit,
               );
             }
+            controller.enqueue(chunk);
           },
         }),
       )
