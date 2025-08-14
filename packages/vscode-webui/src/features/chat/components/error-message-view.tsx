@@ -1,5 +1,5 @@
 import { ErrorMessage } from "@/components/error-message";
-import { ServerErrors } from "@ragdoll/server";
+import { PochiApiErrors } from "@getpochi/base";
 import { ExternalLinkIcon } from "lucide-react";
 
 export function ErrorMessageView({ error }: { error: Error | undefined }) {
@@ -7,7 +7,7 @@ export function ErrorMessageView({ error }: { error: Error | undefined }) {
     <ErrorMessage
       error={error}
       formatter={(e) => {
-        if (e.message === ServerErrors.ReachedCreditLimit) {
+        if (e.message === PochiApiErrors.ReachedCreditLimit) {
           return (
             <span>
               You have reached the spending limit.{" "}
@@ -24,7 +24,7 @@ export function ErrorMessageView({ error }: { error: Error | undefined }) {
           );
         }
 
-        if (e.message === ServerErrors.ReachedOrgCreditLimit) {
+        if (e.message === PochiApiErrors.ReachedOrgCreditLimit) {
           return (
             <span>
               Your team has reached the spending limit.{" "}
@@ -41,7 +41,7 @@ export function ErrorMessageView({ error }: { error: Error | undefined }) {
           );
         }
 
-        if (e.message === ServerErrors.RequireSubscription) {
+        if (e.message === PochiApiErrors.RequireSubscription) {
           return (
             <span>
               You've used all your free credits. To continue, please subscribe
@@ -59,7 +59,7 @@ export function ErrorMessageView({ error }: { error: Error | undefined }) {
           );
         }
 
-        if (e.message === ServerErrors.RequireOrgSubscription) {
+        if (e.message === PochiApiErrors.RequireOrgSubscription) {
           return (
             <span>
               Your team does not have a subscription yet. To continue, please
@@ -77,7 +77,7 @@ export function ErrorMessageView({ error }: { error: Error | undefined }) {
           );
         }
 
-        if (e.message === ServerErrors.RequirePayment) {
+        if (e.message === PochiApiErrors.RequirePayment) {
           return (
             <span>
               You have unpaid invoices. Please{" "}
@@ -94,7 +94,7 @@ export function ErrorMessageView({ error }: { error: Error | undefined }) {
           );
         }
 
-        if (e.message === ServerErrors.RequireOrgPayment) {
+        if (e.message === PochiApiErrors.RequireOrgPayment) {
           return (
             <span>
               Your team have unpaid invoices. Please{" "}

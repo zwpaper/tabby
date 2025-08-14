@@ -1,6 +1,6 @@
 import { useAutoApproveGuard } from "@/features/chat";
 import { useAutoApprove } from "@/features/settings";
-import { ServerErrors } from "@ragdoll/server";
+import { PochiApiErrors } from "@getpochi/base";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // fibonacci sequence starting from 1, 2, 3, 5, 8...
@@ -53,7 +53,7 @@ export function usePendingRetryApproval({
 }) {
   const autoApproveGuard = useAutoApproveGuard();
 
-  if (error && Object.values(ServerErrors).includes(error.message)) {
+  if (error && Object.values(PochiApiErrors).includes(error.message)) {
     autoApproveGuard.current = false;
   }
 

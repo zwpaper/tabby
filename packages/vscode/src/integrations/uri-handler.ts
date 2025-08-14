@@ -1,4 +1,4 @@
-import type { ApiClient, AuthClient } from "@/lib/auth-client";
+import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
 import { getLogger } from "@/lib/logger";
@@ -22,8 +22,6 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
   constructor(
     @inject("AuthClient")
     private readonly authClient: AuthClient,
-    @inject("ApiClient")
-    private readonly apiClient: ApiClient,
     private readonly workspaceJobQueue: WorkspaceJobQueue,
     private readonly newProjectRegistry: NewProjectRegistry,
     private readonly authEvents: AuthEvents,
@@ -51,37 +49,39 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
 
     const task = searchParams.get("task");
     if (task) {
-      await this.handleTaskEvent(task);
+      // remove unused
+      this.handleNewProjectTask;
+      // await this.handleTaskEvent(task);
       return;
     }
   }
 
-  private async handleTaskEvent(uid: string) {
-    try {
-      const taskResponse = await this.apiClient.api.tasks[":uid"].$get({
-        param: { uid },
-      });
-      if (!taskResponse.ok) {
-        throw new Error(`Failed to get task: ${taskResponse.status}`);
-      }
+  // private async handleTaskEvent(uid: string) {
+  //   try {
+  //     const taskResponse = await this.apiClient.api.tasks[":uid"].$get({
+  //       param: { uid },
+  //     });
+  //     if (!taskResponse.ok) {
+  //       throw new Error(`Failed to get task: ${taskResponse.status}`);
+  //     }
 
-      const task = await taskResponse.json();
-      const isNewTask = task?.conversation?.messages.length === 1;
-      if (isNewTask) {
-        switch (task?.event?.type) {
-          case "website:new-project":
-            await this.handleNewProjectTask(task as NewProjectTask);
-            return;
-          default:
-            break;
-        }
-      }
-      await vscode.commands.executeCommand("pochi.openTask", uid);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      vscode.window.showErrorMessage(`Task ${uid} failed: ${message}`);
-    }
-  }
+  //     const task = await taskResponse.json();
+  //     const isNewTask = task?.conversation?.messages.length === 1;
+  //     if (isNewTask) {
+  //       switch (task?.event?.type) {
+  //         case "website:new-project":
+  //           await this.handleNewProjectTask(task as NewProjectTask);
+  //           return;
+  //         default:
+  //           break;
+  //       }
+  //     }
+  //     await vscode.commands.executeCommand("pochi.openTask", uid);
+  //   } catch (error) {
+  //     const message = error instanceof Error ? error.message : "Unknown error";
+  //     vscode.window.showErrorMessage(`Task ${uid} failed: ${message}`);
+  //   }
+  // }
 
   private async handleNewProjectTask(task: NewProjectTask) {
     const { data: params } = task.event;

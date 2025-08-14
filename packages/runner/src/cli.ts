@@ -4,12 +4,14 @@ import "@livestore/wa-sqlite/dist/wa-sqlite.node.wasm" with { type: "file" };
 
 import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";
+import type { PochiApi } from "@getpochi/base";
 import { getLogger } from "@ragdoll/common";
 import { CredentialStorage } from "@ragdoll/common/node";
 import type { LLMRequestData } from "@ragdoll/livekit";
 import type { ChatRequest } from "@ragdoll/server";
 import chalk from "chalk";
 import * as commander from "commander";
+import { hc } from "hono/client";
 import packageJson from "../package.json";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { createStore } from "./livekit/store";
@@ -202,9 +204,11 @@ program
         : {
             type: "pochi",
             modelId: options.model,
-            modelEndpointId: options.modelEndpointId,
-            server: options.url,
-            token,
+            apiClient: hc<PochiApi>(options.url, {
+              headers: {
+                Authorization: `Bearer ${options.token}`,
+              },
+            }),
           }
     ) satisfies LLMRequestData;
 

@@ -8,9 +8,10 @@ import {
   isToolUIPart,
 } from "@ai-v5-sdk/ai";
 import { isAbortError } from "@ai-v5-sdk/provider-utils";
-import type { Environment } from "@getpochi/base";
+import type { Environment, PochiApi } from "@getpochi/base";
 import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
+import type { hc } from "hono/client";
 import type { LLMRequestData } from "..";
 import { makeMessagesQuery, makeTaskQuery } from "../livestore/queries";
 import { events, tables } from "../livestore/schema";
@@ -32,10 +33,15 @@ export type LiveChatKitOptions<T> = {
     }) => Promise<Environment>;
     getMcpTools?: () => Record<string, McpTool>;
   };
+
   allowNewTask?: boolean;
 
   store: Store;
+
+  apiClient?: ReturnType<typeof hc<PochiApi>>;
+
   chatClass: new (options: ChatInit<Message>) => T;
+
   onBeforeMakeRequest?: (options: {
     messages: Message[];
   }) => void | Promise<void>;

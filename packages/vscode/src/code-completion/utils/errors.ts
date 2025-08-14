@@ -1,4 +1,4 @@
-import { ServerErrors } from "@ragdoll/server";
+import { PochiApiErrors } from "@getpochi/base";
 
 export class HttpError extends Error {
   public readonly status: number;
@@ -64,10 +64,10 @@ export function checkSubscriptionRequiredError(
   error: unknown,
 ): undefined | "user" | "team" {
   if (error instanceof HttpError && error.status === 422) {
-    if (error.text === ServerErrors.RequireSubscription) {
+    if (error.text === PochiApiErrors.RequireSubscription) {
       return "user";
     }
-    if (error.text === ServerErrors.RequireOrgSubscription) {
+    if (error.text === PochiApiErrors.RequireOrgSubscription) {
       return "team";
     }
   }
@@ -78,10 +78,10 @@ export function checkPaymentRequiredError(
   error: unknown,
 ): undefined | "user" | "team" {
   if (error instanceof HttpError && error.status === 422) {
-    if (error.text === ServerErrors.RequirePayment) {
+    if (error.text === PochiApiErrors.RequirePayment) {
       return "user";
     }
-    if (error.text === ServerErrors.RequireOrgPayment) {
+    if (error.text === PochiApiErrors.RequireOrgPayment) {
       return "team";
     }
   }

@@ -1,10 +1,7 @@
-import { apiClient } from "@/lib/auth-client";
 import { MaxImages } from "@/lib/constants";
 import { createImageFileName, validateImage } from "@/lib/utils/image";
 import type { FileUIPart } from "@ai-v5-sdk/ai";
 import { useRef, useState } from "react";
-
-const UseDataURI = true;
 
 interface UseImageUploadOptions {
   maxImages?: number;
@@ -138,9 +135,7 @@ export function useImageUpload(options?: UseImageUploadOptions) {
           type: "file",
           filename: file.name || "unnamed-image",
           mediaType: file.type,
-          url: UseDataURI
-            ? await fileToDataUri(file)
-            : await fileToRemoteUri(file, abortController.current?.signal),
+          url: await fileToDataUri(file),
         } satisfies FileUIPart;
       });
 
@@ -200,23 +195,23 @@ function fileToDataUri(file: File) {
   });
 }
 
-async function fileToRemoteUri(file: File, signal?: AbortSignal) {
-  const response = await apiClient.api.upload.$post({
-    form: {
-      image: file,
-    },
-    signal,
-  });
+// async function fileToRemoteUri(file: File, signal?: AbortSignal) {
+//   const response = await apiClient.api.upload.$post({
+//     form: {
+//       image: file,
+//     },
+//     signal,
+//   });
 
-  if (!response.ok) {
-    throw new Error(`Upload failed: ${response.statusText}`);
-  }
+//   if (!response.ok) {
+//     throw new Error(`Upload failed: ${response.statusText}`);
+//   }
 
-  const data = await response.json();
+//   const data = await response.json();
 
-  if (!data.image) {
-    throw new Error("Failed to upload images");
-  }
+//   if (!data.image) {
+//     throw new Error("Failed to upload images");
+//   }
 
-  return data.image;
-}
+//   return data.image;
+// }

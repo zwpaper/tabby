@@ -7,7 +7,6 @@ import type { LLMRequest, OnFinishCallback } from "./types";
 
 export function createPochiModel(
   store: Store | undefined,
-  taskId: string | undefined,
   llm: Extract<RequestData["llm"], { type: "pochi" }>,
   payload: LLMRequest,
 ) {
@@ -19,27 +18,24 @@ export function createPochiModel(
     supportedUrls: {},
     doGenerate: async () => Promise.reject("Not implemented"),
     doStream: async ({ prompt, abortSignal, stopSequences, tools }) => {
-      const resp = await fetch(`${llm.server}/api/chatNext/stream`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${llm.token}`,
+      const resp = await llm.apiClient.api.chatNext.stream.$post(
+        {
+          json: {
+            id: taskId,
+            model: llm.modelId,
+            callOptions: {
+              prompt,
+              stopSequences,
+              tools,
+            },
+          },
         },
-        signal: abortSignal,
-        body: JSON.stringify({
-          id: taskId,
-          model: llm.modelId,
-          callOptions: {
-            prompt,
-            stopSequences,
-            tools,
+        {
+          init: {
+            signal: abortSignal,
           },
-          persistOptions: {
-            messages: payload.messages,
-            environment: payload.environment,
-          },
-        }),
-      });
+        },
+      );
 
       if (!resp.ok || !resp.body) {
         throw new Error(`Failed to fetch: ${resp.status} ${resp.statusText}`);
@@ -62,20 +58,16 @@ export function createPochiModel(
     },
   };
 
+  const taskId = payload.id;
   const onFinish: OnFinishCallback = async ({ messages }) => {
     if (!store || !taskId) return;
 
-    const resp = await fetch(`${llm.server}/api/chatNext/persist`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${llm.token}`,
-      },
-      body: JSON.stringify({
+    const resp = await llm.apiClient.api.chatNext.persist.$post({
+      json: {
         id: taskId,
         messages,
         environment: payload.environment,
-      }),
+      },
     });
 
     if (resp.status !== 200) {

@@ -1,7 +1,7 @@
 import { ZodTodo } from "@getpochi/tools";
 import { z } from "zod";
 
-export const ZodEnvironment = z.object({
+export const Environment = z.object({
   currentTime: z.string().describe("The current time."),
   workspace: z
     .object({
@@ -110,5 +110,5 @@ export const ZodEnvironment = z.object({
     .describe("User edits since last checkpoint in the current workspace."),
 });
 
-export type Environment = z.infer<typeof ZodEnvironment>;
+export type Environment = z.infer<typeof Environment>;
 export type GitStatus = Environment["workspace"]["gitStatus"];

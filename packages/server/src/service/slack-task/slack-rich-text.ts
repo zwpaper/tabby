@@ -1,9 +1,9 @@
+import { PochiApiErrors } from "@getpochi/base";
 import type { Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
 import type { DBMessage } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";
 import slackifyMarkdown from "slackify-markdown";
-import { ServerErrors } from "../..";
 
 export interface TaskRenderContext {
   headerInfo: {
@@ -185,17 +185,17 @@ class SlackRichTextRenderer {
 
   toRenderErrorMessage(errorMessage: string) {
     switch (errorMessage) {
-      case ServerErrors.RequireSubscription:
+      case PochiApiErrors.RequireSubscription:
         return "You've used all your free credits. To continue, please subscribe to Pochi";
-      case ServerErrors.RequireOrgSubscription:
+      case PochiApiErrors.RequireOrgSubscription:
         return "Your team does not have a subscription yet. To continue, please subscribe to Pochi";
-      case ServerErrors.RequirePayment:
+      case PochiApiErrors.RequirePayment:
         return "You have unpaid invoices. Please make a payment to to continue using Pochi";
-      case ServerErrors.RequireOrgPayment:
+      case PochiApiErrors.RequireOrgPayment:
         return "Your team have unpaid invoices. Please make a payment to to continue using Pochi";
-      case ServerErrors.ReachedCreditLimit:
+      case PochiApiErrors.ReachedCreditLimit:
         return "You have reached the spending limit";
-      case ServerErrors.ReachedOrgCreditLimit:
+      case PochiApiErrors.ReachedOrgCreditLimit:
         return "Your team has reached the spending limit";
       default:
         return `*Something wrong happened, retrying ...*\n\n${errorMessage}`;

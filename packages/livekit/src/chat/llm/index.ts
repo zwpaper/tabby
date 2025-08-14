@@ -7,17 +7,15 @@ import type { LLMRequest } from "./types";
 
 export function requestLLM(
   store: Store | undefined,
-  taskId: string | undefined,
   llm: RequestData["llm"],
   payload: LLMRequest,
 ) {
-  const { model, onFinish } = createModel(store, taskId, llm, payload);
+  const { model, onFinish } = createModel(store, llm, payload);
   return request(model, payload, onFinish);
 }
 
 function createModel(
   store: Store | undefined,
-  taskId: string | undefined,
   llm: RequestData["llm"],
   payload: LLMRequest,
 ) {
@@ -26,7 +24,7 @@ function createModel(
   }
 
   if (llm.type === "pochi") {
-    return createPochiModel(store, taskId, llm, payload);
+    return createPochiModel(store, llm, payload);
   }
 
   throw new Error(`Unknown LLM type: ${llm}`);

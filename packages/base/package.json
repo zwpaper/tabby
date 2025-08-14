@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "zod": "catalog:",
-    "@getpochi/tools": "workspace:*"
+    "@getpochi/tools": "workspace:*",
+    "@ai-v5-sdk/provider": "catalog:",
+    "@ai-v5-sdk/ai": "catalog:",
+    "@hono/zod-validator": "catalog:",
+    "hono": "catalog:"
   }
 }

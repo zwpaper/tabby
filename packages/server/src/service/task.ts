@@ -1,6 +1,6 @@
 import { isAbortError } from "@ai-sdk/provider-utils";
 import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
-import type { Environment } from "@getpochi/base";
+import { type Environment, PochiApiErrors } from "@getpochi/base";
 import { type Todo, isUserInputTool } from "@getpochi/tools";
 import {
   CompactTaskMinTokens,
@@ -25,7 +25,6 @@ import {
 import { HTTPException } from "hono/http-exception";
 import { type ExpressionWrapper, type SqlBool, sql } from "kysely";
 import type { z } from "zod";
-import { ServerErrors } from "..";
 import { db, minionIdCoder, uidCoder } from "../db";
 import { geminiFlash } from "../lib/constants";
 import { applyEventFilter } from "../lib/event-filter";
@@ -764,7 +763,7 @@ class TaskService {
 
     if (!githubAccessToken) {
       throw new HTTPException(401, {
-        message: ServerErrors.RequireGithubIntegration,
+        message: PochiApiErrors.RequireGithubIntegration,
       });
     }
 
@@ -903,7 +902,7 @@ Generate a concise title that captures the essence of the above conversation. Re
     userId: string,
     clientTaskId: string,
     messagesNext: UIMessageNext[],
-    environment: Environment,
+    environment?: Environment,
   ) {
     const { id } = await db
       .insertInto("task")

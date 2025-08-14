@@ -1,5 +1,5 @@
+import { PochiApiErrors } from "@getpochi/base";
 import { HTTPException } from "hono/http-exception";
-import { ServerErrors } from "..";
 import { type User, isInternalOrganization } from "../auth";
 import { usageService } from "../service/usage";
 import { type AvailableModelId, AvailableModels } from "./constants";
@@ -38,19 +38,19 @@ export async function checkUserQuota(user: User, modelId: string) {
     if (!isInternalOrganization(organization)) {
       if (quota.credit.isUnpaid) {
         throw new HTTPException(422, {
-          message: ServerErrors.RequireOrgPayment,
+          message: PochiApiErrors.RequireOrgPayment,
         });
       }
 
       if (!quota.plan) {
         throw new HTTPException(422, {
-          message: ServerErrors.RequireOrgSubscription,
+          message: PochiApiErrors.RequireOrgSubscription,
         });
       }
 
       if (quota.credit.isLimitReached) {
         throw new HTTPException(422, {
-          message: ServerErrors.ReachedOrgCreditLimit,
+          message: PochiApiErrors.ReachedOrgCreditLimit,
         });
       }
     }
@@ -65,20 +65,20 @@ export async function checkUserQuota(user: User, modelId: string) {
 
   if (userQuota.credit.isUnpaid) {
     throw new HTTPException(422, {
-      message: ServerErrors.RequirePayment,
+      message: PochiApiErrors.RequirePayment,
     });
   }
 
   if (userOutOfFreeCredit) {
     throw new HTTPException(422, {
-      message: ServerErrors.RequireSubscription,
+      message: PochiApiErrors.RequireSubscription,
     });
   }
 
   const userLimitReached = userQuota.credit.isLimitReached;
   if (userLimitReached) {
     throw new HTTPException(422, {
-      message: ServerErrors.ReachedCreditLimit,
+      message: PochiApiErrors.ReachedCreditLimit,
     });
   }
 
@@ -107,13 +107,13 @@ export async function checkUserCodeCompletionQuota(user: User) {
     // check organization quota
     if (quota.credit.isUnpaid) {
       throw new HTTPException(422, {
-        message: ServerErrors.RequireOrgPayment,
+        message: PochiApiErrors.RequireOrgPayment,
       });
     }
 
     if (!quota.plan) {
       throw new HTTPException(422, {
-        message: ServerErrors.RequireOrgSubscription,
+        message: PochiApiErrors.RequireOrgSubscription,
       });
     }
 
@@ -130,14 +130,14 @@ export async function checkUserCodeCompletionQuota(user: User) {
 
   if (usage.isUnpaid) {
     throw new HTTPException(422, {
-      message: ServerErrors.RequirePayment,
+      message: PochiApiErrors.RequirePayment,
     });
   }
 
   if (usage.plan === "Community") {
     // free plan
     throw new HTTPException(422, {
-      message: ServerErrors.RequireSubscription,
+      message: PochiApiErrors.RequireSubscription,
     });
   }
 

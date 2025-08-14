@@ -1,6 +1,6 @@
 import { createAuthHooks } from "@daveyplate/better-auth-tanstack";
+import type { PochiApi } from "@getpochi/base";
 import { type ThreadSignal, threadSignal } from "@quilted/threads/signals";
-import type { AppType } from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -68,7 +68,7 @@ export type User = (typeof authClient.$Infer.Session)["user"];
 export const authHooks = createAuthHooks(authClient);
 
 function createApiClient() {
-  const app = hc<AppType>(getServerBaseUrl(), {
+  const app = hc<PochiApi>(getServerBaseUrl(), {
     fetch: customFetchImpl,
   });
   return app;

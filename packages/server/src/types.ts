@@ -1,5 +1,5 @@
 import type { JSONSchema7 } from "@ai-v5-sdk/ai";
-import { ZodEnvironment } from "@getpochi/base";
+import { Environment } from "@getpochi/base";
 import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
 import { z } from "zod";
 
@@ -39,7 +39,7 @@ export const ZodChatRequestType = z.object({
     )
     .optional()
     .describe("MCP tools available for this request."),
-  environment: ZodEnvironment.optional().describe(
+  environment: Environment.optional().describe(
     "Execution environment settings.",
   ),
   minionId: z
@@ -62,75 +62,3 @@ export const ZodChatRequestType = z.object({
 });
 
 export type ChatRequest = z.infer<typeof ZodChatRequestType>;
-
-// Code Completion API types (Fill-in-Middle style completion)
-export const ZodCodeCompletionRequestType = z.object({
-  language: z.string().optional().describe("Programming language identifier"),
-  segments: z
-    .object({
-      prefix: z.string().describe("Code before cursor"),
-      suffix: z.string().optional().describe("Code after cursor"),
-      filepath: z.string().optional().describe("Relative file path"),
-      gitUrl: z.string().optional().describe("Git repository URL"),
-      declarations: z
-        .array(
-          z.object({
-            filepath: z.string().describe("File path (relative or URI)"),
-            body: z.string().describe("Declaration code"),
-          }),
-        )
-        .optional()
-        .describe("LSP-provided declarations"),
-      relevantSnippetsFromChangedFiles: z
-        .array(
-          z.object({
-            filepath: z.string().describe("File path"),
-            body: z.string().describe("Code snippet"),
-            score: z.number().optional().describe("Relevance score"),
-          }),
-        )
-        .optional()
-        .describe("Recent edit context"),
-      relevantSnippetsFromRecentlyOpenedFiles: z
-        .array(
-          z.object({
-            filepath: z.string().describe("File path"),
-            body: z.string().describe("Code snippet"),
-            score: z.number().optional().describe("Relevance score"),
-          }),
-        )
-        .optional()
-        .describe("Recent file context"),
-      clipboard: z.string().optional().describe("Clipboard content"),
-    })
-    .describe("Code completion segments"),
-  temperature: z
-    .number()
-    .min(0)
-    .max(1)
-    .optional()
-    .describe("Model temperature (0.0-1.0)"),
-  mode: z
-    .enum(["standard", "next_edit_suggestion"])
-    .optional()
-    .describe("Completion mode"),
-});
-
-export const ZodCodeCompletionResponseType = z.object({
-  id: z.string().describe("Completion ID"),
-  choices: z
-    .array(
-      z.object({
-        index: z.number().describe("Choice index"),
-        text: z.string().describe("Generated completion text"),
-      }),
-    )
-    .describe("Completion choices"),
-});
-
-export type CodeCompletionRequest = z.infer<
-  typeof ZodCodeCompletionRequestType
->;
-export type CodeCompletionResponse = z.infer<
-  typeof ZodCodeCompletionResponseType
->;

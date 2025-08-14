@@ -1,6 +1,6 @@
 import type { InferUITool, UIMessage } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2FinishReason } from "@ai-v5-sdk/provider";
-import { ZodEnvironment } from "@getpochi/base";
+import { Environment, type PochiApiClient } from "@getpochi/base";
 import { type ClientToolsV5, ZodMcpTool } from "@getpochi/tools";
 import z from "zod";
 import type { tables } from "./livestore/schema";
@@ -29,7 +29,7 @@ export type UITools = {
 export type Message = UIMessage<Metadata, DataParts, UITools>;
 
 const ZodRequestData = z.object({
-  environment: ZodEnvironment.optional(),
+  environment: Environment.optional(),
   llm: z.discriminatedUnion("type", [
     z.object({
       type: z.literal("openai"),
@@ -41,10 +41,8 @@ const ZodRequestData = z.object({
     }),
     z.object({
       type: z.literal("pochi"),
-      server: z.string().default("https://app.getpochi.com"),
       modelId: z.string().optional(),
-      modelEndpointId: z.string().optional(),
-      token: z.string(),
+      apiClient: z.custom<PochiApiClient>(),
     }),
   ]),
   mcpToolSet: z

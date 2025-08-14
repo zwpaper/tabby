@@ -3,19 +3,14 @@ import {
   JsonToSseTransformStream,
   type LanguageModelUsage,
   type ProviderMetadata,
-  type UIMessage,
   streamText,
   wrapLanguageModel,
 } from "@ai-v5-sdk/ai";
-import type {
-  LanguageModelV2CallOptions,
-  LanguageModelV2StreamPart,
-} from "@ai-v5-sdk/provider";
-import { ZodEnvironment } from "@getpochi/base";
+import type { LanguageModelV2StreamPart } from "@ai-v5-sdk/provider";
+import { ModelGatewayRequest, PersistRequest } from "@getpochi/base";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { z } from "zod";
 import { requireAuth } from "../auth";
 import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
@@ -29,29 +24,9 @@ import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
 import { spanConfig } from "../trace";
 
-const ZodCallOptions: z.ZodType<
-  Pick<LanguageModelV2CallOptions, "prompt" | "stopSequences" | "tools">
-> = z.any();
-
-const RequestType = z.object({
-  id: z.string().optional(),
-  model: z.string().optional().describe("Model to use for this request."),
-  callOptions: ZodCallOptions,
-});
-
-type RequestType = z.infer<typeof RequestType>;
-
-const PersistRequestType = z.object({
-  id: z.string(),
-  messages: z.array(z.custom<UIMessage>()),
-  environment: ZodEnvironment,
-});
-
-type PersistRequestType = z.infer<typeof PersistRequestType>;
-
 const chat = new Hono()
   .use(requireAuth())
-  .post("/stream", zValidator("json", RequestType), async (c) => {
+  .post("/stream", zValidator("json", ModelGatewayRequest), async (c) => {
     setIdleTimeout(c.req.raw, 120);
     const req = await c.req.valid("json");
     const { prompt, tools, stopSequences } = req.callOptions;
@@ -166,7 +141,7 @@ const chat = new Hono()
       },
     });
   })
-  .post("/persist", zValidator("json", PersistRequestType), async (c) => {
+  .post("/persist", zValidator("json", PersistRequest), async (c) => {
     const req = c.req.valid("json");
     const user = c.get("user");
     const shareId = await taskService.persistTask(

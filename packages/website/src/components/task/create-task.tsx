@@ -18,7 +18,7 @@ import {
   validateImages,
 } from "@/lib/utils/image";
 import { AuthCard } from "@daveyplate/better-auth-ui";
-import { ServerErrors } from "@ragdoll/server";
+import { PochiApiErrors } from "@getpochi/base";
 import { useRouter } from "@tanstack/react-router";
 import type { Attachment } from "ai";
 import {
@@ -509,7 +509,7 @@ function ErrorMessage({ error }: { error: Error | undefined }) {
 
   if (!error) return;
 
-  if (error.message === ServerErrors.RequireGithubIntegration) {
+  if (error.message === PochiApiErrors.RequireGithubIntegration) {
     return (
       <span>
         GitHub integration is required.{" "}

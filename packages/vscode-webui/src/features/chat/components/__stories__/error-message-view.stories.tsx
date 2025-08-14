@@ -1,4 +1,4 @@
-import { ServerErrors } from "@ragdoll/server";
+import { PochiApiErrors } from "@getpochi/base";
 import type { Meta, StoryObj } from "@storybook/react";
 import { ErrorMessageView } from "../error-message-view";
 
@@ -39,7 +39,7 @@ export const Default: Story = {
 
 export const ReachedCreditLimit: Story = {
   args: {
-    error: new TaskError("CreditLimitError", ServerErrors.ReachedCreditLimit),
+    error: new TaskError("CreditLimitError", PochiApiErrors.ReachedCreditLimit),
   },
 };
 
@@ -47,7 +47,7 @@ export const ReachedOrgCreditLimit: Story = {
   args: {
     error: new TaskError(
       "OrgCreditLimitError",
-      ServerErrors.ReachedOrgCreditLimit,
+      PochiApiErrors.ReachedOrgCreditLimit,
     ),
   },
 };
@@ -56,7 +56,7 @@ export const RequireSubscription: Story = {
   args: {
     error: new TaskError(
       "SubscriptionRequired",
-      ServerErrors.RequireSubscription,
+      PochiApiErrors.RequireSubscription,
     ),
   },
 };
@@ -65,19 +65,22 @@ export const RequireOrgSubscription: Story = {
   args: {
     error: new TaskError(
       "OrgSubscriptionRequired",
-      ServerErrors.RequireOrgSubscription,
+      PochiApiErrors.RequireOrgSubscription,
     ),
   },
 };
 
 export const RequirePayment: Story = {
   args: {
-    error: new TaskError("PaymentRequired", ServerErrors.RequirePayment),
+    error: new TaskError("PaymentRequired", PochiApiErrors.RequirePayment),
   },
 };
 
 export const RequireOrgPayment: Story = {
   args: {
-    error: new TaskError("OrgPaymentRequired", ServerErrors.RequireOrgPayment),
+    error: new TaskError(
+      "OrgPaymentRequired",
+      PochiApiErrors.RequireOrgPayment,
+    ),
   },
 };

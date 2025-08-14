@@ -1,5 +1,8 @@
+import type {
+  CodeCompletionRequest,
+  CodeCompletionResponse,
+} from "@getpochi/base";
 import { HTTPException } from "hono/http-exception";
-import type { CodeCompletionRequest, CodeCompletionResponse } from "../types";
 
 export class CodeCompletionService {
   // FIM (Fill-in-Middle) prompt building for Mistral API

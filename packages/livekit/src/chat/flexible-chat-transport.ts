@@ -96,7 +96,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       ...selectClientToolsNext(!!this.allowNewTask),
       ...(mcpTools || {}),
     };
-    return requestLLM(this.store, chatId, llm, {
+    return requestLLM(this.store, llm, {
       system,
       messages: prepareMessages(messages, environment),
       abortSignal,

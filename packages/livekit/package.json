@@ -23,6 +23,7 @@
     "@ai-v5-sdk/provider": "catalog:",
     "@ragdoll/db": "workspace:*",
     "@ragdoll/common": "workspace:*",
+    "hono": "catalog:",
     "zod": "catalog:",
     "ai": "catalog:",
     "react": "catalog:",
