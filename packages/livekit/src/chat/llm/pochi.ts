@@ -19,7 +19,7 @@ export function createPochiModel(
     supportedUrls: {},
     doGenerate: async () => Promise.reject("Not implemented"),
     doStream: async ({ prompt, abortSignal, stopSequences, tools }) => {
-      const resp = await llm.apiClient.api.chatNext.stream.$post(
+      const resp = await llm.apiClient.api.chat.stream.$post(
         {
           json: {
             id: taskId,
@@ -73,7 +73,7 @@ export function createPochiModel(
         .where("id", "=", taskId)
         .first({ fallback: () => null }),
     );
-    const resp = await llm.apiClient.api.chatNext.persist.$post({
+    const resp = await llm.apiClient.api.chat.persist.$post({
       json: {
         id: taskId,
         messages,

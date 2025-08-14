@@ -118,11 +118,9 @@ export type CodeCompletionRequest = z.infer<typeof CodeCompletionRequest>;
 export type CodeCompletionResponse = z.infer<typeof CodeCompletionResponse>;
 
 const stub = new Hono()
-  .post("/api/chatNext/stream", zValidator("json", ModelGatewayRequest))
-  .post(
-    "/api/chatNext/persist",
-    zValidator("json", PersistRequest),
-    async (c) => c.json({} as PersistResponse),
+  .post("/api/chat/stream", zValidator("json", ModelGatewayRequest))
+  .post("/api/chat/persist", zValidator("json", PersistRequest), async (c) =>
+    c.json({} as PersistResponse),
   )
   .post(
     "/api/code/completion",

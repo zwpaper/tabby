@@ -7,7 +7,7 @@ import { HTTPException } from "hono/http-exception";
 import { logger as loggerMiddleware } from "hono/logger";
 import admin from "./api/admin";
 import billing from "./api/billing";
-import chatNext from "./api/chat-next";
+import chat from "./api/chat";
 import clips from "./api/clips";
 import code from "./api/code";
 import enhance from "./api/enhance";
@@ -151,7 +151,8 @@ const api = app.basePath("/api");
 // Endpoint to list available models
 export const route = api
   .route("/models", models)
-  .route("/chatNext", chatNext)
+  .route("/chatNext", chat) // FIXME: remove once released.
+  .route("/chat", chat)
   .route("/code", code)
   .route("/usages", usages)
   .route("/billing", billing)
