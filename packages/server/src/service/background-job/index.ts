@@ -6,16 +6,18 @@ import {
   queue as createSandboxQueue,
   createSandboxWorker,
 } from "./create-sandbox";
-
 import {
-  createNotifyTaskSlackWorker,
-  queue as slackQueue,
-} from "./notify-task-slack";
-
+  queue as createMigrateDBTaskQueue,
+  createMigrateDBTaskWorker,
+} from "./migrate-db-task";
 import {
   createMonitorStripeCreditUsageWorker,
   queue as monitorStripeCreditUsageQueue,
 } from "./monitor-stripe-credit-usage";
+import {
+  createNotifyTaskSlackWorker,
+  queue as slackQueue,
+} from "./notify-task-slack";
 
 export function startWorkers() {
   createNotifyTaskSlackWorker();
@@ -24,6 +26,7 @@ export function startWorkers() {
     createCleanupSandboxWorker();
   }
   createMonitorStripeCreditUsageWorker();
+  createMigrateDBTaskWorker();
 }
 
 export { enqueueNotifyTaskSlack } from "./notify-task-slack";
@@ -51,6 +54,11 @@ export const backgroundJobQueues = [
   {
     queue: monitorStripeCreditUsageQueue,
     displayName: "MonitorStripeCreditUsage",
+    type: "bullmq" as const,
+  },
+  {
+    queue: createMigrateDBTaskQueue,
+    displayName: "MigrateDBTask",
     type: "bullmq" as const,
   },
 ];
