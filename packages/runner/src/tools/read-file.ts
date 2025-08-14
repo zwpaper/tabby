@@ -11,10 +11,9 @@ export const readFile =
   (context: ToolCallOptions): ToolFunctionType<ClientToolsType["readFile"]> =>
   async ({ path, startLine, endLine }) => {
     const resolvedPath = resolvePath(path, context.cwd);
-    const fileBuffer = await fs.readFile(resolvedPath);
-    await validateTextFile(fileBuffer);
+    await validateTextFile(resolvedPath);
+    const fileContent = (await fs.readFile(resolvedPath)).toString();
 
-    const fileContent = fileBuffer.toString();
     const addLineNumbers = !!process.env.VSCODE_TEST_OPTIONS;
 
     return selectFileContent(fileContent, {

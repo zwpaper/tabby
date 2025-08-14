@@ -17,10 +17,9 @@ export const readFile: ToolFunctionType<ClientToolsType["readFile"]> = async ({
   const resolvedPath = resolvePath(path, workspaceFolder.uri.fsPath);
   const fileUri = vscode.Uri.file(resolvedPath);
 
-  const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
-  await validateTextFile(fileBuffer);
+  await validateTextFile(fileUri.fsPath);
+  const fileContent = (await vscode.workspace.fs.readFile(fileUri)).toString();
 
-  const fileContent = fileBuffer.toString();
   const addLineNumbers = !!process.env.VSCODE_TEST_OPTIONS;
 
   return selectFileContent(fileContent, {

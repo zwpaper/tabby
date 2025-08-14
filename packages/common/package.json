@@ -20,7 +20,6 @@
     "@getpochi/base": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "fast-levenshtein": "^3.0.0",
-    "file-type": "catalog:",
     "hast-util-to-text": "^4.0.2",
     "ignore": "^7.0.5",
     "minimatch": "^10.0.1",

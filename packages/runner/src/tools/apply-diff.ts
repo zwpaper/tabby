@@ -15,10 +15,8 @@ export const applyDiff =
     const fileUri = nodePath.join(context.cwd, path);
     await ensureFileDirectoryExists(fileUri);
 
-    const fileBuffer = await fs.readFile(fileUri);
-    await validateTextFile(fileBuffer);
-
-    const fileContent = fileBuffer.toString();
+    await validateTextFile(fileUri);
+    const fileContent = (await fs.readFile(fileUri)).toString();
 
     const updatedContent = await parseDiffAndApply(
       fileContent,

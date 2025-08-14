@@ -17,10 +17,9 @@ export const multiApplyDiff =
     const fileUri = nodePath.join(context.cwd, path);
     await ensureFileDirectoryExists(fileUri);
 
-    const fileBuffer = await fs.readFile(fileUri);
-    await validateTextFile(fileBuffer);
+    await validateTextFile(fileUri);
+    const fileContent = (await fs.readFile(fileUri)).toString();
 
-    const fileContent = fileBuffer.toString();
     const updatedContent = await processMultipleDiffs(fileContent, edits);
     await fs.writeFile(fileUri, updatedContent);
 
