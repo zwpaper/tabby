@@ -15,10 +15,8 @@ import { TodoList } from "../todo";
 type BIDCChannel = ReturnType<typeof createChannel>;
 
 export function SharePage() {
-  const [channel, setChannel] = useState<BIDCChannel | null>(null);
-  const receive = channel?.receive;
-  const send = channel?.send;
-  const shareData = useShareData(receive);
+  const [channel, setChannel] = useState<BIDCChannel | undefined>();
+  const shareData = useShareData(channel);
 
   const isChannelCreated = useRef(false);
 
@@ -32,10 +30,10 @@ export function SharePage() {
   // Set up ResizeObserver to monitor content height and send updates to parent
   const monitorHeight = useCallback(
     (element: HTMLElement | null) => {
-      if (!element || !send) return;
+      if (!element || !channel) return;
 
       const resizeObserver = new ResizeObserver(() => {
-        send({
+        channel.send({
           type: "resize",
           height: element.clientHeight,
         } satisfies ResizeEvent);
@@ -50,7 +48,7 @@ export function SharePage() {
 
       return () => resizeObserver.disconnect();
     },
-    [send],
+    [channel],
   );
 
   const {
@@ -148,12 +146,13 @@ const ZodShareEvent = z.object({
 
 type ShareEvent = z.infer<typeof ZodShareEvent>;
 
-function useShareData(receive: BIDCChannel["receive"] | undefined) {
+function useShareData(channel: BIDCChannel | undefined) {
   const [data, setData] = useState<ShareEvent>();
   useEffect(() => {
-    receive?.((data) => {
+    if (!channel) return;
+    channel.receive((data) => {
       setData(ZodShareEvent.parse(data));
     });
-  }, [receive]);
+  }, [channel]);
   return data;
 }
