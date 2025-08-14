@@ -1,6 +1,6 @@
 import type { Tool } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2Middleware } from "@ai-v5-sdk/provider";
-import type { Environment } from "@getpochi/base";
+import type { Environment } from "@ragdoll/common";
 import type { Message } from "../../types";
 
 export type LLMRequest = {

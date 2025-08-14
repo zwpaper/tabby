@@ -29,7 +29,6 @@ import { searchFiles } from "@/tools/search-files";
 import { todoWrite } from "@/tools/todo-write";
 import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
 import type { Tool } from "@ai-v5-sdk/ai";
-import type { Environment } from "@getpochi/base";
 import type {
   PreviewToolFunctionType,
   ToolFunctionType,
@@ -42,6 +41,7 @@ import {
   ThreadSignal,
   type ThreadSignalSerialization,
 } from "@quilted/threads/signals";
+import type { Environment } from "@ragdoll/common";
 import {
   GitStatusReader,
   ignoreWalk,

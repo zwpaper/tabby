@@ -319,13 +319,11 @@
     "release": "bunx bumpp --tag=vscode@%s"
   },
   "dependencies": {
-    "@getpochi/base": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@orama/orama": "^3.1.11",
     "@preact/signals-core": "catalog:",
     "@quilted/threads": "catalog:",
     "@ragdoll/common": "workspace:*",
-
     "@vscode-logging/logger": "^2.0.0",
     "@xstate/fsm": "^2.1.0",
     "@ai-v5-sdk/ai": "catalog:",

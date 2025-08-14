@@ -15,7 +15,7 @@ import {
   organization,
 } from "better-auth/plugins";
 
-import { deviceLink } from "@getpochi/base/device-link";
+import { deviceLink } from "@ragdoll/common/device-link";
 import moment from "moment";
 import { db } from "./db";
 import { handleGithubAccountUpdate } from "./github";

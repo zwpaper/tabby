@@ -1,4 +1,4 @@
-import type { Environment } from "@getpochi/base";
+import type { Environment } from "@ragdoll/common";
 import {
   GitStatusReader,
   collectCustomRules,

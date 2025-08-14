@@ -1,6 +1,6 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { GitStatus } from "@getpochi/base";
+import type { GitStatus } from "../environment";
 import { parseGitOriginUrl } from "../git-utils";
 import { getLogger } from "../logger";
 

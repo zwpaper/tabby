@@ -9,7 +9,7 @@ import type { hc } from "hono/client";
 import type { AppType } from "./server";
 export type * from "./types";
 export type { AppType } from "./server";
-export { deviceLinkClient } from "@getpochi/base/device-link/client";
+export { deviceLinkClient } from "@ragdoll/common/device-link/client";
 
 export type { auth } from "./better-auth";
 

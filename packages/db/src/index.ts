@@ -1,5 +1,5 @@
 import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
-import type { Environment } from "@getpochi/base";
+import type { Environment } from "@ragdoll/common";
 import type { ColumnType, Generated, JSONColumnType } from "kysely";
 import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";

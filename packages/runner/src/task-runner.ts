@@ -4,7 +4,6 @@ import {
   isToolUIPart,
   lastAssistantMessageIsCompleteWithToolCalls,
 } from "@ai-v5-sdk/ai";
-import type { Environment } from "@getpochi/base";
 import {
   type Todo,
   type ToolFunctionType,
@@ -12,6 +11,7 @@ import {
 } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { type Signal, signal } from "@preact/signals-core";
+import type { Environment } from "@ragdoll/common";
 import { getLogger, prompts } from "@ragdoll/common";
 import {
   isAssistantMessageWithEmptyParts,
@@ -19,7 +19,7 @@ import {
   isAssistantMessageWithPartialToolCalls,
   prepareLastMessageForRetry,
 } from "@ragdoll/common/message-utils";
-import { findTodosNext, mergeTodos } from "@ragdoll/common/todo-utils";
+import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { LLMRequestData, Message, Task, UITools } from "@ragdoll/livekit";
 import { LiveChatKit } from "@ragdoll/livekit/node";
 import { toError, toErrorString } from "./lib/error-utils";
@@ -328,7 +328,7 @@ export class TaskRunner {
     this.task = task;
     const lastMessage = this.getLastMessageOrThrow();
 
-    this.todos = mergeTodos(this.todos, findTodosNext(lastMessage) ?? []);
+    this.todos = mergeTodos(this.todos, findTodos(lastMessage) ?? []);
 
     this.logger.trace("Task loaded:", task);
     this.updateState({

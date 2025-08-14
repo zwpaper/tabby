@@ -14,7 +14,7 @@
   "dependencies": {
     "@livestore/livestore": "catalog:",
     "@livestore/react": "catalog:",
-    "@getpochi/base": "workspace:*",
+    "@ragdoll/common": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "@ai-v5-sdk/ai": "catalog:",
     "@ai-v5-sdk/react": "catalog:",
@@ -22,7 +22,6 @@
     "@ai-v5-sdk/provider-utils": "catalog:",
     "@ai-v5-sdk/provider": "catalog:",
     "@ragdoll/db": "workspace:*",
-    "@ragdoll/common": "workspace:*",
     "hono": "catalog:",
     "zod": "catalog:",
     "ai": "catalog:",

@@ -17,7 +17,6 @@
     "@ai-v5-sdk/ai": "catalog:",
     "@ai-v5-sdk/react": "catalog:",
     "@daveyplate/better-auth-tanstack": "catalog:",
-    "@getpochi/base": "workspace:*",
     "@leeoniya/ufuzzy": "^1.0.18",
     "@livestore/adapter-web": "catalog:",
     "@livestore/livestore": "catalog:",

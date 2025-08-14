@@ -1,6 +1,6 @@
 import { createAuthHooks } from "@daveyplate/better-auth-tanstack";
-import type { PochiApi } from "@getpochi/base";
 import { type ThreadSignal, threadSignal } from "@quilted/threads/signals";
+import type { PochiApi } from "@ragdoll/common";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useQuery } from "@tanstack/react-query";
 import {

@@ -1,5 +1,5 @@
-import { PochiApiErrors } from "@getpochi/base";
 import type { Todo } from "@getpochi/tools";
+import { PochiApiErrors } from "@ragdoll/common";
 import { prompts } from "@ragdoll/common";
 import type { DBMessage } from "@ragdoll/db";
 import type { AnyBlock } from "@slack/web-api";

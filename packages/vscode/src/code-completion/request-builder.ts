@@ -1,7 +1,7 @@
 // Modified from: https://github.com/TabbyML/tabby/blob/493cef3b3229548175de430dbc7f7e4a092ca507/clients/tabby-agent/src/codeCompletion/buildRequest.ts
 
 import path from "node:path";
-import type { CodeCompletionRequest } from "@getpochi/base";
+import type { CodeCompletionRequest } from "@ragdoll/common";
 import type * as vscode from "vscode";
 import { CodeCompletionConfig } from "./configuration";
 import type { CompletionContext, CompletionExtraContexts } from "./contexts";

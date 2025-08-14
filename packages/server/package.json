@@ -13,7 +13,6 @@
     "@ai-v5-sdk/groq": "npm:@ai-sdk/groq@2",
     "@ai-v5-sdk/provider": "catalog:",
     "@better-auth/stripe": "catalog:",
-    "@getpochi/base": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "@google/genai": "catalog:",
     "@hono-storage/s3": "^0.0.13",

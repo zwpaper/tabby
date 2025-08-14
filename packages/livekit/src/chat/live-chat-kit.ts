@@ -3,9 +3,9 @@ import type {
   ChatOnErrorCallback,
   ChatOnFinishCallback,
 } from "@ai-v5-sdk/ai";
-import type { Environment, PochiApi } from "@getpochi/base";
 import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
+import type { Environment, PochiApi } from "@ragdoll/common";
 import type { hc } from "hono/client";
 import type { LLMRequestData } from "..";
 import { makeMessagesQuery, makeTaskQuery } from "../livestore/queries";

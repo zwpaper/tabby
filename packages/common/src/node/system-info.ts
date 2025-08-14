@@ -1,5 +1,5 @@
 import os from "node:os";
-import type { Environment } from "@getpochi/base";
+import type { Environment } from "../environment";
 
 /**
  * Gets system information such as current working directory, shell, OS, and home directory.

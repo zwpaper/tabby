@@ -1,6 +1,5 @@
 import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
-import type { DBMessage } from "@ragdoll/db";
 
 export function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
   // If newTodos is empty, return existing todos
@@ -39,32 +38,7 @@ export function mergeTodos(todos: Todo[], newTodos: Todo[]): Todo[] {
   return ret;
 }
 
-export function findTodos(message: DBMessage): Todo[] | undefined {
-  if (message.role !== "assistant") {
-    return;
-  }
-  const lastStepStartIndex = message.parts.reduce((lastIndex, part, index) => {
-    return part.type === "step-start" ? index : lastIndex;
-  }, -1);
-
-  const todos = message.parts
-    .slice(lastStepStartIndex + 1)
-    .reduce((acc, part) => {
-      if (
-        part.type === "tool-invocation" &&
-        part.toolInvocation.toolName === "todoWrite" &&
-        (part.toolInvocation.state === "call" ||
-          part.toolInvocation.state === "result")
-      ) {
-        return mergeTodos(acc, part.toolInvocation.args.todos);
-      }
-      return acc;
-    }, [] as Todo[]);
-
-  return todos;
-}
-
-export function findTodosNext(message: UIMessageNext): Todo[] | undefined {
+export function findTodos(message: UIMessageNext): Todo[] | undefined {
   if (message.role !== "assistant") {
     return;
   }

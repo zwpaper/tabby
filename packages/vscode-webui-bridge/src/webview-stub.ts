@@ -1,6 +1,6 @@
-import type { Environment } from "@getpochi/base";
 import type { ThreadAbortSignalSerialization } from "@quilted/threads";
 import type { ThreadSignalSerialization } from "@quilted/threads/signals";
+import type { Environment } from "@ragdoll/common";
 
 import type {
   CaptureEvent,

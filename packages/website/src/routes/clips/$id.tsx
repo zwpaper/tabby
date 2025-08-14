@@ -12,7 +12,7 @@ import { normalizeApiError, toHttpError } from "@/lib/error";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
 import { parseTitle } from "@ragdoll/common/message-utils";
-import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
+import { mergeTodos } from "@ragdoll/common/todo-utils";
 import type { DBMessage } from "@ragdoll/db";
 import { fromV4DBMessage } from "@ragdoll/livekit/v4-adapter";
 import { useEffect, useMemo, useState } from "react";
@@ -179,4 +179,29 @@ function GetPochiButton() {
       ✨ Get Pochi!
     </a>
   );
+}
+
+function findTodos(message: DBMessage): Todo[] | undefined {
+  if (message.role !== "assistant") {
+    return;
+  }
+  const lastStepStartIndex = message.parts.reduce((lastIndex, part, index) => {
+    return part.type === "step-start" ? index : lastIndex;
+  }, -1);
+
+  const todos = message.parts
+    .slice(lastStepStartIndex + 1)
+    .reduce((acc, part) => {
+      if (
+        part.type === "tool-invocation" &&
+        part.toolInvocation.toolName === "todoWrite" &&
+        (part.toolInvocation.state === "call" ||
+          part.toolInvocation.state === "result")
+      ) {
+        return mergeTodos(acc, part.toolInvocation.args.todos);
+      }
+      return acc;
+    }, [] as Todo[]);
+
+  return todos;
 }

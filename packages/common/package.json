@@ -9,25 +9,29 @@
     "./git-utils": "./src/git-utils.ts",
     "./output-utils": "./src/output-utils.ts",
     "./diff-utils": "./src/diff-utils.ts",
-    "./todo-utils": "./src/todo-utils.ts"
+    "./todo-utils": "./src/todo-utils.ts",
+    "./device-link": "./src/device-link/index.ts",
+    "./device-link/client": "./src/device-link/client.ts"
   },
   "scripts": {
     "tsc": "tsc",
     "test": "bun vitest --run"
   },
   "dependencies": {
-    "@ragdoll/db": "workspace:*",
-    "@getpochi/base": "workspace:*",
+    "@ai-v5-sdk/ai": "catalog:",
+    "@ai-v5-sdk/provider": "catalog:",
     "@getpochi/tools": "workspace:*",
+    "@hono/zod-validator": "catalog:",
+    "better-auth": "catalog:",
     "fast-levenshtein": "^3.0.0",
     "hast-util-to-text": "^4.0.2",
+    "hono": "catalog:",
     "ignore": "^7.0.5",
     "minimatch": "^10.0.1",
     "rehype": "^13.0.2",
     "remeda": "catalog:",
     "tslog": "catalog:",
-    "zod": "catalog:",
-    "@ai-v5-sdk/ai": "catalog:"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/fast-levenshtein": "^0.0.4",

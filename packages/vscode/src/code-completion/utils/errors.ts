@@ -1,4 +1,4 @@
-import { PochiApiErrors } from "@getpochi/base";
+import { PochiApiErrors } from "@ragdoll/common";
 
 export class HttpError extends Error {
   public readonly status: number;

@@ -1,4 +1,4 @@
-import { PochiApiErrors } from "@getpochi/base";
+import { PochiApiErrors } from "@ragdoll/common";
 import { HTTPException } from "hono/http-exception";
 import { type User, isInternalOrganization } from "../auth";
 import { usageService } from "../service/usage";

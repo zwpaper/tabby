@@ -1,4 +1,4 @@
-import { PochiApiErrors } from "@getpochi/base";
+import { PochiApiErrors } from "@ragdoll/common";
 import type { Meta, StoryObj } from "@storybook/react";
 import { ErrorMessageView } from "../error-message-view";
 

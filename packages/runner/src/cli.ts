@@ -4,7 +4,7 @@ import "@livestore/wa-sqlite/dist/wa-sqlite.node.wasm" with { type: "file" };
 
 import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";
-import type { PochiApi } from "@getpochi/base";
+import type { PochiApi } from "@ragdoll/common";
 import { getLogger } from "@ragdoll/common";
 import { CredentialStorage } from "@ragdoll/common/node";
 import type { LLMRequestData } from "@ragdoll/livekit";

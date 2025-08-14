@@ -4,7 +4,7 @@
   "devDependencies": {
     "@quilted/threads": "catalog:",
     "@getpochi/tools": "workspace:*",
-    "@getpochi/base": "workspace:*"
+    "@ragdoll/common": "workspace:*"
   },
   "private": true
 }

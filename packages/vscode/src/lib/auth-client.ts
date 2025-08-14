@@ -1,5 +1,5 @@
-import type { PochiApi } from "@getpochi/base";
-import { deviceLinkClient } from "@getpochi/base/device-link/client";
+import type { PochiApi } from "@ragdoll/common";
+import { deviceLinkClient } from "@ragdoll/common/device-link/client";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 import { hc } from "hono/client";

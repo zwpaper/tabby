@@ -1,6 +1,6 @@
 // Modified from: https://github.com/TabbyML/tabby/blob/493cef3b3229548175de430dbc7f7e4a092ca507/clients/tabby-agent/src/codeCompletion/solution.ts
 
-import type { CodeCompletionResponse } from "@getpochi/base";
+import type { CodeCompletionResponse } from "@ragdoll/common";
 import * as vscode from "vscode";
 import type { CompletionContext, CompletionExtraContexts } from "./contexts";
 import { isBlank, splitLines } from "./utils/strings";

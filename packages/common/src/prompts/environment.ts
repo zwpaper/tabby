@@ -1,5 +1,5 @@
 import type { TextUIPart, UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
-import type { Environment, GitStatus } from "@getpochi/base";
+import type { Environment, GitStatus } from "../environment";
 import { prompts } from "./index";
 
 type User = { name: string; email: string };
