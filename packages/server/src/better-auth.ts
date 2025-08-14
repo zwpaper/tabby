@@ -15,11 +15,11 @@ import {
   organization,
 } from "better-auth/plugins";
 
+import { deviceLink } from "@getpochi/base/device-link";
 import moment from "moment";
 import { db } from "./db";
 import { handleGithubAccountUpdate } from "./github";
 import { StripePlans } from "./lib/constants";
-import { deviceLink } from "./lib/device-link";
 import {
   getMagicLinkEmailHtml,
   getOrganizationInviteEmailHtml,

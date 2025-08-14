@@ -325,7 +325,7 @@
     "@preact/signals-core": "catalog:",
     "@quilted/threads": "catalog:",
     "@ragdoll/common": "workspace:*",
-    "@ragdoll/server": "workspace:*",
+
     "@vscode-logging/logger": "^2.0.0",
     "@xstate/fsm": "^2.1.0",
     "@ai-v5-sdk/ai": "catalog:",
