@@ -519,7 +519,24 @@ class TaskService {
     status: PersistRequest["status"],
     messagesNext: UIMessageNext[],
     environment?: Environment,
+    parentClientTaskId?: string,
   ) {
+    let parentId: number | null = null;
+    if (parentClientTaskId) {
+      const parentTask = await db
+        .selectFrom("task")
+        .select("id")
+        .where("clientTaskId", "=", parentClientTaskId)
+        .where("userId", "=", userId)
+        .executeTakeFirst();
+      if (!parentTask) {
+        throw new HTTPException(400, {
+          message: "Invalid parent client task id",
+        });
+      }
+      parentId = parentTask.id;
+    }
+
     const { id } = await db
       .insertInto("task")
       .values({
@@ -531,6 +548,7 @@ class TaskService {
         clientTaskId,
         environment,
         taskId: 0,
+        parentId: parentId,
       })
       .onConflict((oc) =>
         oc.columns(["userId", "clientTaskId"]).doUpdateSet(() => ({

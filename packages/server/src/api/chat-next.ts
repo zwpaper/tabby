@@ -150,6 +150,7 @@ const chat = new Hono()
       req.status,
       req.messages,
       req.environment,
+      req.parentClientTaskId,
     );
     return c.json({ shareId });
   });
