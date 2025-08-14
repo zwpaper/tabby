@@ -4,7 +4,7 @@ import type {
   LanguageModelV2StreamPart,
 } from "@ai-v5-sdk/provider";
 import { safeParseJSON } from "@ai-v5-sdk/provider-utils";
-import { ClientToolsV5 } from "@getpochi/tools";
+import { ClientTools } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { events } from "../../livestore/schema";
 
@@ -59,7 +59,7 @@ export function createNewTaskMiddleware(
             if (chunk.type === "tool-call" && chunk.toolCallId === toolCallId) {
               const parsedResult = await safeParseJSON({
                 text: chunk.input,
-                schema: ClientToolsV5.newTask.inputSchema,
+                schema: ClientTools.newTask.inputSchema,
               });
               if (!parsedResult.success) {
                 throw new InvalidToolInputError({

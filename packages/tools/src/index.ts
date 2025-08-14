@@ -2,6 +2,12 @@ export {
   ZodMcpTool,
   type McpTool,
 } from "./mcp-tools";
+import type {
+  ToolUIPart,
+  UIDataTypes,
+  UIMessagePart,
+  UITools,
+} from "@ai-v5-sdk/ai";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
 import { attemptCompletion } from "./attempt-completion";
@@ -19,25 +25,24 @@ export {
   type Todo,
 } from "./todo-write";
 export type {
-  ToolFunctionTypeV5,
-  PreviewToolFunctionTypeV5,
+  ToolFunctionType,
+  PreviewToolFunctionType,
 } from "./types";
 import { writeToFile } from "./write-to-file";
 export type { SubTask } from "./new-task";
 
-export function isUserInputTool(toolName: string): boolean {
-  const userInputTools: string[] = [
-    "askFollowupQuestion",
-    "attemptCompletion",
-  ] satisfies ToolName[];
-  return userInputTools.includes(toolName);
+export function isUserInputToolPart(part: UIMessagePart<UIDataTypes, UITools>) {
+  return (
+    part.type === "tool-askFollowupQuestion" ||
+    part.type === "tool-attemptCompletion"
+  );
 }
 
-export function isAutoApproveTool(toolName: string): boolean {
-  return ToolsByPermission.default.includes(toolName);
+export function isAutoApproveTool(part: ToolUIPart): boolean {
+  return ToolsByPermission.default.some((tool) => part.type === `tool-${tool}`);
 }
 
-type ToolName = keyof typeof ClientToolsV5;
+type ToolName = keyof typeof ClientTools;
 
 export const ToolsByPermission = {
   read: [
@@ -59,7 +64,7 @@ export const ServerToolApproved = "<server-tool-approved>";
 
 export { BatchCallTools } from "./batch-call";
 
-export const ClientToolsV5 = {
+export const ClientTools = {
   applyDiff,
   askFollowupQuestion,
   attemptCompletion,
@@ -75,15 +80,15 @@ export const ClientToolsV5 = {
   batchCall,
 };
 
-export type ClientToolsV5Type = typeof ClientToolsV5;
+export type ClientToolsType = typeof ClientTools;
 
 export const selectClientToolsNext = (enableNewTask: boolean) => {
   if (enableNewTask) {
     return {
-      ...ClientToolsV5,
+      ...ClientTools,
     };
   }
 
-  const { newTask, ...rest } = ClientToolsV5;
+  const { newTask, ...rest } = ClientTools;
   return rest;
 };

@@ -1,19 +1,19 @@
-export { tool as defineClientToolV5 } from "@ai-v5-sdk/ai";
+export { tool as defineClientTool } from "@ai-v5-sdk/ai";
 import type {
   InferToolInput,
   InferToolOutput,
+  Tool,
   ToolCallOptions,
-  Tool as ToolV5,
 } from "@ai-v5-sdk/ai";
 
-export type ToolFunctionTypeV5<T extends ToolV5> = (
+export type ToolFunctionType<T extends Tool> = (
   input: InferToolInput<T>,
   options: ToolCallOptions & {
     nonInteractive?: boolean;
   },
 ) => PromiseLike<InferToolOutput<T>> | InferToolOutput<T>;
 
-export type PreviewToolFunctionTypeV5<T extends ToolV5> = (
+export type PreviewToolFunctionType<T extends Tool> = (
   args: Partial<InferToolInput<T>> | null,
   options: {
     toolCallId: string;

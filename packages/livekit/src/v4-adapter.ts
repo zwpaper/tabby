@@ -3,7 +3,7 @@
  */
 
 import { type Tool, asSchema, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
-import { ClientToolsV5 } from "@getpochi/tools";
+import { ClientTools } from "@getpochi/tools";
 import type { DBMessage } from "@ragdoll/db";
 import type { UIMessage as V4UIMessage } from "ai";
 import type { Message } from "./types";
@@ -44,11 +44,10 @@ export function fromDBMessage(x: DBMessage): Message {
       case "tool-invocation":
         {
           const { toolInvocation } = part;
-          const toolName =
-            toolInvocation.toolName as keyof typeof ClientToolsV5;
+          const toolName = toolInvocation.toolName as keyof typeof ClientTools;
           const toolPart = createToolPart(
             toolInvocation,
-            ClientToolsV5[toolName] || null,
+            ClientTools[toolName] || null,
           );
           parts.push(toolPart);
         }

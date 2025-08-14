@@ -1,7 +1,7 @@
 import { type ExecException, exec } from "node:child_process";
 import * as path from "node:path";
 import { promisify } from "node:util";
-import type { ClientToolsV5Type, ToolFunctionTypeV5 } from "@getpochi/tools";
+import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import {
   MaxTerminalOutputSize,
   fixExecuteCommandOutput,
@@ -14,7 +14,7 @@ const execCommand = promisify(exec);
 export const executeCommand =
   (
     context: ToolCallOptions,
-  ): ToolFunctionTypeV5<ClientToolsV5Type["executeCommand"]> =>
+  ): ToolFunctionType<ClientToolsType["executeCommand"]> =>
   async (
     { command, cwd = ".", isDevServer, timeout = 120 },
     { abortSignal },

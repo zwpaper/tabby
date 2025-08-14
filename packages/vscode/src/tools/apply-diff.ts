@@ -2,10 +2,10 @@ import { DiffView } from "@/integrations/editor/diff-view";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import { writeTextDocument } from "@/lib/write-text-document";
-import type { ClientToolsV5Type } from "@getpochi/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import type {
-  PreviewToolFunctionTypeV5,
-  ToolFunctionTypeV5,
+  PreviewToolFunctionType,
+  ToolFunctionType,
 } from "@getpochi/tools";
 import { parseDiffAndApply } from "@ragdoll/common/diff-utils";
 import { validateTextFile } from "@ragdoll/common/node";
@@ -16,8 +16,8 @@ const logger = getLogger("applyDiffTool");
 /**
  * Preview the diff using DiffView
  */
-export const previewApplyDiff: PreviewToolFunctionTypeV5<
-  ClientToolsV5Type["applyDiff"]
+export const previewApplyDiff: PreviewToolFunctionType<
+  ClientToolsType["applyDiff"]
 > = async (args, { toolCallId, state, abortSignal }) => {
   const { path, searchContent, replaceContent, expectedReplacements } =
     args || {};
@@ -52,9 +52,7 @@ export const previewApplyDiff: PreviewToolFunctionTypeV5<
 /**
  * Apply a diff to a file using DiffView
  */
-export const applyDiff: ToolFunctionTypeV5<
-  ClientToolsV5Type["applyDiff"]
-> = async (
+export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   { path, searchContent, replaceContent, expectedReplacements },
   { toolCallId, abortSignal, nonInteractive },
 ) => {

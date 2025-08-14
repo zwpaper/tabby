@@ -1,7 +1,7 @@
 import type { InferUITool, UIMessage } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2FinishReason } from "@ai-v5-sdk/provider";
 import { Environment, type PochiApiClient } from "@getpochi/base";
-import { type ClientToolsV5, ZodMcpTool } from "@getpochi/tools";
+import { type ClientTools, ZodMcpTool } from "@getpochi/tools";
 import z from "zod";
 import type { tables } from "./livestore/schema";
 
@@ -23,7 +23,7 @@ export type DataParts = {
 };
 
 export type UITools = {
-  [K in keyof typeof ClientToolsV5]: InferUITool<(typeof ClientToolsV5)[K]>;
+  [K in keyof typeof ClientTools]: InferUITool<(typeof ClientTools)[K]>;
 };
 
 export type Message = UIMessage<Metadata, DataParts, UITools>;

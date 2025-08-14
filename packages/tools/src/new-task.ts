@@ -1,7 +1,7 @@
 import type { UIMessage } from "@ai-v5-sdk/ai";
 import { z } from "zod";
 import type { Todo } from "./todo-write";
-import { defineClientToolV5 } from "./types";
+import { defineClientTool } from "./types";
 
 export type SubTask = {
   uid: string;
@@ -56,4 +56,4 @@ Usage notes:
   }),
 };
 
-export const newTask = defineClientToolV5(toolDef);
+export const newTask = defineClientTool(toolDef);

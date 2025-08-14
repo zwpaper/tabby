@@ -1,6 +1,6 @@
 import { vscodeHost } from "@/lib/vscode";
 import type { InferToolInput, ToolUIPart } from "@ai-v5-sdk/ai";
-import type { ClientToolsV5Type } from "@getpochi/tools";
+import type { ClientToolsType } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import {
   ThreadAbortSignal,
@@ -21,7 +21,7 @@ type ExecuteCommandReturnType = {
   output: ThreadSignalSerialization<ExecuteCommandResult>;
   detach: () => void;
 };
-type NewTaskParameterType = InferToolInput<ClientToolsV5Type["newTask"]>;
+type NewTaskParameterType = InferToolInput<ClientToolsType["newTask"]>;
 type NewTaskReturnType = {
   uid: string;
   serializedAbortSignal: ThreadAbortSignalSerialization;

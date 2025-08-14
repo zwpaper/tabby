@@ -5,7 +5,11 @@ import {
   lastAssistantMessageIsCompleteWithToolCalls,
 } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
-import type { Todo, ToolFunctionTypeV5 } from "@getpochi/tools";
+import {
+  type Todo,
+  type ToolFunctionType,
+  isUserInputToolPart,
+} from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import { type Signal, signal } from "@preact/signals-core";
 import { getLogger, prompts } from "@ragdoll/common";
@@ -139,7 +143,7 @@ export type TaskRunnerState =
 const ToolMap: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: ToolFunctionType requires any for generic tool parameters
-  (options: ToolCallOptions) => ToolFunctionTypeV5<any>
+  (options: ToolCallOptions) => ToolFunctionType<any>
 > = {
   readFile,
   applyDiff,
@@ -598,12 +602,7 @@ async function executeToolCall(
 function isResultMessage(message: Message): boolean {
   return (
     message.role === "assistant" &&
-    (message.parts?.some(
-      (part) =>
-        part.type === "tool-attemptCompletion" ||
-        part.type === "tool-askFollowupQuestion",
-    ) ??
-      false)
+    (message.parts?.some(isUserInputToolPart) ?? false)
   );
 }
 

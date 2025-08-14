@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { EditFileOutputSchema, EditFileResultPrompt } from "./constants";
-import { defineClientToolV5 } from "./types";
+import { defineClientTool } from "./types";
 
 const toolDef = {
   description: `
@@ -70,4 +70,4 @@ ${EditFileResultPrompt}`.trim(),
   outputSchema: EditFileOutputSchema, // Assuming similar output structure for now
 };
 
-export const multiApplyDiff = defineClientToolV5(toolDef);
+export const multiApplyDiff = defineClientTool(toolDef);

@@ -1,5 +1,5 @@
 import { type UIMessage, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
-import { isAutoApproveTool, isUserInputTool } from "@getpochi/tools";
+import { isAutoApproveTool, isUserInputToolPart } from "@getpochi/tools";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
 import { prompts } from "./prompts";
@@ -19,9 +19,8 @@ function resolvePendingToolCalls(
           part.state !== "output-available" &&
           part.state !== "output-error"
         ) {
-          const toolName = getToolName(part);
           const isSuccess =
-            isUserInputTool(toolName) || isAutoApproveTool(toolName);
+            isUserInputToolPart(part) || isAutoApproveTool(part);
           return {
             ...part,
             state: "output-available",

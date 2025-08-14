@@ -28,11 +28,11 @@ import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
 import { todoWrite } from "@/tools/todo-write";
 import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
-import type { Tool as ToolV5 } from "@ai-v5-sdk/ai";
+import type { Tool } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
 import type {
-  PreviewToolFunctionTypeV5,
-  ToolFunctionTypeV5,
+  PreviewToolFunctionType,
+  ToolFunctionType,
 } from "@getpochi/tools";
 import {
   ThreadAbortSignal,
@@ -279,7 +279,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         nonInteractive?: boolean;
       },
     ) => {
-      let tool: ToolFunctionTypeV5<ToolV5> | undefined;
+      let tool: ToolFunctionType<Tool> | undefined;
 
       if (toolName in ToolMap) {
         tool = ToolMap[toolName];
@@ -678,7 +678,7 @@ function safeCall<T>(x: Promise<T>) {
 const ToolMap: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-  ToolFunctionTypeV5<any>
+  ToolFunctionType<any>
 > = {
   readFile,
   executeCommand,
@@ -694,7 +694,7 @@ const ToolMap: Record<
 const ToolPreviewMap: Record<
   string,
   // biome-ignore lint/suspicious/noExplicitAny: external call without type information
-  PreviewToolFunctionTypeV5<any>
+  PreviewToolFunctionType<any>
 > = {
   writeToFile: previewWriteToFile,
   applyDiff: previewApplyDiff,

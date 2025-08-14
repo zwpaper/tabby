@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { EditFileOutputSchema, EditFileResultPrompt } from "./constants";
-import { defineClientToolV5 } from "./types";
+import { defineClientTool } from "./types";
 
 const toolDef = {
   description: `
@@ -21,4 +21,4 @@ ${EditFileResultPrompt}`.trim(),
   outputSchema: EditFileOutputSchema,
 };
 
-export const writeToFile = defineClientToolV5(toolDef);
+export const writeToFile = defineClientTool(toolDef);

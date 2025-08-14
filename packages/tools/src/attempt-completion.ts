@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineClientToolV5 } from "./types";
+import { defineClientTool } from "./types";
 
 const toolDef = {
   description: `After each tool use. Once you've received the results of tool uses and can confirm that the task is complete, use this tool to present the result of your work to the user.`,
@@ -23,4 +23,4 @@ const toolDef = {
   }),
 };
 
-export const attemptCompletion = defineClientToolV5(toolDef);
+export const attemptCompletion = defineClientTool(toolDef);

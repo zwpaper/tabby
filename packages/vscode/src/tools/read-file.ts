@@ -1,5 +1,5 @@
 import { getWorkspaceFolder } from "@/lib/fs";
-import type { ClientToolsV5Type, ToolFunctionTypeV5 } from "@getpochi/tools";
+import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import {
   resolvePath,
   selectFileContent,
@@ -7,9 +7,11 @@ import {
 } from "@ragdoll/common/node";
 import * as vscode from "vscode";
 
-export const readFile: ToolFunctionTypeV5<
-  ClientToolsV5Type["readFile"]
-> = async ({ path, startLine, endLine }) => {
+export const readFile: ToolFunctionType<ClientToolsType["readFile"]> = async ({
+  path,
+  startLine,
+  endLine,
+}) => {
   const workspaceFolder = getWorkspaceFolder();
 
   const resolvedPath = resolvePath(path, workspaceFolder.uri.fsPath);

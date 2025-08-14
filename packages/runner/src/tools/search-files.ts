@@ -1,5 +1,5 @@
 import * as fs from "node:fs";
-import type { ClientToolsV5Type, ToolFunctionTypeV5 } from "@getpochi/tools";
+import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import { getLogger } from "@ragdoll/common";
 import { searchFilesWithRipgrep } from "@ragdoll/common/node";
 import type { ToolCallOptions } from "../types";
@@ -9,7 +9,7 @@ const logger = getLogger("searchFiles");
 export const searchFiles =
   (
     context: ToolCallOptions,
-  ): ToolFunctionTypeV5<ClientToolsV5Type["searchFiles"]> =>
+  ): ToolFunctionType<ClientToolsType["searchFiles"]> =>
   async ({ path, regex, filePattern }, { abortSignal }) => {
     const rgPath = context.rg;
     if (!rgPath || !fs.existsSync(rgPath)) {

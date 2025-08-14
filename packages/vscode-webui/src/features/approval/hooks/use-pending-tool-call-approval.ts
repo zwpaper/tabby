@@ -1,12 +1,12 @@
 import { type ToolUIPart, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
-import type { ClientToolsV5, ClientToolsV5Type } from "@getpochi/tools";
-import { isUserInputTool } from "@getpochi/tools";
+import type { ClientTools, ClientToolsType } from "@getpochi/tools";
+import { isUserInputToolPart } from "@getpochi/tools";
 import type { Message, UITools } from "@ragdoll/livekit";
 import { useMemo } from "react";
 
 export type PendingToolCallApproval =
   | {
-      name: keyof ClientToolsV5Type;
+      name: keyof ClientToolsType;
       tool: ToolUIPart<UITools>;
     }
   | {
@@ -33,7 +33,7 @@ export function usePendingToolCallApproval({
       if (
         isToolUIPart(part) &&
         part.state === "input-available" &&
-        !isUserInputTool(getToolName(part))
+        !isUserInputToolPart(part)
       ) {
         tools.push(part);
       }
@@ -41,7 +41,7 @@ export function usePendingToolCallApproval({
 
     if (tools.length === 1) {
       return {
-        name: getToolName(tools[0]) as keyof typeof ClientToolsV5,
+        name: getToolName(tools[0]) as keyof typeof ClientTools,
         tool: tools[0],
       };
     }
