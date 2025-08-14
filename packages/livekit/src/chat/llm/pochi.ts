@@ -2,6 +2,7 @@ import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
 import { EventSourceParserStream } from "@ai-v5-sdk/provider-utils";
 import type { Store } from "@livestore/livestore";
 import { events, tables } from "../../livestore/schema";
+import { toTaskStatus } from "../../task";
 import type { RequestData } from "../../types";
 import type { LLMRequest, OnFinishCallback } from "./types";
 
@@ -62,11 +63,16 @@ export function createPochiModel(
   const onFinish: OnFinishCallback = async ({ messages }) => {
     if (!store || !taskId) return;
 
+    const lastMessage = messages.at(-1);
+    if (!lastMessage || lastMessage.metadata?.kind !== "assistant") {
+      throw new Error("No messages to persist");
+    }
     const resp = await llm.apiClient.api.chatNext.persist.$post({
       json: {
         id: taskId,
         messages,
         environment: payload.environment,
+        status: toTaskStatus(lastMessage, lastMessage.metadata),
       },
     });
 

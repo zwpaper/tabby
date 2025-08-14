@@ -18,6 +18,15 @@ export type ModelGatewayRequest = z.infer<typeof ModelGatewayRequest>;
 
 export const PersistRequest = z.object({
   id: z.string(),
+  status: z
+    .union([
+      z.literal("completed"),
+      z.literal("pending-input"),
+      z.literal("failed"),
+      z.literal("pending-tool"),
+      z.literal("pending-model"),
+    ])
+    .optional(),
   messages: z.array(z.custom<UIMessage>()),
   environment: Environment.optional(),
 });

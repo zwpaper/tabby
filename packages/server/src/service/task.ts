@@ -1,5 +1,9 @@
 import { type UIMessage as UIMessageNext, generateId } from "@ai-v5-sdk/ai";
-import { type Environment, PochiApiErrors } from "@getpochi/base";
+import {
+  type Environment,
+  type PersistRequest,
+  PochiApiErrors,
+} from "@getpochi/base";
 import type { Todo } from "@getpochi/tools";
 import { parseTitle } from "@ragdoll/common/message-utils";
 import type { DB, DBMessage, TaskCreateEvent } from "@ragdoll/db";
@@ -512,6 +516,7 @@ class TaskService {
   async persistTask(
     userId: string,
     clientTaskId: string,
+    status: PersistRequest["status"],
     messagesNext: UIMessageNext[],
     environment?: Environment,
   ) {
@@ -533,6 +538,7 @@ class TaskService {
             messages: [],
             messagesNext,
           },
+          status,
           isPublicShared: true,
           environment,
         })),

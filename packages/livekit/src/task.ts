@@ -1,0 +1,89 @@
+import {
+  APICallError,
+  InvalidToolInputError,
+  NoSuchToolError,
+  isToolUIPart,
+} from "@ai-v5-sdk/ai";
+import { isAbortError } from "@ai-v5-sdk/provider-utils";
+import type { tables } from "./livestore/schema";
+import type { Message } from "./types";
+
+export function toTaskStatus(
+  message: Message,
+  metadata: Extract<NonNullable<Message["metadata"]>, { kind: "assistant" }>,
+): (typeof tables.tasks.Type)["status"] {
+  // Find the last index of a step-start part
+  let lastStepStart = -1;
+  for (let i = message.parts.length - 1; i >= 0; i--) {
+    if (message.parts[i].type === "step-start") {
+      lastStepStart = i;
+      break;
+    }
+  }
+
+  const { finishReason } = metadata;
+  if (!finishReason) return "failed";
+
+  for (const part of message.parts.slice(lastStepStart + 1)) {
+    if (
+      part.type === "tool-askFollowupQuestion" ||
+      part.type === "tool-attemptCompletion"
+    ) {
+      return "completed";
+    }
+
+    if (isToolUIPart(part)) {
+      return "pending-tool";
+    }
+  }
+
+  if (finishReason !== "error") {
+    return "pending-input";
+  }
+
+  return "failed";
+}
+
+export function toTaskError(
+  error: unknown,
+): NonNullable<(typeof tables.tasks.Type)["error"]> {
+  if (APICallError.isInstance(error)) {
+    return {
+      kind: "APICallError",
+      message: error.message,
+      requestBodyValues: error.requestBodyValues,
+    };
+  }
+
+  const internalError = (message: string) => {
+    return {
+      kind: "InternalError",
+      message,
+    } as const;
+  };
+
+  if (InvalidToolInputError.isInstance(error)) {
+    return internalError(
+      `Invalid arguments provided to tool "${error.toolName}". Please try again.`,
+    );
+  }
+
+  if (NoSuchToolError.isInstance(error)) {
+    return internalError(`${error.toolName} is not a valid tool.`);
+  }
+
+  if (isAbortError(error)) {
+    return {
+      kind: "AbortError",
+      message: error.message,
+    };
+  }
+
+  if (!(error instanceof Error)) {
+    return internalError(
+      `Something went wrong. Please try again: ${JSON.stringify(error)}`,
+    );
+  }
+
+  return internalError(error.message);
+}

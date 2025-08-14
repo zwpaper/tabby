@@ -147,6 +147,7 @@ const chat = new Hono()
     const shareId = await taskService.persistTask(
       user.id,
       req.id,
+      req.status,
       req.messages,
       req.environment,
     );
