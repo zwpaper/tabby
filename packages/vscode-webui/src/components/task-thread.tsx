@@ -62,7 +62,7 @@ export const TaskThread: React.FC<{
       {showMessageList && (
         <div className="my-1 rounded-xs border border-[var(--vscode-borderColor)]">
           <MessageList
-            className={cn("px-0", {
+            className={cn("px-1 py-0.5", {
               "mt-2": !renderMessages.length,
             })}
             showUserAvatar={false}
