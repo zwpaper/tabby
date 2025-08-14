@@ -7,10 +7,11 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { apiClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { normalizeApiError, toHttpError } from "@/lib/error";
-import { inlineSubTasks } from "@/lib/inline-sub-task";
 import { cn } from "@/lib/utils";
+import type { UIMessage } from "@ai-v5-sdk/ai";
 import type { SubTask } from "@getpochi/tools";
-import { toUIMessages } from "@ragdoll/common";
+import { toUIMessage, toUIMessages } from "@ragdoll/common";
+import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
@@ -70,11 +71,15 @@ function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const { theme } = useTheme();
 
-  const renderMessages = useMemo(() => {
-    const dbMessages = loaderData.conversation?.messages ?? [];
-    const subtasks = loaderData.subtasks ?? [];
-    return inlineSubTasks(toUIMessages(dbMessages), subtasks);
-  }, [loaderData]);
+  const renderMessages: UIMessage[] = useMemo(
+    () =>
+      // @ts-ignore
+      loaderData.conversation?.messagesNext ||
+      (loaderData.conversation?.messages || [])
+        .map(toUIMessage)
+        .map(fromV4UIMessage),
+    [loaderData],
+  );
 
   return (
     <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8 md:mt-6">

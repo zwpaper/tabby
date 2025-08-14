@@ -1,3 +1,4 @@
+import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
 import type { ColumnType, Generated, JSONColumnType } from "kysely";
 import type { ExternalIntegrationVendorData } from "./external-integration";
@@ -14,7 +15,10 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task" | "clip"> & {
     "event" | "conversation" | "environment" | "status" | "error" | "taskId"
   > & {
     event: TaskCreateEvent | null;
-    conversation: { messages: DBMessage[] } | null;
+    conversation: {
+      messages: DBMessage[];
+      messagesNext?: UIMessageNext[];
+    } | null;
     environment: Environment | null;
     status: Generated<
       // Task has finished and ends with attemptCompletion tool call.

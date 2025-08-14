@@ -8,10 +8,10 @@ import { useTheme } from "@/components/theme-provider";
 import { usePochiEvents } from "@/hooks/use-pochi-events";
 import { apiClient } from "@/lib/auth-client";
 import { normalizeApiError, toHttpError } from "@/lib/error";
-import { inlineSubTasks } from "@/lib/inline-sub-task";
-import type { SubTask } from "@getpochi/tools";
-import { toUIMessages } from "@ragdoll/common";
+import type { UIMessage } from "@ai-v5-sdk/ai";
+import { toUIMessage } from "@ragdoll/common";
 import type { TaskEvent } from "@ragdoll/db";
+import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
@@ -25,9 +25,6 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
         param: {
           uid,
         },
-        query: {
-          includeSubTasks: "true",
-        },
       });
 
       if (!resp.ok) {
@@ -37,14 +34,6 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
       const { subtasks, ...rest } = await resp.json();
       return {
         ...rest,
-        subtasks: subtasks?.map(
-          (x) =>
-            ({
-              uid: x.uid,
-              messages: toUIMessages(x.conversation?.messages || []),
-              todos: x.todos || [],
-            }) satisfies SubTask,
-        ),
       };
     } catch (error) {
       throw normalizeApiError(error);
@@ -87,11 +76,17 @@ function RouteComponent() {
     );
   }, [loaderData]);
 
-  const renderMessages = useMemo(() => {
-    const dbMessages = loaderData.conversation?.messages ?? [];
-    const subtasks = loaderData.subtasks ?? [];
-    return inlineSubTasks(toUIMessages(dbMessages), subtasks);
-  }, [loaderData]);
+  const renderMessages: UIMessage[] = useMemo(
+    () =>
+      // @ts-ignore
+      loaderData.conversation?.messagesNext ||
+      (loaderData.conversation?.messages || [])
+        .map(toUIMessage)
+        .map(fromV4UIMessage),
+    [loaderData],
+  );
+
+  console.log("renderMessages", renderMessages);
 
   return (
     <div className="mx-auto flex max-w-6xl flex-1 flex-col space-y-8">

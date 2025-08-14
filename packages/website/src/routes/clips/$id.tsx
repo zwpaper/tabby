@@ -14,6 +14,7 @@ import type { Todo } from "@getpochi/tools";
 import { toUIMessages } from "@ragdoll/common";
 import { parseTitle } from "@ragdoll/common/message-utils";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
+import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
 import type { UIMessage } from "ai";
 import { useEffect, useMemo, useState } from "react";
 
@@ -67,7 +68,12 @@ function ClipView() {
   const { messages, todos, title, updatedAt, assistant } =
     Route.useLoaderData();
 
-  if (!messages || messages.length === 0) {
+  const renderMessages = useMemo(
+    () => messages.map(fromV4UIMessage),
+    [messages],
+  );
+
+  if (renderMessages.length === 0) {
     return (
       <div className="p-4">
         <p>No messages in this clip.</p>
@@ -106,7 +112,7 @@ function ClipView() {
         </TaskHeader.Subtitle>
       </TaskHeader>
       <TaskContent
-        messages={messages}
+        messages={renderMessages}
         todos={todos}
         title={title}
         user={{

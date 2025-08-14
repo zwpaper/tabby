@@ -103,6 +103,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       id: chatId,
       tools,
       middlewares,
+      environment,
     });
   };
 

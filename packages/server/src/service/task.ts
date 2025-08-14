@@ -1,4 +1,5 @@
 import { isAbortError } from "@ai-sdk/provider-utils";
+import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
 import { type Todo, isUserInputTool } from "@getpochi/tools";
 import {
@@ -36,6 +37,8 @@ import { minionService } from "./minion";
 const titleSelect = sql<string>`
       COALESCE(
         title,
+        (conversation #>> '{messagesNext, 0, parts, 1, text}')::text,
+        (conversation #>> '{messagesNext, 0, parts, 0, text}')::text,
         (conversation #>> '{messages, 0, parts, 1, text}')::text,
         (conversation #>> '{messages, 0, parts, 0, text}')::text
       )
@@ -331,7 +334,10 @@ class TaskService {
     userId: string,
     taskData: Partial<{
       event: TaskCreateEvent | null;
-      conversation: { messages: DBMessage[] } | null;
+      conversation: {
+        messages: DBMessage[];
+        messagesNext?: UIMessageNext[];
+      } | null;
       status: DB["task"]["status"]["__insert__"];
       parentId: number | null;
     }>,
@@ -891,6 +897,38 @@ Generate a concise title that captures the essence of the above conversation. Re
     } catch (error) {
       logger.error("Error generating task title", error);
     }
+  }
+
+  async persistTask(
+    userId: string,
+    clientTaskId: string,
+    messagesNext: UIMessageNext[],
+    environment: Environment,
+  ) {
+    const { id } = await db
+      .insertInto("task")
+      .values({
+        userId,
+        conversation: {
+          messages: [],
+          messagesNext,
+        },
+        clientTaskId,
+        environment,
+        taskId: 0,
+      })
+      .onConflict((oc) =>
+        oc.columns(["userId", "clientTaskId"]).doUpdateSet(() => ({
+          conversation: {
+            messages: [],
+            messagesNext,
+          },
+          environment,
+        })),
+      )
+      .returning("id")
+      .executeTakeFirstOrThrow();
+    return uidCoder.encode(id);
   }
 
   async compactAndCreateTask(

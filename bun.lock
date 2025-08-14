@@ -53,6 +53,7 @@
         "kysely": "catalog:",
       },
       "devDependencies": {
+        "@ai-v5-sdk/ai": "catalog:",
         "@slack/bolt": "catalog:",
         "kysely-codegen": "^0.18.3",
       },
@@ -417,6 +418,7 @@
     "packages/website": {
       "name": "@ragdoll/website",
       "dependencies": {
+        "@ai-v5-sdk/ai": "catalog:",
         "@better-auth/stripe": "catalog:",
         "@daveyplate/better-auth-tanstack": "catalog:",
         "@daveyplate/better-auth-ui": "^2.0.12",

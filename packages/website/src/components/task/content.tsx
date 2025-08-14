@@ -1,9 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import type { UIMessage } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
 import type { TaskError } from "@ragdoll/db";
-import { fromV4UIMessage } from "@ragdoll/livekit/v4-adapter";
-import type { UIMessage } from "ai";
 import {
   type ComponentProps,
   useCallback,
@@ -130,7 +129,7 @@ function TaskContent({
       iframeRef.current.contentWindow?.postMessage(
         {
           type: "share",
-          messages: messages?.map(fromV4UIMessage),
+          messages: messages,
           user,
           assistant,
           todos,

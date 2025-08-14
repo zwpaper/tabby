@@ -9,17 +9,21 @@ export function requestLLM(
   llm: RequestData["llm"],
   payload: LLMRequest,
 ) {
-  const model = createModel(taskId, llm);
-  return request(model, payload);
+  const { model, onFinish } = createModel(taskId, llm, payload);
+  return request(model, payload, onFinish);
 }
 
-function createModel(taskId: string | undefined, llm: RequestData["llm"]) {
+function createModel(
+  taskId: string | undefined,
+  llm: RequestData["llm"],
+  payload: LLMRequest,
+) {
   if (llm.type === "openai") {
     return createOpenAIModel(llm);
   }
 
   if (llm.type === "pochi") {
-    return createPochiModel(taskId, llm);
+    return createPochiModel(taskId, llm, payload);
   }
 
   throw new Error(`Unknown LLM type: ${llm}`);

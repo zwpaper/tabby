@@ -1,14 +1,20 @@
 import {
+  type UIMessage,
   convertToModelMessages,
   streamText,
   wrapLanguageModel,
 } from "@ai-v5-sdk/ai";
 
 import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
+import type { Message } from "../../types";
 import { makeRepairToolCall } from "./repair-tool-call";
-import type { LLMRequest } from "./types";
+import type { LLMRequest, OnFinishCallback } from "./types";
 
-export async function request(model: LanguageModelV2, payload: LLMRequest) {
+export async function request(
+  model: LanguageModelV2,
+  payload: LLMRequest,
+  onFinish?: OnFinishCallback,
+) {
   const tools = payload.tools;
 
   const result = streamText({
@@ -26,6 +32,7 @@ export async function request(model: LanguageModelV2, payload: LLMRequest) {
     experimental_repairToolCall: makeRepairToolCall(model),
   });
   return result.toUIMessageStream({
+    originalMessages: payload.messages as UIMessage[],
     messageMetadata: ({ part }) => {
       if (part.type === "finish") {
         return {
@@ -34,6 +41,11 @@ export async function request(model: LanguageModelV2, payload: LLMRequest) {
           finishReason: part.finishReason,
         };
       }
+    },
+    onFinish: async ({ messages }) => {
+      await onFinish?.({
+        messages: messages as Message[],
+      });
     },
   });
 }

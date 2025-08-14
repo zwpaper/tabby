@@ -11,7 +11,7 @@ export function createOpenAIModel(
     apiKey: llm.apiKey,
   });
 
-  return wrapLanguageModel({
+  const model = wrapLanguageModel({
     model: openai(llm.modelId),
     middleware: {
       middlewareVersion: "v2",
@@ -21,4 +21,8 @@ export function createOpenAIModel(
       },
     },
   });
+  return {
+    model,
+    onFinish: undefined,
+  };
 }

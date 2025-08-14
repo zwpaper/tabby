@@ -3,6 +3,7 @@ import {
   JsonToSseTransformStream,
   type LanguageModelUsage,
   type ProviderMetadata,
+  type UIMessage,
   streamText,
   wrapLanguageModel,
 } from "@ai-v5-sdk/ai";
@@ -10,6 +11,7 @@ import type {
   LanguageModelV2CallOptions,
   LanguageModelV2StreamPart,
 } from "@ai-v5-sdk/provider";
+import { ZodEnvironment } from "@getpochi/base";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -23,6 +25,7 @@ import {
   getModelOptionsNext,
 } from "../lib/constants";
 import { setIdleTimeout } from "../server";
+import { taskService } from "../service/task";
 import { usageService } from "../service/usage";
 import { spanConfig } from "../trace";
 
@@ -36,11 +39,20 @@ const RequestType = z.object({
   callOptions: ZodCallOptions,
 });
 
+type RequestType = z.infer<typeof RequestType>;
+
+const PersistRequestType = z.object({
+  id: z.string(),
+  messages: z.array(z.custom<UIMessage>()),
+  environment: ZodEnvironment,
+});
+
+type PersistRequestType = z.infer<typeof PersistRequestType>;
+
 const chat = new Hono()
   .use(requireAuth())
   .post("/stream", zValidator("json", RequestType), async (c) => {
     setIdleTimeout(c.req.raw, 120);
-
     const req = await c.req.valid("json");
     const { prompt, tools, stopSequences } = req.callOptions;
     const validModelId = checkModel(req.model || "google/gemini-2.5-pro");
@@ -153,6 +165,17 @@ const chat = new Hono()
         "content-type": "text/plain; charset=utf-8",
       },
     });
+  })
+  .post("/persist", zValidator("json", PersistRequestType), async (c) => {
+    const req = c.req.valid("json");
+    const user = c.get("user");
+    const uid = await taskService.persistTask(
+      user.id,
+      req.id,
+      req.messages,
+      req.environment,
+    );
+    return c.json({ uid });
   });
 
 export default chat;

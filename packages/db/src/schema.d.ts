@@ -201,6 +201,7 @@ export interface Subscription {
 }
 
 export interface Task {
+  clientTaskId: string | null;
   conversation: Json | null;
   createdAt: Generated<Timestamp>;
   environment: Json | null;

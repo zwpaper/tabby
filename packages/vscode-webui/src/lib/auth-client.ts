@@ -1,5 +1,5 @@
 import { createAuthHooks } from "@daveyplate/better-auth-tanstack";
-import { threadSignal } from "@quilted/threads/signals";
+import { type ThreadSignal, threadSignal } from "@quilted/threads/signals";
 import type { AppType } from "@ragdoll/server";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { useQuery } from "@tanstack/react-query";
@@ -10,15 +10,29 @@ import {
 import { hc } from "hono/client";
 import { vscodeHost } from "./vscode";
 
-const tokenPromise = vscodeHost.readToken().then(threadSignal);
-const extensionVersionPromise = vscodeHost.readExtensionVersion();
+let TokenPromise: Promise<ThreadSignal<string | undefined>> | null = null;
+let ExtensionVersionPromise: Promise<string> | null = null;
+
+const getToken = () => {
+  if (!TokenPromise) {
+    TokenPromise = vscodeHost.readToken().then(threadSignal);
+  }
+  return TokenPromise;
+};
+
+const getExtensionVersion = () => {
+  if (!ExtensionVersionPromise) {
+    ExtensionVersionPromise = vscodeHost.readExtensionVersion();
+  }
+  return ExtensionVersionPromise;
+};
 
 const customFetchImpl = async (
   input: RequestInfo | URL,
   requestInit?: RequestInit,
 ) => {
-  const token = await tokenPromise;
-  const extensionVersion = await extensionVersionPromise;
+  const token = await getToken();
+  const extensionVersion = await getExtensionVersion();
   const headers = new Headers(requestInit?.headers);
   headers.append("Authorization", `Bearer ${token.value}`);
   headers.set("X-Pochi-Extension-Version", extensionVersion);
@@ -36,7 +50,7 @@ function createAuthClient() {
       onResponse: (ctx: ResponseContext) => {
         const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
         if (authToken) {
-          tokenPromise.then((signal) => {
+          getToken().then((signal) => {
             signal.value = authToken;
           });
         }
@@ -63,7 +77,7 @@ function createApiClient() {
 export function useToken(): string | undefined {
   const { data } = useQuery({
     queryKey: ["token"],
-    queryFn: () => tokenPromise,
+    queryFn: getToken,
   });
 
   return data?.value;
