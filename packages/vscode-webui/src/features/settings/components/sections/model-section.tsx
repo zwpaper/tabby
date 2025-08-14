@@ -11,6 +11,7 @@ import { useCustomModelSetting } from "@/lib/hooks/use-custom-model-setting";
 import { useQuery } from "@tanstack/react-query";
 import { DotIcon, PencilIcon } from "lucide-react";
 import { useMemo } from "react";
+import { useSettingsStore } from "../../store";
 import { AccordionSection } from "../ui/accordion-section";
 import { EmptySectionPlaceholder, Section } from "../ui/section";
 
@@ -19,6 +20,7 @@ interface ModelSectionProps {
 }
 
 export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
+  const { enablePochiModels } = useSettingsStore();
   const { data: pochiModelsData, isLoading: isPochiModelLoading } = useQuery({
     queryKey: ["models", user?.id],
     queryFn: async () => {
@@ -31,16 +33,22 @@ export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
   const pochiModels = useMemo(() => {
     if (!pochiModelsData) return undefined;
 
-    return pochiModelsData.slice().sort((a, b) => {
-      if (a.costType === "premium" && b.costType !== "premium") {
-        return -1;
-      }
-      if (a.costType !== "premium" && b.costType === "premium") {
-        return 1;
-      }
-      return 0;
-    });
-  }, [pochiModelsData]);
+    let models = pochiModelsData
+      .filter((x) => x)
+      .sort((a, b) => {
+        if (a.costType === "premium" && b.costType !== "premium") {
+          return -1;
+        }
+        if (a.costType !== "premium" && b.costType === "premium") {
+          return 1;
+        }
+        return 0;
+      });
+    if (!enablePochiModels) {
+      models = models.filter((model) => !model.id.startsWith("pochi/"));
+    }
+    return models;
+  }, [pochiModelsData, enablePochiModels]);
 
   const { customModelSettings, isLoading: isCustomModelLoading } =
     useCustomModelSetting();
