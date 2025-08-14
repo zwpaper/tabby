@@ -45,14 +45,19 @@ export function GitBadge({
     ? repoInfo.shorthand
     : `${git.origin}/${git.branch}`;
 
+  const fullText = git.branch ? `${displayText}@${git.branch}` : displayText;
+
   const badgeContent = (
     <div
       className={cn("flex max-w-full items-center overflow-hidden", className)}
+      title={fullText}
     >
       <IconComponent className="mr-1.5 h-3 w-3 shrink-0 opacity-70 sm:h-3.5 sm:w-3.5 md:mr-0.5" />
-      <span>{displayText}</span>
+      <span className="max-w-[200px] truncate">{displayText}</span>
       {!!git.branch && (
-        <span className="truncate text-muted-foreground/60">@{git.branch}</span>
+        <span className="max-w-[320px] truncate text-muted-foreground/60">
+          @{git.branch}
+        </span>
       )}
     </div>
   );
@@ -71,9 +76,7 @@ export function GitBadge({
           "hover:opacity-80": interactive,
         })}
         title={
-          interactive
-            ? `Open ${repoInfo.shorthand} on ${repoInfo.platform}`
-            : undefined
+          interactive ? `Open ${fullText} on ${repoInfo.platform}` : fullText
         }
       >
         {badgeContent}
