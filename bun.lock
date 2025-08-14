@@ -488,12 +488,11 @@
     "@ast-grep/cli",
   ],
   "patchedDependencies": {
-    "@ai-sdk/react@1.2.12": "patches/@ai-sdk%2Freact@1.2.12.patch",
+    "@better-auth/stripe@1.2.9": "patches/@better-auth%2Fstripe@1.2.9.patch",
     "ai@4.3.16": "patches/ai@4.3.16.patch",
     "@daveyplate/better-auth-ui@2.0.12": "patches/@daveyplate%2Fbetter-auth-ui@2.0.12.patch",
     "ai@5.0.0": "patches/ai@5.0.0.patch",
     "better-auth@1.2.9": "patches/better-auth@1.2.9.patch",
-    "@better-auth/stripe@1.2.9": "patches/@better-auth%2Fstripe@1.2.9.patch",
   },
   "catalog": {
     "@ai-v5-sdk/ai": "npm:ai@5",
