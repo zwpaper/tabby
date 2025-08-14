@@ -184,7 +184,7 @@ function Part({
     );
   }
 
-  if (part.type === "step-start") {
+  if (part.type === "step-start" || part.type === "file") {
     return;
   }
 

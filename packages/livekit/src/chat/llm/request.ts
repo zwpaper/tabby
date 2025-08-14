@@ -24,7 +24,9 @@ export async function request(
     }),
     abortSignal: payload.abortSignal,
     system: payload.system,
-    messages: convertToModelMessages(payload.messages),
+    messages: convertToModelMessages(payload.messages, {
+      tools,
+    }),
     tools,
     maxRetries: 0,
     // error log is handled in live chat kit.

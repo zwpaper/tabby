@@ -1,10 +1,12 @@
 import { type Tool, jsonSchema, tool } from "@ai-v5-sdk/provider-utils";
 import type { McpTool } from "@getpochi/tools";
 
-function parseMcpTool(mcpTool: McpTool): Tool {
+function parseMcpTool(name: string, mcpTool: McpTool): Tool {
+  const toModelOutput = toModelOutputFn[name] || undefined;
   return tool({
     description: mcpTool.description,
     inputSchema: jsonSchema(mcpTool.inputSchema.jsonSchema),
+    toModelOutput,
   });
 }
 
@@ -15,8 +17,31 @@ export function parseMcpToolSet(
     ? Object.fromEntries(
         Object.entries(mcpToolSet).map(([name, tool]) => [
           name,
-          parseMcpTool(tool),
+          parseMcpTool(name, tool),
         ]),
       )
     : undefined;
 }
+
+const toModelOutputFn: Record<string, Tool["toModelOutput"]> = {
+  browser_take_screenshot: (output: {
+    content: Array<
+      | { type: "text"; text: string }
+      | { type: "image"; mimeType: string; data: string }
+    >;
+  }) => {
+    return {
+      type: "content",
+      value: output.content.map((item) => {
+        if (item.type === "text") {
+          return item;
+        }
+        return {
+          type: "media",
+          data: item.data,
+          mediaType: item.mimeType,
+        };
+      }),
+    };
+  },
+};
