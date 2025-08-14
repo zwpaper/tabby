@@ -16,8 +16,8 @@ import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
   type AvailableModelId,
   type CreditCostInput,
-  getModelByIdNext,
-  getModelOptionsNext,
+  getModelById,
+  getModelOptions,
 } from "../lib/constants";
 import { setIdleTimeout } from "../server";
 import { taskService } from "../service/task";
@@ -39,7 +39,7 @@ const chat = new Hono()
     const remainingFreeCredit =
       (await checkUserQuota(user, validModelId))?.remainingFreeCredit || 0;
 
-    const model = getModelByIdNext(validModelId);
+    const model = getModelById(validModelId);
     if (validModelId.includes("anthropic")) {
       const lastMessage = prompt.at(-1);
       if (lastMessage) {
@@ -73,7 +73,7 @@ const chat = new Hono()
                   abortSignal,
                   stopSequences,
                   tools,
-                  ...getModelOptionsNext(validModelId),
+                  ...getModelOptions(validModelId),
                 });
 
                 const [stream1, stream2] = stream.tee();

@@ -1,7 +1,7 @@
 import { MessageList } from "@/components/message/message-list";
 import { cn } from "@/lib/utils";
 import type { Todo } from "@getpochi/tools";
-import { formattersNext } from "@ragdoll/common";
+import { formatters } from "@ragdoll/common";
 import type { Message } from "@ragdoll/livekit";
 import { useEffect, useMemo, useState } from "react";
 
@@ -81,6 +81,6 @@ export const TaskThread: React.FC<{
 function prepareForRender(messages: Message[]): Message[] {
   // Remove user messages.
   const filteredMessages = messages.filter((x) => x.role !== "user");
-  const x = formattersNext.ui(filteredMessages);
+  const x = formatters.ui(filteredMessages);
   return x;
 }

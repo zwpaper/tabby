@@ -14,10 +14,10 @@ import type { Store } from "@livestore/livestore";
 import { type Signal, signal } from "@preact/signals-core";
 import { getLogger, prompts } from "@ragdoll/common";
 import {
-  isAssistantMessageWithEmptyPartsNext,
-  isAssistantMessageWithNoToolCallsNext,
-  isAssistantMessageWithPartialToolCallsNext,
-  prepareLastMessageForRetryNext,
+  isAssistantMessageWithEmptyParts,
+  isAssistantMessageWithNoToolCalls,
+  isAssistantMessageWithPartialToolCalls,
+  prepareLastMessageForRetry,
 } from "@ragdoll/common/message-utils";
 import { findTodosNext, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { LLMRequestData, Message, Task, UITools } from "@ragdoll/livekit";
@@ -376,14 +376,14 @@ export class TaskRunner {
     }
 
     if (
-      isAssistantMessageWithEmptyPartsNext(lastMessage) ||
-      isAssistantMessageWithPartialToolCallsNext(lastMessage) ||
+      isAssistantMessageWithEmptyParts(lastMessage) ||
+      isAssistantMessageWithPartialToolCalls(lastMessage) ||
       lastAssistantMessageIsCompleteWithToolCalls({ messages: this.messages })
     ) {
       this.logger.trace(
         "Last message is assistant with empty parts or partial/completed tool calls, resending it to resume the task.",
       );
-      const processed = prepareLastMessageForRetryNext(lastMessage);
+      const processed = prepareLastMessageForRetry(lastMessage);
       if (processed) {
         this.messages.splice(-1, 1, processed);
       } else {
@@ -403,7 +403,7 @@ export class TaskRunner {
       return "next";
     }
 
-    if (isAssistantMessageWithNoToolCallsNext(lastMessage)) {
+    if (isAssistantMessageWithNoToolCalls(lastMessage)) {
       this.logger.trace(
         "Last message is assistant with no tool calls, sending a new user reminder.",
       );

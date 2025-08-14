@@ -1,5 +1,5 @@
 import { type ToolUIPart, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
-import { formattersNext } from "@ragdoll/common";
+import { formatters } from "@ragdoll/common";
 import type { Message, UITools } from "@ragdoll/livekit";
 import chalk from "chalk";
 import deepEqual from "fast-deep-equal";
@@ -19,7 +19,7 @@ export class TaskRunnerOutputStream {
   constructor(readonly stream: NodeJS.WriteStream) {}
 
   updateMessage(messages: Message[]) {
-    const formattedMessages = formattersNext.ui(messages);
+    const formattedMessages = formatters.ui(messages);
     for (const message of formattedMessages) {
       if (message.role !== "user" && message.role !== "assistant") {
         continue; // Only render user and assistant messages

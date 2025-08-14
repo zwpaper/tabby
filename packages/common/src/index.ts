@@ -1,4 +1,4 @@
-export { formatters as formattersNext } from "./formatters-next";
+export { formatters } from "./formatters";
 export { attachTransport, getLogger } from "./logger";
 export { prompts, getReadEnvironmentResult } from "./prompts";
 

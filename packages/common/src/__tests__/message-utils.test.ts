@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseTitle, prepareLastMessageForRetryNext } from "../message-utils";
+import { parseTitle, prepareLastMessageForRetry } from "../message-utils";
 import type { UIMessage } from "@ai-v5-sdk/ai";
 
 describe("message-utils", () => {
@@ -19,7 +19,7 @@ describe("message-utils", () => {
     });
   });
 
-  describe("prepareLastMessageForRetryNext", () => {
+  describe("prepareLastMessageForRetry", () => {
     it("should keep last step", () => {
       const lastMessage: UIMessage = {
         "id": "a8ed4356-72ab-487a-9bb4-b98d61948eba",
@@ -69,7 +69,7 @@ describe("message-utils", () => {
 
       const before = lastMessage?.parts.filter((part) => part.type === "step-start").length || 0;
       expect(before).toBe(2);
-      const message = prepareLastMessageForRetryNext(lastMessage)
+      const message = prepareLastMessageForRetry(lastMessage)
       const after = message?.parts.filter((part) => part.type === "step-start").length || 0;
       expect(after).toBe(1);
     })

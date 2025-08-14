@@ -1,8 +1,8 @@
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
 import {
-  isAssistantMessageWithEmptyPartsNext,
-  isAssistantMessageWithNoToolCallsNext,
-  isAssistantMessageWithPartialToolCallsNext,
+  isAssistantMessageWithEmptyParts,
+  isAssistantMessageWithNoToolCalls,
+  isAssistantMessageWithPartialToolCalls,
 } from "@ragdoll/common/message-utils";
 import type { Message } from "@ragdoll/livekit";
 import { useMemo } from "react";
@@ -26,11 +26,11 @@ export function useMixinReadyForRetryError(
     const lastMessage = messages.at(-1);
     if (!lastMessage) return;
     if (lastMessage.role === "user") return new ReadyForRetryError();
-    if (isAssistantMessageWithEmptyPartsNext(lastMessage)) {
+    if (isAssistantMessageWithEmptyParts(lastMessage)) {
       return new ReadyForRetryError();
     }
 
-    if (isAssistantMessageWithPartialToolCallsNext(lastMessage)) {
+    if (isAssistantMessageWithPartialToolCalls(lastMessage)) {
       return new ReadyForRetryError();
     }
 
@@ -38,7 +38,7 @@ export function useMixinReadyForRetryError(
       return new ReadyForRetryError("tool-calls");
     }
 
-    if (isAssistantMessageWithNoToolCallsNext(lastMessage)) {
+    if (isAssistantMessageWithNoToolCalls(lastMessage)) {
       return new ReadyForRetryError("no-tool-calls");
     }
   }, [messages]);

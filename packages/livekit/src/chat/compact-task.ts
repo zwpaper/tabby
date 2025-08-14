@@ -1,4 +1,4 @@
-import { formattersNext, prompts } from "@ragdoll/common";
+import { formatters, prompts } from "@ragdoll/common";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
 
@@ -43,7 +43,7 @@ async function createSummary(
   llm: RequestData["llm"],
   inputMessages: Message[],
 ) {
-  const messages: Message[] = formattersNext.llm([
+  const messages: Message[] = formatters.llm([
     ...inputMessages,
     {
       id: crypto.randomUUID(),

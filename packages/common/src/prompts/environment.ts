@@ -142,7 +142,7 @@ function getGitStatus(gitStatus: GitStatus | undefined) {
   return result;
 }
 
-export function injectEnvironmentDetailsNext(
+export function injectEnvironmentDetails(
   messages: UIMessageNext[],
   environment: Environment | undefined,
 ): UIMessageNext[] {

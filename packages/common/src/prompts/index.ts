@@ -1,11 +1,11 @@
 import type { TextUIPart } from "@ai-v5-sdk/ai";
 import { createCompactSummaryPrompt } from "./compact";
-import { injectEnvironmentDetailsNext } from "./environment";
+import { injectEnvironmentDetails } from "./environment";
 import { generateSystemPrompt } from "./system";
 
 export const prompts = {
   system: generateSystemPrompt,
-  injectEnvironmentDetailsNext,
+  injectEnvironmentDetails,
   createSystemReminder,
   isSystemReminder,
   isCompact,

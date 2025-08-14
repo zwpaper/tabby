@@ -3,7 +3,7 @@ import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import { ZodTodo } from "@getpochi/tools";
-import { formattersNext } from "@ragdoll/common";
+import { formatters } from "@ragdoll/common";
 import type { Message } from "@ragdoll/livekit";
 import { createChannel } from "bidc";
 import { Loader2 } from "lucide-react";
@@ -62,7 +62,7 @@ export function SharePage() {
     error,
   } = shareData || {};
 
-  const renderMessages = useMemo(() => formattersNext.ui(messages), [messages]);
+  const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
   return (
     <VSCodeWebProvider>
       <ChatContextProvider>

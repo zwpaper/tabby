@@ -82,7 +82,7 @@ export const ClientTools = {
 
 export type ClientToolsType = typeof ClientTools;
 
-export const selectClientToolsNext = (enableNewTask: boolean) => {
+export const selectClientTools = (enableNewTask: boolean) => {
   if (enableNewTask) {
     return {
       ...ClientTools,

@@ -27,7 +27,7 @@ import { vscodeHost } from "@/lib/vscode";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
 import { useStore } from "@livestore/react";
-import { CompactTaskMinTokens, formattersNext } from "@ragdoll/common";
+import { CompactTaskMinTokens, formatters } from "@ragdoll/common";
 import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
 import type { UserEditsDiff } from "@ragdoll/vscode-webui-bridge";
@@ -208,7 +208,7 @@ function Chat({ user, uid }: ChatProps) {
 
   const [input, setInput] = useState("");
   const { messages, sendMessage, status, addToolResult } = chat;
-  const renderMessages = useMemo(() => formattersNext.ui(messages), [messages]);
+  const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
   const buildEnvironment = useCallback(async () => {
     const environment = await vscodeHost.readEnvironment();
 

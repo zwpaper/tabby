@@ -281,12 +281,9 @@ function patchedFetchForFinetune(
   throw new Error(`Unexpected requestInfo type: ${typeof requestInfo}`);
 }
 
-import {
-  type AnthropicProviderOptions as AnthropicProviderOptionsNext,
-  anthropic as anthropicNext,
-} from "@ai-v5-sdk/anthropic";
-import { createVertex as createVertexNext } from "@ai-v5-sdk/google-vertex";
-const vertexFineTuningNext = createVertexNext({
+import { type AnthropicProviderOptions, anthropic } from "@ai-v5-sdk/anthropic";
+import { createVertex } from "@ai-v5-sdk/google-vertex";
+const vertexFineTuning = createVertex({
   location: "us-central1",
   baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/us-central1/publishers/google`,
   googleAuthOptions: {
@@ -295,44 +292,44 @@ const vertexFineTuningNext = createVertexNext({
   fetch: patchedFetchForFinetune as unknown as typeof globalThis.fetch,
 });
 
-const vertexNext = createVertexNext({
+const vertex = createVertex({
   baseURL: `https://aiplatform.googleapis.com/v1/projects/${process.env.GOOGLE_VERTEX_PROJECT}/locations/${process.env.GOOGLE_VERTEX_LOCATION}/publishers/google`,
   googleAuthOptions: {
     credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS || ""),
   },
 });
 
-export const geminiFlashNext = vertexNext("gemini-2.5-flash");
+export const geminiFlash = vertex("gemini-2.5-flash");
 
-import { deepinfra as deepinfraNext } from "@ai-v5-sdk/deepinfra";
-import type { GoogleGenerativeAIProviderOptions as GoogleGenerativeAIProviderOptionsNext } from "@ai-v5-sdk/google";
-import { groq as groqNext } from "@ai-v5-sdk/groq";
+import { deepinfra } from "@ai-v5-sdk/deepinfra";
+import type { GoogleGenerativeAIProviderOptions } from "@ai-v5-sdk/google";
+import { groq } from "@ai-v5-sdk/groq";
 
-export function getModelByIdNext(
+export function getModelById(
   modelId: AvailableModelId,
   modelEndpointId?: string,
 ): LanguageModelV2 {
   switch (modelId) {
     case "anthropic/claude-4-sonnet":
-      return anthropicNext("claude-4-sonnet-20250514");
+      return anthropic("claude-4-sonnet-20250514");
     case "google/gemini-2.5-pro":
-      return vertexNext("gemini-2.5-pro");
+      return vertex("gemini-2.5-pro");
     case "google/gemini-2.5-flash":
-      return vertexNext("gemini-2.5-flash");
+      return vertex("gemini-2.5-flash");
     case "moonshotai/kimi-k2":
-      return groqNext("moonshotai/kimi-k2-instruct");
+      return groq("moonshotai/kimi-k2-instruct");
     case "pochi/pro-1":
-      return vertexFineTuningNext(modelEndpointId || "2224986023618674688");
+      return vertexFineTuning(modelEndpointId || "2224986023618674688");
     case "pochi/max-1":
-      return vertexFineTuningNext(modelEndpointId || "4041983964099903488");
+      return vertexFineTuning(modelEndpointId || "4041983964099903488");
     case "qwen/qwen3-coder":
-      return deepinfraNext("Qwen/Qwen3-Coder-480B-A35B-Instruct");
+      return deepinfra("Qwen/Qwen3-Coder-480B-A35B-Instruct");
     case "zai/glm-4.5":
-      return deepinfraNext("zai-org/GLM-4.5");
+      return deepinfra("zai-org/GLM-4.5");
   }
 }
 
-export function getModelOptionsNext(
+export function getModelOptions(
   modelId: AvailableModelId,
 ): Partial<LanguageModelV2CallOptions> {
   switch (modelId) {
@@ -348,7 +345,7 @@ export function getModelOptionsNext(
               includeThoughts: true,
               thinkingBudget: 4096,
             },
-          } satisfies GoogleGenerativeAIProviderOptionsNext,
+          } satisfies GoogleGenerativeAIProviderOptions,
         },
       };
     case "anthropic/claude-4-sonnet":
@@ -360,7 +357,7 @@ export function getModelOptionsNext(
               type: "enabled",
               budgetTokens: 4096,
             },
-          } satisfies AnthropicProviderOptionsNext,
+          } satisfies AnthropicProviderOptions,
         },
       };
     case "moonshotai/kimi-k2":

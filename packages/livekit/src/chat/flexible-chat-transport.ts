@@ -4,9 +4,9 @@ import type {
   UIMessageChunk,
 } from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/base";
-import { type McpTool, selectClientToolsNext } from "@getpochi/tools";
+import { type McpTool, selectClientTools } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import { formattersNext, prompts } from "@ragdoll/common";
+import { formatters, prompts } from "@ragdoll/common";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
 import { parseMcpToolSet } from "./llm/utils";
@@ -93,7 +93,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     const system = prompts.system(environment?.info?.customRules);
     const mcpTools = mcpToolSet && parseMcpToolSet(mcpToolSet);
     const tools = {
-      ...selectClientToolsNext(!!this.allowNewTask),
+      ...selectClientTools(!!this.allowNewTask),
       ...(mcpTools || {}),
     };
     return requestLLM(this.store, llm, {
@@ -118,12 +118,9 @@ function prepareMessages<T extends import("@ai-v5-sdk/ai").UIMessage>(
   inputMessages: T[],
   environment: Environment | undefined,
 ): T[] {
-  const messages = prompts.injectEnvironmentDetailsNext(
-    inputMessages,
-    environment,
-  );
+  const messages = prompts.injectEnvironmentDetails(inputMessages, environment);
 
-  return formattersNext.llm(messages) as T[];
+  return formatters.llm(messages) as T[];
 }
 
 function isWellKnownReasoningModel(model?: string): boolean {

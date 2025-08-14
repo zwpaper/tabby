@@ -51,9 +51,7 @@ export function parseTitle(title: string | null) {
   return toText(hast).slice(0, 256) || "(empty)";
 }
 
-export function isAssistantMessageWithNoToolCallsNext(
-  message: UIMessage,
-): boolean {
+export function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {
   if (message.role !== "assistant") {
     return false;
   }
@@ -69,15 +67,11 @@ export function isAssistantMessageWithNoToolCallsNext(
   return message.parts.length > 0 && lastStepToolInvocations.length === 0;
 }
 
-export function isAssistantMessageWithEmptyPartsNext(
-  message: UIMessage,
-): boolean {
+export function isAssistantMessageWithEmptyParts(message: UIMessage): boolean {
   return message.role === "assistant" && message.parts.length === 0;
 }
 
-export function isAssistantMessageWithPartialToolCallsNext(
-  lastMessage: UIMessage,
-) {
+export function isAssistantMessageWithPartialToolCalls(lastMessage: UIMessage) {
   return (
     lastMessage.role === "assistant" &&
     lastMessage.parts.some(
@@ -86,7 +80,7 @@ export function isAssistantMessageWithPartialToolCallsNext(
   );
 }
 
-export function prepareLastMessageForRetryNext<T extends UIMessage>(
+export function prepareLastMessageForRetry<T extends UIMessage>(
   lastMessage: T,
 ): T | null {
   const message = {
@@ -99,7 +93,7 @@ export function prepareLastMessageForRetryNext<T extends UIMessage>(
       return message;
     }
 
-    if (isAssistantMessageWithNoToolCallsNext(message)) {
+    if (isAssistantMessageWithNoToolCalls(message)) {
       return message;
     }
 
