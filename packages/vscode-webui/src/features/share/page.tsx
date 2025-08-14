@@ -2,166 +2,158 @@ import { MessageList } from "@/components/message/message-list";
 import { VSCodeWebProvider } from "@/components/vscode-web-provider";
 import { ChatContextProvider } from "@/features/chat";
 import { cn } from "@/lib/utils";
-import type { Todo } from "@getpochi/tools";
+import { ZodTodo } from "@getpochi/tools";
 import { formattersNext } from "@ragdoll/common";
 import type { Message } from "@ragdoll/livekit";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createChannel } from "bidc";
 import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import z from "zod";
 import { ErrorMessageView } from "../chat/components/error-message-view";
 import { TodoList } from "../todo";
 
+type BIDCChannel = ReturnType<typeof createChannel>;
+
 export function SharePage() {
-  const searchParams = new URLSearchParams(location.search);
-  const assistant_name = searchParams.get("assistant_name");
-  const assistant_image = searchParams.get("assistant_image");
+  const [channel, setChannel] = useState<BIDCChannel | null>(null);
+  const receive = channel?.receive;
+  const send = channel?.send;
+  const shareData = useShareData(receive);
 
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [user, setUser] = useState<{
-    name: string;
-    image?: string | null;
-  }>();
-  const [assistant, setAssistant] = useState<{
-    name: string;
-    image?: string | null;
-  }>({
-    name: assistant_name ?? "Pochi",
-    image: assistant_image,
-  });
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | undefined>();
-
-  const queryClient = useMemo(() => new QueryClient(), []);
+  const isChannelCreated = useRef(false);
 
   useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      if (typeof event.data === "object" && event.data?.type === "share") {
-        const shareMessage = event.data as ShareMessage;
-        setMessages(shareMessage.messages ?? []);
-        setUser(shareMessage.user);
-        if (shareMessage.assistant) {
-          setAssistant(shareMessage.assistant);
-        }
-        setTodos(shareMessage.todos ?? []);
-        setIsLoading(!!shareMessage.isLoading);
-        setError(shareMessage.error ?? undefined);
-        setIsInitialized(true);
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => {
-      window.removeEventListener("message", handler);
-    };
+    if (isChannelCreated.current) return;
+
+    isChannelCreated.current = true;
+    setChannel(createChannel());
   }, []);
-
-  useEffect(() => {
-    if (isInitialized) {
-      window.parent.postMessage(
-        {
-          type: "messagesLoaded",
-        },
-        "*",
-      );
-    }
-  }, [isInitialized]);
 
   // Set up ResizeObserver to monitor content height and send updates to parent
-  const monitorHeight = useCallback((element: HTMLElement | null) => {
-    if (!element) return;
+  const monitorHeight = useCallback(
+    (element: HTMLElement | null) => {
+      if (!element || !send) return;
 
-    const resizeObserver = new ResizeObserver(() => {
-      // Send height update to parent window
-      window.parent.postMessage(
-        {
+      const resizeObserver = new ResizeObserver(() => {
+        send({
           type: "resize",
-          height: element.clientHeight + 20, // Add some padding
-        },
-        "*",
-      );
-    });
+          height: element.clientHeight,
+        } satisfies ResizeEvent);
+      });
 
-    resizeObserver.observe(element);
+      resizeObserver.observe(element);
 
-    // Also observe document.body for better coverage
-    if (document.body) {
-      resizeObserver.observe(document.body);
-    }
+      // Also observe document.body for better coverage
+      if (document.body) {
+        resizeObserver.observe(document.body);
+      }
 
-    return () => resizeObserver.disconnect();
-  }, []);
+      return () => resizeObserver.disconnect();
+    },
+    [send],
+  );
+
+  const {
+    messages = [],
+    todos = [],
+    user,
+    assistant,
+    isLoading = false,
+    error,
+  } = shareData || {};
 
   const renderMessages = useMemo(() => formattersNext.ui(messages), [messages]);
   return (
     <VSCodeWebProvider>
       <ChatContextProvider>
-        <QueryClientProvider client={queryClient}>
-          <div>
-            {/* todo skeleton outside? */}
-            {messages.length === 0 ? (
-              <div className="flex min-h-screen items-center justify-center">
-                <Loader2 className="size-6 animate-spin" />
-              </div>
-            ) : (
+        <div>
+          {/* todo skeleton outside? */}
+          {messages.length === 0 ? (
+            <div className="flex min-h-screen items-center justify-center">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          ) : (
+            <div
+              ref={monitorHeight}
+              className={cn("grid grid-cols-1 gap-3", {
+                "md:grid-cols-4": todos && todos.length > 0,
+              })}
+            >
               <div
-                ref={monitorHeight}
-                className={cn("grid grid-cols-1 gap-3", {
-                  "md:grid-cols-4": todos && todos.length > 0,
+                className={cn("col-span-1", {
+                  "md:col-span-3": todos && todos.length > 0,
                 })}
               >
-                <div
-                  className={cn("col-span-1", {
-                    "md:col-span-3": todos && todos.length > 0,
-                  })}
-                >
-                  <MessageList
-                    user={user}
-                    assistant={assistant}
-                    messages={renderMessages}
-                    isLoading={isLoading}
-                  />
-                  <ErrorMessageView error={error} />
-                </div>
-                {todos && todos.length > 0 && (
-                  <div className="col-span-1">
-                    <TodoList
-                      todos={todos}
-                      className="[&>.todo-border]:!hidden px-4 md:px-0"
-                    >
-                      <TodoList.Header
-                        disableCollapse={true}
-                        disableInProgressTodoTitle={true}
-                      />
-                      <TodoList.Items />
-                    </TodoList>
-                  </div>
-                )}
+                <MessageList
+                  user={user}
+                  assistant={assistant}
+                  messages={renderMessages}
+                  isLoading={isLoading}
+                />
+                <ErrorMessageView error={error ?? undefined} />
               </div>
-            )}
-          </div>
-        </QueryClientProvider>
+              {todos && todos.length > 0 && (
+                <div className="col-span-1">
+                  <TodoList
+                    todos={todos}
+                    className="[&>.todo-border]:!hidden px-4 md:px-0"
+                  >
+                    <TodoList.Header
+                      disableCollapse={true}
+                      disableInProgressTodoTitle={true}
+                    />
+                    <TodoList.Items />
+                  </TodoList>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </ChatContextProvider>
     </VSCodeWebProvider>
   );
 }
 
-type ShareMessage = {
-  type: "share";
-  messages: Message[] | undefined; // Array of messages to be displayed
-  user:
-    | {
-        name: string;
-        image?: string | null;
-      }
-    | undefined;
-  assistant:
-    | {
-        name: string;
-        image?: string | null;
-      }
-    | undefined;
-  todos: Todo[] | undefined;
-  isLoading: boolean | undefined;
-  error?: Error | null;
-};
+const ZodResizeEvent = z.object({
+  type: z.literal("resize"),
+  height: z.number(),
+});
+
+type ResizeEvent = z.infer<typeof ZodResizeEvent>;
+
+const ZodShareEvent = z.object({
+  type: z.literal("share"),
+  messages: z.array(z.custom<Message>()).optional(),
+  user: z
+    .object({
+      name: z.string(),
+      image: z.string().optional().nullable(),
+    })
+    .optional(),
+  assistant: z
+    .object({
+      name: z.string(),
+      image: z.string().optional().nullable(),
+    })
+    .optional(),
+  todos: z.array(ZodTodo).optional(),
+  isLoading: z.boolean().optional(),
+  error: z
+    .object({
+      message: z.string(),
+    })
+    .optional()
+    .nullable(),
+});
+
+type ShareEvent = z.infer<typeof ZodShareEvent>;
+
+function useShareData(receive: BIDCChannel["receive"] | undefined) {
+  const [data, setData] = useState<ShareEvent>();
+  useEffect(() => {
+    receive?.((data) => {
+      setData(ZodShareEvent.parse(data));
+    });
+  }, [receive]);
+  return data;
+}

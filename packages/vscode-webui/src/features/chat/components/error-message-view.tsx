@@ -2,7 +2,9 @@ import { ErrorMessage } from "@/components/error-message";
 import { PochiApiErrors } from "@getpochi/base";
 import { ExternalLinkIcon } from "lucide-react";
 
-export function ErrorMessageView({ error }: { error: Error | undefined }) {
+export function ErrorMessageView({
+  error,
+}: { error: { message: string } | undefined }) {
   return (
     <ErrorMessage
       error={error}
