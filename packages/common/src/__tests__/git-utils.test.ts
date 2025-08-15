@@ -1,8 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
   parseGitOriginUrl,
-  isGitHubUrl,
-  getGitPlatformIcon,
 } from "../git-utils";
 
 describe("git-utils", () => {
@@ -115,46 +113,6 @@ describe("git-utils", () => {
       expect(parseGitOriginUrl("")).toBeNull();
       expect(parseGitOriginUrl(null as any)).toBeNull();
       expect(parseGitOriginUrl(undefined as any)).toBeNull();
-    });
-  });
-
-  describe("isGitHubUrl", () => {
-    test("should return true for GitHub URLs", () => {
-      const urls = [
-        "https://github.com/TabbyML/tabby",
-        "git@github.com:TabbyML/tabby.git",
-        "https://github.com/user/repo.git",
-      ];
-
-      for (const url of urls) {
-        expect(isGitHubUrl(url)).toBe(true);
-      }
-    });
-
-    test("should return false for non-GitHub URLs", () => {
-      const urls = [
-        "https://gitlab.com/user/project",
-        "git@bitbucket.org:user/project.git",
-        "https://example.com/user/repo",
-        "",
-        "not-a-url",
-      ];
-
-      for (const url of urls) {
-        expect(isGitHubUrl(url)).toBe(false);
-      }
-    });
-  });
-
-  describe("getGitPlatformIcon", () => {
-    test("should return correct icons for known platforms", () => {
-      expect(getGitPlatformIcon("github")).toBe("github");
-      expect(getGitPlatformIcon("gitlab")).toBe("gitlab");
-      expect(getGitPlatformIcon("bitbucket")).toBe("bitbucket");
-    });
-
-    test("should return default icon for unknown platforms", () => {
-      expect(getGitPlatformIcon("unknown")).toBe("git");
     });
   });
 });

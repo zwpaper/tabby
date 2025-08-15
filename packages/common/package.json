@@ -3,19 +3,17 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./src/base/index.ts",
 
     "./pochi-api": "./src/pochi-api.ts",
 
     "./device-link": "./src/device-link/index.ts",
     "./device-link/client": "./src/device-link/client.ts",
 
-    "./node": "./src/node/index.ts",
-    "./message-utils": "./src/message-utils.ts",
+    "./message-utils": "./src/message-utils/index.ts",
     "./git-utils": "./src/git-utils.ts",
-    "./output-utils": "./src/output-utils.ts",
     "./diff-utils": "./src/diff-utils.ts",
-    "./todo-utils": "./src/todo-utils.ts"
+    "./tool-utils": "./src/tool-utils/index.ts"
   },
   "scripts": {
     "tsc": "tsc",

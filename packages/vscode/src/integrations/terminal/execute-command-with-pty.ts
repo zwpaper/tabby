@@ -1,5 +1,5 @@
 import { getLogger } from "@ragdoll/common";
-import { buildShellCommand } from "@ragdoll/common/node";
+import { buildShellCommand } from "@ragdoll/common/tool-utils";
 import type * as nodePty from "node-pty";
 import * as vscode from "vscode";
 import type { ExecuteCommandOptions } from "./types";

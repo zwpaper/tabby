@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { describe, it, beforeEach } from "mocha";
 import { OutputTruncator } from "../output";
-import { MaxTerminalOutputSize } from "@ragdoll/common/node";
+import { MaxTerminalOutputSize } from "@ragdoll/common/tool-utils";
 
 describe("OutputTruncator", () => {
   let truncator: OutputTruncator;

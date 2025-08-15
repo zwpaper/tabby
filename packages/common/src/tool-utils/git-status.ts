@@ -1,8 +1,7 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import type { GitStatus } from "../environment";
+import { type GitStatus, getLogger } from "../base";
 import { parseGitOriginUrl } from "../git-utils";
-import { getLogger } from "../logger";
 
 export interface GitStatusReaderOptions {
   cwd: string;

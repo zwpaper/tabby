@@ -174,7 +174,7 @@ describe("env.ts", () => {
 
     const proxiedEnv = proxyquire("../env", {
       "vscode": vscodeStub,
-      "@ragdoll/common/node": commonStub,
+      "@ragdoll/common/tool-utils": commonStub,
       "./fs": fsStub,
     });
     env = proxiedEnv as typeof envModuleType;

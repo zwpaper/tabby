@@ -1,6 +1,6 @@
 import type { Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
-import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
+import { findTodos, mergeTodos } from "@ragdoll/common/message-utils";
 import type { Message } from "@ragdoll/livekit";
 import { useCallback, useEffect, useRef, useState } from "react";
 

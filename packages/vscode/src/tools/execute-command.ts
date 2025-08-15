@@ -7,7 +7,7 @@ import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import { type Signal, signal } from "@preact/signals-core";
 import { ThreadSignal } from "@quilted/threads/signals";
 import { getLogger } from "@ragdoll/common";
-import { getShellPath } from "@ragdoll/common/node";
+import { getShellPath } from "@ragdoll/common/tool-utils";
 import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import { executeCommandWithNode } from "../integrations/terminal/execute-command-with-node";
 import {

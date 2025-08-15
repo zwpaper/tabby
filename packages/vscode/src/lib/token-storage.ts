@@ -1,5 +1,5 @@
 import { type Signal, signal } from "@preact/signals-core";
-import { CredentialStorage } from "@ragdoll/common/node";
+import { CredentialStorage } from "@ragdoll/common/tool-utils";
 import { isDev } from "@ragdoll/vscode-webui-bridge";
 import { injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";

@@ -4,7 +4,7 @@ import {
   resolvePath,
   selectFileContent,
   validateTextFile,
-} from "@ragdoll/common/node";
+} from "@ragdoll/common/tool-utils";
 import * as vscode from "vscode";
 
 export const readFile: ToolFunctionType<ClientToolsType["readFile"]> = async ({

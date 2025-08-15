@@ -8,7 +8,7 @@ import type {
   ToolFunctionType,
 } from "@getpochi/tools";
 import { processMultipleDiffs } from "@ragdoll/common/diff-utils";
-import { validateTextFile } from "@ragdoll/common/node";
+import { validateTextFile } from "@ragdoll/common/tool-utils";
 import * as vscode from "vscode";
 
 const logger = getLogger("multiApplyDiffTool");

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { GitStatusReader } from "../node/git-status";
-import type { GitStatusReaderOptions } from "../node/git-status";
+import { GitStatusReader } from "../git-status";
+import type { GitStatusReaderOptions } from "../git-status";
 
 describe("GitStatusReader", () => {
   let gitStatusReader: GitStatusReader;

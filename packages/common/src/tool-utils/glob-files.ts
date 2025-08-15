@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import { minimatch } from "minimatch";
-import { getLogger } from "..";
+import { getLogger } from "../base";
 import { resolvePath, validateRelativePath } from "./fs";
 import { ignoreWalk } from "./ignore-walk";
 import { MaxGlobFileItems } from "./limits";

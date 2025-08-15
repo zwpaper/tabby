@@ -6,7 +6,7 @@ import type {
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@getpochi/tools";
-import { fixCodeGenerationOutput } from "@ragdoll/common/output-utils";
+import { fixCodeGenerationOutput } from "@ragdoll/common/message-utils";
 
 const logger = getLogger("writeToFileTool");
 

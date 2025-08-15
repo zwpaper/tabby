@@ -355,7 +355,7 @@ export function CreateTask({
         What can I help you ship?
       </h2>
       <form
-        className="relative w-full max-w-3xl overflow-hidden rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80 dark:bg-input/30"
+        className="relative w-full max-w-3xl overflow-hidden rounded-lg border border-gray-300/50 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-gray-600/50 dark:bg-gray-900/80"
         onSubmit={handleSubmit}
         onClick={() => {
           textareaRef.current?.focus();

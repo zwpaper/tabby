@@ -6,7 +6,7 @@ import {
   MaxTerminalOutputSize,
   fixExecuteCommandOutput,
   getShellPath,
-} from "@ragdoll/common/node";
+} from "@ragdoll/common/tool-utils";
 import type { ToolCallOptions } from "../types";
 
 const execCommand = promisify(exec);

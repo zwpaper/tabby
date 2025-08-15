@@ -19,7 +19,7 @@ import {
   isAssistantMessageWithPartialToolCalls,
   prepareLastMessageForRetry,
 } from "@ragdoll/common/message-utils";
-import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
+import { findTodos, mergeTodos } from "@ragdoll/common/message-utils";
 import type { LLMRequestData, Message, Task, UITools } from "@ragdoll/livekit";
 import { LiveChatKit } from "@ragdoll/livekit/node";
 import { toError, toErrorString } from "./lib/error-utils";

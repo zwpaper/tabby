@@ -1,5 +1,5 @@
 import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
-import { globFiles as globFilesImpl } from "@ragdoll/common/node";
+import { globFiles as globFilesImpl } from "@ragdoll/common/tool-utils";
 import type { ToolCallOptions } from "../types";
 
 /**

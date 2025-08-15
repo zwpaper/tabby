@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import { getLogger } from "@ragdoll/common";
-import { searchFilesWithRipgrep } from "@ragdoll/common/node";
+import { searchFilesWithRipgrep } from "@ragdoll/common/tool-utils";
 import type { ToolCallOptions } from "../types";
 
 const logger = getLogger("searchFiles");

@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import type { hc } from "hono/client";
 import z from "zod";
-import { Environment } from "./environment";
+import { Environment } from "./base";
 
 export const ModelGatewayRequest = z.object({
   id: z.string().optional(),

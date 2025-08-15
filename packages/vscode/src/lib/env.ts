@@ -5,7 +5,7 @@ import {
   SystemRulesFilepath,
   collectCustomRules as collectCustomRulesImpl,
   getSystemInfo as getSystemInfoImpl,
-} from "@ragdoll/common/node";
+} from "@ragdoll/common/tool-utils";
 import type { RuleFile } from "@ragdoll/vscode-webui-bridge";
 import * as vscode from "vscode";
 import {

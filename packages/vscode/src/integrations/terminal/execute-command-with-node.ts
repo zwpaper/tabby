@@ -2,7 +2,7 @@ import { type ChildProcess, exec, spawn } from "node:child_process";
 import {
   buildShellCommand,
   fixExecuteCommandOutput,
-} from "@ragdoll/common/node";
+} from "@ragdoll/common/tool-utils";
 import type { ExecuteCommandOptions } from "./types";
 import { ExecutionError, truncateOutput } from "./utils";
 

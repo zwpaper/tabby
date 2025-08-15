@@ -4,7 +4,6 @@ import type { AnyBlock, WebClient } from "@slack/web-api";
 import { getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
 import { getLogger } from "@ragdoll/common";
-import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
 import type { Message } from "@ragdoll/livekit";
 import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
@@ -738,4 +737,24 @@ function extractErrorInfo(messages?: Message[]): {
     message: "Task failed",
     details: "No specific error details available",
   };
+}
+
+/**
+ * Parses a repository string and extracts the owner and repo
+ *
+ * @param repoFullName - The repository full name (e.g. 'TabbyML/tabby')
+ * @returns The owner and repo, or null if the format is invalid
+ */
+function parseOwnerAndRepo(
+  repoFullName: string,
+): { owner: string; repo: string } | null {
+  if (!repoFullName) return null;
+
+  const parts = repoFullName.split("/");
+  if (parts.length !== 2) return null;
+
+  const [owner, repo] = parts;
+  if (!owner || !repo) return null;
+
+  return { owner, repo };
 }

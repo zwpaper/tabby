@@ -4,7 +4,7 @@ import {
   resolvePath,
   selectFileContent,
   validateTextFile,
-} from "@ragdoll/common/node";
+} from "@ragdoll/common/tool-utils";
 import type { ToolCallOptions } from "../types";
 
 export const readFile =

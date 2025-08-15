@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fixCodeGenerationOutput } from "../output-utils";
+import { fixCodeGenerationOutput } from "../assistant-message";
 
 describe('fixCodeGenerationOutput', () => {
   it('should handle empty string', () => {

@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { Ignore } from "ignore";
 import ignore from "ignore";
-import { getLogger } from "..";
+import { getLogger } from "../base";
 
 const logger = getLogger("ignoreWalk");
 const MaxScanItems = 10_000;

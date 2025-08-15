@@ -1,5 +1,5 @@
 import { get as levenshtein } from "fast-levenshtein";
-import { getLogger } from "./logger";
+import { getLogger } from "./base";
 
 const logger = getLogger("diffUtils");
 

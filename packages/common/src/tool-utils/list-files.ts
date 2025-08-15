@@ -1,5 +1,5 @@
 import path from "node:path";
-import { getLogger } from "..";
+import { getLogger } from "../base";
 import { resolvePath, validateRelativePath } from "./fs";
 import { ignoreWalk } from "./ignore-walk";
 import { MaxListFileItems } from "./limits";

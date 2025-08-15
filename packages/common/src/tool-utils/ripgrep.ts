@@ -1,7 +1,7 @@
 import { exec } from "node:child_process";
 import { relative, resolve } from "node:path";
 import { promisify } from "node:util";
-import { getLogger } from "../logger";
+import { getLogger } from "../base";
 import { MaxRipgrepItems } from "./limits";
 
 const execAsync = promisify(exec);

@@ -4,7 +4,7 @@ import {
   collectCustomRules,
   getSystemInfo,
   listWorkspaceFiles,
-} from "@ragdoll/common/node";
+} from "@ragdoll/common/tool-utils";
 import type { RunnerOptions } from "../task-runner";
 
 /**

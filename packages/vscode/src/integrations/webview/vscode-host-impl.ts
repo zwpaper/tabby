@@ -47,7 +47,7 @@ import {
   ignoreWalk,
   isPlainTextFile,
   listWorkspaceFiles,
-} from "@ragdoll/common/node";
+} from "@ragdoll/common/tool-utils";
 import type {
   CaptureEvent,
   CustomModelSetting,

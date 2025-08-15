@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseTitle, prepareLastMessageForRetry } from "../message-utils";
+import { parseTitle, prepareLastMessageForRetry } from "..";
 import type { UIMessage } from "@ai-v5-sdk/ai";
 
 describe("message-utils", () => {

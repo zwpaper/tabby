@@ -1,9 +1,6 @@
 import type { apiClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import {
-  getGitPlatformIcon,
-  parseGitOriginUrl,
-} from "@ragdoll/common/git-utils";
+import { type GitPlatform, parseGitOriginUrl } from "@ragdoll/common/git-utils";
 import {
   IconBrandBitbucket,
   IconBrandGithub,
@@ -85,4 +82,23 @@ export function GitBadge({
   }
 
   return badgeContent;
+}
+
+/**
+ * Gets the appropriate icon name for a git platform
+ *
+ * @param platform - The git platform name
+ * @returns The icon name to use
+ */
+function getGitPlatformIcon(platform: GitPlatform) {
+  switch (platform) {
+    case "github":
+      return "github";
+    case "gitlab":
+      return "gitlab";
+    case "bitbucket":
+      return "bitbucket";
+    case "unknown":
+      return "git";
+  }
 }

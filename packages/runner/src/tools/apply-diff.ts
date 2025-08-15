@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
 import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import { parseDiffAndApply } from "@ragdoll/common/diff-utils";
-import { validateTextFile } from "@ragdoll/common/node";
+import { validateTextFile } from "@ragdoll/common/tool-utils";
 import { ensureFileDirectoryExists } from "../lib/fs";
 import type { ToolCallOptions } from "../types";
 

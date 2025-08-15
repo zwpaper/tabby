@@ -1,5 +1,5 @@
 import { getLogger } from "@/lib/logger";
-import { MaxTerminalOutputSize } from "@ragdoll/common/node";
+import { MaxTerminalOutputSize } from "@ragdoll/common/tool-utils";
 
 const logger = getLogger("BackgroundStreamUtils");
 
