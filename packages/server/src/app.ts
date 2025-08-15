@@ -151,7 +151,6 @@ const api = app.basePath("/api");
 // Endpoint to list available models
 export const route = api
   .route("/models", models)
-  .route("/chatNext", chat) // FIXME: remove once released.
   .route("/chat", chat)
   .route("/code", code)
   .route("/usages", usages)

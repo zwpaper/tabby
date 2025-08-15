@@ -16,7 +16,7 @@ import type { DBMessage } from "@ragdoll/db";
 import { fromV4DBMessage } from "@ragdoll/db/v4-adapter";
 import { useEffect, useMemo, useState } from "react";
 
-export const Route = createFileRoute("/clips/$id")({
+export const Route = createFileRoute("/s/$id")({
   loader: async ({ params }) => {
     const { id } = params;
     try {
