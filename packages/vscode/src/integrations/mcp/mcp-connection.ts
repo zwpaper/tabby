@@ -9,7 +9,7 @@ import {
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { type Signal, signal } from "@preact/signals-core";
-import type { McpToolStatus } from "@ragdoll/vscode-webui-bridge";
+import type { McpToolStatus } from "@ragdoll/common/vscode-webui-bridge";
 import { createMachine, interpret } from "@xstate/fsm";
 import type * as vscode from "vscode";
 import {

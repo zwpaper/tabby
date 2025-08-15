@@ -10,7 +10,7 @@ import {
   type VSCodeHostApi,
   type WebviewHostApi,
   getServerBaseUrl,
-} from "@ragdoll/vscode-webui-bridge";
+} from "@ragdoll/common/vscode-webui-bridge";
 import { container, inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection

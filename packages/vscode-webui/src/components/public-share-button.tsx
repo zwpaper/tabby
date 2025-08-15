@@ -8,7 +8,7 @@ import {
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
 import { SocialLinks, prompts } from "@ragdoll/common";
-import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
+import { getServerBaseUrl } from "@ragdoll/common/vscode-webui-bridge";
 import {
   CheckIcon,
   CopyIcon,

@@ -91,7 +91,6 @@
     "@getpochi/tools": "workspace:*",
     "@livestore/devtools-vite": "catalog:",
     "@preact/signals-react-transform": "^0.5.1",
-    "@ragdoll/vscode-webui-bridge": "workspace:*",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/addon-interactions": "^8.6.12",
     "@storybook/addon-onboarding": "^8.6.12",

@@ -11,8 +11,8 @@ import {
   threadSignal,
 } from "@quilted/threads/signals";
 import { getLogger } from "@ragdoll/common";
+import type { ExecuteCommandResult } from "@ragdoll/common/vscode-webui-bridge";
 import { type Message, type Task, catalog } from "@ragdoll/livekit";
-import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
 import Emittery from "emittery";
 import type { ToolCallLifeCycleKey } from "./chat-state/types";
 

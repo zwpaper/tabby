@@ -5,7 +5,7 @@ import { getLogger } from "@ragdoll/common";
 import type {
   SaveCheckpointOptions,
   UserEditsDiff,
-} from "@ragdoll/vscode-webui-bridge";
+} from "@ragdoll/common/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import { ShadowGitRepo } from "./shadow-git-repo";

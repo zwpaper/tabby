@@ -59,7 +59,7 @@ import type {
   SessionState,
   VSCodeHostApi,
   WorkspaceState,
-} from "@ragdoll/vscode-webui-bridge";
+} from "@ragdoll/common/vscode-webui-bridge";
 import * as runExclusive from "run-exclusive";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";

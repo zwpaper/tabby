@@ -3,7 +3,7 @@ import {
   type VSCodeHostApi,
   type WebviewHostApi,
   createVscodeHostStub,
-} from "@ragdoll/vscode-webui-bridge";
+} from "@ragdoll/common/vscode-webui-bridge";
 import Emittery from "emittery";
 
 const channel = new Emittery();

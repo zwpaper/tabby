@@ -1,7 +1,7 @@
 import { getLogger } from "@/lib/logger";
 import { signal } from "@preact/signals-core";
 import { MaxTerminalOutputSize } from "@ragdoll/common/tool-utils";
-import type { ExecuteCommandResult } from "@ragdoll/vscode-webui-bridge";
+import type { ExecuteCommandResult } from "@ragdoll/common/vscode-webui-bridge";
 import type { ExecutionError } from "./utils";
 
 const logger = getLogger("TerminalOutput");

@@ -1,5 +1,5 @@
 import type { ToolCallOptions } from "@ai-v5-sdk/ai";
-import type { McpToolStatus } from "@ragdoll/vscode-webui-bridge";
+import type { McpToolStatus } from "@ragdoll/common/vscode-webui-bridge";
 
 interface McpServerTransportStdio {
   command: string;
