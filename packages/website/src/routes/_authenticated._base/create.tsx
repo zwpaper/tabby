@@ -5,7 +5,6 @@ import { z } from "zod";
 const createSearchSchema = z.object({
   remote: z.boolean().optional(),
 });
-
 export const Route = createFileRoute("/_authenticated/_base/create")({
   component: RouteComponent,
   validateSearch: (search) => createSearchSchema.parse(search),

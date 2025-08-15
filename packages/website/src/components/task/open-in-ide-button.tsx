@@ -9,6 +9,7 @@ interface OpenInIdeButtonProps {
 
 export function OpenInIdeButton({ uid, minionId }: OpenInIdeButtonProps) {
   const handleOpenInIde = () => {
+    // TODO(sma1lboy): remove this
     window.open(`vscode://tabbyml.pochi/?task=${uid}`, "_blank");
   };
 

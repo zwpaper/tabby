@@ -6,8 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { apiClient } from "@/lib/auth-client";
-import { useQuery } from "@tanstack/react-query";
+import type { WebsiteTaskCreateEvent } from "@ragdoll/common";
 import { createFileRoute } from "@tanstack/react-router";
 import { LifeBuoy, Loader2, Puzzle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -16,6 +15,7 @@ import { z } from "zod";
 const searchSchema = z.object({
   uid: z.string().optional(),
   url: z.string(),
+  event: z.custom<WebsiteTaskCreateEvent>((o) => o),
 });
 
 export const Route = createFileRoute("/_authenticated/redirect-vscode")({
@@ -24,28 +24,18 @@ export const Route = createFileRoute("/_authenticated/redirect-vscode")({
 });
 
 function RouteComponent() {
-  const { uid, url } = Route.useSearch();
+  const { url, event } = Route.useSearch();
   const [showManualButton, setShowManualButton] = useState(false);
   const isVscode = url.startsWith("vscode://");
-  const { data: task } = useQuery({
-    queryKey: ["task", uid],
-    queryFn: async () => {
-      if (!uid) return null;
-      // TODO(sma1lboy): should we just passing descrption directly?
-      const resp = await apiClient.api.tasks[":uid"].$get({
-        param: { uid },
-      });
-      return resp.json();
-    },
-    enabled: !!uid,
-  });
 
   const description = useMemo(() => {
-    if (task?.event?.type === "website:new-project") {
-      return task.event.data.prompt?.split("\n")[0];
+    if (event) {
+      return (
+        event.data.prompt?.split("\n")[0] || "Creating new project locally..."
+      );
     }
-    return null;
-  }, [task]);
+    return "null";
+  }, [event]);
 
   const openRedirectUrl = useCallback(() => {
     window.open(url);

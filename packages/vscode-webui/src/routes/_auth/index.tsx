@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 
 const searchSchema = z.object({
   uid: z.string().optional(),
+  prompt: z.string().optional(),
   ts: z.number().optional(),
 });
 
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_auth/")({
 });
 
 function RouteComponent() {
-  const { uid: uidFromRoute, ts = Date.now() } = Route.useSearch();
+  const { uid: uidFromRoute, prompt, ts = Date.now() } = Route.useSearch();
   const key = uidFromRoute !== undefined ? `task-${uidFromRoute}` : `new-${ts}`;
 
   const { auth } = Route.useRouteContext();
@@ -38,5 +39,5 @@ function RouteComponent() {
     return <WelcomeScreen user={auth?.user} />;
   }
 
-  return <ChatPage key={key} user={auth?.user} uid={uid} />;
+  return <ChatPage key={key} user={auth?.user} uid={uid} prompt={prompt} />;
 }

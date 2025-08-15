@@ -51,6 +51,7 @@ export function TaskRowActions({ task }: TaskRowActionsProps) {
   };
 
   function openVSCode() {
+    // TODO(sma1lboy): remove this
     window.open(`vscode://TabbyML.pochi/?task=${task.uid}`);
   }
 

@@ -6,27 +6,10 @@ import { getLogger } from "@/lib/logger";
 import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorkspaceJobQueue } from "@/lib/workspace-job";
-// import type { DB } from "@ragdoll/db";
+import type { WebsiteTaskCreateEvent } from "@ragdoll/common";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
-export interface NewProjectTask {
-  uid: string;
-  event: {
-    type: "website:new-project";
-    data: {
-      requestId: string;
-      name?: string;
-      prompt: string;
-      attachments?: {
-        url: string;
-        name?: string;
-        contentType?: string;
-      }[];
-      githubTemplateUrl?: string;
-    };
-  };
-}
 const logger = getLogger("UriHandler");
 
 @injectable()
@@ -60,44 +43,23 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       return;
     }
 
-    const task = searchParams.get("task");
-    if (task) {
-      // remove unused
-      this.handleNewProjectTask;
-      // await this.handleTaskEvent(task);
+    const eventParam = searchParams.get("event");
+    if (eventParam) {
+      try {
+        const event = JSON.parse(decodeURIComponent(eventParam));
+        if (event?.type === "website:new-project") {
+          await this.handleNewProjectTask(event);
+        }
+      } catch (error) {
+        logger.error("Failed to parse event parameter", error);
+        vscode.window.showErrorMessage("Failed to process task event");
+      }
       return;
     }
   }
 
-  // private async handleTaskEvent(uid: string) {
-  //   try {
-  //     const taskResponse = await this.apiClient.api.tasks[":uid"].$get({
-  //       param: { uid },
-  //     });
-  //     if (!taskResponse.ok) {
-  //       throw new Error(`Failed to get task: ${taskResponse.status}`);
-  //     }
-
-  //     const task = await taskResponse.json();
-  //     const isNewTask = task?.conversation?.messages.length === 1;
-  //     if (isNewTask) {
-  //       switch (task?.event?.type) {
-  //         case "website:new-project":
-  //           await this.handleNewProjectTask(task as NewProjectTask);
-  //           return;
-  //         default:
-  //           break;
-  //       }
-  //     }
-  //     await vscode.commands.executeCommand("pochi.openTask", uid);
-  //   } catch (error) {
-  //     const message = error instanceof Error ? error.message : "Unknown error";
-  //     vscode.window.showErrorMessage(`Task ${uid} failed: ${message}`);
-  //   }
-  // }
-
-  private async handleNewProjectTask(task: NewProjectTask) {
-    const { data: params } = task.event;
+  private async handleNewProjectTask(event: WebsiteTaskCreateEvent) {
+    const { data: params } = event;
     const { requestId, name } = params;
 
     logger.info(`Handling new project task: ${JSON.stringify(params)}`);
@@ -153,7 +115,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       );
 
       // Execute the command directly instead of queueing it
-      await vscode.commands.executeCommand("pochi.createProject", task);
+      await vscode.commands.executeCommand("pochi.createProject", event);
       return;
     }
 
@@ -161,7 +123,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     await this.workspaceJobQueue.push({
       workspaceUri: newWorkspaceUri.toString(),
       command: "pochi.createProject",
-      args: [task],
+      args: [event],
       expiresAt: Date.now() + 1000 * 60,
     });
 
@@ -187,7 +149,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
         logger.info(
           "Attempting to execute createProject directly after folder open failure",
         );
-        await vscode.commands.executeCommand("pochi.createProject", task);
+        await vscode.commands.executeCommand("pochi.createProject", event);
       }
     }
   }

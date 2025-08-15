@@ -16,7 +16,8 @@ import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 import { PostHog } from "@/lib/posthog";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
-import type { TaskIdParams } from "@ragdoll/vscode-webui-bridge";
+import type { WebsiteTaskCreateEvent } from "@ragdoll/common";
+import type { NewTaskParams, TaskIdParams } from "@ragdoll/vscode-webui-bridge";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
@@ -26,7 +27,6 @@ import { DiffChangesContentProvider } from "./editor/diff-changes-content-provid
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { McpHub } from "./mcp/mcp-hub";
 import type { McpServerConfig } from "./mcp/types";
-import type { NewProjectTask } from "./uri-handler";
 
 const logger = getLogger("CommandManager");
 
@@ -52,7 +52,7 @@ export class CommandManager implements vscode.Disposable {
     progress: vscode.Progress<{ message?: string; increment?: number }>,
     workspaceUri: vscode.Uri,
     githubTemplateUrl: string | undefined,
-    openTaskParams: TaskIdParams,
+    openTaskParams: TaskIdParams | NewTaskParams,
     requestId?: string,
   ) {
     await vscode.commands.executeCommand("pochiWebui.focus");
@@ -129,8 +129,8 @@ export class CommandManager implements vscode.Disposable {
 
       vscode.commands.registerCommand(
         "pochi.createProject",
-        async (task: NewProjectTask) => {
-          const params = task.event.data;
+        async (event: WebsiteTaskCreateEvent) => {
+          const params = event.data;
           const currentWorkspace = vscode.workspace.workspaceFolders?.[0].uri;
           if (!currentWorkspace) {
             return;
@@ -148,9 +148,7 @@ export class CommandManager implements vscode.Disposable {
                   progress,
                   currentWorkspace,
                   params.githubTemplateUrl,
-                  {
-                    uid: task.uid,
-                  },
+                  { uid: undefined, prompt: params.prompt },
                   params.requestId,
                 );
               } catch (error) {

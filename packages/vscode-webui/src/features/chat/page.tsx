@@ -45,10 +45,14 @@ import { useNewCompactTask } from "./hooks/use-new-compact-task";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useLiveChatKitGetters } from "./lib/use-live-chat-kit-getters";
 
-export function ChatPage({ uid, user }: { uid: string; user?: User }) {
+export function ChatPage({
+  uid,
+  user,
+  prompt,
+}: { uid: string; user?: User; prompt?: string }) {
   return (
     <ChatContextProvider>
-      <Chat user={user} uid={uid} />
+      <Chat user={user} uid={uid} prompt={prompt} />
     </ChatContextProvider>
   );
 }
@@ -56,9 +60,10 @@ export function ChatPage({ uid, user }: { uid: string; user?: User }) {
 interface ChatProps {
   uid: string;
   user?: User;
+  prompt?: string;
 }
 
-function Chat({ user, uid }: ChatProps) {
+function Chat({ user, uid, prompt }: ChatProps) {
   const { store } = useStore();
   const todosRef = useRef<Todo[] | undefined>(undefined);
   const getters = useLiveChatKitGetters({
@@ -290,6 +295,13 @@ function Chat({ user, uid }: ChatProps) {
     showApproval,
     ...chat,
   });
+
+  // Initialize task with prompt if provided and task doesn't exist yet
+  useEffect(() => {
+    if (prompt && !chatKit.inited) {
+      chatKit.init(prompt);
+    }
+  }, [prompt, chatKit]);
 
   usePendingModelAutoStart({
     enabled: status === "ready" && messages.length === 1 && !isTaskLoading,

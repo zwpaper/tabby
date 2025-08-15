@@ -82,6 +82,7 @@ function createVSCodeHost(): VSCodeHostApi {
             to: "/",
             search: {
               uid: params.uid,
+              prompt: "prompt" in params ? params.prompt : undefined,
               ts: Date.now(),
             },
             replace: true,

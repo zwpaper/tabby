@@ -4,4 +4,5 @@ export interface TaskIdParams {
 
 export interface NewTaskParams {
   uid: undefined;
+  prompt?: string;
 }

@@ -18,22 +18,15 @@ import {
 } from "@/lib/utils/image";
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { PochiApiErrors } from "@ragdoll/common/pochi-api";
+import { useRouter } from "@tanstack/react-router";
 import {
   ArrowUpIcon,
-  GlobeIcon,
   ImageIcon,
   Loader2Icon,
-  MonitorIcon,
   SparklesIcon,
 } from "lucide-react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { HomeBackgroundGradient } from "../home/constants";
 
 export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at once
@@ -41,17 +34,15 @@ export const MAX_IMAGES = 4; // Maximum number of images that can be uploaded at
 export function CreateTask({
   initialInput,
   className,
-  initialRemote,
 }: {
   initialInput?: string;
   className?: string;
   initialRemote?: boolean;
 }) {
-  const [isRemote, setIsRemote] = useState(initialRemote ?? true); // Default to remote
+  // Always use local mode - no remote toggle
+  // const isRemote = false;
   const { data: auth } = useSession();
-  const isInternalUser = useCallback(() => {
-    return auth?.user?.email?.endsWith("@tabbyml.com") ?? false;
-  }, [auth?.user?.email]);
+  const router = useRouter();
   const isMobileDevice = useIsMobile();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
@@ -187,7 +178,7 @@ export function CreateTask({
     setInputValue(enhanced);
   };
 
-  const doSubmit = async (_input: string, _name?: string) => {
+  const doSubmit = async (input: string, name?: string) => {
     if (isMobileDevice) {
       setShowMobileWarning(true);
       return;
@@ -198,58 +189,33 @@ export function CreateTask({
     } else {
       try {
         setIsSubmitting(true);
-        // let attachments: Attachment[] | undefined = undefined;
 
-        // if (files.length > 0) {
-        //   try {
-        //     attachments = await uploadImages();
-        //   } catch (error) {
-        //     throw new Error("Failed to upload images. Please try again.");
-        //   }
-        // }
+        // TODO(sma1lboy): support remote mode
+        // TODO(sma1lboy): support attachments in next pr
+        const event = {
+          type: "website:new-project" as const,
+          data: {
+            requestId: crypto.randomUUID(),
+            name: name,
+            prompt: input,
+            // attachments: undefined, // Temporarily blocked
+            githubTemplateUrl:
+              "https://github.com/wsxiaoys/reimagined-octo-funicular",
+          },
+        };
 
-        // const taskResponse = await apiClient.api.tasks.$post({
-        //   json: {
-        //     prompt: input,
-        //     remote: isRemote,
-        //     event: {
-        //       type: "website:new-project",
-        //       data: {
-        //         requestId: crypto.randomUUID(),
-        //         name,
-        //         prompt: input,
-        //         attachments,
-        //         githubTemplateUrl:
-        //           "https://github.com/wsxiaoys/reimagined-octo-funicular",
-        //       },
-        //     },
-        //   },
-        // });
+        // Construct VSCode URI
+        const eventParam = encodeURIComponent(JSON.stringify(event));
+        const vscodeUri = `vscode://TabbyML.pochi/?event=${eventParam}`;
 
-        // if (!taskResponse.ok) {
-        //   const errorMessage = await taskResponse.text();
-        //   throw new Error(errorMessage);
-        // }
-
-        // const { uid, url, minionId } = await taskResponse.json();
-
-        // if (isRemote) {
-        //   await navigate({
-        //     to: "/redirect-remote",
-        //     search: {
-        //       uid,
-        //       minionId: minionId as string,
-        //     },
-        //   });
-        // } else {
-        //   await navigate({
-        //     to: "/redirect-vscode",
-        //     search: {
-        //       uid,
-        //       url,
-        //     },
-        //   });
-        // }
+        // Navigate to redirect-vscode page with the URL and event (no uid needed)
+        await router.navigate({
+          to: "/redirect-vscode",
+          search: {
+            url: vscodeUri,
+            event: event,
+          },
+        });
 
         return;
       } catch (error) {
@@ -386,30 +352,7 @@ export function CreateTask({
         />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {isInternalUser() && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-full border-gray-300 bg-white/90 px-3 py-1 font-medium text-xs backdrop-blur-sm transition-all duration-200 hover:border-gray-400 hover:bg-white hover:shadow-md dark:border-gray-600 dark:bg-gray-800/90 dark:hover:border-gray-500 dark:hover:bg-gray-800"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsRemote(!isRemote);
-                }}
-              >
-                {isRemote ? (
-                  <>
-                    <GlobeIcon className="mr-1 h-3 w-3" />
-                    Remote
-                  </>
-                ) : (
-                  <>
-                    <MonitorIcon className="mr-1 h-3 w-3" />
-                    Local
-                  </>
-                )}
-              </Button>
-            )}
+            {/* Local mode only - no toggle needed */}
           </div>
           <div
             className="flex items-center gap-2"
