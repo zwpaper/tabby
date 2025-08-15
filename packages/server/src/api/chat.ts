@@ -9,6 +9,7 @@ import {
 import type { LanguageModelV2StreamPart } from "@ai-v5-sdk/provider";
 import { zValidator } from "@hono/zod-validator";
 import { ModelGatewayRequest, PersistRequest } from "@ragdoll/common";
+import type { Message } from "@ragdoll/livekit";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { isInternalUser, requireAuth } from "../auth";
@@ -152,7 +153,7 @@ const chat = new Hono()
       user.id,
       req.id,
       req.status,
-      req.messages,
+      req.messages as Message[],
       req.environment,
       req.parentClientTaskId,
     );

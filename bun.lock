@@ -46,6 +46,7 @@
       },
       "devDependencies": {
         "@ai-v5-sdk/ai": "catalog:",
+        "@ragdoll/livekit": "workspace:*",
         "@slack/bolt": "catalog:",
         "kysely-codegen": "^0.18.3",
       },
@@ -88,7 +89,6 @@
         "@livestore/livestore": "catalog:",
         "@livestore/react": "catalog:",
         "@ragdoll/common": "workspace:*",
-        "@ragdoll/db": "workspace:*",
         "ai": "catalog:",
         "base58-js": "^3.0.3",
         "hono": "catalog:",

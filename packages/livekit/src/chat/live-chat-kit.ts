@@ -5,8 +5,7 @@ import type {
 } from "@ai-v5-sdk/ai";
 import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import type { Environment, PochiApi } from "@ragdoll/common";
-import type { hc } from "hono/client";
+import type { Environment, PochiApiClient } from "@ragdoll/common";
 import type { LLMRequestData } from "..";
 import { makeMessagesQuery, makeTaskQuery } from "../livestore/queries";
 import { events, tables } from "../livestore/schema";
@@ -34,7 +33,7 @@ export type LiveChatKitOptions<T> = {
 
   store: Store;
 
-  apiClient?: ReturnType<typeof hc<PochiApi>>;
+  apiClient?: PochiApiClient;
 
   chatClass: new (options: ChatInit<Message>) => T;
 

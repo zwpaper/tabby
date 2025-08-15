@@ -1,4 +1,4 @@
-import { type UIMessage as UIMessageNext, generateId } from "@ai-v5-sdk/ai";
+import { generateId } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
 import {
   type Environment,
@@ -7,6 +7,7 @@ import {
 } from "@ragdoll/common";
 import { parseTitle } from "@ragdoll/common/message-utils";
 import type { DB, DBMessage, TaskCreateEvent } from "@ragdoll/db";
+import type { Message } from "@ragdoll/livekit";
 import { HTTPException } from "hono/http-exception";
 import { type ExpressionWrapper, type SqlBool, sql } from "kysely";
 import { db, minionIdCoder, uidCoder } from "../db";
@@ -79,7 +80,7 @@ class TaskService {
       event: TaskCreateEvent | null;
       conversation: {
         messages: DBMessage[];
-        messagesNext?: UIMessageNext[];
+        messagesNext?: Message[];
       } | null;
       status: DB["task"]["status"]["__insert__"];
       parentId: number | null;
@@ -517,7 +518,7 @@ class TaskService {
     userId: string,
     clientTaskId: string,
     status: PersistRequest["status"],
-    messagesNext: UIMessageNext[],
+    messagesNext: Message[],
     environment?: Environment,
     parentClientTaskId?: string,
   ) {

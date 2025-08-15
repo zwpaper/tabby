@@ -1,5 +1,5 @@
-import type { UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
 import type { Environment } from "@ragdoll/common";
+import type { Message } from "@ragdoll/livekit";
 import type { ColumnType, Generated, JSONColumnType } from "kysely";
 import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";
@@ -17,7 +17,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task" | "clip"> & {
     event: TaskCreateEvent | null;
     conversation: {
       messages: DBMessage[];
-      messagesNext?: UIMessageNext[];
+      messagesNext?: Message[];
     } | null;
     environment: Environment | null;
     status: Generated<

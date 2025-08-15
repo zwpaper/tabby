@@ -1,6 +1,6 @@
 import { getLogger } from "@ragdoll/common";
 import type { DBMessage } from "@ragdoll/db";
-import { fromDBMessage } from "@ragdoll/livekit/v4-adapter";
+import { fromDBMessage } from "@ragdoll/db/v4-adapter";
 import { Queue, Worker } from "bullmq";
 import { sql } from "kysely";
 import { queueConfig } from "./redis";

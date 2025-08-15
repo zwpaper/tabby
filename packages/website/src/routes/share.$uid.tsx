@@ -9,7 +9,7 @@ import { useSession } from "@/lib/auth-hooks";
 import { normalizeApiError, toHttpError } from "@/lib/error";
 import { cn } from "@/lib/utils";
 import type { UIMessage } from "@ai-v5-sdk/ai";
-import { fromV4DBMessage } from "@ragdoll/livekit/v4-adapter";
+import { fromV4DBMessage } from "@ragdoll/db/v4-adapter";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 

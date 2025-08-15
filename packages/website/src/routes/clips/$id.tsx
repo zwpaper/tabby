@@ -14,7 +14,7 @@ import type { Todo } from "@getpochi/tools";
 import { parseTitle } from "@ragdoll/common/message-utils";
 import { mergeTodos } from "@ragdoll/common/todo-utils";
 import type { DBMessage } from "@ragdoll/db";
-import { fromV4DBMessage } from "@ragdoll/livekit/v4-adapter";
+import { fromV4DBMessage } from "@ragdoll/db/v4-adapter";
 import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/clips/$id")({

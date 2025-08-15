@@ -4,9 +4,9 @@
 
 import { type Tool, asSchema, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import { ClientTools } from "@getpochi/tools";
-import type { DBMessage } from "@ragdoll/db";
+import type { Message } from "@ragdoll/livekit";
 import type { UIMessage as V4UIMessage } from "ai";
-import type { Message } from "./types";
+import type { DBMessage } from "./index";
 
 export function fromDBMessage(x: DBMessage): Message {
   if (x.role === "data") {

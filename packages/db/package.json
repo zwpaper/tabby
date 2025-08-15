@@ -1,11 +1,13 @@
 {
   "name": "@ragdoll/db",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./v4-adapter": "./src/v4-adapter.ts"
   },
   "dependencies": {
     "kysely": "catalog:",
     "@ragdoll/common": "workspace:*",
+    "@getpochi/tools": "workspace:*",
     "ai": "catalog:"
   },
   "scripts": {
@@ -15,6 +17,7 @@
   "devDependencies": {
     "@slack/bolt": "catalog:",
     "@ai-v5-sdk/ai": "catalog:",
+    "@ragdoll/livekit": "workspace:*",
     "kysely-codegen": "^0.18.3"
   }
 }

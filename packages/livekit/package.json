@@ -3,8 +3,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./react": "./src/react.tsx",
-    "./node": "./src/node.ts",
-    "./v4-adapter": "./src/v4-adapter.ts"
+    "./node": "./src/node.ts"
   },
   "type": "module",
   "private": true,
@@ -21,10 +20,7 @@
     "@ai-v5-sdk/openai-compatible": "catalog:",
     "@ai-v5-sdk/provider-utils": "catalog:",
     "@ai-v5-sdk/provider": "catalog:",
-    "@ragdoll/db": "workspace:*",
-    "hono": "catalog:",
     "zod": "catalog:",
-    "ai": "catalog:",
     "react": "catalog:",
     "base58-js": "^3.0.3"
   }

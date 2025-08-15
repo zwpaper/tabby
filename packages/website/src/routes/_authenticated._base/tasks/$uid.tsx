@@ -10,7 +10,7 @@ import { apiClient } from "@/lib/auth-client";
 import { normalizeApiError, toHttpError } from "@/lib/error";
 import type { UIMessage } from "@ai-v5-sdk/ai";
 import type { TaskEvent } from "@ragdoll/db";
-import { fromV4DBMessage } from "@ragdoll/livekit/v4-adapter";
+import { fromV4DBMessage } from "@ragdoll/db/v4-adapter";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
