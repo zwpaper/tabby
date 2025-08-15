@@ -170,7 +170,11 @@ export function injectEnvironment(
     text: prompts.createSystemReminder(environmentDetails),
   } satisfies TextUIPart;
 
-  const parts = messageToInject.parts || [];
+  const parts =
+    // Remove existing system reminders.
+    messageToInject.parts.filter(
+      (x) => x.type !== "text" || !prompts.isSystemReminder(x.text),
+    ) || [];
   const lastTextPartIndex = messageToInject.parts.findLastIndex(
     (parts) => parts.type === "text",
   );
