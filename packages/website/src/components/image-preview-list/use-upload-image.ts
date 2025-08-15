@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/auth-client";
 import { generateFileId } from "@/lib/utils/image";
-import type { Attachment } from "ai";
+import type { FilePart } from "@ai-v5-sdk/ai";
 import { useEffect, useRef, useState } from "react";
 interface UseUploadImageOptions {
   files: File[] | undefined;
@@ -17,7 +17,7 @@ export function useUploadImage({ files }: UseUploadImageOptions) {
   const [error, setError] = useState<Error | undefined>(undefined);
   const uploadAbortController = useRef(new AbortController());
 
-  const uploadImages = async (): Promise<Attachment[] | undefined> => {
+  const uploadImages = async (): Promise<FilePart[] | undefined> => {
     // Clear error
     setError(undefined);
 
@@ -45,7 +45,7 @@ export function useUploadImage({ files }: UseUploadImageOptions) {
     const { signal } = uploadAbortController.current;
 
     try {
-      const uploadedImages: Attachment[] = await Promise.all(
+      const uploadedImages: FilePart[] = await Promise.all(
         files.map(async (file) => {
           const fileId = generateFileId(file);
           try {
@@ -65,10 +65,11 @@ export function useUploadImage({ files }: UseUploadImageOptions) {
             }
 
             setUploadResults((prev) => ({ ...prev, [fileId]: "success" }));
-            const result: Attachment = {
-              name: file.name || "unnamed-image",
-              contentType: file.type,
-              url: data.image,
+            const result: FilePart = {
+              type: "file",
+              filename: file.name || "unnamed-image",
+              mediaType: file.type,
+              data: data.image,
             };
             return result;
           } catch (error) {

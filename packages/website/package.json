@@ -46,7 +46,6 @@
     "@tanstack/react-router": "^1.119.0",
     "@tanstack/react-router-devtools": "^1.119.0",
     "@tanstack/router-plugin": "^1.119.0",
-    "ai": "catalog:",
     "@ai-v5-sdk/ai": "catalog:",
     "better-auth": "catalog:",
     "class-variance-authority": "^0.7.1",
