@@ -6,7 +6,7 @@ import type {
 import { type McpTool, selectClientTools } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import type { Environment } from "@ragdoll/common";
-import { formatters, prompts } from "@ragdoll/common";
+import { prompts } from "@ragdoll/common";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
 import { parseMcpToolSet } from "./llm/utils";
@@ -118,9 +118,7 @@ function prepareMessages<T extends import("@ai-v5-sdk/ai").UIMessage>(
   inputMessages: T[],
   environment: Environment | undefined,
 ): T[] {
-  const messages = prompts.injectEnvironment(inputMessages, environment);
-
-  return formatters.llm(messages) as T[];
+  return prompts.injectEnvironment(inputMessages, environment) as T[];
 }
 
 function isWellKnownReasoningModel(model?: string): boolean {

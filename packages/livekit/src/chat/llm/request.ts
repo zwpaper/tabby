@@ -6,6 +6,7 @@ import {
 } from "@ai-v5-sdk/ai";
 
 import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
+import { formatters } from "@ragdoll/common";
 import type { Message } from "../../types";
 import { makeRepairToolCall } from "./repair-tool-call";
 import type { LLMRequest, OnFinishCallback } from "./types";
@@ -24,7 +25,7 @@ export async function request(
     }),
     abortSignal: payload.abortSignal,
     system: payload.system,
-    messages: convertToModelMessages(payload.messages, {
+    messages: convertToModelMessages(formatters.llm(payload.messages), {
       tools,
     }),
     tools,
