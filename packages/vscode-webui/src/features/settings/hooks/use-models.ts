@@ -1,7 +1,7 @@
 import { apiClient, authHooks } from "@/lib/auth-client";
 import { useCustomModelSetting } from "@/lib/hooks/use-custom-model-setting";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSettingsStore } from "../store";
 
 export type DisplayModel =
@@ -131,21 +131,23 @@ export function useSelectedModels() {
     }
     return groups;
   }, [models]);
+  const [isModelReady, setIsModelReady] = useState(false);
 
   useEffect(() => {
     if (!isLoading) {
-      // init model
+      // validate and init model
       const validModelId = getModelIdFromModelInfo(selectedModelId, models);
       if (validModelId !== selectedModelId) {
         updateSelectedModelId(validModelId);
       }
+      setIsModelReady(true);
     }
   }, [isLoading, models, selectedModelId, updateSelectedModelId]);
 
   const selectedModel = models?.find((x) => x.id === selectedModelId);
 
   return {
-    isLoading,
+    isLoading: isLoading || !isModelReady,
     models,
     groupedModels,
     selectedModel,
