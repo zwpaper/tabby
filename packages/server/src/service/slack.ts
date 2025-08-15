@@ -17,7 +17,7 @@ import { slackModalViewRenderer } from "./slack-task/slack-modal-view";
 import { slackRichTextRenderer } from "./slack-task/slack-rich-text";
 import { usageService } from "./usage";
 
-const tracer = trace.getTracer("ragdoll-slack", "0.0.1");
+const tracer = trace.getTracer("ragdoll.slack", "0.0.1");
 const logger = getLogger("SlackService");
 
 export const withSpan = async <T>(

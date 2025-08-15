@@ -30,7 +30,7 @@ export class UsageService {
     remainingFreeCredit: number,
   ): Promise<void> {
     await trace
-      .getTracer("ragdoll-usage")
+      .getTracer("ragdoll.usage")
       .startActiveSpan("trackUsage", async (span) => {
         try {
           await this.trackUsageImpl(
