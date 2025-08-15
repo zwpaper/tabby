@@ -1,9 +1,11 @@
-import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
+import type { TaskCreateEvent } from "@ragdoll/db";
 import type { AnyBlock, WebClient } from "@slack/web-api";
 
+import { getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
 import { getLogger } from "@ragdoll/common";
 import { parseOwnerAndRepo } from "@ragdoll/common/git-utils";
+import type { Message } from "@ragdoll/livekit";
 import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { slackService } from "../slack";
@@ -73,7 +75,7 @@ class SlackTaskService {
     switch (task.status) {
       case "completed": {
         const completionResult = this.extractCompletionResult(
-          task.conversation?.messages,
+          task.conversation?.messagesNext,
         );
         blocks = slackRichTextRenderer.renderTaskComplete(
           context,
@@ -195,6 +197,7 @@ class SlackTaskService {
   /**
    * Send created task message to slack and return message timestamp
    */
+  // @ts-ignore
   private async sendCreatedTaskMessage(
     userId: string,
     prompt: string,
@@ -230,80 +233,80 @@ class SlackTaskService {
   /**
    * Create a GitHub repository task with cloud runner (E2B)
    */
-  async createTaskWithCloudRunner(
-    user: { id: string; name: string; email: string },
-    command: { channel_id: string; user_id: string; text?: string },
-    taskText: string,
-    slackUserId: string,
-  ) {
-    const webClient = await slackService.getWebClientByUser(user.id);
-    if (!webClient) return;
+  // async createTaskWithCloudRunner(
+  //   user: { id: string; name: string; email: string },
+  //   command: { channel_id: string; user_id: string; text?: string },
+  //   taskText: string,
+  //   slackUserId: string,
+  // ) {
+  //   const webClient = await slackService.getWebClientByUser(user.id);
+  //   if (!webClient) return;
 
-    const githubToken = await githubService.getAccessToken(user.id);
-    if (!githubToken) {
-      return;
-    }
+  //   const githubToken = await githubService.getAccessToken(user.id);
+  //   if (!githubToken) {
+  //     return;
+  //   }
 
-    const parsedCommand = await this.parseTaskCommand(
-      taskText,
-      webClient,
-      command.channel_id,
-      githubToken,
-      slackUserId,
-    );
+  //   const parsedCommand = await this.parseTaskCommand(
+  //     taskText,
+  //     webClient,
+  //     command.channel_id,
+  //     githubToken,
+  //     slackUserId,
+  //   );
 
-    if (!parsedCommand) {
-      return;
-    }
+  //   if (!parsedCommand) {
+  //     return;
+  //   }
 
-    const taskPrompt = parsedCommand.description;
+  //   const taskPrompt = parsedCommand.description;
 
-    const slackInfo = await this.sendCreatedTaskMessage(
-      user.id,
-      taskPrompt,
-      parsedCommand.githubRepository,
-      command.channel_id,
-      slackUserId,
-    );
+  //   const slackInfo = await this.sendCreatedTaskMessage(
+  //     user.id,
+  //     taskPrompt,
+  //     parsedCommand.githubRepository,
+  //     command.channel_id,
+  //     slackUserId,
+  //   );
 
-    if (!slackInfo?.ts) {
-      logger.error("Failed to send slack message");
-      return;
-    }
+  //   if (!slackInfo?.ts) {
+  //     logger.error("Failed to send slack message");
+  //     return;
+  //   }
 
-    const slackEvent: Extract<TaskCreateEvent, { type: "slack:new-task" }> = {
-      type: "slack:new-task",
-      data: {
-        channel: command.channel_id,
-        ts: slackInfo.ts,
-        prompt: taskPrompt,
-        slackUserId: slackUserId,
-        githubRepository: parsedCommand.githubRepository,
-      },
-    };
+  //   const slackEvent: Extract<TaskCreateEvent, { type: "slack:new-task" }> = {
+  //     type: "slack:new-task",
+  //     data: {
+  //       channel: command.channel_id,
+  //       ts: slackInfo.ts,
+  //       prompt: taskPrompt,
+  //       slackUserId: slackUserId,
+  //       githubRepository: parsedCommand.githubRepository,
+  //     },
+  //   };
 
-    const { uid } = await taskService.createWithRunner({
-      user,
-      prompt: taskPrompt,
-      event: slackEvent,
-      githubRepository: parsedCommand.githubRepository,
-    });
+  //   const { uid } = await taskService.createWithRunner({
+  //     user,
+  //     prompt: taskPrompt,
+  //     event: slackEvent,
+  //     githubRepository: parsedCommand.githubRepository,
+  //   });
 
-    // Get the created task to retrieve todos
-    const task = await taskService.get(uid, user.id);
+  //   // Get the created task to retrieve todos
+  //   const task = await taskService.get(uid, user.id);
 
-    await this.sendTaskStarting({
-      userId: user.id,
-      prompt: taskPrompt,
-      event: slackEvent,
-      slackUserId,
-      githubRepository: parsedCommand.githubRepository,
-      taskId: uid,
-      todos: task?.todos,
-    });
+  //   await this.sendTaskStarting({
+  //     userId: user.id,
+  //     prompt: taskPrompt,
+  //     event: slackEvent,
+  //     slackUserId,
+  //     githubRepository: parsedCommand.githubRepository,
+  //     taskId: uid,
+  //     todos: task?.todos,
+  //   });
 
-    return uid;
-  }
+  //   return uid;
+  // }
 
   /**
    * Extract repository information from channel topic
@@ -347,6 +350,7 @@ class SlackTaskService {
   /**
    * Parse GitHub repository task command from Slack
    */
+  // @ts-ignore
   private async parseTaskCommand(
     commandText: string,
     webClient: WebClient,
@@ -453,7 +457,7 @@ class SlackTaskService {
     };
   }
 
-  private extractCompletionResult(messages?: DBMessage[]): string | undefined {
+  private extractCompletionResult(messages?: Message[]): string | undefined {
     if (!messages) return undefined;
 
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -461,12 +465,10 @@ class SlackTaskService {
       if (message.role === "assistant" && message.parts) {
         for (const part of message.parts) {
           if (
-            part.type === "tool-invocation" &&
-            part.toolInvocation?.toolName === "attemptCompletion" &&
-            part.toolInvocation?.args?.result &&
-            typeof part.toolInvocation.args.result === "string"
+            part.type === "tool-attemptCompletion" &&
+            part.state !== "input-streaming"
           ) {
-            return part.toolInvocation.args.result;
+            return part.input.result;
           }
         }
       }
@@ -496,13 +498,14 @@ class SlackTaskService {
       };
     }
 
-    const fallbackError = extractErrorInfo(task.conversation?.messages);
+    const fallbackError = extractErrorInfo(task.conversation?.messagesNext);
     return {
       message: fallbackError.message || "Task execution failed",
       details: fallbackError.details || "No specific error details available",
     };
   }
 
+  // @ts-ignore
   private async sendTaskStarting({
     userId,
     prompt,
@@ -552,24 +555,21 @@ class SlackTaskService {
     task: Task,
   ): { question: string; followUp?: string[] } | undefined {
     // Check recent messages for askFollowupQuestion tool calls
-    if (!task.conversation?.messages) {
+    if (!task.conversation?.messagesNext) {
       return;
     }
 
-    for (let i = task.conversation.messages.length - 1; i >= 0; i--) {
-      const message = task.conversation.messages[i];
+    for (let i = task.conversation.messagesNext.length - 1; i >= 0; i--) {
+      const message = task.conversation.messagesNext[i];
       if (message.role === "assistant" && message.parts) {
         for (const part of message.parts) {
           if (
-            part.type === "tool-invocation" &&
-            part.toolInvocation?.toolName === "askFollowupQuestion" &&
-            part.toolInvocation?.args?.question
+            part.type === "tool-askFollowupQuestion" &&
+            part.state !== "input-streaming"
           ) {
             return {
-              question: part.toolInvocation.args.question as string,
-              followUp: part.toolInvocation.args.followUp as
-                | string[]
-                | undefined,
+              question: part.input.question,
+              followUp: part.input.followUp,
             };
           }
         }
@@ -587,7 +587,7 @@ class SlackTaskService {
 
     // Get message count from conversation
     const requestsCount =
-      task.conversation?.messages?.reduce((count_, message) => {
+      task.conversation?.messagesNext?.reduce((count_, message) => {
         let count = count_;
         if (message.role === "assistant") {
           for (const part of message.parts || []) {
@@ -625,7 +625,7 @@ class SlackTaskService {
   /**
    * Handle followup action from Slack button
    */
-  async handleFollowupAction(params: {
+  async handleFollowupAction(_params: {
     taskId: string;
     content: string;
     userId: string;
@@ -633,12 +633,12 @@ class SlackTaskService {
     messageTs?: string;
   }): Promise<{ success: boolean; error?: string }> {
     try {
-      // Submit the answer using taskService
-      await taskService.appendUserMessage(
-        params.userId,
-        params.taskId,
-        params.content,
-      );
+      // // Submit the answer using taskService
+      // await taskService.appendUserMessage(
+      //   params.userId,
+      //   params.taskId,
+      //   params.content,
+      // );
 
       return { success: true };
     } catch (error) {
@@ -692,7 +692,7 @@ function shouldNotifyForEvent(eventType: TaskCreateEvent["type"] | null) {
   return eventType === "slack:new-task";
 }
 
-function extractErrorInfo(messages?: DBMessage[]): {
+function extractErrorInfo(messages?: Message[]): {
   message?: string;
   details?: string;
 } {
@@ -704,15 +704,14 @@ function extractErrorInfo(messages?: DBMessage[]): {
     if (message.role === "assistant" && message.parts) {
       for (const part of message.parts) {
         if (
-          part.type === "tool-invocation" &&
-          part.toolInvocation.state === "result" &&
-          part.toolInvocation.result &&
-          typeof part.toolInvocation.result === "object" &&
-          "error" in part.toolInvocation.result
+          isToolUIPart(part) &&
+          typeof part.output === "object" &&
+          part &&
+          "error" in part.output
         ) {
-          const error = part.toolInvocation.result.error;
+          const error = part.output.error;
           return {
-            message: `Tool ${part.toolInvocation.toolName} failed`,
+            message: `Tool ${getToolName(part)} failed`,
             details: typeof error === "string" ? error : JSON.stringify(error),
           };
         }

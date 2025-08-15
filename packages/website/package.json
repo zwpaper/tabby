@@ -37,6 +37,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@ragdoll/common": "workspace:*",
     "@ragdoll/db": "workspace:*",
+    "@ragdoll/livekit": "workspace:*",
     "@ragdoll/server": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "@tabler/icons-react": "^3.31.0",

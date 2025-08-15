@@ -8,10 +8,9 @@ import { apiClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { normalizeApiError, toHttpError } from "@/lib/error";
 import { cn } from "@/lib/utils";
-import type { UIMessage } from "@ai-v5-sdk/ai";
-import { fromV4DBMessage } from "@ragdoll/db/v4-adapter";
+import type { Message } from "@ragdoll/livekit";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const Skeleton = () => <TaskPageSkeleton className="mt-4 md:mt-6" />;
 
@@ -61,13 +60,8 @@ function RouteComponent() {
   const loaderData = Route.useLoaderData();
   const { theme } = useTheme();
 
-  const renderMessages: UIMessage[] = useMemo(
-    () =>
-      // @ts-ignore
-      loaderData.conversation?.messagesNext ||
-      (loaderData.conversation?.messages || []).map(fromV4DBMessage),
-    [loaderData],
-  );
+  // @ts-ignore
+  const renderMessages: Message[] = loaderData.conversation?.messagesNext || [];
 
   return (
     <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8 md:mt-6">

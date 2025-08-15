@@ -16,8 +16,7 @@ export type DB = Omit<DbImpl, "externalIntegration" | "task" | "clip"> & {
   > & {
     event: TaskCreateEvent | null;
     conversation: {
-      messages: DBMessage[];
-      messagesNext?: Message[];
+      messagesNext: Message[];
     } | null;
     environment: Environment | null;
     status: Generated<

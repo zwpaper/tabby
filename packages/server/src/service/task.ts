@@ -1,19 +1,12 @@
-import { generateId } from "@ai-v5-sdk/ai";
 import type { Todo } from "@getpochi/tools";
-import {
-  type Environment,
-  type PersistRequest,
-  PochiApiErrors,
-} from "@ragdoll/common";
+import type { Environment, PersistRequest } from "@ragdoll/common";
 import { parseTitle } from "@ragdoll/common/message-utils";
-import type { DB, DBMessage, TaskCreateEvent } from "@ragdoll/db";
+import type { DB } from "@ragdoll/db";
 import type { Message } from "@ragdoll/livekit";
 import { HTTPException } from "hono/http-exception";
 import { type ExpressionWrapper, type SqlBool, sql } from "kysely";
 import { db, minionIdCoder, uidCoder } from "../db";
 import { applyEventFilter } from "../lib/event-filter";
-import { githubService } from "./github";
-import { minionService } from "./minion";
 
 const titleSelect = sql<string>`
       COALESCE(
@@ -34,69 +27,68 @@ const legacyMinionId = sql<string | null>`environment->'info'->>'minionId'`.as(
 );
 
 class TaskService {
-  async createWithUserMessage(
-    userId: string,
-    prompt: string,
-    event?: TaskCreateEvent,
-    parentId?: string | null,
-    compactText?: string,
-  ): Promise<string> {
-    const parts = [];
-    if (compactText) {
-      parts.push({
-        type: "text" as const,
-        text: compactText,
-      });
-    }
-    parts.push({
-      type: "text" as const,
-      text: prompt,
-    });
-    const message: DBMessage = {
-      id: generateId(),
-      role: "user",
-      parts,
-    };
+  // async createWithUserMessage(
+  //   userId: string,
+  //   prompt: string,
+  //   event?: TaskCreateEvent,
+  //   parentId?: string | null,
+  //   compactText?: string,
+  // ): Promise<string> {
+  //   const parts = [];
+  //   if (compactText) {
+  //     parts.push({
+  //       type: "text" as const,
+  //       text: compactText,
+  //     });
+  //   }
+  //   parts.push({
+  //     type: "text" as const,
+  //     text: prompt,
+  //   });
+  //   const message: DBMessage = {
+  //     id: generateId(),
+  //     role: "user",
+  //     parts,
+  //   };
 
-    if (event?.type === "website:new-project") {
-      if (event.data.attachments) {
-        message.experimental_attachments = event.data.attachments;
-      }
-    }
+  //   if (event?.type === "website:new-project") {
+  //     if (event.data.attachments) {
+  //       message.experimental_attachments = event.data.attachments;
+  //     }
+  //   }
 
-    return await this.createTaskImpl(userId, {
-      event: event || null,
-      conversation: {
-        messages: [message],
-      },
-      status: "pending-model",
-      parentId: parentId ? uidCoder.decode(parentId) : null,
-    });
-  }
+  //   return await this.createTaskImpl(userId, {
+  //     event: event || null,
+  //     conversation: {
+  //       messages: [message],
+  //     },
+  //     status: "pending-model",
+  //     parentId: parentId ? uidCoder.decode(parentId) : null,
+  //   });
+  // }
 
-  private async createTaskImpl(
-    userId: string,
-    taskData: Partial<{
-      event: TaskCreateEvent | null;
-      conversation: {
-        messages: DBMessage[];
-        messagesNext?: Message[];
-      } | null;
-      status: DB["task"]["status"]["__insert__"];
-      parentId: number | null;
-    }>,
-  ): Promise<string> {
-    const { id } = await db
-      .insertInto("task")
-      .values({
-        userId,
-        taskId: 0,
-        ...taskData,
-      })
-      .returning("id")
-      .executeTakeFirstOrThrow();
-    return uidCoder.encode(id);
-  }
+  // private async createTaskImpl(
+  //   userId: string,
+  //   taskData: Partial<{
+  //     event: TaskCreateEvent | null;
+  //     conversation: {
+  //       messagesNext: Message[];
+  //     } | null;
+  //     status: DB["task"]["status"]["__insert__"];
+  //     parentId: number | null;
+  //   }>,
+  // ): Promise<string> {
+  //   const { id } = await db
+  //     .insertInto("task")
+  //     .values({
+  //       userId,
+  //       taskId: 0,
+  //       ...taskData,
+  //     })
+  //     .returning("id")
+  //     .executeTakeFirstOrThrow();
+  //   return uidCoder.encode(id);
+  // }
 
   async list(
     userId: string,
@@ -411,108 +403,108 @@ class TaskService {
     return result?.latestStreamId ?? null;
   }
 
-  async createWithRunner({
-    user,
-    prompt,
-    event,
-    githubRepository,
-  }: {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-    };
-    prompt: string;
-    event: TaskCreateEvent;
-    githubRepository?: { owner: string; repo: string };
-  }) {
-    const githubAccessToken = await githubService.getAccessToken(user.id);
+  // async createWithRunner({
+  //   user,
+  //   prompt,
+  //   event,
+  //   githubRepository,
+  // }: {
+  //   user: {
+  //     id: string;
+  //     name: string;
+  //     email: string;
+  //   };
+  //   prompt: string;
+  //   event: TaskCreateEvent;
+  //   githubRepository?: { owner: string; repo: string };
+  // }) {
+  //   const githubAccessToken = await githubService.getAccessToken(user.id);
 
-    if (!githubAccessToken) {
-      throw new HTTPException(401, {
-        message: PochiApiErrors.RequireGithubIntegration,
-      });
-    }
+  //   if (!githubAccessToken) {
+  //     throw new HTTPException(401, {
+  //       message: PochiApiErrors.RequireGithubIntegration,
+  //     });
+  //   }
 
-    const uid = await this.createWithUserMessage(user.id, prompt, event);
-    const minion = await minionService.create({
-      user,
-      uid,
-      githubAccessToken,
-      githubRepository,
-    });
+  //   const uid = await this.createWithUserMessage(user.id, prompt, event);
+  //   const minion = await minionService.create({
+  //     user,
+  //     uid,
+  //     githubAccessToken,
+  //     githubRepository,
+  //   });
 
-    // Update the task with the minion ID
-    await db
-      .updateTable("task")
-      .set({
-        minionId: minionIdCoder.decode(minion.id),
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("id", "=", uidCoder.decode(uid))
-      .executeTakeFirstOrThrow();
+  //   // Update the task with the minion ID
+  //   await db
+  //     .updateTable("task")
+  //     .set({
+  //       minionId: minionIdCoder.decode(minion.id),
+  //       updatedAt: sql`CURRENT_TIMESTAMP`,
+  //     })
+  //     .where("id", "=", uidCoder.decode(uid))
+  //     .executeTakeFirstOrThrow();
 
-    return { uid, minion };
-  }
+  //   return { uid, minion };
+  // }
 
-  async appendUserMessage(userId: string, uid: string, prompt: string) {
-    const userMessage: DBMessage = {
-      id: generateId(),
-      role: "user",
-      parts: [
-        {
-          type: "text",
-          text: prompt,
-        },
-      ],
-    };
-    const task = await this.get(uid, userId);
-    if (
-      !task ||
-      (task.status !== "pending-input" && task.status !== "completed")
-    ) {
-      throw new HTTPException(400, {
-        message: "Task is not in pending-input or completed state",
-      });
-    }
+  // async appendUserMessage(userId: string, uid: string, prompt: string) {
+  //   const userMessage: DBMessage = {
+  //     id: generateId(),
+  //     role: "user",
+  //     parts: [
+  //       {
+  //         type: "text",
+  //         text: prompt,
+  //       },
+  //     ],
+  //   };
+  //   const task = await this.get(uid, userId);
+  //   if (
+  //     !task ||
+  //     (task.status !== "pending-input" && task.status !== "completed")
+  //   ) {
+  //     throw new HTTPException(400, {
+  //       message: "Task is not in pending-input or completed state",
+  //     });
+  //   }
 
-    const messagesToSave = [
-      ...(task.conversation?.messages || []),
-      userMessage,
-    ];
+  //   const messagesToSave = [
+  //     ...(task.conversation?.messages || []),
+  //     userMessage,
+  //   ];
 
-    // Use a subquery with leftJoin to check for locks atomically
-    const taskId = uidCoder.decode(uid);
-    const result = await db
-      .updateTable("task")
-      .set({
-        status: "pending-model",
-        conversation: {
-          messages: messagesToSave,
-        },
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      })
-      .where("id", "=", taskId)
-      .where("userId", "=", userId)
-      .where((eb) =>
-        eb.or([
-          eb("status", "=", "pending-input"),
-          eb("status", "=", "completed"),
-        ]),
-      )
-      .executeTakeFirst();
+  //   // Use a subquery with leftJoin to check for locks atomically
+  //   const taskId = uidCoder.decode(uid);
+  //   const result = await db
+  //     .updateTable("task")
+  //     .set({
+  //       status: "pending-model",
+  //       conversation: {
+  //         messages: messagesToSave,
+  //       },
+  //       updatedAt: sql`CURRENT_TIMESTAMP`,
+  //     })
+  //     .where("id", "=", taskId)
+  //     .where("userId", "=", userId)
+  //     .where((eb) =>
+  //       eb.or([
+  //         eb("status", "=", "pending-input"),
+  //         eb("status", "=", "completed"),
+  //       ]),
+  //     )
+  //     .executeTakeFirst();
 
-    if (!result || result.numUpdatedRows === 0n) {
-      throw new HTTPException(423, {
-        message: "Task is locked by another session",
-      });
-    }
+  //   if (!result || result.numUpdatedRows === 0n) {
+  //     throw new HTTPException(423, {
+  //       message: "Task is locked by another session",
+  //     });
+  //   }
 
-    // if task is slack event we need resume the minion
-    if (task.event?.type === "slack:new-task" && task.minionId) {
-      minionService.resumeMinion(userId, task.minionId);
-    }
-  }
+  //   // if task is slack event we need resume the minion
+  //   if (task.event?.type === "slack:new-task" && task.minionId) {
+  //     minionService.resumeMinion(userId, task.minionId);
+  //   }
+  // }
 
   async persistTask(
     userId: string,
@@ -543,7 +535,6 @@ class TaskService {
       .values({
         userId,
         conversation: {
-          messages: [],
           messagesNext,
         },
         clientTaskId,

@@ -7,7 +7,6 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useGithubAuth } from "@/hooks/use-github-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { apiClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { useEnhancingPrompt } from "@/lib/use-enhancing-prompt";
 import { cn } from "@/lib/utils";
@@ -19,8 +18,6 @@ import {
 } from "@/lib/utils/image";
 import { AuthCard } from "@daveyplate/better-auth-ui";
 import { PochiApiErrors } from "@ragdoll/common";
-import { useRouter } from "@tanstack/react-router";
-import type { Attachment } from "ai";
 import {
   ArrowUpIcon,
   GlobeIcon,
@@ -79,8 +76,6 @@ export function CreateTask({
     Error | undefined
   >(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const { navigate } = useRouter();
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
@@ -161,7 +156,7 @@ export function CreateTask({
   };
 
   const {
-    uploadImages,
+    // uploadImages,
     uploadingFilesMap,
     isUploadingImages,
     stop: stopUpload,
@@ -192,7 +187,7 @@ export function CreateTask({
     setInputValue(enhanced);
   };
 
-  const doSubmit = async (input: string, name?: string) => {
+  const doSubmit = async (_input: string, _name?: string) => {
     if (isMobileDevice) {
       setShowMobileWarning(true);
       return;
@@ -203,58 +198,58 @@ export function CreateTask({
     } else {
       try {
         setIsSubmitting(true);
-        let attachments: Attachment[] | undefined = undefined;
+        // let attachments: Attachment[] | undefined = undefined;
 
-        if (files.length > 0) {
-          try {
-            attachments = await uploadImages();
-          } catch (error) {
-            throw new Error("Failed to upload images. Please try again.");
-          }
-        }
+        // if (files.length > 0) {
+        //   try {
+        //     attachments = await uploadImages();
+        //   } catch (error) {
+        //     throw new Error("Failed to upload images. Please try again.");
+        //   }
+        // }
 
-        const taskResponse = await apiClient.api.tasks.$post({
-          json: {
-            prompt: input,
-            remote: isRemote,
-            event: {
-              type: "website:new-project",
-              data: {
-                requestId: crypto.randomUUID(),
-                name,
-                prompt: input,
-                attachments,
-                githubTemplateUrl:
-                  "https://github.com/wsxiaoys/reimagined-octo-funicular",
-              },
-            },
-          },
-        });
+        // const taskResponse = await apiClient.api.tasks.$post({
+        //   json: {
+        //     prompt: input,
+        //     remote: isRemote,
+        //     event: {
+        //       type: "website:new-project",
+        //       data: {
+        //         requestId: crypto.randomUUID(),
+        //         name,
+        //         prompt: input,
+        //         attachments,
+        //         githubTemplateUrl:
+        //           "https://github.com/wsxiaoys/reimagined-octo-funicular",
+        //       },
+        //     },
+        //   },
+        // });
 
-        if (!taskResponse.ok) {
-          const errorMessage = await taskResponse.text();
-          throw new Error(errorMessage);
-        }
+        // if (!taskResponse.ok) {
+        //   const errorMessage = await taskResponse.text();
+        //   throw new Error(errorMessage);
+        // }
 
-        const { uid, url, minionId } = await taskResponse.json();
+        // const { uid, url, minionId } = await taskResponse.json();
 
-        if (isRemote) {
-          await navigate({
-            to: "/redirect-remote",
-            search: {
-              uid,
-              minionId: minionId as string,
-            },
-          });
-        } else {
-          await navigate({
-            to: "/redirect-vscode",
-            search: {
-              uid,
-              url,
-            },
-          });
-        }
+        // if (isRemote) {
+        //   await navigate({
+        //     to: "/redirect-remote",
+        //     search: {
+        //       uid,
+        //       minionId: minionId as string,
+        //     },
+        //   });
+        // } else {
+        //   await navigate({
+        //     to: "/redirect-vscode",
+        //     search: {
+        //       uid,
+        //       url,
+        //     },
+        //   });
+        // }
 
         return;
       } catch (error) {

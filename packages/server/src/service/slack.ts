@@ -270,12 +270,13 @@ class SlackService {
             .execute();
 
           try {
-            const uid = await slackTaskService.createTaskWithCloudRunner(
-              user,
-              command,
-              taskText,
-              command.user_id,
-            );
+            // const uid = await slackTaskService.createTaskWithCloudRunner(
+            //   user,
+            //   command,
+            //   taskText,
+            //   command.user_id,
+            // );
+            const uid = undefined;
             if (!uid) {
               throw new Error("Failed to create task");
             }

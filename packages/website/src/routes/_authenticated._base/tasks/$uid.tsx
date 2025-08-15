@@ -8,9 +8,8 @@ import { useTheme } from "@/components/theme-provider";
 import { usePochiEvents } from "@/hooks/use-pochi-events";
 import { apiClient } from "@/lib/auth-client";
 import { normalizeApiError, toHttpError } from "@/lib/error";
-import type { UIMessage } from "@ai-v5-sdk/ai";
 import type { TaskEvent } from "@ragdoll/db";
-import { fromV4DBMessage } from "@ragdoll/db/v4-adapter";
+import type { Message } from "@ragdoll/livekit";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
@@ -75,15 +74,8 @@ function RouteComponent() {
     );
   }, [loaderData]);
 
-  const renderMessages: UIMessage[] = useMemo(
-    () =>
-      // @ts-ignore
-      loaderData.conversation?.messagesNext ||
-      (loaderData.conversation?.messages || []).map(fromV4DBMessage),
-    [loaderData],
-  );
-
-  console.log("renderMessages", renderMessages);
+  // @ts-ignore
+  const renderMessages: Message[] = loaderData.conversation?.messagesNext || [];
 
   return (
     <div className="mx-auto flex max-w-6xl flex-1 flex-col space-y-8">

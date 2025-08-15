@@ -1,7 +1,7 @@
 import type { Todo } from "@getpochi/tools";
 import { PochiApiErrors } from "@ragdoll/common";
 import { prompts } from "@ragdoll/common";
-import type { DBMessage } from "@ragdoll/db";
+import type { Message } from "@ragdoll/livekit";
 import type { AnyBlock } from "@slack/web-api";
 import slackifyMarkdown from "slackify-markdown";
 
@@ -14,7 +14,7 @@ export interface TaskRenderContext {
   task: {
     uid: string;
     todos?: Todo[];
-    conversation?: { messages: DBMessage[] } | null | undefined;
+    conversation?: { messagesNext: Message[] } | null | undefined;
   };
   stats?: {
     requestsCount?: number;
@@ -50,7 +50,7 @@ class SlackRichTextRenderer {
     todos?: Todo[],
     requestsCount?: number,
     totalTokens?: number,
-    conversation?: { messages: DBMessage[] } | null | undefined,
+    conversation?: { messagesNext: Message[] } | null | undefined,
   ): AnyBlock[] {
     const blocks: AnyBlock[] = [
       this.renderHeaderBlock(prompt, githubRepository, slackUserId),
@@ -659,11 +659,11 @@ class SlackRichTextRenderer {
    * Render task history from conversation messages
    */
   renderTaskHistoryBlock(
-    conversation: { messages: DBMessage[] } | null | undefined,
+    conversation: { messagesNext: Message[] } | null | undefined,
     includeLatestMessage = false,
     slackUserId?: string,
   ): AnyBlock[] {
-    if (!conversation?.messages || conversation.messages.length === 0) {
+    if (!conversation?.messagesNext || conversation.messagesNext.length === 0) {
       return [];
     }
 
@@ -671,8 +671,8 @@ class SlackRichTextRenderer {
     const maxChars = 37000; // Reserve 3000 chars for other content in Slack message
     let currentLength = 0;
 
-    const allMessages = [...conversation.messages].reverse(); // newest first
-    const firstUserMessageIndex = conversation.messages.findIndex(
+    const allMessages = [...conversation.messagesNext].reverse(); // newest first
+    const firstUserMessageIndex = conversation.messagesNext.findIndex(
       (msg) => msg.role === "user",
     );
 
@@ -682,7 +682,7 @@ class SlackRichTextRenderer {
 
     const messages = messagesToProcess.filter((msg, index) => {
       const originalIndex =
-        conversation.messages.length -
+        conversation.messagesNext.length -
         1 -
         (includeLatestMessage ? index : index + 1);
       return !(msg.role === "user" && originalIndex === firstUserMessageIndex);
@@ -713,16 +713,12 @@ class SlackRichTextRenderer {
         // Check for completion attempts first
         const completionPart = message.parts?.find(
           (part) =>
-            part.type === "tool-invocation" &&
-            part.toolInvocation?.toolName === "attemptCompletion" &&
-            part.toolInvocation?.args?.result,
+            part.type === "tool-attemptCompletion" &&
+            part.state !== "input-streaming",
         );
 
-        if (
-          completionPart?.type === "tool-invocation" &&
-          completionPart?.toolInvocation?.args?.result
-        ) {
-          const result = completionPart.toolInvocation.args.result as string;
+        if (completionPart) {
+          const result = completionPart.input.result;
           const historyItem = `✅ *Completed:* ${slackifyMarkdown(result)}`;
 
           // Check if this item would exceed our limit
@@ -735,17 +731,12 @@ class SlackRichTextRenderer {
         // Check for follow-up questions
         const askFollowUpPart = message.parts?.find(
           (part) =>
-            part.type === "tool-invocation" &&
-            part.toolInvocation?.toolName === "askFollowupQuestion" &&
-            part.toolInvocation?.args?.question,
+            part.type === "tool-askFollowupQuestion" &&
+            part.state !== "input-streaming",
         );
 
-        if (
-          askFollowUpPart?.type === "tool-invocation" &&
-          askFollowUpPart?.toolInvocation?.args?.question
-        ) {
-          const question = askFollowUpPart.toolInvocation.args
-            .question as string;
+        if (askFollowUpPart) {
+          const question = askFollowUpPart.input.question;
           const historyItem = `*🤔 I need some help to proceed*\n${slackifyMarkdown(question)}`;
 
           // Check if this item would exceed our limit
