@@ -71,9 +71,9 @@ export async function migrateDBTask() {
 }
 
 await queue.upsertJobScheduler(
-  "every-10-minutes",
+  "every-1-minutes",
   {
-    pattern: "*/10 * * * *",
+    pattern: "*/1 * * * *",
   },
   {
     opts: {
