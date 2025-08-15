@@ -46,6 +46,12 @@ export function findTodos(message: UIMessageNext): Todo[] | undefined {
     return part.type === "step-start" ? index : lastIndex;
   }, -1);
 
+  const hasTodos = message.parts.slice(lastStepStartIndex + 1).some((part) => {
+    return part.type === "tool-todoWrite";
+  });
+
+  if (!hasTodos) return undefined;
+
   const todos = message.parts
     .slice(lastStepStartIndex + 1)
     .reduce((acc, part) => {
