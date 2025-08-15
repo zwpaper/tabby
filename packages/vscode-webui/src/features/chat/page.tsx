@@ -27,7 +27,7 @@ import { vscodeHost } from "@/lib/vscode";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
 import { useStore } from "@livestore/react";
 import type { Environment } from "@ragdoll/common";
-import { CompactTaskMinTokens, formatters } from "@ragdoll/common";
+import { constants, formatters } from "@ragdoll/common";
 import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
 import type { UserEditsDiff } from "@ragdoll/vscode-webui-bridge";
@@ -265,7 +265,7 @@ function Chat({ user, uid }: ChatProps) {
     isLoading ||
     isTaskLoading ||
     isExecuting ||
-    totalTokens < CompactTaskMinTokens
+    totalTokens < constants.CompactTaskMinTokens
   );
 
   // FIXME(meng): consider add back auto-resume

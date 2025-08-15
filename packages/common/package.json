@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./pochi-api": "./src/pochi-api.ts",
     "./node": "./src/node/index.ts",
     "./message-utils": "./src/message-utils.ts",
     "./git-utils": "./src/git-utils.ts",

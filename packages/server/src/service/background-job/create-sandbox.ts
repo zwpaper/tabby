@@ -1,5 +1,5 @@
 import path from "node:path";
-import { SandboxPath, getLogger } from "@ragdoll/common";
+import { constants, getLogger } from "@ragdoll/common";
 import { Queue, Worker } from "bullmq";
 import { db, minionIdCoder } from "../../db";
 import { spanConfig } from "../../trace";
@@ -92,8 +92,8 @@ export function createSandboxWorker() {
         }
 
         const projectDir = githubRepository
-          ? path.join(SandboxPath.home, githubRepository.repo)
-          : SandboxPath.project;
+          ? path.join(constants.SandboxPath.home, githubRepository.repo)
+          : constants.SandboxPath.project;
         let urlString = url.toString();
         if (url.search) {
           urlString += `&folder=${projectDir}`;

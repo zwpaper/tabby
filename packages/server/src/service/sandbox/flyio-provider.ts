@@ -1,4 +1,4 @@
-import { SandboxPath, getLogger } from "@ragdoll/common";
+import { constants, getLogger } from "@ragdoll/common";
 import { HTTPException } from "hono/http-exception";
 import {
   type FlyioClient,
@@ -149,8 +149,8 @@ export class FlyioSandboxProvider implements SandboxProvider {
       // This is a simplified implementation - in practice, you'd need to exec into the machine
       // or use Fly's log streaming API to read the specific log files
       const [initLog, runnerLog] = await Promise.all([
-        this.readFileFromMachine(sandboxId, SandboxPath.initLog),
-        this.readFileFromMachine(sandboxId, SandboxPath.runnerLog),
+        this.readFileFromMachine(sandboxId, constants.SandboxPath.initLog),
+        this.readFileFromMachine(sandboxId, constants.SandboxPath.runnerLog),
       ]);
 
       return { initLog, runnerLog };

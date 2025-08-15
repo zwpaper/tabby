@@ -1,6 +1,7 @@
 import type { Todo } from "@getpochi/tools";
-import type { Environment, PersistRequest } from "@ragdoll/common";
+import type { Environment } from "@ragdoll/common";
 import { parseTitle } from "@ragdoll/common/message-utils";
+import type { PersistRequest } from "@ragdoll/common/pochi-api";
 import type { DB } from "@ragdoll/db";
 import type { Message } from "@ragdoll/livekit";
 import { HTTPException } from "hono/http-exception";

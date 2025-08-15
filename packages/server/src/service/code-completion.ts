@@ -1,7 +1,7 @@
 import type {
   CodeCompletionRequest,
   CodeCompletionResponse,
-} from "@ragdoll/common";
+} from "@ragdoll/common/pochi-api";
 import { HTTPException } from "hono/http-exception";
 
 export class CodeCompletionService {

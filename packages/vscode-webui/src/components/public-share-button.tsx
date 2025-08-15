@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
-import { SocialLinks, getReadEnvironmentResult } from "@ragdoll/common";
+import { SocialLinks, prompts } from "@ragdoll/common";
 import { getServerBaseUrl } from "@ragdoll/vscode-webui-bridge";
 import {
   CheckIcon,
@@ -61,7 +61,10 @@ export function PublicShareButton({
     const environment = await vscodeHost.readEnvironment();
     const shareUrl = `${getServerBaseUrl()}/share/${shareId}`;
 
-    const environmentInfo = getReadEnvironmentResult(environment, undefined);
+    const environmentInfo = prompts.getReadEnvironmentResult(
+      environment,
+      undefined,
+    );
     const supportInfo = `Support Information
 =================
 

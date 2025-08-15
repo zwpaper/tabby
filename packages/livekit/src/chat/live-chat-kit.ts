@@ -5,7 +5,8 @@ import type {
 } from "@ai-v5-sdk/ai";
 import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import type { Environment, PochiApiClient } from "@ragdoll/common";
+import type { Environment } from "@ragdoll/common";
+import type { PochiApiClient } from "@ragdoll/common/pochi-api";
 import type { LLMRequestData } from "..";
 import { makeMessagesQuery, makeTaskQuery } from "../livestore/queries";
 import { events, tables } from "../livestore/schema";

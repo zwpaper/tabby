@@ -2,7 +2,7 @@ import { exec } from "node:child_process";
 import * as os from "node:os";
 import { promisify } from "node:util";
 import { getLogger } from "@/lib/logger";
-import { SandboxPath } from "@ragdoll/common";
+import { constants } from "@ragdoll/common";
 import * as jszip from "jszip";
 import generate from "project-name-generator";
 import * as vscode from "vscode";
@@ -119,7 +119,7 @@ export async function createNewWorkspace(
   namePlaceholder?: string | undefined,
 ): Promise<vscode.Uri | undefined> {
   if (process.env.POCHI_MINION_ID) {
-    return vscode.Uri.parse(SandboxPath.project);
+    return vscode.Uri.parse(constants.SandboxPath.project);
   }
 
   await createDirectoryIfNotExists(baseUri);

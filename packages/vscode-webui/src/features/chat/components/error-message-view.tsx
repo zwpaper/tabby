@@ -1,5 +1,5 @@
 import { ErrorMessage } from "@/components/error-message";
-import { PochiApiErrors } from "@ragdoll/common";
+import { PochiApiErrors } from "@ragdoll/common/pochi-api";
 import { ExternalLinkIcon } from "lucide-react";
 
 export function ErrorMessageView({

@@ -8,7 +8,7 @@ import {
 } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2StreamPart } from "@ai-v5-sdk/provider";
 import { zValidator } from "@hono/zod-validator";
-import { ModelGatewayRequest, PersistRequest } from "@ragdoll/common";
+import { ModelGatewayRequest, PersistRequest } from "@ragdoll/common/pochi-api";
 import type { Message } from "@ragdoll/livekit";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";

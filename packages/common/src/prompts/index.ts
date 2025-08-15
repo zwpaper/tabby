@@ -1,11 +1,15 @@
 import type { TextUIPart } from "@ai-v5-sdk/ai";
 import { createCompactSummaryPrompt } from "./compact";
-import { injectEnvironmentDetails } from "./environment";
+import {
+  getReadEnvironmentResult,
+  injectEnvironmentDetails,
+} from "./environment";
 import { generateSystemPrompt } from "./system";
 
 export const prompts = {
   system: generateSystemPrompt,
   injectEnvironmentDetails,
+  getReadEnvironmentResult,
   createSystemReminder,
   isSystemReminder,
   isCompact,
@@ -13,8 +17,6 @@ export const prompts = {
   createCompactPart,
   extractSummary,
 };
-
-export { getReadEnvironmentResult } from "./environment";
 
 function createSystemReminder(content: string) {
   return `<system-reminder>${content}</system-reminder>`;

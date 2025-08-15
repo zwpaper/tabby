@@ -1,4 +1,4 @@
-import type { ListModelsResponse } from "@ragdoll/common";
+import type { ListModelsResponse } from "@ragdoll/common/pochi-api";
 import { Hono } from "hono";
 import { AvailableModels } from "../lib/constants";
 

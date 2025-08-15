@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRules } from "@/lib/hooks/use-rules";
-import { CompactTaskMinTokens } from "@ragdoll/common";
+import { constants } from "@ragdoll/common";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -77,11 +77,11 @@ export function TokenUsage({
   };
 
   const minTokenTooltip =
-    totalTokens < CompactTaskMinTokens ? (
+    totalTokens < constants.CompactTaskMinTokens ? (
       <TooltipContent>
         <p>
-          At least {CompactTaskMinTokens} tokens are required to compact the
-          conversation
+          At least {constants.CompactTaskMinTokens} tokens are required to
+          compact the conversation
         </p>
       </TooltipContent>
     ) : null;
