@@ -2,6 +2,7 @@ import { type Span, trace } from "@opentelemetry/api";
 
 type RagdollAttributes = {
   "ragdoll.user.email": string;
+  "ragdoll.organization.id": string;
   "ragdoll.task.uid": string;
   "ragdoll.metering.credit": number;
   "ragdoll.minion.sandboxId": string;

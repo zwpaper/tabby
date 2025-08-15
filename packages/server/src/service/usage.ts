@@ -1,4 +1,5 @@
 import type { LanguageModelUsage } from "@ai-v5-sdk/ai";
+import { trace } from "@opentelemetry/api";
 import { getLogger } from "@ragdoll/common";
 import { jsonArrayFrom } from "kysely/helpers/postgres";
 import moment from "moment";
@@ -28,6 +29,34 @@ export class UsageService {
     creditCostInput: CreditCostInput | undefined,
     remainingFreeCredit: number,
   ): Promise<void> {
+    await trace
+      .getTracer("ragdoll-usage")
+      .startActiveSpan("trackUsage", async (span) => {
+        try {
+          await this.trackUsageImpl(
+            user,
+            modelId,
+            {
+              inputTokens: usage.inputTokens || 0,
+              outputTokens: usage.outputTokens || 0,
+              totalTokens: usage.totalTokens || 0,
+            },
+            creditCostInput,
+            remainingFreeCredit,
+          );
+        } finally {
+          span.end();
+        }
+      });
+  }
+
+  private async trackUsageImpl(
+    user: User,
+    modelId: string,
+    usage: LanguageModelUsage,
+    creditCostInput: CreditCostInput | undefined,
+    remainingFreeCredit: number,
+  ): Promise<void> {
     // Track monthly usage count
     const now = moment.utc();
     const startDayOfMonth = now.startOf("month").toDate();
@@ -40,6 +69,7 @@ export class UsageService {
         ))) ||
       0;
 
+    spanConfig.setAttribute("ragdoll.user.email", user.email);
     spanConfig.setAttribute("ragdoll.metering.credit", credit);
 
     // Track individual completion details
@@ -78,6 +108,7 @@ export class UsageService {
             })),
         )
         .execute();
+      spanConfig.setAttribute("ragdoll.organization.id", organization.id);
       return;
     }
 
