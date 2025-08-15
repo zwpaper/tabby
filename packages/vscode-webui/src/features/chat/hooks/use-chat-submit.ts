@@ -82,7 +82,7 @@ export function useChatSubmit({
       if (isCompacting) return;
 
       const content = input.trim();
-      if (isSubmitDisabled && !content) {
+      if (isSubmitDisabled) {
         return;
       }
       if (handleStop()) {
