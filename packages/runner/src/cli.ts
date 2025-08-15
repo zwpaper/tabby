@@ -8,7 +8,6 @@ import type { PochiApi } from "@ragdoll/common";
 import { getLogger } from "@ragdoll/common";
 import { CredentialStorage } from "@ragdoll/common/node";
 import type { LLMRequestData } from "@ragdoll/livekit";
-import type { ChatRequest } from "@ragdoll/server";
 import chalk from "chalk";
 import * as commander from "commander";
 import { hc } from "hono/client";
@@ -147,7 +146,14 @@ program
       );
     }
 
-    let openAIModelOverride: ChatRequest["openAIModelOverride"] | undefined;
+    let openAIModelOverride:
+      | {
+          apiKey?: string;
+          baseURL: string;
+          maxOutputTokens: number;
+          contextWindow: number;
+        }
+      | undefined;
     if (options.baseUrl) {
       if (options.maxOutputTokens && options.model && options.contextWindow) {
         openAIModelOverride = {

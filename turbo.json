@@ -20,6 +20,13 @@
   },
   "globalPassThroughEnv": ["NODE_ENV"],
   "boundaries": {
-    "implicitDependencies": ["vitest"]
+    "implicitDependencies": ["vitest"],
+    "tags": {
+      "public": {
+        "dependencies": {
+          "allow": ["public"]
+        }
+      }
+    }
   }
 }

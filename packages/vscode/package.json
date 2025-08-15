@@ -346,7 +346,6 @@
     "tsyringe": "^4.10.0"
   },
   "devDependencies": {
-    "@ragdoll/db": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "@ragdoll/vscode-webui-bridge": "workspace:*",
     "@types/diff": "^7.0.2",

@@ -24,7 +24,6 @@
     "@preact/signals-core": "^1.6.2",
     "@ragdoll/common": "workspace:*",
     "@ragdoll/livekit": "workspace:*",
-    "@ragdoll/server": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^14.0.0",
     "fast-deep-equal": "^3.1.3",

@@ -6,13 +6,26 @@ import { getLogger } from "@/lib/logger";
 import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorkspaceJobQueue } from "@/lib/workspace-job";
-import type { DB } from "@ragdoll/db";
+// import type { DB } from "@ragdoll/db";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
 export interface NewProjectTask {
   uid: string;
-  event: Extract<DB["task"]["event"], { type: "website:new-project" }>;
+  event: {
+    type: "website:new-project";
+    data: {
+      requestId: string;
+      name?: string;
+      prompt: string;
+      attachments?: {
+        url: string;
+        name?: string;
+        contentType?: string;
+      }[];
+      githubTemplateUrl?: string;
+    };
+  };
 }
 const logger = getLogger("UriHandler");
 
