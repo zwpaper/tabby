@@ -64,30 +64,7 @@ export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
   const hasModels = !!pochiModels?.length || !!customModelSettings?.length;
 
   return (
-    <Section
-      title={
-        <div className="flex items-center">
-          Models
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href="command:pochi.openCustomModelSettings"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative z-10 ml-1 rounded-md p-1 py-3 transition-colors hover:bg-muted"
-                >
-                  <PencilIcon className="size-3" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Manage your custom models.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      }
-    >
+    <Section title={<div className="flex items-center">Models</div>}>
       {isPochiModelLoading || isCustomModelLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -149,7 +126,26 @@ export const ModelSection: React.FC<ModelSectionProps> = ({ user }) => {
                 <div key={provider.id} className="ml-1">
                   <AccordionSection
                     title={
-                      <div className="py-1">{provider.name || provider.id}</div>
+                      <div className="flex items-center gap-0.5 py-1">
+                        {provider.name || provider.id}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <a
+                                href="command:pochi.openCustomModelSettings"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="relative z-10 ml-1 rounded-md p-1 py-3 transition-colors hover:bg-muted"
+                              >
+                                <PencilIcon className="size-3" />
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Manage your custom models.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     }
                     variant="compact"
                     className="py-0"

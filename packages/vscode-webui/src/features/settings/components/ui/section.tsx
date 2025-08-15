@@ -112,5 +112,9 @@ export const ScetionItem: React.FC<{
 export const EmptySectionPlaceholder: React.FC<{
   content: React.ReactNode;
 }> = ({ content }) => {
-  return <div className="ml-1 text-muted-foreground text-sm">{content}</div>;
+  return (
+    <div className="ml-1 select-none text-muted-foreground text-sm">
+      {content}
+    </div>
+  );
 };
