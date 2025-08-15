@@ -2,7 +2,7 @@ import type { Todo } from "@getpochi/tools";
 import { prompts } from "@ragdoll/common";
 import { findTodos, mergeTodos } from "@ragdoll/common/todo-utils";
 import type { Message } from "@ragdoll/livekit";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useTodos({
   initialTodos,
@@ -13,7 +13,13 @@ export function useTodos({
   messages: Message[];
   todosRef: React.MutableRefObject<Todo[] | undefined>;
 }) {
-  const [todos, setTodosImpl] = useState<Todo[]>([]);
+  const todoWriteToolcalls = useRef<Set<string>>(new Set());
+  const [todos, setTodosImpl] = useState<Todo[]>(
+    initialTodos
+      ? // readonly -> mutable with json re-serialize
+        JSON.parse(JSON.stringify(initialTodos))
+      : [],
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef): todosRef is a ref
   const setTodos = useCallback((newTodos: Todo[]) => {
@@ -21,16 +27,17 @@ export function useTodos({
     setTodosImpl(newTodos);
   }, []);
 
-  useEffect(() => {
-    if (initialTodos) {
-      // readonly -> mutable with json re-serialize
-      setTodos(JSON.parse(JSON.stringify(initialTodos)));
-    }
-  }, [initialTodos, setTodos]);
-
   // biome-ignore lint/correctness/useExhaustiveDependencies(todosRef.current): todosRef is a ref
   const updateTodos = useCallback(
     (message: Message) => {
+      const toolCallId = getLastTodoWriteToolCallId(message);
+      if (!toolCallId) {
+        return;
+      }
+      if (todoWriteToolcalls.current.has(toolCallId)) {
+        return;
+      }
+      todoWriteToolcalls.current.add(toolCallId);
       const newTodos = findTodos(message);
       if (newTodos !== undefined) {
         setTodos(mergeTodos(todosRef.current || [], newTodos));
@@ -95,4 +102,11 @@ function isSystemReminderMessage(message: Message): boolean {
   return message.parts.some(
     (x) => x.type === "text" && prompts.isSystemReminder(x.text),
   );
+}
+
+function getLastTodoWriteToolCallId(message: Message): string | undefined {
+  const toolCall = message.parts.findLast(
+    (x) => x.type === "tool-todoWrite" && x.state !== "input-streaming",
+  );
+  return toolCall?.toolCallId;
 }
