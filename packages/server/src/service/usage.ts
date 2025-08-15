@@ -31,7 +31,7 @@ export class UsageService {
   ): Promise<void> {
     await trace
       .getTracer("ragdoll.usage")
-      .startActiveSpan("trackUsage", async (span) => {
+      .startActiveSpan("ragdoll.trackUsage", async (span) => {
         try {
           await this.trackUsageImpl(
             user,
