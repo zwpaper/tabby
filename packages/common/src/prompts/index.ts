@@ -1,21 +1,17 @@
-import type { TextUIPart } from "@ai-v5-sdk/ai";
-import { createCompactSummaryPrompt } from "./compact";
-import {
-  getReadEnvironmentResult,
-  injectEnvironmentDetails,
-} from "./environment";
-import { generateSystemPrompt } from "./system";
+import { createCompactPrompt } from "./compact";
+import { createEnvironmentPrompt, injectEnvironment } from "./environment";
+import { createSystemPrompt } from "./system";
 
 export const prompts = {
-  system: generateSystemPrompt,
-  injectEnvironmentDetails,
-  getReadEnvironmentResult,
+  system: createSystemPrompt,
+  injectEnvironment,
+  environment: createEnvironmentPrompt,
   createSystemReminder,
   isSystemReminder,
   isCompact,
-  compact: createCompactSummaryPrompt,
-  createCompactPart,
-  extractSummary,
+  compact: createCompactPrompt,
+  inlineCompact,
+  parseInlineCompact,
 };
 
 function createSystemReminder(content: string) {
@@ -38,16 +34,18 @@ function isCompact(content: string) {
   return content.startsWith("<compact>") && content.endsWith("</compact>");
 }
 
-function createCompactPart(summary: string, messageCount: number): TextUIPart {
-  const text = `<compact>
+function inlineCompact(summary: string, messageCount: number) {
+  return `<compact>
 Previous conversation summary (${messageCount} messages):
 ${summary}
 This section contains a summary of the conversation up to this point to save context. The full conversation history has been preserved but condensed for efficiency.
 </compact>`;
-  return { type: "text", text };
 }
 
-function extractSummary(text: string): string | undefined {
+function parseInlineCompact(text: string) {
   const match = text.match(/^<compact>(.*)<\/compact>$/s);
-  return match ? match[1] : undefined;
+  if (!match) return;
+  return {
+    summary: match[1],
+  };
 }

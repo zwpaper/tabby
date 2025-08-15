@@ -2,7 +2,7 @@ import type { Environment } from "../environment";
 
 type CustomRules = Environment["info"]["customRules"];
 
-export function generateSystemPrompt(customRules: CustomRules) {
+export function createSystemPrompt(customRules: CustomRules) {
   const prompt = `You are Pochi, a highly skilled software engineer with extensive knowledge in many programming languages, frameworks, design patterns, and best practices.
 
 ${getCapabilitiesPrompt()}

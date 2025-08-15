@@ -297,10 +297,8 @@ function CompactPartToolTip({
   className,
 }: { message: Message; className?: string }) {
   const compactPart = findCompactPart(message);
-  const summary = compactPart
-    ? prompts.extractSummary(compactPart.text)
-    : undefined;
-  if (!summary) return null;
+  const parsed = compactPart && prompts.parseInlineCompact(compactPart.text);
+  if (!parsed) return null;
   return (
     <Tooltip>
       <TooltipTrigger asChild className={className}>
@@ -308,7 +306,7 @@ function CompactPartToolTip({
           className="size-5 cursor-pointer"
           onClick={() =>
             vscodeHost.openFile(`/task-summary-${message.id}.md`, {
-              base64Data: btoa(unescape(encodeURIComponent(summary))),
+              base64Data: btoa(unescape(encodeURIComponent(parsed.summary))),
             })
           }
         />

@@ -26,14 +26,17 @@ export async function compactTask({
 
   const llm = getLLM();
   try {
-    const part = prompts.createCompactPart(
+    const text = prompts.inlineCompact(
       await createSummary(llm, messages.slice(0, -1)),
       messages.length - 1,
     );
     if (overwrite) {
-      lastMessage.parts.unshift(part);
+      lastMessage.parts.unshift({
+        type: "text",
+        text,
+      });
     }
-    return part.text;
+    return text;
   } catch (err) {
     console.warn("Failed to create summary", err);
   }

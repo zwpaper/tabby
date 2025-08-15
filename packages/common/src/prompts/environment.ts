@@ -4,7 +4,7 @@ import { prompts } from "./index";
 
 type User = { name: string; email: string };
 
-export function getReadEnvironmentResult(
+export function createEnvironmentPrompt(
   environment: Environment,
   user: User | undefined,
 ) {
@@ -142,7 +142,7 @@ function getGitStatus(gitStatus: GitStatus | undefined) {
   return result;
 }
 
-export function injectEnvironmentDetails(
+export function injectEnvironment(
   messages: UIMessageNext[],
   environment: Environment | undefined,
 ): UIMessageNext[] {
@@ -162,7 +162,7 @@ export function injectEnvironmentDetails(
 
   const environmentDetails =
     messages.length === 1
-      ? getReadEnvironmentResult(environment, user)
+      ? createEnvironmentPrompt(environment, user)
       : getLiteReadEnvironmentResult(environment);
 
   const reminderPart = {

@@ -1,4 +1,4 @@
-export function createCompactSummaryPrompt(): string {
+export function createCompactPrompt(): string {
   return `Create a summary of our conversation, focusing on technical details and user requests.
 
 First, show your thinking process to ensure completeness:

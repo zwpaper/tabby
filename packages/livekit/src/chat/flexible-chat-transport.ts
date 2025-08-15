@@ -118,7 +118,7 @@ function prepareMessages<T extends import("@ai-v5-sdk/ai").UIMessage>(
   inputMessages: T[],
   environment: Environment | undefined,
 ): T[] {
-  const messages = prompts.injectEnvironmentDetails(inputMessages, environment);
+  const messages = prompts.injectEnvironment(inputMessages, environment);
 
   return formatters.llm(messages) as T[];
 }

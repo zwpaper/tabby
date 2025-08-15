@@ -61,10 +61,7 @@ export function PublicShareButton({
     const environment = await vscodeHost.readEnvironment();
     const shareUrl = `${getServerBaseUrl()}/share/${shareId}`;
 
-    const environmentInfo = prompts.getReadEnvironmentResult(
-      environment,
-      undefined,
-    );
+    const environmentInfo = prompts.environment(environment, undefined);
     const supportInfo = `Support Information
 =================
 
