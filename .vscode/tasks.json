@@ -34,7 +34,7 @@
       "label": "dev:server-server",
       "command": "bun run dev:server",
       "options": {
-        "cwd": "packages/server"
+        "cwd": "private/packages/server"
       },
       "group": {
         "kind": "none",
@@ -64,7 +64,7 @@
       "label": "dev:server-website",
       "command": "bun run dev:server",
       "options": {
-        "cwd": "packages/website"
+        "cwd": "private/packages/website"
       },
       "group": {
         "kind": "none",
