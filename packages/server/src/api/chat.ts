@@ -250,7 +250,7 @@ function createUsageTrackingTransform(
           modelId,
           chunk.finishReason,
         );
-        await usageService.trackUsage(
+        usageService.trackUsage(
           user,
           modelId,
           {
@@ -277,7 +277,7 @@ function ensureStreamTextFinish(
       controller.enqueue(chunk);
 
       if (chunk.type === "finish") {
-        await streamTextResult.toUIMessageStream().pipeTo(new WritableStream());
+        streamTextResult.toUIMessageStream().pipeTo(new WritableStream());
       }
     },
   });
