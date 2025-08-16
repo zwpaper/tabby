@@ -2,6 +2,7 @@ import {
   type FinishReason,
   JsonToSseTransformStream,
   type LanguageModelUsage,
+  NoSuchToolError,
   type ProviderMetadata,
   type StreamTextResult,
   type ToolSet,
@@ -71,6 +72,13 @@ const chat = new Hono()
         messages: prompt,
         abortSignal,
         stopSequences,
+        onError({ error }) {
+          if (NoSuchToolError.isInstance(error)) {
+            // ignore as we don't really pass tools to stream text, but hook to doStream instead.
+          }
+
+          throw error;
+        },
         model: wrapLanguageModel({
           model,
           middleware: {
@@ -241,7 +249,10 @@ function createUsageTrackingTransform(
     LanguageModelV2StreamPart
   >({
     async transform(chunk, controller) {
-      controller.enqueue(chunk);
+      if (chunk.type !== "finish") {
+        controller.enqueue(chunk);
+        return;
+      }
 
       if (chunk.type === "finish") {
         const { usage, creditCostInput } = computeUsage(
@@ -250,6 +261,7 @@ function createUsageTrackingTransform(
           modelId,
           chunk.finishReason,
         );
+        controller.enqueue({ ...chunk, usage });
         usageService.trackUsage(
           user,
           modelId,
