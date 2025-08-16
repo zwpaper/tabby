@@ -5,5 +5,5 @@ rule:
 message: Don't use console for logging, use getLogger instead.
 severity: error
 files:
-  - "packages/runner/src/**/*.ts"
-  - "packages/server/src/**/*.ts"
+  - "private/packages/runner/src/**/*.ts"
+  - "private/packages/server/src/**/*.ts"

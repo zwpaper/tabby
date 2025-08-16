@@ -21,23 +21,28 @@ interface PackageInfo {
 }
 
 async function getPackages(): Promise<PackageInfo[]> {
-  const packagesDir = join(process.cwd(), "packages");
+  const packagesDirs = [
+    join(process.cwd(), "packages"),
+    join(process.cwd(), "private", "packages"),
+  ];
   const packages: PackageInfo[] = [];
 
   try {
-    const dirs = await readdir(packagesDir, { withFileTypes: true });
+    for (const packagesDir of packagesDirs) {
+      const dirs = await readdir(packagesDir, { withFileTypes: true });
 
-    for (const dir of dirs) {
-      if (dir.isDirectory()) {
-        const packagePath = join(packagesDir, dir.name);
-        const packageJsonPath = join(packagePath, "package.json");
-        const hasPackageJson = existsSync(packageJsonPath);
+      for (const dir of dirs) {
+        if (dir.isDirectory()) {
+          const packagePath = join(packagesDir, dir.name);
+          const packageJsonPath = join(packagePath, "package.json");
+          const hasPackageJson = existsSync(packageJsonPath);
 
-        packages.push({
-          name: dir.name,
-          path: packagePath,
-          hasPackageJson,
-        });
+          packages.push({
+            name: dir.name,
+            path: packagePath,
+            hasPackageJson,
+          });
+        }
       }
     }
   } catch (error) {

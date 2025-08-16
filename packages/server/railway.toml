@@ -1,8 +1,0 @@
-[build]
-buildCommand = "bun run build:server"
-
-[deploy]
-startCommand = "cd packages/server && bun start"
-healthcheckPath = "/health"
-healthcheckTimeout = 10
-drainingSeconds = 60

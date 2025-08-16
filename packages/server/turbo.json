@@ -1,7 +1,0 @@
-{
-  "extends": ["//"],
-  "$schema": "https://turborepo.com/schema.json",
-  "boundaries": {
-    "implicitDependencies": ["@aws-sdk/client-s3"]
-  }
-}

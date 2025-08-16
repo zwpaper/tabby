@@ -17,7 +17,7 @@
     "postinstall": "bun check:resolve-v5-deps --silent"
   },
   "workspaces": {
-    "packages": ["packages/*"],
+    "packages": ["packages/*", "private/packages/*"],
     "catalog": {
       "@preact/signals-core": "^1.8.0",
       "@quilted/threads": "^3.1.3",
