@@ -1,5 +1,8 @@
 import type { UIMessage } from "@ai-v5-sdk/ai";
-import type { LanguageModelV2CallOptions } from "@ai-v5-sdk/provider";
+import type {
+  LanguageModelV2CallOptions,
+  LanguageModelV2Prompt,
+} from "@ai-v5-sdk/provider";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import type { hc } from "hono/client";
@@ -10,10 +13,11 @@ export const ModelGatewayRequest = z.object({
   id: z.string().optional(),
   model: z.string().optional().describe("Model to use for this request."),
   modelEndpointId: z.string().optional(),
-  callOptions:
-    z.custom<
-      Pick<LanguageModelV2CallOptions, "prompt" | "stopSequences" | "tools">
-    >(),
+  callOptions: z.object({
+    prompt: z.custom<LanguageModelV2Prompt>(),
+    stopSequences: z.array(z.string()).optional(),
+    tools: z.custom<LanguageModelV2CallOptions["tools"]>(),
+  }),
 });
 export type ModelGatewayRequest = z.infer<typeof ModelGatewayRequest>;
 
