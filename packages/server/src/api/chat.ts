@@ -3,6 +3,8 @@ import {
   JsonToSseTransformStream,
   type LanguageModelUsage,
   type ProviderMetadata,
+  type StreamTextResult,
+  type ToolSet,
   streamText,
   wrapLanguageModel,
 } from "@ai-v5-sdk/ai";
@@ -12,7 +14,7 @@ import { ModelGatewayRequest, PersistRequest } from "@ragdoll/common/pochi-api";
 import type { Message } from "@ragdoll/livekit";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { isInternalUser, requireAuth } from "../auth";
+import { type User, isInternalUser, requireAuth } from "../auth";
 import { checkModel, checkUserQuota } from "../lib/check-request";
 import {
   type AvailableModelId,
@@ -61,82 +63,61 @@ const chat = new Hono()
     }
 
     const abortSignal = c.req.raw.signal;
-    const stream = await new Promise<ReadableStream<LanguageModelV2StreamPart>>(
-      (resolve) => {
-        streamText({
-          messages: prompt,
-          abortSignal,
-          stopSequences,
-          model: wrapLanguageModel({
-            model,
-            middleware: {
-              middlewareVersion: "v2",
-              async wrapStream() {
-                const { stream, ...rest } = await model.doStream({
-                  prompt,
-                  temperature: 0.7,
-                  abortSignal,
-                  stopSequences,
-                  tools,
-                  ...getModelOptions(validModelId),
-                });
+    const { streamTextResult, stream } = await new Promise<{
+      streamTextResult: StreamTextResult<ToolSet, never>;
+      stream: ReadableStream<LanguageModelV2StreamPart>;
+    }>((resolve) => {
+      const streamTextResult = streamText({
+        messages: prompt,
+        abortSignal,
+        stopSequences,
+        model: wrapLanguageModel({
+          model,
+          middleware: {
+            middlewareVersion: "v2",
+            async wrapStream() {
+              const { stream, ...rest } = await model.doStream({
+                prompt,
+                temperature: 0.7,
+                abortSignal,
+                stopSequences,
+                tools,
+                ...getModelOptions(validModelId),
+              });
 
-                const [stream1, stream2] = stream.tee();
-                resolve(stream2);
-                return {
-                  stream: stream1,
-                  ...rest,
-                };
-              },
+              const [stream1, stream2] = stream.tee();
+              resolve({
+                streamTextResult,
+                stream: stream2,
+              });
+              return {
+                stream: stream1,
+                ...rest,
+              };
             },
-          }),
-          maxRetries: 0,
-          experimental_telemetry: {
-            isEnabled: true,
-            metadata: {
-              "user-id": user.id,
-              "user-email": user.email,
-              "model-id": validModelId,
-              ...(req.id
-                ? {
-                    "task-id": req.id,
-                  }
-                : {}),
-            },
-          },
-        });
-      },
-    );
-
-    const sseStream = stream
-      .pipeThrough(
-        new TransformStream<
-          LanguageModelV2StreamPart,
-          LanguageModelV2StreamPart
-        >({
-          async transform(chunk, controller) {
-            if (chunk.type === "finish") {
-              const { usage, creditCostInput } = computeUsage(
-                chunk.usage,
-                chunk.providerMetadata,
-                validModelId,
-                chunk.finishReason,
-              );
-              await usageService.trackUsage(
-                user,
-                validModelId,
-                {
-                  inputTokens: usage.inputTokens || 0,
-                  outputTokens: usage.outputTokens || 0,
-                  totalTokens: usage.totalTokens || 0,
-                },
-                creditCostInput,
-                remainingFreeCredit,
-              );
-            }
-            controller.enqueue(chunk);
           },
         }),
+        maxRetries: 0,
+        experimental_telemetry: {
+          isEnabled: true,
+          metadata: {
+            "user-id": user.id,
+            "user-email": user.email,
+            "model-id": validModelId,
+            ...(req.id
+              ? {
+                  "task-id": req.id,
+                }
+              : {}),
+          },
+        },
+      });
+    });
+
+    const sseStream = stream
+      .pipeThrough(ensureStreamTextFinish(streamTextResult))
+      .pipeThrough(
+        createUsageTrackingTransform(user, remainingFreeCredit, validModelId),
       )
       .pipeThrough(new JsonToSseTransformStream());
 
@@ -248,4 +229,56 @@ function computeUsage(
   }
 
   return { usage, creditCostInput };
+}
+
+function createUsageTrackingTransform(
+  user: User,
+  remainingFreeCredit: number,
+  modelId: AvailableModelId,
+) {
+  return new TransformStream<
+    LanguageModelV2StreamPart,
+    LanguageModelV2StreamPart
+  >({
+    async transform(chunk, controller) {
+      controller.enqueue(chunk);
+
+      if (chunk.type === "finish") {
+        const { usage, creditCostInput } = computeUsage(
+          chunk.usage,
+          chunk.providerMetadata,
+          modelId,
+          chunk.finishReason,
+        );
+        await usageService.trackUsage(
+          user,
+          modelId,
+          {
+            inputTokens: usage.inputTokens || 0,
+            outputTokens: usage.outputTokens || 0,
+            totalTokens: usage.totalTokens || 0,
+          },
+          creditCostInput,
+          remainingFreeCredit,
+        );
+      }
+    },
+  });
+}
+
+function ensureStreamTextFinish(
+  streamTextResult: StreamTextResult<ToolSet, never>,
+) {
+  return new TransformStream<
+    LanguageModelV2StreamPart,
+    LanguageModelV2StreamPart
+  >({
+    async transform(chunk, controller) {
+      controller.enqueue(chunk);
+
+      if (chunk.type === "finish") {
+        await streamTextResult.response;
+      }
+    },
+  });
 }
