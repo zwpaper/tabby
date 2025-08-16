@@ -33,8 +33,10 @@ export const previewApplyDiff: PreviewToolFunctionType<
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
 
-  await validateTextFile(fileUri.fsPath);
-  const fileContent = (await vscode.workspace.fs.readFile(fileUri)).toString();
+  const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
+  await validateTextFile(fileBuffer);
+
+  const fileContent = fileBuffer.toString();
 
   const updatedContent = await parseDiffAndApply(
     fileContent,
@@ -58,8 +60,10 @@ export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
   await ensureFileDirectoryExists(fileUri);
 
-  await validateTextFile(fileUri.fsPath);
-  const fileContent = (await vscode.workspace.fs.readFile(fileUri)).toString();
+  const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
+  await validateTextFile(fileBuffer);
+
+  const fileContent = fileBuffer.toString();
 
   const updatedContent = await parseDiffAndApply(
     fileContent,

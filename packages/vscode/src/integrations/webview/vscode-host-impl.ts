@@ -8,7 +8,7 @@ import {
   getSystemInfo,
   getWorkspaceRulesFileUri,
 } from "@/lib/env";
-import { getWorkspaceFolder, isFileExists } from "@/lib/fs";
+import { getWorkspaceFolder, isBinaryFile, isFileExists } from "@/lib/fs";
 
 import path from "node:path";
 import { getLogger } from "@/lib/logger";
@@ -45,7 +45,6 @@ import type { Environment } from "@ragdoll/common";
 import {
   GitStatusReader,
   ignoreWalk,
-  isPlainTextFile,
   listWorkspaceFiles,
 } from "@ragdoll/common/tool-utils";
 import type {
@@ -394,8 +393,8 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         await vscode.commands.executeCommand("revealInExplorer", fileUri);
         await vscode.commands.executeCommand("list.expand");
       } else if (stat.type === vscode.FileType.File) {
-        const isPlainText = await isPlainTextFile(fileUri.fsPath);
-        if (!isPlainText) {
+        const isBinary = await isBinaryFile(fileUri);
+        if (isBinary) {
           await vscode.commands.executeCommand("vscode.open", fileUri);
         } else {
           const start = options?.start ?? 1;

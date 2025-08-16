@@ -27,8 +27,9 @@ export const previewMultiApplyDiff: PreviewToolFunctionType<
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
 
-  await validateTextFile(fileUri.fsPath);
-  const fileContent = (await vscode.workspace.fs.readFile(fileUri)).toString();
+  const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
+  await validateTextFile(fileBuffer);
+  const fileContent = fileBuffer.toString();
   const updatedContent = await processMultipleDiffs(fileContent, edits);
 
   const diffView = await DiffView.getOrCreate(toolCallId, path);
@@ -45,9 +46,10 @@ export const multiApplyDiff: ToolFunctionType<
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);
   await ensureFileDirectoryExists(fileUri);
 
-  await validateTextFile(fileUri.fsPath);
-  const fileContent = (await vscode.workspace.fs.readFile(fileUri)).toString();
+  const fileBuffer = await vscode.workspace.fs.readFile(fileUri);
+  await validateTextFile(fileBuffer);
 
+  const fileContent = fileBuffer.toString();
   const updatedContent = await processMultipleDiffs(fileContent, edits);
 
   if (nonInteractive) {
