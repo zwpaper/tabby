@@ -6,7 +6,6 @@ import type { Message } from "@ragdoll/livekit";
 import { useEffect, useMemo, useState } from "react";
 
 export type TaskThreadSource = {
-  type: "task";
   messages: Message[];
   todos: Todo[];
   isLoading?: boolean;
@@ -28,16 +27,15 @@ export const TaskThread: React.FC<{
   const [messages, setMessages] = useState<Message[]>([]);
   const [todos, setTodos] = useState<Todo[]>([]);
 
-  const sourceTask = source.type === "task" ? source : undefined;
   useEffect(() => {
-    if (!sourceTask) {
+    if (!source) {
       return;
     }
 
-    setIsLoading(sourceTask.isLoading ?? false);
-    setMessages(sourceTask.messages);
-    setTodos(sourceTask.todos);
-  }, [sourceTask]);
+    setIsLoading(source.isLoading ?? false);
+    setMessages(source.messages);
+    setTodos(source.todos);
+  }, [source]);
 
   const renderMessages = useMemo(() => prepareForRender(messages), [messages]);
 

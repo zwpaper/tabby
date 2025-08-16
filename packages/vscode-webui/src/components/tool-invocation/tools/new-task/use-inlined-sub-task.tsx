@@ -1,0 +1,21 @@
+import type { TaskThreadSource } from "@/components/task-thread";
+import type { Message } from "@ragdoll/livekit";
+import type { ToolProps } from "../../types";
+
+export function useInlinedSubTask(
+  tool: ToolProps<"newTask">["tool"],
+): TaskThreadSource | undefined {
+  if (tool.state === "input-streaming") {
+    return undefined;
+  }
+
+  const subtask = tool.input?._transient?.task;
+  if (!subtask) {
+    return undefined;
+  }
+
+  return {
+    messages: (subtask?.messages as Message[]) ?? [],
+    todos: subtask?.todos ?? [],
+  };
+}

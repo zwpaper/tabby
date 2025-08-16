@@ -8,6 +8,8 @@ import { useTheme } from "@/components/theme-provider";
 import { usePochiEvents } from "@/hooks/use-pochi-events";
 import { apiClient } from "@/lib/auth-client";
 import { normalizeApiError, toHttpError } from "@/lib/error";
+import { inlineSubTasks } from "@/lib/inline-sub-task";
+import type { SubTask } from "@getpochi/tools";
 import type { TaskEvent } from "@ragdoll/db";
 import type { Message } from "@ragdoll/livekit";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
@@ -23,16 +25,16 @@ export const Route = createFileRoute("/_authenticated/_base/tasks/$uid")({
         param: {
           uid,
         },
+        query: {
+          includeSubTasks: "true",
+        },
       });
 
       if (!resp.ok) {
         throw toHttpError(resp);
       }
 
-      const { subtasks, ...rest } = await resp.json();
-      return {
-        ...rest,
-      };
+      return await resp.json();
     } catch (error) {
       throw normalizeApiError(error);
     }
@@ -75,7 +77,22 @@ function RouteComponent() {
   }, [loaderData]);
 
   // @ts-ignore
-  const renderMessages: Message[] = loaderData.conversation?.messagesNext || [];
+  const messages: Message[] = loaderData.conversation?.messagesNext || [];
+  // @ts-ignore
+  const subtasks: SubTask[] =
+    loaderData.subtasks?.map((subtask) => {
+      return {
+        uid: subtask.uid,
+        clientTaskId: subtask.clientTaskId,
+        messages: subtask.conversation?.messagesNext || [],
+        todos: subtask.todos,
+      };
+    }) ?? [];
+
+  const renderMessages =
+    messages.length > 0 && subtasks.length > 0
+      ? inlineSubTasks(messages, subtasks)
+      : messages;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-1 flex-col space-y-8">

@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { apiClient } from "@/lib/auth-client";
 import { useSession } from "@/lib/auth-hooks";
 import { normalizeApiError, toHttpError } from "@/lib/error";
+import { inlineSubTasks } from "@/lib/inline-sub-task";
 import { cn } from "@/lib/utils";
 import type { Message } from "@ragdoll/livekit";
 import { Link, createFileRoute } from "@tanstack/react-router";
@@ -30,10 +31,7 @@ export const Route = createFileRoute("/share/$uid")({
         throw toHttpError(resp);
       }
 
-      const { subtasks, ...rest } = await resp.json();
-      return {
-        ...rest,
-      };
+      return await resp.json();
     } catch (error) {
       throw normalizeApiError(error);
     }
@@ -61,7 +59,22 @@ function RouteComponent() {
   const { theme } = useTheme();
 
   // @ts-ignore
-  const renderMessages: Message[] = loaderData.conversation?.messagesNext || [];
+  const messages: Message[] = loaderData.conversation?.messagesNext || [];
+  // @ts-ignore
+  const subtasks: SubTask[] =
+    loaderData.subtasks?.map((subtask) => {
+      return {
+        uid: subtask.uid,
+        clientTaskId: subtask.clientTaskId,
+        messages: subtask.conversation?.messagesNext || [],
+        todos: subtask.todos,
+      };
+    }) ?? [];
+
+  const renderMessages =
+    messages.length > 0 && subtasks.length > 0
+      ? inlineSubTasks(messages, subtasks)
+      : messages;
 
   return (
     <div className="mx-auto mt-4 flex max-w-6xl flex-1 flex-col space-y-8 md:mt-6">

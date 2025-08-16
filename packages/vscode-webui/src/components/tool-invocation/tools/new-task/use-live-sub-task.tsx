@@ -1,9 +1,5 @@
-import { TaskThread, type TaskThreadSource } from "@/components/task-thread";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import type { TaskThreadSource } from "@/components/task-thread";
 import { useLiveChatKitGetters, useToolCallLifeCycle } from "@/features/chat";
-import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
-import { cn } from "@/lib/utils";
 
 import {
   ReadyForRetryError,
@@ -22,23 +18,13 @@ import type { Todo } from "@getpochi/tools";
 import { useStore } from "@livestore/react";
 import { catalog } from "@ragdoll/livekit";
 import { useLiveChatKit } from "@ragdoll/livekit/react";
-import { Link } from "@tanstack/react-router";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { StatusIcon } from "../status-icon";
-import { ExpandIcon, ToolTitle } from "../tool-container";
-import type { ToolProps } from "../types";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ToolProps } from "../../types";
 
-export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
+export function useLiveSubTask({
   tool,
   isExecuting,
-}) => {
+}: Pick<ToolProps<"newTask">, "tool" | "isExecuting">): TaskThreadSource {
   // biome-ignore lint/style/noNonNullAssertion: uid must have been set.
   const uid = tool.input?._meta?.uid!;
 
@@ -232,81 +218,12 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
     todosRef,
   });
 
-  const description = tool.input?.description ?? "";
-
-  const taskSource: TaskThreadSource = {
-    type: "task",
+  return {
     messages,
     todos,
+    isLoading: status === "submitted" || status === "streaming",
   };
-
-  const [showMessageList, setShowMessageList] = useState(false);
-  const newTaskContainer = useRef<HTMLDivElement>(null);
-  const { isAtBottom, scrollToBottom } = useIsAtBottom(newTaskContainer);
-  const isAtBottomRef = useRef(isAtBottom);
-
-  useEffect(() => {
-    isAtBottomRef.current = isAtBottom;
-  }, [isAtBottom]);
-
-  // Scroll to bottom when the message list height changes
-  useEffect(() => {
-    if (!showMessageList) {
-      return;
-    }
-    const container = newTaskContainer.current;
-    if (!container?.children[0]) {
-      return;
-    }
-    const resizeObserver = new ResizeObserver(() => {
-      if (isAtBottomRef.current) {
-        requestAnimationFrame(() => scrollToBottom());
-      }
-    });
-    resizeObserver.observe(container);
-    resizeObserver.observe(container.children[0]);
-    return () => {
-      resizeObserver.disconnect();
-    }; // clean up
-  }, [scrollToBottom, showMessageList]);
-
-  // Initial scroll to bottom once when component mounts (without smooth behavior)
-  useLayoutEffect(() => {
-    if (newTaskContainer.current) {
-      scrollToBottom(false); // false = not smooth
-    }
-  }, [scrollToBottom]);
-
-  return (
-    <div>
-      <ToolTitle>
-        <span className={cn("flex items-center gap-2")}>
-          <div>
-            <StatusIcon tool={tool} isExecuting={isExecuting} />
-            <Badge variant="secondary" className={cn("mr-1 ml-2 py-0")}>
-              <Link to="/" search={{ uid, ts: Date.now() }} replace={true}>
-                Subtask
-              </Link>
-            </Badge>
-            <span className="ml-2">{description}</span>
-          </div>
-        </span>
-        {messages.length > 1 && (
-          <ExpandIcon
-            className="cursor-pointer"
-            isExpanded={showMessageList}
-            onClick={() => setShowMessageList(!showMessageList)}
-          />
-        )}
-      </ToolTitle>
-      {taskSource && (
-        <ScrollArea viewportClassname="max-h-[300px]" ref={newTaskContainer}>
-          <TaskThread source={taskSource} showMessageList={showMessageList} />
-        </ScrollArea>
-      )}
-    </div>
-  );
-};
+}
 
 const SubtaskMaxStep = 24;
 const SubtaskMaxRetry = 2;

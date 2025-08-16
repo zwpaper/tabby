@@ -211,6 +211,7 @@ class TaskService {
       .selectFrom("task")
       .select([
         "id",
+        "clientTaskId",
         "createdAt",
         "updatedAt",
         "conversation",
@@ -268,6 +269,7 @@ class TaskService {
       subtasks: includeSubTasks
         ? subtasks.map((subtask) => ({
             uid: uidCoder.encode(subtask.id),
+            clientTaskId: subtask.clientTaskId,
             status: subtask.status,
             conversation: subtask.conversation,
             todos: subtask.todos || undefined,
@@ -298,6 +300,7 @@ class TaskService {
       })
       .select([
         "task.id",
+        "task.clientTaskId",
         "task.userId",
         "task.isPublicShared",
         "task.createdAt",
@@ -348,6 +351,7 @@ class TaskService {
       title: parseTitle(task.title),
       subtasks: subtasks.map((subtask) => ({
         uid: uidCoder.encode(subtask.id),
+        clientTaskId: subtask.clientTaskId,
         status: subtask.status,
         conversation: subtask.conversation,
         todos: subtask.todos || undefined,
