@@ -25,7 +25,6 @@ type NewTaskParameterType = InferToolInput<ClientToolsType["newTask"]>;
 type NewTaskReturnType = {
   uid: string;
   serializedAbortSignal: ThreadAbortSignalSerialization;
-  abortSignal: AbortSignal;
 };
 type ExecuteReturnType = ExecuteCommandReturnType | NewTaskReturnType | unknown;
 
@@ -250,7 +249,6 @@ export class ManagedToolCallLifeCycle
       executePromise = this.runNewTask(
         args as NewTaskParameterType,
         abortSignal,
-        abortController.signal,
       );
     } else {
       executePromise = vscodeHost.executeToolCall(this.toolName, args, {
@@ -277,7 +275,6 @@ export class ManagedToolCallLifeCycle
   private runNewTask(
     args: NewTaskParameterType,
     serializedAbortSignal: ThreadAbortSignalSerialization,
-    abortSignal: AbortSignal,
   ): Promise<NewTaskReturnType> {
     const uid = args._meta?.uid;
     if (!uid) {
@@ -287,7 +284,6 @@ export class ManagedToolCallLifeCycle
     return Promise.resolve({
       uid,
       serializedAbortSignal,
-      abortSignal,
     });
   }
 
@@ -391,18 +387,14 @@ export class ManagedToolCallLifeCycle
     });
   }
 
-  private onExecuteNewTask({
-    uid,
-    abortSignal,
-    serializedAbortSignal,
-  }: NewTaskReturnType) {
+  private onExecuteNewTask({ uid, serializedAbortSignal }: NewTaskReturnType) {
     const { abortController } = this.checkState("onExecuteNewTask", "execute");
     this.transitTo("execute", {
       type: "execute:streaming",
       abortController,
       streamingResult: {
         toolName: "newTask",
-        abortSignal,
+        abortSignal: abortController.signal,
         serializedAbortSignal,
         throws: (error: string) => {
           this.transitTo("execute:streaming", {
