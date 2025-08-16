@@ -1,6 +1,6 @@
 import "./telemetry";
 
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import { app } from "./app";
 import { startListenDBEvents } from "./db/events";
 import { startWorkers } from "./service/background-job";

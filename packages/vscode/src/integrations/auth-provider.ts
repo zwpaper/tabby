@@ -1,7 +1,7 @@
 import type { AuthClient } from "@/lib/auth-client";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { AuthEvents } from "@/lib/auth-events";
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import { inject, singleton } from "tsyringe";
 import {
   type AuthenticationProvider,

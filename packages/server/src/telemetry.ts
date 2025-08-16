@@ -1,3 +1,4 @@
+import { attachTransport } from "@getpochi/common";
 import { trace } from "@opentelemetry/api";
 import { SeverityNumber, logs } from "@opentelemetry/api-logs";
 import {
@@ -10,7 +11,6 @@ import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { SimpleLogRecordProcessor } from "@opentelemetry/sdk-logs";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import { attachTransport } from "@ragdoll/common";
 
 const logAsEvent = false;
 

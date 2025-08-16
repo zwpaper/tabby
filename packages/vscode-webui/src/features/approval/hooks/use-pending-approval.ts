@@ -1,4 +1,4 @@
-import type { Message } from "@ragdoll/livekit";
+import type { Message } from "@getpochi/livekit";
 import {
   type PendingRetryApproval,
   usePendingRetryApproval,

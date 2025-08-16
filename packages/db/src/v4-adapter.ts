@@ -3,8 +3,8 @@
  */
 
 import { type Tool, asSchema, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
+import type { Message } from "@getpochi/livekit";
 import { ClientTools } from "@getpochi/tools";
-import type { Message } from "@ragdoll/livekit";
 import type { UIMessage as V4UIMessage } from "ai";
 import type { DBMessage } from "./index";
 

@@ -1,8 +1,8 @@
 import * as readline from "node:readline/promises";
+import { type RequestMetadata, catalog } from "@getpochi/livekit";
+import { LiveChatKit } from "@getpochi/livekit/node";
 import { makeAdapter } from "@livestore/adapter-node";
 import { type LiveStoreSchema, createStorePromise } from "@livestore/livestore";
-import { type RequestMetadata, catalog } from "@ragdoll/livekit";
-import { LiveChatKit } from "@ragdoll/livekit/node";
 import { Chat } from "./chat.node";
 
 const adapter = makeAdapter({

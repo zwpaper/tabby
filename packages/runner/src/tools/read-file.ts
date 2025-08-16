@@ -1,10 +1,10 @@
 import * as fs from "node:fs/promises";
-import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import {
   resolvePath,
   selectFileContent,
   validateTextFile,
-} from "@ragdoll/common/tool-utils";
+} from "@getpochi/common/tool-utils";
+import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import type { ToolCallOptions } from "../types";
 
 export const readFile =

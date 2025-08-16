@@ -1,7 +1,7 @@
 import type { UseChatHelpers } from "@ai-v5-sdk/react";
-import { prompts } from "@ragdoll/common";
-import { prepareLastMessageForRetry } from "@ragdoll/common/message-utils";
-import type { Message } from "@ragdoll/livekit";
+import { prompts } from "@getpochi/common";
+import { prepareLastMessageForRetry } from "@getpochi/common/message-utils";
+import type { Message } from "@getpochi/livekit";
 import { useCallback } from "react";
 import { ReadyForRetryError } from "./use-ready-for-retry-error";
 

@@ -1,7 +1,7 @@
+import { prompts } from "@getpochi/common";
+import { PochiApiErrors } from "@getpochi/common/pochi-api";
+import type { Message } from "@getpochi/livekit";
 import type { Todo } from "@getpochi/tools";
-import { prompts } from "@ragdoll/common";
-import { PochiApiErrors } from "@ragdoll/common/pochi-api";
-import type { Message } from "@ragdoll/livekit";
 import type { AnyBlock } from "@slack/web-api";
 import slackifyMarkdown from "slackify-markdown";
 

@@ -1,6 +1,6 @@
 import { window } from "vscode";
-export { getLogger } from "@ragdoll/common";
-import { attachTransport } from "@ragdoll/common";
+export { getLogger } from "@getpochi/common";
+import { attachTransport } from "@getpochi/common";
 
 const outputChannel = window.createOutputChannel("Pochi", { log: true });
 

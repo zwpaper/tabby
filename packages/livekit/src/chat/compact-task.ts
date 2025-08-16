@@ -1,4 +1,4 @@
-import { formatters, prompts } from "@ragdoll/common";
+import { formatters, prompts } from "@getpochi/common";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
 

@@ -1,5 +1,5 @@
 import { getLogger } from "@/lib/logger";
-import { getShellPath } from "@ragdoll/common/tool-utils";
+import { getShellPath } from "@getpochi/common/tool-utils";
 import * as vscode from "vscode";
 import { OutputManager } from "./output";
 import { ExecutionError, createBackgroundOutputStream } from "./utils";

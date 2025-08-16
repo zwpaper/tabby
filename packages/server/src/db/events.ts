@@ -1,4 +1,4 @@
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import type { DB, TaskCreateEvent } from "@ragdoll/db";
 import { slackTaskService } from "../service/slack-task";
 import { taskEvents } from "../service/task-events";

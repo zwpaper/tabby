@@ -6,7 +6,7 @@ import { ActiveSelectionBadge } from "@/components/prompt-form/active-selection-
 import { FormEditor } from "@/components/prompt-form/form-editor";
 import type { useApprovalAndRetry } from "@/features/approval";
 import type { UseChatHelpers } from "@ai-v5-sdk/react";
-import type { Message } from "@ragdoll/livekit";
+import type { Message } from "@getpochi/livekit";
 
 interface ChatInputFormProps {
   input: string;

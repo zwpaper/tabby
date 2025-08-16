@@ -1,9 +1,9 @@
 import type { PendingToolCallApproval } from "@/features/approval";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { type ToolUIPart, getToolName } from "@ai-v5-sdk/ai";
+import { type UITools, catalog } from "@getpochi/livekit";
 import { ToolsByPermission } from "@getpochi/tools";
 import { useStore } from "@livestore/react";
-import { type UITools, catalog } from "@ragdoll/livekit";
 import { useAutoApprove } from "./use-auto-approve";
 
 export function useToolAutoApproval(

@@ -1,9 +1,9 @@
-import { Thread } from "@quilted/threads";
 import {
   type VSCodeHostApi,
   type WebviewHostApi,
   createVscodeHostStub,
-} from "@ragdoll/common/vscode-webui-bridge";
+} from "@getpochi/common/vscode-webui-bridge";
+import { Thread } from "@quilted/threads";
 import Emittery from "emittery";
 
 const channel = new Emittery();

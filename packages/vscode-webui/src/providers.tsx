@@ -1,12 +1,12 @@
 import { persister, queryClient } from "@/lib/query-client";
 import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
+import { catalog, getStoreId } from "@getpochi/livekit";
 import {
   makeInMemoryAdapter,
   makePersistedAdapter,
 } from "@livestore/adapter-web";
 import LiveStoreSharedWorker from "@livestore/adapter-web/shared-worker?sharedworker&inline";
 import { LiveStoreProvider } from "@livestore/react";
-import { catalog, getStoreId } from "@ragdoll/livekit";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useMemo } from "react";

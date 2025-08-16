@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { SocialLinks } from "@ragdoll/common";
+import { SocialLinks } from "@getpochi/common";
 
 async function readHtml(name: string) {
   return fs.readFile(`./src/templates/${name}.html`, "utf8");

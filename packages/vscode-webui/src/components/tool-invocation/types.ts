@@ -1,5 +1,5 @@
 import type { ToolUIPart } from "@ai-v5-sdk/ai";
-import type { UITools } from "@ragdoll/livekit";
+import type { UITools } from "@getpochi/livekit";
 import type { ToolCallCheckpoint } from "../message/message-list";
 
 export interface ToolProps<T extends string> {

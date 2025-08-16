@@ -1,8 +1,8 @@
-import { ThreadNestedWindow } from "@quilted/threads";
 import type {
   VSCodeHostApi,
   WebviewHostApi,
-} from "@ragdoll/common/vscode-webui-bridge";
+} from "@getpochi/common/vscode-webui-bridge";
+import { ThreadNestedWindow } from "@quilted/threads";
 import type { WebviewApi } from "vscode-webview";
 import { queryClient } from "./query-client";
 

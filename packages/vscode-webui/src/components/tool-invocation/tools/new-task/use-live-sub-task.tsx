@@ -14,10 +14,10 @@ import {
   lastAssistantMessageIsCompleteWithToolCalls,
 } from "@ai-v5-sdk/ai";
 import { useChat } from "@ai-v5-sdk/react";
+import { catalog } from "@getpochi/livekit";
+import { useLiveChatKit } from "@getpochi/livekit/react";
 import type { Todo } from "@getpochi/tools";
 import { useStore } from "@livestore/react";
-import { catalog } from "@ragdoll/livekit";
-import { useLiveChatKit } from "@ragdoll/livekit/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ToolProps } from "../../types";
 

@@ -1,4 +1,4 @@
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import chalk from "chalk";
 import { stepToString } from "./lib/step-count";
 import type { TaskRunner, TaskRunnerState } from "./task-runner";

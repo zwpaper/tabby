@@ -1,6 +1,6 @@
+import { catalog, getStoreId } from "@getpochi/livekit";
 import { makeAdapter } from "@livestore/adapter-node";
 import { type LiveStoreSchema, createStorePromise } from "@livestore/livestore";
-import { catalog, getStoreId } from "@ragdoll/livekit";
 
 const adapter = makeAdapter({
   storage: { type: "fs", baseDirectory: "./data" },

@@ -1,8 +1,8 @@
-import { threadSignal } from "@quilted/threads/signals";
 import type {
   McpConnection,
   McpStatus,
-} from "@ragdoll/common/vscode-webui-bridge";
+} from "@getpochi/common/vscode-webui-bridge";
+import { threadSignal } from "@quilted/threads/signals";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { vscodeHost } from "../vscode";

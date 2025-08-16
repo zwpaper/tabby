@@ -2,7 +2,7 @@ import { exec } from "node:child_process";
 import * as os from "node:os";
 import { promisify } from "node:util";
 import { getLogger } from "@/lib/logger";
-import { constants } from "@ragdoll/common";
+import { constants } from "@getpochi/common";
 import * as jszip from "jszip";
 import generate from "project-name-generator";
 import * as vscode from "vscode";

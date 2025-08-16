@@ -5,7 +5,7 @@ import { TaskRow } from "@/components/tasks/task-row";
 import type { FilterValues } from "@/components/tasks/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/auth-client";
-import { parseGitOriginUrl } from "@ragdoll/common/git-utils";
+import { parseGitOriginUrl } from "@getpochi/common/git-utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { go as fuzzy } from "fuzzysort";

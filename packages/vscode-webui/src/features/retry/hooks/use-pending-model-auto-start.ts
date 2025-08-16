@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import type { Task } from "@ragdoll/livekit";
+import type { Task } from "@getpochi/livekit";
 import { ReadyForRetryError } from "./use-ready-for-retry-error";
 
 interface UseEventAutoStartOptions {

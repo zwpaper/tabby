@@ -3,8 +3,8 @@ import {
   isAssistantMessageWithEmptyParts,
   isAssistantMessageWithNoToolCalls,
   isAssistantMessageWithPartialToolCalls,
-} from "@ragdoll/common/message-utils";
-import type { Message } from "@ragdoll/livekit";
+} from "@getpochi/common/message-utils";
+import type { Message } from "@getpochi/livekit";
 import { useMemo } from "react";
 
 type RetryKind = "ready" | "tool-calls" | "no-tool-calls";

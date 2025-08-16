@@ -1,8 +1,8 @@
 import * as fs from "node:fs/promises";
 import * as nodePath from "node:path";
+import { processMultipleDiffs } from "@getpochi/common/diff-utils";
+import { validateTextFile } from "@getpochi/common/tool-utils";
 import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
-import { processMultipleDiffs } from "@ragdoll/common/diff-utils";
-import { validateTextFile } from "@ragdoll/common/tool-utils";
 import { ensureFileDirectoryExists } from "../lib/fs";
 import type { ToolCallOptions } from "../types";
 

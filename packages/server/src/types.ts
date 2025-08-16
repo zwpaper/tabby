@@ -1,5 +1,5 @@
 import type { JSONSchema7 } from "@ai-v5-sdk/ai";
-import { Environment } from "@ragdoll/common";
+import { Environment } from "@getpochi/common";
 import type { DBMessage, TaskCreateEvent } from "@ragdoll/db";
 import { z } from "zod";
 

@@ -16,12 +16,12 @@ import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 import { PostHog } from "@/lib/posthog";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TokenStorage } from "@/lib/token-storage";
-import type { WebsiteTaskCreateEvent } from "@ragdoll/common";
+import type { WebsiteTaskCreateEvent } from "@getpochi/common";
 import type {
   NewTaskParams,
   TaskIdParams,
-} from "@ragdoll/common/vscode-webui-bridge";
-import { getServerBaseUrl } from "@ragdoll/common/vscode-webui-bridge";
+} from "@getpochi/common/vscode-webui-bridge";
+import { getServerBaseUrl } from "@getpochi/common/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection

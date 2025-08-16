@@ -1,5 +1,5 @@
 {
-  "name": "@ragdoll/livekit",
+  "name": "@getpochi/livekit",
   "exports": {
     ".": "./src/index.ts",
     "./react": "./src/react.tsx",
@@ -13,7 +13,7 @@
   "dependencies": {
     "@livestore/livestore": "catalog:",
     "@livestore/react": "catalog:",
-    "@ragdoll/common": "workspace:*",
+    "@getpochi/common": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "@ai-v5-sdk/ai": "catalog:",
     "@ai-v5-sdk/react": "catalog:",

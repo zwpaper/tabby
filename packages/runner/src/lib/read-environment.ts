@@ -1,10 +1,10 @@
-import type { Environment } from "@ragdoll/common";
+import type { Environment } from "@getpochi/common";
 import {
   GitStatusReader,
   collectCustomRules,
   getSystemInfo,
   listWorkspaceFiles,
-} from "@ragdoll/common/tool-utils";
+} from "@getpochi/common/tool-utils";
 import type { RunnerOptions } from "../task-runner";
 
 /**

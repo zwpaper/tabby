@@ -7,6 +7,6 @@
     "@ai-v5-sdk/ai": "catalog:",
     "@livestore/adapter-node": "catalog:",
     "@livestore/livestore": "catalog:",
-    "@ragdoll/livekit": "workspace:*"
+    "@getpochi/livekit": "workspace:*"
   }
 }

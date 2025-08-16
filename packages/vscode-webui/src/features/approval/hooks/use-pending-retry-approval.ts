@@ -1,6 +1,6 @@
 import { useAutoApproveGuard } from "@/features/chat";
 import { useAutoApprove } from "@/features/settings";
-import { PochiApiErrors } from "@ragdoll/common/pochi-api";
+import { PochiApiErrors } from "@getpochi/common/pochi-api";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // fibonacci sequence starting from 1, 2, 3, 5, 8...

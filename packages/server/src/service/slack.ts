@@ -1,6 +1,6 @@
 import type { Server } from "node:http";
+import { getLogger } from "@getpochi/common";
 import { type Span, SpanStatusCode, trace } from "@opentelemetry/api";
-import { getLogger } from "@ragdoll/common";
 import type { DB } from "@ragdoll/db";
 import type { ButtonAction } from "@slack/bolt";
 import { App, type Installation } from "@slack/bolt";

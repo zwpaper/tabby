@@ -1,11 +1,11 @@
 import { mkdir } from "node:fs/promises";
 import * as path from "node:path";
 import { getWorkspaceFolder } from "@/lib/fs";
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import type {
   SaveCheckpointOptions,
   UserEditsDiff,
-} from "@ragdoll/common/vscode-webui-bridge";
+} from "@getpochi/common/vscode-webui-bridge";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import { ShadowGitRepo } from "./shadow-git-repo";

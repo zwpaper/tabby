@@ -1,5 +1,5 @@
-import { getLogger } from "@ragdoll/common";
-import { resolvePath } from "@ragdoll/common/tool-utils";
+import { getLogger } from "@getpochi/common";
+import { resolvePath } from "@getpochi/common/tool-utils";
 import * as diff from "diff";
 import * as vscode from "vscode";
 import { diagnosticsToProblemsString, getNewDiagnostics } from "./diagnostic";

@@ -12,7 +12,7 @@ import { useMcp } from "@/lib/hooks/use-mcp";
 import { cn } from "@/lib/utils";
 import { getFileName } from "@/lib/utils/file";
 import { vscodeHost } from "@/lib/vscode";
-import type { McpConnection } from "@ragdoll/common/vscode-webui-bridge";
+import type { McpConnection } from "@getpochi/common/vscode-webui-bridge";
 import {
   ChevronsUpDown,
   Dot,

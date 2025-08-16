@@ -1,7 +1,7 @@
 import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { MessageList } from "@/components/message/message-list";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
-import type { Message } from "@ragdoll/livekit";
+import type { Message } from "@getpochi/livekit";
 import { Loader2 } from "lucide-react";
 import type React from "react";
 

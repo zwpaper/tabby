@@ -10,11 +10,11 @@
       "outputs": ["dist/**"]
     },
     "pochi#build": {
-      "dependsOn": ["@ragdoll/vscode-webui#build"],
+      "dependsOn": ["@getpochi/vscode-webui#build"],
       "outputs": ["assets/webview-ui/**", "dist/**"]
     },
     "@ragdoll/website#build": {
-      "dependsOn": ["@ragdoll/vscode-webui#build"],
+      "dependsOn": ["@getpochi/vscode-webui#build"],
       "outputs": ["dist/**"]
     }
   },

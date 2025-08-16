@@ -10,9 +10,9 @@ import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
 import { convertToModelMessages } from "@ai-v5-sdk/ai";
+import type { Environment } from "@getpochi/common";
+import type { Message } from "@getpochi/livekit";
 import type { Todo } from "@getpochi/tools";
-import type { Environment } from "@ragdoll/common";
-import type { Message } from "@ragdoll/livekit";
 
 import { CheckIcon, CopyIcon, Gavel } from "lucide-react"; // Removed FilesIcon
 import type React from "react";

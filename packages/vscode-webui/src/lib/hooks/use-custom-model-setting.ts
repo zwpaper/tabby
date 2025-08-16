@@ -1,6 +1,6 @@
 import { vscodeHost } from "@/lib/vscode";
+import type { CustomModelSetting } from "@getpochi/common/vscode-webui-bridge";
 import { threadSignal } from "@quilted/threads/signals";
-import type { CustomModelSetting } from "@ragdoll/common/vscode-webui-bridge";
 import { useQuery } from "@tanstack/react-query";
 
 const isValidCustomModel = (model: CustomModelSetting["models"][number]) => {

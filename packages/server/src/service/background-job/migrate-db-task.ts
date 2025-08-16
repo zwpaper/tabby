@@ -1,4 +1,4 @@
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import type { DBMessage } from "@ragdoll/db";
 import { fromDBMessage } from "@ragdoll/db/v4-adapter";
 import { Queue, Worker } from "bullmq";

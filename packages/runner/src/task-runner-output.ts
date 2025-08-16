@@ -1,6 +1,6 @@
 import { type ToolUIPart, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
-import { formatters } from "@ragdoll/common";
-import type { Message, UITools } from "@ragdoll/livekit";
+import { formatters } from "@getpochi/common";
+import type { Message, UITools } from "@getpochi/livekit";
 import chalk from "chalk";
 import deepEqual from "fast-deep-equal";
 import loading from "loading-cli";

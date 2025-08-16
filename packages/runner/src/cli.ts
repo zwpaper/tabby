@@ -4,10 +4,10 @@ import "@livestore/wa-sqlite/dist/wa-sqlite.node.wasm" with { type: "file" };
 
 import { Console } from "node:console";
 import { Command } from "@commander-js/extra-typings";
-import { getLogger } from "@ragdoll/common";
-import type { PochiApi } from "@ragdoll/common/pochi-api";
-import { CredentialStorage } from "@ragdoll/common/tool-utils";
-import type { LLMRequestData } from "@ragdoll/livekit";
+import { getLogger } from "@getpochi/common";
+import type { PochiApi } from "@getpochi/common/pochi-api";
+import { CredentialStorage } from "@getpochi/common/tool-utils";
+import type { LLMRequestData } from "@getpochi/livekit";
 import chalk from "chalk";
 import * as commander from "commander";
 import { hc } from "hono/client";

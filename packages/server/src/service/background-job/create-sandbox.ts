@@ -1,5 +1,5 @@
 import path from "node:path";
-import { constants, getLogger } from "@ragdoll/common";
+import { constants, getLogger } from "@getpochi/common";
 import { Queue, Worker } from "bullmq";
 import { db, minionIdCoder } from "../../db";
 import { spanConfig } from "../../trace";

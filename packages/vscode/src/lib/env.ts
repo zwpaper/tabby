@@ -5,8 +5,8 @@ import {
   SystemRulesFilepath,
   collectCustomRules as collectCustomRulesImpl,
   getSystemInfo as getSystemInfoImpl,
-} from "@ragdoll/common/tool-utils";
-import type { RuleFile } from "@ragdoll/common/vscode-webui-bridge";
+} from "@getpochi/common/tool-utils";
+import type { RuleFile } from "@getpochi/common/vscode-webui-bridge";
 import * as vscode from "vscode";
 import {
   getWorkspaceFolder,

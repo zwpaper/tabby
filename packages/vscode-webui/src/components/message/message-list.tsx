@@ -16,8 +16,8 @@ import {
   type ToolUIPart,
   isToolUIPart,
 } from "@ai-v5-sdk/ai";
-import { prompts } from "@ragdoll/common";
-import type { Message, UITools } from "@ragdoll/livekit";
+import { prompts } from "@getpochi/common";
+import type { Message, UITools } from "@getpochi/livekit";
 import { useEffect } from "react";
 import { CheckpointUI } from "../checkpoint-ui";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";

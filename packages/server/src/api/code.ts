@@ -6,7 +6,7 @@ import { requireAuth } from "../auth";
 import {
   CodeCompletionRequest,
   type CodeCompletionResponse,
-} from "@ragdoll/common/pochi-api";
+} from "@getpochi/common/pochi-api";
 import { checkUserCodeCompletionQuota } from "../lib/check-request";
 import { codeCompletionService } from "../service/code-completion";
 import { usageService } from "../service/usage";

@@ -1,7 +1,7 @@
 import { type ToolCallLifeCycle, useToolCallLifeCycle } from "@/features/chat";
 import { isToolUIPart } from "@ai-v5-sdk/ai";
 import type { Chat } from "@ai-v5-sdk/react";
-import type { Message } from "@ragdoll/livekit";
+import type { Message } from "@getpochi/livekit";
 import { useEffect } from "react";
 
 interface UseAddCompleteToolCallsProps {

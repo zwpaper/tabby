@@ -3,12 +3,12 @@ import { TerminalJob } from "@/integrations/terminal/terminal-job";
 import type { ExecuteCommandOptions } from "@/integrations/terminal/types";
 import { waitForWebviewSubscription } from "@/integrations/terminal/utils";
 import { getWorkspaceFolder } from "@/lib/fs";
+import { getLogger } from "@getpochi/common";
+import { getShellPath } from "@getpochi/common/tool-utils";
+import type { ExecuteCommandResult } from "@getpochi/common/vscode-webui-bridge";
 import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
 import { type Signal, signal } from "@preact/signals-core";
 import { ThreadSignal } from "@quilted/threads/signals";
-import { getLogger } from "@ragdoll/common";
-import { getShellPath } from "@ragdoll/common/tool-utils";
-import type { ExecuteCommandResult } from "@ragdoll/common/vscode-webui-bridge";
 import { executeCommandWithNode } from "../integrations/terminal/execute-command-with-node";
 import {
   PtySpawnError,

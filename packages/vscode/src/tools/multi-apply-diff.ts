@@ -2,13 +2,13 @@ import { DiffView } from "@/integrations/editor/diff-view";
 import { ensureFileDirectoryExists, getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
 import { writeTextDocument } from "@/lib/write-text-document";
+import { processMultipleDiffs } from "@getpochi/common/diff-utils";
+import { validateTextFile } from "@getpochi/common/tool-utils";
 import type { ClientToolsType } from "@getpochi/tools";
 import type {
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@getpochi/tools";
-import { processMultipleDiffs } from "@ragdoll/common/diff-utils";
-import { validateTextFile } from "@ragdoll/common/tool-utils";
 import * as vscode from "vscode";
 
 const logger = getLogger("multiApplyDiffTool");

@@ -5,7 +5,7 @@ import { FPSMeter } from "@overengineering/fps-meter";
 import type React from "react";
 import { unstable_batchedUpdates as batchUpdates } from "react-dom";
 
-import { catalog } from "@ragdoll/livekit";
+import { catalog } from "@getpochi/livekit";
 import Page from "./components/chat.js";
 import LiveStoreWorker from "./livestore.worker?worker";
 

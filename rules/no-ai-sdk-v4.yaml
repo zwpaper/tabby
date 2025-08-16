@@ -4,7 +4,7 @@ rule:
   any:
     - pattern: UIMessage
     - pattern: ToolInvocation
-message: Don't use UIMessage (vercel v4), use Message (defined in @ragdoll/livekit) instead.
+message: Don't use UIMessage (vercel v4), use Message (defined in @getpochi/livekit) instead.
 severity: error
 files:
   - "packages/vscode-webui/src/**/*.ts"

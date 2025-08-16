@@ -1,7 +1,7 @@
 import { useChat } from "@ai-v5-sdk/react";
+import { catalog } from "@getpochi/livekit";
+import { useLiveChatKit } from "@getpochi/livekit/react";
 import { useStore } from "@livestore/react";
-import { catalog } from "@ragdoll/livekit";
-import { useLiveChatKit } from "@ragdoll/livekit/react";
 import { useEffect, useRef, useState } from "react";
 
 export function ChatView({ taskId }: { taskId: string }) {

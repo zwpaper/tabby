@@ -17,7 +17,7 @@ import {
   validateImages,
 } from "@/lib/utils/image";
 import { AuthCard } from "@daveyplate/better-auth-ui";
-import { PochiApiErrors } from "@ragdoll/common/pochi-api";
+import { PochiApiErrors } from "@getpochi/common/pochi-api";
 import { useRouter } from "@tanstack/react-router";
 import {
   ArrowUpIcon,

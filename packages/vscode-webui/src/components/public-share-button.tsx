@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { vscodeHost } from "@/lib/vscode";
-import { SocialLinks, prompts } from "@ragdoll/common";
-import { getServerBaseUrl } from "@ragdoll/common/vscode-webui-bridge";
+import { SocialLinks, prompts } from "@getpochi/common";
+import { getServerBaseUrl } from "@getpochi/common/vscode-webui-bridge";
 import {
   CheckIcon,
   CopyIcon,

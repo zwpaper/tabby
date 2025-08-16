@@ -6,7 +6,7 @@ import { getLogger } from "@/lib/logger";
 import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorkspaceJobQueue } from "@/lib/workspace-job";
-import { WebsiteTaskCreateEvent } from "@ragdoll/common";
+import { WebsiteTaskCreateEvent } from "@getpochi/common";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 

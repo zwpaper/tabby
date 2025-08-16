@@ -1,4 +1,4 @@
-import type { WebsiteTaskCreateEvent } from "@ragdoll/common";
+import type { WebsiteTaskCreateEvent } from "@getpochi/common";
 import type { UIMessage } from "ai";
 import type { DB } from ".";
 

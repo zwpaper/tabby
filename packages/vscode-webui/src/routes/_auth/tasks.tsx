@@ -12,9 +12,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { cn } from "@/lib/utils";
+import { parseTitle } from "@getpochi/common/message-utils";
+import { type Task, catalog } from "@getpochi/livekit";
 import { useStore } from "@livestore/react";
-import { parseTitle } from "@ragdoll/common/message-utils";
-import { type Task, catalog } from "@ragdoll/livekit";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import {
   Brain,

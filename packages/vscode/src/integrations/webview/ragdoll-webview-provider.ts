@@ -3,14 +3,14 @@ import { VSCodeHostImpl } from "@/integrations/webview/vscode-host-impl";
 import { AuthEvents } from "@/lib/auth-events";
 import { getNonce } from "@/lib/get-nonce";
 import { getUri } from "@/lib/get-uri";
-import { Thread } from "@quilted/threads";
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import {
   type ResourceURI,
   type VSCodeHostApi,
   type WebviewHostApi,
   getServerBaseUrl,
-} from "@ragdoll/common/vscode-webui-bridge";
+} from "@getpochi/common/vscode-webui-bridge";
+import { Thread } from "@quilted/threads";
 import { container, inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection

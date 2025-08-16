@@ -3,13 +3,13 @@ import {
   type ToolSet,
   experimental_createMCPClient as createClient,
 } from "@ai-v5-sdk/ai";
+import type { McpToolStatus } from "@getpochi/common/vscode-webui-bridge";
 import {
   StdioClientTransport,
   getDefaultEnvironment,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { type Signal, signal } from "@preact/signals-core";
-import type { McpToolStatus } from "@ragdoll/common/vscode-webui-bridge";
 import { createMachine, interpret } from "@xstate/fsm";
 import type * as vscode from "vscode";
 import {

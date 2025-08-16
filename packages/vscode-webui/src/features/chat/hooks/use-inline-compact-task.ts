@@ -1,5 +1,5 @@
 import type { UseChatHelpers } from "@ai-v5-sdk/react";
-import type { Message } from "@ragdoll/livekit";
+import type { Message } from "@getpochi/livekit";
 import { useState } from "react";
 
 export const useInlineCompactTask = ({

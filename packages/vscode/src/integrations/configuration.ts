@@ -1,5 +1,5 @@
+import type { CustomModelSetting } from "@getpochi/common/vscode-webui-bridge";
 import { signal } from "@preact/signals-core";
-import type { CustomModelSetting } from "@ragdoll/common/vscode-webui-bridge";
 import deepEqual from "fast-deep-equal";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";

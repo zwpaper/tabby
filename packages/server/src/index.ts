@@ -3,13 +3,13 @@ export type {
   TaskCreateEvent,
   ExternalIntegrationsEvent,
 } from "@ragdoll/db";
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import { EventSource, type EventSourceInit } from "eventsource";
 import type { hc } from "hono/client";
 import type { AppType } from "./server";
 export type * from "./types";
 export type { AppType } from "./server";
-export { deviceLinkClient } from "@ragdoll/common/device-link/client";
+export { deviceLinkClient } from "@getpochi/common/device-link/client";
 
 export type { auth } from "./better-auth";
 

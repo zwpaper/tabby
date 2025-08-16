@@ -1,5 +1,5 @@
+import { getLogger } from "@getpochi/common";
 import { Octokit } from "@octokit/rest";
-import { getLogger } from "@ragdoll/common";
 import { sql } from "kysely";
 import { db } from "../db";
 

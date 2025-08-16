@@ -1,10 +1,10 @@
 import type { AnyBlock, WebClient } from "@slack/web-api";
 
 import { getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
+import { getLogger } from "@getpochi/common";
+import type { Message } from "@getpochi/livekit";
 import type { Todo } from "@getpochi/tools";
-import { getLogger } from "@ragdoll/common";
 import type { TaskCreateEvent } from "@ragdoll/db";
-import type { Message } from "@ragdoll/livekit";
 import { enqueueNotifyTaskSlack } from "../background-job";
 import { githubService } from "../github";
 import { slackService } from "../slack";

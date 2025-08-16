@@ -11,7 +11,7 @@ import {
 } from "@/lib/fs";
 import { createPrettyPatch } from "@/lib/fs";
 import { getLogger } from "@/lib/logger";
-import { resolvePath } from "@ragdoll/common/tool-utils";
+import { resolvePath } from "@getpochi/common/tool-utils";
 import * as diff from "diff";
 import * as runExclusive from "run-exclusive";
 import * as vscode from "vscode";

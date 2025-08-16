@@ -1,4 +1,4 @@
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import type { DB } from "@ragdoll/db";
 import { Kysely, PostgresDialect } from "kysely";
 import moment from "moment";

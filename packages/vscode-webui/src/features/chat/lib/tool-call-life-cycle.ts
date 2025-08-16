@@ -1,5 +1,8 @@
 import { vscodeHost } from "@/lib/vscode";
 import type { InferToolInput, ToolUIPart } from "@ai-v5-sdk/ai";
+import { getLogger } from "@getpochi/common";
+import type { ExecuteCommandResult } from "@getpochi/common/vscode-webui-bridge";
+import { type Message, type Task, catalog } from "@getpochi/livekit";
 import type { ClientToolsType } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import {
@@ -10,9 +13,6 @@ import {
   type ThreadSignalSerialization,
   threadSignal,
 } from "@quilted/threads/signals";
-import { getLogger } from "@ragdoll/common";
-import type { ExecuteCommandResult } from "@ragdoll/common/vscode-webui-bridge";
-import { type Message, type Task, catalog } from "@ragdoll/livekit";
 import Emittery from "emittery";
 import type { ToolCallLifeCycleKey } from "./chat-state/types";
 

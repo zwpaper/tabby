@@ -8,7 +8,7 @@ import {
   type McpServerConfig,
   type McpToolExecutable,
 } from "../types";
-import type { McpToolStatus } from "@ragdoll/common/vscode-webui-bridge";
+import type { McpToolStatus } from "@getpochi/common/vscode-webui-bridge";
 
 describe("MCP Types", () => {
   describe("isStdioTransport", () => {

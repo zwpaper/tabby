@@ -1,4 +1,4 @@
-import { getLogger } from "@ragdoll/common";
+import { getLogger } from "@getpochi/common";
 import { Queue, Worker } from "bullmq";
 import { db } from "../../db";
 import { stripeClient } from "../../lib/stripe";

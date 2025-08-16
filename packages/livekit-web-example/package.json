@@ -14,7 +14,7 @@
     "react": "catalog:",
     "react-dom": "^19.0.0",
     "todomvc-app-css": "2.4.3",
-    "@ragdoll/livekit": "workspace:*"
+    "@getpochi/livekit": "workspace:*"
   },
   "devDependencies": {
     "@livestore/devtools-vite": "^0.3.1",

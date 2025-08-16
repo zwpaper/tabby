@@ -9,7 +9,7 @@ import { useSession } from "@/lib/auth-hooks";
 import { normalizeApiError, toHttpError } from "@/lib/error";
 import { inlineSubTasks } from "@/lib/inline-sub-task";
 import { cn } from "@/lib/utils";
-import type { Message } from "@ragdoll/livekit";
+import type { Message } from "@getpochi/livekit";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 

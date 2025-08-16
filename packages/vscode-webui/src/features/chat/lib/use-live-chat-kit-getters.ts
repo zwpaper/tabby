@@ -4,10 +4,10 @@ import { useLatest } from "@/lib/hooks/use-latest";
 import { useMcp } from "@/lib/hooks/use-mcp";
 import { usePochiModelSettings } from "@/lib/hooks/use-pochi-model-settings";
 import { vscodeHost } from "@/lib/vscode";
+import type { Environment } from "@getpochi/common";
+import type { UserEditsDiff } from "@getpochi/common/vscode-webui-bridge";
+import type { LLMRequestData, Message } from "@getpochi/livekit";
 import type { Todo } from "@getpochi/tools";
-import type { Environment } from "@ragdoll/common";
-import type { UserEditsDiff } from "@ragdoll/common/vscode-webui-bridge";
-import type { LLMRequestData, Message } from "@ragdoll/livekit";
 import { useCallback } from "react";
 
 export function useLiveChatKitGetters({

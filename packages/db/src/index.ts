@@ -1,5 +1,5 @@
-import type { Environment } from "@ragdoll/common";
-import type { Message } from "@ragdoll/livekit";
+import type { Environment } from "@getpochi/common";
+import type { Message } from "@getpochi/livekit";
 import type { ColumnType, Generated, JSONColumnType } from "kysely";
 import type { ExternalIntegrationVendorData } from "./external-integration";
 import type { DB as DbImpl } from "./schema";

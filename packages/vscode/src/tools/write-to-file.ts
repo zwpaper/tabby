@@ -1,12 +1,12 @@
 import { DiffView } from "@/integrations/editor/diff-view";
 import { getLogger } from "@/lib/logger";
 import { writeTextDocument } from "@/lib/write-text-document";
+import { fixCodeGenerationOutput } from "@getpochi/common/message-utils";
 import type {
   ClientToolsType,
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@getpochi/tools";
-import { fixCodeGenerationOutput } from "@ragdoll/common/message-utils";
 
 const logger = getLogger("writeToFileTool");
 

@@ -4,7 +4,7 @@ import {
   type ChatState,
   type ChatStatus,
 } from "@ai-v5-sdk/ai";
-import type { Message } from "@ragdoll/livekit";
+import type { Message } from "@getpochi/livekit";
 
 class NodeChatState implements ChatState<Message> {
   messages: Message[];

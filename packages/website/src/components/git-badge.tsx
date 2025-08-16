@@ -1,6 +1,9 @@
 import type { apiClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import { type GitPlatform, parseGitOriginUrl } from "@ragdoll/common/git-utils";
+import {
+  type GitPlatform,
+  parseGitOriginUrl,
+} from "@getpochi/common/git-utils";
 import {
   IconBrandBitbucket,
   IconBrandGithub,

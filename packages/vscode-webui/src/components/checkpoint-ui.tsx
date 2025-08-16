@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { DataParts } from "@ragdoll/livekit";
+import type { DataParts } from "@getpochi/livekit";
 import { useState } from "react";
 import { Button } from "./ui/button";
 

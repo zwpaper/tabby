@@ -5,7 +5,7 @@ import { getLogger } from "@/lib/logger";
 import type {
   CodeCompletionRequest,
   CodeCompletionResponse,
-} from "@ragdoll/common/pochi-api";
+} from "@getpochi/common/pochi-api";
 import { inject, injectable, singleton } from "tsyringe";
 import type * as vscode from "vscode";
 import { CodeCompletionConfig } from "./configuration";

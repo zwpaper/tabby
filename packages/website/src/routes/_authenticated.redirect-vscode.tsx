@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { WebsiteTaskCreateEvent } from "@ragdoll/common";
+import { WebsiteTaskCreateEvent } from "@getpochi/common";
 import { createFileRoute } from "@tanstack/react-router";
 import { LifeBuoy, Loader2, Puzzle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";

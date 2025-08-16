@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "kysely": "catalog:",
-    "@ragdoll/common": "workspace:*",
+    "@getpochi/common": "workspace:*",
     "@getpochi/tools": "workspace:*",
     "ai": "catalog:"
   },
@@ -17,7 +17,7 @@
   "devDependencies": {
     "@slack/bolt": "catalog:",
     "@ai-v5-sdk/ai": "catalog:",
-    "@ragdoll/livekit": "workspace:*",
+    "@getpochi/livekit": "workspace:*",
     "kysely-codegen": "^0.18.3"
   }
 }

@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { join } from "node:path";
-import { isFileExists } from "@ragdoll/common/tool-utils";
+import { isFileExists } from "@getpochi/common/tool-utils";
 
 const getBuildArtifactPatterns = () => [
   ".gradle/",

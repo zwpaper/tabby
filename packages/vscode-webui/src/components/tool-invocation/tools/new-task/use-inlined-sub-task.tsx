@@ -1,5 +1,5 @@
 import type { TaskThreadSource } from "@/components/task-thread";
-import type { Message } from "@ragdoll/livekit";
+import type { Message } from "@getpochi/livekit";
 import type { ToolProps } from "../../types";
 
 export function useInlinedSubTask(
