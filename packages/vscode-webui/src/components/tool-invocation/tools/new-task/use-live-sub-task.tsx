@@ -1,5 +1,9 @@
 import type { TaskThreadSource } from "@/components/task-thread";
-import { useLiveChatKitGetters, useToolCallLifeCycle } from "@/features/chat";
+import {
+  type ToolCallLifeCycle,
+  useLiveChatKitGetters,
+  useToolCallLifeCycle,
+} from "@/features/chat";
 
 import {
   ReadyForRetryError,
@@ -46,6 +50,12 @@ export function useLiveSubTask({
     taskId: uid,
     getters,
     sendAutomaticallyWhen: (x) => {
+      const streamingResult = ensureNewTaskStreamingResult(
+        lifecycle.streamingResult,
+      );
+      if (!streamingResult || streamingResult.abortSignal.aborted) {
+        return false;
+      }
       // AI SDK v5 will retry regardless of the status if sendAutomaticallyWhen is set.
       if (chatKit.chat.status === "error") {
         return false;
@@ -53,7 +63,10 @@ export function useLiveSubTask({
       return lastAssistantMessageIsCompleteWithToolCalls(x);
     },
     onToolCall: async ({ toolCall }) => {
-      if (lifecycle.streamingResult?.toolName !== "newTask") {
+      const streamingResult = ensureNewTaskStreamingResult(
+        lifecycle.streamingResult,
+      );
+      if (!streamingResult) {
         throw new Error("Unexpected parent toolCall state");
       }
 
@@ -71,7 +84,7 @@ export function useLiveSubTask({
         toolCall.input,
         {
           toolCallId: toolCall.toolCallId,
-          abortSignal: lifecycle.streamingResult.serializedAbortSignal,
+          abortSignal: streamingResult.serializedAbortSignal,
           nonInteractive: true,
         },
       );
@@ -100,12 +113,17 @@ export function useLiveSubTask({
   });
 
   useEffect(() => {
-    if (!isExecuting || lifecycle.streamingResult?.toolName !== "newTask") {
+    const streamingResult = ensureNewTaskStreamingResult(
+      lifecycle.streamingResult,
+    );
+    if (!isExecuting || !streamingResult) {
       return;
     }
 
-    const onAbort = () => stop();
-    const { abortSignal } = lifecycle.streamingResult;
+    const onAbort = () => {
+      stop();
+    };
+    const { abortSignal } = streamingResult;
     abortSignal.addEventListener("abort", onAbort);
     return () => {
       abortSignal.removeEventListener("abort", onAbort);
@@ -129,12 +147,15 @@ export function useLiveSubTask({
   );
   const retryWithCount = useCallback(
     (error?: Error) => {
-      if (!isExecuting || lifecycle.streamingResult?.toolName !== "newTask") {
+      const streamingResult = ensureNewTaskStreamingResult(
+        lifecycle.streamingResult,
+      );
+      if (!isExecuting || !streamingResult) {
         return;
       }
       setRetryCount((count) => count + 1);
       if (retryCount > SubtaskMaxRetry) {
-        lifecycle.streamingResult.throws(
+        streamingResult.throws(
           "The sub-task failed to complete, max retry count reached.",
         );
         return;
@@ -160,7 +181,10 @@ export function useLiveSubTask({
     }
   }, [errorForRetry, setPendingErrorForRetry, status, isExecuting]);
   useEffect(() => {
-    if (!isExecuting || lifecycle.streamingResult?.toolName !== "newTask") {
+    const streamingResult = ensureNewTaskStreamingResult(
+      lifecycle.streamingResult,
+    );
+    if (!isExecuting || !streamingResult) {
       return;
     }
     if (pendingErrorForRetry) {
@@ -189,11 +213,14 @@ export function useLiveSubTask({
   }, [stepCount, currentStepCount, isExecuting]);
 
   useEffect(() => {
-    if (!isExecuting || lifecycle.streamingResult?.toolName !== "newTask") {
+    const streamingResult = ensureNewTaskStreamingResult(
+      lifecycle.streamingResult,
+    );
+    if (!isExecuting || !streamingResult) {
       return;
     }
     if (currentStepCount > SubtaskMaxStep) {
-      lifecycle.streamingResult.throws(
+      streamingResult.throws(
         "The sub-task failed to complete, max step count reached.",
       );
     }
@@ -218,10 +245,21 @@ export function useLiveSubTask({
     todosRef,
   });
 
+  const isLoading = useMemo(() => {
+    const streamingResult = ensureNewTaskStreamingResult(
+      lifecycle.streamingResult,
+    );
+    return (
+      streamingResult &&
+      !streamingResult.abortSignal.aborted &&
+      (status === "submitted" || status === "streaming")
+    );
+  }, [lifecycle.streamingResult, status]);
+
   return {
     messages,
     todos,
-    isLoading: status === "submitted" || status === "streaming",
+    isLoading,
   };
 }
 
@@ -242,4 +280,13 @@ const useInitAutoStart = ({
       start();
     }
   }, [start, enabled]);
+};
+
+const ensureNewTaskStreamingResult = (
+  streamingResult: ToolCallLifeCycle["streamingResult"],
+) => {
+  if (streamingResult?.toolName !== "newTask") {
+    return undefined;
+  }
+  return streamingResult;
 };

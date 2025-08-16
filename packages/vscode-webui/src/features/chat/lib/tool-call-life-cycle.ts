@@ -388,6 +388,13 @@ export class ManagedToolCallLifeCycle
   }
 
   private onExecuteNewTask({ uid, serializedAbortSignal }: NewTaskReturnType) {
+    const cleanupFns: (() => void)[] = [];
+    const cleanup = () => {
+      for (const fn of cleanupFns) {
+        fn();
+      }
+    };
+
     const { abortController } = this.checkState("onExecuteNewTask", "execute");
     this.transitTo("execute", {
       type: "execute:streaming",
@@ -404,43 +411,54 @@ export class ManagedToolCallLifeCycle
             },
             reason: "execute-finish",
           });
-          unsubscribe();
+          cleanup();
         },
       },
     });
 
+    const onAbort = () => {
+      this.transitTo("execute:streaming", {
+        type: "complete",
+        result: {
+          error: abortController.signal.reason,
+        },
+        reason: "user-abort",
+      });
+      cleanup();
+    };
+    if (abortController.signal.aborted) {
+      onAbort();
+    } else {
+      abortController.signal.addEventListener("abort", onAbort, { once: true });
+      cleanupFns.push(() => {
+        abortController.signal.removeEventListener("abort", onAbort);
+      });
+    }
+
     const onTaskUpdate = (task: Task | undefined) => {
-      if (
-        (task?.status === "failed" && task.error?.kind === "AbortError") ||
-        task?.status === "completed"
-      ) {
-        const result =
-          task.status === "failed"
-            ? {
-                error: task.error,
-              }
-            : {
-                result: extractCompletionResult(this.store, uid),
-              };
+      if (task?.status === "completed") {
+        const result = {
+          result: extractCompletionResult(this.store, uid),
+        };
         this.transitTo("execute:streaming", {
           type: "complete",
           result,
-          reason: abortController.signal.aborted
-            ? "user-abort"
-            : "execute-finish",
+          reason: "execute-finish",
         });
 
-        unsubscribe();
+        cleanup();
       }
     };
 
     const unsubscribe = this.store.subscribe(
       catalog.queries.makeTaskQuery(uid),
       {
-        onSubscribe: (query) => onTaskUpdate(this.store.query(query)),
+        onSubscribe: (query) =>
+          setTimeout(() => onTaskUpdate(this.store.query(query)), 1), // setTimeout to ensure we call onTaskUpdate after the subscription is established
         onUpdate: (task) => onTaskUpdate(task),
       },
     );
+    cleanupFns.push(unsubscribe);
   }
 
   private checkState<T extends ToolCallState["type"]>(
