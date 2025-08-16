@@ -224,7 +224,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
     store.commit(
       events.chatStreamFinished({
         id: this.taskId,
-        status: toTaskStatus(message, message.metadata),
+        status: toTaskStatus(message, message.metadata?.finishReason),
         data: message,
         totalTokens: message.metadata.totalTokens,
         updatedAt: new Date(),

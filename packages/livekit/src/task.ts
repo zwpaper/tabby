@@ -1,5 +1,6 @@
 import {
   APICallError,
+  type FinishReason,
   InvalidToolInputError,
   NoSuchToolError,
   isToolUIPart,
@@ -10,7 +11,7 @@ import type { Message } from "./types";
 
 export function toTaskStatus(
   message: Message,
-  metadata: Extract<NonNullable<Message["metadata"]>, { kind: "assistant" }>,
+  finishReason?: FinishReason,
 ): (typeof tables.tasks.Type)["status"] {
   // Find the last index of a step-start part
   let lastStepStart = -1;
@@ -21,7 +22,6 @@ export function toTaskStatus(
     }
   }
 
-  const { finishReason } = metadata;
   if (!finishReason) return "failed";
 
   for (const part of message.parts.slice(lastStepStart + 1)) {

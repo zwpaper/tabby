@@ -277,7 +277,7 @@ function ensureStreamTextFinish(
       controller.enqueue(chunk);
 
       if (chunk.type === "finish") {
-        await streamTextResult.response;
+        await streamTextResult.toUIMessageStream().pipeTo(new WritableStream());
       }
     },
   });

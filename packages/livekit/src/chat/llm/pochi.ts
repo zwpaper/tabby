@@ -64,7 +64,7 @@ export function createPochiModel(
     if (!store || !taskId) return;
 
     const lastMessage = messages.at(-1);
-    if (!lastMessage || lastMessage.metadata?.kind !== "assistant") {
+    if (!lastMessage) {
       throw new Error("No messages to persist");
     }
     const parentTaskId = store.query(
@@ -73,12 +73,16 @@ export function createPochiModel(
         .where("id", "=", taskId)
         .first({ fallback: () => null }),
     );
+    const finishReason =
+      lastMessage.metadata?.kind === "assistant"
+        ? lastMessage.metadata.finishReason
+        : undefined;
     const resp = await llm.apiClient.api.chat.persist.$post({
       json: {
         id: taskId,
         messages,
         environment: payload.environment,
-        status: toTaskStatus(lastMessage, lastMessage.metadata),
+        status: toTaskStatus(lastMessage, finishReason),
         parentClientTaskId: parentTaskId ?? undefined,
       },
     });
