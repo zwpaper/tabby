@@ -6,7 +6,7 @@ import { getLogger } from "@/lib/logger";
 import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorkspaceJobQueue } from "@/lib/workspace-job";
-import type { WebsiteTaskCreateEvent } from "@ragdoll/common";
+import { WebsiteTaskCreateEvent } from "@ragdoll/common";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
@@ -46,10 +46,10 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     const eventParam = searchParams.get("event");
     if (eventParam) {
       try {
-        const event = JSON.parse(decodeURIComponent(eventParam));
-        if (event?.type === "website:new-project") {
-          await this.handleNewProjectTask(event);
-        }
+        const event = WebsiteTaskCreateEvent.parse(
+          JSON.parse(decodeURIComponent(eventParam)),
+        );
+        await this.handleNewProjectTask(event);
       } catch (error) {
         logger.error("Failed to parse event parameter", error);
         vscode.window.showErrorMessage("Failed to process task event");
@@ -60,15 +60,15 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
 
   private async handleNewProjectTask(event: WebsiteTaskCreateEvent) {
     const { data: params } = event;
-    const { requestId, name } = params;
+    const { uid, name } = params;
 
     logger.info(`Handling new project task: ${JSON.stringify(params)}`);
 
-    if (requestId) {
-      const createdProject = this.newProjectRegistry.get(requestId);
+    if (uid) {
+      const createdProject = this.newProjectRegistry.get(uid);
       if (createdProject) {
         logger.info(
-          `Found existing project for requestId ${requestId}: ${createdProject}`,
+          `Found existing project for requestId ${uid}: ${createdProject}`,
         );
 
         await this.workspaceJobQueue.push({

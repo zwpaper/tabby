@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { WebsiteTaskCreateEvent } from "@ragdoll/common";
+import { WebsiteTaskCreateEvent } from "@ragdoll/common";
 import { createFileRoute } from "@tanstack/react-router";
 import { LifeBuoy, Loader2, Puzzle } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -15,7 +15,7 @@ import { z } from "zod";
 const searchSchema = z.object({
   uid: z.string().optional(),
   url: z.string(),
-  event: z.custom<WebsiteTaskCreateEvent>((o) => o),
+  event: WebsiteTaskCreateEvent,
 });
 
 export const Route = createFileRoute("/_authenticated/redirect-vscode")({

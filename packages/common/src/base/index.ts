@@ -11,4 +11,4 @@ export {
   type GitStatus,
 } from "./environment";
 
-export type { WebsiteTaskCreateEvent } from "./event";
+export { WebsiteTaskCreateEvent } from "./event";

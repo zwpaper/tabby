@@ -152,7 +152,7 @@ export class CommandManager implements vscode.Disposable {
                   currentWorkspace,
                   params.githubTemplateUrl,
                   { uid: undefined, prompt: params.prompt },
-                  params.requestId,
+                  params.uid,
                 );
               } catch (error) {
                 const errorMessage =
