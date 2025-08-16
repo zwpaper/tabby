@@ -1,3 +1,4 @@
+import type { WebsiteTaskCreateEvent } from "@ragdoll/common";
 import type { UIMessage } from "ai";
 import type { DB } from ".";
 
@@ -34,19 +35,21 @@ export type TaskError = {
     }
 );
 
-export type TaskCreateEvent = {
-  type: "slack:new-task";
-  data: {
-    slackUserId?: string;
-    channel: string;
-    ts: string;
-    prompt: string;
-    githubRepository?: {
-      owner: string;
-      repo: string;
-    };
-  };
-};
+export type TaskCreateEvent =
+  | {
+      type: "slack:new-task";
+      data: {
+        slackUserId?: string;
+        channel: string;
+        ts: string;
+        prompt: string;
+        githubRepository?: {
+          owner: string;
+          repo: string;
+        };
+      };
+    }
+  | WebsiteTaskCreateEvent;
 
 export type TaskEvent = {
   type: "task:status-changed";

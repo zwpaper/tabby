@@ -195,7 +195,7 @@ export function CreateTask({
         const event = {
           type: "website:new-project" as const,
           data: {
-            requestId: crypto.randomUUID(),
+            uid: crypto.randomUUID(),
             name: name,
             prompt: input,
             // attachments: undefined, // Temporarily blocked
