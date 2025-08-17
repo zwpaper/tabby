@@ -1,4 +1,4 @@
-import { TaskThread } from "@/components/task-thread";
+import { TaskThread, type TaskThreadSource } from "@/components/task-thread";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
@@ -16,12 +16,19 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
   tool,
   isExecuting,
 }) => {
-  // biome-ignore lint/style/noNonNullAssertion: uid must have been set.
-  const uid = tool.input?._meta?.uid!;
+  const uid = tool.input?._meta?.uid;
   const description = tool.input?.description ?? "";
 
-  const inlinedSubTask = useInlinedSubTask(tool);
-  const taskSource = inlinedSubTask ?? useLiveSubTask({ tool, isExecuting });
+  let isLiveTaskSource = false;
+  let taskSource: TaskThreadSource | undefined = undefined;
+
+  const inlinedTaskSource = useInlinedSubTask(tool);
+  if (inlinedTaskSource) {
+    taskSource = inlinedTaskSource;
+  } else if (uid) {
+    taskSource = useLiveSubTask({ tool, isExecuting });
+    isLiveTaskSource = true;
+  }
 
   const [showMessageList, setShowMessageList] = useState(false);
   const newTaskContainer = useRef<HTMLDivElement>(null);
@@ -67,18 +74,18 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
           <div>
             <StatusIcon tool={tool} isExecuting={isExecuting} />
             <Badge variant="secondary" className={cn("mr-1 ml-2 py-0")}>
-              {inlinedSubTask ? (
-                <>Subtask</>
-              ) : (
+              {isLiveTaskSource ? (
                 <Link to="/" search={{ uid, ts: Date.now() }} replace={true}>
                   Subtask
                 </Link>
+              ) : (
+                <>Subtask</>
               )}
             </Badge>
             <span className="ml-2">{description}</span>
           </div>
         </span>
-        {taskSource.messages.length > 1 && (
+        {taskSource && taskSource.messages.length > 1 && (
           <ExpandIcon
             className="cursor-pointer"
             isExpanded={showMessageList}
