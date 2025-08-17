@@ -8,18 +8,6 @@
     "build": {
       "dependsOn": ["tsc"],
       "outputs": ["dist/**"]
-    },
-    "pochi#build": {
-      "dependsOn": ["@getpochi/vscode-webui#build"],
-      "outputs": ["assets/webview-ui/**", "dist/**"]
-    },
-    "@ragdoll/website#build": {
-      "dependsOn": ["@getpochi/vscode-webui#build"],
-      "outputs": ["dist/**"]
-    },
-    "@ragdoll/server#build": {
-      "dependsOn": ["@ragdoll/website#build"],
-      "outputs": ["dist/**"]
     }
   },
   "globalPassThroughEnv": ["NODE_ENV"],
