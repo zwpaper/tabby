@@ -3,7 +3,7 @@ import type { InferToolInput, ToolUIPart } from "@ai-v5-sdk/ai";
 import { getLogger } from "@getpochi/common";
 import type { ExecuteCommandResult } from "@getpochi/common/vscode-webui-bridge";
 import { type Message, type Task, catalog } from "@getpochi/livekit";
-import type { ClientToolsType } from "@getpochi/tools";
+import type { ClientTools } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
 import {
   ThreadAbortSignal,
@@ -21,7 +21,7 @@ type ExecuteCommandReturnType = {
   output: ThreadSignalSerialization<ExecuteCommandResult>;
   detach: () => void;
 };
-type NewTaskParameterType = InferToolInput<ClientToolsType["newTask"]>;
+type NewTaskParameterType = InferToolInput<ClientTools["newTask"]>;
 type NewTaskReturnType = {
   uid: string;
   serializedAbortSignal: ThreadAbortSignalSerialization;

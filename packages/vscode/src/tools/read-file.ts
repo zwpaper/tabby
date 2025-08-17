@@ -4,10 +4,10 @@ import {
   selectFileContent,
   validateTextFile,
 } from "@getpochi/common/tool-utils";
-import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
+import type { ClientTools, ToolFunctionType } from "@getpochi/tools";
 import * as vscode from "vscode";
 
-export const readFile: ToolFunctionType<ClientToolsType["readFile"]> = async ({
+export const readFile: ToolFunctionType<ClientTools["readFile"]> = async ({
   path,
   startLine,
   endLine,

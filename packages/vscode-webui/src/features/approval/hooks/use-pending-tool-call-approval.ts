@@ -1,12 +1,12 @@
 import { type ToolUIPart, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import type { Message, UITools } from "@getpochi/livekit";
-import type { ClientTools, ClientToolsType } from "@getpochi/tools";
+import type { ClientTools } from "@getpochi/tools";
 import { isUserInputToolPart } from "@getpochi/tools";
 import { useMemo } from "react";
 
 export type PendingToolCallApproval =
   | {
-      name: keyof ClientToolsType;
+      name: keyof ClientTools;
       tool: ToolUIPart<UITools>;
     }
   | {

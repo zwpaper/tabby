@@ -4,7 +4,7 @@ import { getLogger } from "@/lib/logger";
 import { writeTextDocument } from "@/lib/write-text-document";
 import { parseDiffAndApply } from "@getpochi/common/diff-utils";
 import { validateTextFile } from "@getpochi/common/tool-utils";
-import type { ClientToolsType } from "@getpochi/tools";
+import type { ClientTools } from "@getpochi/tools";
 import type {
   PreviewToolFunctionType,
   ToolFunctionType,
@@ -17,7 +17,7 @@ const logger = getLogger("applyDiffTool");
  * Preview the diff using DiffView
  */
 export const previewApplyDiff: PreviewToolFunctionType<
-  ClientToolsType["applyDiff"]
+  ClientTools["applyDiff"]
 > = async (args, { toolCallId, state, abortSignal }) => {
   const { path, searchContent, replaceContent, expectedReplacements } =
     args || {};
@@ -52,7 +52,7 @@ export const previewApplyDiff: PreviewToolFunctionType<
 /**
  * Apply a diff to a file using DiffView
  */
-export const applyDiff: ToolFunctionType<ClientToolsType["applyDiff"]> = async (
+export const applyDiff: ToolFunctionType<ClientTools["applyDiff"]> = async (
   { path, searchContent, replaceContent, expectedReplacements },
   { toolCallId, abortSignal, nonInteractive },
 ) => {

@@ -4,7 +4,7 @@ import { getLogger } from "@/lib/logger";
 import { writeTextDocument } from "@/lib/write-text-document";
 import { processMultipleDiffs } from "@getpochi/common/diff-utils";
 import { validateTextFile } from "@getpochi/common/tool-utils";
-import type { ClientToolsType } from "@getpochi/tools";
+import type { ClientTools } from "@getpochi/tools";
 import type {
   PreviewToolFunctionType,
   ToolFunctionType,
@@ -17,7 +17,7 @@ const logger = getLogger("multiApplyDiffTool");
  * Preview the diff using DiffView for multiple operations
  */
 export const previewMultiApplyDiff: PreviewToolFunctionType<
-  ClientToolsType["multiApplyDiff"]
+  ClientTools["multiApplyDiff"]
 > = async (args, { toolCallId, state, abortSignal }) => {
   const { path, edits } = args || {};
   if (!args || !path || !edits || edits.length === 0) {
@@ -40,7 +40,7 @@ export const previewMultiApplyDiff: PreviewToolFunctionType<
  * Apply multiple diff operations to a file using DiffView
  */
 export const multiApplyDiff: ToolFunctionType<
-  ClientToolsType["multiApplyDiff"]
+  ClientTools["multiApplyDiff"]
 > = async ({ path, edits }, { toolCallId, abortSignal, nonInteractive }) => {
   const workspaceFolder = getWorkspaceFolder();
   const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, path);

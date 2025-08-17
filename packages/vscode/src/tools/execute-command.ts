@@ -6,7 +6,7 @@ import { getWorkspaceFolder } from "@/lib/fs";
 import { getLogger } from "@getpochi/common";
 import { getShellPath } from "@getpochi/common/tool-utils";
 import type { ExecuteCommandResult } from "@getpochi/common/vscode-webui-bridge";
-import type { ClientToolsType, ToolFunctionType } from "@getpochi/tools";
+import type { ClientTools, ToolFunctionType } from "@getpochi/tools";
 import { type Signal, signal } from "@preact/signals-core";
 import { ThreadSignal } from "@quilted/threads/signals";
 import { executeCommandWithNode } from "../integrations/terminal/execute-command-with-node";
@@ -18,7 +18,7 @@ import {
 const logger = getLogger("ExecuteCommand");
 
 export const executeCommand: ToolFunctionType<
-  ClientToolsType["executeCommand"]
+  ClientTools["executeCommand"]
 > = async (
   { command, cwd = ".", isDevServer, timeout },
   { abortSignal, nonInteractive },

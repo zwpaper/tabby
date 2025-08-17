@@ -3,7 +3,7 @@ import { getLogger } from "@/lib/logger";
 import { writeTextDocument } from "@/lib/write-text-document";
 import { fixCodeGenerationOutput } from "@getpochi/common/message-utils";
 import type {
-  ClientToolsType,
+  ClientTools,
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@getpochi/tools";
@@ -11,7 +11,7 @@ import type {
 const logger = getLogger("writeToFileTool");
 
 export const previewWriteToFile: PreviewToolFunctionType<
-  ClientToolsType["writeToFile"]
+  ClientTools["writeToFile"]
 > = async (args, { state, toolCallId, abortSignal }) => {
   const { path, content } = args || {};
   if (path === undefined || content === undefined) return;
@@ -30,9 +30,10 @@ export const previewWriteToFile: PreviewToolFunctionType<
  * Implements the writeToFile tool for VSCode extension.
  * Writes content to a specified file, creating directories if needed.
  */
-export const writeToFile: ToolFunctionType<
-  ClientToolsType["writeToFile"]
-> = async ({ path, content }, { toolCallId, abortSignal, nonInteractive }) => {
+export const writeToFile: ToolFunctionType<ClientTools["writeToFile"]> = async (
+  { path, content },
+  { toolCallId, abortSignal, nonInteractive },
+) => {
   const processedContent = fixCodeGenerationOutput(content);
 
   if (nonInteractive) {

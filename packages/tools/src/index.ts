@@ -80,7 +80,7 @@ export const ClientTools = {
   batchCall,
 };
 
-export type ClientToolsType = typeof ClientTools;
+export type ClientTools = typeof ClientTools;
 
 export const selectClientTools = (enableNewTask: boolean) => {
   if (enableNewTask) {

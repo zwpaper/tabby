@@ -1,4 +1,4 @@
-import type { InferUITool, UIMessage } from "@ai-v5-sdk/ai";
+import type { InferUITools, UIMessage } from "@ai-v5-sdk/ai";
 import type { LanguageModelV2FinishReason } from "@ai-v5-sdk/provider";
 import { Environment } from "@getpochi/common";
 import type { PochiApiClient } from "@getpochi/common/pochi-api";
@@ -23,9 +23,7 @@ export type DataParts = {
   };
 };
 
-export type UITools = {
-  [K in keyof typeof ClientTools]: InferUITool<(typeof ClientTools)[K]>;
-};
+export type UITools = InferUITools<ClientTools>;
 
 export type Message = UIMessage<Metadata, DataParts, UITools>;
 
