@@ -9,7 +9,6 @@
     "check:test": "biome check --config-path=./biome.test.json .",
     "test": "turbo test",
     "tsc": "turbo tsc",
-    "build:server": "turbo --filter @ragdoll/server --filter @ragdoll/website build",
     "dep-check": "bun scripts/dep-check.ts",
     "prepare": "husky",
     "pre-push": "bash ./.husky/pre-push",
