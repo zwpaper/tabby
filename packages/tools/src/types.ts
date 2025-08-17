@@ -1,10 +1,10 @@
-export { tool as defineClientTool } from "@ai-v5-sdk/ai";
+export { tool as defineClientTool } from "ai";
 import type {
   InferToolInput,
   InferToolOutput,
   Tool,
   ToolCallOptions,
-} from "@ai-v5-sdk/ai";
+} from "ai";
 
 export type ToolFunctionType<T extends Tool> = (
   input: InferToolInput<T>,

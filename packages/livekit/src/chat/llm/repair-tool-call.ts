@@ -1,10 +1,10 @@
+import type { LanguageModelV2 } from "@ai-sdk/provider";
 import {
   NoSuchToolError,
   type Tool,
   type ToolCallRepairFunction,
   streamText,
-} from "@ai-v5-sdk/ai";
-import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
+} from "ai";
 
 export const makeRepairToolCall: (
   model: LanguageModelV2,

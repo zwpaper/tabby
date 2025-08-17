@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 
 import { ToolInvocationPart } from "@/components/tool-invocation";
 import type { ToolProps } from "@/components/tool-invocation/types";
-import type { ToolUIPart } from "@ai-v5-sdk/ai";
+import type { ToolUIPart } from "ai";
 
 const ToolsGallery: React.FC<{
   tools: ToolUIPart[];

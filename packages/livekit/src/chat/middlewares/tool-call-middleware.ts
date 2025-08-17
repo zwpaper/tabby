@@ -1,9 +1,9 @@
-import { generateId } from "@ai-v5-sdk/ai";
 import type {
   LanguageModelV2Middleware,
   LanguageModelV2Prompt,
   LanguageModelV2StreamPart,
-} from "@ai-v5-sdk/provider";
+} from "@ai-sdk/provider";
+import { generateId } from "ai";
 import { getPotentialStartIndex } from "./utils";
 
 export function createToolCallMiddleware(): LanguageModelV2Middleware {

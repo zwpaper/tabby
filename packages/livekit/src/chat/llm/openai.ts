@@ -1,5 +1,5 @@
-import { wrapLanguageModel } from "@ai-v5-sdk/ai";
-import { createOpenAICompatible } from "@ai-v5-sdk/openai-compatible";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { wrapLanguageModel } from "ai";
 import type { RequestData } from "../../types";
 
 export function createOpenAIModel(

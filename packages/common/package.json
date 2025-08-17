@@ -22,8 +22,8 @@
     "test": "bun vitest --run"
   },
   "dependencies": {
-    "@ai-v5-sdk/ai": "catalog:",
-    "@ai-v5-sdk/provider": "catalog:",
+    "ai": "catalog:",
+    "@ai-sdk/provider": "catalog:",
     "@getpochi/tools": "workspace:*",
     "@hono/zod-validator": "catalog:",
     "@quilted/threads": "catalog:",

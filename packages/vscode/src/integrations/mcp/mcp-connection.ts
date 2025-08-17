@@ -1,8 +1,4 @@
 import { getLogger } from "@/lib/logger";
-import {
-  type ToolSet,
-  experimental_createMCPClient as createClient,
-} from "@ai-v5-sdk/ai";
 import type { McpToolStatus } from "@getpochi/common/vscode-webui-bridge";
 import {
   StdioClientTransport,
@@ -11,6 +7,7 @@ import {
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { type Signal, signal } from "@preact/signals-core";
 import { createMachine, interpret } from "@xstate/fsm";
+import { type ToolSet, experimental_createMCPClient as createClient } from "ai";
 import type * as vscode from "vscode";
 import {
   type McpServerConfig,

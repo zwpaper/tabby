@@ -1,8 +1,8 @@
-import type { InferUITools, UIMessage } from "@ai-v5-sdk/ai";
-import type { LanguageModelV2FinishReason } from "@ai-v5-sdk/provider";
+import type { LanguageModelV2FinishReason } from "@ai-sdk/provider";
 import { Environment } from "@getpochi/common";
 import type { PochiApiClient } from "@getpochi/common/pochi-api";
 import { type ClientTools, ZodMcpTool } from "@getpochi/tools";
+import type { InferUITools, UIMessage } from "ai";
 import z from "zod";
 import type { tables } from "./livestore/schema";
 

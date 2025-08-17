@@ -1,12 +1,8 @@
-import type {
-  ChatRequestOptions,
-  ChatTransport,
-  UIMessageChunk,
-} from "@ai-v5-sdk/ai";
 import type { Environment } from "@getpochi/common";
 import { prompts } from "@getpochi/common";
 import { type McpTool, selectClientTools } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
+import type { ChatRequestOptions, ChatTransport, UIMessageChunk } from "ai";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
 import { parseMcpToolSet } from "./llm/utils";
@@ -114,7 +110,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
   };
 }
 
-function prepareMessages<T extends import("@ai-v5-sdk/ai").UIMessage>(
+function prepareMessages<T extends import("ai").UIMessage>(
   inputMessages: T[],
   environment: Environment | undefined,
 ): T[] {

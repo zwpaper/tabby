@@ -1,7 +1,7 @@
 import type {
   LanguageModelV2Middleware,
   LanguageModelV2StreamPart,
-} from "@ai-v5-sdk/provider";
+} from "@ai-sdk/provider";
 import { getPotentialStartIndex } from "./utils";
 
 export function createReasoningMiddleware(

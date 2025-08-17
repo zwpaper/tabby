@@ -1,6 +1,6 @@
 import { MaxImages } from "@/lib/constants";
 import { createImageFileName, validateImage } from "@/lib/utils/image";
-import type { FileUIPart } from "@ai-v5-sdk/ai";
+import type { FileUIPart } from "ai";
 import { useRef, useState } from "react";
 
 interface UseImageUploadOptions {

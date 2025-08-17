@@ -1,4 +1,4 @@
-import type { ToolUIPart } from "@ai-v5-sdk/ai";
+import type { ToolUIPart } from "ai";
 import type { ToolCallLifeCycle } from "./tool-call-life-cycle";
 
 export class FixedStateToolCallLifeCycle implements ToolCallLifeCycle {

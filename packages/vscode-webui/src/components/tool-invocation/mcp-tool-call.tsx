@@ -1,6 +1,6 @@
 import { CodeBlock, MessageMarkdown } from "@/components/message";
 import { vscodeHost } from "@/lib/vscode";
-import { getToolName } from "@ai-v5-sdk/ai";
+import { getToolName } from "ai";
 import { filterPlayrightMarkdown } from "./filter-playwright";
 import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";

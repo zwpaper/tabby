@@ -1,4 +1,4 @@
-import { Chat } from "@ai-v5-sdk/react";
+import { Chat } from "@ai-sdk/react";
 import { useStore } from "@livestore/react";
 import { useMemo } from "react";
 import { LiveChatKit, type LiveChatKitOptions } from "./chat/live-chat-kit";

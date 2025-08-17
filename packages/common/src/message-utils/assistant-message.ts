@@ -2,7 +2,7 @@ import {
   type UIMessage,
   isToolUIPart,
   lastAssistantMessageIsCompleteWithToolCalls,
-} from "@ai-v5-sdk/ai";
+} from "ai";
 export function isAssistantMessageWithNoToolCalls(message: UIMessage): boolean {
   if (message.role !== "assistant") {
     return false;

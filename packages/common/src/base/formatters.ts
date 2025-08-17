@@ -1,5 +1,5 @@
-import { type UIMessage, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import { isAutoApproveTool, isUserInputToolPart } from "@getpochi/tools";
+import { type UIMessage, getToolName, isToolUIPart } from "ai";
 import { clone } from "remeda";
 import { KnownTags } from "./constants";
 import { prompts } from "./prompts";

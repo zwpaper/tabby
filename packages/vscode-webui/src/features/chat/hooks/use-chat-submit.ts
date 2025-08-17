@@ -1,6 +1,6 @@
 import type { PendingApproval } from "@/features/approval";
 import type { useImageUpload } from "@/lib/hooks/use-image-upload";
-import type { UseChatHelpers } from "@ai-v5-sdk/react";
+import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Message } from "@getpochi/livekit";
 import type React from "react";
 import { useCallback } from "react";

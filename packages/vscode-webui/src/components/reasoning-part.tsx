@@ -2,7 +2,7 @@ import { Dot, Lightbulb } from "lucide-react";
 
 import { MessageMarkdown } from "@/components/message/markdown";
 import { cn, tw } from "@/lib/utils";
-import type { ReasoningUIPart } from "@ai-v5-sdk/ai";
+import type { ReasoningUIPart } from "ai";
 import { ExpandableToolContainer } from "./tool-invocation/tool-container";
 
 interface ReasoningPartUIProps {

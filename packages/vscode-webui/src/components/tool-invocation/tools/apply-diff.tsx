@@ -1,5 +1,5 @@
 import { useToolCallLifeCycle } from "@/features/chat";
-import { getToolName } from "@ai-v5-sdk/ai";
+import { getToolName } from "ai";
 import { useCallback } from "react";
 import { FileBadge } from "../file-badge";
 import { NewProblems, NewProblemsIcon } from "../new-problems";

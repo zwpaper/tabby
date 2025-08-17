@@ -1,6 +1,6 @@
 import { useToolCallLifeCycle } from "@/features/chat";
-import { type ToolUIPart, getToolName, isToolUIPart } from "@ai-v5-sdk/ai";
 import type { Message, UITools } from "@getpochi/livekit";
+import { type ToolUIPart, getToolName, isToolUIPart } from "ai";
 import { useEffect, useMemo } from "react";
 import { funnel } from "remeda";
 

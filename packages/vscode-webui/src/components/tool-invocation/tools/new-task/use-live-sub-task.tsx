@@ -13,15 +13,12 @@ import {
 import { useTodos } from "@/features/todo";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { vscodeHost } from "@/lib/vscode";
-import {
-  getToolName,
-  lastAssistantMessageIsCompleteWithToolCalls,
-} from "@ai-v5-sdk/ai";
-import { useChat } from "@ai-v5-sdk/react";
+import { useChat } from "@ai-sdk/react";
 import { catalog } from "@getpochi/livekit";
 import { useLiveChatKit } from "@getpochi/livekit/react";
 import type { Todo } from "@getpochi/tools";
 import { useStore } from "@livestore/react";
+import { getToolName, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ToolProps } from "../../types";
 

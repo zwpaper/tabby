@@ -4,7 +4,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-import type { FileUIPart } from "@ai-v5-sdk/ai";
+import type { FileUIPart } from "ai";
 import { FileIcon } from "lucide-react";
 
 interface MessageAttachmentsProps {

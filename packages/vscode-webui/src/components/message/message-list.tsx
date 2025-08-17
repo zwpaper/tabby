@@ -10,14 +10,14 @@ import { useToolCallLifeCycle } from "@/features/chat";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import { cn } from "@/lib/utils";
 import { isVSCodeEnvironment, vscodeHost } from "@/lib/vscode";
+import { prompts } from "@getpochi/common";
+import type { Message, UITools } from "@getpochi/livekit";
 import {
   type FileUIPart,
   type TextUIPart,
   type ToolUIPart,
   isToolUIPart,
-} from "@ai-v5-sdk/ai";
-import { prompts } from "@getpochi/common";
-import type { Message, UITools } from "@getpochi/livekit";
+} from "ai";
 import { useEffect } from "react";
 import { CheckpointUI } from "../checkpoint-ui";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";

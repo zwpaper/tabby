@@ -1,4 +1,4 @@
-import { type Tool, jsonSchema, tool } from "@ai-v5-sdk/provider-utils";
+import { type Tool, jsonSchema, tool } from "@ai-sdk/provider-utils";
 import type { McpTool } from "@getpochi/tools";
 
 function parseMcpTool(name: string, mcpTool: McpTool): Tool {

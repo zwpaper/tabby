@@ -6,7 +6,7 @@ check_git_clean() {
 main() {
     bun dep-check
     bun check:ast-grep
-    bun check:resolve-v5-deps
+
     bun turbo boundaries
     bun fix
     check_git_clean

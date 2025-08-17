@@ -1,10 +1,10 @@
-import { lastAssistantMessageIsCompleteWithToolCalls } from "@ai-v5-sdk/ai";
 import {
   isAssistantMessageWithEmptyParts,
   isAssistantMessageWithNoToolCalls,
   isAssistantMessageWithPartialToolCalls,
 } from "@getpochi/common/message-utils";
 import type { Message } from "@getpochi/livekit";
+import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useMemo } from "react";
 
 type RetryKind = "ready" | "tool-calls" | "no-tool-calls";

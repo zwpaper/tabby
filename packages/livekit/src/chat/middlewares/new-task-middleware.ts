@@ -1,11 +1,11 @@
-import { InvalidToolInputError } from "@ai-v5-sdk/ai";
 import type {
   LanguageModelV2Middleware,
   LanguageModelV2StreamPart,
-} from "@ai-v5-sdk/provider";
-import { safeParseJSON } from "@ai-v5-sdk/provider-utils";
+} from "@ai-sdk/provider";
+import { safeParseJSON } from "@ai-sdk/provider-utils";
 import { ClientTools } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
+import { InvalidToolInputError } from "ai";
 import { events } from "../../livestore/schema";
 
 export function createNewTaskMiddleware(

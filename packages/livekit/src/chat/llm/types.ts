@@ -1,6 +1,6 @@
-import type { Tool } from "@ai-v5-sdk/ai";
-import type { LanguageModelV2Middleware } from "@ai-v5-sdk/provider";
+import type { LanguageModelV2Middleware } from "@ai-sdk/provider";
 import type { Environment } from "@getpochi/common";
+import type { Tool } from "ai";
 import type { Message } from "../../types";
 
 export type LLMRequest = {

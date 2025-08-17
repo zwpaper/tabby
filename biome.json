@@ -9,18 +9,19 @@
     "ignoreUnknown": false,
     "ignore": [
       "**/*/routeTree.gen.ts",
-      "packages/label-studio/data",
-      "packages/ink-storybook",
       "*.test.ts",
       "*.story.tsx",
-      "packages/website/src/components/ui/*.tsx",
-      "packages/code/src/lib/db/*.ts",
-      "packages/server/migrations/*.ts",
-      "packages/server/src/lib/tool-call-middleware/relaxed-json.ts",
-      "packages/db/src/schema.d.ts",
-      "packages/server/scripts/migrate-db-schema.ts",
+
+      "private/packages/label-studio/data",
+      "private/packages/website/src/components/ui/*.tsx",
+      "private/packages/server/migrations/*.ts",
+      "private/packages/server/src/lib/tool-call-middleware/relaxed-json.ts",
+      "private/packages/db/src/schema.d.ts",
+      "private/packages/server/scripts/migrate-db-schema.ts",
+
       "packages/vscode/.vscode-test",
       "packages/vscode/out",
+
       "**/.wrangler",
       "**/node_modules/**"
     ]

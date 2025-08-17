@@ -14,8 +14,8 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@ai-v5-sdk/ai": "catalog:",
-    "@ai-v5-sdk/react": "catalog:",
+    "ai": "catalog:",
+    "@ai-sdk/react": "catalog:",
     "@daveyplate/better-auth-tanstack": "catalog:",
     "@leeoniya/ufuzzy": "^1.0.18",
     "@livestore/adapter-web": "catalog:",

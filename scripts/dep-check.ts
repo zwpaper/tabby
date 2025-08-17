@@ -228,7 +228,7 @@ const PackageIgnoreList: Record<string, string[]> = {
     "ovsx",
   ],
   runner: ["@types/bun"],
-  livekit: ["@ai-v5-sdk/provider-utils", "@ai-v5-sdk/provider"],
+  livekit: ["@ai-sdk/provider-utils", "@ai-sdk/provider"],
 };
 
 // Run the script

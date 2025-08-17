@@ -2,12 +2,7 @@ export {
   ZodMcpTool,
   type McpTool,
 } from "./mcp-tools";
-import type {
-  ToolUIPart,
-  UIDataTypes,
-  UIMessagePart,
-  UITools,
-} from "@ai-v5-sdk/ai";
+import type { ToolUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
 import { attemptCompletion } from "./attempt-completion";

@@ -1,5 +1,4 @@
 import { vscodeHost } from "@/lib/vscode";
-import type { InferToolInput, ToolUIPart } from "@ai-v5-sdk/ai";
 import { getLogger } from "@getpochi/common";
 import type { ExecuteCommandResult } from "@getpochi/common/vscode-webui-bridge";
 import { type Message, type Task, catalog } from "@getpochi/livekit";
@@ -13,6 +12,7 @@ import {
   type ThreadSignalSerialization,
   threadSignal,
 } from "@quilted/threads/signals";
+import type { InferToolInput, ToolUIPart } from "ai";
 import Emittery from "emittery";
 import type { ToolCallLifeCycleKey } from "./chat-state/types";
 
@@ -525,14 +525,14 @@ function extractCompletionResult(store: Store, uid: string) {
   for (const part of lastMessage.parts.slice(lastStepStart + 1)) {
     if (
       part.type === "tool-attemptCompletion" &&
-      part.state !== "input-streaming"
+      (part.state === "input-available" || part.state === "output-available")
     ) {
       return part.input.result;
     }
 
     if (
       part.type === "tool-askFollowupQuestion" &&
-      part.state !== "input-streaming"
+      (part.state === "input-available" || part.state === "output-available")
     ) {
       return part.input.question;
     }

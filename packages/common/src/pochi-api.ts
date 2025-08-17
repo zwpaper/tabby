@@ -1,9 +1,9 @@
-import type { UIMessage } from "@ai-v5-sdk/ai";
 import type {
   LanguageModelV2CallOptions,
   LanguageModelV2Prompt,
-} from "@ai-v5-sdk/provider";
+} from "@ai-sdk/provider";
 import { zValidator } from "@hono/zod-validator";
+import type { UIMessage } from "ai";
 import { Hono } from "hono";
 import type { hc } from "hono/client";
 import z from "zod";

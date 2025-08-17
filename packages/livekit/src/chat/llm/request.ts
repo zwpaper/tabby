@@ -3,9 +3,9 @@ import {
   convertToModelMessages,
   streamText,
   wrapLanguageModel,
-} from "@ai-v5-sdk/ai";
+} from "ai";
 
-import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
+import type { LanguageModelV2 } from "@ai-sdk/provider";
 import { formatters } from "@getpochi/common";
 import type { Message } from "../../types";
 import { makeRepairToolCall } from "./repair-tool-call";

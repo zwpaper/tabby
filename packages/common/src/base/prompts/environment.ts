@@ -1,4 +1,4 @@
-import type { TextUIPart, UIMessage as UIMessageNext } from "@ai-v5-sdk/ai";
+import type { TextUIPart, UIMessage } from "ai";
 import type { Environment, GitStatus } from "../environment";
 import { prompts } from "./index";
 
@@ -143,9 +143,9 @@ function getGitStatus(gitStatus: GitStatus | undefined) {
 }
 
 export function injectEnvironment(
-  messages: UIMessageNext[],
+  messages: UIMessage[],
   environment: Environment | undefined,
-): UIMessageNext[] {
+): UIMessage[] {
   if (environment === undefined) return messages;
   const messageToInject = messages.at(-1);
   if (!messageToInject) return messages;

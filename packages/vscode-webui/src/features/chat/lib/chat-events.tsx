@@ -1,4 +1,4 @@
-import type { UseChatHelpers } from "@ai-v5-sdk/react";
+import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Message } from "@getpochi/livekit";
 import Emittery from "emittery";
 import { useCallback, useEffect } from "react";

@@ -1,4 +1,4 @@
-import type { UIMessage } from "@ai-v5-sdk/ai";
+import type { UIMessage } from "ai";
 import { z } from "zod";
 import type { Todo } from "./todo-write";
 import { defineClientTool } from "./types";

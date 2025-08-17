@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAutoApproveGuard, useToolCallLifeCycle } from "@/features/chat";
 import { useSelectedModels, useToolAutoApproval } from "@/features/settings";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
-import { getToolName } from "@ai-v5-sdk/ai";
+import { getToolName } from "ai";
 import type { PendingToolCallApproval } from "../hooks/use-pending-tool-call-approval";
 
 interface ToolCallApprovalButtonProps {

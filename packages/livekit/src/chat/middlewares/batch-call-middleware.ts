@@ -1,10 +1,10 @@
-import { InvalidToolInputError } from "@ai-v5-sdk/ai";
 import type {
   LanguageModelV2Middleware,
   LanguageModelV2StreamPart,
-} from "@ai-v5-sdk/provider";
-import { safeParseJSON } from "@ai-v5-sdk/provider-utils";
+} from "@ai-sdk/provider";
+import { safeParseJSON } from "@ai-sdk/provider-utils";
 import { BatchCallTools, ClientTools } from "@getpochi/tools";
+import { InvalidToolInputError } from "ai";
 
 export function createBatchCallMiddleware(): LanguageModelV2Middleware {
   return {

@@ -7,7 +7,7 @@ import {
 import { useIsDevMode } from "@/features/settings";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
-import type { ToolUIPart } from "@ai-v5-sdk/ai";
+import type { ToolUIPart } from "ai";
 import {
   Check,
   CheckIcon,

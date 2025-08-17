@@ -1,8 +1,8 @@
 import { useToolCallLifeCycle } from "@/features/chat";
 import { useIsDevMode } from "@/features/settings";
 import { cn } from "@/lib/utils";
-import { type ToolUIPart, getToolName } from "@ai-v5-sdk/ai";
 import type { UITools } from "@getpochi/livekit";
+import { type ToolUIPart, getToolName } from "ai";
 import type { ToolCallCheckpoint } from "../message/message-list";
 import { McpToolCall } from "./mcp-tool-call";
 import { applyDiffTool } from "./tools/apply-diff";

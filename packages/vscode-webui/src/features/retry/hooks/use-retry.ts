@@ -1,4 +1,4 @@
-import type { UseChatHelpers } from "@ai-v5-sdk/react";
+import type { UseChatHelpers } from "@ai-sdk/react";
 import { prompts } from "@getpochi/common";
 import { prepareLastMessageForRetry } from "@getpochi/common/message-utils";
 import type { Message } from "@getpochi/livekit";

@@ -1,5 +1,5 @@
 import { useToolCallLifeCycle } from "@/features/chat";
-import { getToolName } from "@ai-v5-sdk/ai";
+import { getToolName } from "ai";
 import { useCallback } from "react";
 import { CommandExecutionPanel } from "../command-execution-panel";
 import { HighlightedText } from "../highlight-text";

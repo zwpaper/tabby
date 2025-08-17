@@ -1,5 +1,5 @@
-import type { LanguageModelV2 } from "@ai-v5-sdk/provider";
-import { EventSourceParserStream } from "@ai-v5-sdk/provider-utils";
+import type { LanguageModelV2 } from "@ai-sdk/provider";
+import { EventSourceParserStream } from "@ai-sdk/provider-utils";
 import type { Store } from "@livestore/livestore";
 import { events, tables } from "../../livestore/schema";
 import { toTaskStatus } from "../../task";

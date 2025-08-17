@@ -1,11 +1,11 @@
+import { isAbortError } from "@ai-sdk/provider-utils";
 import {
   APICallError,
   type FinishReason,
   InvalidToolInputError,
   NoSuchToolError,
   isToolUIPart,
-} from "@ai-v5-sdk/ai";
-import { isAbortError } from "@ai-v5-sdk/provider-utils";
+} from "ai";
 import type { tables } from "./livestore/schema";
 import type { Message } from "./types";
 
