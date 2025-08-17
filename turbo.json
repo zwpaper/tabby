@@ -16,6 +16,10 @@
     "@ragdoll/website#build": {
       "dependsOn": ["@getpochi/vscode-webui#build"],
       "outputs": ["dist/**"]
+    },
+    "@ragdoll/server#build": {
+      "dependsOn": ["@ragdoll/website#build"],
+      "outputs": ["dist/**"]
     }
   },
   "globalPassThroughEnv": ["NODE_ENV"],
