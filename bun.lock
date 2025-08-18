@@ -67,7 +67,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.6.5",
+      "version": "0.6.6",
       "dependencies": {
         "@getpochi/common": "workspace:*",
         "@modelcontextprotocol/sdk": "^1.12.0",
@@ -462,6 +462,7 @@
   ],
   "patchedDependencies": {
     "@daveyplate/better-auth-ui@2.0.12": "patches/@daveyplate%2Fbetter-auth-ui@2.0.12.patch",
+    "ai@5.0.15": "patches/ai@5.0.15.patch",
     "@better-auth/stripe@1.2.9": "patches/@better-auth%2Fstripe@1.2.9.patch",
     "better-auth@1.2.9": "patches/better-auth@1.2.9.patch",
   },
