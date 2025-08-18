@@ -101,7 +101,8 @@ export function TokenUsage({
           )}
         >
           <span className="flex select-none items-center gap-1 whitespace-nowrap font-medium">
-            {compact?.newCompactTaskPending ? (
+            {compact?.newCompactTaskPending ||
+            compact?.inlineCompactTaskPending ? (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Compacting...

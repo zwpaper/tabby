@@ -240,7 +240,7 @@ function Chat({ user, uid, prompt }: ChatProps) {
   const isLoading = status === "streaming" || status === "submitted";
 
   const { inlineCompactTask, inlineCompactTaskPending } = useInlineCompactTask({
-    ...chat,
+    sendMessage,
   });
 
   const { newCompactTask, newCompactTaskPending } = useNewCompactTask({
@@ -423,7 +423,8 @@ function Chat({ user, uid, prompt }: ChatProps) {
                         !inlineCompactTaskPending &&
                         !newCompactTaskPending,
                       inlineCompactTask,
-                      inlineCompactTaskPending,
+                      inlineCompactTaskPending:
+                        inlineCompactTaskPending && !isLoading,
                       newCompactTask,
                       newCompactTaskPending,
                     }}
