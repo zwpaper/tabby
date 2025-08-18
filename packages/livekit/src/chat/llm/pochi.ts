@@ -1,9 +1,10 @@
 import type { LanguageModelV2 } from "@ai-sdk/provider";
 import { EventSourceParserStream } from "@ai-sdk/provider-utils";
+import type { Environment } from "@getpochi/common";
 import type { Store } from "@livestore/livestore";
 import { events, tables } from "../../livestore/schema";
 import { toTaskStatus } from "../../task";
-import type { RequestData } from "../../types";
+import type { Message, RequestData } from "../../types";
 import type { LLMRequest, OnFinishCallback } from "./types";
 
 export function createPochiModel(
@@ -60,9 +61,73 @@ export function createPochiModel(
   };
 
   const taskId = payload.id;
-  const onFinishImpl: OnFinishCallback = async ({ messages }) => {
+
+  const onFinish: OnFinishCallback = async ({ messages }) => {
+    const taskId = payload.id;
     if (!store || !taskId) return;
 
+    persistManager.push({
+      taskId,
+      environment: payload.environment,
+      store,
+      messages,
+      llm,
+    });
+  };
+
+  return {
+    model,
+    onFinish,
+  };
+}
+
+interface PersistJob {
+  taskId: string;
+  store: Store;
+  messages: Message[];
+  llm: Extract<RequestData["llm"], { type: "pochi" }>;
+  environment?: Environment;
+}
+
+class PersistManager {
+  constructor() {
+    this.loop();
+  }
+
+  private queue: PersistJob[] = [];
+
+  push(job: PersistJob) {
+    const existingJobIndex = this.queue.findIndex(
+      (j) => j.taskId === job.taskId,
+    );
+
+    if (existingJobIndex >= 0) {
+      this.queue[existingJobIndex] = job;
+    } else {
+      this.queue.push(job);
+    }
+  }
+
+  private async loop() {
+    while (true) {
+      const job = this.queue.shift();
+      if (!job) {
+        // FIXME: naive implementation of non-busy wait.
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        continue;
+      }
+
+      this.process(job);
+    }
+  }
+
+  private async process({
+    taskId,
+    store,
+    messages,
+    llm,
+    environment,
+  }: PersistJob) {
     const lastMessage = messages.at(-1);
     if (!lastMessage) {
       throw new Error("No messages to persist");
@@ -81,7 +146,7 @@ export function createPochiModel(
       json: {
         id: taskId,
         messages,
-        environment: payload.environment,
+        environment,
         status: toTaskStatus(lastMessage, finishReason),
         parentClientTaskId: parentTaskId ?? undefined,
       },
@@ -107,16 +172,7 @@ export function createPochiModel(
         }),
       );
     }
-  };
-
-  const onFinish: OnFinishCallback = (args) => {
-    // No await.
-    onFinishImpl(args);
-    return Promise.resolve();
-  };
-
-  return {
-    model,
-    onFinish,
-  };
+  }
 }
+
+const persistManager = new PersistManager();
