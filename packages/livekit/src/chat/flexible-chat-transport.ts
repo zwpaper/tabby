@@ -29,18 +29,18 @@ export type PrepareRequestGetters = {
 export class FlexibleChatTransport implements ChatTransport<Message> {
   private readonly onStart?: OnStartCallback;
   private readonly getters: PrepareRequestGetters;
-  private readonly allowNewTask?: boolean;
+  private readonly isSubTask?: boolean;
   private readonly store: Store;
 
   constructor(options: {
     onStart?: OnStartCallback;
     getters: PrepareRequestGetters;
-    allowNewTask?: boolean;
+    isSubTask?: boolean;
     store: Store;
   }) {
     this.onStart = options.onStart;
     this.getters = options.getters;
-    this.allowNewTask = options.allowNewTask;
+    this.isSubTask = options.isSubTask;
     this.store = options.store;
   }
 
@@ -68,7 +68,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
 
     const middlewares = [];
 
-    if (this.allowNewTask) {
+    if (this.isSubTask) {
       middlewares.push(createNewTaskMiddleware(this.store, chatId));
     }
 
@@ -89,7 +89,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     const system = prompts.system(environment?.info?.customRules);
     const mcpTools = mcpToolSet && parseMcpToolSet(mcpToolSet);
     const tools = {
-      ...selectClientTools(!!this.allowNewTask),
+      ...selectClientTools(!!this.isSubTask),
       ...(mcpTools || {}),
     };
     return requestLLM(this.store, llm, {

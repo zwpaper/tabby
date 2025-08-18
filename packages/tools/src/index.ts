@@ -77,8 +77,8 @@ export const ClientTools = {
 
 export type ClientTools = typeof ClientTools;
 
-export const selectClientTools = (enableNewTask: boolean) => {
-  if (enableNewTask) {
+export const selectClientTools = (isSubTask: boolean) => {
+  if (!isSubTask) {
     return {
       ...ClientTools,
     };

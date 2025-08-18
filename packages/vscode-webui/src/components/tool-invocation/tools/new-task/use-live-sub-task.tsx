@@ -46,6 +46,7 @@ export function useLiveSubTask({
   const chatKit = useLiveChatKit({
     taskId: uid,
     getters,
+    isSubTask: true,
     sendAutomaticallyWhen: (x) => {
       const streamingResult = ensureNewTaskStreamingResult(
         lifecycle.streamingResult,
