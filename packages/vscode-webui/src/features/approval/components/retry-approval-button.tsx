@@ -2,6 +2,7 @@ import type React from "react";
 import { useCallback, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useAutoApproveGuard } from "@/features/chat";
 import { useDebounceState } from "@/lib/hooks/use-debounce-state";
 import type { PendingRetryApproval } from "../hooks/use-pending-retry-approval";
 
@@ -25,6 +26,12 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
     retry(pendingApproval.error);
   }, [retry, pendingApproval]);
 
+  const autoApproveGuard = useAutoApproveGuard();
+  const onAccept = useCallback(() => {
+    autoApproveGuard.current = true;
+    doRetry();
+  }, [autoApproveGuard, doRetry]);
+
   const autoRetryText = "Continue";
   const retryText = "Continue";
 
@@ -37,7 +44,7 @@ export const RetryApprovalButton: React.FC<RetryApprovalButtonProps> = ({
 
   return (
     <>
-      <Button onClick={doRetry}>
+      <Button onClick={onAccept}>
         {pendingApproval.attempts !== undefined &&
         pendingApproval.countdown !== undefined
           ? `${autoRetryText} in ${pendingApproval.countdown}s`
