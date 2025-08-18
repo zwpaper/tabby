@@ -26,6 +26,8 @@ export function createEnvironmentPrompt(
 
 export function getLiteReadEnvironmentResult(environment: Environment) {
   const sections = [
+    getCurrentOpenedFiles(environment.workspace),
+    getCurrentWorkingFile(environment.workspace),
     getGitStatus(environment.workspace.gitStatus),
     getUserEdits(environment.userEdits),
     getTodos(environment.todos),
