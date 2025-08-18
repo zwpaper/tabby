@@ -53,7 +53,7 @@ export const globFilesTool: React.FC<ToolProps<"globFiles">> = ({
           <>Searching {searchCondition}</>
         ) : (
           <>
-            Searched {searchCondition}, {files.length} match
+            Searching {searchCondition}, {files.length} match
             {files.length > 1 ? "es" : ""}{" "}
             {isTruncated && ", results truncated"}
           </>

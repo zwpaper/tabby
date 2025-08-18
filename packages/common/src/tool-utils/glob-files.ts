@@ -62,7 +62,7 @@ export async function globFiles(
 
     for (const fileResult of allFiles) {
       if (minimatch(fileResult.relativePath, globPattern, { nocase: true })) {
-        files.push(fileResult.relativePath);
+        files.push(path.join(searchPath, fileResult.relativePath));
         if (files.length >= MaxGlobFileItems) {
           isTruncated = true;
           break;

@@ -109,7 +109,13 @@ describe("globFiles Tool", () => {
       { path: currentTestTempDirRelativePath, globPattern: "*.txt" },
       dummyToolOptions,
     );
-    assert.deepStrictEqual(result.files.sort(), ["another.txt", "file1.txt"]);
+    assert.deepStrictEqual(
+      result.files.sort(),
+      [
+        _path.join(currentTestTempDirRelativePath, "another.txt"),
+        _path.join(currentTestTempDirRelativePath, "file1.txt"),
+      ].sort(),
+    );
     assert.strictEqual(result.isTruncated, false);
   });
 
@@ -133,7 +139,11 @@ describe("globFiles Tool", () => {
     );
     assert.deepStrictEqual(
       result.files.sort(),
-      ["file1.txt", _path.join("sub1", "file2.txt"), _path.join("sub2", "file3.txt")].sort(),
+      [
+        _path.join(currentTestTempDirRelativePath, "file1.txt"),
+        _path.join(currentTestTempDirRelativePath, _path.join("sub1", "file2.txt")),
+        _path.join(currentTestTempDirRelativePath, _path.join("sub2", "file3.txt")),
+      ].sort(),
     );
     assert.strictEqual(result.isTruncated, false);
   });
@@ -165,7 +175,7 @@ describe("globFiles Tool", () => {
       dummyToolOptions,
     );
     
-    assert.ok(result.files.includes(fileName));
+    assert.deepStrictEqual(result.files, [_path.join(absolutePath, fileName)]);
     assert.strictEqual(result.isTruncated, false);
   });
 
@@ -215,21 +225,27 @@ describe("globFiles Tool", () => {
       { path: currentTestTempDirRelativePath, globPattern: "targetdir/*.txt" },
       dummyToolOptions,
     );
-    assert.deepStrictEqual(result.files.sort(), [_path.join("targetdir", "fileA.txt")]);
+    assert.deepStrictEqual(result.files.sort(), [
+      _path.join(currentTestTempDirRelativePath, "targetdir", "fileA.txt"),
+    ]);
     assert.strictEqual(result.isTruncated, false);
 
     result = await globFiles(
       { path: currentTestTempDirRelativePath, globPattern: "**/fileA.txt" },
       dummyToolOptions,
     );
-    assert.deepStrictEqual(result.files.sort(), [_path.join("targetdir", "fileA.txt")]);
+    assert.deepStrictEqual(result.files.sort(), [
+      _path.join(currentTestTempDirRelativePath, "targetdir", "fileA.txt"),
+    ]);
     assert.strictEqual(result.isTruncated, false);
 
     result = await globFiles(
-      { path: currentTestTempDirRelativePath, globPattern: "otherdir/*"},
+      { path: currentTestTempDirRelativePath, globPattern: "otherdir/*" },
       dummyToolOptions,
     );
-    assert.deepStrictEqual(result.files.sort(), [_path.join("otherdir", "fileC.txt")]);
+    assert.deepStrictEqual(result.files.sort(), [
+      _path.join(currentTestTempDirRelativePath, "otherdir", "fileC.txt"),
+    ]);
      assert.strictEqual(result.isTruncated, false);
   });
 
@@ -248,14 +264,22 @@ describe("globFiles Tool", () => {
       { path: currentTestTempDirRelativePath, globPattern: "*.txt" },
       dummyToolOptions,
     );
-    assert.deepStrictEqual(result.files.sort(), ["File.TXT", "document.txt"].sort());
+    assert.deepStrictEqual(
+      result.files.sort(),
+      [
+        _path.join(currentTestTempDirRelativePath, "File.TXT"),
+        _path.join(currentTestTempDirRelativePath, "document.txt"),
+      ].sort(),
+    );
     assert.strictEqual(result.isTruncated, false);
 
     const resultJpg = await globFiles(
       { path: currentTestTempDirRelativePath, globPattern: "*.jpg" },
       dummyToolOptions,
     );
-    assert.deepStrictEqual(resultJpg.files.sort(), ["IMAGE.JPG"]);
+    assert.deepStrictEqual(resultJpg.files.sort(), [
+      _path.join(currentTestTempDirRelativePath, "IMAGE.JPG"),
+    ]);
     assert.strictEqual(resultJpg.isTruncated, false);
   });
 
