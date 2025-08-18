@@ -60,7 +60,7 @@ export function createPochiModel(
   };
 
   const taskId = payload.id;
-  const onFinish: OnFinishCallback = async ({ messages }) => {
+  const onFinishImpl: OnFinishCallback = async ({ messages }) => {
     if (!store || !taskId) return;
 
     const lastMessage = messages.at(-1);
@@ -107,6 +107,12 @@ export function createPochiModel(
         }),
       );
     }
+  };
+
+  const onFinish: OnFinishCallback = (args) => {
+    // No await.
+    onFinishImpl(args);
+    return Promise.resolve();
   };
 
   return {
