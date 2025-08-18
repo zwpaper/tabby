@@ -1,4 +1,5 @@
 import {
+  type ModelMessage,
   type UIMessage,
   convertToModelMessages,
   streamText,
@@ -17,6 +18,9 @@ export async function request(
   onFinish?: OnFinishCallback,
 ) {
   const tools = payload.tools;
+  const messages = convertToModelMessages(formatters.llm(payload.messages), {
+    tools,
+  });
 
   const result = streamText({
     model: wrapLanguageModel({
@@ -25,9 +29,7 @@ export async function request(
     }),
     abortSignal: payload.abortSignal,
     system: payload.system,
-    messages: convertToModelMessages(formatters.llm(payload.messages), {
-      tools,
-    }),
+    messages,
     tools,
     maxRetries: 0,
     // error log is handled in live chat kit.
@@ -40,7 +42,8 @@ export async function request(
       if (part.type === "finish") {
         return {
           kind: "assistant",
-          totalTokens: part.totalUsage.totalTokens || 0,
+          totalTokens:
+            part.totalUsage.totalTokens || estimateTotalTokens(messages),
           finishReason: part.finishReason,
         } satisfies Metadata;
       }
@@ -51,4 +54,28 @@ export async function request(
       });
     },
   });
+}
+
+function estimateTotalTokens(messages: ModelMessage[]): number {
+  let totalTextLength = 0;
+  for (const message of messages) {
+    if (typeof message.content === "string") {
+      totalTextLength += message.content.length;
+    } else {
+      for (const part of message.content) {
+        switch (part.type) {
+          case "text":
+            totalTextLength += part.text.length;
+            break;
+          case "tool-call":
+          case "tool-result":
+            totalTextLength += JSON.stringify(part).length;
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  }
+  return Math.ceil(totalTextLength / 4);
 }
