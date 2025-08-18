@@ -6,7 +6,7 @@ import type { InferUITools, UIMessage } from "ai";
 import z from "zod";
 import type { tables } from "./livestore/schema";
 
-type Metadata =
+export type Metadata =
   | {
       kind: "assistant";
       totalTokens: number;

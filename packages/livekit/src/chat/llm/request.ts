@@ -7,7 +7,7 @@ import {
 
 import type { LanguageModelV2 } from "@ai-sdk/provider";
 import { formatters } from "@getpochi/common";
-import type { Message } from "../../types";
+import type { Message, Metadata } from "../../types";
 import { makeRepairToolCall } from "./repair-tool-call";
 import type { LLMRequest, OnFinishCallback } from "./types";
 
@@ -40,9 +40,9 @@ export async function request(
       if (part.type === "finish") {
         return {
           kind: "assistant",
-          totalTokens: part.totalUsage.totalTokens,
+          totalTokens: part.totalUsage.totalTokens || 0,
           finishReason: part.finishReason,
-        };
+        } satisfies Metadata;
       }
     },
     onFinish: async ({ messages }) => {
