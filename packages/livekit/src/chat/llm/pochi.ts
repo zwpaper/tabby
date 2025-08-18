@@ -2,6 +2,7 @@ import type { LanguageModelV2 } from "@ai-sdk/provider";
 import { EventSourceParserStream } from "@ai-sdk/provider-utils";
 import type { Environment } from "@getpochi/common";
 import type { Store } from "@livestore/livestore";
+import { makeTaskQuery } from "../../livestore/queries";
 import { events, tables } from "../../livestore/schema";
 import { toTaskStatus } from "../../task";
 import type { Message, RequestData } from "../../types";
@@ -132,12 +133,7 @@ class PersistManager {
     if (!lastMessage) {
       throw new Error("No messages to persist");
     }
-    const parentTaskId = store.query(
-      tables.tasks
-        .select("parentId")
-        .where("id", "=", taskId)
-        .first({ fallback: () => null }),
-    );
+    const { parentId } = store.query(makeTaskQuery(taskId)) || {};
     const finishReason =
       lastMessage.metadata?.kind === "assistant"
         ? lastMessage.metadata.finishReason
@@ -148,7 +144,7 @@ class PersistManager {
         messages,
         environment,
         status: toTaskStatus(lastMessage, finishReason),
-        parentClientTaskId: parentTaskId ?? undefined,
+        parentClientTaskId: parentId ?? undefined,
       },
     });
 

@@ -68,7 +68,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
 
     const middlewares = [];
 
-    if (this.isSubTask) {
+    if (!this.isSubTask) {
       middlewares.push(createNewTaskMiddleware(this.store, chatId));
     }
 

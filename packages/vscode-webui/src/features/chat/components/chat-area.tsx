@@ -2,12 +2,10 @@ import { EmptyChatPlaceholder } from "@/components/empty-chat-placeholder";
 import { MessageList } from "@/components/message/message-list";
 import { useResourceURI } from "@/lib/hooks/use-resource-uri";
 import type { Message } from "@getpochi/livekit";
-import { Loader2 } from "lucide-react";
 import type React from "react";
 
 interface ChatAreaProps {
   messages: Message[];
-  isTaskLoading: boolean;
   isLoading: boolean;
   user?: { name: string; image?: string | null };
   messagesContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -15,7 +13,6 @@ interface ChatAreaProps {
 
 export function ChatArea({
   messages,
-  isTaskLoading,
   isLoading,
   user,
   messagesContainerRef,
@@ -23,14 +20,7 @@ export function ChatArea({
   const resourceUri = useResourceURI();
   return (
     <>
-      {messages.length === 0 &&
-        (isTaskLoading ? (
-          <div className="flex h-full w-full items-center justify-center">
-            <Loader2 className="animate-spin" />
-          </div>
-        ) : (
-          <EmptyChatPlaceholder />
-        ))}
+      {messages.length === 0 && <EmptyChatPlaceholder />}
       {messages.length > 0 && <div className="h-4" />}
       <MessageList
         messages={messages}
@@ -39,7 +29,7 @@ export function ChatArea({
           name: "Pochi",
           image: resourceUri?.logo128,
         }}
-        isLoading={isLoading || isTaskLoading}
+        isLoading={isLoading}
         containerRef={messagesContainerRef}
       />
     </>

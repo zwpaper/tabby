@@ -1,7 +1,7 @@
 import { ImagePreviewList } from "@/components/image-preview-list";
 import { ModelSelect } from "@/components/model-select";
 import { PreviewTool } from "@/components/preview-tool";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import {
   ChatContextProvider,
@@ -15,7 +15,13 @@ import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { type UseChatHelpers, useChat } from "@ai-sdk/react";
 import type { Todo } from "@getpochi/tools";
-import { ImageIcon, SendHorizonal, StopCircleIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  ImageIcon,
+  SendHorizonal,
+  StopCircleIcon,
+} from "lucide-react";
+import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DevModeButton } from "@/components/dev-mode-button";
@@ -23,6 +29,7 @@ import { PublicShareButton } from "@/components/public-share-button";
 import { TokenUsage } from "@/components/token-usage";
 import { usePendingModelAutoStart } from "@/features/retry";
 import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls";
+import { cn } from "@/lib/utils";
 import { vscodeHost } from "@/lib/vscode";
 import type { Environment } from "@getpochi/common";
 import { constants, formatters } from "@getpochi/common";
@@ -30,7 +37,7 @@ import type { UserEditsDiff } from "@getpochi/common/vscode-webui-bridge";
 import { type Message, type Task, catalog } from "@getpochi/livekit";
 import { useLiveChatKit } from "@getpochi/livekit/react";
 import { useStore } from "@livestore/react";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { ApprovalButton, useApprovalAndRetry } from "../approval";
 import { TodoList, useTodos } from "../todo";
@@ -94,7 +101,10 @@ function Chat({ user, uid, prompt }: ChatProps) {
   });
   const task = store.useQuery(catalog.queries.makeTaskQuery(uid));
   const totalTokens = task?.totalTokens || 0;
-  const isTaskLoading = false;
+  const isSubTask = !!task?.parentId;
+
+  // Readonly for subtask
+  const isReadOnly = isSubTask;
 
   const autoApproveGuard = useAutoApproveGuard();
   // const { data: minionId } = useMinionId();
@@ -256,7 +266,7 @@ function Chat({ user, uid, prompt }: ChatProps) {
     showPreview,
     showApproval,
   } = useChatStatus({
-    isTaskLoading,
+    isReadOnly,
     isModelsLoading,
     isLoading,
     isInputEmpty: !input.trim(),
@@ -267,7 +277,7 @@ function Chat({ user, uid, prompt }: ChatProps) {
 
   const compactEnabled = !(
     isLoading ||
-    isTaskLoading ||
+    isReadOnly ||
     isExecuting ||
     totalTokens < constants.CompactTaskMinTokens
   );
@@ -303,7 +313,7 @@ function Chat({ user, uid, prompt }: ChatProps) {
   }, [prompt, chatKit]);
 
   usePendingModelAutoStart({
-    enabled: status === "ready" && messages.length === 1 && !isTaskLoading,
+    enabled: status === "ready" && messages.length === 1 && !isReadOnly,
     task,
     retry,
   });
@@ -333,28 +343,29 @@ function Chat({ user, uid, prompt }: ChatProps) {
     (pendingApproval?.name === "retry" ? pendingApproval.error : undefined);
 
   // Only allow adding tool results when not loading
-  const allowAddToolResult = !(isLoading || isTaskLoading || isCompacting);
+  const allowAddToolResult = !(isLoading || isReadOnly || isCompacting);
   useAddCompleteToolCalls({
     messages,
     enable: allowAddToolResult,
     addToolResult: addToolResult,
   });
 
-  useHandleChatEvents(isLoading || isTaskLoading ? undefined : sendMessage);
+  useHandleChatEvents(isLoading || isReadOnly ? undefined : sendMessage);
 
   return (
     <div className="flex h-screen flex-col">
       {showPreview && <PreviewTool messages={messages} />}
       <ChatArea
         messages={renderMessages}
-        isTaskLoading={isTaskLoading}
         isLoading={isLoading}
         user={user || defaultUser}
         messagesContainerRef={messagesContainerRef}
       />
       <div className="flex flex-col px-4">
         <ErrorMessageView error={displayError} />
-        {!isWorkspaceActive ? (
+        {isSubTask ? (
+          <NavigateParentTask className="mb-16" parentId={task.parentId} />
+        ) : !isWorkspaceActive ? (
           <WorkspaceRequiredPlaceholder
             isFetching={isFetching}
             className="mb-12"
@@ -435,7 +446,7 @@ function Chat({ user, uid, prompt }: ChatProps) {
                   todos={todos}
                 />
                 <PublicShareButton
-                  disabled={isTaskLoading || isModelsLoading}
+                  disabled={isReadOnly || isModelsLoading}
                   shareId={task?.shareId}
                   modelId={selectedModel?.id}
                   displayError={displayError?.message}
@@ -582,3 +593,21 @@ function useStopBeforeNavigate({
     };
   }, [stop, router]);
 }
+
+const NavigateParentTask: React.FC<{
+  parentId: string;
+  className?: string;
+}> = ({ parentId, className }) => {
+  return (
+    <div className={cn("flex flex-col items-center justify-center", className)}>
+      <Link
+        to="/"
+        search={{ uid: parentId }}
+        replace={true}
+        className={cn(buttonVariants(), "!text-primary-foreground gap-1")}
+      >
+        <ChevronLeft className="mr-1.5 size-4" /> Parent Task
+      </Link>
+    </div>
+  );
+};
