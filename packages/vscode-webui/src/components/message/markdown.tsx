@@ -162,7 +162,8 @@ export function MessageMarkdown({
                     !text.startsWith("@") &&
                     !text.includes("://") &&
                     !/\s/.test(text) &&
-                    (text.includes("/") || text.includes("\\"))
+                    (text.includes("/") || text.includes("\\")) &&
+                    !text.startsWith("\\")
                   );
                 };
 

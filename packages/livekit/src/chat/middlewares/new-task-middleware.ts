@@ -56,7 +56,11 @@ export function createNewTaskMiddleware(
               return;
             }
 
-            if (chunk.type === "tool-call" && chunk.toolCallId === toolCallId) {
+            if (
+              chunk.type === "tool-call" &&
+              chunk.toolName === "newTask" &&
+              (chunk.toolCallId === toolCallId || toolCallId === "")
+            ) {
               const parsedResult = await safeParseJSON({
                 text: chunk.input,
                 schema: ClientTools.newTask.inputSchema,

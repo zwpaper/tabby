@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { StatusIcon } from "../../status-icon";
 import { ExpandIcon, ToolTitle } from "../../tool-container";
 import type { ToolProps } from "../../types";
@@ -35,29 +35,6 @@ export const newTaskTool: React.FC<NewTaskToolProps> = ({
   }
 
   const [showMessageList, setShowMessageList] = useState(false);
-
-  const hasContent = taskSource && taskSource.messages.length > 1;
-  const autoShowMessageListOnce = useRef(hasContent);
-  useEffect(() => {
-    if (!showMessageList && !autoShowMessageListOnce.current && hasContent) {
-      autoShowMessageListOnce.current = true;
-      setShowMessageList(true);
-    }
-  }, [showMessageList, hasContent]);
-
-  const autoCloseMessageListOnce = useRef(tool.state === "output-available");
-  useEffect(() => {
-    if (
-      !autoCloseMessageListOnce.current &&
-      tool.state === "output-available"
-    ) {
-      autoCloseMessageListOnce.current = true;
-      setTimeout(() => {
-        setShowMessageList(false);
-      }, 1_500);
-    }
-  }, [tool.state]);
-
   return (
     <div>
       <ToolTitle>
