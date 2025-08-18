@@ -1,7 +1,4 @@
-export {
-  ZodMcpTool,
-  type McpTool,
-} from "./mcp-tools";
+export { McpTool } from "./mcp-tools";
 import type { ToolUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
@@ -15,10 +12,7 @@ import { newTask } from "./new-task";
 import { readFile } from "./read-file";
 import { searchFiles } from "./search-files";
 import { todoWrite } from "./todo-write";
-export {
-  ZodTodo,
-  type Todo,
-} from "./todo-write";
+export { Todo } from "./todo-write";
 export type {
   ToolFunctionType,
   PreviewToolFunctionType,

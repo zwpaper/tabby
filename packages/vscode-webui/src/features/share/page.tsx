@@ -4,7 +4,7 @@ import { ChatContextProvider } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import { formatters } from "@getpochi/common";
 import type { Message } from "@getpochi/livekit";
-import { ZodTodo } from "@getpochi/tools";
+import { Todo } from "@getpochi/tools";
 import { createChannel } from "bidc";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -134,7 +134,7 @@ const ZodShareEvent = z.object({
       image: z.string().optional().nullable(),
     })
     .optional(),
-  todos: z.array(ZodTodo).optional(),
+  todos: z.array(Todo).optional(),
   isLoading: z.boolean().optional(),
   error: z
     .object({

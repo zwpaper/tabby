@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { defineClientTool } from "./types";
 
-export const ZodTodo = z.object({
+export const Todo = z.object({
   id: z
     .string()
     .describe('The unique identifier of the task, e.g "collect-information".'),
@@ -14,7 +14,7 @@ export const ZodTodo = z.object({
     .describe("The priority of the task."),
 });
 
-export type Todo = z.infer<typeof ZodTodo>;
+export type Todo = z.infer<typeof Todo>;
 
 const toolDef = {
   description: `
@@ -186,7 +186,7 @@ The assistant did not use the todo list because this is a single command executi
 When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
 `.trim(),
   inputSchema: z.object({
-    todos: z.array(ZodTodo),
+    todos: z.array(Todo),
   }),
   outputSchema: z.object({
     success: z

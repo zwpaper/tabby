@@ -1,7 +1,7 @@
 import type { JSONSchema7 } from "json-schema";
 import { z } from "zod";
 
-export const ZodMcpTool = z.object({
+export const McpTool = z.object({
   description: z
     .string()
     .optional()
@@ -14,4 +14,4 @@ export const ZodMcpTool = z.object({
     .describe("The parameters of the MCP tool."),
 });
 
-export type McpTool = z.infer<typeof ZodMcpTool>;
+export type McpTool = z.infer<typeof McpTool>;

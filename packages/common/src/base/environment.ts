@@ -1,4 +1,4 @@
-import { ZodTodo } from "@getpochi/tools";
+import { Todo } from "@getpochi/tools";
 import { z } from "zod";
 
 export const Environment = z.object({
@@ -98,7 +98,7 @@ export const Environment = z.object({
         .describe("Custom rules provided by the user."),
     })
     .describe("General information about the environment."),
-  todos: z.array(ZodTodo).optional().describe("Todos in current task"),
+  todos: z.array(Todo).optional().describe("Todos in current task"),
   userEdits: z
     .array(
       z.object({
