@@ -10,6 +10,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Import pagination components
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { cn } from "@/lib/utils";
 import { parseTitle } from "@getpochi/common/message-utils";
@@ -28,9 +29,8 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { MdOutlineErrorOutline } from "react-icons/md";
-import { WorkspaceRequiredPlaceholder } from "../../components/workspace-required-placeholder";
 
-export const Route = createFileRoute("/_auth/tasks")({
+export const Route = createFileRoute("/tasks")({
   validateSearch: (search: Record<string, unknown>): { page?: number } => {
     return {
       page: Number(search.page ?? 1),

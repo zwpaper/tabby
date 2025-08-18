@@ -13,7 +13,7 @@ const searchSchema = z.object({
   ts: z.number().optional(),
 });
 
-export const Route = createFileRoute("/_auth/")({
+export const Route = createFileRoute("/")({
   validateSearch: (search) => searchSchema.parse(search),
   component: RouteComponent,
 });

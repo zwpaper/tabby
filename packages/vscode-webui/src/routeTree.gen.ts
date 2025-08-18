@@ -11,13 +11,18 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as TasksImport } from './routes/tasks'
 import { Route as SignInImport } from './routes/sign-in'
-import { Route as AuthImport } from './routes/_auth'
-import { Route as AuthIndexImport } from './routes/_auth/index'
-import { Route as AuthTasksImport } from './routes/_auth/tasks'
-import { Route as AuthSettingsImport } from './routes/_auth/settings'
+import { Route as SettingsImport } from './routes/settings'
+import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const TasksRoute = TasksImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const SignInRoute = SignInImport.update({
   id: '/sign-in',
@@ -25,38 +30,34 @@ const SignInRoute = SignInImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthRoute = AuthImport.update({
-  id: '/_auth',
+const SettingsRoute = SettingsImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthIndexRoute = AuthIndexImport.update({
+const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthRoute,
-} as any)
-
-const AuthTasksRoute = AuthTasksImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => AuthRoute,
-} as any)
-
-const AuthSettingsRoute = AuthSettingsImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthRoute,
+  getParentRoute: () => rootRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsImport
       parentRoute: typeof rootRoute
     }
     '/sign-in': {
@@ -66,93 +67,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInImport
       parentRoute: typeof rootRoute
     }
-    '/_auth/settings': {
-      id: '/_auth/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthSettingsImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/tasks': {
-      id: '/_auth/tasks'
+    '/tasks': {
+      id: '/tasks'
       path: '/tasks'
       fullPath: '/tasks'
-      preLoaderRoute: typeof AuthTasksImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/': {
-      id: '/_auth/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthIndexImport
-      parentRoute: typeof AuthImport
+      preLoaderRoute: typeof TasksImport
+      parentRoute: typeof rootRoute
     }
   }
 }
 
 // Create and export the route tree
 
-interface AuthRouteChildren {
-  AuthSettingsRoute: typeof AuthSettingsRoute
-  AuthTasksRoute: typeof AuthTasksRoute
-  AuthIndexRoute: typeof AuthIndexRoute
-}
-
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthSettingsRoute: AuthSettingsRoute,
-  AuthTasksRoute: AuthTasksRoute,
-  AuthIndexRoute: AuthIndexRoute,
-}
-
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
-
 export interface FileRoutesByFullPath {
-  '': typeof AuthRouteWithChildren
+  '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
-  '/settings': typeof AuthSettingsRoute
-  '/tasks': typeof AuthTasksRoute
-  '/': typeof AuthIndexRoute
+  '/tasks': typeof TasksRoute
 }
 
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
-  '/settings': typeof AuthSettingsRoute
-  '/tasks': typeof AuthTasksRoute
-  '/': typeof AuthIndexRoute
+  '/tasks': typeof TasksRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
-  '/_auth': typeof AuthRouteWithChildren
+  '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
-  '/_auth/settings': typeof AuthSettingsRoute
-  '/_auth/tasks': typeof AuthTasksRoute
-  '/_auth/': typeof AuthIndexRoute
+  '/tasks': typeof TasksRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '' | '/sign-in' | '/settings' | '/tasks' | '/'
+  fullPaths: '/' | '/settings' | '/sign-in' | '/tasks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/sign-in' | '/settings' | '/tasks' | '/'
-  id:
-    | '__root__'
-    | '/_auth'
-    | '/sign-in'
-    | '/_auth/settings'
-    | '/_auth/tasks'
-    | '/_auth/'
+  to: '/' | '/settings' | '/sign-in' | '/tasks'
+  id: '__root__' | '/' | '/settings' | '/sign-in' | '/tasks'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  AuthRoute: typeof AuthRouteWithChildren
+  IndexRoute: typeof IndexRoute
+  SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
+  TasksRoute: typeof TasksRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  AuthRoute: AuthRouteWithChildren,
+  IndexRoute: IndexRoute,
+  SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
+  TasksRoute: TasksRoute,
 }
 
 export const routeTree = rootRoute
@@ -165,32 +134,23 @@ export const routeTree = rootRoute
     "__root__": {
       "filePath": "__root.tsx",
       "children": [
-        "/_auth",
-        "/sign-in"
+        "/",
+        "/settings",
+        "/sign-in",
+        "/tasks"
       ]
     },
-    "/_auth": {
-      "filePath": "_auth.tsx",
-      "children": [
-        "/_auth/settings",
-        "/_auth/tasks",
-        "/_auth/"
-      ]
+    "/": {
+      "filePath": "index.tsx"
+    },
+    "/settings": {
+      "filePath": "settings.tsx"
     },
     "/sign-in": {
       "filePath": "sign-in.tsx"
     },
-    "/_auth/settings": {
-      "filePath": "_auth/settings.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/tasks": {
-      "filePath": "_auth/tasks.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/": {
-      "filePath": "_auth/index.tsx",
-      "parent": "/_auth"
+    "/tasks": {
+      "filePath": "tasks.tsx"
     }
   }
 }
