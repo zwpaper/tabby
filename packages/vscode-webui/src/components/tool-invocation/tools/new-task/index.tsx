@@ -1,26 +1,30 @@
 import { TaskThread, type TaskThreadSource } from "@/components/task-thread";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useIsAtBottom } from "@/lib/hooks/use-is-at-bottom";
 import { cn } from "@/lib/utils";
 
 import { Link } from "@tanstack/react-router";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StatusIcon } from "../../status-icon";
 import { ExpandIcon, ToolTitle } from "../../tool-container";
 import type { ToolProps } from "../../types";
 import { useInlinedSubTask } from "./use-inlined-sub-task";
 import { useLiveSubTask } from "./use-live-sub-task";
 
-export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
+interface NewTaskToolProps extends ToolProps<"newTask"> {
+  // For storybook visualization
+  taskThreadSource?: TaskThreadSource;
+}
+
+export const newTaskTool: React.FC<NewTaskToolProps> = ({
   tool,
   isExecuting,
+  taskThreadSource,
 }) => {
   const uid = tool.input?._meta?.uid;
   const description = tool.input?.description ?? "";
 
   let isLiveTaskSource = false;
-  let taskSource: TaskThreadSource | undefined = undefined;
+  let taskSource = taskThreadSource;
 
   const inlinedTaskSource = useInlinedSubTask(tool);
   if (inlinedTaskSource) {
@@ -31,41 +35,26 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
   }
 
   const [showMessageList, setShowMessageList] = useState(false);
-  const newTaskContainer = useRef<HTMLDivElement>(null);
-  const { isAtBottom, scrollToBottom } = useIsAtBottom(newTaskContainer);
-  const isAtBottomRef = useRef(isAtBottom);
 
+  const hasContent = taskSource && taskSource.messages.length > 1;
+  const autoShowMessageListOnce = useRef(hasContent);
   useEffect(() => {
-    isAtBottomRef.current = isAtBottom;
-  }, [isAtBottom]);
+    if (!showMessageList && !autoShowMessageListOnce.current && hasContent) {
+      autoShowMessageListOnce.current = true;
+      setShowMessageList(true);
+    }
+  }, [showMessageList, hasContent]);
 
-  // Scroll to bottom when the message list height changes
+  const autoCloseMessageListOnce = useRef(tool.state === "output-available");
   useEffect(() => {
-    if (!showMessageList) {
-      return;
+    if (
+      !autoCloseMessageListOnce.current &&
+      tool.state === "output-available"
+    ) {
+      autoCloseMessageListOnce.current = true;
+      setShowMessageList(false);
     }
-    const container = newTaskContainer.current;
-    if (!container?.children[0]) {
-      return;
-    }
-    const resizeObserver = new ResizeObserver(() => {
-      if (isAtBottomRef.current) {
-        requestAnimationFrame(() => scrollToBottom());
-      }
-    });
-    resizeObserver.observe(container);
-    resizeObserver.observe(container.children[0]);
-    return () => {
-      resizeObserver.disconnect();
-    }; // clean up
-  }, [scrollToBottom, showMessageList]);
-
-  // Initial scroll to bottom once when component mounts (without smooth behavior)
-  useLayoutEffect(() => {
-    if (newTaskContainer.current) {
-      scrollToBottom(false); // false = not smooth
-    }
-  }, [scrollToBottom]);
+  }, [tool.state]);
 
   return (
     <div>
@@ -94,9 +83,7 @@ export const newTaskTool: React.FC<ToolProps<"newTask">> = ({
         )}
       </ToolTitle>
       {taskSource && (
-        <ScrollArea viewportClassname="max-h-[300px]" ref={newTaskContainer}>
-          <TaskThread source={taskSource} showMessageList={showMessageList} />
-        </ScrollArea>
+        <TaskThread source={taskSource} showMessageList={showMessageList} />
       )}
     </div>
   );

@@ -77,5 +77,6 @@ const Tools: Record<string, React.FC<ToolProps<any>>> = {
   globFiles: globFilesTool,
   webFetch: webFetchTool,
   todoWrite: todoWriteTool,
+  // @ts-ignore
   newTask: newTaskTool,
 };
