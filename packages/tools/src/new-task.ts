@@ -17,8 +17,6 @@ const toolDef = {
 Always include a reminder in your prompt to ensure the result will be submitted through the \`attemptCompletion\` tool.
 If the runner stops without submitting the result, it will return an error message.
 
-You should only use the \`newTask\` tool to perform a single, specific read-only task. No file writing or modification is allowed.
-
 For example, if you are searching for a keyword or file and are not confident about finding the right match in the first few tries, use this tool to perform the search.
 When to use this tool:
 - If you are searching for a keyword like "config" or "logger", or for questions like "which file does X?", this tool is strongly recommended.

@@ -52,7 +52,9 @@ export const newTaskTool: React.FC<NewTaskToolProps> = ({
       tool.state === "output-available"
     ) {
       autoCloseMessageListOnce.current = true;
-      setShowMessageList(false);
+      setTimeout(() => {
+        setShowMessageList(false);
+      }, 1_500);
     }
   }, [tool.state]);
 
