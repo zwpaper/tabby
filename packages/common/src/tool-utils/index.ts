@@ -2,6 +2,7 @@ export { searchFilesWithRipgrep } from "./ripgrep";
 export { ignoreWalk } from "./ignore-walk";
 export {
   validateTextFile,
+  isPlainTextFile,
   selectFileContent,
   resolvePath,
   isFileExists,
