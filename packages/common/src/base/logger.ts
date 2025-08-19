@@ -51,9 +51,8 @@ function getPochiLogLevel() {
   }
 
   if (typeof process !== "undefined") {
-    return process.env.POCHI_LOG || "";
+    return process.env.POCHI_LOG;
   }
-  return "";
 }
 
 function parseLogMinLevelAndType(name: string) {
@@ -62,16 +61,18 @@ function parseLogMinLevelAndType(name: string) {
   }
 
   const config = getPochiLogLevel();
-  // POCHI_LOG=debug
-  if (!config.includes("=")) {
-    return stringToLogLevel(config);
-  }
+  if (config !== undefined) {
+    // POCHI_LOG=debug
+    if (!config.includes("=")) {
+      return stringToLogLevel(config);
+    }
 
-  // POCHI_LOG=Pochi=debug,Ragdoll=info
-  for (const item of config.split(",")) {
-    const [pattern, value] = item.split("=");
-    if (minimatch(name, pattern)) {
-      return stringToLogLevel(value);
+    // POCHI_LOG=Pochi=debug,Ragdoll=info
+    for (const item of config.split(",")) {
+      const [pattern, value] = item.split("=");
+      if (minimatch(name, pattern)) {
+        return stringToLogLevel(value);
+      }
     }
   }
 
