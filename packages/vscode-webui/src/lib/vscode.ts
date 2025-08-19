@@ -1,3 +1,4 @@
+import { getLogger } from "@getpochi/common";
 import type {
   VSCodeHostApi,
   WebviewHostApi,
@@ -20,7 +21,7 @@ function getVSCodeApi() {
   try {
     vscodeApi = acquireVsCodeApi();
   } catch (error) {
-    console.warn(
+    logger.warn(
       "Failed to acquire VSCode API. This is likely due to running in a non-VSCode environment.",
       error,
     );
@@ -117,3 +118,5 @@ function createVSCodeHost(): VSCodeHostApi {
 }
 
 export const vscodeHost = createVSCodeHost();
+
+const logger = getLogger("vscode");

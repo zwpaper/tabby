@@ -1,4 +1,7 @@
+import { getLogger } from "@getpochi/common";
 import { useEffect, useRef } from "react";
+
+const logger = getLogger("use-effect-debugger");
 
 function usePrevious<T>(value: T, initialValue: T): T {
   const ref = useRef(initialValue);
@@ -37,7 +40,7 @@ const useEffectDebugger: typeof useEffect = (
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   if (Object.keys(changedDeps as any).length) {
-    console.log("[use-effect-debugger] ", changedDeps);
+    logger.info("[use-effect-debugger] ", changedDeps);
   }
 
   useEffect(effectHook, dependencies);

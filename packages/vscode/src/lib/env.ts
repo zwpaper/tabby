@@ -1,4 +1,5 @@
 import path from "node:path";
+import { getLogger } from "@getpochi/common";
 import {
   DefaultWorkspaceRulesFilePath,
   SystemRulesFileDisplayPath,
@@ -18,6 +19,7 @@ import {
 // Path constants - using arrays for consistency
 const WorkspaceRulesFilePath = [DefaultWorkspaceRulesFilePath];
 const WorkflowsDirPath = [".pochi", "workflows"];
+const logger = getLogger("env");
 
 export function getCwd() {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd();
@@ -220,7 +222,7 @@ export async function detectThirdPartyRules(): Promise<string[]> {
 
     await findCursorRulesDirectories(workspaceFolder.uri);
   } catch (error) {
-    console.error("Error detecting cursor rule files:", error);
+    logger.error("Error detecting cursor rule files:", error);
   }
 
   return cursorRulePaths;

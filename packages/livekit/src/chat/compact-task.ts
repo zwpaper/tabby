@@ -1,6 +1,8 @@
-import { formatters, prompts } from "@getpochi/common";
+import { formatters, getLogger, prompts } from "@getpochi/common";
 import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
+
+const logger = getLogger("compactTask");
 
 export async function compactTask({
   getLLM,
@@ -40,7 +42,7 @@ export async function compactTask({
     }
     return text;
   } catch (err) {
-    console.warn("Failed to create summary", err);
+    logger.warn("Failed to create summary", err);
   }
 }
 

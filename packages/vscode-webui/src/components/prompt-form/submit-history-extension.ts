@@ -1,4 +1,5 @@
 import { vscodeHost } from "@/lib/vscode";
+import { getLogger } from "@getpochi/common";
 import { Extension } from "@tiptap/react";
 
 interface SubmitHistoryOptions {
@@ -13,6 +14,8 @@ interface SubmitHistoryStorage {
 }
 
 export const extensionName = "submitHistory";
+
+const logger = getLogger("submit-history-extension");
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -56,7 +59,7 @@ export const SubmitHistoryExtension = Extension.create<
         this.storage.history = Array.isArray(history) ? history : [];
       }
     } catch (error) {
-      console.warn("Failed to load submit history from storage:", error);
+      logger.warn("Failed to load submit history from storage:", error);
       this.storage.history = [];
     }
   },
@@ -90,7 +93,7 @@ export const SubmitHistoryExtension = Extension.create<
             storage.history,
           );
         } catch (error) {
-          console.warn("Failed to save submit history to storage:", error);
+          logger.warn("Failed to save submit history to storage:", error);
         }
 
         return true;
@@ -145,7 +148,7 @@ export const SubmitHistoryExtension = Extension.create<
                   dispatch(transaction);
                 }
               } catch (error) {
-                console.warn("Failed to save current draft to storage:", error);
+                logger.warn("Failed to save current draft to storage:", error);
               }
 
               return true;
@@ -174,7 +177,7 @@ export const SubmitHistoryExtension = Extension.create<
                 dispatch(transaction);
               }
             } catch (error) {
-              console.warn("Failed to navigate submit history:", error);
+              logger.warn("Failed to navigate submit history:", error);
             }
           }
 
@@ -192,7 +195,7 @@ export const SubmitHistoryExtension = Extension.create<
             storage.history,
           );
         } catch (error) {
-          console.warn("Failed to save submit history to storage:", error);
+          logger.warn("Failed to save submit history to storage:", error);
         }
 
         return true;

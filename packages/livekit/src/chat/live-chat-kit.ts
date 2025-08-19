@@ -1,4 +1,4 @@
-import type { Environment } from "@getpochi/common";
+import { type Environment, getLogger } from "@getpochi/common";
 import type { PochiApiClient } from "@getpochi/common/pochi-api";
 import type { McpTool } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
@@ -239,7 +239,7 @@ export class LiveChatKit<
   };
 
   private readonly onError: ChatOnErrorCallback = (error) => {
-    console.error("onError", error);
+    logger.error("onError", error);
     const lastMessage = this.chat.messages.at(-1) || null;
     this.store.commit(
       events.chatStreamFailed({
@@ -251,3 +251,5 @@ export class LiveChatKit<
     );
   };
 }
+
+const logger = getLogger("LiveChatKit");

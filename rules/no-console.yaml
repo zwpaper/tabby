@@ -4,6 +4,12 @@ rule:
   pattern: console.$$$
 message: Don't use console for logging, use getLogger instead.
 severity: error
+ignores:
+  - "**/__test__/**"
+  - "**/__stories__/**"
 files:
+  - "packages/livekit/src/**/*.ts"
+  - "packages/vscode-webui/src/**/*.ts"
+  - "packages/vscode/src/**/*.ts"
   - "private/packages/runner/src/**/*.ts"
   - "private/packages/server/src/**/*.ts"

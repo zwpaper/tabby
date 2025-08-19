@@ -27,8 +27,6 @@ import { TokenStorage } from "./lib/token-storage";
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-  console.log("activating Pochi...");
-
   // Container will dispose all the registered instances when itself is disposed
   context.subscriptions.push(container);
   await container.resolve(TokenStorage).init();
