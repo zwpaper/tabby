@@ -18,6 +18,7 @@ import { catalog } from "@getpochi/livekit";
 import { useLiveChatKit } from "@getpochi/livekit/react";
 import type { Todo } from "@getpochi/tools";
 import { useStore } from "@livestore/react";
+import { ThreadAbortSignal } from "@quilted/threads";
 import { getToolName, lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ToolProps } from "../../types";
@@ -26,14 +27,33 @@ export function useLiveSubTask({
   tool,
   isExecuting,
 }: Pick<ToolProps<"newTask">, "tool" | "isExecuting">): TaskThreadSource {
-  // biome-ignore lint/style/noNonNullAssertion: uid must have been set.
-  const uid = tool.input?._meta?.uid!;
-
   const lifecycle = useToolCallLifeCycle().getToolCallLifeCycle({
     toolName: getToolName(tool),
     toolCallId: tool.toolCallId,
   });
 
+  const abortController = useRef(new AbortController());
+
+  useEffect(() => {
+    const streamingResult = ensureNewTaskStreamingResult(
+      lifecycle.streamingResult,
+    );
+    if (!isExecuting || !streamingResult) {
+      return;
+    }
+
+    const { abortSignal } = streamingResult;
+    const onAbort = () => {
+      abortController.current.abort(abortSignal.reason);
+    };
+    abortSignal.addEventListener("abort", onAbort);
+    return () => {
+      abortSignal.removeEventListener("abort", onAbort);
+    };
+  }, [isExecuting, lifecycle.streamingResult]);
+
+  // biome-ignore lint/style/noNonNullAssertion: uid must have been set.
+  const uid = tool.input?._meta?.uid!;
   const { store } = useStore();
   const task = store.useQuery(catalog.queries.makeTaskQuery(uid));
   const todosRef = useRef<Todo[] | undefined>(undefined);
@@ -45,13 +65,14 @@ export function useLiveSubTask({
   // FIXME: handle auto retry for output without task.
   const chatKit = useLiveChatKit({
     taskId: uid,
+    abortSignal: abortController.current.signal,
     getters,
     isSubTask: true,
     sendAutomaticallyWhen: (x) => {
       const streamingResult = ensureNewTaskStreamingResult(
         lifecycle.streamingResult,
       );
-      if (!streamingResult || streamingResult.abortSignal.aborted) {
+      if (!streamingResult || abortController.current.signal.aborted) {
         return false;
       }
       // AI SDK v5 will retry regardless of the status if sendAutomaticallyWhen is set.
@@ -82,7 +103,9 @@ export function useLiveSubTask({
         toolCall.input,
         {
           toolCallId: toolCall.toolCallId,
-          abortSignal: streamingResult.serializedAbortSignal,
+          abortSignal: ThreadAbortSignal.serialize(
+            abortController.current.signal,
+          ),
           nonInteractive: true,
         },
       );
@@ -101,7 +124,6 @@ export function useLiveSubTask({
     messages,
     status,
     error,
-    stop,
     setMessages,
     sendMessage,
     addToolResult,
@@ -109,24 +131,6 @@ export function useLiveSubTask({
   } = useChat({
     chat: chatKit.chat,
   });
-
-  useEffect(() => {
-    const streamingResult = ensureNewTaskStreamingResult(
-      lifecycle.streamingResult,
-    );
-    if (!isExecuting || !streamingResult) {
-      return;
-    }
-
-    const onAbort = () => {
-      stop();
-    };
-    const { abortSignal } = streamingResult;
-    abortSignal.addEventListener("abort", onAbort);
-    return () => {
-      abortSignal.removeEventListener("abort", onAbort);
-    };
-  }, [isExecuting, lifecycle.streamingResult, stop]);
 
   const [retryCount, setRetryCount] = useState(0);
   const retryImpl = useRetry({
@@ -230,6 +234,7 @@ export function useLiveSubTask({
       tool.state === "input-available" &&
       isExecuting &&
       currentStepCount <= SubtaskMaxStep &&
+      !abortController.current.signal.aborted &&
       // task is not completed or aborted
       !(
         (task?.status === "failed" && task.error?.kind === "AbortError") ||
@@ -249,7 +254,7 @@ export function useLiveSubTask({
     );
     return (
       streamingResult &&
-      !streamingResult.abortSignal.aborted &&
+      !abortController.current.signal.aborted &&
       (status === "submitted" || status === "streaming")
     );
   }, [lifecycle.streamingResult, status]);

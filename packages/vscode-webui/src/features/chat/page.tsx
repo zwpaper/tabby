@@ -45,8 +45,6 @@ interface ChatProps {
 }
 
 function Chat({ user, uid, prompt }: ChatProps) {
-  useAbortBeforeNavigation();
-
   const { store } = useStore();
   const todosRef = useRef<Todo[] | undefined>(undefined);
   const getters = useLiveChatKitGetters({
@@ -58,11 +56,17 @@ function Chat({ user, uid, prompt }: ChatProps) {
     image: `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(store.clientId)}&scale=120`,
   };
 
+  const chatAbortController = useChatAbortController();
+  useAbortBeforeNavigation(chatAbortController.current);
+
   const chatKit = useLiveChatKit({
     taskId: uid,
     getters,
-    abortSignal: useChatAbortController().current.signal,
+    abortSignal: chatAbortController.current.signal,
     sendAutomaticallyWhen: (x) => {
+      if (chatAbortController.current.signal.aborted) {
+        return false;
+      }
       // AI SDK v5 will retry regardless of the status if sendAutomaticallyWhen is set.
       if (chatKit.chat.status === "error") {
         return false;
@@ -162,13 +166,12 @@ function Chat({ user, uid, prompt }: ChatProps) {
   );
 }
 
-function useAbortBeforeNavigation() {
-  const abortController = useChatAbortController();
+function useAbortBeforeNavigation(abortController: AbortController) {
   const router = useRouter();
   useEffect(() => {
     // Subscribe to the 'onBeforeLoad' event
     const unsubscribe = router.subscribe("onBeforeLoad", () => {
-      abortController.current.abort();
+      abortController.abort();
     });
 
     // Clean up the subscription when the component unmounts

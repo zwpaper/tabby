@@ -4,10 +4,7 @@ import type { ExecuteCommandResult } from "@getpochi/common/vscode-webui-bridge"
 import { type Message, type Task, catalog } from "@getpochi/livekit";
 import type { ClientTools } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import {
-  ThreadAbortSignal,
-  type ThreadAbortSignalSerialization,
-} from "@quilted/threads";
+import { ThreadAbortSignal } from "@quilted/threads";
 import {
   type ThreadSignalSerialization,
   threadSignal,
@@ -24,7 +21,6 @@ type ExecuteCommandReturnType = {
 type NewTaskParameterType = InferToolInput<ClientTools["newTask"]>;
 type NewTaskReturnType = {
   uid: string;
-  serializedAbortSignal: ThreadAbortSignalSerialization;
 };
 type ExecuteReturnType = ExecuteCommandReturnType | NewTaskReturnType | unknown;
 
@@ -35,9 +31,9 @@ type StreamingResult =
       detach: () => void;
     }
   | {
+      // Not actually a task streaming result, but we provide context here for the live-sub-task.
       toolName: "newTask";
       abortSignal: AbortSignal;
-      serializedAbortSignal: ThreadAbortSignalSerialization;
       throws: (error: string) => void;
     };
 
@@ -47,6 +43,8 @@ type CompleteReason =
   | "preview-reject"
   | "user-detach"
   | "user-abort";
+
+type AbortFunctionType = AbortController["abort"];
 
 type ToolCallState =
   | {
@@ -58,22 +56,25 @@ type ToolCallState =
       // Represents the preview runs at toolCall.state === "call"
       type: "pending";
       previewJob: Promise<PreviewReturnType>;
-      abortController: AbortController;
+      abort: AbortFunctionType;
+      abortSignal: AbortSignal;
     }
   | {
       type: "ready";
-      abortController: AbortController;
+      abort: AbortFunctionType;
+      abortSignal: AbortSignal;
     }
   | {
       type: "execute";
       executeJob: Promise<ExecuteReturnType>;
-      // Controller to abort the execute job
-      abortController: AbortController;
+      abort: AbortFunctionType;
+      abortSignal: AbortSignal;
     }
   | {
       type: "execute:streaming";
-      abortController: AbortController;
       streamingResult: StreamingResult;
+      abort: AbortFunctionType;
+      abortSignal: AbortSignal;
     }
   | {
       type: "complete";
@@ -146,17 +147,19 @@ export class ManagedToolCallLifeCycle
     type: "init",
     previewJob: Promise.resolve(undefined),
   };
-
+  private readonly outerAbortSignal: AbortSignal;
   readonly toolName: string;
   readonly toolCallId: string;
 
   constructor(
     private readonly store: Store,
     key: ToolCallLifeCycleKey,
+    abortSignal: AbortSignal,
   ) {
     super();
     this.toolName = key.toolName;
     this.toolCallId = key.toolCallId;
+    this.outerAbortSignal = abortSignal;
   }
 
   get status() {
@@ -190,36 +193,38 @@ export class ManagedToolCallLifeCycle
   }
 
   private previewReady(args: unknown, state: ToolUIPart["state"]) {
-    const { abortController } = this.checkState("Preview", "ready");
+    const { abortSignal } = this.checkState("Preview", "ready");
     vscodeHost.previewToolCall(this.toolName, args, {
       state: convertState(state),
       toolCallId: this.toolCallId,
-      abortSignal: ThreadAbortSignal.serialize(abortController.signal),
+      abortSignal: ThreadAbortSignal.serialize(abortSignal),
     });
   }
 
   private previewInit(args: unknown, state: ToolUIPart["state"]) {
     let { previewJob } = this.checkState("Preview", "init");
-    const previewToolCall = (abortSignal?: AbortSignal) =>
+    const previewToolCall = (abortSignal: AbortSignal) =>
       vscodeHost.previewToolCall(this.toolName, args, {
         state: convertState(state),
         toolCallId: this.toolCallId,
-        abortSignal: abortSignal
-          ? ThreadAbortSignal.serialize(abortSignal)
-          : undefined,
+        abortSignal: ThreadAbortSignal.serialize(abortSignal),
       });
 
     if (state === "input-streaming") {
-      previewJob = previewJob.then(() => previewToolCall());
+      previewJob = previewJob.then(() =>
+        previewToolCall(this.outerAbortSignal),
+      );
       this.transitTo("init", {
         type: "init",
         previewJob,
       });
     } else if (state === "input-available") {
       const abortController = new AbortController();
-      previewJob = previewJob.then(() =>
-        previewToolCall(abortController.signal),
-      );
+      const abortSignal = AbortSignal.any([
+        abortController.signal,
+        this.outerAbortSignal,
+      ]);
+      previewJob = previewJob.then(() => previewToolCall(abortSignal));
       previewJob.then((result) => {
         if (result?.error) {
           logger.debug("Tool call preview rejected:", result.error);
@@ -229,31 +234,36 @@ export class ManagedToolCallLifeCycle
             reason: "preview-reject",
           });
         } else {
-          this.transitTo("pending", { type: "ready", abortController });
+          this.transitTo("pending", {
+            type: "ready",
+            abort: (reason) => abortController.abort(reason),
+            abortSignal,
+          });
         }
       });
       this.transitTo("init", {
         type: "pending",
         previewJob,
-        abortController,
+        abort: (reason) => abortController.abort(reason),
+        abortSignal,
       });
     }
   }
 
   execute(args: unknown) {
     const abortController = new AbortController();
-    const abortSignal = ThreadAbortSignal.serialize(abortController.signal);
+    const abortSignal = AbortSignal.any([
+      abortController.signal,
+      this.outerAbortSignal,
+    ]);
     let executePromise: Promise<unknown>;
 
     if (this.toolName === "newTask") {
-      executePromise = this.runNewTask(
-        args as NewTaskParameterType,
-        abortSignal,
-      );
+      executePromise = this.runNewTask(args as NewTaskParameterType);
     } else {
       executePromise = vscodeHost.executeToolCall(this.toolName, args, {
         toolCallId: this.toolCallId,
-        abortSignal,
+        abortSignal: ThreadAbortSignal.serialize(abortSignal),
       });
     }
 
@@ -268,23 +278,18 @@ export class ManagedToolCallLifeCycle
     this.transitTo("ready", {
       type: "execute",
       executeJob,
-      abortController,
+      abort: (reason) => abortController.abort(reason),
+      abortSignal,
     });
   }
 
-  private runNewTask(
-    args: NewTaskParameterType,
-    serializedAbortSignal: ThreadAbortSignalSerialization,
-  ): Promise<NewTaskReturnType> {
+  private runNewTask(args: NewTaskParameterType): Promise<NewTaskReturnType> {
     const uid = args._meta?.uid;
     if (!uid) {
       throw new Error("Missing uid in newTask arguments");
     }
 
-    return Promise.resolve({
-      uid,
-      serializedAbortSignal,
-    });
+    return Promise.resolve({ uid });
   }
 
   abort() {
@@ -292,13 +297,13 @@ export class ManagedToolCallLifeCycle
       this.state.type === "execute" ||
       this.state.type === "execute:streaming"
     ) {
-      this.state.abortController.abort("user-abort");
+      this.state.abort("user-abort");
     }
   }
 
   reject() {
-    const { abortController } = this.checkState("Reject", "ready");
-    abortController.abort();
+    const { abort } = this.checkState("Reject", "ready");
+    abort();
     this.transitTo("ready", {
       type: "complete",
       result: {
@@ -310,7 +315,7 @@ export class ManagedToolCallLifeCycle
   }
 
   private onExecuteDone(result: ExecuteReturnType) {
-    const execute = this.checkState("onExecuteDone", "execute");
+    const { abortSignal } = this.checkState("onExecuteDone", "execute");
     if (
       this.toolName === "executeCommand" &&
       typeof result === "object" &&
@@ -324,33 +329,32 @@ export class ManagedToolCallLifeCycle
       this.transitTo("execute", {
         type: "complete",
         result,
-        reason: execute.abortController.signal.aborted
-          ? "user-abort"
-          : "execute-finish",
+        reason: abortSignal.aborted ? "user-abort" : "execute-finish",
       });
     }
   }
 
   private onExecuteCommand(result: ExecuteCommandReturnType) {
     const signal = threadSignal(result.output);
-    const { abortController } = this.checkState("Streaming", "execute");
+    const { abort, abortSignal } = this.checkState("Streaming", "execute");
 
     let isUserDetached = false;
 
     const detach = () => {
       isUserDetached = true;
       result.detach();
-      abortController.abort();
+      abort();
     };
 
     this.transitTo("execute", {
       type: "execute:streaming",
-      abortController,
       streamingResult: {
         toolName: "executeCommand",
         output: signal.value,
         detach,
       },
+      abort,
+      abortSignal,
     });
 
     const unsubscribe = signal.subscribe((output) => {
@@ -368,7 +372,7 @@ export class ManagedToolCallLifeCycle
           result,
           reason: isUserDetached
             ? "user-detach"
-            : abortController.signal.aborted
+            : abortSignal.aborted
               ? "user-abort"
               : "execute-finish",
         });
@@ -376,18 +380,19 @@ export class ManagedToolCallLifeCycle
       } else {
         this.transitTo("execute:streaming", {
           type: "execute:streaming",
-          abortController,
           streamingResult: {
             toolName: "executeCommand",
             output,
             detach,
           },
+          abort,
+          abortSignal,
         });
       }
     });
   }
 
-  private onExecuteNewTask({ uid, serializedAbortSignal }: NewTaskReturnType) {
+  private onExecuteNewTask({ uid }: NewTaskReturnType) {
     const cleanupFns: (() => void)[] = [];
     const cleanup = () => {
       for (const fn of cleanupFns) {
@@ -395,14 +400,15 @@ export class ManagedToolCallLifeCycle
       }
     };
 
-    const { abortController } = this.checkState("onExecuteNewTask", "execute");
+    const { abort, abortSignal } = this.checkState(
+      "onExecuteNewTask",
+      "execute",
+    );
     this.transitTo("execute", {
       type: "execute:streaming",
-      abortController,
       streamingResult: {
         toolName: "newTask",
-        abortSignal: abortController.signal,
-        serializedAbortSignal,
+        abortSignal,
         throws: (error: string) => {
           this.transitTo("execute:streaming", {
             type: "complete",
@@ -414,24 +420,26 @@ export class ManagedToolCallLifeCycle
           cleanup();
         },
       },
+      abort,
+      abortSignal,
     });
 
     const onAbort = () => {
       this.transitTo("execute:streaming", {
         type: "complete",
         result: {
-          error: abortController.signal.reason,
+          error: abortSignal.reason,
         },
         reason: "user-abort",
       });
       cleanup();
     };
-    if (abortController.signal.aborted) {
+    if (abortSignal.aborted) {
       onAbort();
     } else {
-      abortController.signal.addEventListener("abort", onAbort, { once: true });
+      abortSignal.addEventListener("abort", onAbort, { once: true });
       cleanupFns.push(() => {
-        abortController.signal.removeEventListener("abort", onAbort);
+        abortSignal.removeEventListener("abort", onAbort);
       });
     }
 
