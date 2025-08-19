@@ -6,7 +6,11 @@ import { getLogger } from "@/lib/logger";
 import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorkspaceJobQueue } from "@/lib/workspace-job";
-import { WebsiteTaskCreateEvent } from "@getpochi/common";
+import {
+  type WebsiteTaskCreateEvent,
+  WebsiteTaskEvent,
+  type WebsiteTaskOpenEvent,
+} from "@getpochi/common";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
@@ -46,15 +50,76 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     const eventParam = searchParams.get("event");
     if (eventParam) {
       try {
-        const event = WebsiteTaskCreateEvent.parse(
-          JSON.parse(decodeURIComponent(eventParam)),
-        );
-        await this.handleNewProjectTask(event);
+        const decodedEvent = JSON.parse(decodeURIComponent(eventParam));
+        const event = WebsiteTaskEvent.parse(decodedEvent);
+
+        // Route to appropriate handler based on event type
+        switch (event.type) {
+          case "website:open-task":
+            await this.handleOpenTask(event);
+            break;
+          case "website:new-project":
+            await this.handleNewProjectTask(event);
+            break;
+          default:
+            logger.error("Unknown event type", event);
+            vscode.window.showErrorMessage("Unknown event type");
+        }
       } catch (error) {
         logger.error("Failed to parse event parameter", error);
         vscode.window.showErrorMessage("Failed to process task event");
       }
       return;
+    }
+  }
+
+  /**
+   * Opens an existing project and task if found in registry
+   * @returns true if project was found and opened, false otherwise
+   */
+  private async openExistingProject(uid: string): Promise<boolean> {
+    const existingProject = this.newProjectRegistry.get(uid);
+
+    if (!existingProject) {
+      return false;
+    }
+
+    logger.info(`Found existing project for uid ${uid}: ${existingProject}`);
+
+    // Push job to open the task after workspace opens
+    await this.workspaceJobQueue.push({
+      workspaceUri: existingProject.toString(),
+      command: "pochi.openTask",
+      args: [uid],
+      expiresAt: Date.now() + 1000 * 60,
+    });
+
+    logger.info(
+      `Pushed openTask job for existing workspace: ${existingProject} with task ID: ${uid}`,
+    );
+
+    // Open the workspace
+    await vscode.commands.executeCommand("vscode.openFolder", existingProject, {
+      forceNewWindow: true,
+    });
+    logger.info("Successfully opened existing project folder");
+
+    return true;
+  }
+
+  private async handleOpenTask(event: WebsiteTaskOpenEvent) {
+    const { uid } = event.data;
+
+    logger.info(`Handling open task request for uid: ${uid}`);
+
+    // Try to open existing project
+    const opened = await this.openExistingProject(uid);
+
+    if (!opened) {
+      logger.info(
+        `No existing project found for task ${uid}, opening task in current workspace`,
+      );
+      await vscode.commands.executeCommand("pochi.openTask", uid);
     }
   }
 
@@ -64,30 +129,9 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
 
     logger.info(`Handling new project task: ${JSON.stringify(params)}`);
 
-    if (uid) {
-      const createdProject = this.newProjectRegistry.get(uid);
-      if (createdProject) {
-        logger.info(
-          `Found existing project for requestId ${uid}: ${createdProject}`,
-        );
-
-        await this.workspaceJobQueue.push({
-          workspaceUri: createdProject.toString(),
-          command: "pochiWebui.focus",
-          args: [],
-          expiresAt: Date.now() + 1000 * 60,
-        });
-
-        // open the new workspace
-        await vscode.commands.executeCommand(
-          "vscode.openFolder",
-          createdProject,
-          {
-            forceNewWindow: true,
-          },
-        );
-        return;
-      }
+    // Check if project already exists
+    if (uid && (await this.openExistingProject(uid))) {
+      return;
     }
 
     const newWorkspaceUri = await createNewWorkspace(name);

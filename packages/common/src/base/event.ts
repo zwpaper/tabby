@@ -20,3 +20,19 @@ export const WebsiteTaskCreateEvent = z.object({
 });
 
 export type WebsiteTaskCreateEvent = z.infer<typeof WebsiteTaskCreateEvent>;
+
+export const WebsiteTaskOpenEvent = z.object({
+  type: z.literal("website:open-task"),
+  data: z.object({
+    uid: z.string(),
+  }),
+});
+
+export type WebsiteTaskOpenEvent = z.infer<typeof WebsiteTaskOpenEvent>;
+
+export const WebsiteTaskEvent = z.union([
+  WebsiteTaskCreateEvent,
+  WebsiteTaskOpenEvent,
+]);
+
+export type WebsiteTaskEvent = z.infer<typeof WebsiteTaskEvent>;
