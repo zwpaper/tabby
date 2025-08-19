@@ -1,0 +1,31 @@
+name: "Generate production deploy code"
+on:
+  push:
+    branches:
+      - main
+jobs:
+  pull_submodule_and_deploy_production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN_FOR_PRIVATE }}
+      - name: Configure Git
+        run: |
+          git config user.name "Pochi"
+          git config user.email "noreply@getpochi.com"
+
+      - name: Push to production branch
+        env:
+          PRIVATE_PATH: private
+          PRODUCTION_BRANCH: production
+        run: |
+          git checkout -b ${PRODUCTION_BRANCH}
+          git rm --cached "${PRIVATE_PATH}" 1>/dev/null
+          git rm .gitmodules
+          rm -rf "${PRIVATE_PATH}/.git"
+          git add "${PRIVATE_PATH}" 1>/dev/null
+          git commit -m "chore: checkout repo with submodule and push to deploy" 1>/dev/null
+          git push origin ${PRODUCTION_BRANCH} --force
