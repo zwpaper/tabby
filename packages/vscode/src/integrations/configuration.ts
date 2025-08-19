@@ -15,7 +15,6 @@ export class PochiConfiguration implements vscode.Disposable {
   readonly webui = signal(getPochiWebviewLogSettings());
   readonly autoSaveDisabled = signal(getAutoSaveDisabled());
   readonly customModelSettings = signal(getCustomModelSetting());
-  readonly pochiModelSettings = signal(getPochiModelSettings());
 
   constructor() {
     this.disposables.push(
@@ -41,11 +40,6 @@ export class PochiConfiguration implements vscode.Disposable {
         if (e.affectsConfiguration("pochi.customModelSettings")) {
           const settings = getCustomModelSetting();
           this.customModelSettings.value = settings;
-        }
-
-        if (e.affectsConfiguration("pochi.pochiModelSettings")) {
-          const settings = getPochiModelSettings();
-          this.pochiModelSettings.value = settings;
         }
       }),
     );
@@ -128,15 +122,4 @@ function getCustomModelSetting() {
   return vscode.workspace
     .getConfiguration("pochi")
     .get("customModelSettings") as CustomModelSetting[] | undefined;
-}
-
-export type PochiModelsSettings = {
-  modelEndpointId?: string;
-};
-
-function getPochiModelSettings() {
-  const ret = vscode.workspace
-    .getConfiguration("pochi")
-    .get("pochiModelSettings", {}) as PochiModelsSettings;
-  return ret;
 }

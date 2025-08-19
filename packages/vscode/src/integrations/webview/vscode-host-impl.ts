@@ -39,7 +39,6 @@ import type {
   CaptureEvent,
   CustomModelSetting,
   McpStatus,
-  PochiModelsSettings,
   ResourceURI,
   RuleFile,
   SaveCheckpointOptions,
@@ -652,12 +651,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     ThreadSignalSerialization<CustomModelSetting[] | undefined>
   > => {
     return ThreadSignal.serialize(this.pochiConfiguration.customModelSettings);
-  };
-
-  readPochiModelSettings = async (): Promise<
-    ThreadSignalSerialization<PochiModelsSettings>
-  > => {
-    return ThreadSignal.serialize(this.pochiConfiguration.pochiModelSettings);
   };
 
   dispose() {

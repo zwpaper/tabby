@@ -1,6 +1,6 @@
 import z from "zod";
 
-const BaseModelSettings = {
+const BaseModelSettings = z.object({
   id: z
     .string()
     .describe('Model provider identifier, e.g., "openai", "anthropic", etc.'),
@@ -21,10 +21,9 @@ const BaseModelSettings = {
       contextWindow: z.number().describe("Context window size for the model"),
     }),
   ),
-};
+});
 
-const OpenAIModelSettings = z.object({
-  ...BaseModelSettings,
+const OpenAIModelSettings = BaseModelSettings.extend({
   kind: z.optional(z.literal("openai")),
   baseURL: z
     .string()
@@ -37,8 +36,7 @@ const OpenAIModelSettings = z.object({
     .describe("API key for the model provider, if required."),
 });
 
-const GoogleVertexTuningModelSettings = z.object({
-  ...BaseModelSettings,
+const GoogleVertexTuningModelSettings = BaseModelSettings.extend({
   kind: z.literal("google-vertex-tuning"),
   location: z.string().describe("Location of the model, e.g., us-central1"),
   credentials: z.string().describe("Credentials for the vertex model."),
@@ -53,7 +51,3 @@ export const CustomModelSetting = z.discriminatedUnion("kind", [
  * Custom model setting
  */
 export type CustomModelSetting = z.infer<typeof CustomModelSetting>;
-
-export type PochiModelsSettings = {
-  modelEndpointId?: string;
-};

@@ -6,7 +6,6 @@ import type {
   CaptureEvent,
   CustomModelSetting,
   McpStatus,
-  PochiModelsSettings,
   ResourceURI,
   RuleFile,
   SessionState,
@@ -185,13 +184,6 @@ const VSCodeHostStub = {
   > => {
     return Promise.resolve(
       {} as ThreadSignalSerialization<CustomModelSetting[] | undefined>,
-    );
-  },
-  readPochiModelSettings: async (): Promise<
-    ThreadSignalSerialization<PochiModelsSettings>
-  > => {
-    return Promise.resolve(
-      {} as ThreadSignalSerialization<PochiModelsSettings>,
     );
   },
 } satisfies VSCodeHostApi;

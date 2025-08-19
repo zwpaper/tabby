@@ -6,7 +6,6 @@ import type {
   CustomModelSetting,
   McpStatus,
   NewTaskParams,
-  PochiModelsSettings,
   ResourceURI,
   RuleFile,
   SaveCheckpointOptions,
@@ -254,10 +253,6 @@ export interface VSCodeHostApi {
    */
   readCustomModelSetting(): Promise<
     ThreadSignalSerialization<CustomModelSetting[] | undefined>
-  >;
-
-  readPochiModelSettings(): Promise<
-    ThreadSignalSerialization<PochiModelsSettings>
   >;
 }
 
