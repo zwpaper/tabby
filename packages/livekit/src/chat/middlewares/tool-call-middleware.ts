@@ -25,16 +25,7 @@ export function createToolCallMiddleware(): LanguageModelV2Middleware {
         if (message.role === "assistant") {
           return {
             role: "assistant",
-            content: message.content.map((content) => {
-              if (content.type === "tool-call") {
-                return {
-                  type: "text",
-                  text: `<api-request name="${content.toolName}">${JSON.stringify(content.input)}</api-request>`,
-                };
-              }
-
-              return content;
-            }),
+            content: processAssistant(message),
           };
         }
         if (message.role === "tool") {
@@ -73,7 +64,7 @@ export function createToolCallMiddleware(): LanguageModelV2Middleware {
             ];
 
       const stopSequences = params.stopSequences || [];
-      stopSequences.push("</api-request>");
+      stopSequences.push("</api-section>");
 
       return {
         ...params,
@@ -168,42 +159,48 @@ function createToolCallStream(
 
       // Check for buffer size limit
       function publish(text: string) {
-        if (text.length > 0) {
-          const prefix =
-            afterSwitch && (isToolCall ? !isFirstToolCall : !isFirstText)
-              ? "\n" // separator
-              : "";
+        if (text.length === 0) return;
+        if (!isToolCall && text.trimEnd().endsWith("<api-section>")) {
+          return;
+        }
+        if (isFirstText && text.trim().length === 0) {
+          return;
+        }
 
-          if (isToolCall) {
-            const streamingToolCall = streamingToolCalls[toolCallIndex];
-            if (streamingToolCall) {
-              controller.enqueue({
-                type: "tool-input-delta",
-                id: streamingToolCall.toolCallId,
-                delta: text,
-              });
-              streamingToolCall.argTextBuffer += text;
-            }
-          } else {
-            if (pendingTextStart) {
-              controller.enqueue(pendingTextStart);
-              pendingTextStart = undefined;
-            }
+        const prefix =
+          afterSwitch && (isToolCall ? !isFirstToolCall : !isFirstText)
+            ? "\n" // separator
+            : "";
 
+        if (isToolCall) {
+          const streamingToolCall = streamingToolCalls[toolCallIndex];
+          if (streamingToolCall) {
             controller.enqueue({
-              id: textId,
-              type: "text-delta",
-              delta: prefix + text,
+              type: "tool-input-delta",
+              id: streamingToolCall.toolCallId,
+              delta: text,
             });
+            streamingToolCall.argTextBuffer += text;
+          }
+        } else {
+          if (pendingTextStart) {
+            controller.enqueue(pendingTextStart);
+            pendingTextStart = undefined;
           }
 
-          afterSwitch = false;
+          controller.enqueue({
+            id: textId,
+            type: "text-delta",
+            delta: prefix + text,
+          });
+        }
 
-          if (isToolCall) {
-            isFirstToolCall = false;
-          } else {
-            isFirstText = false;
-          }
+        afterSwitch = false;
+
+        if (isToolCall) {
+          isFirstToolCall = false;
+        } else {
+          isFirstText = false;
         }
       }
 
@@ -301,6 +298,34 @@ function createToolCallStream(
   });
 }
 
+function processAssistant(
+  message: Extract<LanguageModelV2Prompt[number], { role: "assistant" }>,
+) {
+  const toolDefs = message.content
+    .filter(
+      (x): x is Extract<typeof x, { type: "tool-call" }> =>
+        x.type === "tool-call",
+    )
+    .map(
+      (x) =>
+        `<api-request name="${x.toolName}">${JSON.stringify(x.input)}</api-request>`,
+    );
+
+  const toolContent = `<api-section>
+${toolDefs.join("\n")}
+</api-section>`;
+
+  const content = [...message.content.filter((x) => x.type !== "tool-call")];
+  if (toolDefs.length > 0) {
+    content.push({
+      type: "text",
+      text: toolContent,
+    });
+  }
+
+  return content;
+}
+
 function processToolResult(
   tool: Extract<LanguageModelV2Prompt[number], { role: "tool" }>,
   toolResponseTagTemplate: (name: string) => string,
@@ -344,35 +369,39 @@ const defaultTemplate = (tools: string) =>
 API INVOCATIONS
 
 You are provided with api signatures within <api-list></api-list> XML tags in JSON schema format.
-You are only allowed to call a single api at a time, if you need to call multiple apis, you must do it in a single batchCall api.
+You are allowed to call one or more api at a time.
 Do not make assumptions about what values to plug into apis; you must follow the api signature strictly to call apis.
 Here are the available apis:
 <api-list>
 ${tools}
 </api-list>
 
-For each api invocation return the arguments in JSON text format within api-request XML tags:
-
-<api-request name="{arg-name}">
-{argument-dict}
-</api-request>
-
 ## OUTPUT FORMAT
 Please remember you are not allowed to use any format related to api calling or fc or tool_code.
-For each api request respone, you are only allowed to return the arguments in JSON text format within api-request XML tags as following:
+For each api request respone, you are only allowed to return the arguments in JSON text format within api-request XML tags (within api-section) as following:
 
+<api-section>
 <api-request name="{arg-name}">
 {argument-dict}
 </api-request>
+</api-section>
 
 ### EXAMPLE OUTPUT 1
+<api-section>
 <api-request name="executeCommand">
 {
-  "command": "bun install"
+  "command": "git status"
 }
 </api-request>
+<api-request name="executeCommand">
+{
+  "command": "git diff"
+}
+</api-request>
+</api-section>
 
 ### EXAMPLE OUTPUT 2
+<api-section>
 <api-request name="todoWrite">
 {
   "todos": [
@@ -403,4 +432,5 @@ For each api request respone, you are only allowed to return the arguments in JS
   ]
 }
 </api-request>
+</api-section>
 `;

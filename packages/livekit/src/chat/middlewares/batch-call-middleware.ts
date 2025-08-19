@@ -3,7 +3,7 @@ import type {
   LanguageModelV2StreamPart,
 } from "@ai-sdk/provider";
 import { safeParseJSON } from "@ai-sdk/provider-utils";
-import { BatchCallTools, ClientTools } from "@getpochi/tools";
+import { BatchCallTools, batchCall } from "@getpochi/tools";
 import { InvalidToolInputError } from "ai";
 
 export function createBatchCallMiddleware(): LanguageModelV2Middleware {
@@ -55,7 +55,7 @@ function createBatchCallTransformStream(): TransformStream<
 
       const parsedResult = await safeParseJSON({
         text: chunk.input,
-        schema: ClientTools.batchCall.inputSchema,
+        schema: batchCall.inputSchema,
       });
       if (!parsedResult.success) {
         throw new InvalidToolInputError({

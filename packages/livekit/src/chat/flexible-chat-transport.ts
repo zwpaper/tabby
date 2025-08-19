@@ -7,7 +7,6 @@ import type { Message, RequestData } from "../types";
 import { requestLLM } from "./llm";
 import { parseMcpToolSet } from "./llm/utils";
 import {
-  createBatchCallMiddleware,
   createNewTaskMiddleware,
   createReasoningMiddleware,
   createToolCallMiddleware,
@@ -72,7 +71,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       middlewares.push(createNewTaskMiddleware(this.store, chatId));
     }
 
-    middlewares.push(createBatchCallMiddleware());
+    // middlewares.push(createBatchCallMiddleware());
 
     if (isWellKnownReasoningModel(llm.modelId)) {
       middlewares.push(createReasoningMiddleware());

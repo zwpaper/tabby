@@ -3,7 +3,6 @@ import type { ToolUIPart, UIDataTypes, UIMessagePart, UITools } from "ai";
 import { applyDiff } from "./apply-diff";
 import { askFollowupQuestion } from "./ask-followup-question";
 import { attemptCompletion } from "./attempt-completion";
-import { batchCall } from "./batch-call";
 import { executeCommand } from "./execute-command";
 import { globFiles } from "./glob-files";
 import { listFiles } from "./list-files";
@@ -51,6 +50,7 @@ export const ToolsByPermission = {
 
 export const ServerToolApproved = "<server-tool-approved>";
 
+export { batchCall } from "./batch-call";
 export { BatchCallTools } from "./batch-call";
 
 export const ClientTools = {
@@ -66,7 +66,6 @@ export const ClientTools = {
   searchFiles,
   todoWrite,
   writeToFile,
-  batchCall,
 };
 
 export type ClientTools = typeof ClientTools;
