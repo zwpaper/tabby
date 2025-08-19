@@ -48,21 +48,25 @@ export class GitStatusReader {
      */
     const strategies = [
       () => this.execGit("symbolic-ref refs/remotes/origin/HEAD --short"),
-      () =>
-        this.execGit("show-ref --verify --quiet refs/remotes/origin/main").then(
-          () => "main",
-        ),
-      () =>
-        this.execGit(
+      async () => {
+        const output = await this.execGit(
+          "show-ref --verify --quiet refs/remotes/origin/main",
+        );
+        return output ? "main" : "";
+      },
+      async () => {
+        const output = await this.execGit(
           "show-ref --verify --quiet refs/remotes/origin/master",
-        ).then(() => "master"),
+        );
+        return output ? "master" : "";
+      },
     ];
 
     for (const strategy of strategies) {
       try {
         const result = await strategy();
         if (result) {
-          return result.replace("refs/remotes/origin/", "").trim();
+          return result.replace(/^origin\//, "").trim();
         }
       } catch {
         // skip to the next strategy

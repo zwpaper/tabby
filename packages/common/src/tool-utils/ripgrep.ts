@@ -163,11 +163,6 @@ export async function searchFilesWithRipgrep(
       if (error.stderr) {
         logger.warn(`rg command stderr (exit code 1): ${error.stderr}`);
       }
-    } else if (!error.code && !error.stdout && !error.stderr) {
-      // Exit code 0, no output - could happen if search path is empty or matches no files
-      logger.debug(
-        "rg command finished with exit code 0 (no matches found or no files searched).",
-      );
     } else {
       // Other unexpected errors
       logger.error("Error executing rg command: ", error);

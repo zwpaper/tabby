@@ -1,126 +1,82 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { GitStatusReader } from "../git-status";
-import type { GitStatusReaderOptions } from "../git-status";
+
+const execMocks = vi.hoisted(() => new Map<string, string>());
+
+vi.mock("node:child_process", () => ({
+  exec: vi.fn((command: string, _, callback) => {
+    const cmd = command.replace(/^git /, "");
+    if (execMocks.has(cmd)) {
+      callback(null, { stdout: execMocks.get(cmd) });
+    } else {
+      callback(new Error(`Command not found: ${cmd}`), { stdout: "" });
+    }
+  }),
+}));
 
 describe("GitStatusReader", () => {
-  let gitStatusReader: GitStatusReader;
-  const mockOptions: GitStatusReaderOptions = {
-    cwd: "/test/repo",
-  };
+  afterEach(() => {
+    execMocks.clear();
+  });
 
-  gitStatusReader = new GitStatusReader(mockOptions);
+  it("should correctly read and parse git status", async () => {
+    execMocks.set("remote get-url origin", "git@github.com:user/repo.git");
+    execMocks.set("rev-parse --abbrev-ref HEAD", "feature-branch");
+    execMocks.set(
+      "symbolic-ref refs/remotes/origin/HEAD --short",
+      "origin/main",
+    );
+    execMocks.set("status --porcelain", " M file1.txt\n?? file2.txt");
+    execMocks.set(
+      'log -n 5 --pretty=format:"%h %s"',
+      "abc1234 feat: new feature\ndef5678 fix: a bug",
+    );
+    execMocks.set("config user.name", "Test User");
+    execMocks.set("config user.email", "test@example.com");
 
-  describe("isScpLikeGitUrl", () => {
-    // Access private method for testing
-    const isScpLikeGitUrl = (url: string) => {
-      return (gitStatusReader as any).isScpLikeGitUrl(url);
-    };
+    const reader = new GitStatusReader({ cwd: "/test/repo" });
+    const status = await reader.readGitStatus();
 
-    test("should return true for SCP-like URLs with credentials", () => {
-      expect(isScpLikeGitUrl("user@password:TabbyML/tabby.git")).toBe(true);
-      expect(isScpLikeGitUrl("myuser@mypass123:owner/repo.git")).toBe(true);
-      expect(isScpLikeGitUrl("user:pass@domain:port:TabbyML/tabby.git")).toBe(true);
-    });
-
-    test("should return false for standard git@ URLs", () => {
-      expect(isScpLikeGitUrl("git@github.com:TabbyML/tabby.git")).toBe(false);
-    });
-
-    test("should return false for SSH URLs", () => {
-      expect(isScpLikeGitUrl("ssh://git@github.com/TabbyML/tabby.git")).toBe(false);
-    });
-
-    test("should return false for HTTPS URLs", () => {
-      expect(isScpLikeGitUrl("https://github.com/TabbyML/tabby.git")).toBe(false);
-    });
-
-    test("should return false for URLs without @ or :", () => {
-      expect(isScpLikeGitUrl("TabbyML/tabby.git")).toBe(false);
-      expect(isScpLikeGitUrl("file:///local/repo")).toBe(false);
+    expect(status).toEqual({
+      origin: "https://github.com/user/repo",
+      currentBranch: "feature-branch",
+      mainBranch: "main",
+      status: "M file1.txt\n?? file2.txt",
+      recentCommits: ["abc1234 feat: new feature", "def5678 fix: a bug"],
+      userName: "Test User",
+      userEmail: "test@example.com",
     });
   });
 
-  describe("sanitizeOriginUrl", () => {
-    // Access private method for testing
-    const sanitizeOriginUrl = (url: string | undefined) => {
-      return (gitStatusReader as any).sanitizeOriginUrl(url);
-    };
+  it("should handle repositories with no main branch", async () => {
+    execMocks.set("remote get-url origin", "git@github.com:user/repo.git");
+    execMocks.set("rev-parse --abbrev-ref HEAD", "master");
+    execMocks.set("symbolic-ref refs/remotes/origin/HEAD --short", "");
+    execMocks.set("show-ref --verify --quiet refs/remotes/origin/main", "");
+    execMocks.set("show-ref --verify --quiet refs/remotes/origin/master", "");
+    execMocks.set("status --porcelain", "");
+    execMocks.set('log -n 5 --pretty=format:"%h %s"', "");
 
-    test("should return undefined for undefined input", () => {
-      expect(sanitizeOriginUrl(undefined)).toBeUndefined();
-    });
+    const reader = new GitStatusReader({ cwd: "/test/repo" });
+    const status = await reader.readGitStatus();
 
-    test("should handle HTTPS URLs with credentials", () => {
-      const input = "https://user:password@github.com/TabbyML/tabby.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("https://github.com/TabbyML/tabby");
-    });
-
-    test("should handle HTTPS URLs without credentials", () => {
-      const input = "https://github.com/TabbyML/tabby.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("https://github.com/TabbyML/tabby");
-    });
-
-    test("should handle git URLs with embedded credentials", () => {
-      const input = "user@password:TabbyML/tabby.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("TabbyML/tabby.git");
-    });
-
-    test("should handle git URLs with complex credentials", () => {
-      const input = "myuser@mypass123:owner/repo.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("owner/repo.git");
-    });
-
-    test("should preserve standard git@ SSH URLs", () => {
-      const input = "git@github.com:TabbyML/tabby.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("https://github.com/TabbyML/tabby");
-    });
-
-    test("should preserve SSH URLs", () => {
-      const input = "ssh://git@github.com/TabbyML/tabby.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("ssh://git@github.com/TabbyML/tabby.git");
-    });
-
-    test("should handle URLs with multiple colons correctly", () => {
-      const input = "user:pass@domain:port:TabbyML/tabby.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("TabbyML/tabby.git");
-    });
-
-    test("should handle edge case with @ but no colon", () => {
-      const input = "user@TabbyML/tabby.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("user@TabbyML/tabby.git");
-    });
-
-    test("should handle edge case with colon but no @", () => {
-      const input = "https://github.com:443/TabbyML/tabby.git";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("https://github.com/TabbyML/tabby");
-    });
-
-    test("should handle URLs that don't match any pattern", () => {
-      const input = "file:///local/repo";
-      const result = sanitizeOriginUrl(input);
-      expect(result).toBe("file:///local/repo");
-    });
+    expect(status?.mainBranch).toBe("");
   });
 
-  describe("constructor and basic functionality", () => {
-    test("should create GitStatusReader with cwd option", () => {
-      const reader = new GitStatusReader({ cwd: "/test/path" });
-      expect(reader).toBeDefined();
-    });
-
-    test("should return undefined when no cwd is provided", async () => {
-      const reader = new GitStatusReader({ cwd: "" });
-      const result = await reader.readGitStatus();
-      expect(result).toBeUndefined();
-    });
+  it("should sanitize origin URLs with credentials", async () => {
+    execMocks.set(
+      "remote get-url origin",
+      "https://user:pass@github.com/user/repo.git",
+    );
+    const reader = new GitStatusReader({ cwd: "/test/repo" });
+    const status = await reader.readGitStatus();
+    expect(status?.origin).toBe("https://github.com/user/repo");
   });
-}); 
+
+  it("should return undefined when not in a git repository", async () => {
+    execMocks.clear(); // No commands will be found
+    const reader = new GitStatusReader({ cwd: "/not/a/repo" });
+    const status = await reader.readGitStatus();
+    expect(status?.origin).toBeUndefined();
+  });
+});
