@@ -21,6 +21,7 @@ export type DisplayModel =
       name: string;
       contextWindow: number;
       maxTokens: number;
+      useToolCallMiddleware?: boolean;
       costType: "basic";
       // https://github.com/microsoft/TypeScript/issues/31501#issuecomment-1079728677
       provider: RemoveModelsField<CustomModelSetting>;
@@ -65,6 +66,7 @@ export function useModels() {
           modelId: model.id,
           contextWindow: model.contextWindow,
           maxTokens: model.maxTokens,
+          useToolCallMiddleware: model.useToolCallMiddleware,
           costType: "basic",
           provider,
         };

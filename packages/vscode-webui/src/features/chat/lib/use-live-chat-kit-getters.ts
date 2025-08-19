@@ -88,6 +88,7 @@ function useLLM(): React.RefObject<LLMRequestData> {
         modelId: selectedModel.modelId,
         maxOutputTokens: selectedModel.maxTokens,
         contextWindow: selectedModel.contextWindow,
+        useToolCallMiddleware: selectedModel.useToolCallMiddleware,
       };
     }
 
@@ -98,6 +99,7 @@ function useLLM(): React.RefObject<LLMRequestData> {
       apiKey: provider.apiKey,
       maxOutputTokens: selectedModel.maxTokens,
       contextWindow: selectedModel.contextWindow,
+      useToolCallMiddleware: selectedModel.useToolCallMiddleware,
     };
   })();
 

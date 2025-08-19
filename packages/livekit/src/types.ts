@@ -37,6 +37,10 @@ const RequestData = z.object({
       apiKey: z.string().optional(),
       contextWindow: z.number().describe("Context window of the model."),
       maxOutputTokens: z.number().describe("Max output tokens of the model."),
+      useToolCallMiddleware: z
+        .boolean()
+        .optional()
+        .describe("Whether to use tool call middleware"),
     }),
     z.object({
       type: z.literal("google-vertex-tuning"),
@@ -45,6 +49,10 @@ const RequestData = z.object({
       credentials: z.string(),
       contextWindow: z.number().describe("Context window of the model."),
       maxOutputTokens: z.number().describe("Max output tokens of the model."),
+      useToolCallMiddleware: z
+        .boolean()
+        .optional()
+        .describe("Whether to use tool call middleware"),
     }),
     z.object({
       type: z.literal("pochi"),

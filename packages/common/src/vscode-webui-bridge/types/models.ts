@@ -19,6 +19,10 @@ const BaseModelSettings = z.object({
         .number()
         .describe("Maximum number of generated tokens for the model"),
       contextWindow: z.number().describe("Context window size for the model"),
+      useToolCallMiddleware: z
+        .boolean()
+        .optional()
+        .describe("Whether to use tool call middleware"),
     }),
   ),
 });

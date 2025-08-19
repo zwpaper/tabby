@@ -263,6 +263,10 @@
                           "contextWindow": {
                             "description": "Context window size for the model",
                             "type": "number"
+                          },
+                          "useToolCallMiddleware": {
+                            "description": "Turn on tool call middleware for xml-based tool call",
+                            "type": "boolean"
                           }
                         },
                         "required": ["id", "maxTokens", "contextWindow"],
@@ -312,6 +316,10 @@
                           "maxTokens": {
                             "description": "Maximum number of generated tokens for the model",
                             "type": "number"
+                          },
+                          "useToolCallMiddleware": {
+                            "description": "Turn on tool call middleware for xml-based tool call",
+                            "type": "boolean"
                           },
                           "contextWindow": {
                             "description": "Context window size for the model",
