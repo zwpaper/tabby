@@ -134,7 +134,10 @@ export function useSelectedModels() {
     }
     return groups;
   }, [models]);
-  const [isModelReady, setIsModelReady] = useState(false);
+  const [isModelReady, setIsModelReady] = useState(
+    !!selectedModelId &&
+      getModelIdFromModelInfo(selectedModelId, models) === selectedModelId,
+  );
 
   useEffect(() => {
     if (!isLoading) {
