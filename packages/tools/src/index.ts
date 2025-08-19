@@ -50,9 +50,6 @@ export const ToolsByPermission = {
 
 export const ServerToolApproved = "<server-tool-approved>";
 
-export { batchCall } from "./batch-call";
-export { BatchCallTools } from "./batch-call";
-
 export const ClientTools = {
   applyDiff,
   askFollowupQuestion,
