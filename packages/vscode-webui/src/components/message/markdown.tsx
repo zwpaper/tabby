@@ -1,6 +1,6 @@
 import { CustomHtmlTags } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { type ElementType, type FC, memo, useMemo } from "react";
+import { type ElementType, type FC, memo, useCallback, useMemo } from "react";
 import ReactMarkdown, { type Components, type Options } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
@@ -28,6 +28,7 @@ interface MessageMarkdownProps {
   children: string;
   className?: string;
   isMinimalView?: boolean;
+  previewImageLink?: boolean;
 }
 
 interface FileComponentProps {
@@ -57,15 +58,22 @@ function escapeMarkdownTag(tag: string): (text: string) => string {
   };
 }
 
+function isImageLink(url: string): boolean {
+  return /\.(jpeg|jpg|gif|png|bmp|webp|svg)(?=[?#]|$)/i.test(url);
+}
+
 const MemoizedReactMarkdown: FC<ExtendedMarkdownOptions> = memo(
   ReactMarkdown,
-  (prevProps, nextProps) => prevProps.children === nextProps.children,
+  (prevProps, nextProps) =>
+    prevProps.children === nextProps.children &&
+    prevProps.components === nextProps.components,
 );
 
 export function MessageMarkdown({
   children,
   className,
   isMinimalView,
+  previewImageLink,
 }: MessageMarkdownProps) {
   const processedChildren = useMemo(() => {
     let result = children;
@@ -75,6 +83,145 @@ export function MessageMarkdown({
     }
     return result;
   }, [children]);
+
+  const components: Components = useMemo(() => {
+    return {
+      file: (props: FileComponentProps) => {
+        const { children } = props;
+        const filepath = String(children);
+        return <FileBadge path={filepath} />;
+      },
+      workflow: (props: WorkflowComponentProps) => {
+        const { id, path } = props;
+        return (
+          <FileBadge label={id.replaceAll("user-content-", "/")} path={path} />
+        );
+      },
+      code({ className, children, ...props }) {
+        if (children && Array.isArray(children) && children.length) {
+          if (children[0] === "▍") {
+            return <span className="mt-1 animate-pulse cursor-default">▍</span>;
+          }
+
+          children[0] = (children[0] as string).replace("`▍`", "▍");
+        }
+
+        const match = /language-(\w+)/.exec(className || "");
+
+        const isInline =
+          props.node?.position &&
+          props.node.position.start.line === props.node.position.end.line;
+
+        if (isInline) {
+          if (typeof children === "string") {
+            // have file extension like `file.txt`
+            const isFilePath = (text: string): boolean => {
+              return (
+                !text.includes("://") &&
+                // file name should not be empty, e.g. .ts is not a valid file path
+                /.+\.[a-z0-9]+$/i.test(text) &&
+                isKnownProgrammingLanguage(text)
+              );
+            };
+
+            // have folder path like `folder/` or `folder/subfolder`
+            const isFolderPath = (text: string): boolean => {
+              return (
+                !text.startsWith("@") &&
+                !text.includes("://") &&
+                !/\s/.test(text) &&
+                (text.includes("/") || text.includes("\\")) &&
+                !text.startsWith("\\")
+              );
+            };
+
+            const isSymbol = (text: string): boolean => {
+              if (SymbolBlacklist.has(text)) {
+                return false; // Skip blacklisted symbols
+              }
+              // A symbol is typically a single word or a sequence of characters without spaces
+              return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(text);
+            };
+
+            // children may be file path, folder path, symbol or normal text, we need to handle each case
+            if (isFilePath(children)) {
+              const pathSeparatorCount = (children.match(/[\/\\]/g) || [])
+                .length;
+              return (
+                <FileBadge
+                  path={children}
+                  fallbackGlobPattern={
+                    // glob pattern use `/` as path separator even on windows; when applied, glob pattern will match paths with both `/` and `\`
+                    pathSeparatorCount >= 2 ? `**/${children}` : undefined
+                  }
+                />
+              );
+            }
+            if (isFolderPath(children)) {
+              return <FileBadge path={children} isDirectory={true} />;
+            }
+            if (isSymbol(children)) {
+              // FIXME(meng): turn off symbol detection for now.
+              // return <SymbolBadge label={children} />;
+            }
+          }
+
+          return (
+            <code className={cn("inline-code", className)} {...props}>
+              {children}
+            </code>
+          );
+        }
+
+        return (
+          <CodeBlock
+            language={match?.[1] || ""}
+            value={String(children).replace(/\n$/, "")}
+            canWrapLongLines={true}
+            className="max-h-none"
+            isMinimalView={isMinimalView}
+          />
+        );
+      },
+      a({ href, children, ...props }) {
+        const openLink = useCallback(() => {
+          href && isVSCodeEnvironment()
+            ? vscodeHost.openExternal(href)
+            : window.open(href, "_blank");
+        }, [href]);
+
+        if (previewImageLink && href && isImageLink(href)) {
+          return (
+            <img
+              src={href}
+              alt={String(children)}
+              className="max-w-full cursor-pointer rounded"
+              onClick={openLink}
+            />
+          );
+        }
+
+        // biome-ignore lint/suspicious/noExplicitAny: props from react-markdown contains a `node` property that is not a valid DOM attribute
+        const { node, ...rest } = props as any;
+        return (
+          <button
+            type="button"
+            className="inline cursor-pointer appearance-none border-none bg-transparent p-0 text-left font-sans underline"
+            onClick={openLink}
+            {...rest}
+          >
+            {children}
+          </button>
+        );
+      },
+      hr() {
+        return null;
+      },
+      p: ({ children }) => (
+        <p className="whitespace-pre-wrap leading-relaxed">{children}</p>
+      ),
+    };
+  }, [isMinimalView, previewImageLink]);
 
   return (
     <div
@@ -112,136 +259,7 @@ export function MessageMarkdown({
                 ],
               ]
         }
-        components={{
-          file: (props: FileComponentProps) => {
-            const { children } = props;
-            const filepath = String(children);
-            return <FileBadge path={filepath} />;
-          },
-          workflow: (props: WorkflowComponentProps) => {
-            const { id, path } = props;
-            return (
-              <FileBadge
-                label={id.replaceAll("user-content-", "/")}
-                path={path}
-              />
-            );
-          },
-          code({ className, children, ...props }) {
-            if (children && Array.isArray(children) && children.length) {
-              if (children[0] === "▍") {
-                return (
-                  <span className="mt-1 animate-pulse cursor-default">▍</span>
-                );
-              }
-
-              children[0] = (children[0] as string).replace("`▍`", "▍");
-            }
-
-            const match = /language-(\w+)/.exec(className || "");
-
-            const isInline =
-              props.node?.position &&
-              props.node.position.start.line === props.node.position.end.line;
-
-            if (isInline) {
-              if (typeof children === "string") {
-                // have file extension like `file.txt`
-                const isFilePath = (text: string): boolean => {
-                  return (
-                    !text.includes("://") &&
-                    // file name should not be empty, e.g. .ts is not a valid file path
-                    /.+\.[a-z0-9]+$/i.test(text) &&
-                    isKnownProgrammingLanguage(text)
-                  );
-                };
-
-                // have folder path like `folder/` or `folder/subfolder`
-                const isFolderPath = (text: string): boolean => {
-                  return (
-                    !text.startsWith("@") &&
-                    !text.includes("://") &&
-                    !/\s/.test(text) &&
-                    (text.includes("/") || text.includes("\\")) &&
-                    !text.startsWith("\\")
-                  );
-                };
-
-                const isSymbol = (text: string): boolean => {
-                  if (SymbolBlacklist.has(text)) {
-                    return false; // Skip blacklisted symbols
-                  }
-                  // A symbol is typically a single word or a sequence of characters without spaces
-                  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(text);
-                };
-
-                // children may be file path, folder path, symbol or normal text, we need to handle each case
-                if (isFilePath(children)) {
-                  const pathSeparatorCount = (children.match(/[\/\\]/g) || [])
-                    .length;
-                  return (
-                    <FileBadge
-                      path={children}
-                      fallbackGlobPattern={
-                        // glob pattern use `/` as path separator even on windows; when applied, glob pattern will match paths with both `/` and `\`
-                        pathSeparatorCount >= 2 ? `**/${children}` : undefined
-                      }
-                    />
-                  );
-                }
-                if (isFolderPath(children)) {
-                  return <FileBadge path={children} isDirectory={true} />;
-                }
-                if (isSymbol(children)) {
-                  // FIXME(meng): turn off symbol detection for now.
-                  // return <SymbolBadge label={children} />;
-                }
-              }
-
-              return (
-                <code className={cn("inline-code", className)} {...props}>
-                  {children}
-                </code>
-              );
-            }
-
-            return (
-              <CodeBlock
-                language={match?.[1] || ""}
-                value={String(children).replace(/\n$/, "")}
-                canWrapLongLines={true}
-                className="max-h-none"
-                isMinimalView={isMinimalView}
-              />
-            );
-          },
-          a({ href, children, ...props }) {
-            // biome-ignore lint/suspicious/noExplicitAny: props from react-markdown contains a `node` property that is not a valid DOM attribute
-            const { node, ...rest } = props as any;
-            return (
-              <button
-                type="button"
-                className="inline cursor-pointer appearance-none border-none bg-transparent p-0 text-left font-sans underline"
-                onClick={() => {
-                  if (href) {
-                    isVSCodeEnvironment()
-                      ? vscodeHost.openExternal(href)
-                      : window.open(href, "_blank");
-                  }
-                }}
-                {...rest}
-              >
-                {children}
-              </button>
-            );
-          },
-          hr() {
-            return null;
-          },
-          p: ({ children }) => (
-            <p className="whitespace-pre-wrap leading-relaxed">{children}</p>
-          ),
-        }}
+        components={components}
       >
         {processedChildren}
       </MemoizedReactMarkdown>

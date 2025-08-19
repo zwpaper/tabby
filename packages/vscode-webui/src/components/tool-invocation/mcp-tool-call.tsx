@@ -1,11 +1,52 @@
 import { CodeBlock, MessageMarkdown } from "@/components/message";
+import { Switch } from "@/components/ui/switch";
 import { vscodeHost } from "@/lib/vscode";
 import { getToolName } from "ai";
+import { useState } from "react";
 import { filterPlayrightMarkdown } from "./filter-playwright";
 import { HighlightedText } from "./highlight-text";
 import { StatusIcon } from "./status-icon";
 import { ExpandableToolContainer } from "./tool-container";
 import type { ToolProps } from "./types";
+
+interface TextContent {
+  type: "text";
+  text: string;
+}
+
+interface ImageContent {
+  type: "image";
+  data: string; // base64-encoded image data or URL
+  mimeType: string; // e.g., "image/png"
+}
+
+type ContentBlock = TextContent | ImageContent;
+
+/**
+ * Current supported mcp tool call output types
+ * For full mcp tool call output @see https://github.com/modelcontextprotocol/modelcontextprotocol/blob/175a52036c73385047a85bfb996f24e5f1f51c80/schema/2025-06-18/schema.ts#L778
+ */
+interface MCPToolCallResult {
+  content: ContentBlock[];
+  isError?: boolean;
+}
+
+const isMcpToolCallResult = (obj: unknown): obj is MCPToolCallResult => {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "content" in obj &&
+    Array.isArray(obj.content) &&
+    obj.content.every((block: unknown) => typeof block === "object")
+  );
+};
+
+const hasTextContent = (result: MCPToolCallResult): boolean => {
+  return (
+    Array.isArray(result.content) &&
+    result.content.some((block) => block.type === "text")
+  );
+};
 
 // biome-ignore lint/suspicious/noExplicitAny: MCP matches any.
 export const McpToolCall: React.FC<ToolProps<any>> = ({
@@ -14,6 +55,7 @@ export const McpToolCall: React.FC<ToolProps<any>> = ({
 }) => {
   const toolName = getToolName(tool);
   const { input } = tool;
+  const [previewImageLink, setPreviewImageLink] = useState(true);
 
   let result = undefined;
   if (tool.state === "output-available") {
@@ -49,15 +91,35 @@ export const McpToolCall: React.FC<ToolProps<any>> = ({
           />
 
           {/* Response Section */}
-          {result && (
+          {result && isMcpToolCallResult(result) ? (
             <>
-              <div className="border-[var(--vscode-widget-border)] border-t border-b bg-[var(--vscode-editorGroupHeader-tabsBackground)] px-4 py-2">
+              <div className="flex items-center justify-between border-[var(--vscode-widget-border)] border-t border-b bg-[var(--vscode-editorGroupHeader-tabsBackground)] px-4 py-2">
                 <span className="font-medium text-[var(--vscode-editor-foreground)] text-sm">
                   Response
                 </span>
+                {hasTextContent(result) && (
+                  <DisplayModeToggle
+                    previewImageLink={previewImageLink}
+                    onToggle={setPreviewImageLink}
+                  />
+                )}
               </div>
-              <Result result={result} toolName={toolName} />
+              <Result
+                result={result}
+                toolName={toolName}
+                previewImageLink={previewImageLink}
+              />
             </>
+          ) : (
+            <div className="p-0">
+              <CodeBlock
+                language={"json"}
+                value={JSON.stringify(result, null, 2)}
+                canWrapLongLines={true}
+                isMinimalView={true}
+                className="border-0"
+              />
+            </div>
           )}
         </div>
       }
@@ -65,65 +127,62 @@ export const McpToolCall: React.FC<ToolProps<any>> = ({
   );
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: unknown output type
-function Result({ result, toolName }: { result: any; toolName: string }) {
-  if ("content" in result) {
-    return <ContentResult content={result.content} toolName={toolName} />;
-  }
+function Result({
+  result,
+  toolName,
+  previewImageLink,
+}: {
+  result: MCPToolCallResult;
+  toolName: string;
+  previewImageLink: boolean;
+}) {
+  const renderContentItem = (item: ContentBlock, index: number) => {
+    const key = index;
+
+    switch (item.type) {
+      case "image":
+        return previewImageLink ? (
+          <div key={key} className="overflow-hidden">
+            <ImageResult {...item} />
+          </div>
+        ) : (
+          <JsonCodeBlock key={key} item={item} />
+        );
+
+      case "text": {
+        const textContent = toolName.toLowerCase().startsWith("browser_")
+          ? filterPlayrightMarkdown(item.text)
+          : item.text;
+
+        return (
+          <div key={key}>
+            <MessageMarkdown isMinimalView previewImageLink={previewImageLink}>
+              {textContent}
+            </MessageMarkdown>
+          </div>
+        );
+      }
+
+      default:
+        return <JsonCodeBlock key={key} item={item} />;
+    }
+  };
+
+  return (
+    <div className="px-4 py-2">{result.content.map(renderContentItem)}</div>
+  );
+}
+
+function JsonCodeBlock({ item }: { item: unknown }) {
   return (
     <div className="p-0">
       <CodeBlock
-        language={"json"}
-        value={JSON.stringify(result, null, 2)}
+        language="json"
+        value={JSON.stringify(item, null, 2)}
         canWrapLongLines={true}
         isMinimalView={true}
         className="border-0"
       />
-    </div>
-  );
-}
-
-function ContentResult({
-  content,
-  toolName,
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-}: { content: any[]; toolName: string }) {
-  return (
-    <div className="space-y-0 px-4 py-2">
-      {content.map((item, index) => {
-        if (item.type === "image") {
-          return (
-            <div key={index} className="overflow-hidden">
-              <ImageResult {...item} />
-            </div>
-          );
-        }
-        if (item.type === "text") {
-          // Check if toolName starts with "browser_" and filter accordingly
-          const textContent = toolName.toLowerCase().startsWith("browser_")
-            ? filterPlayrightMarkdown(item.text)
-            : item.text;
-
-          return (
-            <div key={index}>
-              <MessageMarkdown isMinimalView>{textContent}</MessageMarkdown>
-            </div>
-          );
-        }
-        return (
-          <div key={index}>
-            <div className="p-0">
-              <CodeBlock
-                language={"json"}
-                value={JSON.stringify(item, null, 2)}
-                canWrapLongLines={true}
-                isMinimalView={true}
-                className="border-0"
-              />
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -170,6 +229,27 @@ function ImageResult({
         alt="MCP tool response snapshot"
         className="h-auto w-full shadow-sm"
       />
+    </div>
+  );
+}
+
+interface DisplayModeToggleProps {
+  previewImageLink: boolean;
+  onToggle: (previewImageLink: boolean) => void;
+}
+
+function DisplayModeToggle({
+  previewImageLink,
+  onToggle,
+}: DisplayModeToggleProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <Switch
+        checked={previewImageLink}
+        onCheckedChange={onToggle}
+        className="data-[state=checked]:bg-[var(--vscode-button-background)] data-[state=unchecked]:bg-[var(--vscode-input-background)]"
+      />
+      <span className="text-[var(--vscode-foreground)] text-xs">Preview</span>
     </div>
   );
 }
