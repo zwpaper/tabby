@@ -190,6 +190,7 @@
         "title": "Pochi",
         "properties": {
           "pochi.advanced": {
+            "order": 2,
             "default": {},
             "properties": {
               "inlineCompletion": {
@@ -209,25 +210,21 @@
                     "description": "List of languages where inline completion is disabled."
                   }
                 }
-              }
-            }
-          },
-          "pochi.webui": {
-            "default": {},
-            "properties": {
-              "POCHI_LOG": {
+              },
+              "webviewLogLevel": {
                 "type": "string",
                 "default": "",
                 "description": "Pochi webview UI log level"
               }
-            },
-            "description": "Pochi webview UI settings"
+            }
           },
           "pochi.mcpServers": {
+            "order": 1,
             "default": {},
-            "description": "MCP servers configuration"
+            "description": "MCP servers configuration for Pochi"
           },
           "pochi.customModelSettings": {
+            "description": "Model settings for Pochi",
             "type": "array",
             "default": [],
             "items": {

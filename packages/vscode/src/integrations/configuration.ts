@@ -12,7 +12,6 @@ export class PochiConfiguration implements vscode.Disposable {
 
   readonly advancedSettings = signal(getPochiAdvanceSettings());
   readonly mcpServers = signal(getPochiMcpServersSettings());
-  readonly webui = signal(getPochiWebviewLogSettings());
   readonly autoSaveDisabled = signal(getAutoSaveDisabled());
   readonly customModelSettings = signal(getCustomModelSetting());
 
@@ -26,11 +25,6 @@ export class PochiConfiguration implements vscode.Disposable {
         if (e.affectsConfiguration("pochi.mcpServers")) {
           const settings = getPochiMcpServersSettings();
           this.mcpServers.value = settings;
-        }
-
-        if (e.affectsConfiguration("pochi.webui")) {
-          const settings = getPochiWebviewLogSettings();
-          this.webui.value = settings;
         }
 
         if (e.affectsConfiguration("files.autoSave")) {
@@ -72,6 +66,7 @@ export type PochiAdvanceSettings = {
     disabled?: boolean;
     disabledLanguages?: string[];
   };
+  webviewLogLevel?: string;
 };
 
 function getPochiAdvanceSettings() {
@@ -98,16 +93,6 @@ async function updatePochiMcpServersSettings(value: PochiMcpServersSettings) {
   return vscode.workspace
     .getConfiguration("pochi")
     .update("mcpServers", value, true);
-}
-
-interface PochiWebUISettings {
-  POCHI_LOG?: string;
-}
-
-function getPochiWebviewLogSettings() {
-  return vscode.workspace
-    .getConfiguration("pochi")
-    .get("webui", {}) as PochiWebUISettings;
 }
 
 function getAutoSaveDisabled() {

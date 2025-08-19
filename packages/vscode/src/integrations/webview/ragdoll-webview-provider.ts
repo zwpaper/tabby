@@ -190,7 +190,7 @@ export class RagdollWebviewProvider
     </style>`;
 
     const nonce = getNonce();
-    const webuiLoggingScript = `<script type="module" nonce="${nonce}">window.POCHI_LOG = "${this.pochiConfiguration.webui.value.POCHI_LOG || ""}";</script>`;
+    const webuiLoggingScript = `<script type="module" nonce="${nonce}">window.POCHI_LOG = "${this.pochiConfiguration.advancedSettings.value.webviewLogLevel || ""}";</script>`;
 
     if (isProd) {
       const sqliteWasmUri = getUri(webview, this.context.extensionUri, [
