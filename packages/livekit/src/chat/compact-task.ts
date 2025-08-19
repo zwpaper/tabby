@@ -5,10 +5,12 @@ import { requestLLM } from "./llm";
 export async function compactTask({
   getLLM,
   messages,
+  abortSignal,
   overwrite,
 }: {
   getLLM: () => RequestData["llm"];
   messages: Message[];
+  abortSignal?: AbortSignal;
   overwrite: boolean;
 }): Promise<string | undefined> {
   const lastMessage = messages.at(-1);
@@ -27,7 +29,7 @@ export async function compactTask({
   const llm = getLLM();
   try {
     const text = prompts.inlineCompact(
-      await createSummary(llm, messages.slice(0, -1)),
+      await createSummary(llm, abortSignal, messages.slice(0, -1)),
       messages.length - 1,
     );
     if (overwrite) {
@@ -44,6 +46,7 @@ export async function compactTask({
 
 async function createSummary(
   llm: RequestData["llm"],
+  abortSignal: AbortSignal | undefined,
   inputMessages: Message[],
 ) {
   const messages: Message[] = formatters.llm([
@@ -63,6 +66,7 @@ async function createSummary(
   const stream = await requestLLM(undefined, llm, {
     messages,
     system: prompts.compact(),
+    abortSignal,
   });
 
   const reader = stream.getReader();

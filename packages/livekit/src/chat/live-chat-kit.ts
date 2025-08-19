@@ -16,6 +16,7 @@ import {
 
 export type LiveChatKitOptions<T> = {
   taskId: string;
+  abortSignal?: AbortSignal;
 
   // Request related getters
   getters: {
@@ -42,7 +43,9 @@ export type LiveChatKitOptions<T> = {
   "id" | "messages" | "generateId" | "onFinish" | "onError" | "transport"
 >;
 
-export class LiveChatKit<T extends { messages: Message[] }> {
+export class LiveChatKit<
+  T extends { messages: Message[]; stop: () => Promise<void> },
+> {
   protected readonly taskId: string;
   protected readonly store: Store;
   readonly chat: T;
@@ -50,6 +53,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
 
   constructor({
     taskId,
+    abortSignal,
     store,
     chatClass,
     onBeforeMakeRequest,
@@ -76,6 +80,10 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       transport: this.transport,
     });
 
+    abortSignal?.addEventListener("abort", () => {
+      this.chat.stop();
+    });
+
     // @ts-expect-error: monkey patch
     const chat = this.chat as {
       makeRequest: (...args: unknown[]) => Promise<unknown>;
@@ -91,6 +99,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
         await compactTask({
           messages,
           getLLM: getters.getLLM,
+          abortSignal,
           overwrite: true,
         });
       }
@@ -105,6 +114,7 @@ export class LiveChatKit<T extends { messages: Message[] }> {
       const summary = await compactTask({
         messages,
         getLLM: getters.getLLM,
+        abortSignal,
         overwrite: false,
       });
       if (!summary) {

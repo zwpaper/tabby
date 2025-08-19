@@ -13,6 +13,10 @@ export function useAutoApproveGuard() {
   return useChatState().autoApproveGuard;
 }
 
+export function useChatAbortController() {
+  return useChatState().abortController;
+}
+
 export function useToolCallLifeCycle() {
   const { getToolCallLifeCycle, executingToolCalls, completeToolCalls } =
     useChatState();

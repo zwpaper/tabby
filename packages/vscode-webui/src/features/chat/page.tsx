@@ -6,9 +6,9 @@ import type { User } from "@/lib/auth-client";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useImageUpload } from "@/lib/hooks/use-image-upload";
 import { cn } from "@/lib/utils";
-import { type UseChatHelpers, useChat } from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
 import { formatters } from "@getpochi/common";
-import { type Message, type Task, catalog } from "@getpochi/livekit";
+import { type Task, catalog } from "@getpochi/livekit";
 import { useLiveChatKit } from "@getpochi/livekit/react";
 import type { Todo } from "@getpochi/tools";
 import { useStore } from "@livestore/react";
@@ -22,6 +22,7 @@ import { ChatArea } from "./components/chat-area";
 import { ChatToolbar } from "./components/chat-toolbar";
 import { ErrorMessageView } from "./components/error-message-view";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
+import { useChatAbortController } from "./lib/chat-state";
 import { onBeforeMakeRequest } from "./lib/on-before-make-request";
 import { useLiveChatKitGetters } from "./lib/use-live-chat-kit-getters";
 
@@ -44,6 +45,8 @@ interface ChatProps {
 }
 
 function Chat({ user, uid, prompt }: ChatProps) {
+  useAbortBeforeNavigation();
+
   const { store } = useStore();
   const todosRef = useRef<Todo[] | undefined>(undefined);
   const getters = useLiveChatKitGetters({
@@ -58,6 +61,7 @@ function Chat({ user, uid, prompt }: ChatProps) {
   const chatKit = useLiveChatKit({
     taskId: uid,
     getters,
+    abortSignal: useChatAbortController().current.signal,
     sendAutomaticallyWhen: (x) => {
       // AI SDK v5 will retry regardless of the status if sendAutomaticallyWhen is set.
       if (chatKit.chat.status === "error") {
@@ -84,7 +88,6 @@ function Chat({ user, uid, prompt }: ChatProps) {
   const chat = useChat({
     chat: chatKit.chat,
   });
-  useStopBeforeNavigate(chat);
 
   const { messages, sendMessage, status } = chat;
   const renderMessages = useMemo(() => formatters.ui(messages), [messages]);
@@ -159,21 +162,20 @@ function Chat({ user, uid, prompt }: ChatProps) {
   );
 }
 
-function useStopBeforeNavigate({
-  stop,
-}: Pick<UseChatHelpers<Message>, "stop">) {
+function useAbortBeforeNavigation() {
+  const abortController = useChatAbortController();
   const router = useRouter();
   useEffect(() => {
     // Subscribe to the 'onBeforeLoad' event
     const unsubscribe = router.subscribe("onBeforeLoad", () => {
-      stop();
+      abortController.current.abort();
     });
 
     // Clean up the subscription when the component unmounts
     return () => {
       unsubscribe();
     };
-  }, [stop, router]);
+  }, [abortController, router]);
 }
 
 const NavigateParentTask: React.FC<{

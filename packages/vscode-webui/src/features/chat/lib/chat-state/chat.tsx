@@ -8,11 +8,13 @@ interface ChatContextProviderProps {
 
 export function ChatContextProvider({ children }: ChatContextProviderProps) {
   const autoApproveGuard = useRef(false);
+  const abortController = useRef(new AbortController());
 
   const { executingToolCalls, getToolCallLifeCycle, completeToolCalls } =
     useToolCallLifeCycles();
 
   const value: ChatState = {
+    abortController,
     autoApproveGuard,
     getToolCallLifeCycle,
     executingToolCalls,
