@@ -18,6 +18,8 @@ export function createToolCallMiddleware(): LanguageModelV2Middleware {
   const toolCallStartRegex = /<api-request\s+name="([^"]+)">/;
   const toolCallStartPrefix = "<api-request";
 
+  const toolSectionStartTag = "<api-section>";
+
   return {
     middlewareVersion: "v2",
     async transformParams({ params }) {
@@ -83,6 +85,7 @@ export function createToolCallMiddleware(): LanguageModelV2Middleware {
             toolCallStartRegex,
             toolCallStartPrefix,
             toolCallEndTag,
+            toolSectionStartTag,
           ),
         ),
         ...rest,
@@ -103,11 +106,13 @@ function createToolCallStream(
   toolCallStartRegex: RegExp,
   toolCallStartPrefix: string,
   toolCallEndTag: string,
+  toolSectionStartTag: string,
 ): TransformStream<LanguageModelV2StreamPart, LanguageModelV2StreamPart> {
   let isFirstToolCall = true;
   let isFirstText = true;
   let afterSwitch = false;
   let isToolCall = false;
+  let isToolSection = false;
   let buffer = "";
   let toolCallIndex = -1;
 
@@ -160,9 +165,6 @@ function createToolCallStream(
       // Check for buffer size limit
       function publish(text: string) {
         if (text.length === 0) return;
-        if (!isToolCall && text.trimEnd().endsWith("<api-section>")) {
-          return;
-        }
         if (isFirstText && text.trim().length === 0) {
           return;
         }
@@ -229,7 +231,7 @@ function createToolCallStream(
             buffer = buffer.slice(endIndex);
             break;
           }
-        } else {
+        } else if (isToolSection) {
           // Look for opening tag with name attribute
           const match = buffer.match(toolCallStartRegex);
 
@@ -289,6 +291,35 @@ function createToolCallStream(
             afterSwitch = true;
           } else {
             buffer = buffer.slice(startIndex);
+            break;
+          }
+        } else {
+          // Look for opening tag with name attribute
+          const index = buffer.indexOf(toolSectionStartTag);
+
+          if (index < 0) {
+            const startIndex = getPotentialStartIndex(
+              buffer,
+              toolSectionStartTag,
+            );
+            if (startIndex === null || startIndex < 0) {
+              publish(buffer);
+              buffer = "";
+            }
+            break;
+          }
+
+          // publish text before the tag
+          publish(buffer.slice(0, index));
+
+          const foundFullStartMatch =
+            index + toolSectionStartTag.length <= buffer.length;
+
+          if (foundFullStartMatch) {
+            buffer = buffer.slice(index + toolSectionStartTag.length);
+            isToolSection = true;
+          } else {
+            buffer = buffer.slice(index);
             break;
           }
         }

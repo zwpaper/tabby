@@ -78,9 +78,11 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     }
 
     if (
-      llm.type === "pochi" &&
-      // Turn on ToolCallMiddleware only for gemini backed models for now
-      (llm.modelId?.startsWith("google/") || llm.modelId?.startsWith("pochi/"))
+      (llm.type === "pochi" &&
+        // Turn on ToolCallMiddleware only for gemini backed models for now
+        (llm.modelId?.startsWith("google/") ||
+          llm.modelId?.startsWith("pochi/"))) ||
+      llm.type === "google-vertex-tuning"
     ) {
       middlewares.push(createToolCallMiddleware());
     }
