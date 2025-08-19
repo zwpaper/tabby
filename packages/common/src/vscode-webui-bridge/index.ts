@@ -18,7 +18,7 @@ export type {
 export type { ResourceURI } from "./types/common";
 export type { SessionState, WorkspaceState } from "./types/session";
 export type { TaskIdParams, NewTaskParams } from "./types/task-params";
-export type { CustomModelSetting, PochiModelsSettings } from "./types/models";
+export { CustomModelSetting, type PochiModelsSettings } from "./types/models";
 export type { RuleFile } from "./types/rules";
 export type { CaptureEvent } from "./types/capture-event";
 

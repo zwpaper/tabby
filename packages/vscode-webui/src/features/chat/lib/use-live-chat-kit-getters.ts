@@ -70,24 +70,39 @@ function useLLM(): React.RefObject<LLMRequestData> {
   const { selectedModel } = useSelectedModels();
   const pochiModelSettings = usePochiModelSettings();
 
-  const llmFromSelectedModel =
-    selectedModel?.type === "byok"
-      ? {
-          type: "openai" as const,
-          modelId: selectedModel.modelId,
-          baseURL: selectedModel.provider.baseURL,
-          apiKey: selectedModel.provider.apiKey,
-          maxOutputTokens: selectedModel.maxTokens,
-          contextWindow: selectedModel.contextWindow,
-        }
-      : selectedModel?.type === "hosted"
-        ? {
-            type: "pochi" as const,
-            modelId: selectedModel.modelId,
-            modelEndpointId: pochiModelSettings?.modelEndpointId,
-            apiClient,
-          }
-        : (undefined as never);
+  const llmFromSelectedModel = ((): LLMRequestData => {
+    if (!selectedModel) return undefined as never;
+
+    if (selectedModel.type === "hosted") {
+      return {
+        type: "pochi" as const,
+        modelId: selectedModel.modelId,
+        modelEndpointId: pochiModelSettings?.modelEndpointId,
+        apiClient,
+      };
+    }
+
+    const { provider } = selectedModel;
+    if (provider.kind === "google-vertex-tuning") {
+      return {
+        type: "google-vertex-tuning" as const,
+        location: provider.location,
+        credentials: provider.credentials,
+        modelId: selectedModel.modelId,
+        maxOutputTokens: selectedModel.maxTokens,
+        contextWindow: selectedModel.contextWindow,
+      };
+    }
+
+    return {
+      type: "openai" as const,
+      modelId: selectedModel.modelId,
+      baseURL: provider.baseURL,
+      apiKey: provider.apiKey,
+      maxOutputTokens: selectedModel.maxTokens,
+      contextWindow: selectedModel.contextWindow,
+    };
+  })();
 
   return useLatest(llmFromSelectedModel);
 }

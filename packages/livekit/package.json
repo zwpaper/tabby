@@ -17,6 +17,7 @@
     "@getpochi/tools": "workspace:*",
     "ai": "catalog:",
     "@ai-sdk/react": "catalog:",
+    "@ai-sdk/google-vertex": "catalog:",
     "@ai-sdk/openai-compatible": "catalog:",
     "@ai-sdk/provider-utils": "catalog:",
     "@ai-sdk/provider": "catalog:",

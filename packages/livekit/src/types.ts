@@ -27,7 +27,7 @@ export type UITools = InferUITools<ClientTools>;
 
 export type Message = UIMessage<Metadata, DataParts, UITools>;
 
-const ZodRequestData = z.object({
+const RequestData = z.object({
   environment: Environment.optional(),
   llm: z.discriminatedUnion("type", [
     z.object({
@@ -35,6 +35,14 @@ const ZodRequestData = z.object({
       modelId: z.string(),
       baseURL: z.string(),
       apiKey: z.string().optional(),
+      contextWindow: z.number().describe("Context window of the model."),
+      maxOutputTokens: z.number().describe("Max output tokens of the model."),
+    }),
+    z.object({
+      type: z.literal("google-vertex-tuning"),
+      location: z.string(),
+      modelId: z.string(),
+      credentials: z.string(),
       contextWindow: z.number().describe("Context window of the model."),
       maxOutputTokens: z.number().describe("Max output tokens of the model."),
     }),
@@ -54,6 +62,6 @@ const ZodRequestData = z.object({
     .describe("MCP tools available for this request."),
 });
 
-export type RequestData = z.infer<typeof ZodRequestData>;
+export type RequestData = z.infer<typeof RequestData>;
 
 export type Task = typeof tables.tasks.Type;

@@ -1,46 +1,58 @@
+import z from "zod";
+
+const BaseModelSettings = {
+  id: z
+    .string()
+    .describe('Model provider identifier, e.g., "openai", "anthropic", etc.'),
+  name: z
+    .string()
+    .optional()
+    .describe('Model provider name, e.g., "OpenAI", "Anthropic", etc.'),
+  models: z.array(
+    z.object({
+      name: z
+        .string()
+        .optional()
+        .describe('Display name of the model, e.g., "GPT-4o"'),
+      id: z.string().describe('Identifier for the model, e.g., "gpt-4o"'),
+      maxTokens: z
+        .number()
+        .describe("Maximum number of generated tokens for the model"),
+      contextWindow: z.number().describe("Context window size for the model"),
+    }),
+  ),
+};
+
+const OpenAIModelSettings = z.object({
+  ...BaseModelSettings,
+  kind: z.optional(z.literal("openai")),
+  baseURL: z
+    .string()
+    .describe(
+      'Base URL for the model provider\'s API, e.g., "https://api.openai.com/v1"',
+    ),
+  apiKey: z
+    .string()
+    .optional()
+    .describe("API key for the model provider, if required."),
+});
+
+const GoogleVertexTuningModelSettings = z.object({
+  ...BaseModelSettings,
+  kind: z.literal("google-vertex-tuning"),
+  location: z.string().describe("Location of the model, e.g., us-central1"),
+  credentials: z.string().describe("Credentials for the vertex model."),
+});
+
+export const CustomModelSetting = z.discriminatedUnion("kind", [
+  OpenAIModelSettings,
+  GoogleVertexTuningModelSettings,
+]);
+
 /**
  * Custom model setting
  */
-export type CustomModelSetting = {
-  /**
-   * Model provider identifier, e.g., "openai", "anthropic", etc.
-   */
-  id: string;
-  /**
-   * Model provider name, e.g., "OpenAI", "Anthropic", etc.
-   * This is used for display purposes in the UI. If not provided, the `id` will be used.
-   */
-  name?: string;
-  /**
-   * Base URL for the model provider's API, e.g., "https://api.openai.com/v1"
-   * This is used to make API requests to the model provider.
-   */
-  baseURL: string;
-  /**
-   *  API key for the model provider, if required.
-   */
-  apiKey?: string;
-  models: {
-    /**
-     * Display name of the model, e.g., "GPT-4o".
-     * This is used for display purposes in the UI. If not provided, the `id` will be used.
-     */
-    name?: string;
-    /**
-     * Identifier for the model, e.g., "gpt-4o".
-     * This is used to identify the model in API requests.
-     */
-    id: string;
-    /**
-     * Maximum number of generated tokens for the model
-     */
-    maxTokens: number;
-    /**
-     * Context window size for the model
-     */
-    contextWindow: number;
-  }[];
-};
+export type CustomModelSetting = z.infer<typeof CustomModelSetting>;
 
 export type PochiModelsSettings = {
   modelEndpointId?: string;

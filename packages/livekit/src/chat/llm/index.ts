@@ -1,5 +1,6 @@
 import type { Store } from "@livestore/livestore";
 import type { RequestData } from "../../types";
+import { createGoogleVertexTuningModel } from "./google-vertex-tuning";
 import { createOpenAIModel } from "./openai";
 import { createPochiModel } from "./pochi";
 import { request } from "./request";
@@ -21,6 +22,10 @@ function createModel(
 ) {
   if (llm.type === "openai") {
     return createOpenAIModel(llm);
+  }
+
+  if (llm.type === "google-vertex-tuning") {
+    return createGoogleVertexTuningModel(llm);
   }
 
   if (llm.type === "pochi") {

@@ -18,6 +18,7 @@ import { PostHog } from "@/lib/posthog";
 import { TokenStorage } from "@/lib/token-storage";
 import type { WebsiteTaskCreateEvent } from "@getpochi/common";
 import type {
+  CustomModelSetting,
   NewTaskParams,
   TaskIdParams,
 } from "@getpochi/common/vscode-webui-bridge";
@@ -419,7 +420,7 @@ export class CommandManager implements vscode.Disposable {
           },
         ],
       },
-    ];
+    ] satisfies CustomModelSetting[];
 
     try {
       // Update the settings with defaults

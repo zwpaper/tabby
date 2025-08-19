@@ -42,6 +42,7 @@
     "packages/livekit": {
       "name": "@getpochi/livekit",
       "dependencies": {
+        "@ai-sdk/google-vertex": "catalog:",
         "@ai-sdk/openai-compatible": "catalog:",
         "@ai-sdk/provider": "catalog:",
         "@ai-sdk/provider-utils": "catalog:",
@@ -67,7 +68,7 @@
     },
     "packages/vscode": {
       "name": "pochi",
-      "version": "0.6.10",
+      "version": "0.6.11",
       "dependencies": {
         "@getpochi/common": "workspace:*",
         "@modelcontextprotocol/sdk": "^1.12.0",
@@ -323,7 +324,7 @@
         "@ai-sdk/anthropic": "npm:@ai-sdk/anthropic@2",
         "@ai-sdk/deepinfra": "npm:@ai-sdk/deepinfra@1",
         "@ai-sdk/google": "npm:@ai-sdk/google@2",
-        "@ai-sdk/google-vertex": "npm:@ai-sdk/google-vertex@3",
+        "@ai-sdk/google-vertex": "catalog:",
         "@ai-sdk/groq": "npm:@ai-sdk/groq@2",
         "@ai-sdk/provider": "catalog:",
         "@better-auth/stripe": "catalog:",
@@ -466,6 +467,7 @@
     "better-auth@1.2.9": "patches/better-auth@1.2.9.patch",
   },
   "catalog": {
+    "@ai-sdk/google-vertex": "^3",
     "@ai-sdk/openai-compatible": "^1.0.7",
     "@ai-sdk/provider": "^2",
     "@ai-sdk/provider-utils": "^3.0.3",

@@ -1,5 +1,6 @@
 import { apiClient, authHooks } from "@/lib/auth-client";
 import { useCustomModelSetting } from "@/lib/hooks/use-custom-model-setting";
+import type { CustomModelSetting } from "@getpochi/common/vscode-webui-bridge";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useSettingsStore } from "../store";
@@ -21,13 +22,13 @@ export type DisplayModel =
       contextWindow: number;
       maxTokens: number;
       costType: "basic";
-      provider: {
-        id: string;
-        name?: string;
-        baseURL: string;
-        apiKey?: string;
-      };
+      // https://github.com/microsoft/TypeScript/issues/31501#issuecomment-1079728677
+      provider: RemoveModelsField<CustomModelSetting>;
     };
+
+type RemoveModelsField<Type> = {
+  [Property in keyof Type as Exclude<Property, "models">]: Type[Property];
+};
 
 export type ModelGroup = {
   title: string;

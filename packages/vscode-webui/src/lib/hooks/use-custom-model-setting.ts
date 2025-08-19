@@ -1,22 +1,10 @@
 import { vscodeHost } from "@/lib/vscode";
-import type { CustomModelSetting } from "@getpochi/common/vscode-webui-bridge";
+import { CustomModelSetting } from "@getpochi/common/vscode-webui-bridge";
 import { threadSignal } from "@quilted/threads/signals";
 import { useQuery } from "@tanstack/react-query";
 
-const isValidCustomModel = (model: CustomModelSetting["models"][number]) => {
-  return (
-    typeof model.id === "string" &&
-    typeof model.contextWindow === "number" &&
-    typeof model.maxTokens === "number"
-  );
-};
-
-const isValidCustomModelSetting = (setting: CustomModelSetting) => {
-  return (
-    typeof setting.id === "string" &&
-    typeof setting.baseURL === "string" &&
-    Array.isArray(setting.models)
-  );
+const isValidCustomModelSetting = (setting: unknown) => {
+  return CustomModelSetting.safeParse(setting).success;
 };
 
 const getValidCustomModelSettings = (
@@ -25,12 +13,7 @@ const getValidCustomModelSettings = (
   if (settings === undefined) {
     return undefined;
   }
-  return settings.filter(isValidCustomModelSetting).map((setting) => {
-    return {
-      ...setting,
-      models: setting.models.filter(isValidCustomModel),
-    };
-  });
+  return settings.filter(isValidCustomModelSetting);
 };
 
 /** @useSignals this comment is needed to enable signals in this hook */

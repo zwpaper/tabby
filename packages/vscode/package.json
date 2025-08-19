@@ -240,52 +240,120 @@
             "type": "array",
             "default": [],
             "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "Unique identifier for the model provider, e.g., \"openai\", \"anthropic\", etc."
-                },
-                "name": {
-                  "type": "string",
-                  "description": "Model provider name, e.g., \"OpenAI\", \"Anthropic\", etc. If not provided, the `id` will be used."
-                },
-                "baseURL": {
-                  "type": "string",
-                  "description": "Base URL for the model provider's API (e.g., https://api.openai.com/v1)"
-                },
-                "apiKey": {
-                  "type": "string",
-                  "description": "API key for the model provider, if required."
-                },
-                "models": {
-                  "type": "array",
-                  "default": [],
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "description": "Unique identifier for the model. This is used for API calls."
-                      },
-                      "name": {
-                        "type": "string",
-                        "description": "Display name for the model"
-                      },
-                      "maxTokens": {
-                        "type": "number",
-                        "description": "Maximum number of tokens for the model"
-                      },
-                      "contextWindow": {
-                        "type": "number",
-                        "description": "Context window size for the model"
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "Model provider identifier, e.g., \"openai\", \"anthropic\", etc.",
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Model provider name, e.g., \"OpenAI\", \"Anthropic\", etc.",
+                      "type": "string"
+                    },
+                    "models": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "description": "Display name of the model, e.g., \"GPT-4o\"",
+                            "type": "string"
+                          },
+                          "id": {
+                            "description": "Identifier for the model, e.g., \"gpt-4o\"",
+                            "type": "string"
+                          },
+                          "maxTokens": {
+                            "description": "Maximum number of generated tokens for the model",
+                            "type": "number"
+                          },
+                          "contextWindow": {
+                            "description": "Context window size for the model",
+                            "type": "number"
+                          }
+                        },
+                        "required": ["id", "maxTokens", "contextWindow"],
+                        "additionalProperties": false
                       }
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "openai"
+                    },
+                    "baseURL": {
+                      "description": "Base URL for the model provider's API, e.g., \"https://api.openai.com/v1\"",
+                      "type": "string"
+                    },
+                    "apiKey": {
+                      "description": "API key for the model provider, if required.",
+                      "type": "string"
                     }
                   },
-                  "description": "List of available models from the custom model setting API"
+                  "required": ["id", "models", "baseURL"],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "Model provider identifier, e.g., \"openai\", \"anthropic\", etc.",
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Model provider name, e.g., \"OpenAI\", \"Anthropic\", etc.",
+                      "type": "string"
+                    },
+                    "models": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "description": "Display name of the model, e.g., \"GPT-4o\"",
+                            "type": "string"
+                          },
+                          "id": {
+                            "description": "Identifier for the model, e.g., \"gpt-4o\"",
+                            "type": "string"
+                          },
+                          "maxTokens": {
+                            "description": "Maximum number of generated tokens for the model",
+                            "type": "number"
+                          },
+                          "contextWindow": {
+                            "description": "Context window size for the model",
+                            "type": "number"
+                          }
+                        },
+                        "required": ["id", "maxTokens", "contextWindow"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "google-vertex-tuning"
+                    },
+                    "location": {
+                      "description": "Location of the model, e.g., us-central1",
+                      "type": "string"
+                    },
+                    "credentials": {
+                      "description": "Credentials for the vertex model.",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "models",
+                    "kind",
+                    "location",
+                    "credentials"
+                  ],
+                  "additionalProperties": false
                 }
-              },
-              "description": "List of custom model settings for OpenAI API override"
+              ]
             }
           }
         }
