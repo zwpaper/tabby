@@ -6,11 +6,7 @@ import { getLogger } from "@/lib/logger";
 import { NewProjectRegistry, createNewWorkspace } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorkspaceJobQueue } from "@/lib/workspace-job";
-import {
-  type WebsiteTaskCreateEvent,
-  WebsiteTaskEvent,
-  type WebsiteTaskOpenEvent,
-} from "@getpochi/common";
+import { WebsiteTaskCreateEvent } from "@getpochi/common";
 import { inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
 
@@ -40,6 +36,12 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
   private async handleUriImpl(uri: vscode.Uri) {
     await vscode.commands.executeCommand("pochiWebui.focus");
 
+    /**
+     * Supported URI formats:
+     * - vscode://tabbyml.pochi/?token=<device_link_token> - Device link authentication
+     * - vscode://tabbyml.pochi/?task=<task_uid> - Open an existing task
+     * - vscode://tabbyml.pochi/?event=<encoded_WebsiteTaskCreateEvent> - Create a new project with task
+     */
     const searchParams = new URLSearchParams(uri.query);
     const token = searchParams.get("token");
     if (token) {
@@ -47,29 +49,33 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
       return;
     }
 
+    // Handle URI parameters
+    const taskParam = searchParams.get("task");
     const eventParam = searchParams.get("event");
-    if (eventParam) {
-      try {
-        const decodedEvent = JSON.parse(decodeURIComponent(eventParam));
-        const event = WebsiteTaskEvent.parse(decodedEvent);
 
-        // Route to appropriate handler based on event type
-        switch (event.type) {
-          case "website:open-task":
-            await this.handleOpenTask(event);
-            break;
-          case "website:new-project":
-            await this.handleNewProjectTask(event);
-            break;
-          default:
-            logger.error("Unknown event type", event);
-            vscode.window.showErrorMessage("Unknown event type");
-        }
-      } catch (error) {
-        logger.error("Failed to parse event parameter", error);
-        vscode.window.showErrorMessage("Failed to process task event");
-      }
-      return;
+    if (taskParam) {
+      await this.safeExecute(
+        () => this.handleOpenTask(taskParam),
+        "Failed to open task",
+      );
+    } else if (eventParam) {
+      await this.safeExecute(() => {
+        const decodedEvent = JSON.parse(decodeURIComponent(eventParam));
+        const event = WebsiteTaskCreateEvent.parse(decodedEvent);
+        return this.handleNewProjectTask(event);
+      }, "Failed to process task event");
+    }
+  }
+
+  private async safeExecute<T>(
+    fn: () => T | Promise<T>,
+    errorMessage: string,
+  ): Promise<void> {
+    try {
+      await fn();
+    } catch (error) {
+      logger.error(errorMessage, error);
+      vscode.window.showErrorMessage(errorMessage);
     }
   }
 
@@ -107,9 +113,7 @@ class RagdollUriHandler implements vscode.UriHandler, vscode.Disposable {
     return true;
   }
 
-  private async handleOpenTask(event: WebsiteTaskOpenEvent) {
-    const { uid } = event.data;
-
+  private async handleOpenTask(uid: string) {
     logger.info(`Handling open task request for uid: ${uid}`);
 
     // Try to open existing project

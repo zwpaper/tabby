@@ -14,5 +14,4 @@ export {
 export {
   WebsiteTaskCreateEvent,
   WebsiteTaskOpenEvent,
-  WebsiteTaskEvent,
 } from "./event";
