@@ -46,8 +46,12 @@ async function getPackages(): Promise<PackageInfo[]> {
       }
     }
   } catch (error) {
-    console.error("Error reading packages directory:", error);
-    process.exit(1);
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      // Skipping;
+    } else {
+      console.error("Error reading directory", error);
+      process.exit(1);
+    }
   }
 
   return packages;
