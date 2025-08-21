@@ -7,6 +7,8 @@ import { ThreadNestedWindow } from "@quilted/threads";
 import type { WebviewApi } from "vscode-webview";
 import { queryClient } from "./query-client";
 
+const logger = getLogger("vscode");
+
 let vscodeApi: WebviewApi<unknown> | undefined | null = undefined;
 
 function getVSCodeApi() {
@@ -120,5 +122,3 @@ function createVSCodeHost(): VSCodeHostApi {
 }
 
 export const vscodeHost = createVSCodeHost();
-
-const logger = getLogger("vscode");
