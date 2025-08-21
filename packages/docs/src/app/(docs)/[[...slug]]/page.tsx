@@ -1,3 +1,4 @@
+import { formatTitle } from "@/app/layout.config";
 import { source } from "@/lib/source";
 import { getMDXComponents } from "@/mdx-components";
 import { createRelativeLink } from "fumadocs-ui/mdx";
@@ -39,7 +40,7 @@ export async function generateMetadata(props: {
   if (!page) notFound();
 
   return {
-    title: page.data.title,
+    title: formatTitle(page.data.title),
     description: page.data.description,
   };
 }

@@ -18,14 +18,8 @@ export const baseOptions: BaseLayoutProps = {
       </>
     ),
   },
-  // see https://fumadocs.dev/docs/ui/navigation/links
-  links: [
-    {
-      label: "pochi",
-      text: "Pochi",
-      url: "https://www.getpochi.com",
-      external: true,
-      icon: <Webhook className="w-4 h-4" />,
-    },
-  ],
 };
+
+export function formatTitle(title: string) {
+  return `${title} - Pochi`;
+}
