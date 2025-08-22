@@ -1,16 +1,26 @@
 import type { Environment } from "@getpochi/common";
-import { prompts } from "@getpochi/common";
+import { formatters, prompts } from "@getpochi/common";
 import { type McpTool, selectClientTools } from "@getpochi/tools";
 import type { Store } from "@livestore/livestore";
-import type { ChatRequestOptions, ChatTransport, UIMessageChunk } from "ai";
-import type { Message, RequestData } from "../types";
-import { requestLLM } from "./llm";
-import { parseMcpToolSet } from "./llm/utils";
+import {
+  type ChatRequestOptions,
+  type ChatTransport,
+  type UIMessageChunk,
+  convertToModelMessages,
+  isToolUIPart,
+  streamText,
+  wrapLanguageModel,
+} from "ai";
+import type { Message, Metadata, RequestData } from "../types";
+import { makeRepairToolCall } from "./llm";
+import { parseMcpToolSet } from "./mcp-utils";
 import {
   createNewTaskMiddleware,
   createReasoningMiddleware,
   createToolCallMiddleware,
 } from "./middlewares";
+import { createModel } from "./models";
+import { persistManager } from "./persist-manager";
 
 export type OnStartCallback = (options: {
   messages: Message[];
@@ -75,8 +85,6 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       middlewares.push(createNewTaskMiddleware(this.store, chatId));
     }
 
-    // middlewares.push(createBatchCallMiddleware());
-
     if (isWellKnownReasoningModel(llm.modelId)) {
       middlewares.push(createReasoningMiddleware());
     }
@@ -92,27 +100,53 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
       middlewares.push(createToolCallMiddleware());
     }
 
-    const system = prompts.system(environment?.info?.customRules);
     const mcpTools = mcpToolSet && parseMcpToolSet(mcpToolSet);
-    const tools = {
-      ...selectClientTools(!!this.isSubTask),
-      ...(mcpTools || {}),
-    };
-    return requestLLM({
-      store: this.store,
-      llm,
-      payload: {
-        system,
-        messages: prepareMessages(messages, environment),
-        abortSignal,
-        id: chatId,
-        tools,
-        middlewares,
-        environment,
+    const preparedMessages = await prepareMessages(messages, environment);
+    const model = createModel({ id: chatId, llm });
+    const stream = streamText({
+      system: prompts.system(environment?.info?.customRules),
+      messages: convertToModelMessages(
+        formatters.llm(preparedMessages, {
+          keepReasoningPart:
+            llm.type === "pochi" && llm.modelId?.includes("claude"),
+        }),
+      ),
+      model: wrapLanguageModel({
+        model,
+        middleware: middlewares,
+      }),
+      abortSignal,
+      tools: {
+        ...selectClientTools(!!this.isSubTask),
+        ...(mcpTools || {}),
       },
-      formatterOptions: {
-        keepReasoningPart:
-          llm.type === "pochi" && llm.modelId?.includes("claude"),
+      maxRetries: 0,
+      // error log is handled in live chat kit.
+      onError: () => {},
+      experimental_repairToolCall: makeRepairToolCall(model),
+    });
+    return stream.toUIMessageStream({
+      originalMessages: preparedMessages,
+      messageMetadata: ({ part }) => {
+        if (part.type === "finish") {
+          return {
+            kind: "assistant",
+            totalTokens:
+              part.totalUsage.totalTokens || estimateTotalTokens(messages),
+            finishReason: part.finishReason,
+          } satisfies Metadata;
+        }
+      },
+      onFinish: async ({ messages }) => {
+        if (llm.type === "pochi") {
+          persistManager.push({
+            taskId: chatId,
+            store: this.store,
+            messages,
+            llm,
+            environment,
+          });
+        }
       },
     });
   };
@@ -142,4 +176,18 @@ function isWellKnownReasoningModel(model?: string): boolean {
     }
   }
   return false;
+}
+
+function estimateTotalTokens(messages: Message[]): number {
+  let totalTextLength = 0;
+  for (const message of messages) {
+    for (const part of message.parts) {
+      if (part.type === "text") {
+        totalTextLength += part.text.length;
+      } else if (isToolUIPart(part)) {
+        totalTextLength += JSON.stringify(part).length;
+      }
+    }
+  }
+  return Math.ceil(totalTextLength / 4);
 }
