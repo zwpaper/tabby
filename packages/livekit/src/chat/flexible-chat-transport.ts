@@ -44,6 +44,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
   private readonly isSubTask?: boolean;
   private readonly store: Store;
   private readonly apiClient: PochiApiClient;
+  private readonly waitUntil?: (promise: Promise<unknown>) => void;
 
   constructor(options: {
     onStart?: OnStartCallback;
@@ -51,12 +52,14 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
     isSubTask?: boolean;
     store: Store;
     apiClient: PochiApiClient;
+    waitUntil?: (promise: Promise<unknown>) => void;
   }) {
     this.onStart = options.onStart;
     this.getters = options.getters;
     this.isSubTask = options.isSubTask;
     this.store = options.store;
     this.apiClient = options.apiClient;
+    this.waitUntil = this.waitUntil;
   }
 
   sendMessages: (
@@ -149,6 +152,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
             messages,
             apiClient: this.apiClient,
             environment,
+            waitUntil: this.waitUntil,
           });
         }
       },

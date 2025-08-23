@@ -41,6 +41,8 @@ export type LiveChatKitOptions<T> = {
   onOverrideMessages?: (options: {
     messages: Message[];
   }) => void | Promise<void>;
+
+  waitUntil?: (promise: Promise<unknown>) => void;
 } & Omit<
   ChatInit<Message>,
   "id" | "messages" | "generateId" | "onFinish" | "onError" | "transport"
