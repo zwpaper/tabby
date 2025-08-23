@@ -18,39 +18,30 @@ interface PersistJob {
 }
 
 class PersistManager {
-  constructor() {
-    this.loop();
-  }
-
-  private queue: PersistJob[] = [];
+  private jobs = Promise.resolve();
+  private pendingJobs = new Map<string, PersistJob>();
 
   push(job: PersistJob) {
-    const existingJobIndex = this.queue.findIndex(
-      (j) => j.taskId === job.taskId,
-    );
+    // Replace any existing pending job with the same taskId
+    this.pendingJobs.set(job.taskId, job);
 
-    if (existingJobIndex >= 0) {
-      this.queue[existingJobIndex] = job;
-    } else {
-      this.queue.push(job);
-    }
-  }
-
-  private async loop() {
-    while (true) {
-      const job = this.queue.shift();
-      if (!job) {
-        // FIXME: naive implementation of non-busy wait.
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        continue;
+    this.jobs = this.jobs.then(() => {
+      // Get the next job to process (one at a time)
+      const nextJob = this.pendingJobs.values().next().value;
+      if (!nextJob) {
+        return Promise.resolve();
       }
 
-      const processPromise = this.process(job).catch((error) => {
+      // Remove the job from pending map
+      this.pendingJobs.delete(nextJob.taskId);
+
+      // Process the single job
+      return this.process(nextJob).catch((error) => {
         logger.error("Failed to persist chat", error);
       });
+    });
 
-      job.waitUntil?.(processPromise);
-    }
+    job.waitUntil?.(this.jobs);
   }
 
   private async process({
