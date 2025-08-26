@@ -16,7 +16,7 @@ export async function generateTaskTitle(options: GenerateTaskTitleOptions) {
   const { title } = options;
   const newTitle = await generateTaskTitleImpl(options);
   if (newTitle !== undefined) {
-    logger.info(`Generating task title, old: ${title}, new: ${newTitle}`);
+    logger.debug(`Generating task title, old: ${title}, new: ${newTitle}`);
   }
   return newTitle;
 }
