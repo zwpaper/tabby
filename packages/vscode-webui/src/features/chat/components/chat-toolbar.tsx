@@ -5,6 +5,11 @@ import { PreviewTool } from "@/components/preview-tool";
 import { PublicShareButton } from "@/components/public-share-button";
 import { TokenUsage } from "@/components/token-usage";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ApprovalButton, type useApprovalAndRetry } from "@/features/approval";
 import { useAutoApproveGuard } from "@/features/chat";
 import { useSelectedModels } from "@/features/settings";
@@ -95,6 +100,7 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
     removeFile: handleRemoveImage,
     handleFileSelect,
     handlePaste: handlePasteImage,
+    handleImageDrop,
   } = imageUpload;
 
   const { inlineCompactTask, inlineCompactTaskPending } = useInlineCompactTask({
@@ -184,6 +190,7 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
         onPaste={handlePasteImage}
         pendingApproval={pendingApproval}
         status={status}
+        onImageDrop={handleImageDrop}
       />
 
       {/* Hidden file input for image uploads */}
@@ -226,14 +233,22 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
             modelId={selectedModel?.id}
             displayError={displayError?.message}
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            className="button-focus h-6 w-6 p-0"
-          >
-            <ImageIcon className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                className="button-focus h-6 w-6 p-0"
+              >
+                <ImageIcon className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Attach images to chat. You can also drag and drop images or paste
+              them into the chat input box.
+            </TooltipContent>
+          </Tooltip>
           <SubmitStopButton
             isSubmitDisabled={isSubmitDisabled}
             showStopButton={showStopButton}

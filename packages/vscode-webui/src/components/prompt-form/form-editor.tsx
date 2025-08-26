@@ -14,7 +14,7 @@ import {
   ReactRenderer,
   useEditor,
 } from "@tiptap/react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import tippy from "tippy.js";
 import {
   PromptFormMentionExtension,
@@ -83,6 +83,7 @@ interface FormEditorProps {
   onError?: (e: Error) => void;
   onPaste?: (e: ClipboardEvent) => void;
   enableSubmitHistory?: boolean;
+  onImageDrop?: (files: File[]) => boolean;
 }
 
 export function FormEditor({
@@ -96,6 +97,7 @@ export function FormEditor({
   autoFocus = true,
   onPaste,
   enableSubmitHistory = true,
+  onImageDrop,
 }: FormEditorProps) {
   const internalFormRef = useRef<HTMLFormElement>(null);
   const formRef = externalFormRef || internalFormRef;
@@ -107,6 +109,9 @@ export function FormEditor({
   }, [activeTabs]);
   const isFileMentionComposingRef = useRef(false);
   const isCommandMentionComposingRef = useRef(false);
+
+  // State for drag overlay UI
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const editor = useEditor(
     {
@@ -338,6 +343,54 @@ export function FormEditor({
           class:
             "prose max-w-full min-h-[3.5em] font-sans dark:prose-invert focus:outline-none prose-p:my-0 leading-[1.25]",
         },
+        handleDOMEvents: {
+          dragenter: (_view, event) => {
+            const dataTransfer = (event as DragEvent).dataTransfer;
+            if (
+              dataTransfer &&
+              Array.from(dataTransfer.types).includes("Files")
+            ) {
+              setIsDragOver(true);
+              event.preventDefault();
+            }
+            return false;
+          },
+          dragleave: (view, event) => {
+            const relatedTarget = (event as DragEvent)
+              .relatedTarget as HTMLElement | null;
+            // Only trigger dragleave if we're actually leaving the editor area
+            if (!relatedTarget || !view.dom.contains(relatedTarget)) {
+              setIsDragOver(false);
+            }
+            return false;
+          },
+          dragover: (_view, event) => {
+            const dataTransfer = (event as DragEvent).dataTransfer;
+            if (
+              dataTransfer &&
+              Array.from(dataTransfer.types).includes("Files")
+            ) {
+              event.preventDefault();
+              dataTransfer.dropEffect = "copy";
+            }
+            return false;
+          },
+          drop: (_view, event) => {
+            const dataTransfer = (event as DragEvent).dataTransfer;
+            if (!dataTransfer?.files.length || !onImageDrop) {
+              return false;
+            }
+
+            const filesArray = Array.from(dataTransfer.files);
+
+            event.preventDefault();
+            event.stopPropagation();
+            setIsDragOver(false);
+
+            onImageDrop(filesArray);
+            return true;
+          },
+        },
       },
       onUpdate(props) {
         const text = props.editor.getText({
@@ -478,6 +531,7 @@ export function FormEditor({
         "relative rounded-sm border border-[var(--input-border)] bg-input p-1 transition-color duration-300 focus-within:border-ring",
         {
           "form-editor-loading": isLoading,
+          "bg-zinc-50 dark:bg-zinc-950": isDragOver,
         },
       )}
       onClick={(e) => {
@@ -495,6 +549,17 @@ export function FormEditor({
           className="prose !border-none min-h-20 w-full max-w-none overflow-hidden break-words text-[var(--vscode-input-foreground)] focus:outline-none"
         />
       </ScrollArea>
+
+      {/* Drop zone overlay - shows when dragging over the editor */}
+      {isDragOver && (
+        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-sm border-2 border-zinc-500 border-dashed dark:bg-zinc-500/30">
+          <div className="rounded-md border bg-white px-4 py-2 shadow-lg dark:bg-gray-800">
+            <p className="font-medium text-sm">
+              Drop images here to attach them to your message
+            </p>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
