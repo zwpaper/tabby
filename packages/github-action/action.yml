@@ -39,7 +39,7 @@ runs:
       shell: bash
       run: |
         cd ${GITHUB_ACTION_PATH}
-        bun install
+        bun install --frozen-lockfile
 
     - name: Run pochi GitHub Action
       shell: bash
