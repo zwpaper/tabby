@@ -21,7 +21,9 @@ export async function runPochi(request: RunPochiRequest): Promise<void> {
   const pochiCliPath = process.env.POCHI_CLI_PATH || "pochi";
 
   const instruction = formatCustomInstruction(request.event);
-  console.log(`Starting pochi CLI with custom instruction\n\n${instruction}`);
+  if (process.env.POCHI_GITHUB_ACTION_DEBUG) {
+    console.log(`Starting pochi CLI with custom instruction\n\n${instruction}`);
+  }
 
   // Execute pochi CLI
   await new Promise<void>((resolve, reject) => {
