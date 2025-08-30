@@ -12,6 +12,10 @@ import * as commander from "commander";
 import { hc } from "hono/client";
 import packageJson from "../package.json";
 import { findRipgrep } from "./lib/find-ripgrep";
+import {
+  containsWorkflowReference,
+  replaceWorkflowReferences,
+} from "./lib/workflow-loader";
 import { createStore } from "./livekit/store";
 import { OutputRenderer } from "./output-renderer";
 import { TaskRunner } from "./task-runner";
@@ -41,7 +45,7 @@ const program = new Command()
   .optionsGroup("Prompt:")
   .option(
     "-p, --prompt <prompt>",
-    "Create a new task with the given prompt. You can also pipe input to use as a prompt, for example: `cat .pochi/workflows/create-pr.md | pochi`",
+    'Create a new task with the given prompt. You can also pipe input to use as a prompt, for example: `cat .pochi/workflows/create-pr.md | pochi`. To use a workflow, use /workflow-name, for example: `pochi -p /create-pr`. Workflows can be embedded in larger prompts, for example: `pochi -p "please /create-pr with feat semantic convention"`',
   )
   .optionsGroup("Options:")
   .option(
@@ -175,6 +179,20 @@ async function parseTaskInput(options: ProgramOpts, program: Program) {
 
   if (!prompt) {
     return program.error("error: A prompt must be provided");
+  }
+
+  // Check if the prompt contains workflow references
+  if (containsWorkflowReference(prompt)) {
+    const { prompt: updatedPrompt, missingWorkflows } =
+      await replaceWorkflowReferences(prompt, process.cwd());
+    prompt = updatedPrompt;
+
+    // Handle missing workflows
+    if (missingWorkflows.length > 0) {
+      return program.error(
+        `error: Workflow(s) '${missingWorkflows.join(", ")}' not found in .pochi/workflows/`,
+      );
+    }
   }
 
   return { uid, prompt };
