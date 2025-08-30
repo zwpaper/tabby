@@ -20,6 +20,9 @@ export async function runPochi(request: RunPochiRequest): Promise<void> {
   // Use pochi CLI from PATH (installed by action.yml) or env var
   const pochiCliPath = process.env.POCHI_CLI_PATH || "pochi";
 
+  const instruction = formatCustomInstruction(request.event);
+  console.log(`Starting pochi CLI with custom instruction\n\n${instruction}`);
+
   // Execute pochi CLI
   await new Promise<void>((resolve, reject) => {
     const child = spawn(pochiCliPath, args, {
@@ -27,7 +30,7 @@ export async function runPochi(request: RunPochiRequest): Promise<void> {
       cwd: process.cwd(),
       env: {
         ...process.env,
-        POCHI_CUSTOM_INSTRUCTIONS: formatCustomInstruction(request.event),
+        POCHI_CUSTOM_INSTRUCTIONS: instruction,
         POCHI_SESSION_TOKEN: config.token,
       },
     });
