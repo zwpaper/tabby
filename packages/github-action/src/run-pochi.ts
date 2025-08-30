@@ -10,7 +10,7 @@ export type RunPochiRequest = {
 export async function runPochi(request: RunPochiRequest): Promise<void> {
   const config = readPochiConfig();
 
-  const args = ["--prompt", request.prompt];
+  const args = ["--prompt", request.prompt, "--max-steps", "128"];
 
   // Only add model if specified
   if (config.model) {
