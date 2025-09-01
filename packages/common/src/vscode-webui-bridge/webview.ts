@@ -80,15 +80,7 @@ export interface VSCodeHostApi {
     }[]
   >;
 
-  listAutoCompleteCandidates(
-    query?: string,
-    limit?: number,
-  ): Promise<
-    {
-      type: "symbol" | "tool" | "mcp";
-      label: string;
-    }[]
-  >;
+  listAutoCompleteCandidates(): Promise<string[]>;
 
   openSymbol(symbol: string): Promise<void>;
 

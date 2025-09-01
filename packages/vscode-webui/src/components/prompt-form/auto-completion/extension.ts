@@ -23,48 +23,58 @@ import {
 
 export const autoCompletePluginKey = new PluginKey("autoCompletion");
 
-const debouncedListAutoCompleteCandidates = debounceWithCachedValue(
-  async (query: string) => {
-    const data = await vscodeHost.listAutoCompleteCandidates(query, 40);
-    return data;
-  },
-  300,
-  {
-    leading: true,
-  },
-);
-
 interface AutoCompleteSuggestionItem {
-  value: {
-    label: string;
-    type: string;
-  };
+  value: string;
   range: number[] | null;
 }
 
-const fuzzySearchAutoCompleteItems = async (
-  query: string,
-): Promise<AutoCompleteSuggestionItem[]> => {
-  if (!query) return [];
+const createFuzzySearcher = () => {
+  let lastQuery = "";
+  let lastCandidates: AutoCompleteSuggestionItem[] = [];
+  const debouncedListAutoCompleteCandidates = debounceWithCachedValue(
+    async (messageContent?: string) => {
+      lastQuery = "";
+      const data = await vscodeHost.listAutoCompleteCandidates();
+      if (messageContent) {
+        data.push(...(messageContent.match(/[\w_]+/g) || []));
+      }
+      return [...new Set(data)].filter((item) => item.length > 2);
+    },
+    5_000,
+    {
+      leading: true,
+    },
+  );
 
-  const candidates = await debouncedListAutoCompleteCandidates(query);
+  return async (
+    query: string,
+    messageContent?: string,
+  ): Promise<AutoCompleteSuggestionItem[]> => {
+    if (!query) return [];
 
-  if (!candidates?.length) return [];
-
-  return fuzzySearch(candidates, query);
+    if (query === lastQuery) return lastCandidates;
+    const candidates =
+      await debouncedListAutoCompleteCandidates(messageContent);
+    if (!candidates?.length) return [];
+    lastQuery = query;
+    // LIMIT to 2500 candidates
+    lastCandidates = fuzzySearch(candidates.slice(0, 2500), query);
+    return lastCandidates;
+  };
 };
+
+const fuzzySearchAutoCompleteItems = createFuzzySearcher();
 
 function fuzzySearch(
   items: Awaited<ReturnType<typeof vscodeHost.listAutoCompleteCandidates>>,
   query: string,
 ): AutoCompleteSuggestionItem[] {
-  const labels = items.map((x) => x.label);
-  const fuzzyResult = fuzzySearchStrings(query, labels);
+  const fuzzyResult = fuzzySearchStrings(query, items);
   const result: AutoCompleteSuggestionItem[] = [];
   for (const i of fuzzyResult) {
-    const item = items[i.idx];
+    const value = items[i.idx];
     result.push({
-      value: item,
+      value,
       range: i.range,
     });
   }
@@ -95,6 +105,7 @@ interface AutoCompleteExtensionOptions {
     SuggestionOptions<AutoCompleteSuggestionItem>,
     "editor" | "items" | "render"
   >;
+  messageContent?: string;
 }
 
 export const AutoCompleteExtension = Extension.create<
@@ -167,10 +178,11 @@ export const AutoCompleteExtension = Extension.create<
         editor: this.editor,
         char: "",
         pluginKey: autoCompletePluginKey,
-        items: ({ query }) => fuzzySearchAutoCompleteItems(query),
+        items: ({ query }) =>
+          fuzzySearchAutoCompleteItems(query, this.options.messageContent),
         command: ({ editor, range, props }) => {
-          const label = props.value.label;
-          editor.chain().focus().insertContentAt(range, label).run();
+          const label = props.value;
+          editor.chain().focus().insertContentAt(range, `${label} `).run();
 
           storage.popup?.destroy();
           storage.component?.destroy();
@@ -179,7 +191,10 @@ export const AutoCompleteExtension = Extension.create<
         render: () => {
           const fetchItems = async (query?: string) => {
             if (!query) return [];
-            return fuzzySearchAutoCompleteItems(query);
+            return fuzzySearchAutoCompleteItems(
+              query,
+              this.options.messageContent,
+            );
           };
 
           const createMention = (
