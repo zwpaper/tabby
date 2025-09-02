@@ -14,8 +14,14 @@ const BaseModelSettings = z.object({
         .describe('Display name of the model, e.g., "GPT-4o"'),
       maxTokens: z
         .number()
+        .optional()
+        .default(4096)
         .describe("Maximum number of generated tokens for the model"),
-      contextWindow: z.number().describe("Context window size for the model"),
+      contextWindow: z
+        .number()
+        .optional()
+        .default(100000)
+        .describe("Context window size for the model"),
       useToolCallMiddleware: z
         .boolean()
         .optional()
