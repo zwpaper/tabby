@@ -6,11 +6,13 @@ import { Command } from "@commander-js/extra-typings";
 import { getLogger } from "@getpochi/common";
 import { pochiConfig } from "@getpochi/common/configuration";
 import type { PochiApi, PochiApiClient } from "@getpochi/common/pochi-api";
+import { vendors } from "@getpochi/common/vendor";
 import type { LLMRequestData } from "@getpochi/livekit";
 import chalk from "chalk";
 import * as commander from "commander";
 import { hc } from "hono/client";
 import packageJson from "../package.json";
+import { registerAuthCommand } from "./auth";
 import { findRipgrep } from "./lib/find-ripgrep";
 import {
   containsWorkflowReference,
@@ -73,8 +75,7 @@ const program = new Command()
 
     const store = await createStore(process.cwd());
 
-    const llm = createLLMConfig({ options, apiClient, program });
-
+    const llm = await createLLMConfig({ options, apiClient, program });
     const rg = findRipgrep();
     if (!rg) {
       return program.error(
@@ -130,6 +131,8 @@ program
   .configureOutput({
     outputError: (str, write) => write(chalk.red(str)),
   });
+
+registerAuthCommand(program);
 
 program.parse(process.argv);
 
@@ -193,19 +196,39 @@ async function createApiClient(): Promise<PochiApiClient> {
   return authClient;
 }
 
-function createLLMConfig({
+async function createLLMConfig({
   apiClient,
   options,
 }: {
   apiClient: PochiApiClient;
   program: Program;
   options: ProgramOpts;
-}): LLMRequestData {
+}): Promise<LLMRequestData> {
   const sep = options.model.indexOf("/");
-  const modelProviderId = options.model.slice(0, sep);
+  const vendorId = options.model.slice(0, sep);
   const modelId = options.model.slice(sep + 1);
 
-  const modelProvider = pochiConfig.value.providers?.[modelProviderId];
+  if (vendorId in vendors) {
+    const vendor = vendors[vendorId as keyof typeof vendors];
+    const credentials = await vendor.readCredentials();
+    if (!credentials) {
+      return program.error("Missing credentials for gemini-cli");
+    }
+    const models = await vendors["gemini-cli"].fetchModels();
+    const options = models[modelId];
+    if (!options) {
+      return program.error(`Model ${modelId} not found`);
+    }
+    return {
+      type: "vendor",
+      vendorId: vendorId,
+      modelId: modelId,
+      options,
+      credentials,
+    } satisfies LLMRequestData;
+  }
+
+  const modelProvider = pochiConfig.value.providers?.[vendorId];
   const modelSetting = modelProvider?.models?.[modelId];
 
   if (!modelProvider) {
