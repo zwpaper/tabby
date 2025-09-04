@@ -27,7 +27,7 @@ export abstract class VendorBase {
     const credentials = await this.getCredentials();
 
     const newUser = await this.fetchUserInfo(credentials);
-    updateVendorConfig(this.vendorId, {
+    await updateVendorConfig(this.vendorId, {
       user: newUser,
       credentials,
     });

@@ -6,43 +6,78 @@
       "default": "https://getpochi.com/config.schema.json",
       "type": "string"
     },
-    "credentials": {
-      "type": "object",
-      "properties": {
-        "pochiToken": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
     "vendors": {
       "type": "object",
-      "propertyNames": {
-        "type": "string"
+      "properties": {
+        "pochi": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "credentials": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "user": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "image": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["name", "email"],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       },
       "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "credentials": {},
-          "user": {
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
-              "name": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string"
-              },
-              "image": {
-                "type": "string"
+              "credentials": {},
+              "user": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "image": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name", "email"],
+                "additionalProperties": false
               }
             },
-            "required": ["name", "email"],
+            "required": ["credentials"],
             "additionalProperties": false
+          },
+          {
+            "type": "null"
           }
-        },
-        "required": ["credentials"],
-        "additionalProperties": false
+        ]
       }
     },
     "providers": {
