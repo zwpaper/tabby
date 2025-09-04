@@ -75,7 +75,7 @@ const program = new Command()
 
     const store = await createStore(process.cwd());
 
-    const llm = await createLLMConfig({ options, program });
+    const llm = await createLLMConfig(program, options);
     const rg = findRipgrep();
     if (!rg) {
       return program.error(
@@ -205,26 +205,39 @@ async function createApiClient(): Promise<PochiApiClient> {
   return proxed;
 }
 
-async function createLLMConfig({
-  options,
-}: {
-  program: Program;
-  options: ProgramOpts;
-}): Promise<LLMRequestData> {
+async function createLLMConfig(
+  program: Program,
+  options: ProgramOpts,
+): Promise<LLMRequestData> {
+  const llm =
+    (await createLLMConfigWithVendors(program, options)) ||
+    (await createLLMConfigWithProviders(program, options));
+  if (!llm) {
+    return program.error(`Model ${options.model} not found in configuration`);
+  }
+
+  return llm;
+}
+
+async function createLLMConfigWithVendors(
+  program: Program,
+  options: ProgramOpts,
+): Promise<LLMRequestData | undefined> {
   const sep = options.model.indexOf("/");
   const vendorId = options.model.slice(0, sep);
   const modelId = options.model.slice(sep + 1);
 
   if (vendorId in vendors) {
     const vendor = vendors[vendorId as keyof typeof vendors];
-    const credentials = await vendor.getCredentials();
-    if (!credentials) {
-      return program.error(`Missing credentials for ${vendorId}`);
-    }
-    const models = await vendors["gemini-cli"].fetchModels();
+    const models =
+      await vendors[vendorId as keyof typeof vendors].fetchModels();
     const options = models[modelId];
     if (!options) {
       return program.error(`Model ${modelId} not found`);
+    }
+    const credentials = await vendor.getCredentials();
+    if (!credentials) {
+      return program.error(`Missing credentials for ${vendorId}`);
     }
     return {
       type: "vendor",
@@ -235,25 +248,30 @@ async function createLLMConfig({
     } satisfies LLMRequestData;
   }
 
-  const modelProvider = pochiConfig.value.providers?.[vendorId];
-  const modelSetting = modelProvider?.models?.[modelId];
-
-  const makePochiRequest = async () =>
-    ({
+  const pochiModels = await vendors.pochi.fetchModels();
+  const pochiModelOptions = pochiModels[options.model];
+  if (pochiModelOptions) {
+    return {
       type: "vendor",
       vendorId: "pochi",
       modelId: options.model,
-      // FIXME
-      options: {
-        maxOutputTokens: 4096,
-        contextWindow: 1_000_000,
-      },
+      options: pochiModelOptions,
       credentials: await vendors.pochi.getCredentials(),
-    }) satisfies LLMRequestData;
-
-  if (!modelProvider) {
-    return makePochiRequest();
+    };
   }
+}
+
+async function createLLMConfigWithProviders(
+  program: Program,
+  options: ProgramOpts,
+): Promise<LLMRequestData | undefined> {
+  const sep = options.model.indexOf("/");
+  const providerId = options.model.slice(0, sep);
+  const modelId = options.model.slice(sep + 1);
+
+  const modelProvider = pochiConfig.value.providers?.[providerId];
+  const modelSetting = modelProvider?.models?.[modelId];
+  if (!modelProvider) return;
 
   if (!modelSetting) {
     return program.error(`Model ${options.model} not found in configuration`);
@@ -289,6 +307,4 @@ async function createLLMConfig({
       maxOutputTokens: modelSetting.maxTokens,
     };
   }
-
-  return makePochiRequest();
 }

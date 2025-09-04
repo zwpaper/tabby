@@ -21,6 +21,12 @@ export function createGeminiCliModel(
     model: vertexModel,
     middleware: {
       middlewareVersion: "v2",
+      async transformParams({ params }) {
+        return {
+          ...params,
+          maxOutputTokens: 32768,
+        };
+      },
     },
   });
 }
