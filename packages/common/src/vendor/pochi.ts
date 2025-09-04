@@ -1,25 +1,16 @@
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 import type { PochiVendorConfig, UserInfo } from "../configuration";
-import { deviceLinkClient } from "../device-link/client";
 import { getServerBaseUrl } from "../vscode-webui-bridge";
-import { type ModelOptions, VendorBase } from "./types";
+import { VendorBase } from "./base";
+import type { ModelOptions } from "./types";
 
 type PochiCredentials = PochiVendorConfig["credentials"];
 
 export class Pochi extends VendorBase {
-  private authClient: ReturnType<typeof createAuthClientImpl>;
+  private newCredentials?: PochiCredentials = undefined;
 
-  constructor(
-    credentials: PochiCredentials,
-    updateCredentials: (credentials: PochiCredentials) => void,
-  ) {
+  constructor() {
     super("pochi");
-
-    this.authClient = createAuthClient(credentials?.token, (token) =>
-      updateCredentials({
-        token,
-      }),
-    );
   }
 
   fetchModels(): Promise<Record<string, ModelOptions>> {
@@ -29,13 +20,18 @@ export class Pochi extends VendorBase {
   protected override async renewCredentials(
     credentials: PochiCredentials,
   ): Promise<PochiCredentials> {
+    if (this.newCredentials) {
+      this.newCredentials = undefined;
+      return this.newCredentials;
+    }
     return credentials;
   }
 
   protected override async fetchUserInfo(
-    _credentials: PochiCredentials,
+    credentials: PochiCredentials,
   ): Promise<UserInfo> {
-    const session = await this.authClient.getSession();
+    const authClient = this.createAuthClient(credentials?.token);
+    const session = await authClient.getSession();
     if (!session.data) {
       throw new Error(session.error.message);
     }
@@ -46,28 +42,26 @@ export class Pochi extends VendorBase {
       image: session.data.user.image || undefined,
     };
   }
-}
 
-function createAuthClient(
-  token: string | undefined,
-  setToken: (token: string) => void,
-) {
-  const authClient = createAuthClientImpl({
-    baseURL: getServerBaseUrl(),
-    plugins: [deviceLinkClient()],
+  private createAuthClient(token: string | undefined) {
+    const authClient = createAuthClientImpl({
+      baseURL: getServerBaseUrl(),
 
-    fetchOptions: {
-      customFetchImpl: buildCustomFetchImpl(token),
-      onResponse: (ctx) => {
-        const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
-        if (authToken) {
-          setToken(authToken);
-        }
+      fetchOptions: {
+        customFetchImpl: buildCustomFetchImpl(token),
+        onResponse: (ctx) => {
+          const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
+          if (authToken) {
+            this.newCredentials = {
+              token: authToken,
+            };
+          }
+        },
       },
-    },
-  });
+    });
 
-  return authClient;
+    return authClient;
+  }
 }
 
 const buildCustomFetchImpl = (token: string | undefined) => {

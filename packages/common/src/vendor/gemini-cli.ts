@@ -1,17 +1,15 @@
 import * as crypto from "node:crypto";
 import * as http from "node:http";
+import { GoogleCloudCodeAuth } from "cloud-code-ai-provider";
 import { getLogger } from "../base";
-import type { UserInfo } from "../configuration/vendor";
-import { type ModelOptions, VendorBase } from "./types";
+import type { GeminiCliVendorConfig, UserInfo } from "../configuration";
+import { VendorBase } from "./base";
+import type { ModelOptions } from "./types";
 
 const VendorId = "gemini-cli";
 const logger = getLogger(VendorId);
 
-type GeminiCredentials = {
-  access_token: string;
-  refresh_token: string;
-  expires_at: number;
-};
+type GeminiCredentials = GeminiCliVendorConfig["credentials"];
 
 export interface GeminiOAuthResult {
   authUrl: string;
@@ -176,10 +174,14 @@ export class GeminiCli extends VendorBase {
       expires_in: number;
     };
 
+    await GoogleCloudCodeAuth.setCredentials(tokenData);
+    const project = await GoogleCloudCodeAuth.getProjectId();
+
     return {
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      expires_at: Date.now() + tokenData.expires_in * 1000,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresAt: Date.now() + tokenData.expires_in * 1000,
+      project,
     };
   }
 
@@ -187,10 +189,11 @@ export class GeminiCli extends VendorBase {
     credentials: GeminiCredentials,
   ): Promise<GeminiCredentials | undefined> {
     // Check if tokens are about to expire (with 5 minute buffer)
-    if (credentials.expires_at <= Date.now() + 5 * 60 * 1000) {
+    if (credentials.expiresAt <= Date.now() + 5 * 60 * 1000) {
       try {
         const newCredentials = await this.refreshAccessToken(
-          credentials.refresh_token,
+          credentials.refreshToken,
+          credentials.project,
         );
         return newCredentials;
       } catch (error) {
@@ -208,7 +211,7 @@ export class GeminiCli extends VendorBase {
   override async fetchUserInfo(
     credentials: GeminiCredentials,
   ): Promise<UserInfo> {
-    const { access_token: accessToken } = credentials;
+    const { accessToken } = credentials;
     const response = await fetch(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
@@ -242,6 +245,7 @@ export class GeminiCli extends VendorBase {
 
   private async refreshAccessToken(
     refreshToken: string,
+    project: string,
   ): Promise<GeminiCredentials> {
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -272,9 +276,10 @@ export class GeminiCli extends VendorBase {
 
     const newRefreshToken = tokenData.refresh_token ?? refreshToken;
     return {
-      access_token: tokenData.access_token,
-      refresh_token: newRefreshToken,
-      expires_at: Date.now() + tokenData.expires_in * 1000,
+      accessToken: tokenData.access_token,
+      refreshToken: newRefreshToken,
+      expiresAt: Date.now() + tokenData.expires_in * 1000,
+      project,
     };
   }
 
@@ -326,10 +331,12 @@ export class GeminiCli extends VendorBase {
       "gemini-2.5-pro": {
         contextWindow: 1_000_000,
         maxOutputTokens: 32768,
+        useToolCallMiddleware: true,
       },
       "gemini-2.5-flash": {
         contextWindow: 1_000_000,
         maxOutputTokens: 32768,
+        useToolCallMiddleware: true,
       },
     };
   }
