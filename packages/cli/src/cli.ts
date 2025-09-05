@@ -22,6 +22,7 @@ import { createStore } from "./livekit/store";
 import { registerModelCommand } from "./model";
 import { OutputRenderer } from "./output-renderer";
 import { TaskRunner } from "./task-runner";
+import { registerUpgradeCommand } from "./upgrade";
 import { waitUntil } from "./wait-until";
 
 const logger = getLogger("Pochi");
@@ -135,6 +136,7 @@ program
 
 registerAuthCommand(program);
 registerModelCommand(program);
+registerUpgradeCommand(program);
 
 program.parse(process.argv);
 
