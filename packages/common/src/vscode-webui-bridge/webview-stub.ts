@@ -2,16 +2,15 @@ import type { ThreadAbortSignalSerialization } from "@quilted/threads";
 import type { ThreadSignalSerialization } from "@quilted/threads/signals";
 import type { Environment } from "../base";
 
-import type { CustomModelSetting } from "../configuration";
 import type {
   CaptureEvent,
+  DisplayModel,
   McpStatus,
   ResourceURI,
   RuleFile,
   SessionState,
   UserEditsDiff,
   VSCodeHostApi,
-  VSCodeLmModel,
   WorkspaceState,
 } from "./index";
 
@@ -183,27 +182,6 @@ const VSCodeHostStub = {
   showInformationMessage: async (): Promise<undefined> => {
     return Promise.resolve(undefined);
   },
-  readCustomModelSetting: async (): Promise<
-    ThreadSignalSerialization<Record<string, CustomModelSetting> | undefined>
-  > => {
-    return Promise.resolve(
-      {} as ThreadSignalSerialization<
-        Record<string, CustomModelSetting> | undefined
-      >,
-    );
-  },
-  readVSCodeLm: async (): Promise<{
-    featureAvailable: boolean;
-    models: ThreadSignalSerialization<VSCodeLmModel[]>;
-  }> => {
-    return Promise.resolve({
-      featureAvailable: false,
-      models: {} as ThreadSignalSerialization<VSCodeLmModel[]>,
-    });
-  },
-  chatVSCodeLm: async (): Promise<void> => {
-    return Promise.resolve();
-  },
   readVisibleTerminals: async (): Promise<{
     terminals: ThreadSignalSerialization<
       Environment["workspace"]["terminals"] | undefined
@@ -220,6 +198,9 @@ const VSCodeHostStub = {
         return Promise.resolve();
       },
     });
+  },
+  readModelList: async () => {
+    return Promise.resolve({} as ThreadSignalSerialization<DisplayModel[]>);
   },
 } satisfies VSCodeHostApi;
 
