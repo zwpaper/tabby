@@ -2,11 +2,20 @@
 // Workaround for https://github.com/oven-sh/bun/issues/18145
 import "@livestore/wa-sqlite/dist/wa-sqlite.node.wasm" with { type: "file" };
 
+// Register the vendor
+import "@getpochi/vendor-pochi";
+import "@getpochi/vendor-gemini-cli";
+
+// Register the models
+import "@getpochi/vendor-pochi/edge";
+import "@getpochi/vendor-gemini-cli/edge";
+
 import { Command } from "@commander-js/extra-typings";
 import { constants, getLogger } from "@getpochi/common";
 import { pochiConfig } from "@getpochi/common/configuration";
 import type { PochiApi, PochiApiClient } from "@getpochi/common/pochi-api";
-import { vendors } from "@getpochi/common/vendor/node";
+import { getVendors } from "@getpochi/common/vendor";
+import { createModel } from "@getpochi/common/vendor/edge";
 import type { LLMRequestData } from "@getpochi/livekit";
 import chalk from "chalk";
 import * as commander from "commander";
@@ -215,6 +224,7 @@ async function createLLMConfig(
 ): Promise<LLMRequestData> {
   const llm =
     (await createLLMConfigWithVendors(program, options)) ||
+    (await createLLMConfigWithPochi(options)) ||
     (await createLLMConfigWithProviders(program, options));
   if (!llm) {
     return program.error(`Model ${options.model} not found in configuration`);
@@ -231,6 +241,7 @@ async function createLLMConfigWithVendors(
   const vendorId = options.model.slice(0, sep);
   const modelId = options.model.slice(sep + 1);
 
+  const vendors = getVendors();
   if (vendorId in vendors) {
     const vendor = vendors[vendorId as keyof typeof vendors];
     const models =
@@ -243,20 +254,36 @@ async function createLLMConfigWithVendors(
       type: "vendor",
       vendorId: vendorId,
       modelId: modelId,
-      options,
-      getCredentials: vendor.getCredentials,
+      useToolCallMiddleware: options.useToolCallMiddleware,
+      getModel: (id: string) =>
+        createModel(vendorId, {
+          id,
+          modelId,
+          getCredentials: vendor.getCredentials,
+        }),
     } satisfies LLMRequestData;
   }
+}
 
+async function createLLMConfigWithPochi(
+  options: ProgramOpts,
+): Promise<LLMRequestData | undefined> {
+  const vendors = getVendors();
   const pochiModels = await vendors.pochi.fetchModels();
   const pochiModelOptions = pochiModels[options.model];
   if (pochiModelOptions) {
+    const vendorId = "pochi";
     return {
       type: "vendor",
-      vendorId: "pochi",
+      vendorId,
       modelId: options.model,
-      options: pochiModelOptions,
-      getCredentials: vendors.pochi.getCredentials,
+      useToolCallMiddleware: pochiModelOptions.useToolCallMiddleware,
+      getModel: (id: string) =>
+        createModel(vendorId, {
+          id,
+          modelId: options.model,
+          getCredentials: vendors.pochi.getCredentials,
+        }),
     };
   }
 }
