@@ -6,6 +6,7 @@ import {
   FixedStateChatContextProvider,
   ToolCallStatusRegistry,
 } from "@/features/chat";
+import { isVSCodeEnvironment } from "@/lib/vscode";
 import { Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { StatusIcon } from "../../status-icon";
@@ -13,7 +14,6 @@ import { ExpandIcon, ToolTitle } from "../../tool-container";
 import type { ToolProps } from "../../types";
 import { useInlinedSubTask } from "./use-inlined-sub-task";
 import { useLiveSubTask } from "./use-live-sub-task";
-import { isVSCodeEnvironment } from "@/lib/vscode";
 
 interface NewTaskToolProps extends ToolProps<"newTask" | "newCustomAgent"> {
   // For storybook visualization
