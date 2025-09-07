@@ -13,6 +13,7 @@ import { ExpandIcon, ToolTitle } from "../../tool-container";
 import type { ToolProps } from "../../types";
 import { useInlinedSubTask } from "./use-inlined-sub-task";
 import { useLiveSubTask } from "./use-live-sub-task";
+import { isVSCodeEnvironment } from "@/lib/vscode";
 
 interface NewTaskToolProps extends ToolProps<"newTask" | "newCustomAgent"> {
   // For storybook visualization
@@ -54,7 +55,7 @@ export const newTaskTool: React.FC<NewTaskToolProps> = ({
           <div>
             <StatusIcon tool={tool} isExecuting={isExecuting} />
             <Badge variant="secondary" className={cn("mr-1 ml-2 py-0")}>
-              {uid ? (
+              {uid && isVSCodeEnvironment() ? (
                 <Link to="/" search={{ uid }} replace={true}>
                   {toolTitle}
                 </Link>
