@@ -16,6 +16,6 @@
     "@getpochi/common": "workspace:*",
     "better-auth": "catalog:",
     "hono": "catalog:",
-    "remeda": "catalog:"
+    "jose": "^6.1.0"
   }
 }

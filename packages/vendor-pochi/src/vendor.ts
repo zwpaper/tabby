@@ -1,3 +1,4 @@
+import { getLogger } from "@getpochi/common";
 import type { UserInfo } from "@getpochi/common/configuration";
 import { deviceLinkClient } from "@getpochi/common/device-link/client";
 import type { PochiApi, PochiApiClient } from "@getpochi/common/pochi-api";
@@ -7,11 +8,14 @@ import {
   VendorBase,
 } from "@getpochi/common/vendor";
 import { getServerBaseUrl } from "@getpochi/common/vscode-webui-bridge";
+import { jwtClient } from "better-auth/client/plugins";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 import { hc } from "hono/client";
-import { funnel } from "remeda";
+import * as jose from "jose";
 import { getPochiCredentials, updatePochiCredentials } from "./credentials";
 import { type PochiCredentials, VendorId } from "./types";
+
+const logger = getLogger("PochiVendor");
 
 export class Pochi extends VendorBase {
   private cachedModels?: Record<string, ModelOptions>;
@@ -49,6 +53,15 @@ export class Pochi extends VendorBase {
   protected override async renewCredentials(
     credentials: PochiCredentials,
   ): Promise<PochiCredentials> {
+    if (!credentials.jwt || isJWTExpiring(credentials.jwt)) {
+      logger.debug("JWT is expiring or missing, fetching a new one");
+      const { data } = await authClient.token();
+      return {
+        ...credentials,
+        jwt: data?.token || null,
+      };
+    }
+
     return credentials;
   }
 
@@ -69,23 +82,9 @@ export class Pochi extends VendorBase {
 }
 
 function createAuthClient() {
-  // JWT is populated for every getSession request, thus we need to apply certain throttling.
-  const updateJwtToken = funnel(
-    (jwt: string) => {
-      updatePochiCredentials({
-        jwt,
-      });
-    },
-    {
-      minGapMs: 30_000, // Every 30 seconds
-      triggerAt: "start",
-      reducer: (_, rhs: string) => rhs,
-    },
-  );
-
   const authClient = createAuthClientImpl({
     baseURL: getServerBaseUrl(),
-    plugins: [deviceLinkClient()],
+    plugins: [deviceLinkClient(), jwtClient()],
 
     fetchOptions: {
       customFetchImpl: buildCustomFetchImpl(),
@@ -95,11 +94,6 @@ function createAuthClient() {
           updatePochiCredentials({
             token,
           });
-        }
-
-        const jwt = ctx.response.headers.get("set-auth-jwt");
-        if (jwt) {
-          updateJwtToken.call(jwt);
         }
       },
     },
@@ -123,3 +117,8 @@ const buildCustomFetchImpl = () => {
 };
 
 export const authClient = createAuthClient();
+
+function isJWTExpiring(jwt: string) {
+  const { exp } = jose.decodeJwt(jwt);
+  return exp ? Date.now() >= (exp - 120) * 1000 : true;
+}
