@@ -9,6 +9,7 @@ import {
 import { getServerBaseUrl } from "@getpochi/common/vscode-webui-bridge";
 import { createAuthClient as createAuthClientImpl } from "better-auth/react";
 import { hc } from "hono/client";
+import { funnel } from "remeda";
 import { getPochiCredentials, updatePochiCredentials } from "./credentials";
 import { type PochiCredentials, VendorId } from "./types";
 
@@ -68,26 +69,37 @@ export class Pochi extends VendorBase {
 }
 
 function createAuthClient() {
-  const credentials = getPochiCredentials();
+  // JWT is populated for every getSession request, thus we need to apply certain throttling.
+  const updateJwtToken = funnel(
+    (jwt: string) => {
+      updatePochiCredentials({
+        jwt,
+      });
+    },
+    {
+      minGapMs: 30_000, // Every 30 seconds
+      triggerAt: "start",
+      reducer: (_, rhs: string) => rhs,
+    },
+  );
+
   const authClient = createAuthClientImpl({
     baseURL: getServerBaseUrl(),
     plugins: [deviceLinkClient()],
 
     fetchOptions: {
-      customFetchImpl: buildCustomFetchImpl(credentials?.token),
+      customFetchImpl: buildCustomFetchImpl(),
       onResponse: (ctx) => {
-        const authToken = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
-        const jwtToken = ctx.response.headers.get("set-auth-jwt");
-        if (authToken || jwtToken) {
-          const token = authToken || credentials?.token;
-          if (!token) {
-            throw new Error("token is missing");
-          }
-          const jwt = jwtToken || credentials?.jwt || null;
+        const token = ctx.response.headers.get("set-auth-token"); // get the token from the response headers
+        if (token) {
           updatePochiCredentials({
             token,
-            jwt,
           });
+        }
+
+        const jwt = ctx.response.headers.get("set-auth-jwt");
+        if (jwt) {
+          updateJwtToken.call(jwt);
         }
       },
     },
@@ -96,8 +108,9 @@ function createAuthClient() {
   return authClient;
 }
 
-const buildCustomFetchImpl = (token: string | undefined) => {
+const buildCustomFetchImpl = () => {
   return async (input: string | URL | Request, requestInit?: RequestInit) => {
+    const token = getPochiCredentials()?.token;
     const headers = new Headers(requestInit?.headers);
     if (token) {
       headers.append("Authorization", `Bearer ${token}`);

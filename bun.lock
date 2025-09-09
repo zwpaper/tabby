@@ -158,6 +158,7 @@
         "@getpochi/common": "workspace:*",
         "better-auth": "catalog:",
         "hono": "catalog:",
+        "remeda": "catalog:",
       },
     },
     "packages/vscode": {
