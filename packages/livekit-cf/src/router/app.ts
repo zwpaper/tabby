@@ -39,11 +39,16 @@ app
       const requestParamsResult = SyncBackend.getSyncRequestSearchParams(
         c.req.raw,
       );
+
       if (requestParamsResult._tag === "Some") {
         return SyncBackend.handleSyncRequest({
           request: c.req.raw,
           searchParams: requestParamsResult.value,
-          env: c.env,
+          env: {
+            ...c.env,
+            // @ts-expect-error - we're using a custom implementation
+            DB: null,
+          },
           ctx: c.executionCtx as SyncBackend.CfTypes.ExecutionContext,
           options: {
             async validatePayload(inputPayload, { storeId }) {
