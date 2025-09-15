@@ -27,3 +27,6 @@ new_sqlite_classes = ["SyncBackendDO", "LiveStoreClientDO"]
 
 [triggers] # bootstrap ping every minute
 crons = ["*/1 * * * *"]
+
+[observability]
+enabled = true
