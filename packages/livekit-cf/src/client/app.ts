@@ -1,7 +1,9 @@
+import type { ShareEvent } from "@getpochi/common/share-utils";
 import { catalog } from "@getpochi/livekit";
+import type { UIMessage } from "ai";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import type { Env } from "./types";
+import type { DeepWriteable, Env } from "./types";
 
 const store = new Hono<{ Bindings: Env }>();
 
@@ -11,12 +13,7 @@ store
     await c.env.getStore();
     return c.json({ success: true });
   })
-  .get("/tasks", async (c) => {
-    const store = await c.env.getStore();
-    const tasks = store.query(catalog.queries.tasks$);
-    return c.json({ tasks });
-  })
-  .get("/tasks/:taskId", async (c) => {
+  .get("/tasks/:taskId/json", async (c) => {
     const store = await c.env.getStore();
     const taskId = c.req.param("taskId");
 
@@ -28,9 +25,24 @@ store
     }
 
     return c.json({
-      task,
-      messages,
-    });
+      type: "share",
+      messages: messages.map((message) => message.data) as UIMessage[],
+      todos: task.todos as DeepWriteable<typeof task.todos>,
+      isLoading: task.status === "pending-model",
+      error: task.error,
+      // FIXME: Use the actual user name
+      user: {
+        name: "You",
+        image: `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(task.title || "")}&scale=150`,
+      },
+      assistant: {
+        name: "Pochi",
+        image: "https://app.getpochi.com/logo192.png",
+      },
+    } satisfies ShareEvent);
+  })
+  .get("/tasks/:taskId/html", async (c) => {
+    return c.env.ASSETS.fetch(c.req.raw);
   });
 
 export const app = new Hono<{ Bindings: Env }>();
