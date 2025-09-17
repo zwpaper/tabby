@@ -88,7 +88,8 @@ export class LiveStoreClientDO
     // Make sure to only subscribe once
     if (this.storeSubscription === undefined) {
       this.storeSubscription = store.subscribe(catalog.queries.tasks$, {
-        onUpdate: (tasks) => tasks && this.onTasksUpdate.call(tasks),
+        // FIXME(meng): implement this with store.events stream when it's ready
+        onUpdate: (tasks) => this.onTasksUpdate.call(tasks),
       });
     }
 
@@ -102,12 +103,21 @@ export class LiveStoreClientDO
   }
 
   private onTasksUpdate = funnel(
-    async (tasks: readonly Task[]) => {
+    async (tasks: readonly Task[] | undefined) => {
       if (!tasks) return;
-
       const store = await this.getStore();
+      const now = moment();
+      const updatedTasks = tasks.filter((task) =>
+        moment(task.updatedAt).isAfter(now.subtract(5, "minute")),
+      );
+
+      if (!updatedTasks.length) return;
+
+      console.log(`onTasksUpdate: persisting ${updatedTasks.length} tasks`);
       await Promise.all(
-        tasks.map((task) => this.persistTask(store, task).catch(console.error)),
+        updatedTasks.map((task) =>
+          this.persistTask(store, task).catch(console.error),
+        ),
       );
 
       // Whenever the tasks change, we extend the ttl of the DO.
@@ -123,12 +133,6 @@ export class LiveStoreClientDO
   private async persistTask(store: Store<typeof catalog.schema>, task: Task) {
     const { sub: userId } = decodeStoreId(store.storeId);
     const apiClient = createApiClient(this.env.POCHI_API_KEY, userId);
-
-    // FIXME(meng): implement this with store.events stream when it's ready
-    const now = moment();
-    if (moment(task.updatedAt).subtract(5, "minute").isBefore(now)) {
-      return;
-    }
 
     // If a task was updated in the last 5 minutes, persist it to the pochi api
     const messages = store
@@ -148,7 +152,7 @@ export class LiveStoreClientDO
             os: "",
             homedir: "",
           },
-          currentTime: now.toString(),
+          currentTime: new Date().toString(),
           workspace: {
             files: [],
             isTruncated: false,
