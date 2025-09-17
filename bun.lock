@@ -49,6 +49,7 @@
       "name": "@getpochi/common",
       "version": "0.1.0-dev",
       "dependencies": {
+        "@ai-sdk/google-vertex": "catalog:",
         "@ai-sdk/provider": "catalog:",
         "@getpochi/tools": "workspace:*",
         "@hono/zod-validator": "catalog:",
@@ -124,7 +125,6 @@
       "version": "0.1.0-dev",
       "dependencies": {
         "@ai-sdk/gateway": "catalog:",
-        "@ai-sdk/google-vertex": "catalog:",
         "@ai-sdk/openai-compatible": "catalog:",
         "@ai-sdk/provider": "catalog:",
         "@ai-sdk/provider-utils": "catalog:",
