@@ -126,7 +126,7 @@ export class LiveStoreClientDO
 
     // FIXME(meng): implement this with store.events stream when it's ready
     const now = moment();
-    if (!moment(task.updatedAt).subtract(5, "minute").isBefore(now)) {
+    if (moment(task.updatedAt).subtract(5, "minute").isBefore(now)) {
       return;
     }
 
