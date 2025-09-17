@@ -105,7 +105,7 @@ export class LiveStoreClientDO
       const store = await this.getStore();
       const now = moment();
       const updatedTasks = tasks.filter((task) =>
-        moment(task.updatedAt).isAfter(now.subtract(5, "minute")),
+        moment(task.updatedAt).isAfter(now.subtract(1, "minute")),
       );
 
       if (!updatedTasks.length) return;
