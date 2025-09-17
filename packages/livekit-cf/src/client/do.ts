@@ -12,6 +12,7 @@ import { handleSyncUpdateRpc } from "@livestore/sync-cf/client";
 import { hc } from "hono/client";
 import moment from "moment";
 import { funnel } from "remeda";
+import { getServerBaseUrl } from "../lib/server";
 import { app } from "./app";
 import type { Env as ClientEnv } from "./types";
 
@@ -132,7 +133,11 @@ export class LiveStoreClientDO
 
   private async persistTask(store: Store<typeof catalog.schema>, task: Task) {
     const { sub: userId } = decodeStoreId(store.storeId);
-    const apiClient = createApiClient(this.env.POCHI_API_KEY, userId);
+    const apiClient = createApiClient(
+      this.env.ENVIRONMENT,
+      this.env.POCHI_API_KEY,
+      userId,
+    );
 
     // If a task was updated in the last 5 minutes, persist it to the pochi api
     const messages = store
@@ -173,8 +178,12 @@ export class LiveStoreClientDO
   }
 }
 
-function createApiClient(apiKey: string, userId: string): PochiApiClient {
-  const prodServerUrl = "https://app.getpochi.com";
+function createApiClient(
+  env: "dev" | "prod" | undefined,
+  apiKey: string,
+  userId: string,
+): PochiApiClient {
+  const prodServerUrl = getServerBaseUrl(env);
   return hc<PochiApi>(prodServerUrl, {
     headers: {
       authorization: `${apiKey},${userId}`,
