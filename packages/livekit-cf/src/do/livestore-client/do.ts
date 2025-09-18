@@ -37,7 +37,8 @@ export class LiveStoreClientDO
 
   async signalKeepAlive(storeId: string): Promise<void> {
     this.storeId = storeId;
-    await this.keepAliveAndInitSubscription();
+    await this.state.storage.setAlarm(Date.now() + 30_000);
+    await this.subscribeToStoreUpdates();
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -84,7 +85,7 @@ export class LiveStoreClientDO
     return store;
   }
 
-  private async keepAliveAndInitSubscription() {
+  private async subscribeToStoreUpdates() {
     const store = await this.getStore();
 
     // Make sure to only subscribe once
@@ -94,14 +95,11 @@ export class LiveStoreClientDO
         onUpdate: this.onTasksUpdate,
       });
     }
-
-    await this.state.storage.setAlarm(Date.now() + 30_000);
   }
 
   alarm(_alarmInfo?: AlarmInvocationInfo): void | Promise<void> {}
 
   async syncUpdateRpc(payload: unknown) {
-    await this.keepAliveAndInitSubscription();
     await handleSyncUpdateRpc(payload);
   }
 
