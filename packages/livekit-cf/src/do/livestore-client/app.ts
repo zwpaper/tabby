@@ -45,4 +45,10 @@ store
   });
 
 export const app = new Hono<{ Bindings: Env }>();
-app.route("/stores/:storeId", store);
+app
+  .use("/stores/:storeId/*", async (c, next) => {
+    const storeId = c.req.param("storeId");
+    await c.env.setStoreId(storeId);
+    await next();
+  })
+  .route("/stores/:storeId", store);

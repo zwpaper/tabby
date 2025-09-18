@@ -46,6 +46,9 @@ export class LiveStoreClientDO
       getUser: async () => {
         return await this.state.storage.get<User>("user");
       },
+      setStoreId: (storeId: string) => {
+        this.storeId = storeId;
+      },
       ASSETS: this.env.ASSETS,
     } satisfies ClientEnv);
   }
