@@ -106,9 +106,9 @@ export class LiveStoreClientDO
   private onTasksUpdate = async (tasks: readonly Task[] | undefined) => {
     if (!tasks) return;
     const store = await this.getStore();
-    const now = moment();
+    const oneMinuteAgo = moment().subtract(1, "minute");
     const updatedTasks = tasks.filter((task) =>
-      moment(task.updatedAt).isAfter(now.subtract(1, "minute")),
+      moment(task.updatedAt).isAfter(oneMinuteAgo),
     );
 
     if (!updatedTasks.length) return;
