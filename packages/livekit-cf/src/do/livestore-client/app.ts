@@ -23,7 +23,8 @@ store
       throw new HTTPException(404, { message: "Task not found" });
     }
 
-    if (!task.isPublicShared) {
+    const EnablePublicSharedCheck = false;
+    if (EnablePublicSharedCheck && !task.isPublicShared) {
       const jwt = c.req.header("authorization")?.replace("Bearer ", "");
       const user = jwt && (await verifyJWT(undefined, jwt));
       const isOwner = user && user.sub === decodeStoreId(store.storeId).sub;
@@ -36,13 +37,12 @@ store
       .query(catalog.queries.makeMessagesQuery(taskId))
       .map((x) => x.data as UIMessage);
     const subTasks = collectSubTasks(store, taskId);
-    inlineSubTasks(messages, subTasks);
 
     const user = await c.env.getUser();
 
     return c.json({
       type: "share",
-      messages,
+      messages: inlineSubTasks(messages, subTasks),
       todos: task.todos as DeepWritable<typeof task.todos>,
       isLoading: task.status === "pending-model",
       error: task.error,
