@@ -23,6 +23,7 @@ import * as commander from "commander";
 import packageJson from "../package.json";
 import { registerAuthCommand } from "./auth";
 
+import { initializeShellCompletion } from "./completion";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { loadAgents } from "./lib/load-agents";
 import { createCliMcpHub } from "./lib/mcp-hub-factory";
@@ -176,6 +177,9 @@ registerMcpCommand(program);
 registerTaskCommand(program);
 
 registerUpgradeCommand(program);
+
+// Initialize auto-completion after all commands are registered
+initializeShellCompletion(program);
 
 program.parse(process.argv);
 
