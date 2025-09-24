@@ -5,7 +5,7 @@ import type { PochiApi, PochiApiClient } from "@getpochi/common/pochi-api";
 import { decodeStoreId } from "@getpochi/common/store-id-utils";
 import { type Task, catalog } from "@getpochi/livekit";
 import { createStoreDoPromise } from "@livestore/adapter-cloudflare";
-import { type Store, type Unsubscribe, nanoid } from "@livestore/livestore";
+import { type Store, nanoid } from "@livestore/livestore";
 import { handleSyncUpdateRpc } from "@livestore/sync-cf/client";
 import { hc } from "hono/client";
 import moment from "moment";
@@ -22,7 +22,7 @@ export class LiveStoreClientDO
   private storeId: string | undefined;
 
   private cachedStore: Store<typeof catalog.schema> | undefined;
-  private storeSubscription: Unsubscribe | undefined;
+  // private storeSubscription: Unsubscribe | undefined;
 
   constructor(
     readonly state: DurableObjectState,
@@ -39,8 +39,9 @@ export class LiveStoreClientDO
 
   async signalKeepAlive(storeId: string): Promise<void> {
     this.storeId = storeId;
-    await this.state.storage.setAlarm(Date.now() + 30_000);
-    await this.subscribeToStoreUpdates();
+    await this.onTasksUpdateThrottled.call();
+    await this.state.storage.setAlarm(Date.now() + 15_000);
+    // await this.subscribeToStore();
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -56,9 +57,7 @@ export class LiveStoreClientDO
       },
       reloadShareTasks: async () => {
         const store = await this.getStore();
-        const tasks = await store.query(catalog.queries.tasks$);
-        console.log("Force reloading share tasks", store.storeId, tasks.length);
-        await this.onTasksUpdate(tasks, true);
+        await this.onTasksUpdate(true);
         return await store.query(catalog.queries.tasks$);
       },
       ASSETS: this.env.ASSETS,
@@ -94,17 +93,16 @@ export class LiveStoreClientDO
     return store;
   }
 
-  private async subscribeToStoreUpdates() {
-    const store = await this.getStore();
-
-    // Make sure to only subscribe once
-    if (this.storeSubscription === undefined) {
-      this.storeSubscription = store.subscribe(catalog.queries.tasks$, {
-        // FIXME(meng): implement this with store.events stream when it's ready
-        onUpdate: (tasks) => this.onTasksUpdateThrottled.call(tasks),
-      });
-    }
-  }
+  // private async subscribeToStoreUpdates() {
+  //   const store = await this.getStore();
+  //   // Make sure to only subscribe once
+  //   if (this.storeSubscription === undefined) {
+  //     this.storeSubscription = store.subscribe(catalog.queries.tasks$, {
+  //       // FIXME(meng): implement this with store.events stream when it's ready
+  //       onUpdate: (tasks) => this.onTasksUpdateThrottled.call(tasks),
+  //     });
+  //   }
+  // }
 
   alarm(_alarmInfo?: AlarmInvocationInfo): void | Promise<void> {}
 
@@ -112,27 +110,22 @@ export class LiveStoreClientDO
     await handleSyncUpdateRpc(payload);
   }
 
-  private onTasksUpdateThrottled = funnel(
-    async (tasks: readonly Task[]) => this.onTasksUpdate(tasks),
-    {
-      minGapMs: 3_000,
-      triggerAt: "start",
-      reducer: (_, rhs: readonly Task[]) => rhs,
-    },
-  );
+  private onTasksUpdateThrottled = funnel(async () => this.onTasksUpdate(), {
+    minGapMs: 7_500,
+    triggerAt: "both",
+  });
 
-  private onTasksUpdate = async (tasks: readonly Task[], force = false) => {
+  private onTasksUpdate = async (force = false) => {
     const store = await this.getStore();
+    const tasks = store.query(catalog.queries.tasks$);
     const oneMinuteAgo = moment().subtract(1, "minute");
 
-    console.log(`Updating ${tasks.length} tasks`, store.storeId);
     const updatedTasks = tasks.filter(
       (task) => force || moment(task.updatedAt).isAfter(oneMinuteAgo),
     );
 
     if (!updatedTasks.length) return;
 
-    console.log(`Persisting ${updatedTasks.length} tasks`, store.storeId);
     await Promise.all(
       updatedTasks.map((task) =>
         this.persistTask(store, task).catch(console.error),
