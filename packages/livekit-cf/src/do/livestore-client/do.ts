@@ -8,6 +8,7 @@ import { type Store, type Unsubscribe, nanoid } from "@livestore/livestore";
 import { handleSyncUpdateRpc } from "@livestore/sync-cf/client";
 import { hc } from "hono/client";
 import moment from "moment";
+import { funnel } from "remeda";
 import * as runExclusive from "run-exclusive";
 import { app } from "./app";
 import type { Env as ClientEnv } from "./types";
@@ -99,7 +100,7 @@ export class LiveStoreClientDO
     if (this.storeSubscription === undefined) {
       this.storeSubscription = store.subscribe(catalog.queries.tasks$, {
         // FIXME(meng): implement this with store.events stream when it's ready
-        onUpdate: this.onTasksUpdate,
+        onUpdate: (tasks) => this.onTasksUpdateThrottled.call(tasks),
       });
     }
   }
@@ -110,22 +111,28 @@ export class LiveStoreClientDO
     await handleSyncUpdateRpc(payload);
   }
 
-  private onTasksUpdate = async (
-    tasks: readonly Task[] | undefined,
-    force = false,
-  ) => {
+  private onTasksUpdateThrottled = funnel(
+    async (tasks: readonly Task[]) => this.onTasksUpdate(tasks),
+    {
+      minGapMs: 3_000,
+      triggerAt: "start",
+      reducer: (_, rhs: readonly Task[]) => rhs,
+    },
+  );
+
+  private onTasksUpdate = async (tasks: readonly Task[], force = false) => {
     if (!tasks) return;
     const store = await this.getStore();
     const oneMinuteAgo = moment().subtract(1, "minute");
 
-    console.log(`Updating ${tasks.length} tasks`);
+    console.log(`Updating ${tasks.length} tasks`, store.storeId);
     const updatedTasks = tasks.filter(
       (task) => force || moment(task.updatedAt).isAfter(oneMinuteAgo),
     );
 
     if (!updatedTasks.length) return;
 
-    console.log(`Persisting ${updatedTasks.length} tasks`);
+    console.log(`Persisting ${updatedTasks.length} tasks`, store.storeId);
     await Promise.all(
       updatedTasks.map((task) =>
         this.persistTask(store, task).catch(console.error),
