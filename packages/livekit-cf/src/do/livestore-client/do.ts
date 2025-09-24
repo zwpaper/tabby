@@ -56,7 +56,7 @@ export class LiveStoreClientDO
       reloadShareTasks: async () => {
         const store = await this.getStore();
         const tasks = await store.query(catalog.queries.tasks$);
-        console.log("Force reloading share tasks", tasks.length);
+        console.log("Force reloading share tasks", store.storeId, tasks.length);
         await this.onTasksUpdate(tasks, true);
         return await store.query(catalog.queries.tasks$);
       },
@@ -121,7 +121,6 @@ export class LiveStoreClientDO
   );
 
   private onTasksUpdate = async (tasks: readonly Task[], force = false) => {
-    if (!tasks) return;
     const store = await this.getStore();
     const oneMinuteAgo = moment().subtract(1, "minute");
 
