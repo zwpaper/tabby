@@ -132,21 +132,12 @@ function useLLM(): React.RefObject<LLMRequestData> {
       };
     }
 
-    if (provider.kind === "anthropic" || provider.kind === "openai-responses") {
-      return {
-        type: provider.kind,
-        modelId: selectedModel.modelId,
-        baseURL: provider.baseURL,
-        apiKey: provider.apiKey,
-        maxOutputTokens:
-          selectedModel.options.maxTokens ?? constants.DefaultMaxOutputTokens,
-        contextWindow:
-          selectedModel.options.contextWindow ?? constants.DefaultContextWindow,
-        useToolCallMiddleware: selectedModel.options.useToolCallMiddleware,
-      };
-    }
-
-    if (provider.kind === undefined || provider.kind === "openai") {
+    if (
+      provider.kind === undefined ||
+      provider.kind === "openai" ||
+      provider.kind === "anthropic" ||
+      provider.kind === "openai-responses"
+    ) {
       return {
         type: provider.kind || "openai",
         modelId: selectedModel.modelId,

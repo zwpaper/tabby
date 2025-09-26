@@ -36,7 +36,7 @@ const RequestData = z.object({
     z.object({
       type: z.literal("openai"),
       modelId: z.string(),
-      baseURL: z.string(),
+      baseURL: z.string().optional(),
       apiKey: z.string().optional(),
       contextWindow: z.number().describe("Context window of the model."),
       maxOutputTokens: z.number().describe("Max output tokens of the model."),

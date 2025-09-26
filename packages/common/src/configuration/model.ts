@@ -30,45 +30,29 @@ const BaseModelSettings = z.object({
   ),
 });
 
-const OpenAIModelSettings = BaseModelSettings.extend({
+const ExtendedModelSettings = BaseModelSettings.extend({
+  baseURL: z
+    .string()
+    .optional()
+    .describe(
+      'Base URL for the model provider\'s API, e.g., "https://api.openai.com/v1"',
+    ),
+  apiKey: z
+    .string()
+    .optional()
+    .describe("API key for the model provider, if required."),
+});
+
+const OpenAIModelSettings = ExtendedModelSettings.extend({
   kind: z.optional(z.literal("openai")),
-  baseURL: z
-    .string()
-    .describe(
-      'Base URL for the model provider\'s API, e.g., "https://api.openai.com/v1"',
-    ),
-  apiKey: z
-    .string()
-    .optional()
-    .describe("API key for the model provider, if required."),
 });
 
-const OpenAIResponsesModelSettings = BaseModelSettings.extend({
+const OpenAIResponsesModelSettings = ExtendedModelSettings.extend({
   kind: z.literal("openai-responses"),
-  baseURL: z
-    .string()
-    .optional()
-    .describe(
-      'Base URL for the model provider\'s API, e.g., "https://api.openai.com/v1"',
-    ),
-  apiKey: z
-    .string()
-    .optional()
-    .describe("API key for the model provider, if required."),
 });
 
-const AnthropicModelSettings = BaseModelSettings.extend({
+const AnthropicModelSettings = ExtendedModelSettings.extend({
   kind: z.literal("anthropic"),
-  baseURL: z
-    .string()
-    .optional()
-    .describe(
-      'Base URL for the model provider\'s API, e.g., "https://api.anthropic.com/v1"',
-    ),
-  apiKey: z
-    .string()
-    .optional()
-    .describe("API key for the model provider, if required."),
 });
 
 export const GoogleVertexModel = z.union([

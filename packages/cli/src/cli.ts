@@ -315,19 +315,6 @@ async function createLLMConfigWithProviders(
     );
   }
 
-  if (modelProvider.kind === undefined || modelProvider.kind === "openai") {
-    return {
-      type: "openai",
-      modelId,
-      baseURL: modelProvider.baseURL,
-      apiKey: modelProvider.apiKey,
-      contextWindow:
-        modelSetting.contextWindow ?? constants.DefaultContextWindow,
-      maxOutputTokens:
-        modelSetting.maxTokens ?? constants.DefaultMaxOutputTokens,
-    };
-  }
-
   if (modelProvider.kind === "ai-gateway") {
     return {
       type: "ai-gateway",
@@ -353,11 +340,13 @@ async function createLLMConfigWithProviders(
   }
 
   if (
+    modelProvider.kind === undefined ||
+    modelProvider.kind === "openai" ||
     modelProvider.kind === "openai-responses" ||
     modelProvider.kind === "anthropic"
   ) {
     return {
-      type: modelProvider.kind,
+      type: modelProvider.kind || "openai",
       modelId,
       baseURL: modelProvider.baseURL,
       apiKey: modelProvider.apiKey,
@@ -368,6 +357,7 @@ async function createLLMConfigWithProviders(
       useToolCallMiddleware: modelSetting.useToolCallMiddleware,
     };
   }
+
   assertUnreachable(modelProvider.kind);
 }
 
