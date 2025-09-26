@@ -33,11 +33,11 @@ import { initializeShellCompletion } from "./completion";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { loadAgents } from "./lib/load-agents";
 import { createCliMcpHub } from "./lib/mcp-hub-factory";
-import { shutdownStoreAndExit } from "./lib/store-utils";
 import {
   containsWorkflowReference,
   replaceWorkflowReferences,
 } from "./lib/workflow-loader";
+
 import { createStore } from "./livekit/store";
 import { initializeMcp, registerMcpCommand } from "./mcp";
 import { registerModelCommand } from "./model";
@@ -149,7 +149,7 @@ const program = new Command()
     renderer.shutdown();
     mcpHub.dispose();
     await waitForSync(store, "2 second").catch(console.error);
-    await shutdownStoreAndExit(store);
+    await store.shutdownPromise();
   });
 
 const otherOptionsGroup = "Others:";
