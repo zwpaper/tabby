@@ -1,181 +1,56 @@
-import { VSCodeHostImpl } from "@/integrations/webview/vscode-host-impl";
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { AuthEvents } from "@/lib/auth-events";
+import type { AuthEvents } from "@/lib/auth-events";
 import { getNonce } from "@/lib/get-nonce";
 import { getUri } from "@/lib/get-uri";
 import { getLogger } from "@getpochi/common";
 import { getCorsProxyPort } from "@getpochi/common/cors-proxy";
+import type {
+  SessionState,
+  VSCodeHostApi,
+  WebviewHostApi,
+} from "@getpochi/common/vscode-webui-bridge";
 import {
-  type ResourceURI,
-  type VSCodeHostApi,
-  type WebviewHostApi,
   getServerBaseUrl,
   getSyncBaseUrl,
 } from "@getpochi/common/vscode-webui-bridge";
 import { Thread } from "@quilted/threads";
-import { container, inject, injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
-// biome-ignore lint/style/useImportType: needed for dependency injection
-import { PochiConfiguration } from "../configuration";
+import type { PochiConfiguration } from "../configuration";
+import type { VSCodeHostImpl } from "./vscode-host-impl";
 
-const logger = getLogger("RagdollWebviewProvider");
-@injectable()
-@singleton()
-export class RagdollWebviewProvider
-  implements vscode.WebviewViewProvider, vscode.Disposable
-{
-  public static readonly viewType = "pochiWebui";
+const logger = getLogger("WebviewBase");
 
-  private view?: vscode.WebviewView;
-  private webviewHost?: WebviewHostApi;
-  private webviewHostReady = new vscode.EventEmitter<WebviewHostApi>();
+/**
+ * BASE WEBVIEW CLASS
+ *
+ * Abstract base class that provides common functionality for both:
+ * - Sidebar webviews (RagdollWebviewProvider)
+ * - Editor tab webviews (PochiWebviewPanel)
+ *
+ * Handles:
+ * - HTML content generation
+ * - Webview thread creation and management
+ * - Auth event handling
+ * - Session management integration
+ */
+export abstract class WebviewBase implements vscode.Disposable {
+  protected webviewHost?: WebviewHostApi;
+  protected disposables: vscode.Disposable[] = [];
+  protected webviewReadyCallbacks: (() => void)[] = [];
+  protected sessionState: SessionState = {};
 
   constructor(
-    @inject("vscode.ExtensionContext")
-    private readonly context: vscode.ExtensionContext,
-    private readonly events: AuthEvents,
-    private readonly pochiConfiguration: PochiConfiguration,
+    protected readonly sessionId: string,
+    protected readonly context: vscode.ExtensionContext,
+    protected readonly events: AuthEvents,
+    protected readonly pochiConfiguration: PochiConfiguration,
+    protected readonly vscodeHost: VSCodeHostImpl,
   ) {}
 
-  private disposables: vscode.Disposable[] = [
-    vscode.window.registerWebviewViewProvider(
-      RagdollWebviewProvider.viewType,
-      this,
-      { webviewOptions: { retainContextWhenHidden: true } },
-    ),
-  ];
-
-  dispose() {
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables = [];
+  protected setupWebviewHtml(webview: vscode.Webview): void {
+    webview.html = this.getHtmlForWebview(webview);
   }
 
-  public async retrieveWebviewHost(): Promise<WebviewHostApi> {
-    if (this.webviewHost) {
-      return this.webviewHost;
-    }
-
-    return new Promise((resolve) => {
-      this.disposables.push(
-        this.webviewHostReady.event((host) => resolve(host)),
-      );
-    });
-  }
-
-  public resolveWebviewView(
-    webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
-    _token: vscode.CancellationToken,
-  ) {
-    this.view = webviewView;
-
-    this.view.webview.options = {
-      enableScripts: true,
-      enableCommandUris: true,
-      localResourceRoots: [this.context.extensionUri],
-    };
-
-    this.view.webview.html = this.getHtmlForWebview(this.view.webview);
-
-    this.disposables.push(
-      this.events.loginEvent.event(() => {
-        this.webviewHost?.onAuthChanged();
-      }),
-      this.events.logoutEvent.event(() => {
-        this.webviewHost?.onAuthChanged();
-      }),
-    );
-
-    this.createWebviewThread(webviewView.webview).then((thread) => {
-      this.webviewHost = thread.imports;
-      this.webviewHostReady.fire(this.webviewHost);
-    });
-  }
-
-  readonly readResourceURI: VSCodeHostApi["readResourceURI"] =
-    async (): Promise<ResourceURI> => {
-      if (!this.view) {
-        throw new Error("Webview not initialized");
-      }
-
-      return {
-        logo128: getUri(this.view.webview, this.context.extensionUri, [
-          "assets",
-          "icons",
-          "logo128.png",
-        ]).toString(),
-      };
-    };
-
-  private async createWebviewThread(webview: vscode.Webview) {
-    const vscodeHost = container.resolve(VSCodeHostImpl);
-    // Inject the readResourceURI to avoid circular dependency
-    vscodeHost.readResourceURI = this.readResourceURI;
-
-    // See "tabby-threads/source/targets/iframe/shared.ts"
-    const CHECK_MESSAGE = "quilt.threads.ping";
-    const RESPONSE_MESSAGE = "quilt.threads.pong";
-
-    let connected = false;
-
-    const connectedPromise = new Promise<void>((resolve) => {
-      const { dispose } = webview.onDidReceiveMessage((message) => {
-        if (message === RESPONSE_MESSAGE) {
-          logger.info("Pochi webview ready now");
-          connected = true;
-          dispose();
-          resolve();
-        }
-      });
-
-      // Send ping to check if webview is ready
-      webview.postMessage(CHECK_MESSAGE);
-    });
-
-    const thread = new Thread<WebviewHostApi, VSCodeHostApi>(
-      {
-        async send(message) {
-          if (!connected) {
-            await connectedPromise;
-          }
-          return webview.postMessage(message);
-        },
-        listen(listen, { signal }) {
-          const { dispose } = webview.onDidReceiveMessage((message) => {
-            // Ignore connection check messages
-            if (message === RESPONSE_MESSAGE) return;
-            listen(message);
-          });
-          signal?.addEventListener(
-            "abort",
-            () => {
-              dispose();
-            },
-            { once: true },
-          );
-        },
-      },
-      {
-        exports: vscodeHost,
-        imports: [
-          "openTask",
-          "openTaskList",
-          "openSettings",
-          "onAuthChanged",
-          "isFocused",
-        ],
-      },
-    );
-
-    // Wait for connection to be established before returning
-    await connectedPromise;
-
-    return thread;
-  }
-
-  private getHtmlForWebview(webview: vscode.Webview) {
+  private getHtmlForWebview(webview: vscode.Webview): string {
     const isProd =
       this.context.extensionMode === vscode.ExtensionMode.Production;
 
@@ -237,7 +112,6 @@ export class RagdollWebviewProvider
         `script-src 'nonce-${nonce}' 'unsafe-eval'`,
         `style-src ${webview.cspSource} 'unsafe-inline'`,
         `font-src ${webview.cspSource}`,
-        // https://* is required for local BYOK
         `connect-src ${getServerBaseUrl()} ${getSyncBaseUrl()} ${getSyncBaseUrl().replace("http", "ws")} https://*.vscode-cdn.net https://* http://*:* data:`,
         "worker-src data: blob:",
       ];
@@ -304,5 +178,140 @@ export class RagdollWebviewProvider
         ${bodyElements.join("\n")}
       </body>
     </html>`;
+  }
+
+  protected setupAuthEventListeners(): void {
+    this.disposables.push(
+      this.events.loginEvent.event(() => {
+        this.webviewHost?.onAuthChanged();
+      }),
+      this.events.logoutEvent.event(() => {
+        this.webviewHost?.onAuthChanged();
+      }),
+    );
+  }
+
+  protected async createWebviewThread(
+    webview: vscode.Webview,
+  ): Promise<Thread<WebviewHostApi, VSCodeHostApi>> {
+    const vscodeHostWrapper = this.createVSCodeHostWrapper();
+
+    // See "tabby-threads/source/targets/iframe/shared.ts"
+    const CHECK_MESSAGE = "quilt.threads.ping";
+    const RESPONSE_MESSAGE = "quilt.threads.pong";
+    let connected = false;
+
+    const connectedPromise = new Promise<void>((resolve) => {
+      const { dispose } = webview.onDidReceiveMessage((message) => {
+        if (message === RESPONSE_MESSAGE) {
+          logger.info(`Webview ${this.sessionId} ready`);
+          connected = true;
+          dispose();
+          resolve();
+        }
+      });
+
+      // Send ping to check if webview is ready
+      webview.postMessage(CHECK_MESSAGE);
+    });
+
+    const thread = new Thread<WebviewHostApi, VSCodeHostApi>(
+      {
+        async send(message) {
+          if (!connected) {
+            await connectedPromise;
+          }
+          return webview.postMessage(message);
+        },
+        listen(listen, { signal }) {
+          const { dispose } = webview.onDidReceiveMessage((message) => {
+            // Ignore connection check messages
+            if (message === RESPONSE_MESSAGE) return;
+            listen(message);
+          });
+          signal?.addEventListener(
+            "abort",
+            () => {
+              dispose();
+            },
+            { once: true },
+          );
+        },
+      },
+      {
+        exports: vscodeHostWrapper,
+        imports: [
+          "openTask",
+          "openTaskList",
+          "openSettings",
+          "onAuthChanged",
+          "isFocused",
+        ],
+      },
+    );
+
+    // Wait for connection to be established before returning
+    await connectedPromise;
+
+    // Set webviewHost and execute ready callbacks
+    this.webviewHost = thread.imports;
+    for (const callback of this.webviewReadyCallbacks) {
+      callback();
+    }
+    this.webviewReadyCallbacks = [];
+
+    return thread;
+  }
+
+  public onWebviewReady(callback: () => void): void {
+    if (this.webviewHost) {
+      // Already ready, execute immediately
+      callback();
+    } else {
+      // Add to pending callbacks
+      this.webviewReadyCallbacks.push(callback);
+    }
+  }
+
+  private createVSCodeHostWrapper(): VSCodeHostApi {
+    const vscodeHost = this.vscodeHost;
+
+    const wrapper: VSCodeHostApi = {
+      ...vscodeHost,
+      getSessionState: async (keys) => {
+        const currentState = this.sessionState;
+        if (!keys || keys.length === 0) {
+          return { ...currentState };
+        }
+        return keys.reduce(
+          (filtered, key) => {
+            if (Object.prototype.hasOwnProperty.call(currentState, key)) {
+              filtered[key] = currentState[key];
+            }
+            return filtered;
+          },
+          {} as Pick<SessionState, keyof SessionState>,
+        );
+      },
+      setSessionState: async (state) => {
+        this.sessionState = { ...this.sessionState, ...state };
+      },
+      readResourceURI: this.getReadResourceURI(),
+    };
+
+    return wrapper;
+  }
+
+  // Abstract methods to be implemented by subclasses
+  protected abstract getReadResourceURI(): VSCodeHostApi["readResourceURI"];
+
+  public dispose(): void {
+    // Clean up disposables
+    while (this.disposables.length) {
+      const disposable = this.disposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
+    }
   }
 }
