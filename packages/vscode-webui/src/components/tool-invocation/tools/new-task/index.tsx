@@ -52,7 +52,7 @@ export const newTaskTool: React.FC<NewTaskToolProps> = ({
         <span className={cn("flex items-center gap-2")}>
           <div>
             <StatusIcon tool={tool} isExecuting={isExecuting} />
-            <Badge variant="secondary" className={cn("mr-1 ml-2 py-0")}>
+            <Badge variant="secondary" className={cn("my-0.5 mr-1 ml-2 py-0")}>
               {uid && isVSCodeEnvironment() ? (
                 <Link
                   to="/"
