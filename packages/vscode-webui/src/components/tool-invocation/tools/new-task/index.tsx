@@ -54,8 +54,9 @@ export const newTaskTool: React.FC<NewTaskToolProps> = ({
     useShowMessageList(completed);
 
   // Collapse when execution completes
+  const wasCompleted = useRef(completed);
   useEffect(() => {
-    if (!isExecuting && completed) {
+    if (!wasCompleted.current && !isExecuting && completed) {
       setShowMessageList(false);
     }
   }, [isExecuting, completed, setShowMessageList]);
