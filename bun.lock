@@ -31,6 +31,7 @@
         "@getpochi/vendor-gemini-cli": "workspace:*",
         "@getpochi/vendor-github-copilot": "workspace:*",
         "@getpochi/vendor-pochi": "workspace:*",
+        "@getpochi/vendor-qwen-code": "workspace:*",
         "@inquirer/select": "^4.3.2",
         "@livestore/adapter-node": "catalog:",
         "@livestore/livestore": "catalog:",
@@ -234,6 +235,16 @@
         "zod": "catalog:",
       },
     },
+    "packages/vendor-qwen-code": {
+      "name": "@getpochi/vendor-qwen-code",
+      "version": "0.1.0",
+      "dependencies": {
+        "@ai-sdk/openai-compatible": "catalog:",
+        "@ai-sdk/provider": "catalog:",
+        "@getpochi/common": "workspace:*",
+        "ai": "catalog:",
+      },
+    },
     "packages/vscode": {
       "name": "pochi",
       "version": "0.8.8",
@@ -244,6 +255,7 @@
         "@getpochi/vendor-gemini-cli": "workspace:*",
         "@getpochi/vendor-github-copilot": "workspace:*",
         "@getpochi/vendor-pochi": "workspace:*",
+        "@getpochi/vendor-qwen-code": "workspace:*",
         "@orama/orama": "^3.1.11",
         "@preact/signals-core": "catalog:",
         "@quilted/threads": "catalog:",
@@ -301,6 +313,7 @@
         "@getpochi/vendor-gemini-cli": "workspace:*",
         "@getpochi/vendor-github-copilot": "workspace:*",
         "@getpochi/vendor-pochi": "workspace:*",
+        "@getpochi/vendor-qwen-code": "workspace:*",
         "@leeoniya/ufuzzy": "^1.0.18",
         "@livestore/adapter-web": "catalog:",
         "@livestore/common": "catalog:",
@@ -778,6 +791,8 @@
     "@getpochi/vendor-github-copilot": ["@getpochi/vendor-github-copilot@workspace:packages/vendor-github-copilot"],
 
     "@getpochi/vendor-pochi": ["@getpochi/vendor-pochi@workspace:packages/vendor-pochi"],
+
+    "@getpochi/vendor-qwen-code": ["@getpochi/vendor-qwen-code@workspace:packages/vendor-qwen-code"],
 
     "@getpochi/vscode-webui": ["@getpochi/vscode-webui@workspace:packages/vscode-webui"],
 
