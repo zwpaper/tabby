@@ -23,6 +23,7 @@ export type {
   ToolFunctionType,
   PreviewToolFunctionType,
 } from "./types";
+import { editNotebook } from "./edit-notebook";
 import { killBackgroundJob } from "./kill-background-job";
 import { readBackgroundJobOutput } from "./read-background-job-output";
 import { startBackgroundJob } from "./start-background-job";
@@ -70,6 +71,7 @@ export const ToolsByPermission = {
     "writeToFile",
     "applyDiff",
     "multiApplyDiff",
+    "editNotebook",
   ] satisfies ToolName[] as string[],
   execute: [
     "executeCommand",
@@ -94,6 +96,7 @@ const createCliTools = (customAgents?: CustomAgent[]) => ({
   searchFiles,
   todoWrite,
   writeToFile,
+  editNotebook,
   newTask: createNewTaskTool(customAgents),
 });
 
