@@ -1,12 +1,13 @@
-import { type ToolName, createClientTools } from "@getpochi/tools";
+import type { ToolName } from "@getpochi/tools";
 import { useTranslation } from "react-i18next";
-import { keys } from "remeda";
 import { Section, SubSection } from "../ui/section";
 import { ToolBadgeList } from "../ui/tool-badge";
 import { McpSection, PochiTools } from "./mcp-section";
 export const ToolsSection: React.FC = () => {
   const { t } = useTranslation();
-  const toolsData = AllTools;
+  const toolsData = Object.entries(ToolDescriptions).map(
+    ([id, description]) => ({ id, description }),
+  );
 
   const renderToolsContent = () => {
     return <ToolBadgeList tools={toolsData} />;
@@ -58,9 +59,3 @@ const ToolDescriptions: Record<ToolName, string> = {
   editNotebook:
     "The editNotebook tool enables Pochi to edit Jupyter notebook cells directly. It can modify the content of individual cells within .ipynb files by targeting specific cell IDs or indices. This is essential for working with data science projects, updating code cells, modifying markdown documentation, or adjusting notebook outputs. Pochi uses this tool to make precise changes to notebook cells without affecting the entire notebook structure.",
 };
-const AllTools = keys({ ...createClientTools() })
-  .map((id) => ({
-    id,
-    description: ToolDescriptions[id],
-  }))
-  .filter((x) => !!x.description);
