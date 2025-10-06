@@ -160,6 +160,7 @@
         "@livestore/livestore": "catalog:",
         "@livestore/peer-deps": "catalog:",
         "@livestore/sync-cf": "catalog:",
+        "@livestore/utils": "catalog:",
         "ai": "catalog:",
         "hono": "catalog:",
         "jose": "catalog:",
