@@ -21,7 +21,7 @@ export default defineConfig({
     },
   ],
   coverage: {
-    reporter: ["html"],
+    reporter: ["html", "json"],
     includeAll: true,
   },
   // Launch VS Code with the test-workspace folder open
