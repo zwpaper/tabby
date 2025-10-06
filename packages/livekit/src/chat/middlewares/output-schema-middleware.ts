@@ -4,7 +4,7 @@ import type {
   LanguageModelV2StreamPart,
 } from "@ai-sdk/provider";
 import { safeParseJSON } from "@ai-sdk/provider-utils";
-import { PochiTaskIdHeader } from "@getpochi/common/pochi-api";
+import { constants } from "@getpochi/common";
 import { attemptCompletionSchema } from "@getpochi/tools";
 import { InvalidToolInputError, generateObject } from "ai";
 import z from "zod/v4";
@@ -98,7 +98,7 @@ async function ensureOutputSchema(
   try {
     const { object } = await generateObject({
       headers: {
-        [PochiTaskIdHeader]: taskId,
+        [constants.PochiTaskIdHeader]: taskId,
       },
       model,
       schema,
