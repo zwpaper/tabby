@@ -13,6 +13,7 @@ import { getLogger, showOutputPanel } from "@/lib/logger";
 import { NewProjectRegistry, prepareProject } from "@/lib/new-project";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PostHog } from "@/lib/posthog";
+import { workspaceScoped } from "@/lib/workspace-scoped";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { NESDecorationManager } from "@/nes/decoration-manager";
 import type { WebsiteTaskCreateEvent } from "@getpochi/common";
@@ -63,7 +64,7 @@ export class CommandManager implements vscode.Disposable {
     openTaskParams: TaskIdParams | NewTaskParams,
     requestId?: string,
   ) {
-    await vscode.commands.executeCommand("pochiWebui.focus");
+    await vscode.commands.executeCommand("pochiSidebar.focus");
 
     if (githubTemplateUrl) {
       await prepareProject(workspaceUri, githubTemplateUrl, progress);
@@ -211,7 +212,7 @@ export class CommandManager implements vscode.Disposable {
           },
           async (progress) => {
             progress.report({ message: "Pochi: Opening task..." });
-            await vscode.commands.executeCommand("pochiWebui.focus");
+            await vscode.commands.executeCommand("pochiSidebar.focus");
             const webviewHost =
               await this.pochiWebviewProvider.retrieveWebviewHost();
             webviewHost.openTask({ uid });
@@ -222,7 +223,7 @@ export class CommandManager implements vscode.Disposable {
       vscode.commands.registerCommand(
         "pochi.webui.navigate.newTask",
         async () => {
-          await vscode.commands.executeCommand("pochiWebui.focus");
+          await vscode.commands.executeCommand("pochiSidebar.focus");
           const webviewHost =
             await this.pochiWebviewProvider.retrieveWebviewHost();
           webviewHost.openTask({ uid: undefined });
@@ -232,7 +233,7 @@ export class CommandManager implements vscode.Disposable {
       vscode.commands.registerCommand(
         "pochi.webui.navigate.taskList",
         async () => {
-          await vscode.commands.executeCommand("pochiWebui.focus");
+          await vscode.commands.executeCommand("pochiSidebar.focus");
           const webviewHost =
             await this.pochiWebviewProvider.retrieveWebviewHost();
           webviewHost.openTaskList();
@@ -242,7 +243,7 @@ export class CommandManager implements vscode.Disposable {
       vscode.commands.registerCommand(
         "pochi.webui.navigate.settings",
         async () => {
-          await vscode.commands.executeCommand("pochiWebui.focus");
+          await vscode.commands.executeCommand("pochiSidebar.focus");
           const webviewHost =
             await this.pochiWebviewProvider.retrieveWebviewHost();
           webviewHost.openSettings();
@@ -319,7 +320,7 @@ export class CommandManager implements vscode.Disposable {
           );
         } else {
           logger.debug("Focused on webui");
-          await vscode.commands.executeCommand("pochiWebui.focus");
+          await vscode.commands.executeCommand("pochiSidebar.focus");
         }
       }),
 
@@ -428,8 +429,13 @@ export class CommandManager implements vscode.Disposable {
         },
       ),
 
-      vscode.commands.registerCommand("pochi.openInEditor", async () => {
-        PochiWebviewPanel.createOrShow(this.context.extensionUri);
+      vscode.commands.registerCommand("pochi.openInPanel", async () => {
+        // FIXME(zhanba): pass cwd from command argument
+        const workspaceContainer = workspaceScoped();
+        PochiWebviewPanel.createOrShow(
+          workspaceContainer,
+          this.context.extensionUri,
+        );
       }),
 
       vscode.commands.registerCommand(

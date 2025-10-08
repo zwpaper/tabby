@@ -30,6 +30,7 @@ import { PochiWebviewSidebar } from "./integrations/webview";
 import { type AuthClient, createAuthClient } from "./lib/auth-client";
 import { FileLogger } from "./lib/file-logger";
 import { PostInstallActions } from "./lib/post-install-actions";
+import { workspaceScoped } from "./lib/workspace-scoped";
 import { NESProvider } from "./nes";
 
 // This method is called when your extension is activated
@@ -53,11 +54,12 @@ export async function activate(context: vscode.ExtensionContext) {
     useFactory: instanceCachingFactory(createMcpHub),
   });
 
+  const defaultWorkspaceContainer = workspaceScoped();
+  defaultWorkspaceContainer.resolve(PochiWebviewSidebar);
   container.resolve(CompletionProvider);
   container.resolve(NESProvider);
   container.resolve(StatusBarItem);
   container.resolve(PochiAuthenticationProvider);
-  container.resolve(PochiWebviewSidebar);
   container.resolve(RagdollUriHandler);
   container.resolve(CommandManager);
   container.resolve(DiffOriginContentProvider);
