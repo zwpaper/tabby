@@ -35,7 +35,7 @@ import packageJson from "../package.json";
 import { registerAuthCommand } from "./auth";
 
 import type { Store } from "@livestore/livestore";
-import { initializeShellCompletion } from "./completion";
+import { handleShellCompletion } from "./completion";
 import { findRipgrep } from "./lib/find-ripgrep";
 import { loadAgents } from "./lib/load-agents";
 import {
@@ -197,7 +197,7 @@ program
   });
 
 // Run version check on every invocation before any command executes
-program.hook("preAction", async () => {
+program.hook("preAction", async (_thisCommand) => {
   await Promise.all([
     checkForUpdates().catch(() => {}),
     waitForSync().catch(console.error),
@@ -206,15 +206,15 @@ program.hook("preAction", async () => {
 });
 
 registerAuthCommand(program);
-
 registerModelCommand(program);
 registerMcpCommand(program);
 registerTaskCommand(program);
-
 registerUpgradeCommand(program);
 
-// Initialize auto-completion after all commands are registered
-initializeShellCompletion(program);
+if (process.argv[2] === "--completion") {
+  handleShellCompletion(program, process.argv);
+  process.exit(0);
+}
 
 program.parse(process.argv);
 
