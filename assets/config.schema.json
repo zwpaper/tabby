@@ -264,6 +264,7 @@
                         "type": "string"
                       },
                       "location": {
+                        "default": "",
                         "type": "string"
                       }
                     },
@@ -277,12 +278,15 @@
                     "type": "object",
                     "properties": {
                       "accessToken": {
+                        "default": "",
                         "type": "string"
                       },
                       "projectId": {
+                        "default": "",
                         "type": "string"
                       },
                       "location": {
+                        "default": "",
                         "type": "string"
                       }
                     },
