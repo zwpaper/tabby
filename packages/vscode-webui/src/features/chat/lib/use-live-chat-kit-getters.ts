@@ -105,6 +105,7 @@ function useLLM({
     if (!model) return undefined as never;
     if (model.type === "vendor") {
       return {
+        id: model.id,
         type: "vendor",
         useToolCallMiddleware: model.options.useToolCallMiddleware,
         getModel: () =>
@@ -119,6 +120,7 @@ function useLLM({
     const { provider } = model;
     if (provider.kind === "google-vertex-tuning") {
       return {
+        id: model.id,
         type: "google-vertex-tuning" as const,
         modelId: model.modelId,
         vertex: provider.vertex,
@@ -133,6 +135,7 @@ function useLLM({
 
     if (provider.kind === "ai-gateway") {
       return {
+        id: model.id,
         type: "ai-gateway" as const,
         modelId: model.modelId,
         apiKey: provider.apiKey,
@@ -152,6 +155,7 @@ function useLLM({
       provider.kind === "openai-responses"
     ) {
       return {
+        id: model.id,
         type: provider.kind || "openai",
         modelId: model.modelId,
         baseURL: provider.baseURL,
