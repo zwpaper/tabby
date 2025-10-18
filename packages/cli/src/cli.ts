@@ -345,6 +345,7 @@ async function createLLMConfigWithVendors(
           modelId,
           getCredentials: vendor.getCredentials,
         }),
+      contentType: options.contentType,
     } satisfies LLMRequestData;
   }
 }
@@ -365,6 +366,7 @@ async function createLLMConfigWithPochi(
           modelId: model,
           getCredentials: vendor.getCredentials,
         }),
+      contentType: pochiModelOptions.contentType,
     };
   }
 }
@@ -396,6 +398,7 @@ async function createLLMConfigWithProviders(
         modelSetting.contextWindow ?? constants.DefaultContextWindow,
       maxOutputTokens:
         modelSetting.maxTokens ?? constants.DefaultMaxOutputTokens,
+      contentType: modelSetting.contentType,
     };
   }
 
@@ -409,6 +412,7 @@ async function createLLMConfigWithProviders(
       maxOutputTokens:
         modelSetting.maxTokens ?? constants.DefaultMaxOutputTokens,
       useToolCallMiddleware: modelSetting.useToolCallMiddleware,
+      contentType: modelSetting.contentType,
     };
   }
 
@@ -428,6 +432,7 @@ async function createLLMConfigWithProviders(
       maxOutputTokens:
         modelSetting.maxTokens ?? constants.DefaultMaxOutputTokens,
       useToolCallMiddleware: modelSetting.useToolCallMiddleware,
+      contentType: modelSetting.contentType,
     };
   }
 
