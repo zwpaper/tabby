@@ -39,6 +39,7 @@ import {
   findSuggestionMatch,
 } from "@tiptap/suggestion";
 import { ArrowRightToLine } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ScrollArea } from "../ui/scroll-area";
 import { AutoCompleteExtension } from "./auto-completion/extension";
 import type { MentionListActions } from "./shared";
@@ -127,6 +128,7 @@ export function FormEditor({
   messageContent = "",
   isSubTask,
 }: FormEditorProps) {
+  const { t } = useTranslation();
   const { updateSelectedModelId, models } = useSelectedModels({ isSubTask });
   const internalFormRef = useRef<HTMLFormElement>(null);
   const formRef = externalFormRef || internalFormRef;
@@ -161,7 +163,7 @@ export function FormEditor({
         Paragraph,
         Text,
         Placeholder.configure({
-          placeholder: "Ask anything ...",
+          placeholder: t("formEditor.placeholder"),
         }),
         CustomEnterKeyHandler(formRef, onQueueSubmit),
         PromptFormMentionExtension.configure({
@@ -604,8 +606,9 @@ export function FormEditor({
       >
         {isAutoCompleteHintVisible && (
           <div className="flex items-center text-muted-foreground text-xs">
-            Use Tab <ArrowRightToLine className="mr-1.5 ml-0.5 size-4" /> to see
-            suggestions
+            {t("formEditor.autoCompleteHintPrefix")}{" "}
+            <ArrowRightToLine className="mr-1.5 ml-0.5 size-4" />{" "}
+            {t("formEditor.autoCompleteHintSuffix")}
           </div>
         )}
       </div>
@@ -615,7 +618,7 @@ export function FormEditor({
         <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-sm border-2 border-zinc-500 border-dashed dark:bg-zinc-500/30">
           <div className="rounded-md border bg-white px-4 py-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
             <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100">
-              Drop files here to attach them to your message
+              {t("formEditor.dropFilesMessage")}
             </p>
           </div>
         </div>
