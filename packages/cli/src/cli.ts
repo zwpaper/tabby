@@ -57,7 +57,10 @@ import {
   getModelFromSlashCommand,
   replaceSlashCommandReferences,
 } from "./lib/match-slash-command";
-import { shutdownStoreAndExit } from "./lib/shutdown";
+import {
+  createAbortControllerWithGracefulShutdown,
+  shutdownStoreAndExit,
+} from "./lib/shutdown";
 import { createStore } from "./livekit/store";
 import { initializeMcp, registerMcpCommand } from "./mcp";
 import { registerModelCommand } from "./model";
@@ -199,6 +202,9 @@ const program = new Command()
     // Create MCP Hub for accessing MCP server tools (only if MCP is enabled)
     const mcpHub = options.mcp ? await initializeMcp(program) : undefined;
 
+    // Create AbortController for task cancellation with graceful shutdown
+    const abortController = createAbortControllerWithGracefulShutdown();
+
     const llm = await createLLMConfig(program, options, {
       workflows,
       customAgents,
@@ -216,6 +222,7 @@ const program = new Command()
       onSubTaskCreated,
       customAgents,
       mcpHub,
+      abortSignal: abortController.signal,
       outputSchema: options.experimentalOutputSchema
         ? parseOutputSchema(options.experimentalOutputSchema)
         : undefined,
@@ -229,6 +236,7 @@ const program = new Command()
 
     await runner.run();
 
+    // Cleanup resources after task completion
     renderer.shutdown();
     if (mcpHub) {
       mcpHub.dispose();
