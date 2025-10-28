@@ -66,6 +66,7 @@ import type {
   WorkspaceState,
 } from "@getpochi/common/vscode-webui-bridge";
 import type {
+  PreviewReturnType,
   PreviewToolFunctionType,
   ToolFunctionType,
 } from "@getpochi/tools";
@@ -397,6 +398,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         toolCallId: string;
         state: "partial-call" | "call" | "result";
         abortSignal?: ThreadAbortSignalSerialization;
+        nonInteractive?: boolean;
       },
     ) => {
       const tool = ToolPreviewMap[toolName];
@@ -418,12 +420,13 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         ? new ThreadAbortSignal(options.abortSignal)
         : undefined;
 
-      return await safeCall<undefined>(
+      return await safeCall<PreviewReturnType>(
         // biome-ignore lint/suspicious/noExplicitAny: external call without type information
         tool(args as any, {
           ...options,
           abortSignal,
           cwd: this.cwd,
+          nonInteractive: options.nonInteractive,
         }),
       );
     },
