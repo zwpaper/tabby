@@ -54,7 +54,6 @@ import type {
   CustomAgentFile,
   GitWorktree,
   PochiCredentials,
-  TaskData,
 } from "@getpochi/common/vscode-webui-bridge";
 import type {
   CaptureEvent,
@@ -81,7 +80,6 @@ import {
   type ThreadSignalSerialization,
 } from "@quilted/threads/signals";
 import type { Tool } from "ai";
-import { machineId } from "node-machine-id";
 import { keys } from "remeda";
 import * as runExclusive from "run-exclusive";
 import { Lifecycle, inject, injectable, scoped } from "tsyringe";
@@ -104,7 +102,7 @@ import {
 } from "../terminal-link-provider/url-utils";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { TerminalState } from "../terminal/terminal-state";
-import { commitStore } from "./base";
+import { taskUpdated } from "./base";
 import { PochiWebviewPanel } from "./webview-panel";
 
 const logger = getLogger("VSCodeHostImpl");
@@ -162,15 +160,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     } catch (err) {
       return null;
     }
-  };
-
-  readMachineId = async (): Promise<string> => {
-    const id = await machineId();
-    if (this.context.extensionMode === vscode.ExtensionMode.Production) {
-      return id;
-    }
-
-    return `dev-${id}`;
   };
 
   // These methods are overridden in the wrapper created by BaseWebview.createVSCodeHostWrapper()
@@ -778,15 +767,20 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return ThreadSignal.serialize(this.userStorage.users);
   };
 
-  openTaskInPanel = async (task: TaskData): Promise<void> => {
-    if (!task.cwd) {
+  openTaskInPanel = async ({
+    cwd,
+    id,
+    parentId,
+  }: { cwd: string; id: string; parentId?: string }): Promise<void> => {
+    if (!cwd) {
       return;
     }
-    const workspaceContainer = workspaceScoped(task.cwd);
+    const workspaceContainer = workspaceScoped(cwd);
     await PochiWebviewPanel.createOrShow(
       workspaceContainer,
       this.context.extensionUri,
-      task,
+      parentId,
+      id,
     );
   };
 
@@ -825,13 +819,8 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return ThreadSignal.serialize(this.customAgentManager.agents);
   };
 
-  bridgeStoreEvent = async (
-    webviewType: "sidebar" | "pane",
-    event: unknown,
-  ): Promise<void> => {
-    // Ignore messages from the sidebar WebView as they're synced already.
-    if (webviewType === "sidebar") return;
-    commitStore.fire({ event });
+  onTaskUpdated = async (taskData: unknown): Promise<void> => {
+    taskUpdated.fire({ event: taskData });
   };
 
   readWorktrees = async (): Promise<

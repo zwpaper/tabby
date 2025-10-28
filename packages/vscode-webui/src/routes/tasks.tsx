@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Pagination,
   PaginationContent,
@@ -10,11 +9,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"; // Import pagination components
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
@@ -26,10 +20,10 @@ import { useSettingsStore } from "@/features/settings";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useWorktrees } from "@/lib/hooks/use-worktrees";
 import { cn } from "@/lib/utils";
-import { vscodeHost } from "@/lib/vscode";
+import { setActiveStore, vscodeHost } from "@/lib/vscode";
 import { getWorktreeName } from "@getpochi/common/git-utils";
 import { parseTitle } from "@getpochi/common/message-utils";
-import { type Task, catalog } from "@getpochi/livekit";
+import { type Task, taskCatalog } from "@getpochi/livekit";
 import { useStore } from "@livestore/react";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import {
@@ -43,11 +37,10 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { MdOutlineErrorOutline } from "react-icons/md";
-import type { TaskSyncData } from "../lib/task-sync-event";
-import { useStoreDate } from "../livestore-provider";
+import { LiveStoreTaskProvider } from "../livestore-task-provider";
 
 export const Route = createFileRoute("/tasks")({
   validateSearch: (search: Record<string, unknown>): { page?: number } => {
@@ -185,7 +178,11 @@ function App() {
     );
   }
 
-  return <Tasks />;
+  return (
+    <LiveStoreTaskProvider>
+      <Tasks />
+    </LiveStoreTaskProvider>
+  );
 }
 
 function Tasks() {
@@ -193,9 +190,10 @@ function Tasks() {
   const router = useRouter();
   const { page = 1 } = Route.useSearch();
   const { store } = useStore();
-  const { storeDate, setStoreDate } = useStoreDate();
   const { data: cwd = "default" } = useCurrentWorkspace();
-  const tasks = store.useQuery(catalog.queries.makeTasksQuery(cwd as string));
+  const tasks = store.useQuery(
+    taskCatalog.queries.makeTasksQuery(cwd as string),
+  );
   const { t } = useTranslation();
   const worktrees = useWorktrees();
   const totalPages = Math.ceil(tasks.length / limit);
@@ -209,6 +207,13 @@ function Tasks() {
     });
   };
 
+  useEffect(() => {
+    setActiveStore(store);
+    return () => {
+      setActiveStore(null);
+    };
+  }, [store]);
+
   return (
     <div className="flex h-screen w-screen flex-col">
       {/* Main content area with scroll */}
@@ -220,7 +225,7 @@ function Tasks() {
         </a>
       </div>
       {tasks.length === 0 ? (
-        <EmptyTaskPlaceholder date={storeDate} />
+        <EmptyTaskPlaceholder date={new Date()} />
       ) : (
         <div className="min-h-0 flex-1">
           <ScrollArea className="h-full">
@@ -235,7 +240,6 @@ function Tasks() {
                   <TaskRow
                     key={task.id}
                     task={task}
-                    storeDate={storeDate.getTime()}
                     worktreeName={getWorktreeName(task.git?.worktree?.gitdir)}
                     gitDir={task.git?.worktree?.gitdir}
                     isWorktreeExist={isWorktreeExist}
@@ -250,7 +254,6 @@ function Tasks() {
       {/* Pagination footer */}
       <div className="flex-shrink-0">
         <div className="flex items-center justify-between px-2 py-2.5 sm:py-3">
-          <DatePicker date={storeDate} setDate={setStoreDate} />
           {totalPages > 1 && (
             <div className="mr-2 flex-1 px-3 sm:px-4">
               <Pagination>
@@ -345,18 +348,15 @@ const getStatusBorderColor = (status: string): string => {
 
 function TaskRow({
   task,
-  storeDate,
   worktreeName,
   isWorktreeExist,
   gitDir,
 }: {
   task: Task;
-  storeDate: number;
   worktreeName?: string;
   isWorktreeExist?: boolean;
   gitDir?: string;
 }) {
-  const { store } = useStore();
   const { openInTab } = useSettingsStore();
 
   const title = useMemo(() => parseTitle(task.title), [task.title]);
@@ -394,20 +394,21 @@ function TaskRow({
     if (!openInTab) {
       return;
     }
-    const messages = store.query(catalog.queries.makeMessagesQuery(task.id));
-
-    vscodeHost.openTaskInPanel({
-      ...task,
-      messages: messages.map((m) => m.data),
-    } as TaskSyncData);
-  }, [task.id, task.createdAt, task.updatedAt, task, store.query, openInTab]);
+    if (task.cwd) {
+      vscodeHost.openTaskInPanel({
+        cwd: task.cwd,
+        id: task.id,
+        parentId: task.parentId || undefined,
+      });
+    }
+  }, [task.cwd, task.id, task.parentId, openInTab]);
 
   if (gitDir) {
     return <div onClick={openTaskInPanel}>{content}</div>;
   }
 
   return (
-    <Link to={"/"} search={{ uid: task.id, storeDate }}>
+    <Link to={"/"} search={{ uid: task.id }}>
       {content}
     </Link>
   );
@@ -453,61 +454,5 @@ function GitBadge({
         </>
       )}
     </Badge>
-  );
-}
-
-function DatePicker({
-  date,
-  setDate,
-}: { date: Date; setDate: (date: Date) => void }) {
-  const [open, setOpen] = useState(false);
-  const { t } = useTranslation();
-
-  return (
-    <div className="flex flex-col gap-3">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            id="date"
-            className="w-24 justify-between font-normal"
-          >
-            {date
-              ? date.toLocaleDateString()
-              : t("tasksPage.datePicker.selectDate")}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={date}
-            captionLayout="dropdown"
-            disabled={(date) =>
-              date > new Date() || date < new Date("2020-01-01")
-            }
-            onSelect={(date) => {
-              if (date) {
-                setDate(date);
-                setOpen(false);
-              }
-            }}
-            footer={
-              <div className="mt-2 flex justify-end px-2 py-1">
-                <Button
-                  variant="outline"
-                  className="h-7 px-2 py-0 text-xs"
-                  onClick={() => {
-                    setDate(new Date());
-                    setOpen(false);
-                  }}
-                >
-                  {t("tasksPage.datePicker.today")}
-                </Button>
-              </div>
-            }
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
   );
 }

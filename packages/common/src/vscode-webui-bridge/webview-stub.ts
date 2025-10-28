@@ -226,13 +226,9 @@ const VSCodeHostStub = {
     return Promise.resolve({} as ThreadSignalSerialization<CustomAgentFile[]>);
   },
 
-  readMachineId: async (): Promise<string> => {
-    return "test-machine-id";
-  },
-
   openTaskInPanel: async (): Promise<void> => {},
 
-  bridgeStoreEvent: async (): Promise<void> => {},
+  onTaskUpdated: async (): Promise<void> => {},
 
   readWorktrees: async (): Promise<
     ThreadSignalSerialization<GitWorktree[]>

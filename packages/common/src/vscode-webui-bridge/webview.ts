@@ -19,14 +19,11 @@ import type {
 } from "./index";
 import type { DisplayModel } from "./types/model";
 import type { PochiCredentials } from "./types/pochi";
-import type { TaskDataParams } from "./types/task";
 
 export interface VSCodeHostApi {
   readResourceURI(): Promise<ResourceURI>;
 
   readPochiCredentials(): Promise<PochiCredentials | null>;
-
-  readMachineId(): Promise<string>;
 
   getSessionState<K extends keyof SessionState>(
     keys?: K[],
@@ -279,14 +276,13 @@ export interface VSCodeHostApi {
     ThreadSignalSerialization<Record<string, UserInfo>>
   >;
 
-  openTaskInPanel(
-    task: unknown /** @link packages/vscode-webui/src/livestore-provider.tsx#TaskSyncData */,
-  ): Promise<void>;
+  openTaskInPanel(options: {
+    id: string;
+    cwd: string;
+    parentId: string | undefined;
+  }): Promise<void>;
 
-  bridgeStoreEvent(
-    webviewKind: "sidebar" | "pane",
-    event: unknown,
-  ): Promise<void>;
+  onTaskUpdated(taskData: unknown): Promise<void>;
 
   readWorktrees(): Promise<ThreadSignalSerialization<GitWorktree[]>>;
 }
@@ -295,7 +291,7 @@ export interface WebviewHostApi {
   /**
    * @param params - Existing task id or new task params.
    */
-  openTask(params: TaskIdParams | NewTaskParams | TaskDataParams): void;
+  openTask(params: TaskIdParams | NewTaskParams): void;
 
   openTaskList(): void;
 
@@ -305,5 +301,5 @@ export interface WebviewHostApi {
 
   isFocused(): Promise<boolean>;
 
-  commitStoreEvent(event: unknown): Promise<void>;
+  commitTaskUpdated(event: unknown): Promise<void>;
 }

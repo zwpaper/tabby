@@ -65,7 +65,6 @@ import { createStore } from "./livekit/store";
 import { initializeMcp, registerMcpCommand } from "./mcp";
 import { registerModelCommand } from "./model";
 import { OutputRenderer } from "./output-renderer";
-import { registerTaskCommand } from "./task";
 import { TaskRunner } from "./task-runner";
 import { checkForUpdates, registerUpgradeCommand } from "./upgrade";
 
@@ -136,8 +135,6 @@ const program = new Command()
     "Disable MCP (Model Context Protocol) integration completely.",
   )
   .action(async (options) => {
-    const store = await createStore();
-
     // Load custom agents
     const customAgents = await loadAgents(process.cwd());
     const workflows = await loadWorkflows(process.cwd());
@@ -150,6 +147,8 @@ const program = new Command()
         workflows,
       },
     );
+
+    const store = await createStore(uid);
 
     const parts: Message["parts"] = [];
     if (attachments && attachments.length > 0) {
@@ -269,7 +268,6 @@ program
 program.hook("preAction", async (_thisCommand) => {
   await Promise.all([
     checkForUpdates().catch(() => {}),
-    waitForSync().catch(console.error),
     setPochiConfigWorkspacePath(process.cwd()).catch(() => {}),
   ]);
 });
@@ -277,7 +275,6 @@ program.hook("preAction", async (_thisCommand) => {
 registerAuthCommand(program);
 registerModelCommand(program);
 registerMcpCommand(program);
-registerTaskCommand(program);
 registerUpgradeCommand(program);
 
 if (process.argv[2] === "--completion") {
@@ -483,13 +480,12 @@ async function createLLMConfigWithProviders(
 }
 
 async function waitForSync(
-  inputStore?: Store,
+  store: Store,
   timeoutDuration: Duration.DurationInput = "1 second",
 ) {
   if (!process.env.POCHI_LIVEKIT_SYNC_ON) {
     return;
   }
-  const store = inputStore || (await createStore());
 
   await Effect.gen(function* (_) {
     while (true) {
@@ -506,10 +502,6 @@ async function waitForSync(
       }
     }
   }).pipe(Effect.runPromise);
-
-  if (!inputStore) {
-    await store.shutdown();
-  }
 }
 
 function assertUnreachable(_x: never): never {
