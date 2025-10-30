@@ -277,11 +277,7 @@ export interface VSCodeHostApi {
     ThreadSignalSerialization<Record<string, UserInfo>>
   >;
 
-  openTaskInPanel(options: {
-    id: string;
-    cwd: string;
-    storeId: string | undefined;
-  }): Promise<void>;
+  openTaskInPanel(options: TaskIdParams & { cwd: string }): Promise<void>;
 
   onTaskUpdated(taskData: unknown): Promise<void>;
 
@@ -290,6 +286,8 @@ export interface VSCodeHostApi {
   diff(base?: string): Promise<boolean>;
 
   createTerminal(webviewKind: "sidebar" | "pane"): Promise<void>;
+
+  createWorktree(): Promise<GitWorktree | null>;
 }
 
 export interface WebviewHostApi {

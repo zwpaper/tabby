@@ -65,6 +65,7 @@ import type {
   RuleFile,
   SaveCheckpointOptions,
   SessionState,
+  TaskIdParams,
   VSCodeHostApi,
   WorkspaceState,
 } from "@getpochi/common/vscode-webui-bridge";
@@ -814,9 +815,11 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   openTaskInPanel = async ({
     cwd,
-    id,
+    uid,
     storeId,
-  }: { cwd: string; id: string; storeId?: string }): Promise<void> => {
+    prompt,
+    files,
+  }: TaskIdParams & { cwd: string }): Promise<void> => {
     if (!cwd) {
       return;
     }
@@ -825,8 +828,12 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     await PochiWebviewPanel.createOrShow(
       workspaceContainer,
       this.context.extensionUri,
-      storeId,
-      id,
+      {
+        uid,
+        storeId,
+        prompt,
+        files,
+      },
     );
   };
 
@@ -967,6 +974,27 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     ThreadSignalSerialization<GitWorktree[]>
   > => {
     return ThreadSignal.serialize(this.worktreeManager.worktrees);
+  };
+
+  createWorktree = async () => {
+    if ((await this.worktreeManager.isGitRepository()) === false) {
+      return null;
+    }
+    const worktrees = await this.worktreeManager.getWorktrees();
+    await vscode.commands.executeCommand("git.createWorktree");
+
+    // Get worktrees again to find the new one
+    const updatedWorktrees = await this.worktreeManager.getWorktrees();
+    // Find the new worktree by comparing with previous worktrees
+    const newWorktree = updatedWorktrees.find(
+      (updated) =>
+        !worktrees.some((original) => original.path === updated.path),
+    );
+    if (newWorktree) {
+      return newWorktree;
+    }
+
+    return null;
   };
 
   dispose() {
