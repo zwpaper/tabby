@@ -49,7 +49,6 @@ import type { McpStatus } from "@getpochi/common/mcp-utils";
 import { McpHub } from "@getpochi/common/mcp-utils";
 import {
   GitStatusReader,
-  getShellPath,
   ignoreWalk,
   isPlainTextFile,
   listWorkspaceFiles,
@@ -269,29 +268,15 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     };
   };
 
-  readCurrentWorkspace = async (): Promise<string | null> => {
-    return this.cwd;
-  };
-
-  createTerminal = async (webviewKind: "sidebar" | "pane"): Promise<void> => {
-    if (!this.cwd) return;
-    const terminalViewColumn =
-      webviewKind === "pane" ? this.getBesideViewColumnForPanel() : undefined;
-    const terminal = vscode.window.createTerminal({
+  readCurrentWorkspace = async (): Promise<{
+    cwd: string | null;
+    workspaceFolder: string | null;
+  }> => {
+    return {
       cwd: this.cwd,
-      shellPath: getShellPath(),
-      env: {
-        PAGER: "cat",
-        GIT_COMMITTER_NAME: "Pochi",
-        GIT_COMMITTER_EMAIL: "noreply@getpochi.com",
-      },
-      hideFromUser: false,
-      isTransient: false,
-      location: terminalViewColumn
-        ? { viewColumn: terminalViewColumn }
-        : undefined,
-    });
-    terminal.show(false);
+      workspaceFolder:
+        vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? null,
+    };
   };
 
   readMinionId = async (): Promise<string | null> => {
@@ -851,7 +836,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return currentColumn + 1;
   }
 
-  diff = async (base = "origin/main") => {
+  showDiff = async (base = "origin/main") => {
     if (!this.cwd) {
       return false;
     }
@@ -859,13 +844,13 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     const git = simpleGit(this.cwd);
     const result: { filepath: string; before: string; after: string }[] = [];
     try {
-      const output = await git.raw(["diff", "--name-status", `${base}...HEAD`]);
+      const output = await git.raw(["diff", "--name-status", base]);
       const changedFiles = output
         .trim()
         .split("\n")
         .map((line: string) => {
           const [status, filepath] = line.split("\t");
-          return { status, filepath: filepath.trim() };
+          return { status: status.trim(), filepath: filepath.trim() };
         });
 
       if (changedFiles.length === 0) {
@@ -875,16 +860,17 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       const targetViewColumn = this.getBesideViewColumnForPanel();
 
       for (const { status, filepath } of changedFiles) {
+        const fsPath = path.join(this.cwd, filepath);
         let beforeContent = "";
         let afterContent = "";
         if (status === "A") {
-          const fileContent = await readFileContent(filepath);
+          const fileContent = await readFileContent(fsPath);
           afterContent = fileContent ?? "";
         } else if (status === "D") {
           beforeContent = await git.raw(["show", `${base}:${filepath}`]);
         } else {
           beforeContent = await git.raw(["show", `${base}:${filepath}`]);
-          afterContent = (await readFileContent(filepath)) ?? "";
+          afterContent = (await readFileContent(fsPath)) ?? "";
         }
 
         result.push({
@@ -913,10 +899,14 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
           vscode.Uri.joinPath(vscode.Uri.parse(this.cwd ?? ""), file.filepath),
           DiffChangesContentProvider.decode({
             filepath: file.filepath,
+            content: file.before,
+            cwd: this.cwd ?? "",
+          }),
+          DiffChangesContentProvider.decode({
+            filepath: file.filepath,
             content: file.after,
             cwd: this.cwd ?? "",
           }),
-          vscode.Uri.joinPath(vscode.Uri.parse(this.cwd ?? ""), file.filepath),
         ]),
         {
           viewColumn: targetViewColumn,
