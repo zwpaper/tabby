@@ -6,6 +6,14 @@ import { PublicShareButton } from "@/components/public-share-button";
 import { TokenUsage } from "@/components/token-usage";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
@@ -26,12 +34,9 @@ import type { Message, Task } from "@getpochi/livekit";
 import type { Todo } from "@getpochi/tools";
 import {
   GitBranch,
-  GitCompare,
-  Loader2,
   PaperclipIcon,
   SendHorizonal,
   StopCircleIcon,
-  Terminal,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -281,66 +286,6 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
             isValid={!!selectedModel}
             onChange={updateSelectedModelId}
           />
-          {isOpenInTab && (
-            <div className="flex h-full items-center gap-1 text-muted-foreground text-xs">
-              <GitBranch className="size-4" />
-              <span>{worktreeName}</span>
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="button-focus h-6 w-6 p-0"
-                    onClick={() => {
-                      vscodeHost.createTerminal(globalThis.POCHI_WEBVIEW_KIND);
-                    }}
-                  >
-                    <Terminal className="size-4" />
-                  </Button>
-                </HoverCardTrigger>
-                <HoverCardContent
-                  side="top"
-                  align="center"
-                  sideOffset={6}
-                  className="!w-auto max-w-sm bg-background px-3 py-1.5 text-xs"
-                >
-                  {t("chat.chatToolbar.openInTerminal")}
-                </HoverCardContent>
-              </HoverCard>
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="button-focus h-6 w-6 p-0"
-                    onClick={handleDiff}
-                    disabled={isDiffPending}
-                  >
-                    {isDiffPending ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <GitCompare className="size-4" />
-                    )}
-                  </Button>
-                </HoverCardTrigger>
-                {isDiffFailed && (
-                  <span className="text-muted-foreground text-xs">
-                    {t("checkpointUI.noChangesDetected")}
-                  </span>
-                )}
-                <HoverCardContent
-                  side="top"
-                  align="center"
-                  sideOffset={6}
-                  className="!w-auto max-w-sm bg-background px-3 py-1.5 text-xs"
-                >
-                  {t("chat.chatToolbar.diffWorktreeWith", {
-                    branch: comparisonBranch,
-                  })}
-                </HoverCardContent>
-              </HoverCard>
-            </div>
-          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
@@ -351,6 +296,46 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
               compact={compactOptions}
               selectedModel={selectedModel}
             />
+          )}
+          {isOpenInTab && !!worktreeName && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="button-focus h-6 w-6 p-0"
+                >
+                  <GitBranch className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="bg-background"
+                side="top"
+                align="end"
+              >
+                <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground text-xs">
+                  <GitBranch className="size-4" />
+                  <span>{worktreeName}</span>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    vscodeHost.createTerminal(globalThis.POCHI_WEBVIEW_KIND);
+                  }}
+                >
+                  <span>{t("chat.chatToolbar.openInTerminal")}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDiff} disabled={isDiffPending}>
+                  <span>
+                    {isDiffFailed
+                      ? t("checkpointUI.noChangesDetected")
+                      : t("chat.chatToolbar.diffWorktreeWith", {
+                          branch: comparisonBranch,
+                        })}
+                  </span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <DevModeButton messages={messages} todos={todos} />
           {!isSubTask && (
