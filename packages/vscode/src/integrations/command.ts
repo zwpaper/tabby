@@ -445,7 +445,7 @@ export class CommandManager implements vscode.Disposable {
             );
           }
 
-          PochiTaskEditorProvider.openTaskInEditor({
+          PochiTaskEditorProvider.openTaskEditor({
             cwd,
           });
         },
@@ -482,7 +482,7 @@ export class CommandManager implements vscode.Disposable {
       );
       return;
     }
-    PochiTaskEditorProvider.openTaskInEditor({
+    PochiTaskEditorProvider.openTaskEditor({
       ...params,
       cwd,
     });
