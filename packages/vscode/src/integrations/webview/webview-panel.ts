@@ -1,15 +1,16 @@
 import { AuthEvents } from "@/lib/auth-events";
 import { workspaceScoped } from "@/lib/workspace-scoped";
 import { getLogger, toErrorMessage } from "@getpochi/common";
-import { getWorktreeNameFromWorktreePath } from "@getpochi/common/git-utils";
 import type {
   NewTaskPanelParams,
   ResourceURI,
   TaskPanelParams,
   VSCodeHostApi,
 } from "@getpochi/common/vscode-webui-bridge";
+import { container } from "tsyringe";
 import * as vscode from "vscode";
 import { PochiConfiguration } from "../configuration";
+import { WorktreeManager } from "../git/worktree";
 import { WebviewBase } from "./base";
 import { VSCodeHostImpl } from "./vscode-host-impl";
 
@@ -128,12 +129,13 @@ export class PochiTaskEditorProvider
     cwd: string;
     uid: string;
   }): vscode.Uri {
-    const worktreeName = getWorktreeNameFromWorktreePath(params.cwd);
+    const worktreeName = container
+      .resolve(WorktreeManager)
+      .getWorktreeDisplayName(params.cwd);
+    const displayName = `⎇ ${worktreeName ?? "main"} - ${params.uid.split("-")[0]} `;
     return vscode.Uri.from({
       scheme: PochiTaskEditorProvider.scheme,
-      path: `/pochi/task/Pochi - ${worktreeName ?? "main"} - ${
-        params.uid.split("-")[0]
-      }`,
+      path: `/pochi/task/${displayName}`,
       query: JSON.stringify({ cwd: params.cwd, uid: params.uid }), // keep query string stable for identification
     });
   }
@@ -193,13 +195,13 @@ export class PochiTaskEditorProvider
     }
   }
 
-  public static async reset(uri: vscode.Uri) {
+  public static async createNewTask(uri: vscode.Uri) {
     try {
       const query = PochiTaskEditorProvider.parseTaskUri(uri);
 
       if (!query?.cwd) {
         vscode.window.showErrorMessage(
-          "Failed to reset Pochi task: missing parameters",
+          "Failed to create new Pochi task: missing parameters",
         );
         return;
       }
@@ -208,14 +210,12 @@ export class PochiTaskEditorProvider
       await PochiTaskEditorProvider.openTaskEditor({
         cwd: query.cwd,
       });
-      // close current panel
-      await PochiTaskEditorProvider.closeTaskEditor(uri);
     } catch (error) {
       const errorMessage = toErrorMessage(error);
       vscode.window.showErrorMessage(
-        `Failed to reset Pochi task: ${errorMessage}`,
+        `Failed to create new Pochi task: ${errorMessage}`,
       );
-      logger.error(`Failed to reset Pochi task: ${errorMessage}`, error);
+      logger.error(`Failed to create new Pochi task: ${errorMessage}`, error);
     }
   }
 
@@ -273,6 +273,10 @@ export class PochiTaskEditorProvider
       enableCommandUris: true,
       localResourceRoots: [this.context.extensionUri],
     };
+
+    webviewPanel.iconPath = WebviewBase.getLogoIconPath(
+      this.context.extensionUri,
+    );
 
     const sessionId = `editor-${cwd}-${uid}`;
 

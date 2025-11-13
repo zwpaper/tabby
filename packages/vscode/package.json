@@ -137,10 +137,22 @@
         "icon": "$(go-to-file)"
       },
       {
-        "command": "pochi.resetTaskPanel",
-        "title": "Clear",
+        "command": "pochi.newTaskPanel",
+        "title": "New Task",
         "category": "Pochi",
-        "icon": "$(clear-all)"
+        "icon": "$(add)"
+      },
+      {
+        "command": "pochi.openTerminal",
+        "title": "Open Terminal",
+        "category": "Pochi",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "pochi.diffWorktree",
+        "title": "Review Changes",
+        "category": "Pochi",
+        "icon": "$(diff-multiple)"
       },
       {
         "command": "pochi.openCustomModelSettings",
@@ -169,7 +181,17 @@
           "group": "navigation"
         },
         {
-          "command": "pochi.resetTaskPanel",
+          "command": "pochi.newTaskPanel",
+          "when": "resourceScheme == 'pochi-task'",
+          "group": "navigation"
+        },
+        {
+          "command": "pochi.openTerminal",
+          "when": "resourceScheme == 'pochi-task'",
+          "group": "navigation"
+        },
+        {
+          "command": "pochi.diffWorktree",
           "when": "resourceScheme == 'pochi-task'",
           "group": "navigation"
         }
@@ -216,7 +238,7 @@
           "when": "false"
         },
         {
-          "command": "pochi.resetTaskPanel",
+          "command": "pochi.newTaskPanel",
           "when": "false"
         }
       ],
