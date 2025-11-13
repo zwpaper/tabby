@@ -21,6 +21,7 @@ import {
 } from "ai";
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
+
 import { useApprovalAndRetry } from "../approval";
 import { useSelectedModels } from "../settings";
 import { ChatArea } from "./components/chat-area";
@@ -35,6 +36,7 @@ import { useSubtaskInfo } from "./hooks/use-subtask-info";
 import { useAutoApproveGuard, useChatAbortController } from "./lib/chat-state";
 import { onOverrideMessages } from "./lib/on-override-messages";
 import { useLiveChatKitGetters } from "./lib/use-live-chat-kit-getters";
+import { useSendTaskNotification } from "./lib/use-send-task-notification";
 
 export function ChatPage(props: ChatProps) {
   return (
@@ -82,6 +84,7 @@ function Chat({ user, uid, prompt, files }: ChatProps) {
       );
     }
   }, [task]);
+
   const subtask = useSubtaskInfo(uid, task?.parentId);
   const {
     isLoading: isModelsLoading,
@@ -101,6 +104,8 @@ function Chat({ user, uid, prompt, files }: ChatProps) {
   });
 
   useRestoreTaskModel(task, isModelsLoading, updateSelectedModelId);
+
+  const { sendNotification } = useSendTaskNotification();
 
   const chatKit = useLiveChatKit({
     taskId: uid,
@@ -124,6 +129,11 @@ function Chat({ user, uid, prompt, files }: ChatProps) {
       return lastAssistantMessageIsCompleteWithToolCalls(x);
     },
     onOverrideMessages,
+    onStreamFinish(data) {
+      if (data.status === "completed") {
+        sendNotification("completed", { uid, cwd: data.cwd });
+      }
+    },
   });
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
