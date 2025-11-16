@@ -1,6 +1,6 @@
 import { WorkspaceRequiredPlaceholder } from "@/components/workspace-required-placeholder";
 import { ChatContextProvider, useHandleChatEvents } from "@/features/chat";
-import { usePendingModelAutoStart } from "@/features/retry";
+import { isRetryableError, usePendingModelAutoStart } from "@/features/retry";
 import { useAttachmentUpload } from "@/lib/hooks/use-attachment-upload";
 import { useCurrentWorkspace } from "@/lib/hooks/use-current-workspace";
 import { useCustomAgent } from "@/lib/hooks/use-custom-agents";
@@ -22,8 +22,19 @@ import {
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
+import { useLatest } from "@/lib/hooks/use-latest";
+import { useMcp } from "@/lib/hooks/use-mcp";
 import { useApprovalAndRetry } from "../approval";
-import { useSelectedModels, useSettingsStore } from "../settings";
+import { getReadyForRetryError } from "../retry/hooks/use-ready-for-retry-error";
+import {
+  useAutoApprove,
+  useSelectedModels,
+  useSettingsStore,
+} from "../settings";
+import {
+  getPendingToolcallApproval,
+  isToolAutoApproved,
+} from "../settings/hooks/use-tool-auto-approval";
 import { ChatArea } from "./components/chat-area";
 import { ChatToolbar } from "./components/chat-toolbar";
 import { ErrorMessageView } from "./components/error-message-view";
@@ -33,7 +44,11 @@ import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useSetSubtaskModel } from "./hooks/use-set-subtask-model";
 import { useAddSubtaskResult } from "./hooks/use-subtask-completed";
 import { useSubtaskInfo } from "./hooks/use-subtask-info";
-import { useAutoApproveGuard, useChatAbortController } from "./lib/chat-state";
+import {
+  useAutoApproveGuard,
+  useChatAbortController,
+  useRetryCount,
+} from "./lib/chat-state";
 import { onOverrideMessages } from "./lib/on-override-messages";
 import { useLiveChatKitGetters } from "./lib/use-live-chat-kit-getters";
 import { useSendTaskNotification } from "./lib/use-send-task-notification";
@@ -114,7 +129,89 @@ function Chat({ user, uid, prompt, files }: ChatProps) {
 
   useRestoreTaskModel(task, isModelsLoading, updateSelectedModelId);
 
-  const { sendNotification } = useSendTaskNotification();
+  const { sendNotification, clearNotification } = useSendTaskNotification();
+
+  const { toolset } = useMcp();
+
+  const { autoApproveActive, autoApproveSettings } = useAutoApprove({
+    autoApproveGuard: autoApproveGuard.current === "auto",
+    isSubTask,
+  });
+
+  const { retryCount } = useRetryCount();
+
+  const onStreamFinish = useLatest(
+    (
+      data: Pick<Task, "id" | "cwd" | "status"> & {
+        messages: Message[];
+      },
+    ) => {
+      const lastMessage = data.messages.at(-1);
+      const taskUid = isSubTask ? task?.parentId : uid;
+      if (!taskUid || !lastMessage) return;
+
+      if (data.status === "pending-tool") {
+        const pendingToolCallApproval = getPendingToolcallApproval(lastMessage);
+        if (pendingToolCallApproval) {
+          const autoApproved = isToolAutoApproved({
+            autoApproveActive,
+            autoApproveSettings,
+            toolset,
+            pendingApproval: pendingToolCallApproval,
+          });
+
+          if (!autoApproved) {
+            sendNotification("pending-tool", { uid: taskUid, cwd: data.cwd });
+          }
+        }
+      }
+
+      if (data.status === "pending-input") {
+        const readyForRetryError = getReadyForRetryError(messages);
+        if (!readyForRetryError) return;
+
+        const retryLimit =
+          autoApproveActive && autoApproveSettings.retry
+            ? autoApproveSettings.maxRetryLimit
+            : 0;
+
+        if (
+          retryLimit === 0 ||
+          (retryCount?.count !== undefined && retryCount.count >= retryLimit)
+        ) {
+          sendNotification("pending-input", { uid: taskUid, cwd: data.cwd });
+        }
+      }
+
+      if (data.status === "completed") {
+        sendNotification("completed", { uid: taskUid, cwd: data.cwd });
+      }
+    },
+  );
+
+  const onStreamFailed = useLatest(
+    ({ error, cwd }: { error: Error; cwd: string | null }) => {
+      const taskUid = isSubTask ? task?.parentId : uid;
+      if (!taskUid) return;
+
+      let autoApprove = autoApproveGuard.current === "auto";
+      if (error && !isRetryableError(error)) {
+        autoApprove = false;
+      }
+
+      const retryLimit =
+        autoApproveActive && autoApproveSettings.retry && autoApprove
+          ? autoApproveSettings.maxRetryLimit
+          : 0;
+
+      if (
+        retryLimit === 0 ||
+        (retryCount?.count !== undefined && retryCount.count >= retryLimit)
+      ) {
+        sendNotification("failed", { uid: taskUid, cwd });
+      }
+    },
+  );
 
   const chatKit = useLiveChatKit({
     taskId: uid,
@@ -138,13 +235,14 @@ function Chat({ user, uid, prompt, files }: ChatProps) {
       return lastAssistantMessageIsCompleteWithToolCalls(x);
     },
     onOverrideMessages,
+    onStreamStart() {
+      clearNotification();
+    },
     onStreamFinish(data) {
-      if (data.status === "completed") {
-        const taskUid = isSubTask ? task?.parentId : uid;
-        if (taskUid) {
-          sendNotification("completed", { uid: taskUid, cwd: data.cwd });
-        }
-      }
+      onStreamFinish.current(data);
+    },
+    onStreamFailed(data) {
+      onStreamFailed.current(data);
     },
   });
 
