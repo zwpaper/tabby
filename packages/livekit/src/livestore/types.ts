@@ -23,6 +23,9 @@ export const Todo = Schema.Struct({
 
 export const Todos = Schema.Array(Todo);
 
+export const ToolCall = Schema.Unknown;
+export const ToolCalls = Schema.Array(ToolCall);
+
 export const TaskStatus = Schema.Literal(
   "completed",
   "pending-input",
@@ -83,6 +86,7 @@ export const taskFullFields = {
   title: Schema.optional(Schema.String),
   status: TaskStatus,
   todos: Todos,
+  pendingToolCalls: Schema.optional(ToolCalls),
   totalTokens: Schema.optional(Schema.Number),
   error: Schema.optional(TaskError),
   updatedAt: Schema.Date,
