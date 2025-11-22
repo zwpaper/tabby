@@ -1,3 +1,4 @@
+import { useTaskReadStatusStore } from "@/features/chat";
 import { getLogger } from "@getpochi/common";
 import type {
   VSCodeHostApi,
@@ -147,6 +148,11 @@ function createVSCodeHost(): VSCodeHostApi {
           }
           // @ts-expect-error
           store?.commit(event);
+        },
+
+        async setTaskRead(taskId, read) {
+          if (globalThis.POCHI_WEBVIEW_KIND === "pane") return;
+          useTaskReadStatusStore.getState().setTaskReadStatus(taskId, read);
         },
       },
     },

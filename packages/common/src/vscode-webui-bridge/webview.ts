@@ -311,4 +311,6 @@ export interface WebviewHostApi {
   isFocused(): Promise<boolean>;
 
   commitTaskUpdated(event: unknown): Promise<void>;
+
+  setTaskRead(taskId: string | string[], read: boolean): Promise<void>;
 }
