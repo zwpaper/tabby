@@ -6,6 +6,7 @@ import type { UserInfo } from "../configuration";
 import type {
   CaptureEvent,
   CustomAgentFile,
+  FileDiff,
   GitWorktree,
   McpStatus,
   NewTaskParams,
@@ -13,9 +14,9 @@ import type {
   RuleFile,
   SaveCheckpointOptions,
   SessionState,
+  TaskChangedFile,
   TaskIdParams,
   TaskPanelParams,
-  UserEditsDiff,
   WorkspaceState,
 } from "./index";
 import type { DisplayModel } from "./types/model";
@@ -230,24 +231,31 @@ export interface VSCodeHostApi {
 
   /**
    * Restores the checkpoint to the latest commit or a specific commit hash.
-   * @param commitHash - The commit hash to restore to. If not provided, restores to the latest checkpoint.
+   * @param commitHash - The commit hash to restore to.
+   * @param files - Optional list of files to restore. If provided, only these files will be restored.
    */
-  restoreCheckpoint(commitHash?: string): Promise<void>;
+  restoreCheckpoint(commitHash: string, files?: string[]): Promise<void>;
+
+  restoreChangedFiles(files: TaskChangedFile[]): Promise<void>;
 
   readCheckpointPath(): Promise<string | undefined>;
 
   /**
    * Reads user edits since the last checkpoint as diff stats.
    * @param fromCheckpoint - checkpoint hash to compare from.
+   * @param files - Optional list of files to compare. If provided, only these files will be compared.
    * @returns A promise that resolves to an array of file diff stats, or null if no edits.
    */
-  diffWithCheckpoint(fromCheckpoint: string): Promise<UserEditsDiff[] | null>;
+  diffWithCheckpoint(
+    fromCheckpoint: string,
+    files?: string[],
+  ): Promise<FileDiff[] | null>;
 
   /**
    * Shows the code diff between two checkpoints.
    * @param title - The title of the diff view.
    * @param checkpoint - An object containing the origin and modified checkpoint commits.
-   * @param displayPath - The file path to display in the diff view. If not provided, the diff will be shown for all files.
+   * @param displayPaths - The file path to display in the diff view. If not provided, the diff will be shown for all files.
    * @return A promise that resolves to a boolean indicating whether the diff was shown successfully.
    * If there is no diff, it resolves to false.
    */
@@ -257,8 +265,12 @@ export interface VSCodeHostApi {
       origin: string;
       modified?: string;
     },
-    displayPath?: string,
+    displayPaths?: string[],
   ): Promise<boolean>;
+
+  diffChangedFiles(changedFiles: TaskChangedFile[]): Promise<TaskChangedFile[]>;
+
+  showChangedFiles(files: TaskChangedFile[]): Promise<boolean>;
 
   readExtensionVersion(): Promise<string>;
 
@@ -313,4 +325,6 @@ export interface WebviewHostApi {
   commitTaskUpdated(event: unknown): Promise<void>;
 
   setTaskRead(taskId: string | string[], read: boolean): Promise<void>;
+
+  onFileChanged(filePath: string, content: string): void;
 }

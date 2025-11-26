@@ -6,6 +6,7 @@ import type {
 } from "@getpochi/common/vscode-webui-bridge";
 import type { Store } from "@livestore/livestore";
 import { ThreadNestedWindow } from "@quilted/threads";
+import Emittery from "emittery";
 import * as R from "remeda";
 import type { WebviewApi } from "vscode-webview";
 import { queryClient } from "./query-client";
@@ -85,6 +86,9 @@ function createVSCodeHost(): VSCodeHostApi {
         "readExtensionVersion",
         "readAutoSaveDisabled",
         "diffWithCheckpoint",
+        "diffChangedFiles",
+        "showChangedFiles",
+        "restoreChangedFiles",
         "showInformationMessage",
         "readVisibleTerminals",
         "readModelList",
@@ -154,6 +158,10 @@ function createVSCodeHost(): VSCodeHostApi {
           if (globalThis.POCHI_WEBVIEW_KIND === "pane") return;
           useTaskReadStatusStore.getState().setTaskReadStatus(taskId, read);
         },
+
+        onFileChanged(filePath: string, content: string) {
+          fileChangeEvent.emit("fileChanged", { filepath: filePath, content });
+        },
       },
     },
   );
@@ -162,3 +170,7 @@ function createVSCodeHost(): VSCodeHostApi {
 }
 
 export const vscodeHost = createVSCodeHost();
+
+export const fileChangeEvent = new Emittery<{
+  fileChanged: { filepath: string; content: string };
+}>();

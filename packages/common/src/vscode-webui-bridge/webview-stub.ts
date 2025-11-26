@@ -6,13 +6,14 @@ import type {
   CaptureEvent,
   CustomAgentFile,
   DisplayModel,
+  FileDiff,
   GitWorktree,
   McpStatus,
   PochiCredentials,
   ResourceURI,
   RuleFile,
   SessionState,
-  UserEditsDiff,
+  TaskChangedFile,
   VSCodeHostApi,
   WorkspaceState,
 } from "./index";
@@ -172,7 +173,13 @@ const VSCodeHostStub = {
   saveCheckpoint: async (): Promise<string | null> => {
     return "";
   },
-  restoreCheckpoint: async (): Promise<void> => {
+  restoreCheckpoint: async (
+    _commitHash: string,
+    _files?: string[],
+  ): Promise<void> => {
+    return Promise.resolve();
+  },
+  restoreChangedFiles: async (_files: TaskChangedFile[]): Promise<void> => {
     return Promise.resolve();
   },
   readCheckpointPath: async (): Promise<string | undefined> => {
@@ -180,10 +187,20 @@ const VSCodeHostStub = {
   },
   diffWithCheckpoint: async (
     _fromCheckpoint: string,
-  ): Promise<UserEditsDiff[] | null> => {
+  ): Promise<FileDiff[] | null> => {
     return Promise.resolve(null);
   },
   showCheckpointDiff: async (): Promise<boolean> => {
+    return Promise.resolve(true);
+  },
+  diffChangedFiles: async (
+    _changedFiles: TaskChangedFile[],
+  ): Promise<TaskChangedFile[]> => {
+    return Promise.resolve([]);
+  },
+  showChangedFiles: async (
+    _changedFiles: TaskChangedFile[],
+  ): Promise<boolean> => {
     return Promise.resolve(true);
   },
   readExtensionVersion: () => {

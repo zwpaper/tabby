@@ -1,5 +1,6 @@
 import { AttachmentPreviewList } from "@/components/attachment-preview-list";
 import { DevModeButton } from "@/components/dev-mode-button";
+import { DiffSummary } from "@/components/diff-summary";
 import { ModelSelect } from "@/components/model-select";
 import { PreviewTool } from "@/components/preview-tool";
 import { PublicShareButton } from "@/components/public-share-button";
@@ -209,6 +210,11 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
           <TodoList.Items viewportClassname="max-h-48" />
         </TodoList>
       )}
+      <DiffSummary
+        messages={messages}
+        taskId={task?.id as string}
+        actionEnabled={!isLoading && !isExecuting}
+      />
       <AutoApproveMenu isSubTask={isSubTask} />
       {files.length > 0 && (
         <AttachmentPreviewList

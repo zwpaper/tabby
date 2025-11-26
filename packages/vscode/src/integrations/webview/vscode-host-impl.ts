@@ -60,6 +60,7 @@ import type {
   RuleFile,
   SaveCheckpointOptions,
   SessionState,
+  TaskChangedFile,
   TaskPanelParams,
   VSCodeHostApi,
   WorkspaceState,
@@ -86,6 +87,7 @@ import { Lifecycle, inject, injectable, scoped } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { CheckpointService } from "../checkpoint/checkpoint-service";
+import type { GitDiff } from "../checkpoint/types";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PochiConfiguration } from "../configuration";
 import { DiffChangesContentProvider } from "../editor/diff-changes-content-provider";
@@ -672,8 +674,15 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   restoreCheckpoint = runExclusive.build(
     this.checkpointGroup,
-    async (commitHash: string): Promise<void> => {
-      await this.checkpointService.restoreCheckpoint(commitHash);
+    async (commitHash: string, files?: string[]): Promise<void> => {
+      await this.checkpointService.restoreCheckpoint(commitHash, files);
+    },
+  );
+
+  restoreChangedFiles = runExclusive.build(
+    this.checkpointGroup,
+    async (files: TaskChangedFile[]): Promise<void> => {
+      await this.checkpointService.restoreChangedFiles(files);
     },
   );
 
@@ -683,13 +692,13 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
 
   diffWithCheckpoint = runExclusive.build(
     this.checkpointGroup,
-    async (fromCheckpoint: string) => {
+    async (fromCheckpoint: string, files?: string[]) => {
       try {
         // Get changes using existing method
-        const changes =
-          await this.checkpointService.getCheckpointUserEditsDiff(
-            fromCheckpoint,
-          );
+        const changes = await this.checkpointService.getCheckpointFileEdits(
+          fromCheckpoint,
+          files,
+        );
         if (!changes || changes.length === 0) {
           return null;
         }
@@ -708,7 +717,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     async (
       title: string,
       checkpoint: { origin: string; modified?: string },
-      displayPath?: string,
+      displayPaths?: string[],
     ) => {
       logger.debug(
         `Showing checkpoint diff: from ${checkpoint.origin} to ${
@@ -730,45 +739,32 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
         return false;
       }
 
-      if (displayPath) {
-        const changedFile = changedFiles.filter(
-          (file) => file.filepath === displayPath,
-        )[0];
-        await vscode.commands.executeCommand(
-          "vscode.diff",
-          DiffChangesContentProvider.decode({
-            filepath: changedFile.filepath,
-            content: changedFile.before,
-            cwd: this.cwd,
-          }),
-          DiffChangesContentProvider.decode({
-            filepath: changedFile.filepath,
-            content: changedFile.after,
-            cwd: this.cwd,
-          }),
-          title,
-          {
-            preview: true,
-            preserveFocus: true,
-          },
-        );
-        return true;
-      }
+      const displayFiles = displayPaths
+        ? changedFiles.filter(
+            (file) => file.filepath && displayPaths.includes(file.filepath),
+          )
+        : changedFiles;
 
-      await vscode.commands.executeCommand(
-        "vscode.changes",
-        title,
-        changedFiles.map((file) => [
-          vscode.Uri.joinPath(vscode.Uri.parse(this.cwd ?? ""), file.filepath),
-          DiffChangesContentProvider.decode({
-            filepath: file.filepath,
-            content: file.before,
-            cwd: this.cwd ?? "",
-          }),
-          vscode.Uri.joinPath(vscode.Uri.parse(this.cwd ?? ""), file.filepath),
-        ]),
-      );
-      return true;
+      return await showDiff(displayFiles, title, this.cwd);
+    },
+  );
+
+  diffChangedFiles = runExclusive.build(
+    this.checkpointGroup,
+    async (files: TaskChangedFile[]) => {
+      return this.checkpointService.diffChangedFiles(files);
+    },
+  );
+
+  showChangedFiles = runExclusive.build(
+    this.checkpointGroup,
+    async (files: TaskChangedFile[]) => {
+      const changes =
+        await this.checkpointService.getChangedFilesChanges(files);
+      if (!this.cwd) {
+        return false;
+      }
+      return await showDiff(changes, "Changed Files", this.cwd);
     },
   );
 
@@ -908,3 +904,48 @@ const ToolPreviewMap: Record<
   applyDiff: previewApplyDiff,
   multiApplyDiff: previewMultiApplyDiff,
 };
+
+async function showDiff(displayFiles: GitDiff[], title: string, cwd: string) {
+  if (displayFiles.length === 0) {
+    return false;
+  }
+
+  if (displayFiles.length === 1) {
+    const changedFile = displayFiles[0];
+
+    await vscode.commands.executeCommand(
+      "vscode.diff",
+      DiffChangesContentProvider.decode({
+        filepath: changedFile.filepath,
+        content: changedFile.before ?? "",
+        cwd: cwd,
+      }),
+      DiffChangesContentProvider.decode({
+        filepath: changedFile.filepath,
+        content: changedFile.after ?? "",
+        cwd: cwd,
+      }),
+      title,
+      {
+        preview: true,
+        preserveFocus: true,
+      },
+    );
+    return true;
+  }
+
+  await vscode.commands.executeCommand(
+    "vscode.changes",
+    title,
+    displayFiles.map((file) => [
+      vscode.Uri.joinPath(vscode.Uri.parse(cwd ?? ""), file.filepath),
+      DiffChangesContentProvider.decode({
+        filepath: file.filepath,
+        content: file.before ?? "",
+        cwd: cwd ?? "",
+      }),
+      vscode.Uri.joinPath(vscode.Uri.parse(cwd ?? ""), file.filepath),
+    ]),
+  );
+  return true;
+}
