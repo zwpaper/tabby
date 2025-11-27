@@ -1,4 +1,3 @@
-import { useTaskReadStatusStore } from "@/features/chat";
 import { getLogger } from "@getpochi/common";
 import type {
   VSCodeHostApi,
@@ -10,6 +9,7 @@ import { Schema } from "@livestore/utils/effect";
 import { ThreadNestedWindow } from "@quilted/threads";
 import Emittery from "emittery";
 import type { WebviewApi } from "vscode-webview";
+import { useTaskReadStatusStore } from "./hooks/use-task-read-status-store";
 import { queryClient } from "./query-client";
 
 const logger = getLogger("vscode");
