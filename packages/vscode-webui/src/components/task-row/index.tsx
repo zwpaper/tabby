@@ -3,7 +3,10 @@ import { cn } from "@/lib/utils";
 import { vscodeHost } from "@/lib/vscode";
 import { parseTitle } from "@getpochi/common/message-utils";
 import { encodeStoreId } from "@getpochi/common/store-id-utils";
-import type { TaskState } from "@getpochi/common/vscode-webui-bridge";
+import {
+  type TaskState,
+  prefixTaskDisplayId,
+} from "@getpochi/common/vscode-webui-bridge";
 import type { Task, UITools } from "@getpochi/livekit";
 import type { ToolUIPart } from "ai";
 import { GitBranch, Loader2 } from "lucide-react";
@@ -34,17 +37,20 @@ export function TaskRow({
       <div className="px-2 py-1">
         <div className="flex items-start gap-3">
           <div className="flex-1 space-y-1 overflow-hidden">
-            <div className="flex items-center gap-2">
-              <h3 className="line-clamp-2 flex flex-1 items-center font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
-                <span className="truncate">{title}</span>
+            <div className="flex items-center gap-1.5">
+              {task.displayId && (
+                <span className="flex shrink-0 items-center justify-center text-foreground/80 group-hover:text-foreground/60">
+                  {prefixTaskDisplayId(task.displayId)}
+                </span>
+              )}
+              <div className="line-clamp-2 flex flex-1 items-center font-medium text-foreground leading-relaxed transition-colors duration-200 group-hover:text-foreground/80">
+                <div className="truncate">{title}</div>
                 {state?.unread && (
                   <div className="ml-2 h-2 w-2 shrink-0 rounded-full bg-primary" />
                 )}
-              </h3>
+              </div>
               <div className="flex shrink-0 items-center gap-2">
-                <div className="text-sm italic">
-                  {formatTimeAgo(task.createdAt)}
-                </div>
+                <div className="text-sm">{formatTimeAgo(task.createdAt)}</div>
               </div>
             </div>
             <div className="h-6 text-muted-foreground text-sm">
@@ -80,10 +86,11 @@ export function TaskRow({
       vscodeHost.openTaskInPanel({
         cwd: task.cwd,
         uid: task.id,
+        displayId: task.displayId ?? undefined,
         storeId,
       });
     }
-  }, [task.cwd, task.id, storeId]);
+  }, [task.cwd, task.id, task.displayId, storeId]);
 
   return <div onClick={openTaskInPanel}>{content}</div>;
 }

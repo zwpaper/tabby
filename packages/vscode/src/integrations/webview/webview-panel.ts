@@ -1,15 +1,17 @@
 import { AuthEvents } from "@/lib/auth-events";
 import { workspaceScoped } from "@/lib/workspace-scoped";
 import { getLogger, toErrorMessage } from "@getpochi/common";
-import type {
-  NewTaskPanelParams,
-  ResourceURI,
-  TaskPanelParams,
-  VSCodeHostApi,
+import {
+  type NewTaskPanelParams,
+  type ResourceURI,
+  type TaskPanelParams,
+  type VSCodeHostApi,
+  getTaskDisplayTitle,
 } from "@getpochi/common/vscode-webui-bridge";
 import { container } from "tsyringe";
 import * as vscode from "vscode";
 import { PochiConfiguration } from "../configuration";
+import { GitWorktreeInfoProvider } from "../git/git-worktree-info-provider";
 import { WorktreeManager } from "../git/worktree";
 import { WebviewBase } from "./base";
 import { VSCodeHostImpl } from "./vscode-host-impl";
@@ -133,15 +135,31 @@ export class PochiTaskEditorProvider
   public static createTaskUri(params: {
     cwd: string;
     uid: string;
+    displayId?: number;
   }): vscode.Uri {
     const worktreeName = container
       .resolve(WorktreeManager)
       .getWorktreeDisplayName(params.cwd);
-    const displayName = `⎇ ${worktreeName ?? "main"} - ${params.uid.split("-")[0]} `;
+    const displayName = getTaskDisplayTitle({
+      worktreeName: worktreeName ?? "main",
+      displayId: params.displayId,
+      uid: params.uid,
+    });
     return vscode.Uri.from({
       scheme: PochiTaskEditorProvider.scheme,
       path: `/pochi/task/${displayName}`,
-      query: JSON.stringify({ cwd: params.cwd, uid: params.uid }), // keep query string stable for identification
+      query: JSON.stringify(
+        params.displayId
+          ? {
+              cwd: params.cwd,
+              uid: params.uid,
+              displayId: params.displayId,
+            }
+          : {
+              cwd: params.cwd,
+              uid: params.uid,
+            },
+      ), // keep query string stable for identification
     });
   }
 
@@ -149,10 +167,16 @@ export class PochiTaskEditorProvider
     params: TaskPanelParams | NewTaskPanelParams,
   ) {
     try {
-      const taskParams = {
-        ...params,
-        uid: params.uid ?? crypto.randomUUID(),
-      };
+      const taskParams =
+        "uid" in params
+          ? params
+          : {
+              ...params,
+              uid: crypto.randomUUID(),
+              displayId: container
+                .resolve(GitWorktreeInfoProvider)
+                .getNextDisplayId(params.cwd),
+            };
       const uri = PochiTaskEditorProvider.createTaskUri(taskParams);
       PochiTaskEditorProvider.taskParamsCache.set(uri.toString(), taskParams);
       await openTaskInColumn(uri);
@@ -199,6 +223,7 @@ export class PochiTaskEditorProvider
       const query = JSON.parse(decodeURIComponent(uri.query)) as {
         cwd: string;
         uid: string;
+        displayId?: number;
       };
 
       if (!query?.cwd || !query?.uid) {
