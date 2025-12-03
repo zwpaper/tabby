@@ -36,6 +36,13 @@ import { PochiConfiguration } from "./configuration";
 import { DiffChangesContentProvider } from "./editor/diff-changes-content-provider";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorktreeManager } from "./git/worktree";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import {
+  LayoutManager,
+  getSortedCurrentTabGroups,
+  getViewColumnForTerminals,
+  isPochiTaskTab,
+} from "./layout";
 import { PochiTaskEditorProvider } from "./webview/webview-panel";
 const logger = getLogger("CommandManager");
 
@@ -54,6 +61,7 @@ export class CommandManager implements vscode.Disposable {
     private readonly posthog: PostHog,
     private readonly nesDecorationManager: NESDecorationManager,
     private readonly worktreeManager: WorktreeManager,
+    private readonly layoutManager: LayoutManager,
   ) {
     this.registerCommands();
   }
@@ -463,7 +471,9 @@ export class CommandManager implements vscode.Disposable {
             activeTab.input.uri,
           );
           if (params?.cwd) {
-            vscode.window.createTerminal({ cwd: params.cwd }).show();
+            const viewColumn = getViewColumnForTerminals();
+            const location = viewColumn ? { viewColumn } : undefined;
+            vscode.window.createTerminal({ cwd: params.cwd, location }).show();
           }
         }
       }),
@@ -481,7 +491,11 @@ export class CommandManager implements vscode.Disposable {
         "pochi.worktree.openTerminal",
         async (worktreePath: string) => {
           if (worktreePath) {
-            vscode.window.createTerminal({ cwd: worktreePath }).show();
+            const viewColumn = getViewColumnForTerminals();
+            const location = viewColumn ? { viewColumn } : undefined;
+            vscode.window
+              .createTerminal({ cwd: worktreePath, location })
+              .show();
           }
         },
       ),
@@ -502,6 +516,46 @@ export class CommandManager implements vscode.Disposable {
             PochiTaskEditorProvider.openTaskEditor({
               cwd: worktreePath,
             });
+          }
+        },
+      ),
+
+      vscode.commands.registerCommand(
+        "pochi.toggleTaskFocusLayout",
+        async (...args) => {
+          let taskUri: vscode.Uri | undefined = undefined;
+          // Take args first
+          const arg0 = args.shift();
+          if (arg0 instanceof vscode.Uri) {
+            taskUri = arg0;
+          }
+          // Otherwise take active tab
+          if (taskUri === undefined) {
+            const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+            if (activeTab && isPochiTaskTab(activeTab)) {
+              taskUri = activeTab.input.uri;
+            }
+          }
+          // Otherwise take first task tab
+          if (taskUri === undefined) {
+            const taskUris = getSortedCurrentTabGroups().flatMap((group) =>
+              group.tabs
+                .filter((tab) => isPochiTaskTab(tab))
+                .map((tab) => tab.input.uri),
+            );
+            if (taskUris.length > 0) {
+              taskUri = taskUris[0];
+            }
+          }
+          // No task found
+          if (taskUri === undefined) {
+            return;
+          }
+          if (taskUri.scheme === PochiTaskEditorProvider.scheme) {
+            const task = PochiTaskEditorProvider.parseTaskUri(taskUri);
+            if (task) {
+              await this.layoutManager.toggleTaskFocusLayout(task);
+            }
           }
         },
       ),
