@@ -48,8 +48,12 @@ interface WorktreeGroup {
 
 export function WorktreeList({
   tasks,
+  onDeleteWorktree,
+  deletingWorktreePaths,
 }: {
-  tasks: Task[];
+  tasks: readonly Task[];
+  deletingWorktreePaths: Set<string>;
+  onDeleteWorktree: (worktreePath: string) => void;
 }) {
   const { t } = useTranslation();
   const { data: currentWorkspace, isLoading: isLoadingCurrentWorkspace } =
@@ -164,13 +168,37 @@ export function WorktreeList({
     currentWorkspace,
   ]);
 
-  const activeGroups = groups.filter((g) => !g.isDeleted);
-  const deletedGroups = groups.filter((g) => g.isDeleted);
+  // Apply optimistic deletion: filter out items being deleted
+  const optimisticGroups = useMemo(() => {
+    return groups
+      .map((g) => {
+        if (deletingWorktreePaths.has(g.path)) {
+          // If has tasks, mark as deleted; otherwise filter out
+          if (g.tasks.length > 0) {
+            return { ...g, isDeleted: true };
+          }
+          return null;
+        }
+        return g;
+      })
+      .filter((x): x is WorktreeGroup => x !== null);
+  }, [groups, deletingWorktreePaths]);
+
+  const activeGroups = optimisticGroups.filter((g) => !g.isDeleted);
+  const deletedGroups = optimisticGroups.filter((g) => g.isDeleted);
+
+  const handleDeleteWorktree = (worktreePath: string) => {
+    onDeleteWorktree(worktreePath);
+  };
 
   return (
     <div className="flex flex-col gap-1">
       {activeGroups.map((group) => (
-        <WorktreeSection key={group.path} group={group} />
+        <WorktreeSection
+          key={group.path}
+          group={group}
+          onDeleteGroup={handleDeleteWorktree}
+        />
       ))}
       {deletedGroups.length > 0 && (
         <>
@@ -204,8 +232,10 @@ export function WorktreeList({
 
 function WorktreeSection({
   group,
+  onDeleteGroup,
 }: {
   group: WorktreeGroup;
+  onDeleteGroup?: (worktreePath: string) => void;
 }) {
   const { t } = useTranslation();
   // Default expanded for existing worktrees, collapsed for deleted
@@ -337,14 +367,13 @@ function WorktreeSection({
                         <Button
                           variant="destructive"
                           size="sm"
-                          asChild
-                          onClick={() => setShowDeleteConfirm(false)}
+                          type="button"
+                          onClick={() => {
+                            setShowDeleteConfirm(false);
+                            onDeleteGroup?.(group.path);
+                          }}
                         >
-                          <a
-                            href={`command:pochi.worktree.delete?${encodeURIComponent(JSON.stringify([group.path]))}`}
-                          >
-                            {t("tasksPage.delete")}
-                          </a>
+                          {t("tasksPage.delete")}
                         </Button>
                       </div>
                     </div>
