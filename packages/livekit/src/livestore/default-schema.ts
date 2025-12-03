@@ -98,6 +98,9 @@ export const events = {
     name: "v1.TaskInited",
     schema: Schema.Struct({
       ...taskInitFields,
+      initMessages: Schema.optional(Schema.Array(DBMessage)),
+      // @deprecated
+      // use initMessages instead
       initMessage: Schema.optional(
         Schema.Struct({
           id: Schema.String,
@@ -194,28 +197,48 @@ export const events = {
 };
 
 const materializers = State.SQLite.materializers(events, {
-  "v1.TaskInited": ({ id, parentId, createdAt, cwd, initMessage }) => [
+  "v1.TaskInited": ({
+    id,
+    parentId,
+    createdAt,
+    cwd,
+    initMessage,
+    initMessages,
+  }) => [
     tables.tasks.insert({
       id,
-      status: initMessage ? "pending-model" : "pending-input",
+      status: initMessages
+        ? initMessages.length > 0
+          ? "pending-model"
+          : "pending-input"
+        : initMessage
+          ? "pending-model"
+          : "pending-input",
       parentId,
       createdAt,
       cwd,
       updatedAt: createdAt,
     }),
-    ...(initMessage
-      ? [
-          tables.messages.insert({
-            id: initMessage.id,
-            taskId: id,
-            data: {
+    ...(initMessages?.map((message) => {
+      return tables.messages.insert({
+        id: message.id,
+        taskId: id,
+        data: message,
+      });
+    }) ??
+      (initMessage
+        ? [
+            tables.messages.insert({
               id: initMessage.id,
-              role: "user",
-              parts: initMessage.parts,
-            },
-          }),
-        ]
-      : []),
+              taskId: id,
+              data: {
+                id: initMessage.id,
+                role: "user",
+                parts: initMessage.parts,
+              },
+            }),
+          ]
+        : [])),
   ],
   "v1.TaskFailed": ({ id, error, updatedAt }) => [
     tables.tasks
