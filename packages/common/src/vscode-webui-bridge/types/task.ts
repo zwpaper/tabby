@@ -15,6 +15,10 @@ export interface TaskIdParams {
    * JSON string representing an array of messages to init the task.
    */
   initMessages?: string;
+  /**
+   * Disable auto start for the task
+   */
+  disablePendingModelAutoStart?: boolean;
 }
 
 export interface TaskPanelParams extends TaskIdParams {
