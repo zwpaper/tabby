@@ -60,6 +60,18 @@
     "createWorktree": "Create Git worktree",
     "createWorktreeDescription": "Start task in a new Git worktree"
   },
+  "worktree": {
+    "createPr": "Create PR",
+    "createDraftPr": "Create draft PR",
+    "createPrManually": "Create PR manually",
+    "installGhCli": "Please install GitHub CLI to create PRs",
+    "authGhCli": "Please run `gh auth login` to authenticate GitHub CLI",
+    "prNumber": "PR #{{number}}",
+    "merge": "Merge",
+    "allChecksPassed": "All checks have passed",
+    "allChecksFailed": "All checks have failed",
+    "checksStatus": "{{passed}}/{{total}} checks have passed"
+  },
   "settings": {
     "account": {
       "signIn": "Sign-In for Pochi models",
