@@ -1,3 +1,4 @@
+import { Deferred } from "@/lib/defered";
 import { getLogger } from "@getpochi/common";
 import { injectable, singleton } from "tsyringe";
 import * as vscode from "vscode";
@@ -64,6 +65,8 @@ export class GitStateMonitor implements vscode.Disposable {
   public readonly onDidRepositoryChange: vscode.Event<GitRepositoryChangeEvent> =
     this.#onDidRepositoryChange.event;
 
+  inited = new Deferred<void>();
+
   constructor() {
     this.disposables.push(this.#onDidChangeGitState);
     this.initialize();
@@ -114,15 +117,42 @@ export class GitStateMonitor implements vscode.Disposable {
         ),
       );
 
+      await this.gitApiReady();
       // Initialize existing repositories
       for (const repository of this.gitAPI.repositories) {
+        logger.debug(
+          `Initializing existing repository: ${repository.rootUri.toString()}`,
+        );
         await this.handleRepositoryOpened(repository);
       }
+
+      this.inited.resolve();
 
       logger.debug("Git state monitor initialized successfully");
     } catch (error) {
       logger.debug("Failed to initialize Git state monitor:", error);
     }
+  }
+
+  private async gitApiReady() {
+    return new Promise<void>((resolve, reject) => {
+      if (!this.gitAPI) {
+        reject("VSCode git API is not available");
+        return;
+      }
+
+      if (this.gitAPI.state === "initialized") {
+        resolve();
+        return;
+      }
+      this.disposables.push(
+        this.gitAPI.onDidChangeState((state) => {
+          if (state === "initialized") {
+            resolve();
+          }
+        }),
+      );
+    });
   }
 
   private async handleRepositoryOpened(repository: Repository): Promise<void> {

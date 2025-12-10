@@ -1,6 +1,7 @@
 import path from "node:path";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { GitStateMonitor } from "@/integrations/git/git-state";
+import { Deferred } from "@/lib/defered";
 import { readFileContent } from "@/lib/fs";
 import { generateBranchName } from "@/lib/generate-branch-name";
 import { getLogger } from "@/lib/logger";
@@ -27,6 +28,7 @@ export class WorktreeManager implements vscode.Disposable {
   private maxWorktrees = 10;
   private readonly disposables: vscode.Disposable[] = [];
   worktrees = signal<GitWorktree[]>([]);
+  inited = new Deferred<void>();
 
   private workspaceFolder: string | undefined;
   private git: ReturnType<typeof simpleGit>;
@@ -53,6 +55,7 @@ export class WorktreeManager implements vscode.Disposable {
     if (!(await this.isGitRepository())) {
       return;
     }
+    await this.gitStateMonitor.inited.promise;
     await this.updateWorktrees();
     const onWorktreeChanged = async () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -61,6 +64,11 @@ export class WorktreeManager implements vscode.Disposable {
     this.disposables.push(
       this.gitStateMonitor.onDidRepositoryChange(onWorktreeChanged),
     );
+    this.inited.resolve();
+  }
+
+  getMainWorktree() {
+    return this.worktrees.value.find((wt) => wt.isMain);
   }
 
   async isGitRepository(): Promise<boolean> {
@@ -173,6 +181,7 @@ export class WorktreeManager implements vscode.Disposable {
   }
 
   async updateWorktrees() {
+    logger.debug("Updating worktrees...");
     this.worktrees.value = await this.getWorktrees();
   }
 
