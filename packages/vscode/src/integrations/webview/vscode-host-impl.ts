@@ -98,6 +98,8 @@ import { DiffChangesContentProvider } from "../editor/diff-changes-content-provi
 import { PochiTaskState } from "../editor/pochi-task-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { type FileSelection, TabState } from "../editor/tab-state";
+// biome-ignore lint/style/useImportType: needed for dependency injections
+import { GitState } from "../git/git-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { WorktreeManager } from "../git/worktree";
 // biome-ignore lint/style/useImportType: needed for dependency injection
@@ -142,6 +144,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly pochiTaskState: PochiTaskState,
     private readonly githubPullRequestState: GithubPullRequestState,
     private readonly githubIssueState: GithubIssueState,
+    private readonly gitState: GitState,
   ) {}
 
   private get cwd() {
@@ -952,6 +955,13 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       return [];
     }
     return await this.githubIssueState.queryIssues(query);
+  };
+
+  readGitBranches = async (): Promise<string[]> => {
+    if (!this.cwd) {
+      return [];
+    }
+    return await this.gitState.getBranches(this.cwd);
   };
 
   dispose() {
