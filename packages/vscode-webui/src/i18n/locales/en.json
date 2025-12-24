@@ -289,6 +289,9 @@
     "fork": "Fork",
     "forking": "Forking"
   },
+  "reviewUI": {
+    "reviews": "Reviews"
+  },
   "welcomeScreen": {
     "title": "Get Started",
     "description": "Sign in to access models provided by Pochi and take advantage of a rich set of team features, or bring your own key to use any model you prefer.",

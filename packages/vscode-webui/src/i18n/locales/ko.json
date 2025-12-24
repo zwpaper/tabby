@@ -286,6 +286,9 @@
     "fork": "포크하기",
     "forking": "포크 중..."
   },
+  "reviewUI": {
+    "reviews": "리뷰"
+  },
   "welcomeScreen": {
     "title": "시작하기",
     "description": "Pochi에서 제공하는 모델에 액세스하고 풍부한 팀 기능을 활용하려면 로그인하거나, 원하는 모델을 사용하려면 자신의 키를 가져오세요.",

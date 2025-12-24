@@ -285,6 +285,9 @@
     "fork": "新建分支任务",
     "forking": "创建中..."
   },
+  "reviewUI": {
+    "reviews": "评审"
+  },
   "welcomeScreen": {
     "title": "开始使用",
     "description": "登录以访问 Pochi 提供的模型并利用丰富的团队功能，或者使用您自己的密钥来使用任何您喜欢的模型。",

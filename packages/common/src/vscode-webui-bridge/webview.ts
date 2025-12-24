@@ -11,6 +11,7 @@ import type {
   McpStatus,
   PochiTaskParams,
   ResourceURI,
+  Review,
   RuleFile,
   SaveCheckpointOptions,
   SessionState,
@@ -332,6 +333,15 @@ export interface VSCodeHostApi {
   queryGithubIssues(query?: string): Promise<GithubIssue[]>;
 
   readGitBranches(): Promise<string[]>;
+
+  readReviews(): Promise<ThreadSignalSerialization<Review[]>>;
+
+  clearReviews(): Promise<void>;
+
+  openReview(
+    review: Review,
+    options?: { focusCommentsPanel?: boolean },
+  ): Promise<void>;
 }
 
 export interface WebviewHostApi {

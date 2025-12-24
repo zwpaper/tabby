@@ -27,6 +27,7 @@ import { CheckpointUI } from "../checkpoint-ui";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { MessageAttachments } from "./attachments";
 import { MessageMarkdown } from "./markdown";
+import { Reviews } from "./reviews";
 
 export const MessageList: React.FC<{
   messages: Message[];
@@ -227,6 +228,10 @@ function Part({
       );
     }
     return null;
+  }
+
+  if (part.type === "data-reviews") {
+    return <Reviews reviews={part.data.reviews} />;
   }
 
   if (isToolUIPart(part)) {

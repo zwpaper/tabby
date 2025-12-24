@@ -12,6 +12,7 @@ import type {
   McpStatus,
   PochiCredentials,
   ResourceURI,
+  Review,
   RuleFile,
   SessionState,
   TaskChangedFile,
@@ -285,6 +286,17 @@ const VSCodeHostStub = {
   queryGithubIssues: async (): Promise<GithubIssue[]> => [],
 
   readGitBranches: async (): Promise<string[]> => [],
+
+  readReviews: (): Promise<ThreadSignalSerialization<Review[]>> => {
+    return Promise.resolve({} as ThreadSignalSerialization<Review[]>);
+  },
+
+  clearReviews: async (): Promise<void> => {},
+
+  openReview: async (
+    _review: Review,
+    _options?: { focusCommentsPanel?: boolean },
+  ) => {},
 
   getGlobalState: async (): Promise<unknown> => {
     return null;
