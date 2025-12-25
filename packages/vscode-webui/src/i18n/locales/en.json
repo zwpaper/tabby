@@ -419,5 +419,9 @@
   },
   "forkTask": {
     "forkedTaskTitle": "Forked from {{taskTitle}}"
+  },
+  "mermaid": {
+    "failedToRender": "Failed to render Mermaid chart:",
+    "fixError": "Fix error with Pochi"
   }
 }
