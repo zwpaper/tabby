@@ -243,6 +243,8 @@ export interface VSCodeHostApi {
 
   restoreChangedFiles(files: TaskChangedFile[]): Promise<void>;
 
+  readLatestCheckpoint(): Promise<ThreadSignalSerialization<string | null>>;
+
   readCheckpointPath(): Promise<string | undefined>;
 
   /**
