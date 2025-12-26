@@ -6,8 +6,12 @@ export function renderReviewComments(reviews: Review[]): string {
   }
 
   const reviewTexts = reviews.map((review) => {
+    let codeSnippetText = "";
+    const { content, startLine, endLine } = review.codeSnippet;
+    codeSnippetText = `${review.uri}:${startLine}-${endLine}:\n\`\`\`\n${content}\n\`\`\`\n`;
+
     const location = review.range
-      ? ` (${review.range.start.line}:${review.range.start.character}-${review.range.end.line}:${review.range.end.character})`
+      ? `${review.range.start.line}:${review.range.start.character}-${review.range.end.line}:${review.range.end.character}`
       : "";
 
     const commentsText = review.comments
@@ -17,14 +21,14 @@ export function renderReviewComments(reviews: Review[]): string {
       })
       .join("\n");
 
-    return `${review.uri}${location}:\n${commentsText}`;
+    return `<review>\n${codeSnippetText}<comment location="${location}">\n${commentsText}\n</comment>\n</review>`;
   });
 
   const header = `The user has received code review comments from their team or review system that need to be addressed. These comments highlight issues, suggestions, or questions about specific parts of the code. Your task is to help resolve these comments by making the necessary code changes, explanations, or improvements.
 
-IMPORTANT: If you need more context to understand a review comment, read the file being reviewed using the readFile tool. Understanding the surrounding code will help you provide better solutions.
+The code snippets provided below include surrounding context to help you understand the broader context of each comment.
 
-Review comments (format: filepath(line:char-line:char):):\n`;
+IMPORTANT: If you need additional context beyond the provided code snippets, use the readFile tool.`;
 
   return `${header}\n${reviewTexts.join("\n\n")}`;
 }

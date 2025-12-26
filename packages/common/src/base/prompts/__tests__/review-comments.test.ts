@@ -22,6 +22,11 @@ test("single review with single comment and range", () => {
           body: "This function should handle edge cases for null values.",
         },
       ],
+      codeSnippet: {
+        content: `  return data.map(item => item.value);\n}\n\nfunction processData(data) {\n  if (!data) {\n    return [];\n  }\n  return transform(data);\n}\n\nfunction transform(data) {`,
+        startLine: 5,
+        endLine: 17,
+      },
     },
   ];
   expect(renderReviewComments(reviews)).toMatchSnapshot();
@@ -50,6 +55,11 @@ test("single review with multiple comments", () => {
           body: "Maybe use a try-catch block?",
         },
       ],
+      codeSnippet: {
+        content: `export function validateEmail(email: string): boolean {\n  return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);\n}\n\nexport function sanitizeInput(input: string): string {\n  const trimmed = input.trim();\n  const sanitized = trimmed.replace(/<script>/gi, '');\n  return sanitized;\n}\n\nexport function parseJSON(json: string) {`,
+        startLine: 20,
+        endLine: 35,
+      },
     },
   ];
   expect(renderReviewComments(reviews)).toMatchSnapshot();
@@ -66,6 +76,11 @@ test("single review without range", () => {
           body: "Please update the documentation to include setup instructions.",
         },
       ],
+      codeSnippet: {
+        content: "// No code snippet available",
+        startLine: 0,
+        endLine: 0,
+      },
     },
   ];
   expect(renderReviewComments(reviews)).toMatchSnapshot();
@@ -86,6 +101,11 @@ test("multiple reviews with different files", () => {
           body: "Should this use the theme color instead of hardcoded values?",
         },
       ],
+      codeSnippet: {
+        content: `  const [isHovered, setIsHovered] = useState(false);\n\n  return (\n    <button\n      className={className}\n      style={{ backgroundColor: '#3b82f6' }}\n      onMouseEnter={() => setIsHovered(true)}\n      onMouseLeave={() => setIsHovered(false)}\n      onClick={onClick}\n    >\n      {children}`,
+        startLine: 10,
+        endLine: 20,
+      },
     },
     {
       id: "review-2",
@@ -104,16 +124,11 @@ test("multiple reviews with different files", () => {
           body: "Consider adding retry logic.",
         },
       ],
-    },
-    {
-      id: "review-3",
-      uri: "tests/integration/auth.test.ts",
-      comments: [
-        {
-          id: "comment-4",
-          body: "Add tests for invalid token scenarios.",
-        },
-      ],
+      codeSnippet: {
+        content: `  return users.filter(u => u.active);\n}\n\nexport async function fetchUserById(id: string) {\n  const response = await fetch(\`/api/users/\${id}\`);\n  const data = await response.json();\n  return data;\n}\n\nexport async function updateUser(id: string, updates: UserUpdate) {\n  const response = await fetch(\`/api/users/\${id}\`, {`,
+        startLine: 37,
+        endLine: 55,
+      },
     },
   ];
   expect(renderReviewComments(reviews)).toMatchSnapshot();
@@ -134,6 +149,11 @@ test("review with special characters in comment", () => {
           body: 'The regex pattern `/^[a-z]+$/i` should be `\\w+` for better matching.',
         },
       ],
+      codeSnippet: {
+        content: "function parseInput(input: string): string[] {\n  const pattern = /^[a-z]+$/i;\n  if (pattern.test(input)) {\n    return input.split('');\n  }\n  return [];\n}\n\nfunction validatePattern(str: string) {\n  // Validation logic here\n  return str.length > 0;",
+        startLine: 95,
+        endLine: 110,
+      },
     },
   ];
   expect(renderReviewComments(reviews)).toMatchSnapshot();
@@ -157,6 +177,11 @@ test("review with multiline comment", () => {
 3. Should handle connection errors gracefully`,
         },
       ],
+      codeSnippet: {
+        content: "import { createConnection } from 'mysql2';\n\nconst config = {\n  host: 'localhost',\n  user: 'admin',\n  password: 'secret'\n};\n\nexport function connect() {\n  return createConnection(config);\n}\n\nfunction closeConnection(conn) {",
+        startLine: 0,
+        endLine: 13,
+      },
     },
   ];
   expect(renderReviewComments(reviews)).toMatchSnapshot();
@@ -177,6 +202,11 @@ test("review at start of file", () => {
           body: "Missing copyright header.",
         },
       ],
+      codeSnippet: {
+        content: "import express from 'express';\nimport cors from 'cors';\n\nconst app = express();\nconst port = 3000;\n\napp.use(cors());\napp.use(express.json());\n\napp.get('/', (req, res) => {\n  res.send('Hello World!');",
+        startLine: 0,
+        endLine: 10,
+      },
     },
   ];
   expect(renderReviewComments(reviews)).toMatchSnapshot();
@@ -197,6 +227,36 @@ test("review with large line numbers", () => {
           body: "This entire section should be refactored into smaller functions.",
         },
       ],
+      codeSnippet: {
+        content: "  // Large legacy function starts here\n  function processLegacyData(input) {\n    // ... hundreds of lines of complex logic\n    let result = {};\n    for (let i = 0; i < input.length; i++) {\n      // ... more processing\n      result[i] = transformData(input[i]);\n    }\n    // ... even more lines\n    return result;\n  }",
+        startLine: 1518,
+        endLine: 1655,
+      },
+    },
+  ];
+  expect(renderReviewComments(reviews)).toMatchSnapshot();
+});
+
+test("review with code snippet containing special formatting", () => {
+  const reviews: Review[] = [
+    {
+      id: "review-1",
+      uri: "src/formatter.ts",
+      range: {
+        start: { line: 20, character: 0 },
+        end: { line: 25, character: 1 },
+      },
+      comments: [
+        {
+          id: "comment-1",
+          body: "The string template formatting could be improved.",
+        },
+      ],
+      codeSnippet: {
+        content: `function formatMessage(user: string, count: number): string {\n  // TODO: Add i18n support\n  const template = \`User \${user} has \${count} item(s)\`;\n  return template;\n}\n\nexport function logMessage(msg: string) {\n  console.log(\`[\${new Date().toISOString()}] \${msg}\`);\n}\n\n// Helper function`,
+        startLine: 15,
+        endLine: 30,
+      },
     },
   ];
   expect(renderReviewComments(reviews)).toMatchSnapshot();
