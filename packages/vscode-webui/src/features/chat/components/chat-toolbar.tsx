@@ -54,6 +54,8 @@ interface ChatToolbarProps {
   displayError: Error | undefined;
   todosRef: React.RefObject<Todo[] | undefined>;
   onUpdateIsPublicShared?: (isPublicShared: boolean) => void;
+  taskId: string;
+  saveLatestUserEdits: () => void;
 }
 
 export const ChatToolbar: React.FC<ChatToolbarProps> = ({
@@ -67,6 +69,8 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
   displayError,
   todosRef,
   onUpdateIsPublicShared,
+  taskId,
+  saveLatestUserEdits,
 }) => {
   const { t } = useTranslation();
 
@@ -159,6 +163,7 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
     queuedMessages,
     setQueuedMessages,
     reviews,
+    saveLatestUserEdits,
   });
 
   const handleQueueMessage = useCallback(
@@ -280,6 +285,7 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
         }
         isSubTask={isSubTask}
         reviews={reviews}
+        taskId={taskId}
       />
 
       {/* Hidden file input for image uploads */}

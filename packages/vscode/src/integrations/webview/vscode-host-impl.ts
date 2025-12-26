@@ -54,6 +54,7 @@ import {
   type CustomAgentFile,
   type DiffCheckpointOptions,
   type DisplayModel,
+  type FileDiff,
   type GitWorktree,
   type GithubIssue,
   type PochiCredentials,
@@ -91,6 +92,8 @@ import { Lifecycle, inject, injectable, scoped } from "tsyringe";
 import * as vscode from "vscode";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { CheckpointService } from "../checkpoint/checkpoint-service";
+// biome-ignore lint/style/useImportType: needed for dependency injection
+import { UserEditState } from "../checkpoint/user-edit-state";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PochiConfiguration } from "../configuration";
 import { showDiffChanges } from "../editor/diff-changes-editor";
@@ -148,6 +151,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly githubIssueState: GithubIssueState,
     private readonly gitState: GitState,
     private readonly reviewController: ReviewController,
+    private readonly userEditState: UserEditState,
   ) {}
 
   private get cwd() {
@@ -491,7 +495,6 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
       base64Data?: string;
       fallbackGlobPattern?: string;
       cellId?: string;
-      webviewKind?: "sidebar" | "pane";
     },
   ) => {
     // Expand ~ to home directory if present
@@ -1009,6 +1012,14 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     });
 
     this.reviewController.expandThread(review.id);
+  };
+
+  readUserEdits = async (
+    uid: string,
+  ): Promise<ThreadSignalSerialization<FileDiff[]>> => {
+    return ThreadSignal.serialize(
+      computed(() => this.userEditState.edits.value[uid] ?? []),
+    );
   };
 
   dispose() {

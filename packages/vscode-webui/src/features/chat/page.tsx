@@ -36,6 +36,7 @@ import {
 import { ChatArea } from "./components/chat-area";
 import { ChatToolbar } from "./components/chat-toolbar";
 import { SubtaskHeader } from "./components/subtask";
+import { useLatestUserEdits } from "./hooks/use-latest-user-edits";
 import { useRestoreTaskModel } from "./hooks/use-restore-task-model";
 import { useScrollToBottom } from "./hooks/use-scroll-to-bottom";
 import { useSetSubtaskModel } from "./hooks/use-set-subtask-model";
@@ -98,6 +99,8 @@ function Chat({ user, uid, info }: ChatProps) {
     }
   }, [isSubTask, initSubtaskAutoApproveSettings]);
 
+  const { saveLatestUserEdits, latestUserEdits } = useLatestUserEdits(uid);
+
   const {
     isLoading: isModelsLoading,
     selectedModel,
@@ -110,6 +113,7 @@ function Chat({ user, uid, info }: ChatProps) {
   const getters = useLiveChatKitGetters({
     todos: todosRef,
     isSubTask,
+    userEdits: latestUserEdits,
   });
 
   useRestoreTaskModel(task, isModelsLoading, updateSelectedModelId);
@@ -297,6 +301,7 @@ function Chat({ user, uid, info }: ChatProps) {
             pendingToolCalls,
             lineChanges: task.lineChanges || undefined,
             lastStepDuration: task.lastStepDuration || undefined,
+            lastCheckpointHash: task.lastCheckpointHash || undefined,
           }).args,
         ),
       );
@@ -431,6 +436,8 @@ function Chat({ user, uid, info }: ChatProps) {
           subtask={subtask}
           displayError={displayError}
           onUpdateIsPublicShared={chatKit.updateIsPublicShared}
+          taskId={uid}
+          saveLatestUserEdits={saveLatestUserEdits}
         />
       </div>
     </div>
