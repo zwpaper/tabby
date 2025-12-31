@@ -147,6 +147,11 @@ export function WorktreeList({
     return groups.filter((x) => !deletingWorktreePaths.has(x.path));
   }, [groups, deletingWorktreePaths]);
 
+  // Check if there is only one group and it is the main group
+  // If so, we don't need to set a max-height for the section
+  const containsOnlyMainGroup =
+    optimisticGroups.length === 1 && optimisticGroups[0]?.isMain;
+
   return (
     <div className="flex flex-col gap-1">
       {optimisticGroups.map((group) => (
@@ -157,6 +162,7 @@ export function WorktreeList({
           onDeleteGroup={onDeleteWorktree}
           gitOriginUrl={gitOriginUrl}
           gh={gh}
+          containsOnlyMainGroup={containsOnlyMainGroup}
         />
       ))}
     </div>
@@ -168,12 +174,14 @@ function WorktreeSection({
   onDeleteGroup,
   gh,
   gitOriginUrl,
+  containsOnlyMainGroup,
 }: {
   group: WorktreeGroup;
   isLoadingWorktrees: boolean;
   onDeleteGroup?: (worktreePath: string) => void;
   gh?: { installed: boolean; authorized: boolean };
   gitOriginUrl?: string | null;
+  containsOnlyMainGroup?: boolean;
 }) {
   const { t } = useTranslation();
   // Default expanded for existing worktrees, collapsed for deleted
@@ -183,7 +191,7 @@ function WorktreeSection({
   const pochiTasks = usePochiTabs();
   const { tasks, hasMore, loadMore } = usePaginatedTasks({
     cwd: group.path,
-    pageSize: 10,
+    pageSize: 15,
   });
 
   const pullRequest = group.data?.github?.pullRequest;
@@ -368,7 +376,13 @@ function WorktreeSection({
       </div>
 
       <CollapsibleContent>
-        <ScrollArea viewportClassname="max-h-[230px] px-1 py-1">
+        <ScrollArea
+          viewportClassname={cn("px-1 py-1", {
+            "max-h-[180px]": !group.isMain && !containsOnlyMainGroup,
+            "max-h-[60cqh]": group.isMain && !containsOnlyMainGroup,
+            // When there is only one main group, we let it grow naturally without max-height constraint
+          })}
+        >
           {tasks.length > 0 ? (
             <>
               {tasks.map((task) => {
