@@ -12,6 +12,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ApprovalButton,
   isRetryApprovalCountingDown,
@@ -25,7 +26,7 @@ import { useAddCompleteToolCalls } from "@/lib/hooks/use-add-complete-tool-calls
 import type { useAttachmentUpload } from "@/lib/hooks/use-attachment-upload";
 import { useReviews } from "@/lib/hooks/use-reviews";
 import { useTaskChangedFiles } from "@/lib/hooks/use-task-changed-files";
-import { cn } from "@/lib/utils";
+import { cn, tw } from "@/lib/utils";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { constants } from "@getpochi/common";
 import type { Message, Task } from "@getpochi/livekit";
@@ -48,6 +49,12 @@ import { ChatInputForm } from "./chat-input-form";
 import { ErrorMessageView } from "./error-message-view";
 import { SubmitReviewsButton } from "./submit-review-button";
 import { CompleteSubtaskButton } from "./subtask";
+
+const PopupContainerClassName = tw`-translate-y-full -top-2 absolute left-0 w-full px-4 pt-1`;
+const PopupContentClassName = tw`flex w-full flex-col bg-background`;
+const FooterContainerClassName = tw`my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden`;
+const FooterLeftClassName = tw`flex items-center gap-2 overflow-x-hidden truncate`;
+const FooterRightClassName = tw`flex shrink-0 items-center gap-1`;
 
 interface ChatToolbarProps {
   task?: Task;
@@ -251,8 +258,8 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
 
   return (
     <>
-      <div className="-translate-y-full -top-2 absolute left-0 w-full px-4 pt-1">
-        <div className="flex w-full flex-col bg-background">
+      <div className={PopupContainerClassName}>
+        <div className={PopupContentClassName}>
           <ErrorMessageView error={displayError} />
           <CompleteSubtaskButton
             showCompleteButton={showCompleteSubtaskButton}
@@ -326,8 +333,8 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
         className="hidden"
       />
 
-      <div className="my-2 flex shrink-0 justify-between gap-5 overflow-x-hidden">
-        <div className="flex items-center gap-2 overflow-x-hidden truncate">
+      <div className={FooterContainerClassName}>
+        <div className={FooterLeftClassName}>
           <ModelSelect
             value={selectedModel || selectedModelFromStore}
             models={groupedModels}
@@ -337,7 +344,7 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
           />
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className={FooterRightClassName}>
           {!!selectedModel && (
             <TokenUsage
               totalTokens={totalTokens}
@@ -433,3 +440,62 @@ const SubmitStopButton: React.FC<SubmitStopButtonProps> = ({
     </Button>
   );
 };
+
+export function ChatToolBarSkeleton() {
+  const [input, setInput] = useState("");
+  return (
+    <>
+      <div className={PopupContainerClassName}>
+        <div className={PopupContentClassName}>
+          <ErrorMessageView error={undefined} />
+          <CompleteSubtaskButton
+            showCompleteButton={false}
+            subtask={undefined}
+          />
+          <ApprovalButton
+            pendingApproval={undefined}
+            retry={() => {}}
+            allowAddToolResult={false}
+            isSubTask={false}
+          />
+          <SubmitReviewsButton
+            showSubmitReviewButton={false}
+            onSubmit={async () => {}}
+          />
+        </div>
+      </div>
+
+      <AutoApproveMenu isSubTask={false} />
+      <ChatInputForm
+        input={input}
+        setInput={setInput}
+        onSubmit={async () => {}}
+        onCtrlSubmit={async () => {}}
+        isLoading={true}
+        onPaste={() => {}}
+        onRemoveQueuedMessage={() => {}}
+        status="streaming"
+        queuedMessages={[]}
+        isSubTask={false}
+        pendingApproval={undefined}
+        reviews={[]}
+      />
+
+      <div className={FooterContainerClassName}>
+        <div className={FooterLeftClassName}>
+          <ModelSelect
+            isLoading={true}
+            value={undefined}
+            onChange={() => {}}
+            models={undefined}
+          />
+        </div>
+        <div className={FooterRightClassName}>
+          <div className="py-[4px]">
+            <Skeleton className="h-4 w-48 bg-[var(--vscode-inputOption-hoverBackground)]" />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
