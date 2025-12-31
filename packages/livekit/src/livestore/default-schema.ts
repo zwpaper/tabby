@@ -158,6 +158,7 @@ export const events = {
       data: Schema.NullOr(DBMessage),
       updatedAt: Schema.Date,
       duration: Schema.optional(Schema.DurationFromMillis),
+      lastCheckpointHash: Schema.optional(Schema.String),
     }),
   }),
   updateShareId: Events.synced({
@@ -279,7 +280,7 @@ const materializers = State.SQLite.materializers(events, {
         updatedAt,
         modelId,
         displayId,
-        lastCheckpointHash: null, // clear lastCheckpointHash on stream start to hide changes made by Pochi, set back in ChatStreamFinished
+        lastCheckpointHash: null, // set as null to disable user edit when streaming
       })
       .where({ id }),
     tables.messages
@@ -318,13 +319,21 @@ const materializers = State.SQLite.materializers(events, {
       })
       .onConflict("id", "replace"),
   ],
-  "v1.ChatStreamFailed": ({ id, error, updatedAt, data, duration }) => [
+  "v1.ChatStreamFailed": ({
+    id,
+    error,
+    updatedAt,
+    data,
+    duration,
+    lastCheckpointHash,
+  }) => [
     tables.tasks
       .update({
         status: "failed",
         error,
         updatedAt,
         lastStepDuration: duration ?? undefined,
+        lastCheckpointHash,
       })
       .where({ id }),
     ...(data
