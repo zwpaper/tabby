@@ -241,7 +241,13 @@ const VSCodeHostStub = {
     });
   },
   readModelList: async () => {
-    return Promise.resolve({} as ThreadSignalSerialization<DisplayModel[]>);
+    return Promise.resolve(
+      {} as {
+        modelList: ThreadSignalSerialization<DisplayModel[]>;
+        isLoading: ThreadSignalSerialization<boolean>;
+        reload: () => Promise<void>;
+      },
+    );
   },
   readUserStorage: async () => {
     return Promise.resolve(

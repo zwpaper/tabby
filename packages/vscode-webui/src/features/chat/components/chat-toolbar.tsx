@@ -106,6 +106,8 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
     selectedModel,
     selectedModelFromStore, // for fallback display
     isLoading: isModelsLoading,
+    isFetching: isFetchingModels,
+    reload: reloadModels,
     updateSelectedModelId,
   } = useSelectedModels({ isSubTask });
 
@@ -339,8 +341,10 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
             value={selectedModel || selectedModelFromStore}
             models={groupedModels}
             isLoading={isModelsLoading}
+            isFetching={isFetchingModels}
             isValid={!!selectedModel}
             onChange={updateSelectedModelId}
+            reloadModels={reloadModels}
           />
         </div>
 

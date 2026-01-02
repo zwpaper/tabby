@@ -298,7 +298,11 @@ export interface VSCodeHostApi {
     ...items: T[]
   ): Promise<T | undefined>;
 
-  readModelList(): Promise<ThreadSignalSerialization<DisplayModel[]>>;
+  readModelList(): Promise<{
+    modelList: ThreadSignalSerialization<DisplayModel[]>;
+    isLoading: ThreadSignalSerialization<boolean>;
+    reload: () => Promise<void>;
+  }>;
 
   readUserStorage(): Promise<
     ThreadSignalSerialization<Record<string, UserInfo>>

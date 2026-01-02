@@ -35,7 +35,12 @@ export function useSelectedModels(options?: UseSelectedModelsOptions) {
   const { t } = useTranslation();
   const isSubTask = options?.isSubTask ?? false;
 
-  const { modelList: models, isLoading } = useModelList(true);
+  const {
+    modelList: models,
+    isLoading,
+    isFetching,
+    reload,
+  } = useModelList(true);
   const { selectedModel: selectedModelFromStore } = useSettingsStore();
   const { updateSelectedModel, selectedModel: storedSelectedModel } =
     useModelSelectionState(isSubTask);
@@ -97,6 +102,8 @@ export function useSelectedModels(options?: UseSelectedModelsOptions) {
 
   return {
     isLoading,
+    isFetching,
+    reload,
     models,
     groupedModels,
     // model with full information

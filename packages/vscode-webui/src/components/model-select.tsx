@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -17,7 +16,12 @@ import {
 } from "@/components/ui/hover-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { CheckIcon, ChevronDownIcon, TriangleAlertIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  RefreshCwIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import LoadingWrapper from "@/components/loading-wrapper";
@@ -32,8 +36,10 @@ interface ModelSelectProps {
   value: ModelSelectValue | undefined;
   onChange: (v: string) => void;
   isLoading?: boolean;
+  isFetching?: boolean;
   isValid?: boolean;
   triggerClassName?: string;
+  reloadModels?: () => Promise<void>;
 }
 
 export function ModelSelect({
@@ -41,8 +47,10 @@ export function ModelSelect({
   value,
   onChange,
   isLoading,
+  isFetching,
   isValid,
   triggerClassName,
+  reloadModels,
 }: ModelSelectProps) {
   const { t } = useTranslation();
 
@@ -187,18 +195,34 @@ export function ModelSelect({
                 ))}
 
                 {!!customModels?.flat().length && <DropdownMenuSeparator />}
-                <DropdownMenuItem asChild>
+                <div className="flex items-center justify-between gap-2 px-2">
                   <a
                     href="command:pochi.openCustomModelSettings"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex cursor-pointer items-center gap-2 px-3 py-1"
+                    className="group cursor-pointer px-3 py-2.5"
                   >
-                    <span className="text-[var(--vscode-textLink-foreground)] text-xs">
+                    <span className="text-[var(--vscode-textLink-foreground)] text-xs group-hover:underline ">
                       {t("modelSelect.manageCustomModels")}
                     </span>
                   </a>
-                </DropdownMenuItem>
+                  <span
+                    onClick={() => {
+                      if (isFetching) {
+                        return;
+                      }
+                      reloadModels?.();
+                    }}
+                    className="flex cursor-pointer items-center gap-1 px-3 py-2.5 text-[var(--vscode-textLink-foreground)] text-xs hover:underline"
+                  >
+                    <RefreshCwIcon
+                      className={cn("size-3 opacity-0", {
+                        "animate-spin opacity-100": isFetching,
+                      })}
+                    />
+                    {t("modelSelect.reload")}
+                  </span>
+                </div>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenuPortal>
