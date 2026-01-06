@@ -68,7 +68,7 @@ function BaseBranchSelector({
 }) {
   const { data: branches } = useQuery({
     queryKey: ["git-branches"],
-    queryFn: () => vscodeHost.readGitBranches(),
+    queryFn: () => vscodeHost.readGitBranches(50),
   });
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
