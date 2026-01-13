@@ -728,7 +728,6 @@
   "dependencies": {
     "@ai-sdk/google-vertex": "catalog:",
     "@getpochi/common": "workspace:*",
-    "@getpochi/vendor-claude-code": "workspace:*",
     "@getpochi/vendor-codex": "workspace:*",
     "@getpochi/vendor-gemini-cli": "workspace:*",
     "@getpochi/vendor-github-copilot": "workspace:*",
