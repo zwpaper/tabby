@@ -189,7 +189,7 @@ export const CreateTaskInput: React.FC<CreateTaskInputProps> = ({
       // If no valid model is selected, submission is not allowed.
       if (!selectedModel) return;
 
-      const content = input.trim();
+      const content = input.text.trim();
 
       // Disallow empty submissions
       if (content.length === 0 && files.length === 0) return;
@@ -231,7 +231,7 @@ export const CreateTaskInput: React.FC<CreateTaskInputProps> = ({
       setDebouncedIsCreatingTask(false);
     },
     [
-      input,
+      input.text,
       files,
       upload,
       selectedModel,
