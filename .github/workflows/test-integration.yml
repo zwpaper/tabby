@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  vscode-e2e:
+  test-integration:
     runs-on: ubuntu-latest
     permissions:
       contents: write
