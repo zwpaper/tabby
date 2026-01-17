@@ -39,6 +39,7 @@ export class PochiWebviewPanel
   extends WebviewBase
   implements vscode.Disposable
 {
+  private static panels: PochiWebviewPanel[] = [];
   private readonly panel: vscode.WebviewPanel;
 
   constructor(
@@ -52,6 +53,9 @@ export class PochiWebviewPanel
   ) {
     super(sessionId, context, events, pochiConfiguration, vscodeHost);
     this.panel = panel;
+
+    // Push to static array
+    PochiWebviewPanel.panels.push(this);
 
     // Set webview options
     this.panel.webview.options = {
@@ -82,9 +86,29 @@ export class PochiWebviewPanel
     };
   }
 
+  static readTaskFile(taskId: string, filePath: string) {
+    return PochiWebviewPanel.panels[0]?.webviewHost?.readTaskFile(
+      taskId,
+      filePath,
+    );
+  }
+
+  static writeTaskFile(taskId: string, filePath: string, content: string) {
+    return PochiWebviewPanel.panels[0]?.webviewHost?.writeTaskFile(
+      taskId,
+      filePath,
+      content,
+    );
+  }
+
   dispose(): void {
     super.dispose();
     this.panel.dispose();
+    // Remove from static array when disposed
+    const index = PochiWebviewPanel.panels.indexOf(this);
+    if (index !== -1) {
+      PochiWebviewPanel.panels.splice(index, 1);
+    }
   }
 }
 
@@ -282,6 +306,7 @@ export class PochiTaskEditorProvider
     const events = workspaceContainer.resolve(AuthEvents);
     const pochiConfiguration = workspaceContainer.resolve(PochiConfiguration);
     const vscodeHost = workspaceContainer.resolve(VSCodeHostImpl);
+    vscodeHost.taskId = uid;
 
     webviewPanel.webview.options = {
       enableScripts: true,
