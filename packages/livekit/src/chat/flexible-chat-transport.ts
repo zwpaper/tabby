@@ -62,6 +62,7 @@ export type ChatTransportOptions = {
   blobStore: BlobStore;
   customAgent?: CustomAgent;
   outputSchema?: z.ZodAny;
+  attemptCompletionSchema?: z.ZodAny;
 };
 
 export class FlexibleChatTransport implements ChatTransport<Message> {
@@ -72,15 +73,18 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
   private readonly blobStore: BlobStore;
   private readonly customAgent?: CustomAgent;
   private readonly outputSchema?: z.ZodAny;
+  private readonly attemptCompletionSchema?: z.ZodAny;
 
   constructor(options: ChatTransportOptions) {
     this.onStart = options.onStart;
+
     this.getters = options.getters;
     this.isSubTask = options.isSubTask;
     this.store = options.store;
     this.blobStore = options.blobStore;
     this.customAgent = overrideCustomAgentTools(options.customAgent);
     this.outputSchema = options.outputSchema;
+    this.attemptCompletionSchema = options.attemptCompletionSchema;
   }
 
   sendMessages: (
@@ -148,6 +152,7 @@ export class FlexibleChatTransport implements ChatTransport<Message> {
           isSubTask: !!this.isSubTask,
           customAgents,
           contentType: llm.contentType,
+          attemptCompletionSchema: this.attemptCompletionSchema,
         }),
         ...(mcpTools || {}),
       },
