@@ -21,6 +21,8 @@ import { PochiLanguage } from "@/lib/pochi-language";
 // biome-ignore lint/style/useImportType: needed for dependency injection
 import { PostHog } from "@/lib/posthog";
 // biome-ignore lint/style/useImportType: needed for dependency injection
+import { SkillManager } from "@/lib/skill-manager";
+// biome-ignore lint/style/useImportType: needed for dependency injection
 import { TaskDataStore } from "@/lib/task-data-store";
 import {
   taskPendingApproval,
@@ -44,6 +46,7 @@ import { readFile } from "@/tools/read-file";
 import { searchFiles } from "@/tools/search-files";
 import { startBackgroundJob } from "@/tools/start-background-job";
 import { todoWrite } from "@/tools/todo-write";
+import { useSkill } from "@/tools/use-skill";
 import { previewWriteToFile, writeToFile } from "@/tools/write-to-file";
 import type { Environment, GitStatus } from "@getpochi/common";
 import type { UserInfo } from "@getpochi/common/configuration";
@@ -75,6 +78,7 @@ import {
   type RuleFile,
   type SaveCheckpointOptions,
   type SessionState,
+  type SkillFile,
   type TaskArchivedParams,
   type TaskChangedFile,
   type TaskStates,
@@ -165,6 +169,7 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     private readonly workspaceScope: WorkspaceScope,
     private readonly checkpointService: CheckpointService,
     private readonly customAgentManager: CustomAgentManager,
+    private readonly skillManager: SkillManager,
     private readonly worktreeManager: WorktreeManager,
     private readonly taskActivityTracker: TaskActivityTracker,
     private readonly githubPullRequestState: GithubPullRequestState,
@@ -1052,6 +1057,10 @@ export class VSCodeHostImpl implements VSCodeHostApi, vscode.Disposable {
     return ThreadSignal.serialize(this.customAgentManager.agents);
   };
 
+  readSkills = async (): Promise<ThreadSignalSerialization<SkillFile[]>> => {
+    return ThreadSignal.serialize(this.skillManager.skills);
+  };
+
   onTaskUpdated = async (taskData: unknown): Promise<void> => {
     taskUpdated.fire({ event: taskData });
   };
@@ -1258,6 +1267,7 @@ const ToolMap: Record<
   applyDiff,
   todoWrite,
   editNotebook,
+  useSkill,
 };
 
 const ToolPreviewMap: Record<

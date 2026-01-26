@@ -17,6 +17,7 @@ import type {
   Review,
   RuleFile,
   SessionState,
+  SkillFile,
   TaskArchivedParams,
   TaskChangedFile,
   TaskStates,
@@ -262,6 +263,10 @@ const VSCodeHostStub = {
     ThreadSignalSerialization<CustomAgentFile[]>
   > => {
     return Promise.resolve({} as ThreadSignalSerialization<CustomAgentFile[]>);
+  },
+
+  readSkills: async (): Promise<ThreadSignalSerialization<SkillFile[]>> => {
+    return Promise.resolve({} as ThreadSignalSerialization<SkillFile[]>);
   },
 
   openTaskInPanel: async (

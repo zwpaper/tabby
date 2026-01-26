@@ -40,6 +40,11 @@ export {
   type ValidCustomAgentFile,
   BuiltInAgentPath,
 } from "./types/custom-agent";
+export type {
+  SkillFile,
+  InvalidSkillFile,
+  ValidSkillFile,
+} from "./types/skill";
 export { GitWorktreeInfo } from "./types/git";
 export type {
   GitWorktree,
@@ -53,6 +58,7 @@ export type {
   ReviewCodeSnippet,
 } from "./types/review";
 export { isValidCustomAgentFile } from "./types/custom-agent";
+export { isValidSkillFile } from "./types/skill";
 export {
   prefixWorktreeName,
   getTaskDisplayTitle,

@@ -35,6 +35,7 @@ import { resolveModelFromId } from "@/lib/utils/resolve-model-from-id";
 import {
   BuiltInAgentPath,
   isValidCustomAgentFile,
+  isValidSkillFile,
 } from "@getpochi/common/vscode-webui-bridge";
 import { threadSignal } from "@quilted/threads/signals";
 import { ReactRenderer } from "@tiptap/react";
@@ -723,9 +724,10 @@ const debouncedQueryGithubIssues = asyncDebounce(async (query?: string) => {
 
 export const debouncedListSlashCommand = debounceWithCachedValue(
   async () => {
-    const [workflows, customAgents] = await Promise.all([
+    const [workflows, customAgents, skills] = await Promise.all([
       vscodeHost.listWorkflows(),
       threadSignal(await vscodeHost.readCustomAgents()),
+      threadSignal(await vscodeHost.readSkills()),
     ]);
     const options: SlashCandidate[] = [
       ...customAgents.value
@@ -734,6 +736,15 @@ export const debouncedListSlashCommand = debounceWithCachedValue(
         .filter((x) => isValidCustomAgentFile(x))
         .map((x) => ({
           type: "custom-agent" as const,
+          id: x.name,
+          label: x.name,
+          path: x.filePath,
+          rawData: x,
+        })),
+      ...skills.value
+        .filter((x) => isValidSkillFile(x))
+        .map((x) => ({
+          type: "skill" as const,
           id: x.name,
           label: x.name,
           path: x.filePath,

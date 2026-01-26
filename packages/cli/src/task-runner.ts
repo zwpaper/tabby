@@ -18,7 +18,7 @@ import {
 } from "@getpochi/livekit";
 import { LiveChatKit } from "@getpochi/livekit/node";
 import { type Todo, isUserInputToolPart } from "@getpochi/tools";
-import type { CustomAgent } from "@getpochi/tools";
+import type { CustomAgent, Skill } from "@getpochi/tools";
 import {
   getToolName,
   isToolUIPart,
@@ -91,6 +91,11 @@ export interface RunnerOptions {
    */
   customAgents?: CustomAgent[];
 
+  /**
+   * Available skills for skill tool
+   */
+  skills?: Skill[];
+
   onSubTaskCreated?: (runner: TaskRunner) => void;
 
   /**
@@ -146,6 +151,7 @@ export class TaskRunner {
       rg: options.rg,
 
       customAgents: options.customAgents,
+      skills: options.skills,
       mcpHub: options.mcpHub,
       backgroundJobManager: this.backgroundJobManager,
       createSubTaskRunner: (taskId: string, customAgent?: CustomAgent) => {
@@ -187,6 +193,7 @@ export class TaskRunner {
           todos: this.todos,
         }),
         getCustomAgents: () => this.toolCallOptions.customAgents || [],
+        getSkills: () => this.toolCallOptions.skills || [],
         ...(options.mcpHub
           ? {
               getMcpInfo: () => {

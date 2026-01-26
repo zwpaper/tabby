@@ -8,6 +8,7 @@ import { fixMermaidError } from "./fix-mermaid-error";
 import { generateTitle } from "./generate-title";
 import { injectBashOutputs } from "./inject-bash-outputs";
 import { renderReviewComments } from "./review-comments";
+import { createSkillPrompt, createUseSkillResult } from "./skill";
 import { createSystemPrompt } from "./system";
 import { renderUserEdits } from "./user-edits";
 import { createWorkflowPrompt } from "./workflow";
@@ -26,6 +27,7 @@ export const prompts = {
   generateTitle,
   workflow: createWorkflowPrompt,
   customAgent: createCustomAgentPrompt,
+  skill: createSkillPrompt,
   injectBashOutputs,
   createPr,
   renderReviewComments,
@@ -33,6 +35,7 @@ export const prompts = {
   renderUserEdits,
   renderBashOutputs,
   fixMermaidError,
+  createUseSkillResult,
 };
 
 function createSystemReminder(content: string) {
