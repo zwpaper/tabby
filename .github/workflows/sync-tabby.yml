@@ -1,0 +1,28 @@
+name: Sync to Tabby
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Sync to Tabby
+        env:
+          GH_TOKEN: ${{ secrets.POCHI_HOMEBREW_GITHUB_TOKEN }}
+        run: |
+          gh auth setup-git
+          git remote add target https://github.com/${{ github.repository_owner }}/tabby.git
+          git push target HEAD:pochi --no-verify
