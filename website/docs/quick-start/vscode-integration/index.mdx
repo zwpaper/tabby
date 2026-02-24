@@ -5,6 +5,9 @@ sidebar_position: 4
 
 import TabbyModelsUrl from "./tabby-models.png";
 import TabbyUrlToken from "./tabby-url-token.png";
+import LoginWithTabby from "./login-with-tabby.png";
+import LoginTabbyUrl from "./login-tabby-url.png";
+import LoginTabbyToken from "./login-tabby-token.png";
 
 # VSCode Extension Integration
 
@@ -12,37 +15,17 @@ After configuring the [Endpoint API](../../administration/endpoints),
 you can use it to serve as models api endpoint and experience the agentic coding assistant.
 
 We have already integrated Tabby endpoints API as one of the VSCode extension model providers,
-So all you need to do is to login to Tabby through the pochi CLI.
+So all you need to do is to login to Tabby in VSCode extension.
 
-1. Install [Pochi CLI](https://docs.getpochi.com/cli/) if you haven't done so.
-2. Login to Tabby through the CLI, run `pochi auth login` and select tabby.
-
-   ```console
-   root@tabby-server:~# pochi auth login
-   ? Select a vendor to authenticate with:
-   ❯ tabby - Not logged in
-     pochi - Not logged in
-     gemini-cli - Not logged in
-     codex - Not logged in
-     github-copilot - Not logged in
-     qwen-code - Not logged in
-
-   Current selection: Not logged in
-   Use arrow keys to navigate, enter to select
-   ```
-
-3. Get the Tabby Server URL and TOKEN from the Tabby UI.
+1. Get the Tabby Server URL and TOKEN from the Tabby UI.
    <img src={TabbyUrlToken} alt="Tabby Url And Token" width="300" style={{ borderRadius: "12px" }}/>
 
-4. Input your Tabby Server URL(default: http://localhost:8080, press enter to use default) and TOKEN.
+2. Bring up the command palette in VSCode and select `Pochi: Login with Tabby` to login to Tabby.
+   <img src={LoginWithTabby} alt="Login with Tabby" width="600" style={{ borderRadius: "12px" }}/>
 
-   ```console
-   root@tabby-server:~# pochi auth login
-   ✔ Select a vendor to authenticate with: tabby - Not logged in
-   Enter Tabby Server URL (default: http://localhost:8080):
-   Enter Tabby Token: TABBY_TOKEN
-   Logged in as Admin (admin@example.com)
-   ```
+3. Input the Tabby Server URL(default: http://localhost:8080, press enter to use default) and TOKEN.
+   <img src={LoginTabbyUrl} alt="Login Tabby Url" width="600" style={{ borderRadius: "12px" }}/>
+   <img src={LoginTabbyToken} alt="Login Tabby Token" width="600" style={{ borderRadius: "12px" }}/>
 
-5. The tabby models would be listed in the model list.
+4. After login, you can see the Tabby models in the model list, and you can use them to experience the agentic coding assistant.
    <img src={TabbyModelsUrl} alt="Tabby Models" width="500" style={{ borderRadius: "12px" }}/>
